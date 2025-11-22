@@ -2,6 +2,8 @@
 #include "input/InputManager.hpp"
 #include "config/Config.hpp"
 
+#include <algorithm>
+
 namespace Nova {
 
 FlyCamera::FlyCamera() {
@@ -9,10 +11,20 @@ FlyCamera::FlyCamera() {
     auto& config = Config::Instance();
     m_moveSpeed = config.Get("camera.move_speed", 10.0f);
     m_lookSpeed = config.Get("camera.look_speed", 0.1f);
+    m_sprintMultiplier = config.Get("camera.sprint_multiplier", 2.5f);
+    m_minSpeed = config.Get("camera.min_speed", 1.0f);
+    m_maxSpeed = config.Get("camera.max_speed", 100.0f);
+
+    // Store defaults for reset
+    m_defaultPosition = m_position;
+    m_defaultPitch = m_pitch;
+    m_defaultYaw = m_yaw;
 }
 
 void FlyCamera::Update(InputManager& input, float deltaTime) {
-    if (!m_enabled) return;
+    if (!m_enabled) {
+        return;
+    }
 
     ProcessMouseInput(input, deltaTime);
     ProcessKeyboardInput(input, deltaTime);
@@ -21,36 +33,37 @@ void FlyCamera::Update(InputManager& input, float deltaTime) {
 void FlyCamera::ProcessKeyboardInput(InputManager& input, float deltaTime) {
     float speed = m_moveSpeed * deltaTime;
 
-    // Sprint
+    // Sprint modifier
     if (input.IsKeyDown(Key::LeftShift)) {
         speed *= m_sprintMultiplier;
     }
 
-    // Movement
-    glm::vec3 movement(0.0f);
+    // Accumulate movement direction
+    glm::vec3 moveDir(0.0f);
 
     if (input.IsKeyDown(Key::W)) {
-        movement += m_forward * speed;
+        moveDir += m_forward;
     }
     if (input.IsKeyDown(Key::S)) {
-        movement -= m_forward * speed;
+        moveDir -= m_forward;
     }
     if (input.IsKeyDown(Key::A)) {
-        movement -= m_right * speed;
+        moveDir -= m_right;
     }
     if (input.IsKeyDown(Key::D)) {
-        movement += m_right * speed;
+        moveDir += m_right;
     }
     if (input.IsKeyDown(Key::E) || input.IsKeyDown(Key::Space)) {
-        movement += m_worldUp * speed;
+        moveDir += m_worldUp;
     }
     if (input.IsKeyDown(Key::Q) || input.IsKeyDown(Key::LeftControl)) {
-        movement -= m_worldUp * speed;
+        moveDir -= m_worldUp;
     }
 
-    if (glm::length(movement) > 0.0f) {
-        m_position += movement;
-        UpdateViewMatrix();
+    // Apply movement if any direction pressed
+    if (glm::dot(moveDir, moveDir) > 0.0f) {
+        m_position += glm::normalize(moveDir) * speed;
+        MarkViewDirty();
     }
 }
 
@@ -62,7 +75,8 @@ void FlyCamera::ProcessMouseInput(InputManager& input, float deltaTime) {
 
     glm::vec2 mouseDelta = input.GetMouseDelta();
 
-    if (glm::length(mouseDelta) < 0.001f) {
+    // Use squared length for early exit (avoids sqrt)
+    if (glm::dot(mouseDelta, mouseDelta) < 0.0001f) {
         return;
     }
 
@@ -73,7 +87,26 @@ void FlyCamera::ProcessMouseInput(InputManager& input, float deltaTime) {
     m_pitch = glm::clamp(m_pitch, -89.0f, 89.0f);
 
     UpdateVectors();
-    UpdateViewMatrix();
+    MarkViewDirty();
+}
+
+void FlyCamera::Reset() {
+    m_position = m_defaultPosition;
+    m_pitch = m_defaultPitch;
+    m_yaw = m_defaultYaw;
+
+    UpdateVectors();
+    MarkViewDirty();
+}
+
+void FlyCamera::SetSpeedBounds(float min, float max) {
+    m_minSpeed = min;
+    m_maxSpeed = max;
+    m_moveSpeed = glm::clamp(m_moveSpeed, m_minSpeed, m_maxSpeed);
+}
+
+void FlyCamera::AdjustSpeed(float factor) {
+    m_moveSpeed = glm::clamp(m_moveSpeed * factor, m_minSpeed, m_maxSpeed);
 }
 
 } // namespace Nova

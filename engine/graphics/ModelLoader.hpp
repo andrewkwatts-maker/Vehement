@@ -30,8 +30,8 @@ struct Model {
 /**
  * @brief Model loading system using Assimp
  *
- * Replaces AIE FBXFile with modern, full-featured model loading.
- * Supports FBX, OBJ, GLTF, DAE, and many other formats.
+ * Full-featured model loading with support for FBX, OBJ, GLTF, DAE,
+ * and many other formats. Handles meshes, materials, and textures.
  */
 class ModelLoader {
 public:

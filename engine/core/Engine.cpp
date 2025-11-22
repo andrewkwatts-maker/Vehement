@@ -16,7 +16,7 @@
 
 namespace Nova {
 
-Engine& Engine::Instance() {
+Engine& Engine::Instance() noexcept {
     static Engine instance;
     return instance;
 }
@@ -58,12 +58,20 @@ bool Engine::Initialize(const InitParams& params) {
     // Initialize OpenGL loader
     if (!gladLoadGL(glfwGetProcAddress)) {
         spdlog::critical("Failed to initialize GLAD");
+        m_window.reset();
+        glfwTerminate();
         return false;
     }
 
     spdlog::info("OpenGL Version: {}.{}", GLVersion.major, GLVersion.minor);
-    spdlog::info("OpenGL Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
-    spdlog::info("OpenGL Vendor: {}", reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+
+    // Safely get OpenGL strings with null checks
+    if (const auto* renderer = glGetString(GL_RENDERER)) {
+        spdlog::info("OpenGL Renderer: {}", reinterpret_cast<const char*>(renderer));
+    }
+    if (const auto* vendor = glGetString(GL_VENDOR)) {
+        spdlog::info("OpenGL Vendor: {}", reinterpret_cast<const char*>(vendor));
+    }
 
     // Initialize subsystems
     m_time = std::make_unique<Time>();
@@ -74,6 +82,10 @@ bool Engine::Initialize(const InitParams& params) {
     m_renderer = std::make_unique<Renderer>();
     if (!m_renderer->Initialize()) {
         spdlog::critical("Failed to initialize renderer");
+        m_input.reset();
+        m_time.reset();
+        m_window.reset();
+        glfwTerminate();
         return false;
     }
 
@@ -101,7 +113,7 @@ bool Engine::Initialize(const InitParams& params) {
     return true;
 }
 
-int Engine::Run(const ApplicationCallbacks& callbacks) {
+int Engine::Run(ApplicationCallbacks callbacks) {
     if (!m_initialized) {
         spdlog::error("Engine not initialized");
         return -1;
@@ -133,7 +145,7 @@ void Engine::ProcessFrame(const ApplicationCallbacks& callbacks) {
 
     // Update time
     m_time->Update();
-    float deltaTime = m_time->GetDeltaTime();
+    const float deltaTime = m_time->GetDeltaTime();
 
     // Poll input
     m_input->Update();
@@ -201,7 +213,7 @@ void Engine::EndFrame() {
     m_window->SwapBuffers();
 }
 
-void Engine::RequestShutdown() {
+void Engine::RequestShutdown() noexcept {
     m_running = false;
 }
 
@@ -219,7 +231,7 @@ void Engine::Shutdown() {
         ImGui::DestroyContext();
     }
 
-    // Cleanup subsystems
+    // Cleanup subsystems in reverse initialization order
     m_activeScene.reset();
     m_renderer.reset();
     m_input.reset();

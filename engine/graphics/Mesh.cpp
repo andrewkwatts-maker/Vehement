@@ -135,7 +135,8 @@ void Mesh::Draw() const {
 
     glBindVertexArray(m_vao);
     glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
-    glBindVertexArray(0);
+    // Note: Deliberately not unbinding VAO - the next draw call will bind its own VAO.
+    // Unbinding after every draw is redundant and hurts performance.
 }
 
 void Mesh::DrawInstanced(int instanceCount) const {
@@ -143,7 +144,6 @@ void Mesh::DrawInstanced(int instanceCount) const {
 
     glBindVertexArray(m_vao);
     glDrawElementsInstanced(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr, instanceCount);
-    glBindVertexArray(0);
 }
 
 void Mesh::Cleanup() {

@@ -2,8 +2,10 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <functional>
 #include <chrono>
+#include <optional>
 
 namespace Nova {
 
@@ -33,6 +35,9 @@ public:
 
     /**
      * @brief Application callbacks for user code
+     *
+     * All callbacks are optional. Use std::move when passing to Run()
+     * for optimal performance with captured lambdas.
      */
     struct ApplicationCallbacks {
         std::function<bool()> onStartup;
@@ -40,12 +45,19 @@ public:
         std::function<void()> onRender;
         std::function<void()> onImGui;
         std::function<void()> onShutdown;
+
+        // Enable move semantics for efficient transfer of captured lambdas
+        ApplicationCallbacks() = default;
+        ApplicationCallbacks(ApplicationCallbacks&&) noexcept = default;
+        ApplicationCallbacks& operator=(ApplicationCallbacks&&) noexcept = default;
+        ApplicationCallbacks(const ApplicationCallbacks&) = default;
+        ApplicationCallbacks& operator=(const ApplicationCallbacks&) = default;
     };
 
     // Singleton access
-    static Engine& Instance();
+    [[nodiscard]] static Engine& Instance() noexcept;
 
-    // Delete copy/move
+    // Delete copy/move - singleton pattern
     Engine(const Engine&) = delete;
     Engine& operator=(const Engine&) = delete;
     Engine(Engine&&) = delete;
@@ -53,46 +65,54 @@ public:
 
     /**
      * @brief Initialize the engine with given parameters
+     * @param params Initialization parameters
      * @return true if initialization succeeded
      */
-    bool Initialize(const InitParams& params = {});
+    [[nodiscard]] bool Initialize(const InitParams& params = {});
 
     /**
      * @brief Run the main engine loop
-     * @param callbacks User application callbacks
-     * @return Exit code
+     * @param callbacks User application callbacks (moved for efficiency)
+     * @return Exit code (0 = success, negative = error)
      */
-    int Run(const ApplicationCallbacks& callbacks);
+    [[nodiscard]] int Run(ApplicationCallbacks callbacks);
 
     /**
      * @brief Request engine shutdown
      */
-    void RequestShutdown();
+    void RequestShutdown() noexcept;
 
     /**
      * @brief Check if engine is running
      */
-    bool IsRunning() const { return m_running; }
+    [[nodiscard]] bool IsRunning() const noexcept { return m_running; }
 
-    // Subsystem access
-    Window& GetWindow() { return *m_window; }
-    const Window& GetWindow() const { return *m_window; }
+    /**
+     * @brief Check if engine is initialized
+     */
+    [[nodiscard]] bool IsInitialized() const noexcept { return m_initialized; }
 
-    Time& GetTime() { return *m_time; }
-    const Time& GetTime() const { return *m_time; }
+    // Subsystem access - returns references, assumes engine is initialized
+    [[nodiscard]] Window& GetWindow() noexcept { return *m_window; }
+    [[nodiscard]] const Window& GetWindow() const noexcept { return *m_window; }
 
-    Renderer& GetRenderer() { return *m_renderer; }
-    const Renderer& GetRenderer() const { return *m_renderer; }
+    [[nodiscard]] Time& GetTime() noexcept { return *m_time; }
+    [[nodiscard]] const Time& GetTime() const noexcept { return *m_time; }
 
-    InputManager& GetInput() { return *m_input; }
-    const InputManager& GetInput() const { return *m_input; }
+    [[nodiscard]] Renderer& GetRenderer() noexcept { return *m_renderer; }
+    [[nodiscard]] const Renderer& GetRenderer() const noexcept { return *m_renderer; }
 
-    Scene* GetActiveScene() { return m_activeScene.get(); }
+    [[nodiscard]] InputManager& GetInput() noexcept { return *m_input; }
+    [[nodiscard]] const InputManager& GetInput() const noexcept { return *m_input; }
+
+    // Scene management - may return nullptr if no scene is active
+    [[nodiscard]] Scene* GetActiveScene() noexcept { return m_activeScene.get(); }
+    [[nodiscard]] const Scene* GetActiveScene() const noexcept { return m_activeScene.get(); }
     void SetActiveScene(std::unique_ptr<Scene> scene);
 
-    // Engine info
-    static constexpr const char* GetVersion() { return "1.0.0"; }
-    static constexpr const char* GetName() { return "Nova3D"; }
+    // Engine info - compile-time constants
+    [[nodiscard]] static consteval std::string_view GetVersion() noexcept { return "1.0.0"; }
+    [[nodiscard]] static consteval std::string_view GetName() noexcept { return "Nova3D"; }
 
 private:
     Engine() = default;
@@ -103,12 +123,14 @@ private:
     void BeginFrame();
     void EndFrame();
 
+    // Subsystems managed via unique_ptr for automatic cleanup
     std::unique_ptr<Window> m_window;
     std::unique_ptr<Time> m_time;
     std::unique_ptr<Renderer> m_renderer;
     std::unique_ptr<InputManager> m_input;
     std::unique_ptr<Scene> m_activeScene;
 
+    // Engine state
     bool m_initialized = false;
     bool m_running = false;
     bool m_imguiEnabled = false;

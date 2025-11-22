@@ -4,28 +4,28 @@
 
 namespace Nova {
 
-Time::Time()
+Time::Time() noexcept
     : m_startTime(Clock::now())
     , m_lastFrameTime(m_startTime)
     , m_currentFrameTime(m_startTime)
 {
 }
 
-void Time::Update() {
+void Time::Update() noexcept {
     m_currentFrameTime = Clock::now();
 
     // Calculate delta time
-    Duration elapsed = m_currentFrameTime - m_lastFrameTime;
+    const Duration elapsed = m_currentFrameTime - m_lastFrameTime;
     m_unscaledDeltaTime = elapsed.count();
 
-    // Clamp delta time to prevent huge jumps
+    // Clamp delta time to prevent huge jumps (e.g., when debugging)
     m_unscaledDeltaTime = std::min(m_unscaledDeltaTime, m_maxDeltaTime);
 
     // Apply time scale
     m_deltaTime = m_unscaledDeltaTime * m_timeScale;
 
     // Update total time
-    Duration totalElapsed = m_currentFrameTime - m_startTime;
+    const Duration totalElapsed = m_currentFrameTime - m_startTime;
     m_totalTime = totalElapsed.count();
 
     // Accumulate for fixed updates
@@ -33,24 +33,25 @@ void Time::Update() {
 
     // FPS calculation
     m_fpsTimer += m_unscaledDeltaTime;
-    m_fpsFrameCount++;
+    ++m_fpsFrameCount;
 
+    // Instantaneous FPS
     if (m_unscaledDeltaTime > 0.0f) {
         m_fps = 1.0f / m_unscaledDeltaTime;
     }
 
-    // Calculate average FPS over 1 second
+    // Calculate average FPS over 1 second window
     if (m_fpsTimer >= 1.0f) {
         m_averageFPS = static_cast<float>(m_fpsFrameCount) / m_fpsTimer;
         m_fpsFrameCount = 0;
         m_fpsTimer = 0.0f;
     }
 
-    m_frameCount++;
+    ++m_frameCount;
     m_lastFrameTime = m_currentFrameTime;
 }
 
-bool Time::ShouldFixedUpdate() {
+bool Time::ShouldFixedUpdate() noexcept {
     if (m_fixedAccumulator >= m_fixedDeltaTime) {
         m_fixedAccumulator -= m_fixedDeltaTime;
         return true;
@@ -59,45 +60,51 @@ bool Time::ShouldFixedUpdate() {
 }
 
 // ScopedTimer implementation
-ScopedTimer::ScopedTimer(const char* name)
+ScopedTimer::ScopedTimer(std::string_view name) noexcept
     : m_name(name)
     , m_startTime(Time::Clock::now())
 {
 }
 
 ScopedTimer::~ScopedTimer() {
-    float elapsed = GetElapsedMs();
+    const float elapsed = GetElapsedMs();
     spdlog::debug("{}: {:.3f}ms", m_name, elapsed);
 }
 
-float ScopedTimer::GetElapsedMs() const {
-    auto now = Time::Clock::now();
-    auto duration = std::chrono::duration<float, std::milli>(now - m_startTime);
+float ScopedTimer::GetElapsedMs() const noexcept {
+    const auto now = Time::Clock::now();
+    const auto duration = std::chrono::duration<float, std::milli>(now - m_startTime);
     return duration.count();
 }
 
 // Stopwatch implementation
-void Stopwatch::Start() {
+void Stopwatch::Start() noexcept {
     if (!m_running) {
         m_startTime = Time::Clock::now();
         m_running = true;
     }
 }
 
-void Stopwatch::Stop() {
+void Stopwatch::Stop() noexcept {
     if (m_running) {
-        auto now = Time::Clock::now();
+        const auto now = Time::Clock::now();
         m_accumulated += now - m_startTime;
         m_running = false;
     }
 }
 
-void Stopwatch::Reset() {
+void Stopwatch::Reset() noexcept {
     m_accumulated = Time::Duration{0};
     m_running = false;
 }
 
-float Stopwatch::GetElapsedSeconds() const {
+void Stopwatch::Restart() noexcept {
+    m_accumulated = Time::Duration{0};
+    m_startTime = Time::Clock::now();
+    m_running = true;
+}
+
+float Stopwatch::GetElapsedSeconds() const noexcept {
     auto total = m_accumulated;
     if (m_running) {
         total += Time::Clock::now() - m_startTime;
@@ -105,7 +112,7 @@ float Stopwatch::GetElapsedSeconds() const {
     return total.count();
 }
 
-float Stopwatch::GetElapsedMilliseconds() const {
+float Stopwatch::GetElapsedMilliseconds() const noexcept {
     return GetElapsedSeconds() * 1000.0f;
 }
 

@@ -129,6 +129,17 @@ public:
     Cubemap();
     ~Cubemap();
 
+    // Delete copy, allow move
+    Cubemap(const Cubemap&) = delete;
+    Cubemap& operator=(const Cubemap&) = delete;
+    Cubemap(Cubemap&& other) noexcept;
+    Cubemap& operator=(Cubemap&& other) noexcept;
+
+    /**
+     * @brief Cleanup GPU resources
+     */
+    void Cleanup();
+
     /**
      * @brief Load cubemap from 6 face images
      * Order: +X, -X, +Y, -Y, +Z, -Z

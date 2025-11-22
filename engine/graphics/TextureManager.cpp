@@ -39,20 +39,34 @@ void TextureManager::Clear() {
 }
 
 void TextureManager::CreateDefaultTextures() {
-    // White texture
-    uint8_t white[] = {255, 255, 255, 255};
-    m_whiteTexture = std::make_shared<Texture>();
-    m_whiteTexture->Create(1, 1, TextureFormat::RGBA, white);
+    // Only create if not already created
+    if (m_whiteTexture && m_blackTexture && m_normalTexture) {
+        return;
+    }
 
-    // Black texture
-    uint8_t black[] = {0, 0, 0, 255};
-    m_blackTexture = std::make_shared<Texture>();
-    m_blackTexture->Create(1, 1, TextureFormat::RGBA, black);
+    // White texture (1x1 white pixel)
+    if (!m_whiteTexture) {
+        uint8_t white[] = {255, 255, 255, 255};
+        m_whiteTexture = std::make_shared<Texture>();
+        m_whiteTexture->Create(1, 1, TextureFormat::RGBA, white);
+        m_whiteTexture->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
+    }
 
-    // Normal texture (flat normal pointing up)
-    uint8_t normal[] = {128, 128, 255, 255};
-    m_normalTexture = std::make_shared<Texture>();
-    m_normalTexture->Create(1, 1, TextureFormat::RGBA, normal);
+    // Black texture (1x1 black pixel)
+    if (!m_blackTexture) {
+        uint8_t black[] = {0, 0, 0, 255};
+        m_blackTexture = std::make_shared<Texture>();
+        m_blackTexture->Create(1, 1, TextureFormat::RGBA, black);
+        m_blackTexture->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
+    }
+
+    // Normal texture (flat normal pointing up - tangent space +Z)
+    if (!m_normalTexture) {
+        uint8_t normal[] = {128, 128, 255, 255};
+        m_normalTexture = std::make_shared<Texture>();
+        m_normalTexture->Create(1, 1, TextureFormat::RGBA, normal);
+        m_normalTexture->SetFilter(TextureFilter::Nearest, TextureFilter::Nearest);
+    }
 }
 
 std::shared_ptr<Texture> TextureManager::GetWhite() {

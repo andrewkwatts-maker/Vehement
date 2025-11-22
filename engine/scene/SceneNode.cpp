@@ -4,6 +4,7 @@
 #include "graphics/Material.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #include <algorithm>
 
 namespace Nova {
@@ -39,28 +40,46 @@ void SceneNode::SetScale(float uniformScale) {
     MarkDirty();
 }
 
+void SceneNode::SetLocalTransform(const glm::mat4& transform) {
+    glm::vec3 skew;
+    glm::vec4 perspective;
+    glm::decompose(transform, m_scale, m_rotation, m_position, skew, perspective);
+    MarkDirty();
+}
+
 glm::vec3 SceneNode::GetWorldPosition() const {
     return glm::vec3(GetWorldTransform()[3]);
 }
 
-glm::mat4 SceneNode::GetLocalTransform() const {
+glm::quat SceneNode::GetWorldRotation() const {
+    if (m_parent) {
+        return m_parent->GetWorldRotation() * m_rotation;
+    }
+    return m_rotation;
+}
+
+glm::vec3 SceneNode::GetWorldScale() const {
+    if (m_parent) {
+        return m_parent->GetWorldScale() * m_scale;
+    }
+    return m_scale;
+}
+
+const glm::mat4& SceneNode::GetLocalTransform() const {
     if (m_transformDirty) {
-        glm::mat4 translation = glm::translate(glm::mat4(1.0f), m_position);
-        glm::mat4 rotation = glm::mat4_cast(m_rotation);
-        glm::mat4 scale = glm::scale(glm::mat4(1.0f), m_scale);
-        m_localTransform = translation * rotation * scale;
+        UpdateTransform();
     }
     return m_localTransform;
 }
 
-glm::mat4 SceneNode::GetWorldTransform() const {
+const glm::mat4& SceneNode::GetWorldTransform() const {
     if (m_transformDirty) {
         UpdateTransform();
     }
     return m_worldTransform;
 }
 
-void SceneNode::UpdateTransform() {
+void SceneNode::UpdateTransform() const {
     m_localTransform = glm::translate(glm::mat4(1.0f), m_position) *
                        glm::mat4_cast(m_rotation) *
                        glm::scale(glm::mat4(1.0f), m_scale);
@@ -75,39 +94,128 @@ void SceneNode::UpdateTransform() {
 }
 
 void SceneNode::MarkDirty() {
-    m_transformDirty = true;
+    if (!m_transformDirty) {
+        m_transformDirty = true;
+        MarkChildrenDirty();
+    }
+}
+
+void SceneNode::MarkChildrenDirty() {
     for (auto& child : m_children) {
         child->MarkDirty();
     }
 }
 
 void SceneNode::AddChild(std::unique_ptr<SceneNode> child) {
+    if (!child) {
+        return;
+    }
+
+    // Remove from previous parent if any
+    if (child->m_parent) {
+        child->m_parent->RemoveChild(child.get());
+    }
+
     child->m_parent = this;
     child->MarkDirty();
     m_children.push_back(std::move(child));
 }
 
-void SceneNode::RemoveChild(SceneNode* child) {
+std::unique_ptr<SceneNode> SceneNode::RemoveChild(SceneNode* child) {
     auto it = std::find_if(m_children.begin(), m_children.end(),
         [child](const auto& ptr) { return ptr.get() == child; });
 
     if (it != m_children.end()) {
-        (*it)->m_parent = nullptr;
+        std::unique_ptr<SceneNode> removed = std::move(*it);
+        removed->m_parent = nullptr;
+        removed->MarkDirty();
         m_children.erase(it);
+        return removed;
+    }
+    return nullptr;
+}
+
+std::unique_ptr<SceneNode> SceneNode::DetachFromParent() {
+    if (m_parent) {
+        return m_parent->RemoveChild(this);
+    }
+    return nullptr;
+}
+
+void SceneNode::SetParent(SceneNode* newParent) {
+    if (m_parent == newParent) {
+        return;
+    }
+
+    // Store world transform to preserve position
+    glm::mat4 worldTransform = GetWorldTransform();
+
+    // Detach from current parent
+    std::unique_ptr<SceneNode> self;
+    if (m_parent) {
+        self = m_parent->RemoveChild(this);
+    }
+
+    // Attach to new parent
+    if (newParent) {
+        // Calculate new local transform to maintain world position
+        glm::mat4 parentInverse = glm::inverse(newParent->GetWorldTransform());
+        SetLocalTransform(parentInverse * worldTransform);
+        newParent->AddChild(std::move(self));
+    } else {
+        // Becoming root-level, local = world
+        SetLocalTransform(worldTransform);
+        m_parent = nullptr;
     }
 }
 
-SceneNode* SceneNode::FindChild(const std::string& name, bool recursive) {
-    for (auto& child : m_children) {
+SceneNode* SceneNode::FindChild(std::string_view name, bool recursive) const {
+    for (const auto& child : m_children) {
         if (child->m_name == name) {
             return child.get();
         }
         if (recursive) {
             SceneNode* found = child->FindChild(name, true);
-            if (found) return found;
+            if (found) {
+                return found;
+            }
         }
     }
     return nullptr;
+}
+
+void SceneNode::FindAll(const std::function<bool(const SceneNode&)>& predicate,
+                        std::vector<SceneNode*>& results) const {
+    for (const auto& child : m_children) {
+        if (predicate(*child)) {
+            results.push_back(child.get());
+        }
+        child->FindAll(predicate, results);
+    }
+}
+
+void SceneNode::ForEach(const std::function<void(SceneNode&)>& func) {
+    func(*this);
+    for (auto& child : m_children) {
+        child->ForEach(func);
+    }
+}
+
+void SceneNode::ForEach(const std::function<void(const SceneNode&)>& func) const {
+    func(*this);
+    for (const auto& child : m_children) {
+        child->ForEach(func);
+    }
+}
+
+bool SceneNode::IsVisibleInHierarchy() const {
+    if (!m_visible) {
+        return false;
+    }
+    if (m_parent) {
+        return m_parent->IsVisibleInHierarchy();
+    }
+    return true;
 }
 
 void SceneNode::Update(float deltaTime) {
@@ -117,7 +225,9 @@ void SceneNode::Update(float deltaTime) {
 }
 
 void SceneNode::Render(Renderer& renderer) {
-    if (!m_visible) return;
+    if (!m_visible) {
+        return;
+    }
 
     if (m_mesh && m_material) {
         renderer.DrawMesh(*m_mesh, *m_material, GetWorldTransform());

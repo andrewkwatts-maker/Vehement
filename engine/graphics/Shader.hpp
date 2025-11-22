@@ -91,6 +91,11 @@ public:
     int GetUniformLocation(const std::string& name) const;
 
     /**
+     * @brief Check if this shader is currently bound
+     */
+    bool IsBound() const;
+
+    /**
      * @brief Get the file paths used to load this shader
      */
     const std::string& GetVertexPath() const { return m_vertexPath; }

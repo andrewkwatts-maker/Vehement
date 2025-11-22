@@ -14,7 +14,8 @@ Camera::Camera() {
     m_farPlane = config.Get("camera.far_plane", 1000.0f);
 
     UpdateVectors();
-    UpdateViewMatrix();
+    // Initial projection setup
+    SetPerspective(m_fov, m_aspectRatio, m_nearPlane, m_farPlane);
 }
 
 void Camera::SetPerspective(float fovDegrees, float aspectRatio, float nearPlane, float farPlane) {
@@ -31,7 +32,7 @@ void Camera::SetPerspective(float fovDegrees, float aspectRatio, float nearPlane
         farPlane
     );
 
-    UpdateFrustum();
+    MarkProjectionDirty();
 }
 
 void Camera::SetOrthographic(float left, float right, float bottom, float top,
@@ -41,7 +42,7 @@ void Camera::SetOrthographic(float left, float right, float bottom, float top,
     m_farPlane = farPlane;
 
     m_projectionMatrix = glm::ortho(left, right, bottom, top, nearPlane, farPlane);
-    UpdateFrustum();
+    MarkProjectionDirty();
 }
 
 void Camera::LookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up) {
@@ -56,23 +57,23 @@ void Camera::LookAt(const glm::vec3& position, const glm::vec3& target, const gl
     m_pitch = glm::degrees(std::asin(m_forward.y));
     m_yaw = glm::degrees(std::atan2(m_forward.z, m_forward.x));
 
-    UpdateViewMatrix();
+    MarkViewDirty();
 }
 
 void Camera::SetPosition(const glm::vec3& position) {
     m_position = position;
-    UpdateViewMatrix();
+    MarkViewDirty();
 }
 
 void Camera::SetRotation(const glm::vec3& eulerDegrees) {
     m_pitch = eulerDegrees.x;
     m_yaw = eulerDegrees.y;
 
-    // Clamp pitch
+    // Clamp pitch to prevent gimbal lock
     m_pitch = glm::clamp(m_pitch, -89.0f, 89.0f);
 
     UpdateVectors();
-    UpdateViewMatrix();
+    MarkViewDirty();
 }
 
 void Camera::SetRotation(float pitchDegrees, float yawDegrees) {
@@ -80,12 +81,53 @@ void Camera::SetRotation(float pitchDegrees, float yawDegrees) {
     m_yaw = yawDegrees;
 
     UpdateVectors();
-    UpdateViewMatrix();
+    MarkViewDirty();
 }
 
-void Camera::UpdateViewMatrix() {
+void Camera::MarkViewDirty() {
+    m_viewDirty = true;
+    m_projectionViewDirty = true;
+    m_frustumDirty = true;
+}
+
+void Camera::MarkProjectionDirty() {
+    m_projectionViewDirty = true;
+    m_frustumDirty = true;
+}
+
+const glm::mat4& Camera::GetView() const {
+    if (m_viewDirty) {
+        UpdateViewMatrix();
+    }
+    return m_viewMatrix;
+}
+
+const glm::mat4& Camera::GetProjectionView() const {
+    if (m_projectionViewDirty) {
+        UpdateProjectionView();
+    }
+    return m_projectionViewMatrix;
+}
+
+const glm::mat4& Camera::GetInverseProjectionView() const {
+    if (m_projectionViewDirty) {
+        UpdateProjectionView();
+    }
+    return m_inverseProjectionViewMatrix;
+}
+
+void Camera::UpdateViewMatrix() const {
     m_viewMatrix = glm::lookAt(m_position, m_position + m_forward, m_up);
-    UpdateFrustum();
+    m_viewDirty = false;
+}
+
+void Camera::UpdateProjectionView() const {
+    if (m_viewDirty) {
+        UpdateViewMatrix();
+    }
+    m_projectionViewMatrix = m_projectionMatrix * m_viewMatrix;
+    m_inverseProjectionViewMatrix = glm::inverse(m_projectionViewMatrix);
+    m_projectionViewDirty = false;
 }
 
 void Camera::UpdateVectors() {
@@ -99,8 +141,12 @@ void Camera::UpdateVectors() {
     m_up = glm::normalize(glm::cross(m_right, m_forward));
 }
 
-void Camera::UpdateFrustum() {
-    glm::mat4 vp = m_projectionMatrix * m_viewMatrix;
+void Camera::UpdateFrustum() const {
+    if (!m_frustumDirty) {
+        return;
+    }
+
+    const glm::mat4& vp = GetProjectionView();
 
     // Extract frustum planes from view-projection matrix
     // Left
@@ -149,8 +195,12 @@ void Camera::UpdateFrustum() {
     // Normalize planes
     for (auto& plane : m_frustumPlanes) {
         float length = glm::length(glm::vec3(plane));
-        plane /= length;
+        if (length > 0.0f) {
+            plane /= length;
+        }
     }
+
+    m_frustumDirty = false;
 }
 
 glm::vec3 Camera::ScreenToWorldRay(const glm::vec2& screenPos, const glm::vec2& screenSize) const {
@@ -163,12 +213,12 @@ glm::vec3 Camera::ScreenToWorldRay(const glm::vec2& screenPos, const glm::vec2& 
     glm::vec4 rayEye = glm::inverse(m_projectionMatrix) * rayClip;
     rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
 
-    glm::vec3 rayWorld = glm::vec3(glm::inverse(m_viewMatrix) * rayEye);
+    glm::vec3 rayWorld = glm::vec3(glm::inverse(GetView()) * rayEye);
     return glm::normalize(rayWorld);
 }
 
 glm::vec2 Camera::WorldToScreen(const glm::vec3& worldPos, const glm::vec2& screenSize) const {
-    glm::vec4 clipPos = m_projectionMatrix * m_viewMatrix * glm::vec4(worldPos, 1.0f);
+    glm::vec4 clipPos = GetProjectionView() * glm::vec4(worldPos, 1.0f);
 
     if (clipPos.w <= 0.0f) {
         return glm::vec2(-1.0f);  // Behind camera
@@ -183,6 +233,8 @@ glm::vec2 Camera::WorldToScreen(const glm::vec3& worldPos, const glm::vec2& scre
 }
 
 bool Camera::IsInFrustum(const glm::vec3& point) const {
+    UpdateFrustum();
+
     for (const auto& plane : m_frustumPlanes) {
         float distance = glm::dot(glm::vec3(plane), point) + plane.w;
         if (distance < 0.0f) {
@@ -193,6 +245,8 @@ bool Camera::IsInFrustum(const glm::vec3& point) const {
 }
 
 bool Camera::IsInFrustum(const glm::vec3& center, float radius) const {
+    UpdateFrustum();
+
     for (const auto& plane : m_frustumPlanes) {
         float distance = glm::dot(glm::vec3(plane), center) + plane.w;
         if (distance < -radius) {

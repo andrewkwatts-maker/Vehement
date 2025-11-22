@@ -3,7 +3,12 @@
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 
-#define STB_IMAGE_IMPLEMENTATION
+// STB_IMAGE_IMPLEMENTATION should only be defined once in the entire project.
+// This is the designated compilation unit for stb_image.
+#ifndef NOVA_STB_IMAGE_IMPLEMENTED
+    #define NOVA_STB_IMAGE_IMPLEMENTED
+    #define STB_IMAGE_IMPLEMENTATION
+#endif
 #include <stb_image.h>
 
 namespace Nova {
@@ -198,9 +203,34 @@ void Texture::Cleanup() {
 Cubemap::Cubemap() = default;
 
 Cubemap::~Cubemap() {
+    Cleanup();
+}
+
+Cubemap::Cubemap(Cubemap&& other) noexcept
+    : m_textureID(other.m_textureID)
+    , m_size(other.m_size)
+{
+    other.m_textureID = 0;
+    other.m_size = 0;
+}
+
+Cubemap& Cubemap::operator=(Cubemap&& other) noexcept {
+    if (this != &other) {
+        Cleanup();
+        m_textureID = other.m_textureID;
+        m_size = other.m_size;
+        other.m_textureID = 0;
+        other.m_size = 0;
+    }
+    return *this;
+}
+
+void Cubemap::Cleanup() {
     if (m_textureID) {
         glDeleteTextures(1, &m_textureID);
+        m_textureID = 0;
     }
+    m_size = 0;
 }
 
 bool Cubemap::Load(const std::string faces[6]) {

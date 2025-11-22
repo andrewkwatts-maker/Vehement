@@ -1,0 +1,120 @@
+{
+    "id": "naga_beast_den",
+    "type": "building",
+    "name": "Beast Den",
+    "description": "A cavernous structure where the Naga breed and train their fearsome sea creatures. Produces Snap Dragons, Hydras, and other beasts.",
+    "race": "naga",
+    "tier": 1,
+    "category": "military",
+
+    "tags": ["military", "production", "beasts", "tier1"],
+
+    "model": {
+        "path": "models/races/naga/buildings/beast_den.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/beast_den_diffuse.png",
+        "normal": "textures/races/naga/buildings/beast_den_normal.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [5, 5],
+        "entrances": [[2, 0]],
+        "visualSize": [10.0, 6.0, 10.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 180,
+            "coral": 100
+        },
+        "time": 50.0,
+        "builder_required": true
+    },
+
+    "stats": {
+        "maxHealth": 1100,
+        "armor": 6,
+        "magicResist": 4
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "naga_snap_dragon",
+            "time": 16.0,
+            "cost": {"gold": 90, "coral": 40},
+            "maxQueue": 6,
+            "requirements": {"age": "age_shallow"}
+        },
+        {
+            "type": "unit",
+            "output": "naga_hydra",
+            "time": 50.0,
+            "cost": {"gold": 400, "coral": 220, "abyssal_essence": 60},
+            "maxQueue": 3,
+            "requirements": {"age": "age_abyss", "techs": ["naga_beast_mastery"]}
+        },
+        {
+            "type": "unit",
+            "output": "naga_ancient_hydra",
+            "time": 90.0,
+            "cost": {"gold": 800, "coral": 450, "pearls": 150, "abyssal_essence": 200},
+            "maxQueue": 1,
+            "requirements": {"age": "age_primordial", "techs": ["naga_primordial_beasts"]}
+        }
+    ],
+
+    "research": [
+        {
+            "id": "naga_beast_fangs_1",
+            "name": "Sharpened Fangs I",
+            "cost": {"gold": 100, "coral": 60},
+            "time": 35.0
+        },
+        {
+            "id": "naga_beast_fangs_2",
+            "name": "Sharpened Fangs II",
+            "cost": {"gold": 175, "coral": 100},
+            "time": 50.0,
+            "requirements": {"techs": ["naga_beast_fangs_1"]}
+        },
+        {
+            "id": "naga_beast_fangs_3",
+            "name": "Sharpened Fangs III",
+            "cost": {"gold": 250, "coral": 150},
+            "time": 65.0,
+            "requirements": {"techs": ["naga_beast_fangs_2"]}
+        },
+        {
+            "id": "naga_beast_mastery",
+            "name": "Beast Mastery",
+            "cost": {"gold": 200, "coral": 150},
+            "time": 60.0
+        },
+        {
+            "id": "naga_enhanced_venom",
+            "name": "Enhanced Venom",
+            "cost": {"gold": 175, "coral": 100},
+            "time": 55.0
+        }
+    ],
+
+    "water_bonus": {
+        "near_water_radius": 6,
+        "beast_regen_bonus": 2.0
+    },
+
+    "requirements": {
+        "buildings": ["naga_spawning_pool"]
+    },
+
+    "visionRange": 8.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/beast_den/on_complete.py"
+    }
+}

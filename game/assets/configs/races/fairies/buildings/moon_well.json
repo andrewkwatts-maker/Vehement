@@ -1,0 +1,90 @@
+{
+    "id": "fairy_moon_well",
+    "type": "building",
+    "race": "fairies",
+    "name": "Moon Well",
+    "description": "A sacred pool blessed by moonlight. Moon Wells restore mana and health to nearby units and provide population capacity. They recharge faster at night.",
+
+    "tags": ["support", "regeneration", "population", "mana"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/fairies/buildings/moon_well.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "footprint": {
+        "size": [2, 2],
+        "entrances": [[1, 0]],
+        "visualSize": [4.0, 3.0, 4.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 180,
+            "wood": 50
+        },
+        "time": 50.0
+    },
+
+    "stats": {
+        "maxHealth": 600,
+        "armor": 2,
+        "magicResist": 10
+    },
+
+    "moon_well": {
+        "max_mana": 200,
+        "current_mana": 200,
+        "mana_regen_day": 0.5,
+        "mana_regen_night": 1.5,
+        "heal_per_mana": 2.0,
+        "mana_restore_per_mana": 1.5,
+        "auto_heal_radius": 10.0,
+        "auto_heal_enabled": true
+    },
+
+    "population": {
+        "provides": 8
+    },
+
+    "abilities": [
+        {
+            "id": "ability_replenish",
+            "name": "Replenish Mana and Life",
+            "description": "Automatically restore health and mana to nearby friendly units",
+            "passive": true,
+            "auto_cast": true,
+            "radius": 10.0,
+            "effects": [
+                {"type": "heal_from_well", "rate": 10},
+                {"type": "mana_from_well", "rate": 8}
+            ]
+        }
+    ],
+
+    "aura": {
+        "id": "aura_moon_well",
+        "radius": 10.0,
+        "effects": [
+            {"stat": "healthRegen", "value": 1.5, "scope": "allies"},
+            {"stat": "manaRegen", "value": 1.0, "scope": "allies"}
+        ]
+    },
+
+    "night_bonus": {
+        "mana_regen": 1.0,
+        "heal_effectiveness": 0.25,
+        "aura_bonus": 0.50
+    },
+
+    "visionRange": 10.0,
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/buildings/moon_well.png",
+        "icon": "textures/races/fairies/icons/buildings/moon_well.png",
+        "hotkey": "M"
+    }
+}

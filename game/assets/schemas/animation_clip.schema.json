@@ -1,0 +1,317 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "animation_clip.schema.json",
+  "title": "Animation Clip",
+  "description": "Defines a keyframe-based animation clip with bone transforms, events, and root motion",
+  "type": "object",
+  "required": ["id", "name", "duration", "bones"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^anim_[a-z0-9_]+$",
+      "description": "Unique animation clip identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable animation name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of the animation"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0",
+      "description": "Schema version for this animation"
+    },
+    "duration": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Animation duration in seconds"
+    },
+    "frameRate": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120,
+      "default": 30,
+      "description": "Frames per second for keyframe sampling"
+    },
+    "looping": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the animation should loop"
+    },
+    "playbackSpeed": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 10,
+      "default": 1.0,
+      "description": "Default playback speed multiplier"
+    },
+    "skeleton": {
+      "type": "string",
+      "description": "Reference to skeleton definition this animation targets"
+    },
+    "bones": {
+      "type": "object",
+      "description": "Bone animation tracks keyed by bone name",
+      "additionalProperties": {
+        "$ref": "#/definitions/boneTrack"
+      }
+    },
+    "events": {
+      "type": "array",
+      "description": "Animation events triggered at specific times",
+      "items": {
+        "$ref": "#/definitions/animationEvent"
+      }
+    },
+    "rootMotion": {
+      "$ref": "#/definitions/rootMotionConfig",
+      "description": "Root motion extraction and application settings"
+    },
+    "blending": {
+      "$ref": "#/definitions/blendingSettings",
+      "description": "Default blending settings for this clip"
+    },
+    "compression": {
+      "$ref": "#/definitions/compressionSettings",
+      "description": "Compression settings for storage optimization"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for the animation",
+      "properties": {
+        "author": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "modifiedAt": { "type": "string", "format": "date-time" },
+        "sourceFile": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "boneTrack": {
+      "type": "object",
+      "description": "Animation track for a single bone",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this track is active"
+        },
+        "keyframes": {
+          "type": "array",
+          "description": "List of keyframes for this bone",
+          "items": {
+            "$ref": "#/definitions/keyframe"
+          }
+        },
+        "interpolation": {
+          "enum": ["linear", "step", "bezier", "hermite", "catmull_rom"],
+          "default": "linear",
+          "description": "Default interpolation mode for keyframes"
+        }
+      },
+      "required": ["keyframes"]
+    },
+
+    "keyframe": {
+      "type": "object",
+      "description": "A single keyframe with transform data",
+      "properties": {
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Time of this keyframe in seconds"
+        },
+        "position": {
+          "$ref": "#/definitions/vector3",
+          "description": "Local position offset"
+        },
+        "rotation": {
+          "$ref": "#/definitions/quaternion",
+          "description": "Local rotation as quaternion (x, y, z, w)"
+        },
+        "scale": {
+          "$ref": "#/definitions/vector3",
+          "description": "Local scale"
+        },
+        "interpolation": {
+          "enum": ["linear", "step", "bezier", "hermite", "catmull_rom"],
+          "description": "Interpolation to next keyframe (overrides track default)"
+        },
+        "tangentIn": {
+          "$ref": "#/definitions/tangent",
+          "description": "Incoming tangent for bezier interpolation"
+        },
+        "tangentOut": {
+          "$ref": "#/definitions/tangent",
+          "description": "Outgoing tangent for bezier interpolation"
+        },
+        "tangentMode": {
+          "enum": ["free", "aligned", "mirrored", "auto", "flat", "linear"],
+          "default": "auto",
+          "description": "Tangent constraint mode"
+        }
+      },
+      "required": ["time"]
+    },
+
+    "tangent": {
+      "type": "object",
+      "description": "Bezier tangent handle",
+      "properties": {
+        "x": { "type": "number", "default": 0.333 },
+        "y": { "type": "number", "default": 0 }
+      }
+    },
+
+    "vector3": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "3D vector [x, y, z]"
+    },
+
+    "quaternion": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 4,
+      "maxItems": 4,
+      "description": "Quaternion [x, y, z, w]"
+    },
+
+    "animationEvent": {
+      "type": "object",
+      "description": "Event triggered at a specific time",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Event name/identifier"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Time to trigger event in seconds"
+        },
+        "function": {
+          "type": "string",
+          "description": "Function/callback to invoke"
+        },
+        "parameter": {
+          "type": "string",
+          "description": "String parameter to pass"
+        },
+        "intParameter": {
+          "type": "integer",
+          "description": "Integer parameter to pass"
+        },
+        "floatParameter": {
+          "type": "number",
+          "description": "Float parameter to pass"
+        },
+        "objectParameter": {
+          "type": "string",
+          "description": "Object reference parameter"
+        }
+      },
+      "required": ["name", "time"]
+    },
+
+    "rootMotionConfig": {
+      "type": "object",
+      "description": "Root motion configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to extract root motion"
+        },
+        "extractPosition": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "boolean", "default": true },
+            "y": { "type": "boolean", "default": false },
+            "z": { "type": "boolean", "default": true }
+          }
+        },
+        "extractRotation": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "boolean", "default": false },
+            "y": { "type": "boolean", "default": true },
+            "z": { "type": "boolean", "default": false }
+          }
+        },
+        "rootBone": {
+          "type": "string",
+          "default": "Root",
+          "description": "Name of the root bone to extract motion from"
+        },
+        "lockY": {
+          "type": "boolean",
+          "default": true,
+          "description": "Lock vertical position to ground"
+        }
+      }
+    },
+
+    "blendingSettings": {
+      "type": "object",
+      "description": "Default blending settings",
+      "properties": {
+        "blendInTime": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0.2,
+          "description": "Default blend-in duration"
+        },
+        "blendOutTime": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0.2,
+          "description": "Default blend-out duration"
+        },
+        "blendMode": {
+          "enum": ["override", "additive", "layered"],
+          "default": "override"
+        }
+      }
+    },
+
+    "compressionSettings": {
+      "type": "object",
+      "description": "Keyframe compression settings",
+      "properties": {
+        "positionPrecision": {
+          "type": "number",
+          "default": 0.001,
+          "description": "Position quantization precision"
+        },
+        "rotationPrecision": {
+          "type": "number",
+          "default": 0.0001,
+          "description": "Rotation quantization precision"
+        },
+        "scalePrecision": {
+          "type": "number",
+          "default": 0.001,
+          "description": "Scale quantization precision"
+        },
+        "removeRedundantKeys": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remove keyframes that don't contribute to animation"
+        }
+      }
+    }
+  }
+}

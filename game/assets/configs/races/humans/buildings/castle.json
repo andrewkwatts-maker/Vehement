@@ -1,0 +1,124 @@
+{
+    "id": "human_castle",
+    "type": "building",
+    "race": "humans",
+    "name": "Castle",
+    "description": "The ultimate human stronghold. Unlocks the most powerful units and provides significant defensive bonuses.",
+
+    "tags": ["main", "production", "resource_depot", "tier3", "defensive", "ultimate"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/humans/buildings/castle.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/castle_diffuse.png",
+        "normal": "textures/races/humans/buildings/castle_normal.png",
+        "specular": "textures/races/humans/buildings/castle_specular.png"
+    },
+
+    "footprint": {
+        "size": [5, 5],
+        "entrances": [[2, 0], [0, 2], [4, 2]],
+        "visualSize": [15.0, 18.0, 15.0]
+    },
+
+    "upgrade_from": {
+        "building": "human_keep",
+        "cost": {
+            "gold": 800,
+            "wood": 300,
+            "stone": 250
+        },
+        "time": 120.0
+    },
+
+    "stats": {
+        "maxHealth": 4000,
+        "armor": 20,
+        "magicResist": 15
+    },
+
+    "resource_depot": {
+        "enabled": true,
+        "accepted_resources": ["gold", "wood", "stone", "food"]
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "human_peasant",
+            "cost": {"gold": 75, "food": 1},
+            "time": 12.0,
+            "maxQueue": 5
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "ability_town_bell",
+            "name": "Town Bell",
+            "description": "Ring the bell to transform all peasants into militia for 120 seconds",
+            "hotkey": "B",
+            "cooldown": 120.0,
+            "duration": 120.0
+        },
+        {
+            "id": "ability_royal_guard",
+            "name": "Royal Guard",
+            "description": "Summon 4 elite Royal Guards to defend the castle for 60 seconds",
+            "hotkey": "G",
+            "cooldown": 300.0,
+            "summons": "human_royal_guard",
+            "summon_count": 4,
+            "summon_duration": 60.0
+        }
+    ],
+
+    "garrison": {
+        "capacity": 20,
+        "fire_positions": 8,
+        "garrison_attack": {
+            "damage": 25,
+            "range": 16.0,
+            "attack_speed": 1.5
+        }
+    },
+
+    "defense": {
+        "damage": 35,
+        "range": 16.0,
+        "attackSpeed": 2.0,
+        "splash_damage": 0.25,
+        "splash_radius": 2.0
+    },
+
+    "aura": {
+        "id": "aura_castle",
+        "radius": 30.0,
+        "effects": [
+            {"stat": "gather_rate", "value": 0.20, "scope": "peasant"},
+            {"stat": "armor", "value": 2, "scope": "nearby_units"},
+            {"stat": "damage", "value": 0.10, "scope": "nearby_units"}
+        ]
+    },
+
+    "global_bonuses": [
+        {"stat": "unit_production_speed", "value": 0.10},
+        {"stat": "research_speed", "value": 0.15}
+    ],
+
+    "visionRange": 20.0,
+
+    "unique": false,
+    "maxCount": 3,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/castle.png",
+        "icon": "textures/races/humans/icons/buildings/castle.png"
+    }
+}

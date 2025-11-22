@@ -1,0 +1,199 @@
+{
+  "id": "frost_wyrm",
+  "name": "Frost Wyrm",
+  "race": "undead",
+  "tier": 3,
+  "type": "flying",
+  "role": ["siege", "anti_air", "area_damage"],
+
+  "description": "Massive skeletal dragons that breathe freezing cold, slowing enemies and dealing devastating damage to buildings. The ultimate undead air unit.",
+  "lore": "The mighty dragons of old, raised from death to serve the Scourge. Their breath no longer burns with fire but freezes with the cold of the grave, turning entire armies into brittle ice.",
+
+  "stats": {
+    "health": 1100,
+    "healthRegen": 0.5,
+    "mana": 300,
+    "manaRegen": 0.75,
+    "armor": 2,
+    "armorType": "light",
+    "moveSpeed": 280,
+    "turnRate": 0.4,
+    "collisionSize": 96,
+    "selectionScale": 2.0
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 350,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 85,
+      "variance": 15,
+      "type": "magic",
+      "bonusVsBuildings": 0.25
+    },
+    "attackSpeed": 2.5,
+    "attackRange": 300,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/frost_breath.glb",
+      "speed": 600,
+      "arc": 0,
+      "splashRadius": 200,
+      "fullSplashRadius": 75
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.3,
+    "backswing": 0.7,
+    "acquisitionRange": 500,
+    "aggroRange": 400
+  },
+
+  "abilities": [
+    {
+      "id": "freezing_breath",
+      "name": "Freezing Breath",
+      "type": "passive",
+      "description": "Attacks slow enemy movement and attack speed",
+      "effects": {
+        "slowPercent": 0.4,
+        "attackSlowPercent": 0.25,
+        "duration": 4.0,
+        "affectsBuildings": true,
+        "buildingAttackReduction": 0.5
+      },
+      "icon": "icons/abilities/freezing_breath.png"
+    },
+    {
+      "id": "frost_attack",
+      "name": "Frost Attack",
+      "type": "passive",
+      "description": "Attacks deal splash damage in an area",
+      "effects": {
+        "splashRadius": 200,
+        "fullDamageRadius": 75,
+        "mediumDamageRadius": 125,
+        "mediumDamagePercent": 0.5,
+        "smallDamagePercent": 0.25
+      },
+      "icon": "icons/abilities/frost_attack.png"
+    },
+    {
+      "id": "ice_storm",
+      "name": "Ice Storm",
+      "type": "active",
+      "targetType": "area",
+      "requiresResearch": "ice_storm_upgrade",
+      "description": "Calls down a devastating ice storm that damages and freezes enemies",
+      "cooldown": 60.0,
+      "manaCost": 150,
+      "range": 800,
+      "effects": {
+        "radius": 300,
+        "damagePerSecond": 30,
+        "duration": 6.0,
+        "slowPercent": 0.6,
+        "freezeChance": 0.1
+      },
+      "hotkey": "I",
+      "icon": "icons/abilities/ice_storm.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "boneyard",
+    "buildTime": 65,
+    "cost": {
+      "gold": 385,
+      "lumber": 120,
+      "corpses": 0
+    },
+    "foodCost": 7,
+    "prerequisites": {
+      "buildings": ["boneyard", "black_citadel"],
+      "technologies": ["frost_wyrm_training"],
+      "age": "damnation"
+    },
+    "hotkey": "F"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 5,
+      "maxLevel": 3,
+      "researchId": "creature_attack"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "creature_carapace"
+    },
+    "special": ["ice_storm_upgrade", "wyrm_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/frost_wyrm/ready.ogg",
+    "select": ["audio/units/frost_wyrm/select1.ogg", "audio/units/frost_wyrm/select2.ogg"],
+    "move": ["audio/units/frost_wyrm/move1.ogg", "audio/units/frost_wyrm/move2.ogg"],
+    "attack": ["audio/units/frost_wyrm/attack1.ogg", "audio/units/frost_wyrm/attack2.ogg"],
+    "death": "audio/units/frost_wyrm/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/frost_wyrm.glb",
+    "texture": "textures/units/undead/frost_wyrm.png",
+    "portrait": "textures/portraits/frost_wyrm.png",
+    "icon": "textures/icons/frost_wyrm.png",
+    "scale": 2.0,
+    "animations": {
+      "idle": "frost_wyrm_idle",
+      "walk": "frost_wyrm_fly",
+      "attack": "frost_wyrm_attack",
+      "death": "frost_wyrm_death"
+    },
+    "effects": {
+      "spawn": "effects/frost_rise.vfx",
+      "death": "effects/frost_wyrm_death.vfx",
+      "frostBreath": "effects/frost_breath.vfx",
+      "iceStorm": "effects/ice_storm.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 9,
+    "priority": "very_high",
+    "behavior": "siege",
+    "fleeThreshold": 0.1,
+    "preferredTargets": ["building", "siege", "air"],
+    "useCooldownsWisely": true,
+    "attackBuildingsPreference": 0.7
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isFlying": true,
+    "isSiege": true,
+    "isElite": true,
+    "hasSplash": true
+  },
+
+  "bounty": {
+    "gold": 75,
+    "experience": 100
+  },
+
+  "pointValue": 6,
+  "supplyProvided": 0,
+  "supplyUsed": 7
+}

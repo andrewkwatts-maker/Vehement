@@ -1,0 +1,268 @@
+{
+  "id": "vampires",
+  "name": "The Blood Court",
+  "displayName": "Vampire Blood Court",
+  "description": "An ancient aristocratic civilization of blood-drinking immortals who rule from gothic castles shrouded in eternal night. The Blood Court drains life from their enemies, transforming into creatures of darkness and commanding legions of thralls.",
+  "shortDescription": "Gothic vampires - life steal, night power, transformation, immortal heroes",
+  "theme": "Gothic Vampire Aristocracy",
+
+  "lore": {
+    "origin": "Born from the first mortal who drank from the Crimson Wellspring, the Blood Court emerged in an age before recorded history. They established a shadow empire, ruling from towering citadels and treating mortals as cattle.",
+    "motivation": "To expand their eternal dominion, gather blood tribute from all living creatures, and plunge the world into eternal night where their power is absolute",
+    "culture": "A rigid aristocratic hierarchy where age and blood purity determine rank. Elder vampires command absolute loyalty from their progeny, and intricate blood pacts bind the court together in an unbreakable web of obligation."
+  },
+
+  "strengths": [
+    {
+      "name": "Life Steal",
+      "description": "All vampire units heal when dealing damage to enemies",
+      "mechanic": "life_steal",
+      "value": 0.2
+    },
+    {
+      "name": "Night Power",
+      "description": "+50% to all stats during night time, enabling devastating night raids",
+      "mechanic": "night_bonus",
+      "value": 0.5
+    },
+    {
+      "name": "Transformation",
+      "description": "Many units can transform between forms (bat, wolf, mist) for tactical advantage",
+      "mechanic": "transformation",
+      "value": true
+    },
+    {
+      "name": "Immortal Heroes",
+      "description": "Heroes automatically revive at the Coffin Vault after death",
+      "mechanic": "hero_respawn",
+      "value": true
+    },
+    {
+      "name": "Blood Economy",
+      "description": "Gain Blood resource from kills, used for powerful abilities and transformations",
+      "mechanic": "blood_resource",
+      "value": 1.0
+    },
+    {
+      "name": "Domination",
+      "description": "Can mind-control enemy units and convert them to thralls",
+      "mechanic": "domination",
+      "value": 0.15
+    }
+  ],
+
+  "weaknesses": [
+    {
+      "name": "Sunlight Vulnerability",
+      "description": "-25% to all stats during daylight, some units take damage",
+      "mechanic": "daylight_penalty",
+      "value": 0.25
+    },
+    {
+      "name": "Holy Vulnerability",
+      "description": "Takes 75% increased damage from holy and light-based attacks",
+      "mechanic": "holy_damage_multiplier",
+      "value": 1.75
+    },
+    {
+      "name": "Fire Vulnerability",
+      "description": "Takes 50% increased damage from fire-based attacks",
+      "mechanic": "fire_damage_multiplier",
+      "value": 1.5
+    },
+    {
+      "name": "Running Water",
+      "description": "Cannot cross rivers or deep water without bridges",
+      "mechanic": "water_barrier",
+      "value": true
+    },
+    {
+      "name": "Invitation Required",
+      "description": "Cannot enter enemy buildings to garrison without defeating all defenders",
+      "mechanic": "no_garrison_capture",
+      "value": true
+    }
+  ],
+
+  "uniqueMechanics": {
+    "bloodSystem": {
+      "enabled": true,
+      "bloodPerKill": 5,
+      "bloodPerWorkerKill": 2,
+      "bloodPerHeroKill": 25,
+      "bloodDecayRate": 0.5,
+      "maxBloodStorage": 500,
+      "bloodRegenOnBlight": 1.0,
+      "description": "Blood is harvested from kills and used for transformations, abilities, and powerful rituals"
+    },
+    "dayNightCycle": {
+      "enabled": true,
+      "nightBonusStats": 0.5,
+      "dayPenaltyStats": 0.25,
+      "nightDuration": 300,
+      "dayDuration": 300,
+      "twilightTransition": 30,
+      "sunlightDamagePerSecond": 5,
+      "sunlightAffectedUnits": ["vampire_spawn", "nosferatu", "elder_vampire"],
+      "description": "Vampires gain power at night and weaken during the day"
+    },
+    "transformationSystem": {
+      "enabled": true,
+      "transformCooldown": 10.0,
+      "batFormSpeedBonus": 1.5,
+      "batFormArmorPenalty": 0.5,
+      "wolfFormDamageBonus": 0.3,
+      "wolfFormSpeedBonus": 0.2,
+      "mistFormInvulnerable": true,
+      "mistFormDuration": 5.0,
+      "mistFormCooldown": 60.0,
+      "description": "Vampires can transform between humanoid, bat, wolf, and mist forms"
+    },
+    "lifeStealSystem": {
+      "enabled": true,
+      "baseLifeSteal": 0.15,
+      "upgradeableLifeSteal": true,
+      "maxLifeSteal": 0.40,
+      "lifeStealAffectsBuildings": false,
+      "description": "All vampire units heal for a percentage of damage dealt"
+    },
+    "heroRevival": {
+      "enabled": true,
+      "reviveBuilding": "coffin_vault",
+      "reviveTimeBase": 30,
+      "reviveTimePerLevel": 5,
+      "reviveCostReduction": 0.5,
+      "keepExperience": true,
+      "keepItems": true,
+      "description": "Vampire heroes automatically revive at the Coffin Vault"
+    },
+    "thrallSystem": {
+      "enabled": true,
+      "dominationChance": 0.1,
+      "thrallDuration": -1,
+      "thrallStatPenalty": 0.2,
+      "maxThralls": 20,
+      "thrallUpkeepBlood": 1,
+      "description": "Dominated enemies become permanent thralls serving the Blood Court"
+    }
+  },
+
+  "resources": {
+    "primary": ["gold", "lumber"],
+    "secondary": ["blood", "souls"],
+    "unique": {
+      "blood": {
+        "name": "Blood",
+        "icon": "icons/resources/blood.png",
+        "maxStorage": 500,
+        "gatherRate": 0.0,
+        "decayRate": 0.5,
+        "gainPerKill": 5,
+        "description": "Harvested from slain enemies, powers vampire abilities and transformations"
+      },
+      "souls": {
+        "name": "Souls",
+        "icon": "icons/resources/vampire_soul.png",
+        "maxStorage": 100,
+        "gatherRate": 0.0,
+        "gainPerHeroKill": 10,
+        "description": "Captured from powerful enemies, used for dark rituals and summoning"
+      }
+    }
+  },
+
+  "startingUnits": [
+    {"unit": "thrall", "count": 5},
+    {"unit": "vampire_spawn", "count": 2},
+    {"unit": "blood_seeker", "count": 1}
+  ],
+
+  "startingBuildings": [
+    {"building": "crypt_palace", "count": 1},
+    {"building": "blood_pit", "count": 1},
+    {"building": "dark_obelisk", "count": 2}
+  ],
+
+  "startingResources": {
+    "gold": 500,
+    "lumber": 150,
+    "blood": 50,
+    "souls": 0
+  },
+
+  "populationCap": {
+    "base": 10,
+    "perDarkObelisk": 10,
+    "perBloodFountain": 5,
+    "maximum": 200
+  },
+
+  "visuals": {
+    "primaryColor": "#8B0000",
+    "secondaryColor": "#2F0000",
+    "accentColor": "#FF0000",
+    "bannerTexture": "textures/banners/vampire_banner.png",
+    "iconTexture": "textures/icons/vampire_icon.png",
+    "cursorSet": "cursors/vampire/",
+    "uiTheme": "gothic_crimson",
+    "bloodPoolTexture": "textures/terrain/blood_pool.png",
+    "fogColor": "#1a0000"
+  },
+
+  "audio": {
+    "musicTheme": "audio/music/vampire_theme.ogg",
+    "ambientSound": "audio/ambient/vampire_ambient.ogg",
+    "victoryMusic": "audio/music/vampire_victory.ogg",
+    "defeatMusic": "audio/music/vampire_defeat.ogg",
+    "buildingComplete": "audio/sfx/vampire_building_complete.ogg",
+    "unitReady": "audio/sfx/vampire_unit_ready.ogg",
+    "underAttack": "audio/sfx/vampire_under_attack.ogg",
+    "nightFall": "audio/sfx/vampire_nightfall.ogg",
+    "sunrise": "audio/sfx/vampire_sunrise.ogg"
+  },
+
+  "aiProfile": {
+    "aggression": 0.7,
+    "expansion": 0.5,
+    "techFocus": 0.7,
+    "armyComposition": "elite",
+    "preferredTactics": ["night_raid", "hit_and_sustain", "assassination", "domination"],
+    "heroImportance": 0.9,
+    "preferNightAttacks": true,
+    "avoidDaylightCombat": true
+  },
+
+  "diplomacy": {
+    "defaultStance": "hostile",
+    "canAllyWith": ["vampires", "undead", "demon"],
+    "permanentEnemies": ["holy", "nature", "fire_elementals"],
+    "neutralPossible": ["neutral", "mercenary", "dark_elves"]
+  },
+
+  "unitTiers": {
+    "tier1": ["thrall", "vampire_spawn", "blood_seeker", "night_creature"],
+    "tier2": ["vampire_knight", "blood_mage", "nosferatu", "shadow_dancer", "gargoyle_servant"],
+    "tier3": ["elder_vampire", "blood_countess", "nightmare", "crimson_bat", "flesh_golem"],
+    "tier4": ["ancient_one", "blood_dragon", "vampire_lord", "abyssal_horror"]
+  },
+
+  "heroes": ["vampire_count", "blood_queen", "shadow_lord", "nosferatu_elder"],
+
+  "buildingChains": {
+    "mainHall": ["crypt_palace", "blood_castle", "citadel_of_night"],
+    "defense": ["dark_obelisk", "tower_of_blood"]
+  },
+
+  "ages": {
+    "age1": {"name": "Fledgling", "icon": "icons/ages/fledgling.png"},
+    "age2": {"name": "Noble", "icon": "icons/ages/noble.png"},
+    "age3": {"name": "Count", "icon": "icons/ages/count.png"},
+    "age4": {"name": "Duke", "icon": "icons/ages/duke.png"},
+    "age5": {"name": "Prince", "icon": "icons/ages/prince.png"},
+    "age6": {"name": "Lord", "icon": "icons/ages/lord.png"},
+    "age7": {"name": "Ancient", "icon": "icons/ages/ancient.png"}
+  },
+
+  "version": "1.0.0",
+  "author": "Vehement Development Team"
+}

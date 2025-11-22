@@ -1,0 +1,562 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vehement.game/schemas/game_mode.schema.json",
+  "title": "Vehement Game Mode",
+  "description": "Schema for Vehement custom game mode definitions",
+  "type": "object",
+  "required": ["metadata", "rules"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Game mode metadata",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique mode identifier",
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "description": {
+          "type": "string",
+          "description": "Mode description",
+          "maxLength": 2000
+        },
+        "author": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "default": "1.0.0"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["standard", "competitive", "casual", "custom", "experimental"],
+          "default": "custom"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Path to mode icon"
+        },
+        "thumbnail": {
+          "type": "string",
+          "description": "Path to mode thumbnail"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "minPlayers": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24,
+          "default": 2
+        },
+        "maxPlayers": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24,
+          "default": 8
+        },
+        "suggestedPlayers": {
+          "type": "string"
+        },
+        "estimatedDuration": {
+          "type": "string",
+          "description": "Estimated game duration"
+        },
+        "isRanked": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "description": "Game rules and settings",
+      "properties": {
+        "victoryConditions": {
+          "type": "array",
+          "description": "Ways to win the game",
+          "items": { "$ref": "#/definitions/victoryCondition" }
+        },
+        "defeatConditions": {
+          "type": "array",
+          "description": "Ways to lose the game",
+          "items": { "$ref": "#/definitions/defeatCondition" }
+        },
+        "timeLimit": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "duration": { "type": "integer", "description": "Time limit in seconds" },
+            "overtime": { "type": "boolean", "default": false },
+            "overtimeDuration": { "type": "integer" },
+            "tiebreaker": { "type": "string", "enum": ["score", "resources", "units", "buildings", "draw"] }
+          }
+        },
+        "scoring": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "targetScore": { "type": "integer" },
+            "scoreEvents": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/scoreEvent" }
+            }
+          }
+        },
+        "teamSettings": {
+          "type": "object",
+          "properties": {
+            "teamsEnabled": { "type": "boolean", "default": true },
+            "teamCount": { "type": "integer", "minimum": 2, "default": 2 },
+            "playersPerTeam": { "type": "integer" },
+            "allowTeamChange": { "type": "boolean", "default": false },
+            "sharedVision": { "type": "boolean", "default": true },
+            "sharedControl": { "type": "boolean", "default": false },
+            "sharedResources": { "type": "boolean", "default": false },
+            "fixedTeams": { "type": "boolean", "default": true }
+          }
+        },
+        "respawning": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "respawnTime": { "type": "integer", "description": "Respawn delay in seconds" },
+            "respawnLives": { "type": "integer", "default": -1 },
+            "respawnLocation": { "type": "string", "enum": ["start", "random", "nearest_ally", "custom"] },
+            "respawnPenalty": {
+              "type": "object",
+              "properties": {
+                "resourceLoss": { "type": "number" },
+                "experienceLoss": { "type": "number" },
+                "goldLoss": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "economy": {
+      "type": "object",
+      "description": "Economic settings",
+      "properties": {
+        "startingResources": {
+          "type": "object",
+          "properties": {
+            "gold": { "type": "integer", "default": 500 },
+            "lumber": { "type": "integer", "default": 150 },
+            "food": { "type": "integer", "default": 10 },
+            "foodCap": { "type": "integer", "default": 100 },
+            "custom": {
+              "type": "object",
+              "additionalProperties": { "type": "integer" }
+            }
+          }
+        },
+        "incomeRate": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "goldPerMinute": { "type": "integer" },
+            "lumberPerMinute": { "type": "integer" },
+            "interval": { "type": "integer", "default": 60 }
+          }
+        },
+        "resourceMultipliers": {
+          "type": "object",
+          "properties": {
+            "miningRate": { "type": "number", "default": 1.0 },
+            "harvestRate": { "type": "number", "default": 1.0 },
+            "buildCost": { "type": "number", "default": 1.0 },
+            "trainCost": { "type": "number", "default": 1.0 },
+            "upgradeCost": { "type": "number", "default": 1.0 }
+          }
+        },
+        "resourcesEnabled": {
+          "type": "object",
+          "properties": {
+            "gold": { "type": "boolean", "default": true },
+            "lumber": { "type": "boolean", "default": true },
+            "food": { "type": "boolean", "default": true }
+          }
+        },
+        "upkeep": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "lowThreshold": { "type": "integer", "default": 40 },
+            "highThreshold": { "type": "integer", "default": 80 },
+            "lowPenalty": { "type": "number", "default": 0.7 },
+            "highPenalty": { "type": "number", "default": 0.4 }
+          }
+        }
+      }
+    },
+    "units": {
+      "type": "object",
+      "description": "Unit-related settings",
+      "properties": {
+        "startingUnits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unitTypeId": { "type": "string" },
+              "count": { "type": "integer", "default": 1 },
+              "level": { "type": "integer" }
+            }
+          }
+        },
+        "unitCap": {
+          "type": "integer",
+          "description": "Maximum units per player",
+          "default": -1
+        },
+        "heroCap": {
+          "type": "integer",
+          "description": "Maximum heroes per player",
+          "default": 3
+        },
+        "heroSettings": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "startingLevel": { "type": "integer", "default": 1 },
+            "maxLevel": { "type": "integer", "default": 10 },
+            "experienceRate": { "type": "number", "default": 1.0 },
+            "reviveEnabled": { "type": "boolean", "default": true },
+            "reviveCostMultiplier": { "type": "number", "default": 1.0 },
+            "reviveTimeMultiplier": { "type": "number", "default": 1.0 },
+            "itemDropOnDeath": { "type": "boolean", "default": false }
+          }
+        },
+        "allowedUnits": {
+          "type": "array",
+          "description": "Whitelist of allowed unit types",
+          "items": { "type": "string" }
+        },
+        "bannedUnits": {
+          "type": "array",
+          "description": "Blacklist of banned unit types",
+          "items": { "type": "string" }
+        },
+        "statMultipliers": {
+          "type": "object",
+          "properties": {
+            "health": { "type": "number", "default": 1.0 },
+            "damage": { "type": "number", "default": 1.0 },
+            "armor": { "type": "number", "default": 1.0 },
+            "speed": { "type": "number", "default": 1.0 },
+            "buildTime": { "type": "number", "default": 1.0 },
+            "trainTime": { "type": "number", "default": 1.0 }
+          }
+        }
+      }
+    },
+    "buildings": {
+      "type": "object",
+      "description": "Building-related settings",
+      "properties": {
+        "startingBuildings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "buildingTypeId": { "type": "string" },
+              "count": { "type": "integer", "default": 1 }
+            }
+          }
+        },
+        "buildingCap": {
+          "type": "integer",
+          "default": -1
+        },
+        "allowedBuildings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "bannedBuildings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "constructionSettings": {
+          "type": "object",
+          "properties": {
+            "multipleBuilders": { "type": "boolean", "default": true },
+            "builderSpeedBonus": { "type": "number", "default": 0.0 },
+            "repairEnabled": { "type": "boolean", "default": true },
+            "repairRate": { "type": "number", "default": 1.0 }
+          }
+        }
+      }
+    },
+    "tech": {
+      "type": "object",
+      "description": "Technology/research settings",
+      "properties": {
+        "startingTech": {
+          "type": "array",
+          "description": "Pre-researched technologies",
+          "items": { "type": "string" }
+        },
+        "allowedTech": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "bannedTech": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "researchTimeMultiplier": {
+          "type": "number",
+          "default": 1.0
+        },
+        "researchCostMultiplier": {
+          "type": "number",
+          "default": 1.0
+        },
+        "techTreeModifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "techId": { "type": "string" },
+              "newRequirements": { "type": "array", "items": { "type": "string" } },
+              "removedRequirements": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "mapSettings": {
+      "type": "object",
+      "description": "Map-related settings",
+      "properties": {
+        "fogOfWar": {
+          "type": "string",
+          "enum": ["full", "explored", "none"],
+          "default": "full"
+        },
+        "sharedVision": {
+          "type": "boolean",
+          "default": false
+        },
+        "randomStartLocations": {
+          "type": "boolean",
+          "default": false
+        },
+        "mirroredMap": {
+          "type": "boolean",
+          "default": false
+        },
+        "neutralHostile": {
+          "type": "boolean",
+          "description": "Neutral creeps attack players",
+          "default": true
+        },
+        "creepRespawn": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "delay": { "type": "integer", "description": "Respawn delay in seconds" }
+          }
+        },
+        "dayNightCycle": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "dayDuration": { "type": "integer", "default": 480 },
+            "nightDuration": { "type": "integer", "default": 480 },
+            "startTime": { "type": "number", "default": 0.25 }
+          }
+        }
+      }
+    },
+    "specialRules": {
+      "type": "array",
+      "description": "Custom special rules",
+      "items": { "$ref": "#/definitions/specialRule" }
+    },
+    "events": {
+      "type": "array",
+      "description": "Timed or triggered events",
+      "items": { "$ref": "#/definitions/gameEvent" }
+    },
+    "ui": {
+      "type": "object",
+      "description": "UI customizations",
+      "properties": {
+        "showTimer": { "type": "boolean", "default": false },
+        "showScore": { "type": "boolean", "default": false },
+        "showObjectives": { "type": "boolean", "default": false },
+        "customHUD": { "type": "string" },
+        "announcer": { "type": "string" },
+        "musicPlaylist": { "type": "string" }
+      }
+    },
+    "scripts": {
+      "type": "object",
+      "description": "Custom scripts",
+      "properties": {
+        "onGameStart": { "type": "string" },
+        "onGameEnd": { "type": "string" },
+        "onPlayerJoin": { "type": "string" },
+        "onPlayerLeave": { "type": "string" },
+        "onUnitDeath": { "type": "string" },
+        "onBuildingDestroyed": { "type": "string" },
+        "customScripts": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "victoryCondition": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "elimination",
+            "annihilation",
+            "score_limit",
+            "time_limit",
+            "capture_point",
+            "king_of_hill",
+            "capture_flag",
+            "destroy_target",
+            "protect_target",
+            "collect_resource",
+            "survive_waves",
+            "custom"
+          ]
+        },
+        "description": { "type": "string" },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "teamBased": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "defeatCondition": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "all_units_dead",
+            "all_buildings_destroyed",
+            "hero_dies",
+            "base_destroyed",
+            "time_expired",
+            "score_below",
+            "custom"
+          ]
+        },
+        "description": { "type": "string" },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "eliminatesPlayer": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "scoreEvent": {
+      "type": "object",
+      "required": ["event", "points"],
+      "properties": {
+        "event": {
+          "type": "string",
+          "enum": [
+            "kill_unit",
+            "kill_hero",
+            "kill_building",
+            "capture_point",
+            "hold_point",
+            "collect_item",
+            "complete_objective",
+            "custom"
+          ]
+        },
+        "points": { "type": "integer" },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "specialRule": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "enabled": { "type": "boolean", "default": true },
+        "configurable": { "type": "boolean", "default": false },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "script": { "type": "string" }
+      }
+    },
+    "gameEvent": {
+      "type": "object",
+      "required": ["id", "trigger"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "trigger": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["time", "interval", "condition", "manual"]
+            },
+            "time": { "type": "integer" },
+            "interval": { "type": "integer" },
+            "condition": { "type": "string" }
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string" },
+              "parameters": { "type": "object" }
+            }
+          }
+        },
+        "announcement": {
+          "type": "object",
+          "properties": {
+            "message": { "type": "string" },
+            "sound": { "type": "string" },
+            "duration": { "type": "integer" }
+          }
+        },
+        "recurring": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}

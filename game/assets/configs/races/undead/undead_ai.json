@@ -1,0 +1,237 @@
+{
+  "race": "undead",
+  "name": "Scourge AI Profile",
+  "description": "Aggressive, swarm-based tactics with corpse economy exploitation",
+
+  "personality": {
+    "aggression": 0.8,
+    "expansion": 0.6,
+    "economy": 0.5,
+    "technology": 0.5,
+    "defense": 0.4,
+    "harassment": 0.7,
+    "riskTolerance": 0.7
+  },
+
+  "buildOrder": {
+    "standard": [
+      {"action": "build", "target": "haunted_mine", "priority": 1},
+      {"action": "train", "target": "acolyte", "count": 3, "priority": 1},
+      {"action": "build", "target": "crypt", "priority": 2},
+      {"action": "train", "target": "ghoul", "count": 3, "priority": 2},
+      {"action": "build", "target": "ziggurat", "priority": 3},
+      {"action": "build", "target": "graveyard", "priority": 3},
+      {"action": "build", "target": "sacrificial_pit", "priority": 4},
+      {"action": "train", "target": "hero", "priority": 4}
+    ],
+    "rush": [
+      {"action": "build", "target": "haunted_mine", "priority": 1},
+      {"action": "train", "target": "acolyte", "count": 2, "priority": 1},
+      {"action": "build", "target": "crypt", "priority": 1},
+      {"action": "train", "target": "ghoul", "count": 5, "priority": 1},
+      {"action": "build", "target": "sacrificial_pit", "priority": 2},
+      {"action": "attack", "timing": "early", "priority": 2}
+    ],
+    "turtle": [
+      {"action": "build", "target": "haunted_mine", "priority": 1},
+      {"action": "train", "target": "acolyte", "count": 4, "priority": 1},
+      {"action": "build", "target": "ziggurat", "count": 3, "priority": 2},
+      {"action": "upgrade", "target": "spirit_tower", "count": 2, "priority": 2},
+      {"action": "build", "target": "graveyard", "priority": 3},
+      {"action": "research", "target": "unholy_armor_1", "priority": 3}
+    ]
+  },
+
+  "armyComposition": {
+    "early": {
+      "ghoul": 0.6,
+      "skeleton": 0.3,
+      "zombie": 0.1
+    },
+    "mid": {
+      "ghoul": 0.3,
+      "crypt_fiend": 0.25,
+      "necromancer": 0.15,
+      "banshee": 0.1,
+      "meat_wagon": 0.1,
+      "abomination": 0.1
+    },
+    "late": {
+      "abomination": 0.2,
+      "frost_wyrm": 0.15,
+      "lich": 0.1,
+      "death_knight_unit": 0.15,
+      "gargoyle": 0.15,
+      "necromancer": 0.1,
+      "obsidian_statue": 0.1,
+      "bone_colossus": 0.05
+    }
+  },
+
+  "tactics": {
+    "preferredFormation": "swarm",
+    "engagementRange": 800,
+    "retreatThreshold": 0.25,
+    "reengageThreshold": 0.6,
+
+    "microPriorities": [
+      {"unit": "necromancer", "action": "raise_dead", "priority": "high"},
+      {"unit": "banshee", "action": "curse", "priority": "high"},
+      {"unit": "crypt_fiend", "action": "web_air", "priority": "critical"},
+      {"unit": "meat_wagon", "action": "collect_corpses", "priority": "medium"},
+      {"unit": "ghoul", "action": "cannibalize", "priority": "low"},
+      {"unit": "obsidian_statue", "action": "stay_with_army", "priority": "high"}
+    ],
+
+    "targetPriority": [
+      {"type": "worker", "priority": 1.0},
+      {"type": "caster", "priority": 0.9},
+      {"type": "ranged", "priority": 0.8},
+      {"type": "siege", "priority": 0.85},
+      {"type": "hero", "priority": 0.7},
+      {"type": "melee", "priority": 0.5}
+    ],
+
+    "abilityUsage": {
+      "deathCoil": {
+        "offensive": true,
+        "defensive": true,
+        "healThreshold": 0.4,
+        "damageOnCooldown": true
+      },
+      "frostNova": {
+        "minEnemies": 3,
+        "useOnHeroes": true
+      },
+      "darkRitual": {
+        "manaThreshold": 0.3,
+        "sacrificeUnit": "skeleton"
+      },
+      "animateDead": {
+        "minCorpses": 4,
+        "useDefensively": true
+      },
+      "inferno": {
+        "useInTeamfights": true,
+        "dropOnBuildings": false
+      }
+    }
+  },
+
+  "heroManagement": {
+    "primaryHero": "death_knight",
+    "secondaryHero": "lich_king",
+    "tertiaryHero": "crypt_lord",
+    "heroCount": 3,
+    "levelUpPriority": ["ability", "stats"],
+    "itemPriority": ["boots", "healing", "damage"],
+    "heroWithArmy": true,
+    "soloCreeping": false
+  },
+
+  "economyManagement": {
+    "targetAcolytes": 5,
+    "expandTiming": "after_t2",
+    "goldPriority": 0.7,
+    "lumberPriority": 0.3,
+    "corpseManagement": {
+      "collectCorpses": true,
+      "saveForNecromancers": true,
+      "useForTraining": false
+    }
+  },
+
+  "techProgression": {
+    "researchPriority": [
+      "unholy_strength_1",
+      "ghoul_frenzy_upgrade",
+      "skeletal_mastery",
+      "unholy_armor_1",
+      "creature_attack_1"
+    ],
+    "ageUpTiming": {
+      "crypt": 180,
+      "necropolis": 420,
+      "plague": 720,
+      "blight": 1080
+    }
+  },
+
+  "harassmentBehavior": {
+    "enabled": true,
+    "harassUnits": ["ghoul", "gargoyle", "shade"],
+    "targetWorkers": true,
+    "hitAndRun": true,
+    "retreatOnDefense": true
+  },
+
+  "defenseBehavior": {
+    "towerCount": 3,
+    "wallBuilding": false,
+    "patrolRoutes": true,
+    "respondToAttacks": true,
+    "defendRadius": 1500
+  },
+
+  "adaptiveBehavior": {
+    "scoutFrequency": 45,
+    "counterComposition": {
+      "heavy_air": {"increase": ["gargoyle", "crypt_fiend"], "decrease": ["zombie"]},
+      "heavy_melee": {"increase": ["abomination", "frost_wyrm"], "decrease": ["skeleton"]},
+      "magic_heavy": {"increase": ["banshee"], "decrease": ["skeleton"]}
+    },
+    "adjustAggression": {
+      "winning": 0.1,
+      "losing": -0.2
+    }
+  },
+
+  "specialTactics": {
+    "corpse_bombing": {
+      "enabled": true,
+      "description": "Load Meat Wagons with corpses and drop them for Necromancers",
+      "timing": "teamfight_start"
+    },
+    "possession_snipe": {
+      "enabled": true,
+      "description": "Use Banshees to possess high-value enemy units",
+      "targets": ["siege", "caster", "expensive"]
+    },
+    "frost_wyrm_siege": {
+      "enabled": true,
+      "description": "Use Frost Wyrms to focus down enemy buildings",
+      "targetPriority": ["production", "tech", "defense"]
+    },
+    "blight_denial": {
+      "enabled": true,
+      "description": "Expand blight aggressively to enable flexible building placement"
+    }
+  },
+
+  "difficultyScaling": {
+    "easy": {
+      "microIntensity": 0.3,
+      "buildOrderAccuracy": 0.6,
+      "reactionTime": 2.0,
+      "resourceBonus": 0.0
+    },
+    "medium": {
+      "microIntensity": 0.6,
+      "buildOrderAccuracy": 0.8,
+      "reactionTime": 1.0,
+      "resourceBonus": 0.0
+    },
+    "hard": {
+      "microIntensity": 0.85,
+      "buildOrderAccuracy": 0.95,
+      "reactionTime": 0.5,
+      "resourceBonus": 0.0
+    },
+    "insane": {
+      "microIntensity": 1.0,
+      "buildOrderAccuracy": 1.0,
+      "reactionTime": 0.25,
+      "resourceBonus": 0.25
+    }
+  }
+}

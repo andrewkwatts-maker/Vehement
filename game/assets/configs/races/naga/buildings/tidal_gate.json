@@ -1,0 +1,96 @@
+{
+    "id": "naga_tidal_gate",
+    "type": "building",
+    "name": "Tidal Gate",
+    "description": "A water portal that allows instant travel between gates. Can only be placed near water.",
+    "race": "naga",
+    "tier": 2,
+    "category": "utility",
+
+    "tags": ["utility", "teleport", "portal", "tier2"],
+
+    "model": {
+        "path": "models/races/naga/buildings/tidal_gate.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/tidal_gate_diffuse.png",
+        "normal": "textures/races/naga/buildings/tidal_gate_normal.png",
+        "emissive": "textures/races/naga/buildings/tidal_gate_glow.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [3, 3],
+        "entrances": [[1, 0], [1, 2]],
+        "visualSize": [6.0, 10.0, 6.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 200,
+            "coral": 120,
+            "pearls": 60
+        },
+        "time": 50.0,
+        "builder_required": true,
+        "placement_requirements": {
+            "near_water": true,
+            "water_radius": 4
+        }
+    },
+
+    "stats": {
+        "maxHealth": 700,
+        "armor": 5,
+        "magicResist": 8
+    },
+
+    "teleport": {
+        "enabled": true,
+        "connects_to": "naga_tidal_gate",
+        "channel_time": 3.0,
+        "cooldown": 45.0,
+        "cooldown_per_unit": 2.0,
+        "max_units_per_teleport": 12,
+        "range": "unlimited"
+    },
+
+    "abilities": [
+        {
+            "id": "mass_teleport",
+            "name": "Tidal Transport",
+            "description": "Teleports up to 12 friendly units to another Tidal Gate.",
+            "cooldown": 45.0,
+            "channel_time": 3.0,
+            "interruptible": true
+        }
+    ],
+
+    "water_bonus": {
+        "near_water_radius": 4,
+        "teleport_cooldown_reduction": 0.2,
+        "channel_time_reduction": 0.3
+    },
+
+    "network": {
+        "type": "tidal_gate_network",
+        "auto_connect": true,
+        "max_network_size": 6
+    },
+
+    "requirements": {
+        "buildings": ["naga_temple_of_tides"],
+        "age": "age_reef"
+    },
+
+    "maxCount": 4,
+
+    "visionRange": 10.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/tidal_gate/on_complete.py",
+        "on_teleport": "scripts/buildings/naga/tidal_gate/on_teleport.py"
+    }
+}

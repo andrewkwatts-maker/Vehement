@@ -1,0 +1,193 @@
+{
+  "id": "blood_seeker",
+  "name": "Blood Seeker",
+  "race": "vampires",
+  "tier": 1,
+  "type": "scout",
+  "role": ["scout", "assassin", "harasser"],
+
+  "description": "Swift vampire hunters who track prey by the scent of blood. They excel at scouting and gain strength from killing enemies.",
+  "lore": "Blood Seekers are vampires who have refined their predatory instincts to perfection. They can sense the pulse of living creatures from great distances and grow more powerful with each kill.",
+
+  "stats": {
+    "health": 280,
+    "healthRegen": 0.75,
+    "mana": 50,
+    "manaRegen": 0.5,
+    "armor": 0,
+    "armorType": "light",
+    "moveSpeed": 350,
+    "turnRate": 0.8,
+    "collisionSize": 28,
+    "selectionScale": 0.9
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 11,
+      "variance": 2,
+      "type": "normal"
+    },
+    "attackSpeed": 1.0,
+    "attackRange": 90,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.25,
+    "backswing": 0.25,
+    "acquisitionRange": 600,
+    "aggroRange": 300,
+    "lifeSteal": 0.15
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "speedBonus": 50,
+      "visionBonus": 400
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "speedPenalty": 30
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "blood_scent",
+      "name": "Blood Scent",
+      "type": "passive",
+      "description": "Reveals nearby wounded enemies and gains vision of bleeding targets",
+      "effects": {
+        "detectionRadius": 1200,
+        "woundedThreshold": 0.5,
+        "revealDuration": 10.0
+      },
+      "icon": "icons/abilities/blood_scent.png"
+    },
+    {
+      "id": "feed_on_kill",
+      "name": "Feed on Kill",
+      "type": "passive",
+      "description": "Gains +2 damage and full heal on each kill (stacks up to 10 times)",
+      "effects": {
+        "damagePerKill": 2,
+        "maxStacks": 10,
+        "healOnKill": true,
+        "stacksLostOnDeath": true
+      },
+      "icon": "icons/abilities/feed_on_kill.png"
+    },
+    {
+      "id": "pounce",
+      "name": "Pounce",
+      "type": "active",
+      "targetType": "point",
+      "description": "Leap to target location, dealing bonus damage on arrival",
+      "cooldown": 12,
+      "manaCost": 25,
+      "effects": {
+        "range": 500,
+        "bonusDamage": 20,
+        "stunDuration": 0.5
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/pounce.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "blood_pit",
+    "buildTime": 18,
+    "cost": {
+      "gold": 130,
+      "lumber": 20,
+      "blood": 5
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["blood_pit"],
+      "technologies": [],
+      "age": "fledgling"
+    },
+    "hotkey": "K"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "crimson_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "shadow_hide"
+    },
+    "special": ["improved_blood_scent", "savage_pounce"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/blood_seeker/ready.ogg",
+    "select": ["audio/units/blood_seeker/select1.ogg", "audio/units/blood_seeker/select2.ogg"],
+    "move": ["audio/units/blood_seeker/move1.ogg", "audio/units/blood_seeker/move2.ogg"],
+    "attack": ["audio/units/blood_seeker/attack1.ogg", "audio/units/blood_seeker/attack2.ogg"],
+    "death": "audio/units/blood_seeker/death.ogg",
+    "pounce": "audio/units/blood_seeker/pounce.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/blood_seeker.glb",
+    "texture": "textures/units/vampires/blood_seeker.png",
+    "portrait": "textures/portraits/blood_seeker.png",
+    "icon": "textures/icons/blood_seeker.png",
+    "scale": 0.95,
+    "animations": {
+      "idle": "seeker_idle",
+      "walk": "seeker_walk",
+      "run": "seeker_run",
+      "attack": "seeker_attack",
+      "death": "seeker_death",
+      "pounce": "seeker_pounce"
+    },
+    "effects": {
+      "spawn": "effects/vampire_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "bloodScent": "effects/blood_scent.vfx",
+      "pounce": "effects/pounce_trail.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 2,
+    "priority": "medium",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.2,
+    "preferredTargets": ["worker", "wounded", "lone_units"],
+    "scoutBehavior": true,
+    "harassBehavior": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isScout": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 16,
+    "experience": 22,
+    "blood": 0
+  },
+
+  "visionRange": 1400,
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

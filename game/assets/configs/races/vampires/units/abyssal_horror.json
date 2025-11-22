@@ -1,0 +1,244 @@
+{
+  "id": "abyssal_horror",
+  "name": "Abyssal Horror",
+  "race": "vampires",
+  "tier": 4,
+  "type": "summoned",
+  "role": ["summoned", "terror", "tank", "damage"],
+
+  "description": "Demons summoned from the abyss through blood sacrifice. These nightmarish entities spread fear and destruction wherever they manifest.",
+  "lore": "Abyssal Horrors are demons from the darkest reaches of the void, summoned through ancient blood rituals. They exist only to destroy, feeding on the terror of their victims. Their presence warps reality itself.",
+
+  "stats": {
+    "health": 1400,
+    "healthRegen": 3.0,
+    "mana": 200,
+    "manaRegen": 1.0,
+    "armor": 5,
+    "armorType": "demon",
+    "moveSpeed": 280,
+    "turnRate": 0.5,
+    "collisionSize": 52,
+    "selectionScale": 1.45
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 48,
+      "variance": 8,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.7,
+    "attackRange": 150,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.45,
+    "backswing": 0.45,
+    "acquisitionRange": 600,
+    "aggroRange": 550,
+    "lifeSteal": 0.20,
+    "cleave": {
+      "enabled": true,
+      "percent": 0.25,
+      "radius": 175
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.3,
+      "armorBonus": 2,
+      "terrorRadiusBonus": 100
+    },
+    "day": {
+      "healthDrainPerSecond": 5,
+      "durationReduction": 0.25
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "abyssal_terror",
+      "name": "Abyssal Terror",
+      "type": "passive",
+      "description": "Nearby enemies have a chance to flee in terror and take increased damage from all sources",
+      "effects": {
+        "radius": 400,
+        "fearChance": 0.15,
+        "fearDuration": 3.0,
+        "damageAmplification": 0.15
+      },
+      "icon": "icons/abilities/abyssal_terror.png"
+    },
+    {
+      "id": "void_slam",
+      "name": "Void Slam",
+      "type": "active",
+      "targetType": "point",
+      "description": "Slam the ground, creating a void rift that damages and slows enemies",
+      "cooldown": 15,
+      "manaCost": 75,
+      "effects": {
+        "damage": 125,
+        "radius": 300,
+        "slowPercent": 0.5,
+        "slowDuration": 4.0
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/void_slam.png"
+    },
+    {
+      "id": "consume_soul",
+      "name": "Consume Soul",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Consume an enemy unit below 20% health, instantly killing it and extending duration",
+      "cooldown": 30,
+      "manaCost": 50,
+      "effects": {
+        "executeThreshold": 0.20,
+        "durationExtension": 15.0,
+        "healPercent": 0.25,
+        "range": 200
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/consume_soul.png"
+    },
+    {
+      "id": "chaos_bolt",
+      "name": "Chaos Bolt",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Hurl a bolt of chaos energy that deals random damage and applies a random debuff",
+      "cooldown": 8,
+      "manaCost": 40,
+      "effects": {
+        "damageMin": 50,
+        "damageMax": 150,
+        "debuffOptions": ["slow", "silence", "armor_reduction", "damage_reduction"],
+        "debuffDuration": 5.0,
+        "range": 600
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/chaos_bolt.png"
+    },
+    {
+      "id": "demonic_constitution",
+      "name": "Demonic Constitution",
+      "type": "passive",
+      "description": "Immune to most crowd control effects",
+      "effects": {
+        "immuneToSlow": true,
+        "immuneToFear": true,
+        "immuneToPolymorph": true,
+        "reducedStunDuration": 0.5
+      },
+      "icon": "icons/abilities/demonic_constitution.png"
+    }
+  ],
+
+  "summonedUnit": {
+    "isSummoned": true,
+    "baseDuration": 60.0,
+    "summonedBy": ["altar_of_darkness"],
+    "summonCost": {
+      "gold": 0,
+      "blood": 100,
+      "souls": 15
+    },
+    "summonTime": 10.0,
+    "maxActive": 1
+  },
+
+  "production": {
+    "producedAt": "altar_of_darkness",
+    "buildTime": 0,
+    "cost": {
+      "gold": 0,
+      "lumber": 0,
+      "blood": 100,
+      "souls": 15
+    },
+    "foodCost": 0,
+    "prerequisites": {
+      "buildings": ["altar_of_darkness"],
+      "technologies": ["demonic_pact"],
+      "age": "duke"
+    },
+    "hotkey": "H",
+    "isSummon": true,
+    "summonDuration": 60
+  },
+
+  "sounds": {
+    "ready": "audio/units/abyssal_horror/ready.ogg",
+    "select": ["audio/units/abyssal_horror/select1.ogg", "audio/units/abyssal_horror/select2.ogg"],
+    "move": ["audio/units/abyssal_horror/move1.ogg", "audio/units/abyssal_horror/move2.ogg"],
+    "attack": ["audio/units/abyssal_horror/attack1.ogg", "audio/units/abyssal_horror/attack2.ogg"],
+    "death": "audio/units/abyssal_horror/death.ogg",
+    "voidSlam": "audio/units/abyssal_horror/void_slam.ogg",
+    "consume": "audio/units/abyssal_horror/consume.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/abyssal_horror.glb",
+    "texture": "textures/units/vampires/abyssal_horror.png",
+    "portrait": "textures/portraits/abyssal_horror.png",
+    "icon": "textures/icons/abyssal_horror.png",
+    "scale": 1.45,
+    "animations": {
+      "idle": "horror_idle",
+      "walk": "horror_walk",
+      "attack": "horror_attack",
+      "death": "horror_death",
+      "slam": "horror_slam",
+      "consume": "horror_consume",
+      "summon": "horror_summon"
+    },
+    "effects": {
+      "spawn": "effects/demon_summon.vfx",
+      "death": "effects/demon_banish.vfx",
+      "terrorAura": "effects/abyssal_terror.vfx",
+      "voidSlam": "effects/void_slam.vfx",
+      "consume": "effects/soul_consume.vfx",
+      "chaosBolt": "effects/chaos_bolt.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 9,
+    "priority": "very_high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.0,
+    "preferredTargets": ["hero", "elite", "caster"],
+    "useConsumeToPersist": true,
+    "maximizeTerror": true
+  },
+
+  "flags": {
+    "isVampire": false,
+    "isDemon": true,
+    "isSummoned": true,
+    "isUltimate": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": false,
+    "causesTerror": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true
+  },
+
+  "bounty": {
+    "gold": 0,
+    "experience": 75,
+    "blood": 0
+  },
+
+  "pointValue": 0,
+  "supplyProvided": 0,
+  "supplyUsed": 0
+}

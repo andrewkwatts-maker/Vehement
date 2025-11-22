@@ -1,0 +1,192 @@
+{
+    "id": "human_paladin",
+    "type": "unit",
+    "race": "humans",
+    "name": "Paladin",
+    "description": "Holy knights blessed by the Light itself. Paladins are elite cavalry who combine devastating martial prowess with divine magic to heal and protect.",
+
+    "tags": ["military", "cavalry", "melee", "caster", "tier3", "heavy", "armored", "holy", "elite"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/humans/units/paladin.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/paladin_diffuse.png",
+        "normal": "textures/races/humans/units/paladin_normal.png",
+        "specular": "textures/races/humans/units/paladin_specular.png",
+        "emissive": "textures/races/humans/units/paladin_emissive.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.55,
+                "height": 2.3,
+                "offset": [0.0, 1.15, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 500.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 1200,
+        "maxHealth": 1200,
+        "healthRegen": 2.0,
+        "mana": 150,
+        "maxMana": 150,
+        "manaRegen": 1.0,
+        "armor": 8,
+        "magicResist": 25,
+        "moveSpeed": 7.0,
+        "turnRate": 180.0
+    },
+
+    "combat": {
+        "attackDamage": 36,
+        "attackSpeed": 1.5,
+        "attackRange": 2.0,
+        "damageType": "holy",
+        "armorType": "heavy",
+        "attackType": "melee",
+        "critChance": 0.15,
+        "critMultiplier": 2.0,
+        "splash_damage": 0.30,
+        "splash_radius": 2.5,
+        "bonus_vs_tags": ["undead", "demon"],
+        "bonus_damage": 25
+    },
+
+    "aura": {
+        "id": "aura_devotion_paladin",
+        "name": "Devotion Aura",
+        "description": "Nearby friendly units gain +3 armor and +1 health regen",
+        "radius": 10.0,
+        "effects": [
+            {"stat": "armor", "value": 3, "type": "flat"},
+            {"stat": "healthRegen", "value": 1.0, "type": "flat"}
+        ]
+    },
+
+    "abilities": [
+        {
+            "id": "ability_holy_light_unit",
+            "name": "Holy Light",
+            "description": "Heal a friendly unit for 200 HP or deal 200 holy damage to undead",
+            "hotkey": "Q",
+            "cooldown": 10.0,
+            "mana_cost": 50,
+            "range": 12.0,
+            "heal_amount": 200,
+            "damage_to_undead": 200
+        },
+        {
+            "id": "ability_divine_shield_unit",
+            "name": "Divine Shield",
+            "description": "Become invulnerable for 5 seconds but unable to attack",
+            "hotkey": "W",
+            "cooldown": 60.0,
+            "mana_cost": 75,
+            "duration": 5.0,
+            "effects": [
+                {"type": "invulnerable", "value": true},
+                {"type": "disarm", "value": true}
+            ]
+        },
+        {
+            "id": "ability_judgment",
+            "name": "Judgment",
+            "description": "Strike an enemy with holy vengeance, dealing 150 damage and slowing by 50%",
+            "hotkey": "E",
+            "cooldown": 15.0,
+            "mana_cost": 60,
+            "range": 8.0,
+            "damage": 150,
+            "slow_percent": 0.50,
+            "slow_duration": 4.0
+        },
+        {
+            "id": "ability_resurrection",
+            "name": "Resurrection",
+            "description": "Resurrect a fallen friendly unit at 50% health",
+            "hotkey": "R",
+            "cooldown": 180.0,
+            "mana_cost": 150,
+            "range": 6.0,
+            "resurrect_health_percent": 0.50,
+            "required_upgrade": "upgrade_paladin_resurrection"
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_paladin_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 6
+        },
+        {
+            "id": "upgrade_paladin_armor",
+            "stat": "armor",
+            "bonus_per_level": 3
+        }
+    ],
+
+    "production": {
+        "building": "human_stable",
+        "cost": {
+            "gold": 550,
+            "food": 6
+        },
+        "build_time": 55.0,
+        "population_cost": 4,
+        "prerequisites": ["human_church", "upgrade_paladin_training"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/paladin.bt",
+        "profile": "versatile",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "priority_targets": ["undead", "demon", "caster"],
+        "heal_allies": true,
+        "heal_threshold": 0.5
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/paladin/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/paladin/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/paladin/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/paladin/attack.anim", "loop": false, "events": [[0.4, "deal_damage"]]},
+        "cast": {"path": "animations/humans/paladin/cast.anim", "loop": false},
+        "divine_shield": {"path": "animations/humans/paladin/divine_shield.anim", "loop": true},
+        "death": {"path": "animations/humans/paladin/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/paladin/select_1.wav", "sounds/humans/paladin/select_2.wav"],
+        "acknowledge": ["sounds/humans/paladin/ack_1.wav", "sounds/humans/paladin/ack_2.wav"],
+        "attack": "sounds/holy_sword_swing.wav",
+        "cast": "sounds/holy_cast.wav",
+        "death": "sounds/humans/paladin/death.wav"
+    },
+
+    "effects": {
+        "holy_glow": "effects/paladin_glow.fx",
+        "divine_shield_effect": "effects/divine_shield.fx",
+        "judgment_effect": "effects/judgment.fx"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/paladin.png",
+        "icon": "textures/races/humans/icons/paladin.png",
+        "hotkey": "P"
+    }
+}

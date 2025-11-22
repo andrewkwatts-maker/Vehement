@@ -1,0 +1,238 @@
+{
+    "id": "naga_tidal_guardian",
+    "type": "unit",
+    "name": "Tidal Guardian",
+    "description": "Massive armored Naga encased in coral and shell. These living fortresses protect key positions and absorb tremendous damage while their allies strike.",
+    "race": "naga",
+    "tier": 2,
+    "class": "tank",
+
+    "tags": ["military", "infantry", "melee", "tier2", "amphibious", "tank", "defensive"],
+
+    "model": {
+        "path": "models/races/naga/units/tidal_guardian.obj",
+        "scale": [1.3, 1.3, 1.3],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/tidal_guardian_diffuse.png",
+        "normal": "textures/races/naga/units/tidal_guardian_normal.png",
+        "specular": "textures/races/naga/units/tidal_guardian_spec.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.6,
+                "height": 2.5,
+                "offset": [0.0, 1.25, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 250.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 3.8,
+        "turnRate": 240.0,
+        "acceleration": 8.0,
+        "deceleration": 12.0,
+        "canSwim": true,
+        "swimSpeed": 5.0,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.15,
+            "forest": 0.6,
+            "water": 1.3,
+            "deep_water": 1.35,
+            "desert": 0.5
+        }
+    },
+
+    "combat": {
+        "health": 950,
+        "maxHealth": 950,
+        "armor": 10,
+        "magicResist": 4,
+        "attackDamage": 16,
+        "attackSpeed": 2.0,
+        "attackRange": 1.5,
+        "critChance": 0.05,
+        "critMultiplier": 1.5,
+        "physicalDamage": true,
+        "damageType": "blunt",
+        "armorType": "fortified"
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "armor_bonus": 3,
+            "health_regen_bonus": 3.0
+        },
+        "in_water": {
+            "health_regen": 8.0,
+            "damage_reduction": 0.1
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "hardened_shell",
+            "name": "Hardened Shell",
+            "description": "Reduces all damage taken by 10%. Increases to 20% when below 50% health.",
+            "effect": {
+                "type": "damage_reduction",
+                "value": 0.1,
+                "low_health_threshold": 0.5,
+                "low_health_value": 0.2
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely."
+        },
+        {
+            "id": "taunt_aura",
+            "name": "Imposing Presence",
+            "description": "Enemies within 6 range are 30% more likely to target this unit.",
+            "aura": {
+                "radius": 6.0,
+                "effect": {"type": "taunt_priority", "value": 0.3},
+                "targets": "enemies"
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "shell_wall",
+            "name": "Shell Wall",
+            "description": "Plants firmly, becoming immobile but gaining +15 armor and blocking enemy movement through for 8 seconds.",
+            "icon": "icons/abilities/naga/shell_wall.png",
+            "cooldown": 30.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 8.0,
+            "effects": [
+                {"type": "immobilize_self"},
+                {"type": "armor_bonus", "value": 15},
+                {"type": "block_movement", "radius": 2.0}
+            ],
+            "castAnimation": "plant",
+            "castSound": "sounds/abilities/shell_wall.wav"
+        },
+        {
+            "id": "guardian_slam",
+            "name": "Guardian Slam",
+            "description": "Slams the ground, dealing 60 damage and slowing enemies by 40% for 3 seconds in a radius.",
+            "icon": "icons/abilities/naga/guardian_slam.png",
+            "cooldown": 18.0,
+            "manaCost": 0,
+            "radius": 4.0,
+            "targetType": "self_aoe",
+            "effects": [
+                {"type": "damage", "amount": 60},
+                {"type": "slow", "value": 0.4, "duration": 3.0}
+            ],
+            "castAnimation": "slam",
+            "castSound": "sounds/abilities/guardian_slam.wav"
+        },
+        {
+            "id": "protective_barrier",
+            "name": "Protective Barrier",
+            "description": "Creates a water barrier around an ally, absorbing up to 200 damage for 6 seconds.",
+            "icon": "icons/abilities/naga/protective_barrier.png",
+            "cooldown": 25.0,
+            "manaCost": 0,
+            "range": 8.0,
+            "targetType": "friendly_unit",
+            "duration": 6.0,
+            "effects": [
+                {"type": "shield", "amount": 200}
+            ],
+            "castAnimation": "barrier",
+            "castSound": "sounds/abilities/protective_barrier.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/tidal_guardian/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/tidal_guardian/walk.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/tidal_guardian/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/tidal_guardian/attack.anim",
+            "loop": false,
+            "events": [[0.4, "deal_damage"]]
+        },
+        "plant": {"path": "animations/naga/tidal_guardian/plant.anim", "loop": false},
+        "planted": {"path": "animations/naga/tidal_guardian/planted_idle.anim", "loop": true},
+        "slam": {"path": "animations/naga/tidal_guardian/slam.anim", "loop": false},
+        "barrier": {"path": "animations/naga/tidal_guardian/barrier.anim", "loop": false},
+        "death": {"path": "animations/naga/tidal_guardian/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/heavy_thud_1.wav", "sounds/footsteps/heavy_thud_2.wav"],
+            "volume": 0.7
+        },
+        "attack": "sounds/combat/heavy_bash.wav",
+        "death": {"paths": ["sounds/death/tidal_guardian_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/tidal_guardian_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/tidal_guardian_ack_1.wav",
+                "sounds/voice/naga/tidal_guardian_ack_2.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_tidal_guardian.bt",
+        "profile": "tank",
+        "aggroRange": 10.0,
+        "leashRange": 20.0,
+        "preferWater": true,
+        "bodyblock": true,
+        "protectAllies": true
+    },
+
+    "production": {
+        "building": "naga_coral_barracks",
+        "time": 40.0,
+        "cost": {
+            "gold": 300,
+            "coral": 180,
+            "pearls": 40
+        },
+        "requirements": {
+            "age": "age_reef",
+            "techs": ["naga_fortified_shells"],
+            "buildings": ["naga_temple_of_tides"]
+        }
+    },
+
+    "properties": {
+        "populationCost": 4,
+        "supplyUpkeep": 3,
+        "squadSize": 1,
+        "experienceValue": 65,
+        "bountyGold": 55
+    },
+
+    "upgrades": {
+        "armor": ["naga_shell_armor_1", "naga_shell_armor_2", "naga_shell_armor_3"],
+        "special": ["naga_living_fortress"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/tidal_guardian/on_spawn.py",
+        "on_death": "scripts/units/naga/tidal_guardian/on_death.py"
+    }
+}

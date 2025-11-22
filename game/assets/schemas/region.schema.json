@@ -1,0 +1,480 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "region.schema.json",
+  "title": "World Region Definition",
+  "description": "Defines a game world region with GPS coordinates, biome, resources, and gameplay settings",
+  "type": "object",
+  "required": ["id", "name", "bounds", "biome"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^region_[a-z_]+$",
+      "description": "Unique region identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name of the region"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Region description and lore"
+    },
+    "bounds": {
+      "$ref": "#/definitions/gpsBounds",
+      "description": "GPS coordinate boundaries"
+    },
+    "biome": {
+      "$ref": "#/definitions/biomeType",
+      "description": "Primary biome type"
+    },
+    "subBiomes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/subBiomeZone" },
+      "description": "Sub-regions with different biomes"
+    },
+    "continent": {
+      "enum": ["north_america", "south_america", "europe", "asia", "africa", "oceania", "antarctica", "special"],
+      "description": "Continent this region belongs to"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country or territory name"
+    },
+    "dangerLevel": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 10,
+      "description": "Danger rating (1-100)"
+    },
+    "recommendedLevel": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 1,
+      "description": "Recommended player level"
+    },
+    "maxPlayers": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1000,
+      "description": "Maximum concurrent players"
+    },
+    "pvpEnabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether PvP combat is allowed"
+    },
+    "resources": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/resourceNode" },
+      "description": "Available resource nodes"
+    },
+    "portals": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/portalConnection" },
+      "description": "Portal connections to other regions"
+    },
+    "controlPoints": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/controlPoint" },
+      "description": "Capturable control points"
+    },
+    "spawnPoints": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/spawnPoint" },
+      "description": "NPC and enemy spawn locations"
+    },
+    "quests": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/regionalQuest" },
+      "description": "Region-specific quests"
+    },
+    "landmarks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/landmark" },
+      "description": "Notable locations and POIs"
+    },
+    "weather": {
+      "$ref": "#/definitions/weatherConfig",
+      "description": "Weather system settings"
+    },
+    "timeZone": {
+      "type": "string",
+      "description": "IANA timezone identifier"
+    },
+    "ownership": {
+      "$ref": "#/definitions/ownershipConfig",
+      "description": "Initial ownership settings"
+    },
+    "rules": {
+      "$ref": "#/definitions/regionRules",
+      "description": "Special gameplay rules"
+    },
+    "modifiers": {
+      "$ref": "#/definitions/regionModifiers",
+      "description": "Gameplay stat modifiers"
+    },
+    "discovery": {
+      "$ref": "#/definitions/discoveryConfig",
+      "description": "How the region is discovered"
+    },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/scheduledEvent" },
+      "description": "Recurring regional events"
+    },
+    "ambience": {
+      "$ref": "#/definitions/ambienceConfig",
+      "description": "Audio and visual ambience"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Searchable tags"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Custom metadata"
+    }
+  },
+
+  "definitions": {
+    "gpsBounds": {
+      "type": "object",
+      "required": ["north", "south", "east", "west"],
+      "properties": {
+        "north": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Northern latitude boundary"
+        },
+        "south": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Southern latitude boundary"
+        },
+        "east": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Eastern longitude boundary"
+        },
+        "west": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Western longitude boundary"
+        },
+        "centerLat": {
+          "type": "number",
+          "description": "Center latitude (computed if not provided)"
+        },
+        "centerLon": {
+          "type": "number",
+          "description": "Center longitude (computed if not provided)"
+        }
+      }
+    },
+    "biomeType": {
+      "enum": [
+        "temperate",
+        "desert",
+        "arctic",
+        "tropical",
+        "mountain",
+        "volcanic",
+        "swamp",
+        "coastal",
+        "plains",
+        "cursed",
+        "urban",
+        "underwater",
+        "sky",
+        "void"
+      ]
+    },
+    "subBiomeZone": {
+      "type": "object",
+      "required": ["id", "biome", "bounds"],
+      "properties": {
+        "id": { "type": "string" },
+        "biome": { "$ref": "#/definitions/biomeType" },
+        "bounds": { "$ref": "#/definitions/gpsBounds" },
+        "blendRadius": { "type": "number", "default": 1.0 }
+      }
+    },
+    "resourceNode": {
+      "type": "object",
+      "required": ["id", "type", "position"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": ["gold", "wood", "stone", "iron", "food", "mana", "crystal", "herbs", "oil", "gems", "mythril", "special"]
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lon": { "type": "number" }
+          }
+        },
+        "amount": { "type": "integer", "default": 1000 },
+        "regenerationRate": { "type": "number", "default": 1.0 },
+        "harvestDifficulty": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "requiresTool": { "type": "string" },
+        "contested": { "type": "boolean", "default": false }
+      }
+    },
+    "portalConnection": {
+      "type": "object",
+      "required": ["id", "destinationRegionId", "position"],
+      "properties": {
+        "id": { "type": "string" },
+        "destinationRegionId": { "type": "string" },
+        "position": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lon": { "type": "number" }
+          }
+        },
+        "portalType": {
+          "enum": ["standard", "major", "hidden", "faction", "ancient", "unstable", "underwater", "event"],
+          "default": "standard"
+        },
+        "bidirectional": { "type": "boolean", "default": true },
+        "travelTime": { "type": "number", "default": 30.0 },
+        "cost": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "requirements": {
+          "type": "object",
+          "properties": {
+            "minLevel": { "type": "integer" },
+            "questId": { "type": "string" },
+            "itemId": { "type": "string" },
+            "factionId": { "type": "integer" }
+          }
+        },
+        "active": { "type": "boolean", "default": true },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "startHour": { "type": "integer" },
+            "endHour": { "type": "integer" },
+            "daysActive": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "controlPoint": {
+      "type": "object",
+      "required": ["id", "name", "position"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "$ref": "common.schema.json#/definitions/localizedString" },
+        "position": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lon": { "type": "number" }
+          }
+        },
+        "captureRadius": { "type": "number", "default": 50.0 },
+        "captureTime": { "type": "number", "default": 300.0 },
+        "pointValue": { "type": "integer", "default": 100 },
+        "bonuses": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "defenseStrength": { "type": "integer", "default": 0 },
+        "initialOwner": { "type": "integer", "default": -1 }
+      }
+    },
+    "spawnPoint": {
+      "type": "object",
+      "required": ["id", "position", "unitTypes"],
+      "properties": {
+        "id": { "type": "string" },
+        "position": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lon": { "type": "number" }
+          }
+        },
+        "radius": { "type": "number", "default": 100.0 },
+        "unitTypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "maxActive": { "type": "integer", "default": 10 },
+        "spawnRate": { "type": "number", "default": 60.0 },
+        "levelRange": {
+          "type": "object",
+          "properties": {
+            "min": { "type": "integer", "default": 1 },
+            "max": { "type": "integer", "default": 10 }
+          }
+        },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "timeOfDay": { "enum": ["day", "night", "always"] },
+            "weather": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "regionalQuest": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "$ref": "common.schema.json#/definitions/localizedString" },
+        "description": { "$ref": "common.schema.json#/definitions/localizedString" },
+        "type": { "enum": ["main", "side", "daily", "weekly", "event", "hidden"] },
+        "prerequisites": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "rewards": {
+          "type": "object",
+          "properties": {
+            "experience": { "type": "integer" },
+            "gold": { "type": "integer" },
+            "items": { "type": "array", "items": { "type": "string" } },
+            "reputation": { "type": "integer" }
+          }
+        },
+        "repeatable": { "type": "boolean", "default": false },
+        "cooldown": { "type": "integer", "default": 0 }
+      }
+    },
+    "landmark": {
+      "type": "object",
+      "required": ["id", "name", "position", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "$ref": "common.schema.json#/definitions/localizedString" },
+        "description": { "$ref": "common.schema.json#/definitions/localizedString" },
+        "position": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lon": { "type": "number" }
+          }
+        },
+        "type": { "enum": ["city", "ruins", "dungeon", "monument", "natural", "mystical", "military"] },
+        "discoveryRadius": { "type": "number", "default": 500.0 },
+        "explorable": { "type": "boolean", "default": true },
+        "questGiver": { "type": "boolean", "default": false },
+        "iconPath": { "type": "string" }
+      }
+    },
+    "weatherConfig": {
+      "type": "object",
+      "properties": {
+        "possibleTypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "defaultType": { "type": "string", "default": "clear" },
+        "changeInterval": { "type": "number", "default": 3600.0 },
+        "useRealWeather": { "type": "boolean", "default": false },
+        "seasonalVariation": { "type": "boolean", "default": true }
+      }
+    },
+    "ownershipConfig": {
+      "type": "object",
+      "properties": {
+        "initialFaction": { "type": "integer", "default": -1 },
+        "contestable": { "type": "boolean", "default": true },
+        "captureEnabled": { "type": "boolean", "default": true },
+        "protectionTime": { "type": "number", "default": 0 }
+      }
+    },
+    "regionRules": {
+      "type": "object",
+      "properties": {
+        "pvpEnabled": { "type": "boolean", "default": true },
+        "pveEnabled": { "type": "boolean", "default": true },
+        "buildingEnabled": { "type": "boolean", "default": true },
+        "tradingEnabled": { "type": "boolean", "default": true },
+        "flightEnabled": { "type": "boolean", "default": true },
+        "mountsEnabled": { "type": "boolean", "default": true },
+        "deathPenalty": { "enum": ["none", "experience", "items", "full"], "default": "experience" },
+        "respawnLocation": { "enum": ["local", "nearest_safe", "home"], "default": "local" }
+      }
+    },
+    "regionModifiers": {
+      "type": "object",
+      "properties": {
+        "experienceMultiplier": { "type": "number", "default": 1.0 },
+        "lootMultiplier": { "type": "number", "default": 1.0 },
+        "resourceMultiplier": { "type": "number", "default": 1.0 },
+        "damageMultiplier": { "type": "number", "default": 1.0 },
+        "healingMultiplier": { "type": "number", "default": 1.0 },
+        "movementMultiplier": { "type": "number", "default": 1.0 }
+      }
+    },
+    "discoveryConfig": {
+      "type": "object",
+      "properties": {
+        "method": { "enum": ["visible", "adjacent", "quest", "item", "level"], "default": "visible" },
+        "requiresQuest": { "type": "string" },
+        "requiresItem": { "type": "string" },
+        "requiresLevel": { "type": "integer" },
+        "discoveryReward": {
+          "type": "object",
+          "properties": {
+            "experience": { "type": "integer" },
+            "gold": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "scheduledEvent": {
+      "type": "object",
+      "required": ["id", "name", "schedule"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "$ref": "common.schema.json#/definitions/localizedString" },
+        "description": { "$ref": "common.schema.json#/definitions/localizedString" },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["daily", "weekly", "monthly", "yearly", "custom"] },
+            "dayOfWeek": { "type": "integer" },
+            "dayOfMonth": { "type": "integer" },
+            "hour": { "type": "integer" },
+            "duration": { "type": "number" }
+          }
+        },
+        "rewards": { "type": "object" },
+        "participation": { "enum": ["solo", "group", "faction", "all"] }
+      }
+    },
+    "ambienceConfig": {
+      "type": "object",
+      "properties": {
+        "daySoundscape": { "type": "string" },
+        "nightSoundscape": { "type": "string" },
+        "musicTrack": { "type": "string" },
+        "combatMusic": { "type": "string" },
+        "particleEffects": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "lightingProfile": { "type": "string" },
+        "fogDensity": { "type": "number", "default": 0.0 },
+        "skyboxId": { "type": "string" }
+      }
+    }
+  }
+}

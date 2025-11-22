@@ -1,0 +1,279 @@
+{
+  "id": "nosferatu_elder",
+  "name": "Nosferatu Elder",
+  "race": "vampires",
+  "type": "hero",
+  "class": "terror_tank",
+  "role": ["tank", "terror", "disabler"],
+
+  "title": "Ancient Horror",
+  "description": "A monstrous ancient vampire whose very presence inspires terror. The Nosferatu Elder is nearly indestructible and spreads plague and fear.",
+  "lore": "The Nosferatu Elder is a vampire so ancient and twisted that humanity has forgotten his original form. He has become the very incarnation of nightmare, a shambling horror whose touch brings disease and whose gaze brings madness.",
+
+  "baseStats": {
+    "health": 850,
+    "healthRegen": 3.5,
+    "mana": 250,
+    "manaRegen": 0.9,
+    "armor": 6,
+    "armorType": "hero",
+    "moveSpeed": 290,
+    "turnRate": 0.5,
+    "collisionSize": 40,
+    "selectionScale": 1.35
+  },
+
+  "statsPerLevel": {
+    "health": 150,
+    "healthRegen": 0.5,
+    "mana": 25,
+    "manaRegen": 0.1,
+    "armor": 0.5,
+    "damage": 4
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 30,
+      "variance": 6,
+      "diceSides": 8,
+      "diceCount": 2,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.7,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.45,
+    "backswing": 0.45,
+    "primaryAttribute": "strength",
+    "lifeSteal": 0.30,
+    "cleave": {
+      "enabled": true,
+      "percent": 0.25,
+      "radius": 175
+    }
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 28,
+      "perLevel": 3.5
+    },
+    "agility": {
+      "base": 12,
+      "perLevel": 1.2
+    },
+    "intelligence": {
+      "base": 16,
+      "perLevel": 1.6
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "armorBonus": 4,
+      "healthRegenBonus": 5.0,
+      "terrorRadiusBonus": 150
+    },
+    "day": {
+      "damagePenalty": 0.3,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 10,
+      "healthRegenPenalty": 2.0
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "terror_scream",
+      "name": "Terror Scream",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "Q",
+      "description": "Let out a horrifying scream that fears enemies and reduces their armor",
+      "levels": [
+        {"manaCost": 90, "cooldown": 18, "radius": 350, "fearDuration": 2.5, "armorReduction": 4, "duration": 10},
+        {"manaCost": 100, "cooldown": 16, "radius": 400, "fearDuration": 3.0, "armorReduction": 6, "duration": 12},
+        {"manaCost": 110, "cooldown": 14, "radius": 450, "fearDuration": 3.5, "armorReduction": 8, "duration": 14}
+      ],
+      "effects": {
+        "cannotBeReduced": true,
+        "breaksChanneling": true
+      },
+      "icon": "icons/abilities/terror_scream.png"
+    },
+    {
+      "id": "plague_touch",
+      "name": "Plague Touch",
+      "type": "passive",
+      "hotkey": "W",
+      "description": "Attacks spread a virulent plague that deals damage over time and spreads to nearby enemies",
+      "levels": [
+        {"damagePerSecond": 10, "duration": 8, "spreadRadius": 200, "spreadChance": 0.25},
+        {"damagePerSecond": 20, "duration": 10, "spreadRadius": 250, "spreadChance": 0.35},
+        {"damagePerSecond": 30, "duration": 12, "spreadRadius": 300, "spreadChance": 0.45}
+      ],
+      "effects": {
+        "reducesHealing": 0.25,
+        "maxStacks": 3
+      },
+      "icon": "icons/abilities/plague_touch.png"
+    },
+    {
+      "id": "unholy_strength",
+      "name": "Unholy Strength",
+      "type": "active",
+      "targetType": "self",
+      "hotkey": "E",
+      "description": "Greatly increase strength and health regeneration, becoming nearly unkillable",
+      "levels": [
+        {"manaCost": 100, "cooldown": 60, "duration": 12, "strengthBonus": 15, "healthRegenBonus": 20, "damageReduction": 0.2},
+        {"manaCost": 100, "cooldown": 55, "duration": 15, "strengthBonus": 25, "healthRegenBonus": 35, "damageReduction": 0.3},
+        {"manaCost": 100, "cooldown": 50, "duration": 18, "strengthBonus": 40, "healthRegenBonus": 50, "damageReduction": 0.4}
+      ],
+      "effects": {
+        "movementPenalty": 0.15,
+        "slowImmunity": true
+      },
+      "icon": "icons/abilities/unholy_strength.png"
+    },
+    {
+      "id": "swarm_form",
+      "name": "Swarm Form",
+      "type": "active",
+      "targetType": "self",
+      "hotkey": "D",
+      "ultimate": true,
+      "description": "Transform into a swarm of vermin, becoming invulnerable and dealing damage to all enemies passed through",
+      "levels": [
+        {"manaCost": 175, "cooldown": 100, "duration": 6, "damagePerSecond": 75, "speedBonus": 0.5, "bloodCost": 50}
+      ],
+      "effects": {
+        "invulnerable": true,
+        "canPassThroughUnits": true,
+        "damageType": "magic",
+        "terrorWhileActive": true,
+        "cannotBeTargeted": true
+      },
+      "icon": "icons/abilities/swarm_form.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "coffin_vault",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "blood": 60
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["coffin_vault", "blood_castle"],
+      "technologies": [],
+      "age": "noble"
+    },
+    "hotkey": "N"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/nosferatu_elder/ready.ogg",
+    "select": [
+      "audio/heroes/nosferatu_elder/select1.ogg",
+      "audio/heroes/nosferatu_elder/select2.ogg",
+      "audio/heroes/nosferatu_elder/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/nosferatu_elder/move1.ogg",
+      "audio/heroes/nosferatu_elder/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/nosferatu_elder/attack1.ogg",
+      "audio/heroes/nosferatu_elder/attack2.ogg"
+    ],
+    "death": "audio/heroes/nosferatu_elder/death.ogg",
+    "pissed": [
+      "audio/heroes/nosferatu_elder/pissed1.ogg",
+      "audio/heroes/nosferatu_elder/pissed2.ogg",
+      "audio/heroes/nosferatu_elder/pissed3.ogg"
+    ],
+    "terrorScream": "audio/heroes/nosferatu_elder/scream.ogg",
+    "swarmForm": "audio/heroes/nosferatu_elder/swarm.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/nosferatu_elder.glb",
+    "texture": "textures/heroes/nosferatu_elder.png",
+    "portrait": "textures/portraits/nosferatu_elder_hero.png",
+    "icon": "textures/icons/nosferatu_elder_hero.png",
+    "scale": 1.35,
+    "animations": {
+      "idle": "nosferatu_idle",
+      "walk": "nosferatu_walk",
+      "attack": "nosferatu_attack",
+      "death": "nosferatu_death",
+      "cast": "nosferatu_cast",
+      "scream": "nosferatu_scream",
+      "swarm": "nosferatu_swarm"
+    },
+    "effects": {
+      "spawn": "effects/horror_spawn.vfx",
+      "death": "effects/vampire_hero_death.vfx",
+      "terrorScream": "effects/terror_scream.vfx",
+      "plagueTouch": "effects/plague_touch.vfx",
+      "unholyStrength": "effects/unholy_strength.vfx",
+      "swarmForm": "effects/swarm_form.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "frontline_tank",
+    "useScreamOnGroups": true,
+    "unholyStrengthWhenFocused": true,
+    "swarmFormToEscapeOrEngage": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isVampire": true,
+    "isUndead": true,
+    "isMonstrous": true,
+    "causesTerror": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "canUseItems": true,
+    "canGainExperience": true,
+    "canTransform": true,
+    "hasLifeSteal": true,
+    "affectedByDayNight": true,
+    "autoRevivesAtCoffinVault": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 30,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 75,
+    "bloodPerLevel": 12
+  },
+  "autoRevive": {
+    "enabled": true,
+    "building": "coffin_vault",
+    "delay": 60,
+    "costReduction": 0.5
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 25,
+    "experienceBase": 100,
+    "experiencePerLevel": 30
+  }
+}

@@ -1,0 +1,131 @@
+{
+    "id": "human_scout",
+    "type": "unit",
+    "race": "humans",
+    "name": "Scout",
+    "description": "Swift riders who patrol the borders of Valorheim. Their speed and keen eyesight make them invaluable for reconnaissance.",
+
+    "tags": ["military", "cavalry", "reconnaissance", "tier1", "light"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/humans/units/scout.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/scout_diffuse.png",
+        "normal": "textures/races/humans/units/scout_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.4,
+                "height": 1.8,
+                "offset": [0.0, 0.9, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 200.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 180,
+        "maxHealth": 180,
+        "healthRegen": 0.5,
+        "armor": 1,
+        "magicResist": 5,
+        "moveSpeed": 8.0,
+        "turnRate": 280.0
+    },
+
+    "combat": {
+        "attackDamage": 7,
+        "attackSpeed": 1.0,
+        "attackRange": 1.5,
+        "damageType": "normal",
+        "armorType": "light",
+        "attackType": "melee",
+        "bonus_vs_tags": ["worker"],
+        "bonus_damage": 5
+    },
+
+    "vision": {
+        "range": 16.0,
+        "night_vision": 12.0,
+        "detects_invisible": false,
+        "reveals_area_duration": 5.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_flare",
+            "name": "Flare",
+            "description": "Reveal a target area for 10 seconds",
+            "hotkey": "F",
+            "cooldown": 45.0,
+            "range": 30.0,
+            "reveal_radius": 12.0,
+            "reveal_duration": 10.0
+        },
+        {
+            "id": "ability_sprint",
+            "name": "Sprint",
+            "description": "Increase movement speed by 50% for 5 seconds",
+            "hotkey": "R",
+            "cooldown": 30.0,
+            "duration": 5.0,
+            "effects": [
+                {"stat": "move_speed", "value": 0.50}
+            ]
+        }
+    ],
+
+    "production": {
+        "building": "human_stable",
+        "cost": {
+            "gold": 100,
+            "food": 3
+        },
+        "build_time": 20.0,
+        "population_cost": 1,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/scout.bt",
+        "profile": "evasive",
+        "aggroRange": 8.0,
+        "leashRange": 30.0,
+        "flee_threshold": 0.5,
+        "auto_explore": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/scout/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/scout/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/scout/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/scout/attack.anim", "loop": false},
+        "death": {"path": "animations/humans/scout/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/scout/select_1.wav", "sounds/humans/scout/select_2.wav"],
+        "acknowledge": ["sounds/humans/scout/ack_1.wav", "sounds/humans/scout/ack_2.wav"],
+        "attack": "sounds/humans/scout/attack.wav",
+        "death": "sounds/humans/scout/death.wav",
+        "horse_gallop": "sounds/horse_gallop.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/scout.png",
+        "icon": "textures/races/humans/icons/scout.png",
+        "hotkey": "S"
+    }
+}

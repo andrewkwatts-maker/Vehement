@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cinematic Player</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        .cinematic-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .cinematic-container.active {
+            display: flex;
+        }
+
+        /* Letterbox bars */
+        .letterbox {
+            position: absolute;
+            left: 0;
+            right: 0;
+            background: #000;
+            transition: height 0.5s ease-out;
+        }
+
+        .letterbox.top {
+            top: 0;
+            height: 0;
+        }
+
+        .letterbox.bottom {
+            bottom: 0;
+            height: 0;
+        }
+
+        /* Content area */
+        .cinematic-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        /* Chapter title card */
+        .chapter-title-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .chapter-title-card.visible {
+            opacity: 1;
+        }
+
+        .chapter-main-title {
+            font-size: 48px;
+            color: #FFD700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            margin-bottom: 15px;
+            animation: titleGlow 3s infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+            50% { text-shadow: 0 0 50px rgba(255, 215, 0, 0.8); }
+        }
+
+        .chapter-subtitle {
+            font-size: 24px;
+            color: #aaa;
+            font-style: italic;
+        }
+
+        /* Subtitle area */
+        .subtitle-container {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 1000px;
+            text-align: center;
+        }
+
+        .subtitle-box {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 25px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .subtitle-box.visible {
+            opacity: 1;
+        }
+
+        .subtitle-speaker {
+            font-size: 14px;
+            color: #FFD700;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .subtitle-text {
+            font-size: 20px;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        /* Skip prompt */
+        .skip-prompt {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .skip-prompt.visible {
+            opacity: 1;
+        }
+
+        .skip-text {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .skip-hold-indicator {
+            width: 100px;
+            height: 6px;
+            background: rgba(100, 100, 100, 0.5);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .skip-hold-fill {
+            height: 100%;
+            background: #FFD700;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .skip-key {
+            padding: 5px 10px;
+            background: rgba(100, 100, 100, 0.5);
+            border: 1px solid #666;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #333;
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #888;
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(100, 100, 100, 0.5);
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .loading-progress-fill {
+            height: 100%;
+            background: #FFD700;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Fade overlay for transitions */
+        .fade-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .fade-overlay.visible {
+            opacity: 1;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: absolute;
+            bottom: 5px;
+            left: 5%;
+            right: 5%;
+            height: 3px;
+            background: rgba(100, 100, 100, 0.3);
+            border-radius: 2px;
+            display: none;
+        }
+
+        .progress-bar.visible {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: rgba(255, 215, 0, 0.5);
+            width: 0%;
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="cinematic-container" id="cinematic-container">
+        <div class="letterbox top" id="letterbox-top"></div>
+
+        <div class="cinematic-content" id="cinematic-content">
+            <div class="chapter-title-card" id="chapter-title-card">
+                <div class="chapter-main-title" id="chapter-title"></div>
+                <div class="chapter-subtitle" id="chapter-subtitle"></div>
+            </div>
+
+            <div class="subtitle-container">
+                <div class="subtitle-box" id="subtitle-box">
+                    <div class="subtitle-speaker" id="subtitle-speaker"></div>
+                    <div class="subtitle-text" id="subtitle-text"></div>
+                </div>
+            </div>
+
+            <div class="skip-prompt" id="skip-prompt">
+                <span class="skip-text">Hold to skip</span>
+                <div class="skip-hold-indicator">
+                    <div class="skip-hold-fill" id="skip-fill"></div>
+                </div>
+                <span class="skip-key">SPACE</span>
+            </div>
+
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="letterbox bottom" id="letterbox-bottom"></div>
+
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loading-text">Loading...</div>
+            <div class="loading-progress">
+                <div class="loading-progress-fill" id="loading-progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="fade-overlay" id="fade-overlay"></div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const CinematicPlayer = {
+            isActive: false,
+            isSkipHeld: false,
+            skipProgress: 0,
+
+            init: function() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' && this.isActive) {
+                        this.startSkipHold();
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    if (e.code === 'Space') {
+                        this.endSkipHold();
+                    }
+                });
+            },
+
+            show: function() {
+                this.isActive = true;
+                document.getElementById('cinematic-container').classList.add('active');
+            },
+
+            hide: function() {
+                this.isActive = false;
+                document.getElementById('cinematic-container').classList.remove('active');
+            },
+
+            setLetterbox: function(data) {
+                const height = (data.height || 0) * 100 + '%';
+                document.getElementById('letterbox-top').style.height = height;
+                document.getElementById('letterbox-bottom').style.height = height;
+            },
+
+            showSubtitle: function(data) {
+                const speaker = document.getElementById('subtitle-speaker');
+                const text = document.getElementById('subtitle-text');
+                const box = document.getElementById('subtitle-box');
+
+                speaker.textContent = data.speaker || '';
+                speaker.style.display = data.speaker ? 'block' : 'none';
+                text.textContent = data.text || '';
+                box.classList.toggle('visible', !!data.text);
+            },
+
+            hideSubtitle: function() {
+                document.getElementById('subtitle-box').classList.remove('visible');
+            },
+
+            showChapterTitle: function(data) {
+                document.getElementById('chapter-title').textContent = data.title || '';
+                document.getElementById('chapter-subtitle').textContent = data.subtitle || '';
+                document.getElementById('chapter-title-card').classList.add('visible');
+            },
+
+            hideChapterTitle: function() {
+                document.getElementById('chapter-title-card').classList.remove('visible');
+            },
+
+            showSkipPrompt: function() {
+                document.getElementById('skip-prompt').classList.add('visible');
+            },
+
+            hideSkipPrompt: function() {
+                document.getElementById('skip-prompt').classList.remove('visible');
+            },
+
+            setSkipProgress: function(data) {
+                this.skipProgress = data.progress || 0;
+                document.getElementById('skip-fill').style.width = (this.skipProgress * 100) + '%';
+            },
+
+            startSkipHold: function() {
+                if (!this.isSkipHeld) {
+                    this.isSkipHeld = true;
+                    Engine.call('CinematicPlayer.startSkipHold', {});
+                }
+            },
+
+            endSkipHold: function() {
+                if (this.isSkipHeld) {
+                    this.isSkipHeld = false;
+                    Engine.call('CinematicPlayer.endSkipHold', {});
+                }
+            },
+
+            setProgress: function(data) {
+                document.getElementById('progress-fill').style.width = (data.progress || 0) * 100 + '%';
+            },
+
+            showProgress: function() {
+                document.getElementById('progress-bar').classList.add('visible');
+            },
+
+            hideProgress: function() {
+                document.getElementById('progress-bar').classList.remove('visible');
+            },
+
+            showLoading: function(data) {
+                document.getElementById('loading-text').textContent = data.message || 'Loading...';
+                document.getElementById('loading-overlay').classList.add('visible');
+            },
+
+            hideLoading: function() {
+                document.getElementById('loading-overlay').classList.remove('visible');
+            },
+
+            setLoadingProgress: function(data) {
+                document.getElementById('loading-progress-fill').style.width = (data.progress || 0) * 100 + '%';
+            },
+
+            fadeIn: function() {
+                document.getElementById('fade-overlay').classList.remove('visible');
+            },
+
+            fadeOut: function() {
+                document.getElementById('fade-overlay').classList.add('visible');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => CinematicPlayer.init());
+        window.CinematicPlayer = CinematicPlayer;
+    </script>
+</body>
+</html>

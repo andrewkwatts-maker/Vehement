@@ -1,0 +1,287 @@
+{
+    "id": "naga_tidal_lord",
+    "type": "unit",
+    "name": "Tidal Lord",
+    "description": "Supreme masters of water magic who have transcended mortal limits. These ancient sorcerers wield power over the very essence of the ocean, commanding tides and storms.",
+    "race": "naga",
+    "tier": 4,
+    "class": "ultimate_caster",
+
+    "tags": ["military", "caster", "ranged", "tier4", "amphibious", "legendary", "water_magic", "storm_magic"],
+
+    "model": {
+        "path": "models/races/naga/units/tidal_lord.obj",
+        "scale": [1.3, 1.3, 1.3],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/tidal_lord_diffuse.png",
+        "normal": "textures/races/naga/units/tidal_lord_normal.png",
+        "emissive": "textures/races/naga/units/tidal_lord_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.5,
+                "height": 2.4,
+                "offset": [0.0, 1.2, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 130.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 4.5,
+        "turnRate": 300.0,
+        "acceleration": 12.0,
+        "deceleration": 16.0,
+        "canSwim": true,
+        "swimSpeed": 6.0,
+        "amphibious": true,
+        "canHover": true,
+        "hoverHeight": 0.5,
+        "terrainModifiers": {
+            "road": 1.0,
+            "forest": 0.9,
+            "water": 1.5,
+            "deep_water": 1.6,
+            "desert": 0.6
+        }
+    },
+
+    "combat": {
+        "health": 600,
+        "maxHealth": 600,
+        "mana": 500,
+        "maxMana": 500,
+        "manaRegen": 4.0,
+        "armor": 3,
+        "magicResist": 12,
+        "attackDamage": 45,
+        "attackSpeed": 1.8,
+        "attackRange": 13.0,
+        "critChance": 0.15,
+        "critMultiplier": 2.0,
+        "magicalDamage": true,
+        "damageType": "water",
+        "armorType": "light",
+        "spellPower": 150
+    },
+
+    "projectile": {
+        "id": "tidal_bolt",
+        "model": "models/projectiles/tidal_bolt.obj",
+        "speed": 25.0,
+        "lifetime": 2.0,
+        "gravity": 0.0,
+        "trailEffect": "effects/tidal_trail.fx",
+        "impactEffect": "effects/tidal_impact.fx",
+        "soundOnFire": "sounds/spells/tidal_bolt.wav",
+        "splash_radius": 2.0,
+        "splash_damage": 0.5
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "spell_power_bonus": 0.5,
+            "mana_regen_bonus": 3.0,
+            "cooldown_reduction": 0.2
+        },
+        "in_water": {
+            "health_regen": 10.0,
+            "spell_power_bonus": 0.25,
+            "damage_reduction": 0.15
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "avatar_of_the_tides",
+            "name": "Avatar of the Tides",
+            "description": "All water and frost spells deal 30% more damage and cost 20% less mana.",
+            "effect": {
+                "type": "spell_buff",
+                "schools": ["water", "frost"],
+                "damage_bonus": 0.3,
+                "cost_reduction": 0.2
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and gains massive spell power near water."
+        },
+        {
+            "id": "tidal_aura",
+            "name": "Tidal Aura",
+            "description": "Nearby friendly units gain +20% spell power and +2 mana regen. Nearby enemies are slowed by 15%.",
+            "aura": {
+                "radius": 10.0,
+                "ally_effects": [
+                    {"stat": "spell_power", "type": "percent", "value": 20},
+                    {"stat": "mana_regen", "type": "flat", "value": 2}
+                ],
+                "enemy_effects": [
+                    {"type": "slow", "value": 0.15}
+                ]
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "tsunami",
+            "name": "Tsunami",
+            "description": "Summons a massive tidal wave that travels across the battlefield, dealing 300 damage and knocking enemies aside.",
+            "icon": "icons/abilities/naga/tsunami.png",
+            "cooldown": 50.0,
+            "manaCost": 180,
+            "range": 20.0,
+            "targetType": "direction",
+            "width": 10.0,
+            "effects": [
+                {"type": "damage", "amount": 300, "damage_type": "water"},
+                {"type": "knockback", "distance": 8.0},
+                {"type": "stun", "duration": 1.5}
+            ],
+            "castTime": 1.5,
+            "castAnimation": "tsunami",
+            "castSound": "sounds/abilities/tsunami.wav"
+        },
+        {
+            "id": "maelstrom",
+            "name": "Maelstrom",
+            "description": "Creates a devastating whirlpool that pulls enemies to its center, dealing 50 damage per second for 8 seconds.",
+            "icon": "icons/abilities/naga/maelstrom.png",
+            "cooldown": 40.0,
+            "manaCost": 150,
+            "range": 14.0,
+            "radius": 7.0,
+            "targetType": "ground",
+            "duration": 8.0,
+            "effects": [
+                {"type": "pull_to_center", "strength": 3.0},
+                {"type": "damage_over_time", "damage_per_second": 50, "damage_type": "water"},
+                {"type": "slow", "value": 0.5}
+            ],
+            "castTime": 1.0,
+            "castAnimation": "maelstrom",
+            "castSound": "sounds/abilities/maelstrom.wav"
+        },
+        {
+            "id": "ice_storm",
+            "name": "Ice Storm",
+            "description": "Calls down a storm of ice shards in a large area, dealing 200 damage and freezing enemies for 3 seconds.",
+            "icon": "icons/abilities/naga/ice_storm.png",
+            "cooldown": 35.0,
+            "manaCost": 130,
+            "range": 15.0,
+            "radius": 8.0,
+            "targetType": "ground",
+            "effects": [
+                {"type": "damage", "amount": 200, "damage_type": "frost"},
+                {"type": "freeze", "duration": 3.0}
+            ],
+            "castTime": 0.8,
+            "castAnimation": "ice_storm",
+            "castSound": "sounds/abilities/ice_storm.wav"
+        },
+        {
+            "id": "ocean_blessing",
+            "name": "Ocean's Blessing",
+            "description": "Channels the healing power of the ocean, restoring 400 health to all allies in range over 6 seconds and cleansing debuffs.",
+            "icon": "icons/abilities/naga/ocean_blessing.png",
+            "cooldown": 45.0,
+            "manaCost": 120,
+            "radius": 12.0,
+            "targetType": "self_aoe",
+            "duration": 6.0,
+            "effects": [
+                {"type": "heal_over_time", "total_heal": 400},
+                {"type": "cleanse", "all_debuffs": true}
+            ],
+            "castTime": 0.5,
+            "castAnimation": "blessing",
+            "castSound": "sounds/abilities/ocean_blessing.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/tidal_lord/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/tidal_lord/hover.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/tidal_lord/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/tidal_lord/cast_attack.anim",
+            "loop": false,
+            "events": [[0.4, "fire_projectile"]]
+        },
+        "tsunami": {"path": "animations/naga/tidal_lord/tsunami.anim", "loop": false},
+        "maelstrom": {"path": "animations/naga/tidal_lord/maelstrom.anim", "loop": false},
+        "ice_storm": {"path": "animations/naga/tidal_lord/ice_storm.anim", "loop": false},
+        "blessing": {"path": "animations/naga/tidal_lord/blessing.anim", "loop": false},
+        "death": {"path": "animations/naga/tidal_lord/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/water_hover.wav"],
+            "volume": 0.3
+        },
+        "attack": "sounds/combat/tidal_bolt.wav",
+        "death": {"paths": ["sounds/death/tidal_lord_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/tidal_lord_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/tidal_lord_ack_1.wav",
+                "sounds/voice/naga/tidal_lord_ack_2.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_tidal_lord.bt",
+        "profile": "ultimate_caster",
+        "aggroRange": 16.0,
+        "leashRange": 25.0,
+        "preferWater": true,
+        "keepDistance": 12.0
+    },
+
+    "production": {
+        "building": "naga_siren_shrine",
+        "time": 85.0,
+        "cost": {
+            "gold": 750,
+            "coral": 300,
+            "pearls": 200,
+            "abyssal_essence": 180
+        },
+        "requirements": {
+            "age": "age_primordial",
+            "techs": ["naga_tidal_mastery"],
+            "buildings": ["naga_palace_of_waves"]
+        },
+        "limit": 2
+    },
+
+    "properties": {
+        "populationCost": 6,
+        "supplyUpkeep": 5,
+        "squadSize": 1,
+        "experienceValue": 200,
+        "bountyGold": 175,
+        "isLegendary": true
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/tidal_lord/on_spawn.py",
+        "on_death": "scripts/units/naga/tidal_lord/on_death.py"
+    }
+}

@@ -1,0 +1,184 @@
+{
+    "id": "fairy_enchantress",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Enchantress",
+    "description": "Master illusionists who bend reality itself. Enchantresses can create mirror images, confuse enemies, and control the battlefield with powerful enchantments.",
+
+    "tags": ["military", "caster", "tier3", "illusion", "control"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/fairies/units/enchantress.obj",
+        "scale": [0.95, 0.95, 0.95],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/enchantress_diffuse.png",
+        "normal": "textures/races/fairies/units/enchantress_normal.png",
+        "emissive": "textures/races/fairies/units/enchantress_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.25,
+                "height": 1.6,
+                "offset": [0.0, 0.8, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 50.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 380,
+        "maxHealth": 380,
+        "healthRegen": 0.5,
+        "mana": 500,
+        "maxMana": 500,
+        "manaRegen": 3.0,
+        "armor": 0,
+        "magicResist": 35,
+        "moveSpeed": 5.0,
+        "turnRate": 350.0
+    },
+
+    "combat": {
+        "attackDamage": 20,
+        "attackSpeed": 1.8,
+        "attackRange": 10.0,
+        "damageType": "magic",
+        "armorType": "light",
+        "attackType": "ranged",
+        "projectile": "illusion_bolt",
+        "projectile_speed": 22.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_mirror_image_unit",
+            "name": "Mirror Image",
+            "description": "Create illusory copies of a friendly unit that deal reduced damage",
+            "hotkey": "M",
+            "cooldown": 25.0,
+            "mana_cost": 80,
+            "range": 10.0,
+            "effects": [
+                {"type": "create_illusions", "count": 2, "duration": 45.0},
+                {"type": "illusion_damage_dealt", "value": 0.25},
+                {"type": "illusion_damage_taken", "value": 3.0}
+            ]
+        },
+        {
+            "id": "ability_confusion",
+            "name": "Confusion",
+            "description": "Confuse enemies in an area, causing them to attack random targets",
+            "hotkey": "C",
+            "cooldown": 30.0,
+            "mana_cost": 100,
+            "range": 14.0,
+            "radius": 5.0,
+            "duration": 8.0,
+            "effects": [
+                {"type": "confusion", "value": true},
+                {"type": "attack_random_target", "value": true}
+            ]
+        },
+        {
+            "id": "ability_phantom_army",
+            "name": "Phantom Army",
+            "description": "Summon multiple illusory soldiers to fight for the Fae",
+            "hotkey": "P",
+            "cooldown": 60.0,
+            "mana_cost": 150,
+            "radius": 8.0,
+            "effects": [
+                {"type": "summon_illusions", "unit": "fairy_phantom_warrior", "count": 6, "duration": 30.0}
+            ]
+        },
+        {
+            "id": "ability_invisibility_enchantress",
+            "name": "Vanish",
+            "description": "Turn invisible and gain bonus movement speed",
+            "hotkey": "V",
+            "cooldown": 20.0,
+            "mana_cost": 50,
+            "duration": 15.0,
+            "effects": [
+                {"type": "invisibility", "value": true},
+                {"type": "move_speed_bonus", "value": 0.30}
+            ]
+        }
+    ],
+
+    "night_bonus": {
+        "manaRegen": 0.50,
+        "illusion_duration": 0.30,
+        "illusion_damage": 0.15
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_enchantress_magic",
+            "stat": "spell_power",
+            "bonus_per_level": 0.12
+        },
+        {
+            "id": "upgrade_moonstone_armor",
+            "stat": "magicResist",
+            "bonus_per_level": 5
+        }
+    ],
+
+    "production": {
+        "building": "fairy_ancient_of_lore",
+        "cost": {
+            "gold": 260,
+            "wood": 50,
+            "food": 4
+        },
+        "build_time": 40.0,
+        "population_cost": 3,
+        "prerequisites": ["fairy_tree_of_eternity", "upgrade_master_illusions"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/illusionist.bt",
+        "profile": "support",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "cast_priority": ["ability_confusion", "ability_mirror_image_unit", "ability_phantom_army"],
+        "use_vanish_when_focused": true,
+        "vanish_health_threshold": 0.3
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/enchantress/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/enchantress/walk.anim", "loop": true},
+        "attack": {"path": "animations/fairies/enchantress/attack.anim", "loop": false},
+        "cast": {"path": "animations/fairies/enchantress/cast.anim", "loop": false},
+        "vanish": {"path": "animations/fairies/enchantress/vanish.anim", "loop": false},
+        "death": {"path": "animations/fairies/enchantress/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/enchantress/select_1.wav", "sounds/fairies/enchantress/select_2.wav"],
+        "acknowledge": ["sounds/fairies/enchantress/ack_1.wav", "sounds/fairies/enchantress/ack_2.wav"],
+        "attack": "sounds/fairies/enchantress/attack.wav",
+        "cast": "sounds/fairies/enchantress/cast.wav",
+        "confusion": "sounds/fairies/enchantress/confusion.wav",
+        "death": "sounds/fairies/enchantress/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/enchantress.png",
+        "icon": "textures/races/fairies/icons/enchantress.png",
+        "hotkey": "E"
+    }
+}

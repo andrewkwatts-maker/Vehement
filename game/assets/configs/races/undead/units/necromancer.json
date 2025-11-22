@@ -1,0 +1,209 @@
+{
+  "id": "necromancer",
+  "name": "Necromancer",
+  "race": "undead",
+  "tier": 2,
+  "type": "caster",
+  "role": ["caster", "summoner", "support"],
+
+  "description": "Dark spellcasters who raise skeletons from corpses and empower undead allies with unholy magic.",
+  "lore": "Masters of the dark arts who have pledged their souls to the Scourge. Necromancers wield the power of death itself, turning the fallen into soldiers for the undead armies.",
+
+  "stats": {
+    "health": 305,
+    "healthRegen": 0.25,
+    "mana": 300,
+    "manaRegen": 0.8,
+    "armor": 0,
+    "armorType": "unarmored",
+    "moveSpeed": 230,
+    "turnRate": 0.6,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 10,
+      "variance": 2,
+      "type": "magic"
+    },
+    "attackSpeed": 1.75,
+    "attackRange": 600,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/shadow_bolt.glb",
+      "speed": 900,
+      "arc": 0
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "acquisitionRange": 600,
+    "aggroRange": 500
+  },
+
+  "abilities": [
+    {
+      "id": "raise_dead",
+      "name": "Raise Dead",
+      "type": "active",
+      "targetType": "corpse",
+      "autocast": true,
+      "description": "Raises 2 Skeleton Warriors from a corpse",
+      "cooldown": 1.0,
+      "manaCost": 75,
+      "range": 450,
+      "effects": {
+        "summonCount": 2,
+        "summonUnit": "skeleton_warrior",
+        "summonDuration": 40.0,
+        "consumesCorpse": true
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/raise_dead.png"
+    },
+    {
+      "id": "unholy_frenzy",
+      "name": "Unholy Frenzy",
+      "type": "active",
+      "targetType": "unit",
+      "autocast": false,
+      "description": "Increases target's attack speed at the cost of draining health",
+      "cooldown": 3.0,
+      "manaCost": 50,
+      "range": 500,
+      "effects": {
+        "attackSpeedBonus": 0.75,
+        "healthDrainPerSecond": 4,
+        "duration": 45.0
+      },
+      "hotkey": "U",
+      "icon": "icons/abilities/unholy_frenzy.png"
+    },
+    {
+      "id": "cripple",
+      "name": "Cripple",
+      "type": "active",
+      "targetType": "unit",
+      "requiresResearch": "cripple_upgrade",
+      "description": "Reduces enemy movement, attack rate, and damage",
+      "cooldown": 10.0,
+      "manaCost": 100,
+      "range": 600,
+      "effects": {
+        "moveSpeedReduction": 0.75,
+        "attackSpeedReduction": 0.50,
+        "damageReduction": 0.50,
+        "duration": 20.0
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/cripple.png"
+    },
+    {
+      "id": "skeletal_mastery",
+      "name": "Skeletal Mastery",
+      "type": "passive",
+      "requiresResearch": "skeletal_mastery",
+      "description": "Raised skeletons have increased health and last longer",
+      "effects": {
+        "skeletonHealthBonus": 100,
+        "skeletonDurationBonus": 20.0
+      }
+    }
+  ],
+
+  "production": {
+    "producedAt": "temple_of_the_damned",
+    "buildTime": 28,
+    "cost": {
+      "gold": 145,
+      "lumber": 20,
+      "corpses": 0
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["temple_of_the_damned"],
+      "technologies": [],
+      "age": "necropolis"
+    },
+    "hotkey": "N"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["cripple_upgrade", "skeletal_mastery", "necromancer_adept", "necromancer_master"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/necromancer/ready.ogg",
+    "select": ["audio/units/necromancer/select1.ogg", "audio/units/necromancer/select2.ogg"],
+    "move": ["audio/units/necromancer/move1.ogg", "audio/units/necromancer/move2.ogg"],
+    "attack": ["audio/units/necromancer/attack1.ogg"],
+    "death": "audio/units/necromancer/death.ogg",
+    "raiseDead": "audio/units/necromancer/raise_dead.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/necromancer.glb",
+    "texture": "textures/units/undead/necromancer.png",
+    "portrait": "textures/portraits/necromancer.png",
+    "icon": "textures/icons/necromancer.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "necromancer_idle",
+      "walk": "necromancer_walk",
+      "attack": "necromancer_attack",
+      "death": "necromancer_death",
+      "cast": "necromancer_cast"
+    },
+    "effects": {
+      "spawn": "effects/dark_summon.vfx",
+      "death": "effects/necromancer_death.vfx",
+      "raiseDead": "effects/raise_dead.vfx",
+      "unholyFrenzy": "effects/unholy_frenzy.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "high",
+    "behavior": "support",
+    "fleeThreshold": 0.3,
+    "preferredTargets": [],
+    "maintainDistance": true,
+    "autoRaiseDead": true,
+    "prioritizeFrenzyTargets": ["melee", "hero"]
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isCaster": true,
+    "isSummoner": true
+  },
+
+  "bounty": {
+    "gold": 20,
+    "experience": 30
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

@@ -1,0 +1,148 @@
+{
+  "id": "stalker",
+  "name": "Stalker",
+  "display_name": "Stalker",
+  "description": "Ranged warriors piloting agile mechanical walkers, Stalkers are the versatile backbone of the Collective military. Their particle disruptors can engage both ground and air targets, while their Blink ability allows tactical repositioning.",
+  "race": "aliens",
+  "tier": 1,
+  "unit_type": "infantry",
+  "classification": ["mechanical", "ranged", "walker"],
+
+  "stats": {
+    "health": 80,
+    "health_regen": 0,
+    "shield": 80,
+    "shield_regen": 1.6,
+    "shield_regen_delay": 10.0,
+    "armor": 1,
+    "shield_armor": 0,
+    "move_speed": 4.13,
+    "acceleration": 999,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 13,
+    "attack_bonus_damage": 5,
+    "bonus_vs": ["armored"],
+    "attack_speed": 1.44,
+    "attack_range": 6,
+    "attack_type": "ranged",
+    "damage_type": "normal",
+    "targets": ["ground", "air"],
+    "projectile": {
+      "speed": 18,
+      "model": "fx_particle_disruptor"
+    },
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  "production": {
+    "build_time": 42,
+    "warp_time": 32,
+    "supply_cost": 2,
+    "resource_cost": {
+      "minerals": 125,
+      "vespene": 50
+    },
+    "power_cost": 0,
+    "produced_at": "gateway",
+    "warp_at": "warp_gate",
+    "requirements": ["cyber_core"],
+    "hotkey": "S"
+  },
+
+  "abilities": [
+    {
+      "id": "blink",
+      "name": "Blink",
+      "description": "Instantly teleport to a target location within range. Allows Stalkers to pursue enemies, escape danger, or traverse terrain.",
+      "type": "active",
+      "cooldown": 7.0,
+      "range": 8.0,
+      "energy_cost": 0,
+      "requires_upgrade": "blink_upgrade",
+      "unlocked_default": false,
+      "hotkey": "B"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "blink_upgrade",
+      "name": "Blink",
+      "description": "Enables the Blink ability for Stalkers",
+      "researched_at": "cybernetics_bay",
+      "cost": {
+        "minerals": 150,
+        "vespene": 150
+      },
+      "research_time": 170
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_armored": true,
+    "is_light": false,
+    "is_massive": false,
+    "cargo_size": 2,
+    "can_be_warped": true,
+    "can_blink": false
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 20,
+    "selection_radius": 0.75,
+    "target_radius": 0.625
+  },
+
+  "visuals": {
+    "model": "models/aliens/stalker.fbx",
+    "texture": "textures/aliens/stalker.png",
+    "icon": "icons/aliens/stalker.png",
+    "wireframe": "wireframes/aliens/stalker.png",
+    "portrait": "portraits/aliens/stalker.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "blink_out": "anim_blink_out",
+      "blink_in": "anim_blink_in",
+      "death": "anim_death"
+    },
+    "effects": {
+      "blink": "fx_blink",
+      "attack": "fx_particle_disruptor",
+      "shields": "fx_shield_shimmer"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/stalker_ready.ogg",
+    "selected": ["audio/aliens/stalker_select1.ogg", "audio/aliens/stalker_select2.ogg"],
+    "command": ["audio/aliens/stalker_command1.ogg", "audio/aliens/stalker_command2.ogg"],
+    "attack": "audio/aliens/stalker_attack.ogg",
+    "blink": "audio/aliens/stalker_blink.ogg",
+    "death": "audio/aliens/stalker_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "ranged_dps",
+    "priority_targets": ["armored", "air"],
+    "flee_when_attacked": false,
+    "micro_level": "high",
+    "preferred_formation": "back",
+    "use_ability_on_low_health": true
+  }
+}

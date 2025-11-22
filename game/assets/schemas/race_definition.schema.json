@@ -1,0 +1,376 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "race_definition.schema.json",
+  "title": "Race Definition",
+  "description": "Schema for RTS race definitions in the Vehement game engine",
+  "type": "object",
+  "required": ["id", "name", "theme", "allocation"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the race",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the race",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the race",
+      "maxLength": 1024
+    },
+    "theme": {
+      "type": "string",
+      "description": "Visual and gameplay theme",
+      "enum": ["fantasy", "scifi", "horror", "nature", "steampunk", "mystical", "tribal", "imperial"]
+    },
+    "allocation": {
+      "$ref": "#/definitions/pointAllocation"
+    },
+    "unitArchetypes": {
+      "type": "array",
+      "description": "List of unit archetype IDs available to this race",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "buildingArchetypes": {
+      "type": "array",
+      "description": "List of building archetype IDs available to this race",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "heroArchetypes": {
+      "type": "array",
+      "description": "List of hero archetype IDs available to this race",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "spellArchetypes": {
+      "type": "array",
+      "description": "List of spell archetype IDs available to this race",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "bonusIds": {
+      "type": "array",
+      "description": "List of racial bonus IDs",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "talentTreeId": {
+      "type": "string",
+      "description": "ID of the talent tree for this race"
+    },
+    "techTreeId": {
+      "type": "string",
+      "description": "ID of the technology tree for this race"
+    },
+    "visualStyle": {
+      "$ref": "#/definitions/visualStyle"
+    },
+    "startingConfig": {
+      "$ref": "#/definitions/startingConfig"
+    },
+    "campaign": {
+      "$ref": "#/definitions/campaignInfo"
+    },
+    "restrictions": {
+      "$ref": "#/definitions/restrictions"
+    }
+  },
+  "definitions": {
+    "pointAllocation": {
+      "type": "object",
+      "description": "Point distribution across categories",
+      "required": ["military", "economy", "magic", "technology"],
+      "properties": {
+        "military": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Points allocated to military"
+        },
+        "economy": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Points allocated to economy"
+        },
+        "magic": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Points allocated to magic"
+        },
+        "technology": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Points allocated to technology"
+        },
+        "militaryAlloc": {
+          "$ref": "#/definitions/militaryAllocation"
+        },
+        "economyAlloc": {
+          "$ref": "#/definitions/economyAllocation"
+        },
+        "magicAlloc": {
+          "$ref": "#/definitions/magicAllocation"
+        },
+        "techAlloc": {
+          "$ref": "#/definitions/techAllocation"
+        }
+      }
+    },
+    "militaryAllocation": {
+      "type": "object",
+      "description": "Sub-allocation within military category",
+      "properties": {
+        "infantry": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "ranged": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "cavalry": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "siege": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "economyAllocation": {
+      "type": "object",
+      "description": "Sub-allocation within economy category",
+      "properties": {
+        "harvestSpeed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "buildSpeed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "carryCapacity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "tradeProfits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "magicAllocation": {
+      "type": "object",
+      "description": "Sub-allocation within magic category",
+      "properties": {
+        "spellDamage": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "spellRange": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "manaCost": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "cooldownReduction": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "techAllocation": {
+      "type": "object",
+      "description": "Sub-allocation within technology category",
+      "properties": {
+        "researchSpeed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "ageUpCost": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "uniqueTechs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "visualStyle": {
+      "type": "object",
+      "description": "Visual theming for the race",
+      "properties": {
+        "primaryColor": {
+          "type": "string",
+          "description": "Primary color in hex format",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "secondaryColor": {
+          "type": "string",
+          "description": "Secondary color in hex format",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "accentColor": {
+          "type": "string",
+          "description": "Accent color in hex format",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "buildingStyle": {
+          "type": "string",
+          "description": "Architectural style for buildings"
+        },
+        "unitStyle": {
+          "type": "string",
+          "description": "Visual style for units"
+        },
+        "iconSet": {
+          "type": "string",
+          "description": "Icon set to use for UI"
+        },
+        "musicTheme": {
+          "type": "string",
+          "description": "Background music theme"
+        }
+      }
+    },
+    "startingConfig": {
+      "type": "object",
+      "description": "Starting conditions for this race",
+      "properties": {
+        "startingUnits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unitId": { "type": "string" },
+              "count": { "type": "integer", "minimum": 1 }
+            },
+            "required": ["unitId", "count"]
+          }
+        },
+        "startingBuildings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "buildingId": { "type": "string" },
+              "count": { "type": "integer", "minimum": 1 }
+            },
+            "required": ["buildingId", "count"]
+          }
+        },
+        "startingResources": {
+          "type": "object",
+          "properties": {
+            "gold": { "type": "integer", "minimum": 0 },
+            "wood": { "type": "integer", "minimum": 0 },
+            "food": { "type": "integer", "minimum": 0 },
+            "stone": { "type": "integer", "minimum": 0 },
+            "mana": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "startingPopCap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Initial population cap"
+        }
+      }
+    },
+    "campaignInfo": {
+      "type": "object",
+      "description": "Campaign-related information",
+      "properties": {
+        "hasCampaign": {
+          "type": "boolean",
+          "description": "Whether this race has a campaign"
+        },
+        "campaignId": {
+          "type": "string",
+          "description": "ID of the campaign"
+        },
+        "isPlayable": {
+          "type": "boolean",
+          "description": "Whether the race is playable in skirmish/multiplayer"
+        },
+        "unlockCondition": {
+          "type": "string",
+          "description": "Condition to unlock this race"
+        }
+      }
+    },
+    "restrictions": {
+      "type": "object",
+      "description": "Gameplay restrictions for this race",
+      "properties": {
+        "canBuildWalls": {
+          "type": "boolean",
+          "default": true
+        },
+        "canBuildNaval": {
+          "type": "boolean",
+          "default": true
+        },
+        "canUseMagic": {
+          "type": "boolean",
+          "default": true
+        },
+        "maxHeroes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 3
+        },
+        "maxPopulation": {
+          "type": "integer",
+          "minimum": 10,
+          "default": 200
+        },
+        "forbiddenUnitTypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "forbiddenBuildingTypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

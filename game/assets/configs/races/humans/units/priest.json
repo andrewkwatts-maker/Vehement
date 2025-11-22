@@ -1,0 +1,175 @@
+{
+    "id": "human_priest",
+    "type": "unit",
+    "race": "humans",
+    "name": "Priest",
+    "description": "Holy servants of the Light who channel divine power to heal allies and smite the unholy. Essential for sustained military campaigns.",
+
+    "tags": ["military", "caster", "support", "healer", "tier2", "light"],
+
+    "tier": 2,
+    "age_requirement": 3,
+
+    "model": {
+        "path": "models/races/humans/units/priest.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/priest_diffuse.png",
+        "normal": "textures/races/humans/units/priest_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.28,
+                "height": 1.75,
+                "offset": [0.0, 0.875, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 70.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 200,
+        "maxHealth": 200,
+        "healthRegen": 0.5,
+        "mana": 250,
+        "maxMana": 250,
+        "manaRegen": 1.5,
+        "armor": 0,
+        "magicResist": 20,
+        "moveSpeed": 4.5,
+        "turnRate": 340.0
+    },
+
+    "combat": {
+        "attackDamage": 8,
+        "attackSpeed": 1.8,
+        "attackRange": 8.0,
+        "damageType": "holy",
+        "armorType": "light",
+        "attackType": "ranged",
+        "bonus_vs_tags": ["undead", "demon"],
+        "bonus_damage": 15
+    },
+
+    "abilities": [
+        {
+            "id": "ability_heal",
+            "name": "Heal",
+            "description": "Restore 75 health to a friendly unit",
+            "hotkey": "Q",
+            "cooldown": 1.5,
+            "mana_cost": 25,
+            "range": 10.0,
+            "target_type": "friendly_unit",
+            "heal_amount": 75,
+            "auto_cast": true
+        },
+        {
+            "id": "ability_dispel_magic",
+            "name": "Dispel Magic",
+            "description": "Remove magical buffs from enemies or debuffs from allies in target area",
+            "hotkey": "W",
+            "cooldown": 8.0,
+            "mana_cost": 50,
+            "range": 12.0,
+            "radius": 4.0,
+            "target_type": "ground"
+        },
+        {
+            "id": "ability_inner_fire",
+            "name": "Inner Fire",
+            "description": "Buff a friendly unit with +10% damage and +3 armor for 60 seconds",
+            "hotkey": "E",
+            "cooldown": 4.0,
+            "mana_cost": 35,
+            "range": 10.0,
+            "duration": 60.0,
+            "target_type": "friendly_unit",
+            "effects": [
+                {"stat": "attackDamage", "value": 0.10, "type": "percent"},
+                {"stat": "armor", "value": 3, "type": "flat"}
+            ],
+            "auto_cast": true
+        },
+        {
+            "id": "ability_slow",
+            "name": "Slow",
+            "description": "Reduce target enemy movement and attack speed by 40% for 8 seconds",
+            "hotkey": "R",
+            "cooldown": 6.0,
+            "mana_cost": 40,
+            "range": 10.0,
+            "duration": 8.0,
+            "target_type": "enemy_unit",
+            "effects": [
+                {"stat": "move_speed", "value": -0.40},
+                {"stat": "attack_speed", "value": -0.40}
+            ],
+            "required_upgrade": "upgrade_priest_slow"
+        }
+    ],
+
+    "aura": {
+        "id": "aura_devotion",
+        "name": "Devotion Aura",
+        "description": "Nearby friendly units regenerate health 50% faster",
+        "radius": 8.0,
+        "effects": [
+            {"stat": "healthRegen", "value": 0.50, "type": "percent"}
+        ],
+        "required_upgrade": "upgrade_devotion_aura"
+    },
+
+    "production": {
+        "building": "human_church",
+        "cost": {
+            "gold": 180,
+            "food": 2
+        },
+        "build_time": 32.0,
+        "population_cost": 2,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/healer.bt",
+        "profile": "support",
+        "aggroRange": 6.0,
+        "leashRange": 15.0,
+        "heal_priority": true,
+        "stay_behind_threshold": 0.8,
+        "flee_threshold": 0.4
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/priest/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/priest/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/priest/run.anim", "loop": true},
+        "cast": {"path": "animations/humans/priest/cast.anim", "loop": false, "events": [[0.5, "cast_spell"]]},
+        "heal": {"path": "animations/humans/priest/heal.anim", "loop": false},
+        "attack": {"path": "animations/humans/priest/attack.anim", "loop": false},
+        "death": {"path": "animations/humans/priest/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/priest/select_1.wav", "sounds/humans/priest/select_2.wav"],
+        "acknowledge": ["sounds/humans/priest/ack_1.wav", "sounds/humans/priest/ack_2.wav"],
+        "cast": "sounds/holy_cast.wav",
+        "heal": "sounds/heal.wav",
+        "death": "sounds/humans/priest/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/priest.png",
+        "icon": "textures/races/humans/icons/priest.png",
+        "hotkey": "T"
+    }
+}

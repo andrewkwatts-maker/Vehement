@@ -1,0 +1,156 @@
+{
+  "$schema": "../../../../../schemas/mission.schema.json",
+  "id": "mission_human_1_1",
+  "title": "The Dead March",
+  "description": "Undead forces have been spotted approaching Thornwall Keep. Organize the militia and prepare the defenses before the enemy arrives.",
+  "missionNumber": 1,
+
+  "mapFile": "maps/campaign/human/thornwall_defense.map",
+  "mapName": "Thornwall Keep",
+  "playerStartPosition": "pos_keep_courtyard",
+
+  "objectives": [
+    {
+      "id": "obj_train_militia",
+      "title": "Train Militia",
+      "description": "Train 10 militia units to defend the keep",
+      "type": "train",
+      "priority": "primary",
+      "target": {
+        "targetType": "unit_militia",
+        "count": 10
+      },
+      "hints": [
+        {
+          "text": "Click on the Barracks and select 'Train Militia' to begin recruitment",
+          "showAfterSeconds": 30
+        }
+      ]
+    },
+    {
+      "id": "obj_build_walls",
+      "title": "Fortify the Keep",
+      "description": "Build 5 wall segments to strengthen the defenses",
+      "type": "build",
+      "priority": "primary",
+      "target": {
+        "targetType": "building_wall",
+        "count": 5
+      }
+    },
+    {
+      "id": "obj_survive_attack",
+      "title": "Survive the First Wave",
+      "description": "Hold the keep against the initial undead assault",
+      "type": "survive",
+      "priority": "primary",
+      "target": {
+        "duration": 300
+      },
+      "prerequisites": ["obj_train_militia", "obj_build_walls"]
+    },
+    {
+      "id": "obj_save_villagers",
+      "title": "Rescue Villagers",
+      "description": "Guide 20 villagers to safety inside the keep",
+      "type": "escort",
+      "priority": "secondary",
+      "target": {
+        "targetType": "unit_villager",
+        "count": 20
+      },
+      "reward": {
+        "gold": 200,
+        "experience": 50
+      }
+    }
+  ],
+
+  "primaryObjectives": ["obj_train_militia", "obj_build_walls", "obj_survive_attack"],
+  "secondaryObjectives": ["obj_save_villagers"],
+
+  "victoryCondition": "all_primary",
+  "defeatCondition": "base_destroyed",
+
+  "startingResources": {
+    "gold": 300,
+    "wood": 200,
+    "stone": 150,
+    "food": 100,
+    "supply": 5,
+    "maxSupply": 50
+  },
+
+  "unitRestrictions": {
+    "availableUnits": ["unit_militia", "unit_archer"],
+    "startingUnits": [
+      { "unitType": "unit_militia", "count": 5, "position": "pos_courtyard" },
+      { "unitType": "unit_commander", "count": 1, "position": "pos_keep_entrance" }
+    ]
+  },
+
+  "buildingRestrictions": {
+    "availableBuildings": ["building_barracks", "building_wall", "building_tower"],
+    "startingBuildings": [
+      { "buildingType": "building_keep", "position": "pos_keep_center" },
+      { "buildingType": "building_barracks", "position": "pos_barracks" }
+    ]
+  },
+
+  "briefing": {
+    "title": "The Dead March",
+    "subtitle": "Chapter 1, Mission 1",
+    "storyText": "Commander Aldric,\n\nScout reports confirm our worst fears - a massive undead horde approaches from the north. We have perhaps an hour before they reach our walls.\n\nThe garrison is depleted from recent skirmishes. We must train every able-bodied villager who seeks shelter here. Our walls are crumbling - shore up the defenses wherever possible.\n\nHold Thornwall at all costs. If we fall, there is nothing between the dead and the heartland.\n\nFor the Alliance!\n- General Marcus",
+    "objectiveSummary": "Train militia, fortify the keep, and survive the undead assault.",
+    "tips": [
+      "Build walls near chokepoints to funnel enemies",
+      "Position archers on high ground for bonus damage",
+      "Villagers can be recruited at the Town Center"
+    ],
+    "mapPreviewImage": "campaigns/human/missions/m1_1_preview.png"
+  },
+
+  "debriefing": {
+    "victoryTitle": "The Line Holds",
+    "victoryText": "The first wave has been repelled, but scouts report more undead gathering in the forests. The kingdom must be warned.",
+    "defeatTitle": "Thornwall Falls",
+    "defeatText": "The keep has fallen. The undead march unopposed toward the heartland. All is lost.",
+    "nextMissionTeaser": "Reinforcements are coming, but they need guidance through undead-infested territory."
+  },
+
+  "aiPlayers": [
+    {
+      "aiId": "ai_undead_horde",
+      "faction": "undead",
+      "difficulty": "easy",
+      "personality": "aggressive",
+      "isAlly": false,
+      "startingPosition": "pos_north_forest"
+    }
+  ],
+
+  "rewards": {
+    "experienceBase": 100,
+    "experiencePerObjective": 25,
+    "goldBonus": 100,
+    "unlockedUnits": ["unit_crossbowman"],
+    "storyFlags": {
+      "thornwall_first_wave": true
+    }
+  },
+
+  "cinematics": {
+    "introCinematic": "cinematic_m1_1_intro"
+  },
+
+  "audio": {
+    "ambientMusic": "music/human/tension_defense.ogg",
+    "combatMusic": "music/human/battle_desperate.ogg",
+    "victoryMusic": "music/human/victory_relief.ogg"
+  },
+
+  "ui": {
+    "thumbnailImage": "campaigns/human/missions/m1_1_thumb.png",
+    "loadingScreenTip": "Walls slow enemy advance and give your ranged units more time to attack."
+  }
+}

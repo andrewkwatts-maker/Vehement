@@ -1,0 +1,247 @@
+{
+  "id": "crypt_lord",
+  "name": "Crypt Lord",
+  "race": "undead",
+  "type": "hero",
+  "class": "beetle_tank",
+  "role": ["tank", "area_damage", "summons"],
+
+  "title": "King of the Nerubians",
+  "description": "An ancient undead nerubian lord with incredible durability and powerful summoning abilities. The Crypt Lord is nearly impossible to kill.",
+  "lore": "The lords of the nerubians were once the rulers of the mighty spider kingdom of Azjol-Nerub. Raised in undeath, these massive beetle-like creatures serve as nigh-indestructible tanks for the Scourge.",
+
+  "baseStats": {
+    "health": 725,
+    "healthRegen": 2.50,
+    "mana": 225,
+    "manaRegen": 0.76,
+    "armor": 5,
+    "armorType": "hero",
+    "moveSpeed": 300,
+    "turnRate": 0.5,
+    "collisionSize": 52,
+    "selectionScale": 1.4
+  },
+
+  "statsPerLevel": {
+    "health": 115,
+    "healthRegen": 0.35,
+    "mana": 25,
+    "manaRegen": 0.08,
+    "armor": 0.4,
+    "damage": 3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 28,
+      "variance": 6,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.7,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.46,
+    "backswing": 0.64,
+    "primaryAttribute": "strength"
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 25,
+      "perLevel": 3.2
+    },
+    "agility": {
+      "base": 14,
+      "perLevel": 1.2
+    },
+    "intelligence": {
+      "base": 15,
+      "perLevel": 1.5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "impale",
+      "name": "Impale",
+      "type": "active",
+      "targetType": "direction",
+      "hotkey": "E",
+      "description": "Slams the ground, causing spikes to erupt in a line, damaging, stunning, and launching enemies into the air",
+      "levels": [
+        {"manaCost": 100, "cooldown": 9, "damage": 75, "stunDuration": 1.0, "width": 125, "distance": 700},
+        {"manaCost": 100, "cooldown": 9, "damage": 130, "stunDuration": 1.5, "width": 125, "distance": 700},
+        {"manaCost": 100, "cooldown": 9, "damage": 190, "stunDuration": 2.0, "width": 125, "distance": 700}
+      ],
+      "effects": {
+        "damageType": "magic",
+        "launchesTargets": true,
+        "launchHeight": 150,
+        "pierces": true
+      },
+      "icon": "icons/abilities/impale.png"
+    },
+    {
+      "id": "spiked_carapace",
+      "name": "Spiked Carapace",
+      "type": "passive",
+      "hotkey": "C",
+      "description": "Covers the Crypt Lord in a spiked shell that reflects damage and increases armor",
+      "levels": [
+        {"armorBonus": 3, "damageReturn": 0.15},
+        {"armorBonus": 5, "damageReturn": 0.25},
+        {"armorBonus": 7, "damageReturn": 0.35}
+      ],
+      "effects": {
+        "returnsPhysicalDamage": true,
+        "damageReturnType": "magic"
+      },
+      "icon": "icons/abilities/spiked_carapace.png"
+    },
+    {
+      "id": "carrion_beetles",
+      "name": "Carrion Beetles",
+      "type": "active",
+      "targetType": "corpse",
+      "autocast": true,
+      "hotkey": "R",
+      "description": "Summons Carrion Beetles from a corpse. Beetles have a chance to spawn new beetles when attacking",
+      "levels": [
+        {"manaCost": 30, "cooldown": 6, "maxBeetles": 5, "beetleHealth": 140, "beetleDamage": 8, "spawnChance": 0.05},
+        {"manaCost": 30, "cooldown": 6, "maxBeetles": 5, "beetleHealth": 275, "beetleDamage": 16, "spawnChance": 0.10},
+        {"manaCost": 30, "cooldown": 6, "maxBeetles": 5, "beetleHealth": 410, "beetleDamage": 24, "spawnChance": 0.15}
+      ],
+      "effects": {
+        "consumesCorpse": true,
+        "permanentSummons": true,
+        "beetlesMultiply": true
+      },
+      "icon": "icons/abilities/carrion_beetles.png"
+    },
+    {
+      "id": "locust_swarm",
+      "name": "Locust Swarm",
+      "type": "active",
+      "targetType": "none",
+      "hotkey": "W",
+      "ultimate": true,
+      "description": "Releases a swarm of locusts that attack nearby enemies, draining their life and returning it to the Crypt Lord",
+      "levels": [
+        {"manaCost": 150, "cooldown": 180, "locustCount": 20, "locustDamage": 20, "lifestealPercent": 0.75, "duration": 30, "radius": 800}
+      ],
+      "effects": {
+        "attacksRandomly": true,
+        "healsHero": true,
+        "locustsInvulnerable": true
+      },
+      "icon": "icons/abilities/locust_swarm.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "sacrificial_pit",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "corpses": 0
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["sacrificial_pit"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "C"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/crypt_lord/ready.ogg",
+    "select": [
+      "audio/heroes/crypt_lord/select1.ogg",
+      "audio/heroes/crypt_lord/select2.ogg",
+      "audio/heroes/crypt_lord/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/crypt_lord/move1.ogg",
+      "audio/heroes/crypt_lord/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/crypt_lord/attack1.ogg",
+      "audio/heroes/crypt_lord/attack2.ogg"
+    ],
+    "death": "audio/heroes/crypt_lord/death.ogg",
+    "pissed": [
+      "audio/heroes/crypt_lord/pissed1.ogg",
+      "audio/heroes/crypt_lord/pissed2.ogg",
+      "audio/heroes/crypt_lord/pissed3.ogg"
+    ],
+    "impale": "audio/heroes/crypt_lord/impale.ogg",
+    "locustSwarm": "audio/heroes/crypt_lord/locust_swarm.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/crypt_lord.glb",
+    "texture": "textures/heroes/crypt_lord.png",
+    "portrait": "textures/portraits/crypt_lord.png",
+    "icon": "textures/icons/crypt_lord.png",
+    "scale": 1.4,
+    "animations": {
+      "idle": "crypt_lord_idle",
+      "walk": "crypt_lord_walk",
+      "attack": "crypt_lord_attack",
+      "death": "crypt_lord_death",
+      "cast": "crypt_lord_cast"
+    },
+    "effects": {
+      "spawn": "effects/nerubian_spawn.vfx",
+      "death": "effects/crypt_lord_death.vfx",
+      "impale": "effects/impale.vfx",
+      "spikedCarapace": "effects/spike_return.vfx",
+      "locustSwarm": "effects/locust_swarm.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "frontline_tank",
+    "useImpaleOnGroups": true,
+    "autoSummonBeetles": true,
+    "locustSwarmTiming": "low_health",
+    "locustSwarmThreshold": 0.5
+  },
+
+  "flags": {
+    "isHero": true,
+    "isUndead": true,
+    "isNerubian": true,
+    "vulnerableToHoly": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "affectedByBlight": true,
+    "canUseItems": true,
+    "canGainExperience": true,
+    "hasDamageReturn": true,
+    "isSummoner": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

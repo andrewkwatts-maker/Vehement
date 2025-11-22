@@ -1,0 +1,241 @@
+{
+    "id": "naga_hydra",
+    "type": "unit",
+    "name": "Hydra",
+    "description": "A fearsome multi-headed serpent bred for war. Each head strikes independently, making this beast devastating against multiple foes. Severed heads regenerate over time.",
+    "race": "naga",
+    "tier": 3,
+    "class": "heavy_beast",
+
+    "tags": ["military", "beast", "melee", "tier3", "amphibious", "multi_head", "regeneration"],
+
+    "model": {
+        "path": "models/races/naga/units/hydra.obj",
+        "scale": [1.5, 1.5, 1.5],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/hydra_diffuse.png",
+        "normal": "textures/races/naga/units/hydra_normal.png",
+        "specular": "textures/races/naga/units/hydra_spec.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [1.5, 1.2, 2.0],
+                "offset": [0.0, 1.2, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 450.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 4.8,
+        "turnRate": 180.0,
+        "acceleration": 10.0,
+        "deceleration": 14.0,
+        "canSwim": true,
+        "swimSpeed": 6.5,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.0,
+            "forest": 0.6,
+            "water": 1.4,
+            "deep_water": 1.5,
+            "desert": 0.4
+        }
+    },
+
+    "combat": {
+        "health": 1100,
+        "maxHealth": 1100,
+        "armor": 5,
+        "magicResist": 2,
+        "attackDamage": 18,
+        "attackSpeed": 1.2,
+        "attackRange": 2.5,
+        "critChance": 0.08,
+        "critMultiplier": 1.8,
+        "physicalDamage": true,
+        "damageType": "pierce",
+        "armorType": "heavy",
+        "multiAttack": {
+            "count": 3,
+            "targets": "same_or_different",
+            "per_head": true
+        }
+    },
+
+    "heads": {
+        "count": 3,
+        "max_count": 5,
+        "damage_per_head": 18,
+        "regenerate_time": 30.0,
+        "head_health": 200
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "health_regen_bonus": 5.0
+        },
+        "in_water": {
+            "health_regen": 15.0,
+            "head_regen_time_reduction": 0.5
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "multi_headed",
+            "name": "Multi-Headed",
+            "description": "Each head attacks independently. Hydra attacks 3 times per attack cycle, targeting same or different enemies.",
+            "effect": {
+                "type": "multi_attack",
+                "attacks_per_cycle": 3,
+                "can_split_targets": true
+            }
+        },
+        {
+            "id": "head_regeneration",
+            "name": "Head Regeneration",
+            "description": "Lost heads regenerate after 30 seconds. Can grow up to 5 heads if enemies are killed during combat.",
+            "effect": {
+                "type": "regenerate_heads",
+                "regen_time": 30.0,
+                "max_heads": 5,
+                "grow_on_kill": true
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and regenerates faster in water."
+        },
+        {
+            "id": "venomous_fangs",
+            "name": "Venomous Fangs",
+            "description": "Each head's attack applies poison dealing 5 damage per second for 4 seconds.",
+            "effect": {
+                "type": "dot",
+                "damage_per_tick": 5,
+                "duration": 4,
+                "per_head": true,
+                "stacks": true
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "frenzied_assault",
+            "name": "Frenzied Assault",
+            "description": "All heads attack with increased fury, gaining +50% attack speed for 8 seconds.",
+            "icon": "icons/abilities/naga/frenzied_assault.png",
+            "cooldown": 30.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 8.0,
+            "effects": [
+                {"type": "attack_speed_bonus", "value": 0.5}
+            ],
+            "castAnimation": "roar",
+            "castSound": "sounds/abilities/hydra_frenzy.wav"
+        },
+        {
+            "id": "acid_spray",
+            "name": "Acid Spray",
+            "description": "All heads spit corrosive acid in a cone, dealing 80 damage and reducing armor by 5 for 10 seconds.",
+            "icon": "icons/abilities/naga/acid_spray.png",
+            "cooldown": 22.0,
+            "manaCost": 0,
+            "range": 8.0,
+            "targetType": "cone",
+            "cone_angle": 60,
+            "effects": [
+                {"type": "damage", "amount": 80, "damage_type": "acid"},
+                {"type": "armor_reduction", "value": 5, "duration": 10.0}
+            ],
+            "castAnimation": "spray",
+            "castSound": "sounds/abilities/acid_spray.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/hydra/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/hydra/walk.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/hydra/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/hydra/multi_bite.anim",
+            "loop": false,
+            "events": [[0.2, "head_1_bite"], [0.35, "head_2_bite"], [0.5, "head_3_bite"]]
+        },
+        "roar": {"path": "animations/naga/hydra/roar.anim", "loop": false},
+        "spray": {"path": "animations/naga/hydra/acid_spray.anim", "loop": false},
+        "death": {"path": "animations/naga/hydra/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/heavy_beast_1.wav", "sounds/footsteps/heavy_beast_2.wav"],
+            "volume": 0.7
+        },
+        "attack": {
+            "paths": ["sounds/combat/hydra_bite_1.wav", "sounds/combat/hydra_bite_2.wav", "sounds/combat/hydra_bite_3.wav"],
+            "volume": 0.8
+        },
+        "death": {"paths": ["sounds/death/hydra_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/hydra_hiss.wav",
+        "acknowledge": {"paths": ["sounds/voice/naga/hydra_roar.wav"]}
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_hydra.bt",
+        "profile": "aggressive_beast",
+        "aggroRange": 14.0,
+        "leashRange": 25.0,
+        "preferWater": true,
+        "targetMultiple": true
+    },
+
+    "production": {
+        "building": "naga_beast_den",
+        "time": 50.0,
+        "cost": {
+            "gold": 400,
+            "coral": 220,
+            "abyssal_essence": 60
+        },
+        "requirements": {
+            "age": "age_abyss",
+            "techs": ["naga_beast_mastery"],
+            "buildings": ["naga_palace_of_waves"]
+        }
+    },
+
+    "properties": {
+        "populationCost": 5,
+        "supplyUpkeep": 4,
+        "squadSize": 1,
+        "experienceValue": 100,
+        "bountyGold": 85
+    },
+
+    "upgrades": {
+        "damage": ["naga_beast_fangs_1", "naga_beast_fangs_2", "naga_beast_fangs_3"],
+        "special": ["naga_enhanced_venom", "naga_hydra_growth"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/hydra/on_spawn.py",
+        "on_death": "scripts/units/naga/hydra/on_death.py",
+        "on_head_lost": "scripts/units/naga/hydra/on_head_lost.py",
+        "on_kill": "scripts/units/naga/hydra/on_kill.py"
+    }
+}

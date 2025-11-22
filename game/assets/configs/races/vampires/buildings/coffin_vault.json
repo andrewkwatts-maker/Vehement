@@ -1,0 +1,142 @@
+{
+  "id": "coffin_vault",
+  "type": "building",
+  "race": "vampires",
+  "name": "Coffin Vault",
+  "description": "Sacred resting place for vampire heroes. Heroes automatically revive here and can be trained.",
+
+  "tags": ["hero", "production", "resurrection"],
+  "tier": 1,
+  "age_requirement": 1,
+
+  "model": {
+    "path": "models/races/vampires/buildings/coffin_vault.obj",
+    "scale": [1.0, 1.0, 1.0]
+  },
+
+  "textures": {
+    "diffuse": "textures/races/vampires/buildings/coffin_vault_diffuse.png",
+    "normal": "textures/races/vampires/buildings/coffin_vault_normal.png"
+  },
+
+  "footprint": {
+    "size": [3, 3],
+    "entrances": [[1, 0]],
+    "visualSize": [8.0, 6.0, 8.0]
+  },
+
+  "construction": {
+    "cost": {
+      "gold": 250,
+      "lumber": 100,
+      "blood": 25
+    },
+    "time": 55.0
+  },
+
+  "stats": {
+    "maxHealth": 1200,
+    "armor": 15,
+    "magicResist": 20
+  },
+
+  "production": [
+    {
+      "type": "hero",
+      "output": "vampire_count",
+      "cost": {"gold": 500, "lumber": 100, "blood": 50, "food": 5},
+      "time": 55.0,
+      "maxQueue": 1
+    },
+    {
+      "type": "hero",
+      "output": "shadow_lord",
+      "cost": {"gold": 500, "lumber": 100, "blood": 50, "food": 5},
+      "time": 55.0,
+      "maxQueue": 1
+    },
+    {
+      "type": "hero",
+      "output": "blood_queen",
+      "cost": {"gold": 500, "lumber": 100, "blood": 75, "food": 5},
+      "time": 55.0,
+      "maxQueue": 1,
+      "prerequisites": ["cathedral_of_shadow"]
+    },
+    {
+      "type": "hero",
+      "output": "nosferatu_elder",
+      "cost": {"gold": 500, "lumber": 100, "blood": 60, "food": 5},
+      "time": 55.0,
+      "maxQueue": 1,
+      "prerequisites": ["blood_castle"]
+    }
+  ],
+
+  "researches": [
+    {
+      "id": "improved_coffins",
+      "name": "Improved Coffins",
+      "description": "Hero revival time reduced by 25%",
+      "cost": {"gold": 200, "lumber": 100, "blood": 50},
+      "time": 60.0
+    },
+    {
+      "id": "blood_preservation",
+      "name": "Blood Preservation",
+      "description": "Hero revival cost reduced by 50%",
+      "cost": {"gold": 300, "blood": 100},
+      "time": 75.0,
+      "prerequisites": ["blood_castle"]
+    }
+  ],
+
+  "heroRevival": {
+    "enabled": true,
+    "autoRevive": true,
+    "reviveTimeReduction": 0.0,
+    "reviveCostReduction": 0.5,
+    "maxHeroes": 4
+  },
+
+  "abilities": [
+    {
+      "id": "eternal_rest",
+      "name": "Eternal Rest",
+      "type": "passive",
+      "description": "Dead heroes automatically begin reviving here after 30 seconds",
+      "effects": {
+        "autoReviveDelay": 30,
+        "keepExperience": true,
+        "keepItems": true
+      }
+    },
+    {
+      "id": "revive_hero",
+      "name": "Revive Hero",
+      "type": "active",
+      "targetType": "hero",
+      "description": "Immediately revive a dead hero for a cost",
+      "effects": {
+        "goldCostPerLevel": 75,
+        "bloodCostPerLevel": 10,
+        "instantRevive": true
+      }
+    }
+  ],
+
+  "visionRange": 10.0,
+
+  "requirements": {
+    "buildings": ["crypt_palace"]
+  },
+
+  "unique": true,
+  "maxCount": 1,
+
+  "ui": {
+    "portrait": "textures/races/vampires/portraits/buildings/coffin_vault.png",
+    "icon": "textures/races/vampires/icons/buildings/coffin_vault.png",
+    "hotkey": "V"
+  }
+}

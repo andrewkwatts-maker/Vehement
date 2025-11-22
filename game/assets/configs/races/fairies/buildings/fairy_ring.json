@@ -1,0 +1,87 @@
+{
+    "id": "fairy_fairy_ring",
+    "type": "building",
+    "race": "fairies",
+    "name": "Fairy Ring",
+    "description": "A mystical circle of mushrooms that enables instant teleportation between Fairy Rings. Essential for rapid troop deployment.",
+
+    "tags": ["utility", "teleportation", "magic"],
+
+    "tier": 2,
+    "age_requirement": 3,
+
+    "model": {
+        "path": "models/races/fairies/buildings/fairy_ring.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "footprint": {
+        "size": [2, 2],
+        "entrances": [[1, 0], [0, 1], [1, 1]],
+        "visualSize": [5.0, 2.0, 5.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 150,
+            "wood": 100
+        },
+        "time": 45.0,
+        "prerequisites": ["fairy_tree_of_ages"]
+    },
+
+    "stats": {
+        "maxHealth": 500,
+        "armor": 2,
+        "magicResist": 20
+    },
+
+    "teleportation": {
+        "enabled": true,
+        "cooldown": 30.0,
+        "max_units_per_teleport": 12,
+        "teleport_time": 3.0,
+        "connects_to": "all_fairy_rings",
+        "night_cooldown_reduction": 0.50
+    },
+
+    "abilities": [
+        {
+            "id": "ability_teleport",
+            "name": "Teleport",
+            "description": "Teleport selected units to another Fairy Ring",
+            "hotkey": "T",
+            "cooldown": 30.0,
+            "effects": [
+                {"type": "teleport_units", "max_units": 12},
+                {"type": "teleport_to", "target": "fairy_fairy_ring"}
+            ]
+        },
+        {
+            "id": "ability_mass_teleport_building",
+            "name": "Mass Teleport",
+            "description": "Teleport all units in a large radius",
+            "hotkey": "M",
+            "cooldown": 120.0,
+            "mana_cost": 150,
+            "radius": 15.0,
+            "effects": [
+                {"type": "teleport_all_in_radius", "value": true}
+            ],
+            "requires_upgrade": "upgrade_mass_teleport"
+        }
+    ],
+
+    "visionRange": 10.0,
+
+    "night_bonus": {
+        "cooldown_reduction": 0.50,
+        "max_units": 4
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/buildings/fairy_ring.png",
+        "icon": "textures/races/fairies/icons/buildings/fairy_ring.png",
+        "hotkey": "R"
+    }
+}

@@ -1,0 +1,269 @@
+{
+  "id": "blood_queen",
+  "name": "Blood Queen",
+  "race": "vampires",
+  "type": "hero",
+  "class": "seductress",
+  "role": ["controller", "support", "summoner"],
+
+  "title": "Mistress of the Blood Court",
+  "description": "A seductive vampire queen who controls minds and commands armies of thralls. She drains life from groups of enemies to heal her forces.",
+  "lore": "The Blood Queen rules through manipulation and seduction rather than brute force. Her honeyed words and hypnotic gaze have brought kingdoms to ruin. Those who resist her charms become fodder for her insatiable appetite.",
+
+  "baseStats": {
+    "health": 550,
+    "healthRegen": 1.75,
+    "mana": 375,
+    "manaRegen": 1.5,
+    "armor": 3,
+    "armorType": "hero",
+    "moveSpeed": 300,
+    "turnRate": 0.6,
+    "collisionSize": 32,
+    "selectionScale": 1.15
+  },
+
+  "statsPerLevel": {
+    "health": 85,
+    "healthRegen": 0.25,
+    "mana": 45,
+    "manaRegen": 0.2,
+    "armor": 0.25,
+    "damage": 3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 22,
+      "variance": 4,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "magic"
+    },
+    "attackSpeed": 1.8,
+    "attackRange": 550,
+    "attackType": "ranged",
+    "projectile": "blood_bolt_queen",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.4,
+    "primaryAttribute": "intelligence",
+    "lifeSteal": 0.20
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 16,
+      "perLevel": 1.8
+    },
+    "agility": {
+      "base": 18,
+      "perLevel": 1.6
+    },
+    "intelligence": {
+      "base": 26,
+      "perLevel": 3.0
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "spellDamageBonus": 0.5,
+      "manaRegenBonus": 1.0,
+      "charmDurationBonus": 0.25
+    },
+    "day": {
+      "spellDamagePenalty": 0.25,
+      "manaRegenPenalty": 0.5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "kiss_of_death",
+      "name": "Kiss of Death",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "Q",
+      "description": "Blow a deadly kiss that charms an enemy briefly then deals damage when the charm ends",
+      "levels": [
+        {"manaCost": 75, "cooldown": 12, "charmDuration": 2, "damage": 100, "range": 500},
+        {"manaCost": 85, "cooldown": 11, "charmDuration": 2.5, "damage": 175, "range": 550},
+        {"manaCost": 95, "cooldown": 10, "charmDuration": 3, "damage": 250, "range": 600}
+      ],
+      "effects": {
+        "charmedUnitsAttackAllies": true,
+        "damageType": "magic"
+      },
+      "icon": "icons/abilities/kiss_of_death.png"
+    },
+    {
+      "id": "blood_pact",
+      "name": "Blood Pact",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "W",
+      "description": "Create a blood link with an ally, sharing damage taken and life steal gained",
+      "levels": [
+        {"manaCost": 100, "cooldown": 30, "duration": 15, "damageShare": 0.25, "lifeStealShare": 0.4, "range": 600},
+        {"manaCost": 100, "cooldown": 28, "duration": 18, "damageShare": 0.35, "lifeStealShare": 0.5, "range": 700},
+        {"manaCost": 100, "cooldown": 25, "duration": 22, "damageShare": 0.45, "lifeStealShare": 0.6, "range": 800}
+      ],
+      "effects": {
+        "canTargetHeroes": true,
+        "maxLinks": 1
+      },
+      "icon": "icons/abilities/blood_pact.png"
+    },
+    {
+      "id": "thrall_army",
+      "name": "Thrall Army",
+      "type": "active",
+      "targetType": "point",
+      "hotkey": "E",
+      "description": "Summon a group of thralls to fight for the Blood Queen",
+      "levels": [
+        {"manaCost": 125, "cooldown": 45, "summonCount": 4, "duration": 30, "bloodCost": 25},
+        {"manaCost": 150, "cooldown": 40, "summonCount": 6, "duration": 40, "bloodCost": 30},
+        {"manaCost": 175, "cooldown": 35, "summonCount": 8, "duration": 50, "bloodCost": 35}
+      ],
+      "effects": {
+        "summonType": "thrall_warrior",
+        "summonedHaveLifeSteal": true,
+        "lifeStealAmount": 0.15
+      },
+      "icon": "icons/abilities/thrall_army.png"
+    },
+    {
+      "id": "crimson_night",
+      "name": "Crimson Night",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "D",
+      "ultimate": true,
+      "description": "Blanket an area in crimson darkness, dealing damage to enemies while healing allies and granting night bonuses",
+      "levels": [
+        {"manaCost": 250, "cooldown": 150, "radius": 600, "duration": 20, "damagePerSecond": 40, "healPerSecond": 30, "bloodCost": 100}
+      ],
+      "effects": {
+        "grantsNightBonuses": true,
+        "enemySlowPercent": 0.2,
+        "allyLifeStealBonus": 0.15
+      },
+      "icon": "icons/abilities/crimson_night.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "coffin_vault",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "blood": 75
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["coffin_vault", "cathedral_of_shadow"],
+      "technologies": [],
+      "age": "noble"
+    },
+    "hotkey": "Q"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/blood_queen/ready.ogg",
+    "select": [
+      "audio/heroes/blood_queen/select1.ogg",
+      "audio/heroes/blood_queen/select2.ogg",
+      "audio/heroes/blood_queen/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/blood_queen/move1.ogg",
+      "audio/heroes/blood_queen/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/blood_queen/attack1.ogg"
+    ],
+    "death": "audio/heroes/blood_queen/death.ogg",
+    "pissed": [
+      "audio/heroes/blood_queen/pissed1.ogg",
+      "audio/heroes/blood_queen/pissed2.ogg",
+      "audio/heroes/blood_queen/pissed3.ogg",
+      "audio/heroes/blood_queen/pissed4.ogg"
+    ],
+    "kiss": "audio/heroes/blood_queen/kiss.ogg",
+    "summon": "audio/heroes/blood_queen/summon.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/blood_queen.glb",
+    "texture": "textures/heroes/blood_queen.png",
+    "portrait": "textures/portraits/blood_queen_hero.png",
+    "icon": "textures/icons/blood_queen_hero.png",
+    "scale": 1.15,
+    "animations": {
+      "idle": "queen_idle",
+      "walk": "queen_walk",
+      "attack": "queen_attack",
+      "death": "queen_death",
+      "cast": "queen_cast",
+      "kiss": "queen_kiss",
+      "summon": "queen_summon"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/vampire_hero_death.vfx",
+      "kissOfDeath": "effects/kiss_of_death.vfx",
+      "bloodPact": "effects/blood_pact.vfx",
+      "thrallArmy": "effects/thrall_summon.vfx",
+      "crimsonNight": "effects/crimson_night.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "backline",
+    "useKissOnHighValue": true,
+    "bloodPactWithTank": true,
+    "crimsonNightOnTeamfight": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isVampire": true,
+    "isUndead": true,
+    "isCaster": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "immuneToPoison": true,
+    "canUseItems": true,
+    "canGainExperience": true,
+    "hasLifeSteal": true,
+    "affectedByDayNight": true,
+    "autoRevivesAtCoffinVault": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 30,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 75,
+    "bloodPerLevel": 15
+  },
+  "autoRevive": {
+    "enabled": true,
+    "building": "coffin_vault",
+    "delay": 60,
+    "costReduction": 0.5
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 25,
+    "experienceBase": 100,
+    "experiencePerLevel": 30
+  }
+}

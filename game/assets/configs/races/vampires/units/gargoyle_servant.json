@@ -1,0 +1,202 @@
+{
+  "id": "gargoyle_servant",
+  "name": "Gargoyle Servant",
+  "race": "vampires",
+  "tier": 2,
+  "type": "flying",
+  "role": ["flying_defender", "anti_air", "scout"],
+
+  "description": "Stone guardians animated by vampire blood magic. They patrol the skies around vampire strongholds and can turn to stone for defense.",
+  "lore": "Gargoyle Servants are statues brought to unholy life through dark rituals. By day they appear as ordinary stone decorations on vampire castles, but at night they take flight to hunt and protect their masters.",
+
+  "stats": {
+    "health": 480,
+    "healthRegen": 0.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 3,
+    "armorType": "fortified",
+    "moveSpeed": 300,
+    "turnRate": 0.6,
+    "collisionSize": 36,
+    "selectionScale": 1.1,
+    "isFlying": true
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 18,
+      "variance": 3,
+      "type": "piercing"
+    },
+    "attackSpeed": 1.4,
+    "attackRange": 100,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.4,
+    "acquisitionRange": 500,
+    "aggroRange": 400,
+    "lifeSteal": 0.0,
+    "bonusVsAir": {
+      "enabled": true,
+      "multiplier": 1.5
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.3,
+      "armorBonus": 2,
+      "speedBonus": 50
+    },
+    "day": {
+      "mustLandOrStone": true,
+      "stoneModeDefault": true
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "stone_form",
+      "name": "Stone Form",
+      "type": "active",
+      "targetType": "self",
+      "description": "Turn to stone, becoming immobile but gaining massive armor and health regeneration",
+      "cooldown": 5,
+      "effects": {
+        "immobile": true,
+        "armorBonus": 10,
+        "healthRegenBonus": 10,
+        "magicImmunity": true,
+        "cannotAttack": true,
+        "canBeToggled": true
+      },
+      "hotkey": "F",
+      "icon": "icons/abilities/stone_form.png"
+    },
+    {
+      "id": "aerial_shackles",
+      "name": "Aerial Shackles",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Grab an air unit and drag it to the ground, stunning it",
+      "cooldown": 25,
+      "effects": {
+        "targetMustBeAir": true,
+        "stunDuration": 4.0,
+        "bringsToGround": true,
+        "range": 400
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/aerial_shackles.png"
+    },
+    {
+      "id": "prioritize_air",
+      "name": "Prioritize Air",
+      "type": "toggle",
+      "description": "Toggle to prioritize attacking air units",
+      "effects": {
+        "priorityTargets": ["air"]
+      },
+      "hotkey": "A",
+      "icon": "icons/abilities/prioritize_air.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bat_roost",
+    "buildTime": 30,
+    "cost": {
+      "gold": 200,
+      "lumber": 80,
+      "blood": 10
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["bat_roost", "blood_castle"],
+      "technologies": [],
+      "age": "noble"
+    },
+    "hotkey": "G"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "stone_claws"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "reinforced_stone"
+    },
+    "special": ["improved_stone_form", "extended_shackles"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/gargoyle/ready.ogg",
+    "select": ["audio/units/gargoyle/select1.ogg", "audio/units/gargoyle/select2.ogg"],
+    "move": ["audio/units/gargoyle/move1.ogg", "audio/units/gargoyle/move2.ogg"],
+    "attack": ["audio/units/gargoyle/attack1.ogg", "audio/units/gargoyle/attack2.ogg"],
+    "death": "audio/units/gargoyle/death.ogg",
+    "stoneForm": "audio/units/gargoyle/stone_form.ogg",
+    "awaken": "audio/units/gargoyle/awaken.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/gargoyle_servant.glb",
+    "texture": "textures/units/vampires/gargoyle_servant.png",
+    "portrait": "textures/portraits/gargoyle_servant.png",
+    "icon": "textures/icons/gargoyle_servant.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "gargoyle_idle",
+      "fly": "gargoyle_fly",
+      "attack": "gargoyle_attack",
+      "death": "gargoyle_death",
+      "stoneForm": "gargoyle_stone",
+      "awaken": "gargoyle_awaken"
+    },
+    "effects": {
+      "spawn": "effects/gargoyle_spawn.vfx",
+      "death": "effects/stone_shatter.vfx",
+      "stoneForm": "effects/stone_transform.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 4,
+    "priority": "medium",
+    "behavior": "defensive",
+    "fleeThreshold": 0.15,
+    "preferredTargets": ["air", "ranged"],
+    "useStoneFormWhenIdle": true,
+    "patrolBehavior": true
+  },
+
+  "flags": {
+    "isVampire": false,
+    "isUndead": true,
+    "isConstruct": true,
+    "isFlying": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": false,
+    "canTransform": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": false
+  },
+
+  "bounty": {
+    "gold": 25,
+    "experience": 30,
+    "blood": 0
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

@@ -1,0 +1,136 @@
+{
+    "id": "human_siege_ram",
+    "type": "unit",
+    "race": "humans",
+    "name": "Siege Ram",
+    "description": "A massive wheeled battering ram designed to smash through gates and walls. Protected by a wooden housing, it requires a crew to operate.",
+
+    "tags": ["military", "siege", "melee", "tier2", "heavy", "building_destroyer"],
+
+    "tier": 2,
+    "age_requirement": 4,
+
+    "model": {
+        "path": "models/races/humans/units/siege_ram.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/siege_ram_diffuse.png",
+        "normal": "textures/races/humans/units/siege_ram_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [1.5, 1.2, 3.0],
+                "offset": [0.0, 1.2, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 2000.0,
+        "layer": "siege"
+    },
+
+    "stats": {
+        "health": 700,
+        "maxHealth": 700,
+        "healthRegen": 0.0,
+        "armor": 8,
+        "magicResist": 5,
+        "moveSpeed": 2.5,
+        "turnRate": 80.0
+    },
+
+    "combat": {
+        "attackDamage": 120,
+        "attackSpeed": 3.0,
+        "attackRange": 2.0,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "attackType": "melee",
+        "bonus_vs_tags": ["building", "wall", "gate"],
+        "bonus_damage_multiplier": 5.0
+    },
+
+    "garrison": {
+        "enabled": true,
+        "capacity": 4,
+        "allowed_types": ["infantry"],
+        "garrisoned_attack_bonus": 0.15,
+        "garrisoned_speed_bonus": 0.1
+    },
+
+    "abilities": [
+        {
+            "id": "ability_ram_strike",
+            "name": "Ram Strike",
+            "description": "A devastating blow that deals 300% damage to buildings",
+            "hotkey": "Q",
+            "cooldown": 20.0,
+            "target_type": "building",
+            "effects": [
+                {"type": "damage_multiplier", "value": 3.0, "target": "building"}
+            ]
+        },
+        {
+            "id": "ability_reinforce",
+            "name": "Reinforce",
+            "description": "Reinforce the ram's housing, reducing damage taken by 50% for 10 seconds",
+            "hotkey": "W",
+            "cooldown": 45.0,
+            "duration": 10.0,
+            "effects": [
+                {"stat": "damage_reduction", "value": 0.50}
+            ]
+        }
+    ],
+
+    "vulnerabilities": {
+        "fire_damage": 1.5,
+        "magic_damage": 1.25
+    },
+
+    "production": {
+        "building": "human_siege_workshop",
+        "cost": {
+            "gold": 250,
+            "wood": 150
+        },
+        "build_time": 50.0,
+        "population_cost": 3,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/siege.bt",
+        "profile": "siege",
+        "aggroRange": 5.0,
+        "leashRange": 15.0,
+        "priority_targets": ["gate", "wall", "tower", "building"],
+        "avoid_units": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/siege_ram/idle.anim", "loop": true},
+        "move": {"path": "animations/humans/siege_ram/move.anim", "loop": true},
+        "attack": {"path": "animations/humans/siege_ram/attack.anim", "loop": false, "events": [[0.7, "deal_damage"]]},
+        "death": {"path": "animations/humans/siege_ram/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": "sounds/humans/siege_ram/select.wav",
+        "acknowledge": "sounds/humans/siege_ram/ack.wav",
+        "attack": "sounds/ram_impact.wav",
+        "move": "sounds/wheels_rolling.wav",
+        "death": "sounds/wood_destruction.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/siege_ram.png",
+        "icon": "textures/races/humans/icons/siege_ram.png",
+        "hotkey": "R"
+    }
+}

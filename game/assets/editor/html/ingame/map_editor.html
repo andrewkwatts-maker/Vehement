@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Editor - Vehement</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --accent: #e94560;
+            --accent-hover: #ff6b6b;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --border: #333;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            grid-template-rows: 48px 1fr 32px;
+            height: 100vh;
+        }
+
+        /* Top Toolbar */
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 16px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 8px;
+            border-right: 1px solid var(--border);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tool-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tool-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Left Panel */
+        .left-panel {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        /* Tool Categories */
+        .tool-category {
+            margin-bottom: 16px;
+        }
+
+        .category-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            padding-left: 4px;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+
+        .tool-item {
+            aspect-ratio: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 4px;
+        }
+
+        .tool-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+        }
+
+        .tool-item.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .tool-item svg {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 2px;
+        }
+
+        .tool-item span {
+            font-size: 9px;
+            text-align: center;
+        }
+
+        /* Brush Settings */
+        .brush-settings {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .setting-row {
+            margin-bottom: 12px;
+        }
+
+        .setting-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .setting-value {
+            color: var(--text-primary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Viewport */
+        .viewport {
+            background: #0a0a0f;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .viewport-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .viewport-overlay {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .overlay-badge {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .overlay-badge.recording {
+            background: rgba(233, 69, 96, 0.8);
+        }
+
+        .minimap {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            width: 180px;
+            height: 180px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .minimap-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* Layers Panel */
+        .layers-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .layer-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .layer-item.selected {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent);
+        }
+
+        .layer-visibility {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            cursor: pointer;
+            opacity: 0.5;
+        }
+
+        .layer-visibility.visible {
+            opacity: 1;
+        }
+
+        .layer-name {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .layer-lock {
+            width: 16px;
+            height: 16px;
+            opacity: 0.3;
+            cursor: pointer;
+        }
+
+        .layer-lock.locked {
+            opacity: 1;
+            color: var(--warning);
+        }
+
+        /* Objects List */
+        .object-search {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .object-search input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .object-search input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .objects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 12px;
+        }
+
+        .object-item {
+            aspect-ratio: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .object-item:hover {
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .object-item img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        .object-item span {
+            font-size: 10px;
+            margin-top: 4px;
+            color: var(--text-secondary);
+        }
+
+        /* Properties Panel */
+        .properties-section {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .properties-header {
+            padding: 10px 12px;
+            background: var(--bg-primary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .properties-header svg {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.2s;
+        }
+
+        .properties-header.collapsed svg {
+            transform: rotate(-90deg);
+        }
+
+        .properties-body {
+            padding: 12px;
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 80px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .property-input {
+            flex: 1;
+            display: flex;
+            gap: 4px;
+        }
+
+        .property-input input {
+            flex: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .property-input input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .vec3-input {
+            display: flex;
+            gap: 4px;
+        }
+
+        .vec3-input input {
+            width: 60px;
+            text-align: center;
+        }
+
+        .vec3-input .x { border-color: #e94560; }
+        .vec3-input .y { border-color: #4ade80; }
+        .vec3-input .z { border-color: #60a5fa; }
+
+        /* Status Bar */
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-item {
+            padding: 0 12px;
+            border-right: 1px solid var(--border);
+        }
+
+        .status-item:last-child {
+            border-right: none;
+            margin-left: auto;
+        }
+
+        .status-coords {
+            font-family: monospace;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="tool-btn" id="btn-new" title="New Map (Ctrl+N)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                    New
+                </button>
+                <button class="tool-btn" id="btn-open" title="Open Map (Ctrl+O)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    Open
+                </button>
+                <button class="tool-btn" id="btn-save" title="Save Map (Ctrl+S)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17,21 17,13 7,13 7,21"/>
+                        <polyline points="7,3 7,8 15,8"/>
+                    </svg>
+                    Save
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="tool-btn" id="btn-undo" title="Undo (Ctrl+Z)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="1,4 1,10 7,10"/>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" id="btn-redo" title="Redo (Ctrl+Y)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23,4 23,10 17,10"/>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="tool-btn active" id="btn-select" title="Select Tool (V)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" id="btn-terrain" title="Terrain Tool (T)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/>
+                        <path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                        <path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/>
+                        <path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/>
+                        <path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/>
+                        <path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/>
+                        <path d="M10 9.5c0 .83-.67 1.5-1.5 1.5h-5C2.67 11 2 10.33 2 9.5S2.67 8 3.5 8h5c.83 0 1.5.67 1.5 1.5z"/>
+                        <path d="M8.5 5H10V3.5c0-.83-.67-1.5-1.5-1.5S7 2.67 7 3.5 7.67 5 8.5 5z"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" id="btn-objects" title="Objects Tool (O)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" id="btn-regions" title="Regions Tool (R)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="4"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="tool-btn" id="btn-grid" title="Toggle Grid (G)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18"/>
+                        <line x1="9" y1="3" x2="9" y2="21"/>
+                        <line x1="15" y1="3" x2="15" y2="21"/>
+                        <line x1="3" y1="9" x2="21" y2="9"/>
+                        <line x1="3" y1="15" x2="21" y2="15"/>
+                    </svg>
+                </button>
+                <button class="tool-btn" id="btn-snap" title="Toggle Snap (S)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="5,9 2,12 5,15"/>
+                        <polyline points="9,5 12,2 15,5"/>
+                        <polyline points="19,9 22,12 19,15"/>
+                        <polyline points="9,19 12,22 15,19"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <line x1="12" y1="2" x2="12" y2="22"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group" style="margin-left: auto;">
+                <button class="tool-btn" id="btn-test" title="Test Map (F5)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5,3 19,12 5,21 5,3"/>
+                    </svg>
+                    Test
+                </button>
+                <button class="tool-btn" id="btn-publish" title="Publish to Workshop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                        <polyline points="16,6 12,2 8,6"/>
+                        <line x1="12" y1="2" x2="12" y2="15"/>
+                    </svg>
+                    Publish
+                </button>
+            </div>
+        </div>
+
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <div class="panel-header">Tools</div>
+            <div class="panel-content">
+                <div class="tool-category">
+                    <div class="category-title">Terrain</div>
+                    <div class="tool-grid">
+                        <div class="tool-item selected" data-tool="raise">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="18,15 12,9 6,15"/>
+                            </svg>
+                            <span>Raise</span>
+                        </div>
+                        <div class="tool-item" data-tool="lower">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"/>
+                            </svg>
+                            <span>Lower</span>
+                        </div>
+                        <div class="tool-item" data-tool="smooth">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="4" y1="12" x2="20" y2="12"/>
+                            </svg>
+                            <span>Smooth</span>
+                        </div>
+                        <div class="tool-item" data-tool="flatten">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="4" y="10" width="16" height="4"/>
+                            </svg>
+                            <span>Flatten</span>
+                        </div>
+                        <div class="tool-item" data-tool="paint">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 3H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
+                                <path d="M12 11v10"/>
+                                <path d="M8 21h8"/>
+                            </svg>
+                            <span>Paint</span>
+                        </div>
+                        <div class="tool-item" data-tool="water">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                            </svg>
+                            <span>Water</span>
+                        </div>
+                        <div class="tool-item" data-tool="cliff">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19h16M4 15l4-4 4 4 4-8 4 8"/>
+                            </svg>
+                            <span>Cliff</span>
+                        </div>
+                        <div class="tool-item" data-tool="noise">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 12c1-4 3-4 4 0s3 4 4 0 3-4 4 0 3 4 4 0"/>
+                            </svg>
+                            <span>Noise</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="brush-settings">
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <span>Size</span>
+                            <span class="setting-value" id="brush-size-value">16</span>
+                        </div>
+                        <input type="range" id="brush-size" min="1" max="64" value="16">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <span>Strength</span>
+                            <span class="setting-value" id="brush-strength-value">50%</span>
+                        </div>
+                        <input type="range" id="brush-strength" min="1" max="100" value="50">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <span>Falloff</span>
+                            <span class="setting-value" id="brush-falloff-value">75%</span>
+                        </div>
+                        <input type="range" id="brush-falloff" min="0" max="100" value="75">
+                    </div>
+                </div>
+
+                <div class="tool-category">
+                    <div class="category-title">Textures</div>
+                    <div class="tool-grid" id="texture-grid">
+                        <div class="tool-item selected" data-texture="grass">
+                            <div style="width:32px;height:32px;background:#4a7c23;border-radius:2px;"></div>
+                            <span>Grass</span>
+                        </div>
+                        <div class="tool-item" data-texture="dirt">
+                            <div style="width:32px;height:32px;background:#8b6914;border-radius:2px;"></div>
+                            <span>Dirt</span>
+                        </div>
+                        <div class="tool-item" data-texture="rock">
+                            <div style="width:32px;height:32px;background:#6b6b6b;border-radius:2px;"></div>
+                            <span>Rock</span>
+                        </div>
+                        <div class="tool-item" data-texture="sand">
+                            <div style="width:32px;height:32px;background:#d4b896;border-radius:2px;"></div>
+                            <span>Sand</span>
+                        </div>
+                        <div class="tool-item" data-texture="snow">
+                            <div style="width:32px;height:32px;background:#e8e8e8;border-radius:2px;"></div>
+                            <span>Snow</span>
+                        </div>
+                        <div class="tool-item" data-texture="mud">
+                            <div style="width:32px;height:32px;background:#5c4033;border-radius:2px;"></div>
+                            <span>Mud</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viewport -->
+        <div class="viewport">
+            <canvas class="viewport-canvas" id="viewport-canvas"></canvas>
+            <div class="viewport-overlay">
+                <div class="overlay-badge">
+                    <span>Camera: Free</span>
+                </div>
+                <div class="overlay-badge">
+                    <span>FPS: 60</span>
+                </div>
+            </div>
+            <div class="minimap">
+                <canvas class="minimap-canvas" id="minimap-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <div class="tab-bar">
+                <div class="tab active" data-tab="layers">Layers</div>
+                <div class="tab" data-tab="objects">Objects</div>
+                <div class="tab" data-tab="properties">Properties</div>
+            </div>
+
+            <div class="panel-content" id="tab-layers">
+                <div class="layers-list">
+                    <div class="layer-item selected">
+                        <svg class="layer-visibility visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span class="layer-name">Terrain</span>
+                        <svg class="layer-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <div class="layer-item">
+                        <svg class="layer-visibility visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span class="layer-name">Doodads</span>
+                        <svg class="layer-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <div class="layer-item">
+                        <svg class="layer-visibility visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span class="layer-name">Units</span>
+                        <svg class="layer-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <div class="layer-item">
+                        <svg class="layer-visibility visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span class="layer-name">Buildings</span>
+                        <svg class="layer-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <div class="layer-item">
+                        <svg class="layer-visibility visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span class="layer-name">Regions</span>
+                        <svg class="layer-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-content" id="tab-objects" style="display:none;">
+                <div class="object-search">
+                    <input type="text" placeholder="Search objects...">
+                </div>
+                <div class="objects-grid">
+                    <div class="object-item">
+                        <div style="width:48px;height:48px;background:#4a7c23;border-radius:50%;"></div>
+                        <span>Tree</span>
+                    </div>
+                    <div class="object-item">
+                        <div style="width:48px;height:48px;background:#6b6b6b;border-radius:4px;"></div>
+                        <span>Rock</span>
+                    </div>
+                    <div class="object-item">
+                        <div style="width:48px;height:48px;background:#8b4513;border-radius:2px;"></div>
+                        <span>Crate</span>
+                    </div>
+                    <div class="object-item">
+                        <div style="width:48px;height:48px;background:#ffd700;border-radius:50%;"></div>
+                        <span>Gold</span>
+                    </div>
+                    <div class="object-item">
+                        <div style="width:48px;height:48px;background:#4169e1;border-radius:4px;"></div>
+                        <span>Spawn</span>
+                    </div>
+                    <div class="object-item">
+                        <div style="width:48px;height:48px;background:#dc143c;border-radius:4px;"></div>
+                        <span>Trigger</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-content" id="tab-properties" style="display:none;">
+                <div class="properties-section">
+                    <div class="properties-header">
+                        <span>Transform</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                    </div>
+                    <div class="properties-body">
+                        <div class="property-row">
+                            <div class="property-label">Position</div>
+                            <div class="property-input vec3-input">
+                                <input type="number" class="x" value="0.00" step="0.1">
+                                <input type="number" class="y" value="0.00" step="0.1">
+                                <input type="number" class="z" value="0.00" step="0.1">
+                            </div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Rotation</div>
+                            <div class="property-input vec3-input">
+                                <input type="number" class="x" value="0" step="1">
+                                <input type="number" class="y" value="0" step="1">
+                                <input type="number" class="z" value="0" step="1">
+                            </div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Scale</div>
+                            <div class="property-input vec3-input">
+                                <input type="number" class="x" value="1.00" step="0.1">
+                                <input type="number" class="y" value="1.00" step="0.1">
+                                <input type="number" class="z" value="1.00" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="properties-section">
+                    <div class="properties-header">
+                        <span>Object</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                    </div>
+                    <div class="properties-body">
+                        <div class="property-row">
+                            <div class="property-label">Name</div>
+                            <div class="property-input">
+                                <input type="text" value="Object_001">
+                            </div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Type</div>
+                            <div class="property-input">
+                                <select style="flex:1;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;padding:6px 8px;color:var(--text-primary);">
+                                    <option>Doodad</option>
+                                    <option>Unit</option>
+                                    <option>Building</option>
+                                    <option>Item</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-label">Player</div>
+                            <div class="property-input">
+                                <select style="flex:1;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;padding:6px 8px;color:var(--text-primary);">
+                                    <option>Neutral</option>
+                                    <option>Player 1</option>
+                                    <option>Player 2</option>
+                                    <option>Player 3</option>
+                                    <option>Player 4</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span>Tool: Terrain Raise</span>
+            </div>
+            <div class="status-item">
+                <span class="status-coords">X: 128.5 Y: 64.2 Z: 12.0</span>
+            </div>
+            <div class="status-item">
+                <span>Objects: 247</span>
+            </div>
+            <div class="status-item">
+                <span>Size: 256x256</span>
+            </div>
+            <div class="status-item">
+                <span>Modified</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Editor JavaScript
+        const MapEditor = {
+            currentTool: 'raise',
+            brushSize: 16,
+            brushStrength: 50,
+            brushFalloff: 75,
+            selectedTexture: 'grass',
+            selectedLayer: 'Terrain',
+            activeTab: 'layers',
+
+            init() {
+                this.setupToolbar();
+                this.setupTools();
+                this.setupBrushControls();
+                this.setupTabs();
+                this.setupLayers();
+                this.initViewport();
+            },
+
+            setupToolbar() {
+                document.querySelectorAll('.toolbar-group .tool-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.id;
+                        switch (id) {
+                            case 'btn-new':
+                                this.newMap();
+                                break;
+                            case 'btn-open':
+                                this.openMap();
+                                break;
+                            case 'btn-save':
+                                this.saveMap();
+                                break;
+                            case 'btn-undo':
+                                this.undo();
+                                break;
+                            case 'btn-redo':
+                                this.redo();
+                                break;
+                            case 'btn-test':
+                                this.testMap();
+                                break;
+                            case 'btn-publish':
+                                this.publishMap();
+                                break;
+                        }
+                    });
+                });
+            },
+
+            setupTools() {
+                document.querySelectorAll('.tool-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const tool = item.dataset.tool;
+                        const texture = item.dataset.texture;
+
+                        if (tool) {
+                            document.querySelectorAll('.tool-item[data-tool]').forEach(t => t.classList.remove('selected'));
+                            item.classList.add('selected');
+                            this.currentTool = tool;
+                            this.updateStatus();
+                        }
+
+                        if (texture) {
+                            document.querySelectorAll('.tool-item[data-texture]').forEach(t => t.classList.remove('selected'));
+                            item.classList.add('selected');
+                            this.selectedTexture = texture;
+                        }
+                    });
+                });
+            },
+
+            setupBrushControls() {
+                const sizeSlider = document.getElementById('brush-size');
+                const strengthSlider = document.getElementById('brush-strength');
+                const falloffSlider = document.getElementById('brush-falloff');
+
+                sizeSlider.addEventListener('input', (e) => {
+                    this.brushSize = parseInt(e.target.value);
+                    document.getElementById('brush-size-value').textContent = this.brushSize;
+                });
+
+                strengthSlider.addEventListener('input', (e) => {
+                    this.brushStrength = parseInt(e.target.value);
+                    document.getElementById('brush-strength-value').textContent = this.brushStrength + '%';
+                });
+
+                falloffSlider.addEventListener('input', (e) => {
+                    this.brushFalloff = parseInt(e.target.value);
+                    document.getElementById('brush-falloff-value').textContent = this.brushFalloff + '%';
+                });
+            },
+
+            setupTabs() {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+
+                        document.querySelectorAll('.right-panel .panel-content').forEach(panel => {
+                            panel.style.display = 'none';
+                        });
+                        document.getElementById(`tab-${tabName}`).style.display = 'block';
+                        this.activeTab = tabName;
+                    });
+                });
+            },
+
+            setupLayers() {
+                document.querySelectorAll('.layer-item').forEach(layer => {
+                    layer.addEventListener('click', () => {
+                        document.querySelectorAll('.layer-item').forEach(l => l.classList.remove('selected'));
+                        layer.classList.add('selected');
+                        this.selectedLayer = layer.querySelector('.layer-name').textContent;
+                    });
+
+                    const visibility = layer.querySelector('.layer-visibility');
+                    visibility.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        visibility.classList.toggle('visible');
+                    });
+
+                    const lock = layer.querySelector('.layer-lock');
+                    lock.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        lock.classList.toggle('locked');
+                    });
+                });
+            },
+
+            initViewport() {
+                const canvas = document.getElementById('viewport-canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Resize canvas
+                const resize = () => {
+                    canvas.width = canvas.clientWidth;
+                    canvas.height = canvas.clientHeight;
+                    this.render(ctx, canvas);
+                };
+                window.addEventListener('resize', resize);
+                resize();
+
+                // Mouse tracking
+                canvas.addEventListener('mousemove', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    document.querySelector('.status-coords').textContent =
+                        `X: ${x.toFixed(1)} Y: ${y.toFixed(1)} Z: 0.0`;
+                });
+            },
+
+            render(ctx, canvas) {
+                // Draw grid
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                const gridSize = 32;
+
+                for (let x = 0; x < canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+
+                // Center text
+                ctx.fillStyle = '#555';
+                ctx.font = '24px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Map Viewport', canvas.width / 2, canvas.height / 2);
+            },
+
+            updateStatus() {
+                const toolNames = {
+                    raise: 'Terrain Raise',
+                    lower: 'Terrain Lower',
+                    smooth: 'Terrain Smooth',
+                    flatten: 'Terrain Flatten',
+                    paint: 'Texture Paint',
+                    water: 'Water Tool',
+                    cliff: 'Cliff Tool',
+                    noise: 'Noise Tool'
+                };
+                document.querySelector('.status-bar .status-item span').textContent =
+                    `Tool: ${toolNames[this.currentTool] || this.currentTool}`;
+            },
+
+            newMap() {
+                if (confirm('Create a new map? Unsaved changes will be lost.')) {
+                    console.log('Creating new map...');
+                }
+            },
+
+            openMap() {
+                console.log('Opening map file dialog...');
+            },
+
+            saveMap() {
+                console.log('Saving map...');
+            },
+
+            undo() {
+                console.log('Undo');
+            },
+
+            redo() {
+                console.log('Redo');
+            },
+
+            testMap() {
+                console.log('Testing map...');
+            },
+
+            publishMap() {
+                console.log('Publishing to workshop...');
+            }
+        };
+
+        // Initialize editor
+        document.addEventListener('DOMContentLoaded', () => {
+            MapEditor.init();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'n':
+                        e.preventDefault();
+                        MapEditor.newMap();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        MapEditor.openMap();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        MapEditor.saveMap();
+                        break;
+                    case 'z':
+                        e.preventDefault();
+                        MapEditor.undo();
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        MapEditor.redo();
+                        break;
+                }
+            } else {
+                switch (e.key.toLowerCase()) {
+                    case 'v':
+                        document.getElementById('btn-select').click();
+                        break;
+                    case 't':
+                        document.getElementById('btn-terrain').click();
+                        break;
+                    case 'o':
+                        document.getElementById('btn-objects').click();
+                        break;
+                    case 'r':
+                        document.getElementById('btn-regions').click();
+                        break;
+                    case 'g':
+                        document.getElementById('btn-grid').click();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

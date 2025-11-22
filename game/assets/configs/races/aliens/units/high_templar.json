@@ -1,0 +1,153 @@
+{
+  "id": "high_templar",
+  "name": "High Templar",
+  "display_name": "High Templar",
+  "description": "Masters of psionic warfare, High Templars wield devastating mental abilities. Their Psionic Storm can devastate entire armies, while Feedback drains enemy casters of their energy reserves. Two High Templars can merge to form an Archon.",
+  "race": "aliens",
+  "tier": 4,
+  "unit_type": "caster",
+  "classification": ["biological", "psionic", "caster"],
+
+  "stats": {
+    "health": 40,
+    "health_regen": 0,
+    "shield": 40,
+    "shield_regen": 0.8,
+    "shield_regen_delay": 10.0,
+    "energy": 50,
+    "energy_max": 200,
+    "energy_regen": 0.5625,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 2.82,
+    "acceleration": 999,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": false
+  },
+
+  "production": {
+    "build_time": 55,
+    "warp_time": 45,
+    "supply_cost": 2,
+    "resource_cost": {
+      "minerals": 50,
+      "vespene": 150
+    },
+    "power_cost": 0,
+    "produced_at": "gateway",
+    "warp_at": "warp_gate",
+    "requirements": ["psi_link", "templar_archives"],
+    "hotkey": "T"
+  },
+
+  "abilities": [
+    {
+      "id": "psionic_storm",
+      "name": "Psionic Storm",
+      "description": "Creates a devastating storm of psionic energy at the target area. Deals 80 damage over 2.85 seconds to all enemy units in the area. Multiple storms do not stack.",
+      "type": "active",
+      "cooldown": 1.43,
+      "energy_cost": 75,
+      "damage": 80,
+      "damage_per_tick": 10,
+      "duration": 2.85,
+      "radius": 1.5,
+      "range": 9,
+      "does_not_stack": true,
+      "hotkey": "T"
+    },
+    {
+      "id": "feedback",
+      "name": "Feedback",
+      "description": "Drains all energy from the target unit and deals damage equal to the energy drained.",
+      "type": "active",
+      "cooldown": 0.71,
+      "energy_cost": 50,
+      "range": 9,
+      "damage_per_energy": 1.0,
+      "hotkey": "F"
+    },
+    {
+      "id": "archon_warp",
+      "name": "Archon Warp",
+      "description": "Two High Templars can merge to form a powerful Archon. The merge is permanent.",
+      "type": "active",
+      "cooldown": 0,
+      "energy_cost": 0,
+      "requires_units": 2,
+      "target_unit": "high_templar",
+      "produces": "archon",
+      "hotkey": "C"
+    }
+  ],
+
+  "upgrades": [],
+
+  "attributes": {
+    "is_biological": true,
+    "is_psionic": true,
+    "is_light": true,
+    "is_caster": true,
+    "cargo_size": 2,
+    "can_be_warped": true,
+    "can_merge": true,
+    "merge_result": "archon"
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 18,
+    "selection_radius": 0.75,
+    "target_radius": 0.5
+  },
+
+  "visuals": {
+    "model": "models/aliens/high_templar.fbx",
+    "texture": "textures/aliens/high_templar.png",
+    "icon": "icons/aliens/high_templar.png",
+    "wireframe": "wireframes/aliens/high_templar.png",
+    "portrait": "portraits/aliens/high_templar.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "cast": "anim_cast",
+      "merge": "anim_merge",
+      "death": "anim_death"
+    },
+    "effects": {
+      "psionic_storm": "fx_psionic_storm",
+      "feedback": "fx_feedback",
+      "merge": "fx_archon_merge",
+      "psi_aura": "fx_psi_aura"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/high_templar_ready.ogg",
+    "selected": ["audio/aliens/high_templar_select1.ogg", "audio/aliens/high_templar_select2.ogg"],
+    "command": ["audio/aliens/high_templar_command1.ogg"],
+    "cast": "audio/aliens/high_templar_cast.ogg",
+    "psionic_storm": "audio/aliens/psionic_storm.ogg",
+    "feedback": "audio/aliens/feedback.ogg",
+    "death": "audio/aliens/high_templar_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "caster",
+    "priority_targets": ["cluster", "biological", "caster"],
+    "flee_when_attacked": true,
+    "micro_level": "very_high",
+    "preferred_formation": "back",
+    "storm_cluster_threshold": 8,
+    "merge_when_oom": true
+  }
+}

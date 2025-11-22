@@ -1,0 +1,184 @@
+{
+  "id": "lost_soul",
+  "name": "Lost Soul",
+  "race": "cryptids",
+  "tier": 1,
+  "type": "worker",
+  "role": ["gatherer", "builder", "scout"],
+
+  "description": "A restless spirit bound to serve the Hidden Ones. Lost Souls phase through matter to gather resources from places the living cannot reach.",
+  "lore": "These are the spirits of those who vanished without trace - hikers lost in the woods, travelers who strayed from paths, explorers who delved too deep. Now they serve, gathering the essence of fear and the wealth of the earth.",
+
+  "stats": {
+    "health": 120,
+    "healthRegen": 0.5,
+    "mana": 100,
+    "manaRegen": 0.5,
+    "armor": 0,
+    "armorType": "ethereal",
+    "moveSpeed": 280,
+    "turnRate": 1.0,
+    "collisionSize": 24,
+    "selectionScale": 0.9
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 5,
+      "variance": 1,
+      "type": "cold"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 90,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.3,
+    "backswing": 0.5,
+    "acquisitionRange": 200,
+    "aggroRange": 100
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 50,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "gather_resources",
+      "name": "Gather",
+      "type": "active",
+      "targetType": "resource",
+      "description": "Gathers gold, lumber, or essence from resource nodes",
+      "cooldown": 0,
+      "manaCost": 0,
+      "effects": {
+        "carryCapacity": 10,
+        "gatherRate": 1.0
+      },
+      "hotkey": "G",
+      "icon": "icons/abilities/gather.png"
+    },
+    {
+      "id": "phase_shift",
+      "name": "Phase Shift",
+      "type": "active",
+      "targetType": "none",
+      "description": "Become intangible briefly, passing through units and avoiding damage",
+      "cooldown": 20.0,
+      "manaCost": 25,
+      "effects": {
+        "duration": 3.0,
+        "invulnerable": true,
+        "cannotAttack": true,
+        "speedBonus": 1.3
+      },
+      "hotkey": "P",
+      "icon": "icons/abilities/phase_shift.png"
+    },
+    {
+      "id": "build_structure",
+      "name": "Build",
+      "type": "active",
+      "targetType": "ground",
+      "description": "Construct cryptid buildings",
+      "cooldown": 0,
+      "manaCost": 0,
+      "hotkey": "B",
+      "icon": "icons/abilities/build.png"
+    },
+    {
+      "id": "essence_siphon",
+      "name": "Essence Siphon",
+      "type": "passive",
+      "description": "Automatically collects essence from nearby frightened enemies",
+      "effects": {
+        "range": 300,
+        "essencePerSecond": 0.5
+      },
+      "icon": "icons/abilities/essence_siphon.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "hidden_grove",
+    "buildTime": 15,
+    "cost": {
+      "gold": 75,
+      "lumber": 0,
+      "essence": 0
+    },
+    "foodCost": 1,
+    "prerequisites": {
+      "buildings": ["hidden_grove"],
+      "technologies": [],
+      "age": "whisper"
+    },
+    "hotkey": "L"
+  },
+
+  "upgrades": {
+    "special": ["improved_phasing", "soul_link"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/lost_soul/ready.ogg",
+    "select": ["audio/units/lost_soul/select1.ogg", "audio/units/lost_soul/select2.ogg"],
+    "move": ["audio/units/lost_soul/move1.ogg", "audio/units/lost_soul/move2.ogg"],
+    "attack": ["audio/units/lost_soul/attack1.ogg"],
+    "death": "audio/units/lost_soul/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/lost_soul.glb",
+    "texture": "textures/units/cryptids/lost_soul.png",
+    "portrait": "textures/portraits/lost_soul.png",
+    "icon": "textures/icons/lost_soul.png",
+    "scale": 0.9,
+    "animations": {
+      "idle": "lost_soul_idle",
+      "walk": "lost_soul_float",
+      "attack": "lost_soul_attack",
+      "death": "lost_soul_fade",
+      "gather": "lost_soul_gather"
+    },
+    "effects": {
+      "spawn": "effects/ghost_spawn.vfx",
+      "death": "effects/soul_dissipate.vfx",
+      "phase": "effects/phase_shift.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 1,
+    "priority": "low",
+    "behavior": "worker",
+    "fleeThreshold": 0.5,
+    "preferredTargets": [],
+    "autoGather": true,
+    "usePhaseToEscape": true
+  },
+
+  "flags": {
+    "isWorker": true,
+    "isEthereal": true,
+    "isFlying": true,
+    "leavesCorpse": false,
+    "immuneToPoison": true,
+    "canGatherGold": true,
+    "canGatherLumber": true,
+    "canGatherEssence": true,
+    "canBuild": true
+  },
+
+  "bounty": {
+    "gold": 5,
+    "experience": 10
+  },
+
+  "pointValue": 1,
+  "supplyProvided": 0,
+  "supplyUsed": 1
+}

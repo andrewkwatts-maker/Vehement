@@ -1,0 +1,222 @@
+{
+    "id": "naga_siren",
+    "type": "unit",
+    "name": "Naga Siren",
+    "description": "Enchanting sea maidens who wield dark songs to debilitate foes. Their haunting melodies can slow enemies and drain their will to fight.",
+    "race": "naga",
+    "tier": 1,
+    "class": "ranged_caster",
+
+    "tags": ["military", "caster", "ranged", "tier1", "amphibious", "support", "debuffer"],
+
+    "model": {
+        "path": "models/races/naga/units/siren.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/siren_diffuse.png",
+        "normal": "textures/races/naga/units/siren_normal.png",
+        "emissive": "textures/races/naga/units/siren_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.35,
+                "height": 1.8,
+                "offset": [0.0, 0.9, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 80.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 4.5,
+        "turnRate": 300.0,
+        "acceleration": 12.0,
+        "deceleration": 16.0,
+        "canSwim": true,
+        "swimSpeed": 6.5,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.1,
+            "forest": 0.9,
+            "water": 1.4,
+            "deep_water": 1.5,
+            "desert": 0.6
+        }
+    },
+
+    "combat": {
+        "health": 220,
+        "maxHealth": 220,
+        "mana": 150,
+        "maxMana": 150,
+        "manaRegen": 1.2,
+        "armor": 1,
+        "magicResist": 3,
+        "attackDamage": 12,
+        "attackSpeed": 1.6,
+        "attackRange": 10.0,
+        "critChance": 0.05,
+        "critMultiplier": 1.5,
+        "magicalDamage": true,
+        "damageType": "sonic",
+        "armorType": "light"
+    },
+
+    "projectile": {
+        "id": "siren_note",
+        "model": "models/projectiles/sonic_wave.obj",
+        "speed": 20.0,
+        "lifetime": 1.5,
+        "gravity": 0.0,
+        "trailEffect": "effects/sonic_trail.fx",
+        "impactEffect": "effects/sonic_impact.fx",
+        "soundOnFire": "sounds/spells/siren_attack.wav"
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "spell_power_bonus": 0.2,
+            "mana_regen_bonus": 0.5
+        },
+        "in_water": {
+            "health_regen": 2.0
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "haunting_voice",
+            "name": "Haunting Voice",
+            "description": "Basic attacks slow enemy movement speed by 15% for 3 seconds.",
+            "effect": {
+                "type": "slow",
+                "value": 0.15,
+                "duration": 3.0
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely."
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "song_of_weakness",
+            "name": "Song of Weakness",
+            "description": "Sings a demoralizing song that reduces enemy damage by 25% and armor by 3 for 8 seconds in target area.",
+            "icon": "icons/abilities/naga/song_weakness.png",
+            "cooldown": 22.0,
+            "manaCost": 45,
+            "range": 12.0,
+            "radius": 5.0,
+            "targetType": "ground",
+            "duration": 8.0,
+            "effects": [
+                {"type": "damage_reduction_debuff", "value": 0.25},
+                {"type": "armor_reduction", "value": 3}
+            ],
+            "castTime": 1.0,
+            "castAnimation": "sing",
+            "castSound": "sounds/abilities/song_weakness.wav"
+        },
+        {
+            "id": "mana_tide",
+            "name": "Mana Tide",
+            "description": "Restores 30 mana to all friendly units in a radius over 5 seconds.",
+            "icon": "icons/abilities/naga/mana_tide.png",
+            "cooldown": 30.0,
+            "manaCost": 25,
+            "radius": 8.0,
+            "targetType": "self",
+            "duration": 5.0,
+            "effects": [
+                {"type": "mana_restore", "value": 30, "over_time": true}
+            ],
+            "castAnimation": "channel",
+            "castSound": "sounds/abilities/mana_tide.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/siren/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/siren/slither.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/siren/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/siren/cast.anim",
+            "loop": false,
+            "events": [[0.4, "fire_projectile"]]
+        },
+        "sing": {"path": "animations/naga/siren/sing.anim", "loop": false},
+        "channel": {"path": "animations/naga/siren/channel.anim", "loop": true},
+        "death": {"path": "animations/naga/siren/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/naga_slither_1.wav", "sounds/footsteps/naga_slither_2.wav"],
+            "volume": 0.4
+        },
+        "attack": "sounds/combat/sonic_attack.wav",
+        "death": {"paths": ["sounds/death/siren_death_1.wav"], "volume": 0.9},
+        "select": "sounds/voice/naga/siren_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/siren_ack_1.wav",
+                "sounds/voice/naga/siren_ack_2.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_siren.bt",
+        "profile": "support",
+        "aggroRange": 14.0,
+        "leashRange": 20.0,
+        "preferWater": true,
+        "keepDistance": 8.0
+    },
+
+    "production": {
+        "building": "naga_siren_shrine",
+        "time": 22.0,
+        "cost": {
+            "gold": 140,
+            "coral": 60,
+            "pearls": 20
+        },
+        "requirements": {
+            "age": "age_shallow",
+            "techs": []
+        }
+    },
+
+    "properties": {
+        "populationCost": 2,
+        "supplyUpkeep": 1,
+        "squadSize": 1,
+        "experienceValue": 30,
+        "bountyGold": 25
+    },
+
+    "upgrades": {
+        "spell_power": ["naga_tidal_magic_1", "naga_tidal_magic_2"],
+        "special": ["naga_siren_mastery"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/siren/on_spawn.py",
+        "on_death": "scripts/units/naga/siren/on_death.py"
+    }
+}

@@ -1,0 +1,439 @@
+{
+  "race": "naga",
+  "name": "Depths of Nazjatar AI",
+  "description": "AI behavior configuration for the Naga - favors water maps, uses amphibious advantages, aggressive expansion with water control",
+
+  "personality_profiles": {
+    "default": {
+      "name": "Tidal Strategist",
+      "aggression": 0.6,
+      "expansion_rate": 0.7,
+      "tech_focus": 0.5,
+      "harassment_tendency": 0.6,
+      "defense_priority": 0.5,
+      "micro_intensity": 0.7,
+      "water_affinity": 0.9
+    },
+    "aggressive": {
+      "name": "Tidehunter's Wrath",
+      "aggression": 0.85,
+      "expansion_rate": 0.5,
+      "tech_focus": 0.4,
+      "harassment_tendency": 0.8,
+      "defense_priority": 0.3,
+      "micro_intensity": 0.85,
+      "water_affinity": 0.7
+    },
+    "defensive": {
+      "name": "Abyssal Guardian",
+      "aggression": 0.35,
+      "expansion_rate": 0.5,
+      "tech_focus": 0.7,
+      "harassment_tendency": 0.3,
+      "defense_priority": 0.85,
+      "micro_intensity": 0.6,
+      "water_affinity": 0.95
+    },
+    "economic": {
+      "name": "Pearl Collector",
+      "aggression": 0.4,
+      "expansion_rate": 0.9,
+      "tech_focus": 0.5,
+      "harassment_tendency": 0.4,
+      "defense_priority": 0.5,
+      "micro_intensity": 0.5,
+      "water_affinity": 0.85
+    },
+    "beast_master": {
+      "name": "Deep One Caller",
+      "aggression": 0.55,
+      "expansion_rate": 0.6,
+      "tech_focus": 0.6,
+      "harassment_tendency": 0.5,
+      "defense_priority": 0.5,
+      "micro_intensity": 0.7,
+      "water_affinity": 0.8,
+      "beast_focus": 0.9
+    },
+    "caster_heavy": {
+      "name": "Sea Witch Coven",
+      "aggression": 0.5,
+      "expansion_rate": 0.55,
+      "tech_focus": 0.85,
+      "harassment_tendency": 0.4,
+      "defense_priority": 0.6,
+      "micro_intensity": 0.8,
+      "water_affinity": 0.9,
+      "magic_focus": 0.9
+    }
+  },
+
+  "map_preferences": {
+    "water_map_bonus": 0.3,
+    "island_map_bonus": 0.4,
+    "coastal_map_bonus": 0.25,
+    "land_map_penalty": -0.15,
+    "preferred_starting_positions": ["coastal", "island", "river_delta"],
+    "expansion_preference": "near_water"
+  },
+
+  "build_orders": {
+    "standard_opening": {
+      "name": "Coral Expansion",
+      "priority": 1,
+      "map_type": "any",
+      "steps": [
+        {"action": "build", "target": "slave", "count": 2},
+        {"action": "build", "target": "spawning_pool", "supply_trigger": 10},
+        {"action": "build", "target": "coral_barracks", "supply_trigger": 12},
+        {"action": "train", "target": "myrmidon", "count": 2},
+        {"action": "build", "target": "tide_pools", "supply_trigger": 14},
+        {"action": "build", "target": "spawning_pool", "supply_trigger": 18, "location": "expansion"},
+        {"action": "train", "target": "siren", "count": 2},
+        {"action": "age_up", "target": "age_reef", "supply_trigger": 22}
+      ]
+    },
+    "water_map_opening": {
+      "name": "Tidal Dominance",
+      "priority": 1,
+      "map_type": "water_heavy",
+      "steps": [
+        {"action": "build", "target": "slave", "count": 3},
+        {"action": "build", "target": "spawning_pool", "supply_trigger": 10},
+        {"action": "build", "target": "coral_barracks", "supply_trigger": 11},
+        {"action": "build", "target": "beast_den", "supply_trigger": 13},
+        {"action": "train", "target": "snap_dragon", "count": 3},
+        {"action": "train", "target": "myrmidon", "count": 2},
+        {"action": "build", "target": "spawning_pool", "supply_trigger": 16, "location": "water_expansion"},
+        {"action": "age_up", "target": "age_reef", "supply_trigger": 20}
+      ]
+    },
+    "aggressive_opening": {
+      "name": "Myrmidon Rush",
+      "priority": 2,
+      "steps": [
+        {"action": "build", "target": "slave", "count": 1},
+        {"action": "build", "target": "spawning_pool", "supply_trigger": 9},
+        {"action": "build", "target": "coral_barracks", "supply_trigger": 10},
+        {"action": "build", "target": "coral_barracks", "supply_trigger": 12},
+        {"action": "train", "target": "myrmidon", "count": 6},
+        {"action": "attack", "supply_trigger": 18},
+        {"action": "build", "target": "siren_shrine", "supply_trigger": 20}
+      ]
+    },
+    "tech_opening": {
+      "name": "Deep Magic",
+      "priority": 3,
+      "steps": [
+        {"action": "build", "target": "slave", "count": 2},
+        {"action": "build", "target": "spawning_pool", "supply_trigger": 10},
+        {"action": "build", "target": "siren_shrine", "supply_trigger": 12},
+        {"action": "build", "target": "tide_pools", "supply_trigger": 14},
+        {"action": "train", "target": "siren", "count": 2},
+        {"action": "build", "target": "temple_of_tides", "supply_trigger": 18},
+        {"action": "age_up", "target": "age_reef", "supply_trigger": 20},
+        {"action": "train", "target": "sea_witch", "count": 2}
+      ]
+    },
+    "beast_opening": {
+      "name": "Primal Depths",
+      "priority": 4,
+      "steps": [
+        {"action": "build", "target": "slave", "count": 2},
+        {"action": "build", "target": "spawning_pool", "supply_trigger": 10},
+        {"action": "build", "target": "beast_den", "supply_trigger": 11},
+        {"action": "build", "target": "hatchery", "supply_trigger": 14},
+        {"action": "train", "target": "snap_dragon", "count": 4},
+        {"action": "build", "target": "tide_pools", "supply_trigger": 16},
+        {"action": "age_up", "target": "age_reef", "supply_trigger": 20},
+        {"action": "train", "target": "hydra", "count": 1}
+      ]
+    }
+  },
+
+  "army_composition": {
+    "early_game": {
+      "primary_units": ["myrmidon", "siren"],
+      "support_units": ["slave", "snap_dragon"],
+      "ratios": {
+        "myrmidon": 0.5,
+        "siren": 0.25,
+        "snap_dragon": 0.2,
+        "slave": 0.05
+      }
+    },
+    "mid_game": {
+      "primary_units": ["royal_guard", "sea_witch", "tidal_guardian"],
+      "support_units": ["siren", "couatl", "deep_one"],
+      "siege_units": ["hydra", "dragon_turtle"],
+      "ratios": {
+        "royal_guard": 0.25,
+        "sea_witch": 0.15,
+        "tidal_guardian": 0.15,
+        "hydra": 0.15,
+        "couatl": 0.1,
+        "deep_one": 0.1,
+        "dragon_turtle": 0.05,
+        "slave": 0.05
+      }
+    },
+    "late_game": {
+      "primary_units": ["tidal_lord", "ancient_hydra", "sea_giant"],
+      "capital_units": ["kraken"],
+      "support_units": ["sea_witch", "leviathan_caller", "couatl"],
+      "siege_units": ["dragon_turtle"],
+      "ratios": {
+        "tidal_lord": 0.15,
+        "ancient_hydra": 0.15,
+        "sea_giant": 0.15,
+        "kraken": 0.1,
+        "sea_witch": 0.1,
+        "leviathan_caller": 0.1,
+        "couatl": 0.1,
+        "dragon_turtle": 0.1,
+        "slave": 0.05
+      }
+    }
+  },
+
+  "expansion_behavior": {
+    "first_expansion_timing": {
+      "gold": 350,
+      "supply": 18
+    },
+    "max_bases": 5,
+    "defend_expansion_priority": 0.75,
+    "worker_saturation_target": 14,
+    "coral_timing": {
+      "first_coral": 14,
+      "second_coral": 22
+    },
+    "prefer_water_expansions": true,
+    "water_expansion_bonus_priority": 0.3
+  },
+
+  "combat_behavior": {
+    "engagement_ratio": 1.1,
+    "engagement_ratio_near_water": 0.9,
+    "retreat_threshold": 0.35,
+    "retreat_to_water_priority": 0.8,
+    "rally_point_distance": 12,
+    "focus_fire_priority": ["caster", "siege", "ranged", "melee", "worker"],
+    "use_amphibious_flanking": true,
+    "ability_usage": {
+      "tidal_surge": {
+        "min_summons": 2,
+        "priority": "high"
+      },
+      "maelstrom": {
+        "min_targets": 4,
+        "priority": "high",
+        "prefer_choke_points": true
+      },
+      "frost_bolt": {
+        "priority_targets": ["high_damage", "mobile"],
+        "auto_use": true
+      },
+      "song_of_siren": {
+        "min_targets": 3,
+        "priority": "medium"
+      },
+      "mass_charm": {
+        "min_targets": 5,
+        "priority": "high",
+        "save_for_battles": true
+      },
+      "venom_attacks": {
+        "spread_priority": "high_value_targets",
+        "maintain_stacks": true
+      },
+      "wrath_of_ocean": {
+        "use_threshold": "critical_battle",
+        "min_enemy_value": 2000
+      }
+    }
+  },
+
+  "defense_behavior": {
+    "serpent_ward_per_base": 2,
+    "tidal_gate_per_base": 1,
+    "coral_wall_chokepoints": true,
+    "detection_coverage": true,
+    "water_patrol_routes": true,
+    "underwater_ambush_positions": true
+  },
+
+  "scouting_behavior": {
+    "initial_scout_timing": 12,
+    "scout_unit": "snap_dragon",
+    "alternate_scout": "slave",
+    "maintain_vision": true,
+    "water_route_scouting": true,
+    "deep_one_scout_timing": "siren_shrine_complete"
+  },
+
+  "harassment_behavior": {
+    "enabled": true,
+    "units": ["snap_dragon", "couatl", "deep_one"],
+    "snap_dragon_harass": {
+      "min_count": 3,
+      "targets": ["worker", "isolated_unit"],
+      "use_water_routes": true
+    },
+    "couatl_harass": {
+      "min_count": 2,
+      "targets": ["worker", "light_unit", "caster"]
+    },
+    "deep_one_infiltration": {
+      "min_count": 2,
+      "targets": ["worker", "isolated_building"],
+      "use_stealth": true
+    },
+    "amphibious_raid": {
+      "units": ["myrmidon", "royal_guard"],
+      "count": 6,
+      "attack_from_water": true
+    }
+  },
+
+  "hero_behavior": {
+    "hero_priority": ["sea_empress", "tidehunter", "siren_queen", "deep_oracle"],
+    "hero_priority_water_map": ["tidehunter", "sea_empress", "deep_oracle", "siren_queen"],
+    "hero_with_army": true,
+    "protect_hero": true,
+    "hero_retreat_health": 0.35,
+    "hero_retreat_to_water": true,
+    "ability_conservation": 0.4,
+    "hero_ability_usage": {
+      "sea_empress": {
+        "tsunami": {"save_for_large_battles": true, "min_targets": 6},
+        "crushing_wave": {"use_for_engage": true},
+        "serpent_ward": {"defensive_placement": true}
+      },
+      "tidehunter": {
+        "ravage": {"save_for_large_battles": true, "min_targets": 5},
+        "anchor_smash": {"use_on_cooldown": true},
+        "kraken_shell": {"auto_activate": true}
+      },
+      "siren_queen": {
+        "mass_charm": {"min_targets": 4},
+        "song_of_siren": {"use_defensively": true},
+        "healing_wave": {"health_threshold": 0.6}
+      },
+      "deep_oracle": {
+        "whirlpool": {"min_targets": 4},
+        "tornado": {"use_for_disruption": true},
+        "mana_burn": {"target_casters": true}
+      }
+    }
+  },
+
+  "tech_priorities": {
+    "upgrades": {
+      "trident_mastery_1": 1,
+      "scale_hardening_1": 2,
+      "venom_potency_1": 3,
+      "tidal_magic_1": 4,
+      "amphibious_training": 5
+    },
+    "buildings": {
+      "coral_barracks": 1,
+      "siren_shrine": 2,
+      "beast_den": 3,
+      "temple_of_tides": 4,
+      "hatchery": 5,
+      "leviathan_pit": 6
+    },
+    "ages": {
+      "age_reef": 1,
+      "age_abyss": 2,
+      "age_trench": 3,
+      "age_hadal": 4,
+      "age_primordial": 5,
+      "age_eternal": 6
+    }
+  },
+
+  "talent_priorities": {
+    "default": {
+      "branch_preference": ["branch_tidal", "branch_scale", "branch_venom", "branch_depths"],
+      "key_talents": ["talent_tidal_mastery_1", "talent_hardened_scales_1", "talent_ocean_surge"]
+    },
+    "aggressive": {
+      "branch_preference": ["branch_venom", "branch_tidal", "branch_depths", "branch_scale"],
+      "key_talents": ["talent_venom_potency_1", "talent_neurotoxic_mastery", "talent_spreading_plague"]
+    },
+    "defensive": {
+      "branch_preference": ["branch_scale", "branch_tidal", "branch_depths", "branch_venom"],
+      "key_talents": ["talent_hardened_scales_1", "talent_abyssal_fortitude", "talent_resilient_hide"]
+    },
+    "beast_master": {
+      "branch_preference": ["branch_depths", "branch_scale", "branch_tidal", "branch_venom"],
+      "key_talents": ["talent_beast_bond_1", "talent_leviathan_bond", "talent_primal_fury"]
+    }
+  },
+
+  "reaction_patterns": {
+    "enemy_rush": {
+      "response": "defensive_myrmidons",
+      "cancel_expansion": true,
+      "build_serpent_wards": true,
+      "retreat_to_water": true
+    },
+    "enemy_air": {
+      "response": "build_couatl",
+      "add_sea_witches": true,
+      "use_frost_bolts": true
+    },
+    "enemy_siege": {
+      "response": "flank_from_water",
+      "use_amphibious_advantage": true,
+      "summon_kraken": true
+    },
+    "enemy_expansion": {
+      "response": "water_harass_or_timing_attack",
+      "use_snap_dragons": true
+    },
+    "enemy_casters": {
+      "response": "deep_one_assassins",
+      "focus_fire_casters": true
+    },
+    "fire_damage_heavy": {
+      "response": "increase_regeneration",
+      "stay_near_water": true,
+      "prioritize_scale_talents": true
+    }
+  },
+
+  "difficulty_modifiers": {
+    "easy": {
+      "income_multiplier": 0.8,
+      "build_speed": 0.9,
+      "micro_delay": 2.0,
+      "ability_accuracy": 0.5,
+      "water_route_usage": 0.3
+    },
+    "medium": {
+      "income_multiplier": 1.0,
+      "build_speed": 1.0,
+      "micro_delay": 1.0,
+      "ability_accuracy": 0.75,
+      "water_route_usage": 0.6
+    },
+    "hard": {
+      "income_multiplier": 1.1,
+      "build_speed": 1.1,
+      "micro_delay": 0.5,
+      "ability_accuracy": 0.9,
+      "water_route_usage": 0.85
+    },
+    "insane": {
+      "income_multiplier": 1.3,
+      "build_speed": 1.2,
+      "micro_delay": 0.2,
+      "ability_accuracy": 0.98,
+      "water_route_usage": 1.0,
+      "perfect_amphibious_micro": true
+    }
+  }
+}

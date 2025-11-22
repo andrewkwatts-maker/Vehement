@@ -1,0 +1,94 @@
+{
+    "id": "naga_hatchery",
+    "type": "building",
+    "name": "Hatchery",
+    "description": "Aerial unit production facility where flying serpents are bred. Produces Couatl and other flying creatures.",
+    "race": "naga",
+    "tier": 2,
+    "category": "military",
+
+    "tags": ["military", "production", "flying", "tier2"],
+
+    "model": {
+        "path": "models/races/naga/buildings/hatchery.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/hatchery_diffuse.png",
+        "normal": "textures/races/naga/buildings/hatchery_normal.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [4, 4],
+        "entrances": [[2, 0]],
+        "visualSize": [8.0, 12.0, 8.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 250,
+            "coral": 150,
+            "pearls": 50
+        },
+        "time": 60.0,
+        "builder_required": true
+    },
+
+    "stats": {
+        "maxHealth": 1000,
+        "armor": 5,
+        "magicResist": 5
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "naga_couatl",
+            "time": 38.0,
+            "cost": {"gold": 280, "coral": 80, "pearls": 50},
+            "maxQueue": 4,
+            "requirements": {"age": "age_reef", "techs": ["naga_flight_mastery"]}
+        }
+    ],
+
+    "research": [
+        {
+            "id": "naga_flight_mastery",
+            "name": "Flight Mastery",
+            "cost": {"gold": 200, "pearls": 100},
+            "time": 50.0
+        },
+        {
+            "id": "naga_lightning_mastery",
+            "name": "Lightning Mastery",
+            "cost": {"gold": 250, "pearls": 120},
+            "time": 60.0,
+            "requirements": {"techs": ["naga_flight_mastery"]}
+        },
+        {
+            "id": "naga_wind_rider",
+            "name": "Wind Rider",
+            "description": "Increases Couatl movement speed by 15%",
+            "cost": {"gold": 150, "pearls": 80},
+            "time": 45.0
+        }
+    ],
+
+    "water_bonus": {
+        "near_water_radius": 6,
+        "production_speed_bonus": 0.1
+    },
+
+    "requirements": {
+        "buildings": ["naga_temple_of_tides"],
+        "age": "age_reef"
+    },
+
+    "visionRange": 12.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/hatchery/on_complete.py"
+    }
+}

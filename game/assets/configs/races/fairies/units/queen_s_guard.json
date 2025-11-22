@@ -1,0 +1,187 @@
+{
+    "id": "fairy_queen_s_guard",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Queen's Guard",
+    "description": "Elite faerie warriors sworn to protect the Fae Queen. These legendary fighters wield enchanted moonblades and can blink across the battlefield.",
+
+    "tags": ["military", "melee", "tier4", "elite", "blink", "assassin"],
+
+    "tier": 4,
+    "age_requirement": 6,
+
+    "model": {
+        "path": "models/races/fairies/units/queen_s_guard.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/queen_s_guard_diffuse.png",
+        "normal": "textures/races/fairies/units/queen_s_guard_normal.png",
+        "emissive": "textures/races/fairies/units/queen_s_guard_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.3,
+                "height": 1.7,
+                "offset": [0.0, 0.85, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 70.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 750,
+        "maxHealth": 750,
+        "healthRegen": 1.5,
+        "mana": 250,
+        "maxMana": 250,
+        "manaRegen": 2.0,
+        "armor": 6,
+        "magicResist": 30,
+        "moveSpeed": 6.0,
+        "turnRate": 400.0
+    },
+
+    "combat": {
+        "attackDamage": 48,
+        "attackSpeed": 1.0,
+        "attackRange": 1.5,
+        "damageType": "magic",
+        "armorType": "medium",
+        "attackType": "melee",
+        "critChance": 0.25,
+        "critMultiplier": 2.5
+    },
+
+    "abilities": [
+        {
+            "id": "ability_blink_guard",
+            "name": "Blink",
+            "description": "Instantly teleport a short distance",
+            "hotkey": "B",
+            "cooldown": 8.0,
+            "mana_cost": 30,
+            "range": 12.0,
+            "effects": [
+                {"type": "teleport", "value": true}
+            ]
+        },
+        {
+            "id": "ability_moonblade_strike",
+            "name": "Moonblade Strike",
+            "description": "A devastating attack that deals bonus damage and silences the target",
+            "hotkey": "Q",
+            "cooldown": 15.0,
+            "mana_cost": 50,
+            "effects": [
+                {"type": "damage", "value": 150, "damage_type": "magic"},
+                {"type": "silence", "duration": 4.0}
+            ]
+        },
+        {
+            "id": "ability_shadowmeld",
+            "name": "Shadowmeld",
+            "description": "Become invisible while standing still at night. Bonus damage on first attack from stealth.",
+            "passive": true,
+            "requirements": ["night", "stationary"],
+            "effects": [
+                {"type": "invisibility", "value": true},
+                {"type": "stealth_damage_bonus", "value": 1.5}
+            ]
+        },
+        {
+            "id": "ability_fan_of_knives",
+            "name": "Fan of Knives",
+            "description": "Throw enchanted daggers at all nearby enemies",
+            "hotkey": "F",
+            "cooldown": 12.0,
+            "mana_cost": 60,
+            "radius": 6.0,
+            "effects": [
+                {"type": "damage", "value": 80, "damage_type": "magic", "target": "all_enemies_in_radius"}
+            ]
+        },
+        {
+            "id": "ability_evasion_guard",
+            "name": "Elusive",
+            "description": "High chance to evade attacks",
+            "passive": true,
+            "effects": [
+                {"type": "evasion", "value": 0.30}
+            ]
+        }
+    ],
+
+    "night_bonus": {
+        "attackDamage": 0.35,
+        "critChance": 0.15,
+        "evasion": 0.15,
+        "moveSpeed": 0.20
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_guard_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 6
+        },
+        {
+            "id": "upgrade_moonstone_armor",
+            "stat": "armor",
+            "bonus_per_level": 2
+        }
+    ],
+
+    "production": {
+        "building": "fairy_altar_of_elders",
+        "cost": {
+            "gold": 350,
+            "wood": 75,
+            "food": 5
+        },
+        "build_time": 50.0,
+        "population_cost": 4,
+        "prerequisites": ["fairy_tree_of_eternity", "upgrade_royal_guard"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/assassin.bt",
+        "profile": "aggressive",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "priority_targets": ["caster", "ranged", "hero"],
+        "use_blink_aggressively": true,
+        "use_shadowmeld": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/queen_s_guard/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/queen_s_guard/walk.anim", "loop": true},
+        "run": {"path": "animations/fairies/queen_s_guard/run.anim", "loop": true},
+        "attack": {"path": "animations/fairies/queen_s_guard/attack.anim", "loop": false},
+        "blink": {"path": "animations/fairies/queen_s_guard/blink.anim", "loop": false},
+        "fan_of_knives": {"path": "animations/fairies/queen_s_guard/fan_of_knives.anim", "loop": false},
+        "death": {"path": "animations/fairies/queen_s_guard/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/queen_s_guard/select_1.wav", "sounds/fairies/queen_s_guard/select_2.wav"],
+        "acknowledge": ["sounds/fairies/queen_s_guard/ack_1.wav", "sounds/fairies/queen_s_guard/ack_2.wav"],
+        "attack": "sounds/fairies/queen_s_guard/attack.wav",
+        "blink": "sounds/fairies/queen_s_guard/blink.wav",
+        "death": "sounds/fairies/queen_s_guard/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/queen_s_guard.png",
+        "icon": "textures/races/fairies/icons/queen_s_guard.png",
+        "hotkey": "G"
+    }
+}

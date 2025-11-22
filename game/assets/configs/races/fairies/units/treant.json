@@ -1,0 +1,178 @@
+{
+    "id": "fairy_treant",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Treant",
+    "description": "Massive animated trees that serve as siege units and front-line warriors. Treants deal devastating damage to buildings and can be summoned by Keepers.",
+
+    "tags": ["military", "melee", "tier3", "siege", "heavy", "summoned", "plant"],
+
+    "tier": 3,
+    "age_requirement": 4,
+
+    "model": {
+        "path": "models/races/fairies/units/treant.obj",
+        "scale": [1.5, 1.5, 1.5],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/treant_diffuse.png",
+        "normal": "textures/races/fairies/units/treant_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.8,
+                "height": 3.5,
+                "offset": [0.0, 1.75, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 800.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 800,
+        "maxHealth": 800,
+        "healthRegen": 1.5,
+        "armor": 5,
+        "magicResist": 15,
+        "moveSpeed": 3.2,
+        "turnRate": 150.0
+    },
+
+    "combat": {
+        "attackDamage": 26,
+        "attackSpeed": 2.2,
+        "attackRange": 2.0,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "attackType": "melee",
+        "splash_damage": 0.30,
+        "splash_radius": 2.5,
+        "building_damage_bonus": 2.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_uproot",
+            "name": "Uproot/Root",
+            "description": "Toggle between mobile attack mode and rooted regeneration mode",
+            "hotkey": "R",
+            "toggle": true,
+            "effects_rooted": [
+                {"type": "immobilize", "value": true},
+                {"type": "health_regen_bonus", "value": 5.0},
+                {"type": "armor_bonus", "value": 5},
+                {"type": "hide_as_tree", "value": true}
+            ],
+            "effects_uprooted": [
+                {"type": "can_move", "value": true},
+                {"type": "can_attack", "value": true}
+            ]
+        },
+        {
+            "id": "ability_natures_might",
+            "name": "Nature's Might",
+            "description": "Greatly increase damage for the next attack",
+            "hotkey": "N",
+            "cooldown": 20.0,
+            "effects": [
+                {"type": "next_attack_damage", "value": 3.0}
+            ]
+        },
+        {
+            "id": "ability_eat_tree",
+            "name": "Consume Tree",
+            "description": "Consume a nearby tree to restore health",
+            "hotkey": "E",
+            "cooldown": 25.0,
+            "range": 5.0,
+            "effects": [
+                {"type": "heal", "value": 300},
+                {"type": "destroy_tree", "value": true}
+            ]
+        }
+    ],
+
+    "regeneration": {
+        "enabled": true,
+        "base_rate": 1.5,
+        "rooted_rate": 10.0,
+        "near_tree_bonus": 2.0
+    },
+
+    "night_bonus": {
+        "attackDamage": 0.25,
+        "healthRegen": 0.50
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_treant_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 5
+        },
+        {
+            "id": "upgrade_bark_hide",
+            "stat": "health",
+            "bonus_per_level": 100
+        }
+    ],
+
+    "production": {
+        "building": "fairy_ancient_of_war",
+        "cost": {
+            "gold": 240,
+            "wood": 100,
+            "food": 5
+        },
+        "build_time": 45.0,
+        "population_cost": 4,
+        "prerequisites": ["fairy_tree_of_ages", "upgrade_force_of_nature"]
+    },
+
+    "summoned_version": {
+        "enabled": true,
+        "source_ability": "ability_force_of_nature",
+        "duration": 60.0,
+        "stats_modifier": 0.75
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/siege_melee.bt",
+        "profile": "siege",
+        "aggroRange": 10.0,
+        "leashRange": 25.0,
+        "priority_targets": ["building", "siege"],
+        "use_root_when_low": true,
+        "root_health_threshold": 0.3
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/treant/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/treant/walk.anim", "loop": true},
+        "attack": {"path": "animations/fairies/treant/attack.anim", "loop": false},
+        "root": {"path": "animations/fairies/treant/root.anim", "loop": false},
+        "uproot": {"path": "animations/fairies/treant/uproot.anim", "loop": false},
+        "death": {"path": "animations/fairies/treant/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/treant/select_1.wav", "sounds/fairies/treant/select_2.wav"],
+        "acknowledge": ["sounds/fairies/treant/ack_1.wav", "sounds/fairies/treant/ack_2.wav"],
+        "attack": "sounds/fairies/treant/attack.wav",
+        "root": "sounds/fairies/treant/root.wav",
+        "death": "sounds/fairies/treant/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/treant.png",
+        "icon": "textures/races/fairies/icons/treant.png",
+        "hotkey": "T"
+    }
+}

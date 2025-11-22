@@ -1,0 +1,247 @@
+{
+  "id": "vampire_lord",
+  "name": "Vampire Lord",
+  "race": "vampires",
+  "tier": 4,
+  "type": "near_hero",
+  "role": ["near_hero", "commander", "elite"],
+
+  "description": "Powerful vampire nobles just below hero status. They command lesser vampires and possess devastating personal combat abilities.",
+  "lore": "Vampire Lords are the highest ranking nobles beneath the true masters of the Blood Court. Each has ruled for centuries, amassing personal power that rivals lesser heroes. They are both deadly warriors and inspiring commanders.",
+
+  "stats": {
+    "health": 1100,
+    "healthRegen": 3.5,
+    "mana": 350,
+    "manaRegen": 1.5,
+    "armor": 6,
+    "armorType": "hero",
+    "moveSpeed": 310,
+    "turnRate": 0.6,
+    "collisionSize": 40,
+    "selectionScale": 1.3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 42,
+      "variance": 7,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.4,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.35,
+    "backswing": 0.35,
+    "acquisitionRange": 600,
+    "aggroRange": 550,
+    "lifeSteal": 0.30,
+    "criticalStrike": {
+      "enabled": true,
+      "chance": 0.20,
+      "multiplier": 2.0
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "armorBonus": 2,
+      "auraEffectivenessBonus": 0.25
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 8
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "lordly_presence",
+      "name": "Lordly Presence",
+      "type": "passive",
+      "description": "Nearby vampire units gain +15% attack speed and +10% move speed",
+      "effects": {
+        "radius": 500,
+        "attackSpeedBonus": 0.15,
+        "moveSpeedBonus": 0.10
+      },
+      "icon": "icons/abilities/lordly_presence.png"
+    },
+    {
+      "id": "blood_strike",
+      "name": "Blood Strike",
+      "type": "active",
+      "targetType": "unit",
+      "description": "A devastating strike that deals bonus damage and heals for the full amount",
+      "cooldown": 10,
+      "manaCost": 60,
+      "effects": {
+        "damage": 150,
+        "healPercent": 1.0,
+        "range": 150
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/blood_strike.png"
+    },
+    {
+      "id": "command_thralls",
+      "name": "Command Thralls",
+      "type": "active",
+      "targetType": "area",
+      "description": "Summon 4 thrall warriors to fight for 45 seconds",
+      "cooldown": 60,
+      "manaCost": 150,
+      "bloodCost": 40,
+      "effects": {
+        "summonCount": 4,
+        "summonType": "thrall_warrior",
+        "duration": 45.0
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/command_thralls.png"
+    },
+    {
+      "id": "aristocratic_duel",
+      "name": "Aristocratic Duel",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Challenge an enemy to single combat, both gain +50% damage vs each other, enemy cannot flee",
+      "cooldown": 90,
+      "manaCost": 100,
+      "effects": {
+        "duration": 15.0,
+        "damageBonus": 0.5,
+        "targetCannotFlee": true,
+        "range": 400
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/aristocratic_duel.png"
+    },
+    {
+      "id": "transform_wolf",
+      "name": "Wolf Form",
+      "type": "active",
+      "targetType": "self",
+      "description": "Transform into a dire wolf, gaining speed and melee damage but losing abilities",
+      "cooldown": 25,
+      "manaCost": 50,
+      "bloodCost": 15,
+      "effects": {
+        "speedBonus": 0.4,
+        "damageBonus": 0.3,
+        "cannotCastSpells": true,
+        "canToggle": true
+      },
+      "hotkey": "T",
+      "icon": "icons/abilities/wolf_form.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "blood_pit",
+    "buildTime": 65,
+    "cost": {
+      "gold": 550,
+      "lumber": 100,
+      "blood": 80
+    },
+    "foodCost": 6,
+    "prerequisites": {
+      "buildings": ["blood_pit", "citadel_of_night"],
+      "technologies": ["noble_awakening"],
+      "age": "prince"
+    },
+    "hotkey": "L",
+    "maxActive": 4
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 5,
+      "maxLevel": 3,
+      "researchId": "noble_weapons"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "noble_armor"
+    },
+    "special": ["improved_presence", "stronger_thralls", "master_duelist"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/vampire_lord/ready.ogg",
+    "select": ["audio/units/vampire_lord/select1.ogg", "audio/units/vampire_lord/select2.ogg", "audio/units/vampire_lord/select3.ogg"],
+    "move": ["audio/units/vampire_lord/move1.ogg", "audio/units/vampire_lord/move2.ogg"],
+    "attack": ["audio/units/vampire_lord/attack1.ogg", "audio/units/vampire_lord/attack2.ogg"],
+    "death": "audio/units/vampire_lord/death.ogg",
+    "transform": "audio/units/vampire_lord/transform.ogg",
+    "duel": "audio/units/vampire_lord/duel.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/vampire_lord.glb",
+    "texture": "textures/units/vampires/vampire_lord.png",
+    "portrait": "textures/portraits/vampire_lord.png",
+    "icon": "textures/icons/vampire_lord.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "lord_idle",
+      "walk": "lord_walk",
+      "attack": "lord_attack",
+      "death": "lord_death",
+      "bloodStrike": "lord_strike",
+      "wolfForm": "lord_wolf",
+      "summon": "lord_summon"
+    },
+    "effects": {
+      "spawn": "effects/noble_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "presence": "effects/lordly_presence.vfx",
+      "bloodStrike": "effects/blood_strike.vfx",
+      "wolfForm": "effects/wolf_transform.vfx",
+      "duel": "effects/duel_challenge.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 9,
+    "priority": "very_high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.05,
+    "preferredTargets": ["hero", "elite", "caster"],
+    "useDuelOnHeroes": true,
+    "summonThrallsForPush": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isNearHero": true,
+    "isElite": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "immuneToPoison": true,
+    "canUseItems": true
+  },
+
+  "itemSlots": 2,
+
+  "bounty": {
+    "gold": 80,
+    "experience": 100,
+    "blood": 0
+  },
+
+  "pointValue": 6,
+  "supplyProvided": 0,
+  "supplyUsed": 6
+}

@@ -1,0 +1,228 @@
+{
+  "id": "blood_countess",
+  "name": "Blood Countess",
+  "race": "vampires",
+  "tier": 3,
+  "type": "elite_caster",
+  "role": ["elite_caster", "aoe_damage", "aoe_heal", "support"],
+
+  "description": "Aristocratic vampire sorceresses who command devastating blood magic, draining entire groups of enemies to heal allies.",
+  "lore": "Blood Countesses are noble vampires who have dedicated their immortal existence to mastering hemomancy. They can draw the life force from dozens of victims simultaneously, bathing their allies in rejuvenating crimson mist.",
+
+  "stats": {
+    "health": 550,
+    "healthRegen": 1.5,
+    "mana": 450,
+    "manaRegen": 2.0,
+    "armor": 2,
+    "armorType": "medium",
+    "moveSpeed": 280,
+    "turnRate": 0.6,
+    "collisionSize": 32,
+    "selectionScale": 1.05
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 22,
+      "variance": 4,
+      "type": "magic"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 600,
+    "attackType": "ranged",
+    "projectile": "blood_sphere",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.5,
+    "acquisitionRange": 650,
+    "aggroRange": 500,
+    "lifeSteal": 0.20
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "manaRegenBonus": 1.5,
+      "spellDamageBonus": 0.5,
+      "spellRadiusBonus": 0.2
+    },
+    "day": {
+      "manaRegenPenalty": 0.5,
+      "spellDamagePenalty": 0.25
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "sanguine_nova",
+      "name": "Sanguine Nova",
+      "type": "active",
+      "targetType": "area",
+      "description": "Release a wave of blood magic that damages all enemies in an area and heals all allies",
+      "cooldown": 25,
+      "manaCost": 150,
+      "bloodCost": 30,
+      "effects": {
+        "radius": 400,
+        "damage": 120,
+        "healAmount": 80,
+        "lifeStealToAllies": 0.3
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/sanguine_nova.png"
+    },
+    {
+      "id": "blood_fountain_ability",
+      "name": "Blood Fountain",
+      "type": "active",
+      "targetType": "point",
+      "description": "Create a fountain of blood that heals allies and damages enemies over time",
+      "cooldown": 35,
+      "manaCost": 125,
+      "bloodCost": 25,
+      "effects": {
+        "radius": 300,
+        "duration": 12.0,
+        "healPerSecond": 25,
+        "damagePerSecond": 20
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/blood_fountain_ability.png"
+    },
+    {
+      "id": "exsanguinate",
+      "name": "Exsanguinate",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Rapidly drain all blood from a target, dealing massive damage and restoring mana",
+      "cooldown": 20,
+      "manaCost": 100,
+      "effects": {
+        "damage": 200,
+        "manaRestore": 100,
+        "bloodGenerated": 15,
+        "range": 550
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/exsanguinate.png"
+    },
+    {
+      "id": "crimson_covenant",
+      "name": "Crimson Covenant",
+      "type": "active",
+      "targetType": "area",
+      "requiresResearch": "blood_pact_mastery",
+      "description": "Link all nearby ally vampires, sharing damage taken and life steal gained",
+      "cooldown": 60,
+      "manaCost": 200,
+      "bloodCost": 50,
+      "effects": {
+        "radius": 500,
+        "duration": 15.0,
+        "damageSharing": 0.3,
+        "lifeStealSharing": 0.5
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/crimson_covenant.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "cathedral_of_shadow",
+    "buildTime": 55,
+    "cost": {
+      "gold": 350,
+      "lumber": 60,
+      "blood": 60
+    },
+    "foodCost": 4,
+    "prerequisites": {
+      "buildings": ["cathedral_of_shadow", "citadel_of_night"],
+      "technologies": [],
+      "age": "count"
+    },
+    "hotkey": "C"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "blood_mastery"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "shadow_hide"
+    },
+    "special": ["blood_pact_mastery", "improved_nova", "efficient_exsanguinate"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/blood_countess/ready.ogg",
+    "select": ["audio/units/blood_countess/select1.ogg", "audio/units/blood_countess/select2.ogg"],
+    "move": ["audio/units/blood_countess/move1.ogg"],
+    "attack": ["audio/units/blood_countess/attack1.ogg"],
+    "death": "audio/units/blood_countess/death.ogg",
+    "cast": "audio/units/blood_countess/cast.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/blood_countess.glb",
+    "texture": "textures/units/vampires/blood_countess.png",
+    "portrait": "textures/portraits/blood_countess.png",
+    "icon": "textures/icons/blood_countess.png",
+    "scale": 1.05,
+    "animations": {
+      "idle": "countess_idle",
+      "walk": "countess_walk",
+      "attack": "countess_attack",
+      "death": "countess_death",
+      "cast": "countess_cast",
+      "channel": "countess_channel"
+    },
+    "effects": {
+      "spawn": "effects/noble_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "sanguineNova": "effects/sanguine_nova.vfx",
+      "bloodFountain": "effects/blood_fountain.vfx",
+      "exsanguinate": "effects/exsanguinate.vfx",
+      "crimsonCovenant": "effects/crimson_covenant.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 7,
+    "priority": "very_high",
+    "behavior": "support",
+    "fleeThreshold": 0.25,
+    "preferredTargets": [],
+    "stayBehindMelee": true,
+    "prioritizeAOEHealing": true,
+    "useNovaWhenManyTargets": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isElite": true,
+    "isCaster": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 48,
+    "experience": 65,
+    "blood": 0
+  },
+
+  "pointValue": 4,
+  "supplyProvided": 0,
+  "supplyUsed": 4
+}

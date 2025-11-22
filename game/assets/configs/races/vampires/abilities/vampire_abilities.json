@@ -1,0 +1,390 @@
+{
+  "race": "vampires",
+  "abilityCategories": ["life_drain", "transformation", "mind_control", "shadow_magic", "blood_magic"],
+
+  "abilities": {
+    "life_drain": {
+      "name": "Life Drain Abilities",
+      "description": "Abilities that steal life from enemies",
+      "abilities": [
+        {
+          "id": "vampiric_bite",
+          "name": "Vampiric Bite",
+          "type": "passive",
+          "description": "Attacks heal for a percentage of damage dealt",
+          "effects": {
+            "lifeStealPercent": 0.15,
+            "scaling": {
+              "base": 0.15,
+              "perUpgrade": 0.05,
+              "max": 0.40
+            }
+          },
+          "affectedBy": ["enhanced_life_steal"]
+        },
+        {
+          "id": "blood_drain",
+          "name": "Blood Drain",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Channel to drain life from a target, dealing damage and healing self",
+          "cooldown": 15,
+          "manaCost": 75,
+          "effects": {
+            "damagePerSecond": 50,
+            "healPercent": 1.0,
+            "duration": 5.0,
+            "channeled": true,
+            "range": 400
+          }
+        },
+        {
+          "id": "sanguine_nova",
+          "name": "Sanguine Nova",
+          "type": "active",
+          "targetType": "area",
+          "description": "Release a wave of blood magic that damages enemies and heals allies",
+          "cooldown": 25,
+          "manaCost": 150,
+          "bloodCost": 30,
+          "effects": {
+            "radius": 400,
+            "damage": 120,
+            "healAmount": 80
+          }
+        },
+        {
+          "id": "exsanguinate",
+          "name": "Exsanguinate",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Rapidly drain all blood from a target",
+          "cooldown": 20,
+          "manaCost": 100,
+          "effects": {
+            "damage": 200,
+            "manaRestore": 100,
+            "bloodGenerated": 15,
+            "range": 550
+          }
+        }
+      ]
+    },
+
+    "transformation": {
+      "name": "Transformation Abilities",
+      "description": "Shape-shifting abilities",
+      "abilities": [
+        {
+          "id": "bat_form",
+          "name": "Bat Form",
+          "type": "active",
+          "targetType": "self",
+          "description": "Transform into a bat swarm, gaining flight but reduced combat ability",
+          "cooldown": 20,
+          "manaCost": 50,
+          "bloodCost": 15,
+          "effects": {
+            "becomesFlying": true,
+            "speedBonus": 0.5,
+            "damagePenalty": 0.5,
+            "armorPenalty": 3,
+            "canToggle": true
+          }
+        },
+        {
+          "id": "wolf_form",
+          "name": "Wolf Form",
+          "type": "active",
+          "targetType": "self",
+          "description": "Transform into a dire wolf, gaining speed and damage",
+          "cooldown": 20,
+          "manaCost": 50,
+          "bloodCost": 15,
+          "effects": {
+            "speedBonus": 0.25,
+            "damageBonus": 0.35,
+            "critChanceBonus": 0.15,
+            "canToggle": true
+          }
+        },
+        {
+          "id": "mist_form",
+          "name": "Mist Form",
+          "type": "active",
+          "targetType": "self",
+          "description": "Transform into invulnerable mist, unable to attack but can escape",
+          "cooldown": 60,
+          "manaCost": 100,
+          "effects": {
+            "duration": 5.0,
+            "invulnerable": true,
+            "cannotAttack": true,
+            "speedBonus": 0.3,
+            "canPassThroughUnits": true
+          }
+        },
+        {
+          "id": "swarm_form",
+          "name": "Swarm Form",
+          "type": "active",
+          "targetType": "self",
+          "description": "Transform into a swarm of vermin, becoming invulnerable and dealing damage",
+          "cooldown": 100,
+          "manaCost": 175,
+          "bloodCost": 50,
+          "effects": {
+            "duration": 6,
+            "invulnerable": true,
+            "damagePerSecond": 75,
+            "speedBonus": 0.5
+          }
+        },
+        {
+          "id": "nightmare_transform",
+          "name": "Nightmare Transform",
+          "type": "active",
+          "targetType": "self",
+          "description": "Transform mount into a swarm of bats, gaining flight",
+          "cooldown": 30,
+          "manaCost": 50,
+          "bloodCost": 10,
+          "effects": {
+            "duration": 8.0,
+            "becomesFlying": true,
+            "speedBonus": 0.3,
+            "reducedArmor": 2
+          }
+        }
+      ]
+    },
+
+    "mind_control": {
+      "name": "Mind Control Abilities",
+      "description": "Domination and charm abilities",
+      "abilities": [
+        {
+          "id": "dominate",
+          "name": "Dominate",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Permanently dominate an enemy unit's mind",
+          "cooldown": 180,
+          "manaCost": 200,
+          "bloodCost": 75,
+          "effects": {
+            "permanent": true,
+            "cannotTargetHeroes": true,
+            "targetStatPenalty": 0.1,
+            "range": 500
+          }
+        },
+        {
+          "id": "kiss_of_death",
+          "name": "Kiss of Death",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Charm an enemy briefly then deal damage",
+          "cooldown": 12,
+          "manaCost": 75,
+          "effects": {
+            "charmDuration": 2.5,
+            "damage": 175,
+            "charmedUnitsAttackAllies": true,
+            "range": 550
+          }
+        },
+        {
+          "id": "dominate_mind",
+          "name": "Dominate Mind",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Permanently dominate an enemy unit (Ancient One ability)",
+          "cooldown": 120,
+          "manaCost": 250,
+          "bloodCost": 100,
+          "effects": {
+            "permanent": true,
+            "targetSizeLimit": "large",
+            "range": 500
+          }
+        }
+      ]
+    },
+
+    "shadow_magic": {
+      "name": "Shadow Magic Abilities",
+      "description": "Stealth and shadow-based abilities",
+      "abilities": [
+        {
+          "id": "shadow_walk",
+          "name": "Shadow Walk",
+          "type": "active",
+          "targetType": "self",
+          "description": "Become invisible with bonus damage on first attack",
+          "cooldown": 20,
+          "manaCost": 75,
+          "effects": {
+            "duration": 15.0,
+            "speedBonus": 0.3,
+            "ambushDamageBonus": 1.0,
+            "fadeTime": 1.5
+          }
+        },
+        {
+          "id": "shadow_step",
+          "name": "Shadow Step",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Teleport behind a target and strike",
+          "cooldown": 8,
+          "manaCost": 60,
+          "effects": {
+            "bonusDamage": 100,
+            "teleportsBehind": true,
+            "appliesBackstab": true,
+            "range": 750
+          }
+        },
+        {
+          "id": "shadow_strike",
+          "name": "Shadow Strike",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Blink to target with shadow-infused blades",
+          "cooldown": 8,
+          "manaCost": 50,
+          "effects": {
+            "damage": 60,
+            "slowPercent": 0.4,
+            "slowDuration": 4.0,
+            "range": 600
+          }
+        },
+        {
+          "id": "nightmare_realm",
+          "name": "Nightmare Realm",
+          "type": "active",
+          "targetType": "area",
+          "description": "Create a realm of nightmares trapping enemies",
+          "cooldown": 120,
+          "manaCost": 200,
+          "bloodCost": 75,
+          "effects": {
+            "radius": 500,
+            "duration": 8,
+            "damagePerSecond": 50,
+            "enemiesCannotEscape": true,
+            "heroGainsInvisibility": true
+          }
+        },
+        {
+          "id": "cloak_of_shadows",
+          "name": "Cloak of Shadows",
+          "type": "active",
+          "targetType": "self",
+          "description": "Remove debuffs and become briefly invulnerable",
+          "cooldown": 60,
+          "manaCost": 100,
+          "bloodCost": 20,
+          "effects": {
+            "duration": 1.5,
+            "invulnerable": true,
+            "removeDebuffs": true,
+            "grantStealth": true,
+            "stealthDuration": 5.0
+          }
+        }
+      ]
+    },
+
+    "blood_magic": {
+      "name": "Blood Magic Abilities",
+      "description": "Offensive and support blood spells",
+      "abilities": [
+        {
+          "id": "blood_bolt",
+          "name": "Blood Bolt",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Fire a bolt of condensed blood",
+          "cooldown": 4,
+          "manaCost": 40,
+          "effects": {
+            "damage": 75,
+            "slowPercent": 0.3,
+            "slowDuration": 3.0,
+            "range": 600,
+            "lifeSteal": 0.25
+          }
+        },
+        {
+          "id": "blood_curse",
+          "name": "Blood Curse",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Curse an enemy to take damage over time and heal nearby vampires",
+          "cooldown": 20,
+          "manaCost": 90,
+          "effects": {
+            "damagePerSecond": 15,
+            "duration": 8.0,
+            "healRadius": 300,
+            "healPercent": 0.5,
+            "range": 600
+          }
+        },
+        {
+          "id": "crimson_shield",
+          "name": "Crimson Shield",
+          "type": "active",
+          "targetType": "unit",
+          "description": "Shield an ally with crystallized blood",
+          "cooldown": 18,
+          "manaCost": 75,
+          "bloodCost": 15,
+          "effects": {
+            "shieldAmount": 200,
+            "duration": 10.0,
+            "reflectDamage": 0.1,
+            "range": 500
+          }
+        },
+        {
+          "id": "blood_storm",
+          "name": "Blood Storm",
+          "type": "active",
+          "targetType": "area",
+          "description": "Unleash a devastating storm of blood",
+          "cooldown": 60,
+          "manaCost": 200,
+          "bloodCost": 75,
+          "effects": {
+            "radius": 500,
+            "damage": 300,
+            "healAmount": 200,
+            "duration": 8.0,
+            "waveCount": 4
+          }
+        },
+        {
+          "id": "crimson_night",
+          "name": "Crimson Night",
+          "type": "active",
+          "targetType": "area",
+          "description": "Blanket an area in crimson darkness",
+          "cooldown": 150,
+          "manaCost": 250,
+          "bloodCost": 100,
+          "effects": {
+            "radius": 600,
+            "duration": 20,
+            "damagePerSecond": 40,
+            "healPerSecond": 30,
+            "grantsNightBonuses": true
+          }
+        }
+      ]
+    }
+  }
+}

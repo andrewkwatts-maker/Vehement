@@ -1,0 +1,140 @@
+{
+    "id": "naga_siren_shrine",
+    "type": "building",
+    "name": "Siren Shrine",
+    "description": "A mystical structure where Naga spellcasters are trained. Produces Sirens, Sea Witches, and powerful summoners.",
+    "race": "naga",
+    "tier": 1,
+    "category": "military",
+
+    "tags": ["military", "production", "casters", "magic", "tier1"],
+
+    "model": {
+        "path": "models/races/naga/buildings/siren_shrine.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/siren_shrine_diffuse.png",
+        "normal": "textures/races/naga/buildings/siren_shrine_normal.png",
+        "emissive": "textures/races/naga/buildings/siren_shrine_glow.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [4, 4],
+        "entrances": [[2, 0]],
+        "visualSize": [8.0, 10.0, 8.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 220,
+            "coral": 120,
+            "pearls": 30
+        },
+        "time": 60.0,
+        "builder_required": true
+    },
+
+    "stats": {
+        "maxHealth": 1000,
+        "armor": 5,
+        "magicResist": 10
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "naga_siren",
+            "time": 22.0,
+            "cost": {"gold": 140, "coral": 60, "pearls": 20},
+            "maxQueue": 5,
+            "requirements": {"age": "age_shallow"}
+        },
+        {
+            "type": "unit",
+            "output": "naga_sea_witch",
+            "time": 35.0,
+            "cost": {"gold": 260, "coral": 100, "pearls": 60},
+            "maxQueue": 4,
+            "requirements": {"age": "age_reef", "techs": ["naga_water_magic"]}
+        },
+        {
+            "type": "unit",
+            "output": "naga_leviathan_caller",
+            "time": 55.0,
+            "cost": {"gold": 380, "coral": 160, "pearls": 100, "abyssal_essence": 40},
+            "maxQueue": 2,
+            "requirements": {"age": "age_abyss", "techs": ["naga_elemental_pact"]}
+        },
+        {
+            "type": "unit",
+            "output": "naga_tidal_lord",
+            "time": 85.0,
+            "cost": {"gold": 750, "coral": 300, "pearls": 200, "abyssal_essence": 180},
+            "maxQueue": 1,
+            "requirements": {"age": "age_primordial", "techs": ["naga_tidal_mastery"]}
+        }
+    ],
+
+    "research": [
+        {
+            "id": "naga_tidal_magic_1",
+            "name": "Tidal Magic I",
+            "cost": {"gold": 150, "pearls": 50},
+            "time": 45.0
+        },
+        {
+            "id": "naga_tidal_magic_2",
+            "name": "Tidal Magic II",
+            "cost": {"gold": 250, "pearls": 100},
+            "time": 60.0,
+            "requirements": {"techs": ["naga_tidal_magic_1"]}
+        },
+        {
+            "id": "naga_tidal_magic_3",
+            "name": "Tidal Magic III",
+            "cost": {"gold": 350, "pearls": 150},
+            "time": 75.0,
+            "requirements": {"techs": ["naga_tidal_magic_2"]}
+        },
+        {
+            "id": "naga_water_magic",
+            "name": "Water Magic",
+            "cost": {"gold": 200, "pearls": 80},
+            "time": 50.0
+        },
+        {
+            "id": "naga_elemental_pact",
+            "name": "Elemental Pact",
+            "cost": {"gold": 300, "pearls": 120, "abyssal_essence": 50},
+            "time": 80.0,
+            "requirements": {"techs": ["naga_water_magic"]}
+        }
+    ],
+
+    "water_bonus": {
+        "near_water_radius": 8,
+        "mana_regen_bonus": 2.0,
+        "spell_power_bonus": 0.1
+    },
+
+    "aura": {
+        "name": "Arcane Resonance",
+        "radius": 12.0,
+        "effects": [
+            {"stat": "mana_regen", "type": "flat", "value": 0.5, "targets": "friendly_casters"}
+        ]
+    },
+
+    "requirements": {
+        "buildings": ["naga_spawning_pool"]
+    },
+
+    "visionRange": 10.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/siren_shrine/on_complete.py"
+    }
+}

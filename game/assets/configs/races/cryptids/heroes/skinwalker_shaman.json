@@ -1,0 +1,237 @@
+{
+  "id": "skinwalker_shaman",
+  "name": "Skinwalker Shaman",
+  "race": "cryptids",
+  "type": "hero",
+  "class": "shapeshifter",
+  "role": ["transformation_master", "versatile", "sustained_damage"],
+
+  "title": "Master of Forms",
+  "description": "The ultimate transformation master who has transcended the boundaries of a single form. Commands four distinct shapes, each with powerful abilities.",
+  "lore": "The Shaman has walked the path of the skin longer than any other. They no longer remember their original form - only the endless cycle of transformation. In battle, they shift between beast, bird, serpent, and their terrible True Form.",
+
+  "baseStats": {
+    "health": 600,
+    "healthRegen": 2.0,
+    "mana": 300,
+    "manaRegen": 1.5,
+    "armor": 3,
+    "armorType": "hero",
+    "moveSpeed": 310,
+    "turnRate": 0.8,
+    "collisionSize": 36,
+    "selectionScale": 1.2
+  },
+
+  "statsPerLevel": {
+    "health": 100,
+    "healthRegen": 0.3,
+    "mana": 40,
+    "manaRegen": 0.15,
+    "armor": 0.3,
+    "damage": 3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 24,
+      "variance": 4,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "normal"
+    },
+    "attackSpeed": 1.6,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "primaryAttribute": "agility"
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 20,
+      "perLevel": 2.2
+    },
+    "agility": {
+      "base": 24,
+      "perLevel": 2.8
+    },
+    "intelligence": {
+      "base": 18,
+      "perLevel": 2.0
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "beast_form",
+      "name": "Beast Form",
+      "type": "active",
+      "targetType": "none",
+      "hotkey": "Q",
+      "description": "Transforms into a powerful wolf, gaining attack speed and critical strike chance",
+      "levels": [
+        {"manaCost": 50, "cooldown": 8, "attackSpeedBonus": 0.30, "critChance": 0.15, "critMultiplier": 2.0, "duration": 30},
+        {"manaCost": 50, "cooldown": 8, "attackSpeedBonus": 0.45, "critChance": 0.20, "critMultiplier": 2.25, "duration": 35},
+        {"manaCost": 50, "cooldown": 8, "attackSpeedBonus": 0.60, "critChance": 0.25, "critMultiplier": 2.5, "duration": 40}
+      ],
+      "effects": {
+        "transformType": "beast",
+        "newModel": "wolf_shaman",
+        "grantedAbilities": ["savage_bite", "pack_call"]
+      },
+      "icon": "icons/abilities/beast_form.png"
+    },
+    {
+      "id": "bird_form",
+      "name": "Bird Form",
+      "type": "active",
+      "targetType": "none",
+      "hotkey": "W",
+      "description": "Transforms into a great raven, gaining flight and ranged attacks",
+      "levels": [
+        {"manaCost": 60, "cooldown": 8, "moveSpeedBonus": 80, "attackRange": 600, "duration": 25},
+        {"manaCost": 60, "cooldown": 8, "moveSpeedBonus": 100, "attackRange": 650, "duration": 30},
+        {"manaCost": 60, "cooldown": 8, "moveSpeedBonus": 120, "attackRange": 700, "duration": 35}
+      ],
+      "effects": {
+        "transformType": "bird",
+        "newModel": "raven_shaman",
+        "flightEnabled": true,
+        "grantedAbilities": ["dive_strike", "shadow_feathers"]
+      },
+      "icon": "icons/abilities/bird_form.png"
+    },
+    {
+      "id": "serpent_form",
+      "name": "Serpent Form",
+      "type": "active",
+      "targetType": "none",
+      "hotkey": "E",
+      "description": "Transforms into a giant serpent, gaining poison attacks and evasion",
+      "levels": [
+        {"manaCost": 55, "cooldown": 8, "poisonDPS": 15, "evasion": 0.20, "duration": 30},
+        {"manaCost": 55, "cooldown": 8, "poisonDPS": 25, "evasion": 0.30, "duration": 35},
+        {"manaCost": 55, "cooldown": 8, "poisonDPS": 35, "evasion": 0.40, "duration": 40}
+      ],
+      "effects": {
+        "transformType": "serpent",
+        "newModel": "serpent_shaman",
+        "grantedAbilities": ["venomous_strike", "constrict"]
+      },
+      "icon": "icons/abilities/serpent_form.png"
+    },
+    {
+      "id": "true_form",
+      "name": "True Form",
+      "type": "active",
+      "targetType": "none",
+      "hotkey": "R",
+      "ultimate": true,
+      "description": "Reveals their terrible True Form - a nightmarish amalgamation of all creatures",
+      "levels": [
+        {"manaCost": 150, "cooldown": 120, "healthBonus": 500, "damageBonus": 30, "allResist": 0.20, "fearRadius": 400, "duration": 30}
+      ],
+      "effects": {
+        "transformType": "true_form",
+        "newModel": "true_form_shaman",
+        "combinesAllForms": true,
+        "causesFear": true,
+        "grantedAbilities": ["nightmare_strike", "primal_roar", "essence_devour"]
+      },
+      "icon": "icons/abilities/true_form.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bone_shrine",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "essence": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["bone_shrine"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "S"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/skinwalker_shaman/ready.ogg",
+    "select": ["audio/heroes/skinwalker_shaman/select1.ogg", "audio/heroes/skinwalker_shaman/select2.ogg", "audio/heroes/skinwalker_shaman/select3.ogg"],
+    "move": ["audio/heroes/skinwalker_shaman/move1.ogg", "audio/heroes/skinwalker_shaman/move2.ogg"],
+    "attack": ["audio/heroes/skinwalker_shaman/attack1.ogg", "audio/heroes/skinwalker_shaman/attack2.ogg"],
+    "death": "audio/heroes/skinwalker_shaman/death.ogg",
+    "pissed": ["audio/heroes/skinwalker_shaman/pissed1.ogg", "audio/heroes/skinwalker_shaman/pissed2.ogg"],
+    "transform": "audio/heroes/skinwalker_shaman/transform.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/skinwalker_shaman.glb",
+    "texture": "textures/heroes/skinwalker_shaman.png",
+    "portrait": "textures/portraits/skinwalker_shaman_hero.png",
+    "icon": "textures/icons/skinwalker_shaman_hero.png",
+    "scale": 1.2,
+    "animations": {
+      "idle": "shaman_idle",
+      "walk": "shaman_walk",
+      "attack": "shaman_attack",
+      "death": "shaman_death",
+      "cast": "shaman_cast",
+      "transform": "shaman_transform"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/hero_death.vfx",
+      "transform": "effects/shaman_transform.vfx",
+      "true_form": "effects/true_form_reveal.vfx"
+    },
+    "alternateModels": {
+      "wolf_shaman": "models/heroes/skinwalker_shaman_wolf.glb",
+      "raven_shaman": "models/heroes/skinwalker_shaman_raven.glb",
+      "serpent_shaman": "models/heroes/skinwalker_shaman_serpent.glb",
+      "true_form_shaman": "models/heroes/skinwalker_shaman_true.glb"
+    }
+  },
+
+  "ai": {
+    "combatRole": "adaptive",
+    "transformPriority": "situation_based",
+    "useBeastForDPS": true,
+    "useBirdForChase": true,
+    "useSerpentForSurvival": true,
+    "trueFormWhenOverwhelming": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "canTransform": true,
+    "multiForm": true,
+    "nightBonus": true,
+    "canUseItems": true,
+    "canGainExperience": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

@@ -1,0 +1,224 @@
+{
+  "id": "undead",
+  "name": "The Scourge",
+  "displayName": "Undead Scourge",
+  "description": "A relentless necromantic horde that spreads death and decay across the land. The Scourge raises fallen enemies as mindless servants, creating an ever-growing army that knows no fear and requires no sustenance.",
+  "shortDescription": "Necromantic undead horde - free units from corpses, disease, overwhelming numbers",
+  "theme": "Gothic Horror Undead",
+
+  "lore": {
+    "origin": "Born from the darkest necromantic rituals, the Scourge emerged when the Lich King Ner'zhul merged his consciousness with the Frozen Throne, creating an undying army that sweeps across all living things.",
+    "motivation": "To convert all life into undeath, serving the eternal will of the Lich King",
+    "culture": "A hierarchy of death where power flows from necromantic might. The strong command the weak, and all serve the singular purpose of expanding the Scourge."
+  },
+
+  "strengths": [
+    {
+      "name": "Corpse Economy",
+      "description": "Raise free units from corpses of fallen enemies and allies",
+      "mechanic": "corpse_raising",
+      "value": 1.0
+    },
+    {
+      "name": "Disease Spreading",
+      "description": "Many units spread plague and disease that weakens enemies over time",
+      "mechanic": "plague_damage",
+      "value": 0.15
+    },
+    {
+      "name": "No Food Required",
+      "description": "Undead units do not consume food resources",
+      "mechanic": "no_food_upkeep",
+      "value": true
+    },
+    {
+      "name": "Blight Regeneration",
+      "description": "All undead units regenerate health while standing on blight",
+      "mechanic": "blight_regen",
+      "value": 2.0
+    },
+    {
+      "name": "Fearless",
+      "description": "Undead units are immune to fear and morale effects",
+      "mechanic": "fear_immunity",
+      "value": true
+    },
+    {
+      "name": "Endless Horde",
+      "description": "Higher unit population cap due to necromantic efficiency",
+      "mechanic": "population_bonus",
+      "value": 1.25
+    }
+  ],
+
+  "weaknesses": [
+    {
+      "name": "Holy Vulnerability",
+      "description": "Takes increased damage from holy and light-based attacks",
+      "mechanic": "holy_damage_multiplier",
+      "value": 1.5
+    },
+    {
+      "name": "Slow Movement",
+      "description": "Most undead units move slower than living counterparts",
+      "mechanic": "base_speed_multiplier",
+      "value": 0.85
+    },
+    {
+      "name": "Blight Dependency",
+      "description": "Buildings can only be constructed on blighted ground",
+      "mechanic": "blight_required",
+      "value": true
+    },
+    {
+      "name": "Sunlight Weakness",
+      "description": "Some units take damage or are weakened during daylight",
+      "mechanic": "daylight_penalty",
+      "value": 0.2
+    },
+    {
+      "name": "Fire Vulnerability",
+      "description": "Takes increased damage from fire-based attacks",
+      "mechanic": "fire_damage_multiplier",
+      "value": 1.25
+    }
+  ],
+
+  "uniqueMechanics": {
+    "corpseSystem": {
+      "enabled": true,
+      "corpseDecayTime": 120.0,
+      "corpseGatherRadius": 15.0,
+      "raiseSkeletonCost": 0,
+      "raiseZombieCost": 0,
+      "corpseCapacity": 8,
+      "description": "Corpses remain on the battlefield and can be consumed or raised as new units"
+    },
+    "blightSystem": {
+      "enabled": true,
+      "blightSpreadRate": 0.5,
+      "blightRadius": 8.0,
+      "blightHealthRegen": 2.0,
+      "blightManaRegen": 1.0,
+      "blightRequiredForBuildings": true,
+      "description": "Undead buildings spread blight which heals friendly units and enables construction"
+    },
+    "unholyArmor": {
+      "enabled": true,
+      "armorType": "undead",
+      "holyDamageMultiplier": 1.5,
+      "fireDamageMultiplier": 1.25,
+      "iceDamageMultiplier": 0.75,
+      "poisonDamageMultiplier": 0.0,
+      "description": "Undead armor reduces ice damage but increases vulnerability to holy and fire"
+    },
+    "necromancy": {
+      "enabled": true,
+      "baseRaiseChance": 0.15,
+      "maxRaisedUnits": 50,
+      "raisedUnitDuration": -1,
+      "description": "Fallen enemies have a chance to rise as undead servants"
+    }
+  },
+
+  "resources": {
+    "primary": ["gold", "lumber"],
+    "secondary": ["corpses", "souls"],
+    "unique": {
+      "corpses": {
+        "name": "Corpses",
+        "icon": "icons/resources/corpse.png",
+        "maxStorage": 100,
+        "gatherRate": 1.0,
+        "description": "Harvested from fallen units, used to raise undead"
+      },
+      "souls": {
+        "name": "Souls",
+        "icon": "icons/resources/soul.png",
+        "maxStorage": 50,
+        "gatherRate": 0.5,
+        "description": "Captured from dying enemies, powers dark rituals"
+      }
+    }
+  },
+
+  "startingUnits": [
+    {"unit": "acolyte", "count": 5},
+    {"unit": "ghoul", "count": 1},
+    {"unit": "shade", "count": 1}
+  ],
+
+  "startingBuildings": [
+    {"building": "necropolis", "count": 1},
+    {"building": "crypt", "count": 1},
+    {"building": "ziggurat", "count": 2}
+  ],
+
+  "startingResources": {
+    "gold": 500,
+    "lumber": 150,
+    "corpses": 0,
+    "souls": 0
+  },
+
+  "populationCap": {
+    "base": 12,
+    "perZiggurat": 10,
+    "maximum": 200
+  },
+
+  "visuals": {
+    "primaryColor": "#1a472a",
+    "secondaryColor": "#5c3d6e",
+    "accentColor": "#00ff00",
+    "bannerTexture": "textures/banners/undead_banner.png",
+    "iconTexture": "textures/icons/undead_icon.png",
+    "cursorSet": "cursors/undead/",
+    "uiTheme": "gothic_dark",
+    "blightTexture": "textures/terrain/blight.png",
+    "fogColor": "#2d1f3d"
+  },
+
+  "audio": {
+    "musicTheme": "audio/music/undead_theme.ogg",
+    "ambientSound": "audio/ambient/undead_ambient.ogg",
+    "victoryMusic": "audio/music/undead_victory.ogg",
+    "defeatMusic": "audio/music/undead_defeat.ogg",
+    "buildingComplete": "audio/sfx/undead_building_complete.ogg",
+    "unitReady": "audio/sfx/undead_unit_ready.ogg",
+    "underAttack": "audio/sfx/undead_under_attack.ogg"
+  },
+
+  "aiProfile": {
+    "aggression": 0.8,
+    "expansion": 0.6,
+    "techFocus": 0.5,
+    "armyComposition": "swarm",
+    "preferredTactics": ["zerg_rush", "corpse_bombing", "plague_spread"],
+    "heroImportance": 0.7
+  },
+
+  "diplomacy": {
+    "defaultStance": "hostile",
+    "canAllyWith": ["undead", "demon"],
+    "permanentEnemies": ["holy", "nature"],
+    "neutralPossible": ["neutral", "mercenary"]
+  },
+
+  "unitTiers": {
+    "tier1": ["ghoul", "skeleton", "zombie", "acolyte"],
+    "tier2": ["crypt_fiend", "necromancer", "banshee", "meat_wagon", "shade"],
+    "tier3": ["abomination", "gargoyle", "obsidian_statue", "frost_wyrm"],
+    "tier4": ["lich", "death_knight_unit", "bone_colossus", "zombie_dragon"]
+  },
+
+  "heroes": ["death_knight", "lich_king", "dreadlord", "crypt_lord"],
+
+  "buildingChains": {
+    "mainHall": ["necropolis", "halls_of_the_dead", "black_citadel"],
+    "defense": ["ziggurat", "spirit_tower", "nerubian_tower"]
+  },
+
+  "version": "1.0.0",
+  "author": "Vehement Development Team"
+}

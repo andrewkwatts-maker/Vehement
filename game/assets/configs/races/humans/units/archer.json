@@ -1,0 +1,139 @@
+{
+    "id": "human_archer",
+    "type": "unit",
+    "race": "humans",
+    "name": "Archer",
+    "description": "Skilled bowmen trained in the forests of Valorheim. Their longbows can strike enemies from afar with deadly precision.",
+
+    "tags": ["military", "ranged", "tier1", "light"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/humans/units/archer.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/archer_diffuse.png",
+        "normal": "textures/races/humans/units/archer_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.25,
+                "height": 1.7,
+                "offset": [0.0, 0.85, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 65.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 160,
+        "maxHealth": 160,
+        "healthRegen": 0.4,
+        "armor": 0,
+        "magicResist": 5,
+        "moveSpeed": 5.2,
+        "turnRate": 340.0
+    },
+
+    "combat": {
+        "attackDamage": 12,
+        "attackSpeed": 1.4,
+        "attackRange": 14.0,
+        "damageType": "piercing",
+        "armorType": "light",
+        "attackType": "ranged",
+        "critChance": 0.10,
+        "critMultiplier": 2.0,
+        "projectile_id": "arrow_basic"
+    },
+
+    "projectile": {
+        "id": "arrow_basic",
+        "model": "models/projectiles/arrow.obj",
+        "speed": 30.0,
+        "lifetime": 3.0,
+        "gravity": 0.5,
+        "trailEffect": "effects/arrow_trail.fx",
+        "impactEffect": "effects/arrow_impact.fx"
+    },
+
+    "abilities": [
+        {
+            "id": "ability_flaming_arrows",
+            "name": "Flaming Arrows",
+            "description": "Ignite arrows to deal bonus fire damage over time",
+            "hotkey": "F",
+            "toggle": true,
+            "mana_cost_per_shot": 2,
+            "effects": [
+                {"type": "dot", "damage": 5, "duration": 3.0, "damage_type": "fire"}
+            ],
+            "required_upgrade": "upgrade_flaming_arrows"
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_archer_damage",
+            "stat": "attackDamage",
+            "bonus_per_level": 2
+        },
+        {
+            "id": "upgrade_archer_range",
+            "stat": "attackRange",
+            "bonus_per_level": 1
+        }
+    ],
+
+    "production": {
+        "building": "human_archery_range",
+        "cost": {
+            "gold": 130,
+            "wood": 20,
+            "food": 2
+        },
+        "build_time": 22.0,
+        "population_cost": 1,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/ranged_infantry.bt",
+        "profile": "defensive",
+        "aggroRange": 14.0,
+        "leashRange": 20.0,
+        "preferred_distance": 12.0,
+        "kite_enabled": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/archer/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/archer/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/archer/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/archer/shoot.anim", "loop": false, "events": [[0.5, "fire_projectile"]]},
+        "death": {"path": "animations/humans/archer/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/archer/select_1.wav", "sounds/humans/archer/select_2.wav"],
+        "acknowledge": ["sounds/humans/archer/ack_1.wav", "sounds/humans/archer/ack_2.wav"],
+        "attack": "sounds/bow_release.wav",
+        "death": "sounds/humans/archer/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/archer.png",
+        "icon": "textures/races/humans/icons/archer.png",
+        "hotkey": "A"
+    }
+}

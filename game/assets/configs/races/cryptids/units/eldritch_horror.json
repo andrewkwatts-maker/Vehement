@@ -1,0 +1,247 @@
+{
+  "id": "eldritch_horror",
+  "name": "Eldritch Horror",
+  "race": "cryptids",
+  "tier": 4,
+  "type": "ultimate",
+  "role": ["ultimate", "madness", "area_devastation"],
+
+  "description": "A fragment of something beyond comprehension, summoned from the spaces between dimensions. Its very presence drives mortals to madness.",
+  "lore": "What the Hidden Ones call through the Nightmare Gate defies description. It is wrong - angles that should not exist, forms that hurt to perceive, and a presence that corrodes sanity. Those who gaze upon it too long are lost forever.",
+
+  "stats": {
+    "health": 2500,
+    "healthRegen": 5.0,
+    "mana": 800,
+    "manaRegen": 4.0,
+    "armor": 10,
+    "armorType": "divine",
+    "moveSpeed": 240,
+    "turnRate": 0.4,
+    "collisionSize": 80,
+    "selectionScale": 2.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 80,
+      "variance": 20,
+      "type": "chaos"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 200,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.6,
+    "backswing": 0.8,
+    "acquisitionRange": 600,
+    "aggroRange": 500,
+    "splashDamage": {
+      "enabled": true,
+      "radius": 200,
+      "falloff": 0.4
+    }
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": true,
+    "destroysTreesOnMove": true
+  },
+
+  "abilities": [
+    {
+      "id": "maddening_gaze",
+      "name": "Maddening Gaze",
+      "type": "active",
+      "targetType": "area",
+      "description": "Forces enemies to look upon its true form, causing madness and confusion",
+      "cooldown": 20.0,
+      "manaCost": 150,
+      "range": 700,
+      "effects": {
+        "radius": 400,
+        "madnessDuration": 6.0,
+        "attackAlliesChance": 0.5,
+        "damagePerSecond": 20,
+        "heroReducedDuration": 0.5
+      },
+      "hotkey": "G",
+      "icon": "icons/abilities/maddening_gaze.png"
+    },
+    {
+      "id": "void_tentacles",
+      "name": "Void Tentacles",
+      "type": "active",
+      "targetType": "area",
+      "description": "Summons writhing tentacles that grab and damage enemies in an area",
+      "cooldown": 15.0,
+      "manaCost": 100,
+      "range": 600,
+      "effects": {
+        "radius": 350,
+        "duration": 8.0,
+        "damagePerSecond": 35,
+        "rootDuration": 2.0,
+        "pullsEnemies": true
+      },
+      "hotkey": "V",
+      "icon": "icons/abilities/void_tentacles.png"
+    },
+    {
+      "id": "reality_tear",
+      "name": "Reality Tear",
+      "type": "active",
+      "targetType": "ground",
+      "description": "Tears a hole in reality, creating a zone of pure chaos damage",
+      "cooldown": 30.0,
+      "manaCost": 200,
+      "range": 800,
+      "effects": {
+        "radius": 300,
+        "duration": 10.0,
+        "damagePerSecond": 50,
+        "disablesHealing": true,
+        "randomTeleports": true
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/reality_tear.png"
+    },
+    {
+      "id": "incomprehensible",
+      "name": "Incomprehensible",
+      "type": "passive",
+      "description": "Cannot be directly targeted by single-target abilities; immune to mind-affecting effects",
+      "effects": {
+        "untargetable": true,
+        "aoeOnlyDamage": false,
+        "mindImmune": true,
+        "fearImmune": true,
+        "charmImmune": true
+      },
+      "icon": "icons/abilities/incomprehensible.png"
+    },
+    {
+      "id": "sanity_drain",
+      "name": "Sanity Drain",
+      "type": "passive",
+      "description": "Nearby enemy units slowly lose effectiveness as their sanity erodes",
+      "effects": {
+        "radius": 500,
+        "damageReduction": 0.03,
+        "accuracyReduction": 0.03,
+        "stacksPerSecond": 1,
+        "maxStacks": 10,
+        "resetOnLeaving": true
+      },
+      "icon": "icons/abilities/sanity_drain.png"
+    },
+    {
+      "id": "dimensional_collapse",
+      "name": "Dimensional Collapse",
+      "type": "active",
+      "targetType": "none",
+      "ultimate": true,
+      "description": "Temporarily merges dimensions, dealing massive damage to all enemies on the map",
+      "cooldown": 180.0,
+      "manaCost": 500,
+      "effects": {
+        "globalDamage": 200,
+        "buildingDamage": 400,
+        "fearDuration": 5.0,
+        "visionRevealDuration": 10.0,
+        "selfDamage": 500
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/dimensional_collapse.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "nightmare_gate",
+    "buildTime": 120,
+    "cost": {
+      "gold": 900,
+      "lumber": 200,
+      "essence": 150,
+      "dread": 100
+    },
+    "foodCost": 12,
+    "prerequisites": {
+      "buildings": ["nightmare_gate", "nexus_of_fear"],
+      "technologies": ["dimensional_breach"],
+      "age": "apocalypse"
+    },
+    "hotkey": "E",
+    "limitPerPlayer": 1
+  },
+
+  "upgrades": {
+    "special": []
+  },
+
+  "sounds": {
+    "ready": "audio/units/eldritch_horror/ready.ogg",
+    "select": ["audio/units/eldritch_horror/select1.ogg", "audio/units/eldritch_horror/select2.ogg"],
+    "move": ["audio/units/eldritch_horror/move1.ogg"],
+    "attack": ["audio/units/eldritch_horror/attack1.ogg", "audio/units/eldritch_horror/attack2.ogg"],
+    "death": "audio/units/eldritch_horror/death.ogg",
+    "ability": "audio/units/eldritch_horror/ability.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/eldritch_horror.glb",
+    "texture": "textures/units/cryptids/eldritch_horror.png",
+    "portrait": "textures/portraits/eldritch_horror.png",
+    "icon": "textures/icons/eldritch_horror.png",
+    "scale": 2.0,
+    "animations": {
+      "idle": "horror_idle",
+      "walk": "horror_move",
+      "attack": "horror_attack",
+      "death": "horror_death"
+    },
+    "effects": {
+      "spawn": "effects/horror_spawn.vfx",
+      "death": "effects/horror_death.vfx",
+      "ambient": "effects/eldritch_aura.vfx",
+      "tentacles": "effects/void_tentacles.vfx",
+      "collapse": "effects/dimensional_collapse.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 10,
+    "priority": "ultimate",
+    "behavior": "devastator",
+    "fleeThreshold": 0.0,
+    "preferredTargets": ["building", "grouped"],
+    "useGazeOnGroups": true,
+    "useTentaclesToControl": true,
+    "collapseWhenDying": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "isLegendary": true,
+    "isUltimate": true,
+    "isHeavy": true,
+    "causesFear": true,
+    "fearImmune": true,
+    "mindImmune": true,
+    "unitLimit": 1
+  },
+
+  "bounty": {
+    "gold": 200,
+    "experience": 300
+  },
+
+  "pointValue": 12,
+  "supplyProvided": 0,
+  "supplyUsed": 12
+}

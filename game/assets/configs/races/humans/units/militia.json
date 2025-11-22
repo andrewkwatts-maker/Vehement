@@ -1,0 +1,125 @@
+{
+    "id": "human_militia",
+    "type": "unit",
+    "race": "humans",
+    "name": "Militia",
+    "description": "Hastily armed citizens called to defend the realm. Cheap and quick to train, but lacking the discipline of professional soldiers.",
+
+    "tags": ["military", "infantry", "melee", "tier1", "light"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/humans/units/militia.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/militia_diffuse.png",
+        "normal": "textures/races/humans/units/militia_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.3,
+                "height": 1.7,
+                "offset": [0.0, 0.85, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 75.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 220,
+        "maxHealth": 220,
+        "healthRegen": 0.5,
+        "armor": 1,
+        "magicResist": 5,
+        "moveSpeed": 5.0,
+        "turnRate": 320.0
+    },
+
+    "combat": {
+        "attackDamage": 8,
+        "attackSpeed": 1.2,
+        "attackRange": 1.2,
+        "damageType": "normal",
+        "armorType": "light",
+        "attackType": "melee",
+        "critChance": 0.05,
+        "critMultiplier": 1.5
+    },
+
+    "abilities": [
+        {
+            "id": "ability_defend",
+            "name": "Defend",
+            "description": "Raise shield to reduce incoming damage by 25% but reduce movement speed by 50%",
+            "hotkey": "D",
+            "toggle": true,
+            "effects": [
+                {"stat": "damage_reduction", "value": 0.25},
+                {"stat": "move_speed", "value": -0.50}
+            ]
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_militia_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 2
+        },
+        {
+            "id": "upgrade_militia_armor",
+            "stat": "armor",
+            "bonus_per_level": 1
+        }
+    ],
+
+    "production": {
+        "building": "human_barracks",
+        "cost": {
+            "gold": 90,
+            "food": 2
+        },
+        "build_time": 18.0,
+        "population_cost": 1,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/melee_infantry.bt",
+        "profile": "aggressive",
+        "aggroRange": 10.0,
+        "leashRange": 25.0
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/militia/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/militia/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/militia/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/militia/attack.anim", "loop": false, "events": [[0.4, "deal_damage"]]},
+        "defend": {"path": "animations/humans/militia/defend.anim", "loop": true},
+        "death": {"path": "animations/humans/militia/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/militia/select_1.wav", "sounds/humans/militia/select_2.wav"],
+        "acknowledge": ["sounds/humans/militia/ack_1.wav", "sounds/humans/militia/ack_2.wav"],
+        "attack": "sounds/humans/militia/attack.wav",
+        "death": "sounds/humans/militia/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/militia.png",
+        "icon": "textures/races/humans/icons/militia.png",
+        "hotkey": "M"
+    }
+}

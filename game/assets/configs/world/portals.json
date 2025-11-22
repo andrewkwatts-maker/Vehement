@@ -1,0 +1,388 @@
+{
+  "$schema": "../schemas/portal.schema.json",
+  "version": "1.0.0",
+  "globalSettings": {
+    "defaultTravelTime": 30.0,
+    "defaultCooldown": 300.0,
+    "maxSimultaneousTravelers": 100,
+    "requireActivation": true,
+    "allowBidirectional": true,
+    "encounterChanceBase": 0.1
+  },
+  "portalTypes": {
+    "standard": {
+      "id": "standard",
+      "name": "Standard Portal",
+      "description": "Common portal for regional travel",
+      "visualType": "energy_ring",
+      "color": "#00BFFF",
+      "scale": 1.0,
+      "travelTimeMultiplier": 1.0,
+      "costMultiplier": 1.0,
+      "requirements": {
+        "minLevel": 1,
+        "questRequired": null,
+        "itemRequired": null,
+        "factionRequired": null
+      },
+      "effects": {
+        "idleParticles": "portal_swirl_blue",
+        "activationSound": "portal_activate",
+        "travelEffect": "teleport_standard"
+      }
+    },
+    "major": {
+      "id": "major",
+      "name": "Major Gateway",
+      "description": "High-capacity portal hub connecting major regions",
+      "visualType": "grand_archway",
+      "color": "#FFD700",
+      "scale": 2.0,
+      "travelTimeMultiplier": 0.5,
+      "costMultiplier": 2.0,
+      "requirements": {
+        "minLevel": 10,
+        "questRequired": null,
+        "itemRequired": null,
+        "factionRequired": null
+      },
+      "effects": {
+        "idleParticles": "portal_swirl_gold",
+        "activationSound": "portal_major_activate",
+        "travelEffect": "teleport_grand"
+      },
+      "bonuses": {
+        "armyCapacity": 2.0,
+        "resourceCapacity": 1.5
+      }
+    },
+    "hidden": {
+      "id": "hidden",
+      "name": "Hidden Portal",
+      "description": "Secret portal requiring discovery",
+      "visualType": "invisible_until_found",
+      "color": "#9400D3",
+      "scale": 0.8,
+      "travelTimeMultiplier": 1.5,
+      "costMultiplier": 0.5,
+      "requirements": {
+        "minLevel": 5,
+        "questRequired": "discover_hidden_paths",
+        "itemRequired": "revealing_crystal",
+        "factionRequired": null
+      },
+      "effects": {
+        "idleParticles": "portal_shimmer_violet",
+        "activationSound": "portal_whisper",
+        "travelEffect": "teleport_shadow"
+      }
+    },
+    "faction": {
+      "id": "faction",
+      "name": "Faction Portal",
+      "description": "Portal restricted to specific faction members",
+      "visualType": "faction_banner",
+      "color": "#FF4500",
+      "scale": 1.2,
+      "travelTimeMultiplier": 0.8,
+      "costMultiplier": 0.0,
+      "requirements": {
+        "minLevel": 1,
+        "questRequired": null,
+        "itemRequired": null,
+        "factionRequired": "same_as_owner"
+      },
+      "effects": {
+        "idleParticles": "faction_colors",
+        "activationSound": "portal_faction",
+        "travelEffect": "teleport_faction"
+      }
+    },
+    "ancient": {
+      "id": "ancient",
+      "name": "Ancient Gateway",
+      "description": "Mysterious portal from a forgotten age",
+      "visualType": "runic_circle",
+      "color": "#00FF7F",
+      "scale": 1.5,
+      "travelTimeMultiplier": 2.0,
+      "costMultiplier": 0.0,
+      "requirements": {
+        "minLevel": 20,
+        "questRequired": "ancient_knowledge",
+        "itemRequired": "runic_key",
+        "factionRequired": null
+      },
+      "effects": {
+        "idleParticles": "ancient_runes_glow",
+        "activationSound": "ancient_hum",
+        "travelEffect": "teleport_ancient"
+      },
+      "bonuses": {
+        "experienceGain": 1.5,
+        "lootRarity": 1.3
+      }
+    },
+    "unstable": {
+      "id": "unstable",
+      "name": "Unstable Rift",
+      "description": "Dangerous portal with unpredictable behavior",
+      "visualType": "chaotic_rift",
+      "color": "#FF00FF",
+      "scale": 1.0,
+      "travelTimeMultiplier": 0.3,
+      "costMultiplier": 0.0,
+      "requirements": {
+        "minLevel": 15,
+        "questRequired": null,
+        "itemRequired": null,
+        "factionRequired": null
+      },
+      "effects": {
+        "idleParticles": "chaos_sparks",
+        "activationSound": "rift_crackle",
+        "travelEffect": "teleport_chaotic"
+      },
+      "hazards": {
+        "randomDestination": 0.1,
+        "damageOnTravel": 10,
+        "itemLossChance": 0.05
+      }
+    },
+    "underwater": {
+      "id": "underwater",
+      "name": "Aquatic Portal",
+      "description": "Portal located beneath the waves",
+      "visualType": "water_vortex",
+      "color": "#00CED1",
+      "scale": 1.3,
+      "travelTimeMultiplier": 1.2,
+      "costMultiplier": 1.0,
+      "requirements": {
+        "minLevel": 10,
+        "questRequired": null,
+        "itemRequired": "water_breathing",
+        "factionRequired": null
+      },
+      "effects": {
+        "idleParticles": "bubble_swirl",
+        "activationSound": "underwater_whoosh",
+        "travelEffect": "teleport_aquatic"
+      }
+    },
+    "event": {
+      "id": "event",
+      "name": "Event Portal",
+      "description": "Temporary portal appearing during special events",
+      "visualType": "seasonal_themed",
+      "color": "#FF69B4",
+      "scale": 1.5,
+      "travelTimeMultiplier": 0.5,
+      "costMultiplier": 0.0,
+      "requirements": {
+        "minLevel": 1,
+        "questRequired": null,
+        "itemRequired": "event_token",
+        "factionRequired": null
+      },
+      "effects": {
+        "idleParticles": "celebration_sparkles",
+        "activationSound": "fanfare",
+        "travelEffect": "teleport_celebration"
+      },
+      "temporary": true,
+      "durationHours": 72
+    }
+  },
+  "portalNetwork": {
+    "continentalHubs": [
+      {
+        "id": "hub_north_america",
+        "regionId": "region_new_york",
+        "type": "major",
+        "connections": ["hub_europe", "hub_asia", "hub_south_america"]
+      },
+      {
+        "id": "hub_europe",
+        "regionId": "region_london",
+        "type": "major",
+        "connections": ["hub_north_america", "hub_asia", "hub_africa"]
+      },
+      {
+        "id": "hub_asia",
+        "regionId": "region_tokyo",
+        "type": "major",
+        "connections": ["hub_north_america", "hub_europe", "hub_oceania"]
+      }
+    ],
+    "crossContinentRoutes": [
+      {
+        "source": "hub_north_america",
+        "destination": "hub_europe",
+        "travelTime": 60.0,
+        "cost": {"gold": 500, "energy": 100},
+        "encounterChance": 0.2
+      },
+      {
+        "source": "hub_europe",
+        "destination": "hub_asia",
+        "travelTime": 90.0,
+        "cost": {"gold": 750, "energy": 150},
+        "encounterChance": 0.25
+      },
+      {
+        "source": "hub_asia",
+        "destination": "hub_north_america",
+        "travelTime": 120.0,
+        "cost": {"gold": 1000, "energy": 200},
+        "encounterChance": 0.3
+      }
+    ]
+  },
+  "travelEncounters": {
+    "dimensional_storm": {
+      "id": "dimensional_storm",
+      "name": "Dimensional Storm",
+      "description": "A violent storm in the space between realms",
+      "chance": 0.15,
+      "minLevel": 5,
+      "effects": {
+        "damage": {"min": 10, "max": 50},
+        "delay": 30,
+        "armyLoss": 0.05
+      },
+      "avoidable": true,
+      "avoidSkillCheck": "navigation"
+    },
+    "void_pirates": {
+      "id": "void_pirates",
+      "name": "Void Pirates",
+      "description": "Raiders who prey on travelers between worlds",
+      "chance": 0.1,
+      "minLevel": 10,
+      "combatEncounter": true,
+      "enemies": [
+        {"type": "void_pirate", "count": {"min": 3, "max": 8}},
+        {"type": "void_captain", "count": 1}
+      ],
+      "rewards": {
+        "gold": {"min": 100, "max": 500},
+        "items": ["pirate_treasure", "void_map"]
+      }
+    },
+    "lost_traveler": {
+      "id": "lost_traveler",
+      "name": "Lost Traveler",
+      "description": "A stranded traveler seeking help",
+      "chance": 0.08,
+      "minLevel": 1,
+      "combatEncounter": false,
+      "choices": [
+        {
+          "id": "help",
+          "text": "Help the traveler",
+          "requirements": {"resources": {"food": 10}},
+          "rewards": {"reputation": 50, "karma": 10}
+        },
+        {
+          "id": "ignore",
+          "text": "Ignore and continue",
+          "rewards": {}
+        },
+        {
+          "id": "rob",
+          "text": "Rob the traveler",
+          "rewards": {"gold": 50},
+          "penalties": {"karma": -20, "reputation": -30}
+        }
+      ]
+    },
+    "ancient_guardian": {
+      "id": "ancient_guardian",
+      "name": "Ancient Guardian",
+      "description": "A powerful being that tests worthy travelers",
+      "chance": 0.05,
+      "minLevel": 20,
+      "combatEncounter": true,
+      "enemies": [
+        {"type": "ancient_guardian", "count": 1}
+      ],
+      "rewards": {
+        "experience": 5000,
+        "items": ["guardian_blessing", "ancient_artifact"]
+      },
+      "canFlee": true
+    },
+    "dimensional_rift": {
+      "id": "dimensional_rift",
+      "name": "Dimensional Rift",
+      "description": "A tear in reality offering risk and reward",
+      "chance": 0.07,
+      "minLevel": 15,
+      "combatEncounter": false,
+      "choices": [
+        {
+          "id": "enter",
+          "text": "Enter the rift",
+          "outcomes": [
+            {"chance": 0.5, "reward": {"rare_item": true}},
+            {"chance": 0.3, "penalty": {"teleport_random": true}},
+            {"chance": 0.2, "penalty": {"damage": 100}}
+          ]
+        },
+        {
+          "id": "avoid",
+          "text": "Carefully avoid it",
+          "rewards": {}
+        }
+      ]
+    }
+  },
+  "transferLimits": {
+    "standard": {
+      "maxUnits": 50,
+      "maxResources": {
+        "gold": 10000,
+        "wood": 5000,
+        "stone": 5000,
+        "iron": 2500,
+        "food": 5000
+      },
+      "cooldownMinutes": 30
+    },
+    "premium": {
+      "maxUnits": 200,
+      "maxResources": {
+        "gold": 50000,
+        "wood": 25000,
+        "stone": 25000,
+        "iron": 12500,
+        "food": 25000
+      },
+      "cooldownMinutes": 10
+    },
+    "vip": {
+      "maxUnits": -1,
+      "maxResources": {
+        "gold": -1,
+        "wood": -1,
+        "stone": -1,
+        "iron": -1,
+        "food": -1
+      },
+      "cooldownMinutes": 0
+    }
+  },
+  "activationRequirements": {
+    "firstTimeActivation": {
+      "questRequired": "portal_attunement",
+      "costGold": 100,
+      "costItems": []
+    },
+    "permanentUnlock": {
+      "visitCount": 3,
+      "costGold": 1000,
+      "benefits": ["instant_travel", "reduced_cost"]
+    }
+  }
+}

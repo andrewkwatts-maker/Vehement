@@ -1,0 +1,184 @@
+{
+    "id": "human_trebuchet",
+    "type": "unit",
+    "race": "humans",
+    "name": "Trebuchet",
+    "description": "The ultimate siege weapon, capable of hurling massive projectiles across incredible distances. A single trebuchet can level an entire fortress given enough time.",
+
+    "tags": ["military", "siege", "ranged", "tier4", "heavy", "artillery", "ultimate"],
+
+    "tier": 4,
+    "age_requirement": 7,
+
+    "model": {
+        "path": "models/races/humans/units/trebuchet.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/trebuchet_diffuse.png",
+        "normal": "textures/races/humans/units/trebuchet_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [3.0, 4.0, 3.0],
+                "offset": [0.0, 4.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 3000.0,
+        "layer": "siege"
+    },
+
+    "stats": {
+        "health": 800,
+        "maxHealth": 800,
+        "healthRegen": 0.0,
+        "armor": 8,
+        "magicResist": 5,
+        "moveSpeed": 1.5,
+        "turnRate": 40.0
+    },
+
+    "combat": {
+        "attackDamage": 200,
+        "attackSpeed": 6.0,
+        "attackRange": 40.0,
+        "minAttackRange": 15.0,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "attackType": "ranged",
+        "splash_damage": 1.0,
+        "splash_radius": 5.0,
+        "projectile_id": "trebuchet_boulder",
+        "bonus_vs_tags": ["building", "wall", "tower"],
+        "bonus_damage_multiplier": 3.0
+    },
+
+    "projectile": {
+        "id": "trebuchet_boulder",
+        "model": "models/projectiles/massive_boulder.obj",
+        "speed": 15.0,
+        "lifetime": 8.0,
+        "gravity": 2.0,
+        "arc_height": 25.0,
+        "trailEffect": "effects/massive_boulder_trail.fx",
+        "impactEffect": "effects/massive_boulder_impact.fx"
+    },
+
+    "setup": {
+        "required": true,
+        "setup_time": 5.0,
+        "packup_time": 4.0,
+        "can_attack_while_moving": false
+    },
+
+    "abilities": [
+        {
+            "id": "ability_diseased_corpse",
+            "name": "Diseased Corpse",
+            "description": "Launch a diseased corpse that creates a poison cloud dealing 50 damage per second for 8 seconds",
+            "hotkey": "Q",
+            "cooldown": 60.0,
+            "range": 40.0,
+            "radius": 6.0,
+            "damage_per_second": 50,
+            "duration": 8.0,
+            "damage_type": "poison"
+        },
+        {
+            "id": "ability_explosive_barrel",
+            "name": "Explosive Barrel",
+            "description": "Launch a barrel of explosives that detonates on impact for 300 damage",
+            "hotkey": "W",
+            "cooldown": 45.0,
+            "range": 40.0,
+            "damage": 300,
+            "splash_radius": 6.0,
+            "damage_type": "fire",
+            "required_upgrade": "upgrade_explosive_ammunition"
+        },
+        {
+            "id": "ability_scatter_shot",
+            "name": "Scatter Shot",
+            "description": "Fire multiple smaller projectiles covering a large area",
+            "hotkey": "E",
+            "cooldown": 35.0,
+            "range": 35.0,
+            "projectile_count": 5,
+            "damage_per_projectile": 60,
+            "spread_radius": 8.0
+        },
+        {
+            "id": "ability_ground_attack",
+            "name": "Ground Attack",
+            "description": "Target the ground to attack a specific area without requiring enemy vision",
+            "hotkey": "G",
+            "target_type": "ground",
+            "requires_vision": false
+        }
+    ],
+
+    "vulnerabilities": {
+        "fire_damage": 1.75,
+        "melee_damage": 1.5,
+        "cavalry_damage": 2.0
+    },
+
+    "production": {
+        "building": "human_siege_workshop",
+        "cost": {
+            "gold": 550,
+            "wood": 350
+        },
+        "build_time": 90.0,
+        "population_cost": 5,
+        "prerequisites": ["human_castle", "upgrade_advanced_siege"],
+        "max_count": 3
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/long_range_siege.bt",
+        "profile": "siege",
+        "aggroRange": 35.0,
+        "leashRange": 45.0,
+        "priority_targets": ["castle", "keep", "tower", "wall", "building"],
+        "maintain_max_distance": true,
+        "flee_from_melee": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/trebuchet/idle.anim", "loop": true},
+        "move": {"path": "animations/humans/trebuchet/move.anim", "loop": true},
+        "setup": {"path": "animations/humans/trebuchet/setup.anim", "loop": false},
+        "packup": {"path": "animations/humans/trebuchet/packup.anim", "loop": false},
+        "attack": {"path": "animations/humans/trebuchet/fire.anim", "loop": false, "events": [[0.8, "fire_projectile"]]},
+        "reload": {"path": "animations/humans/trebuchet/reload.anim", "loop": false},
+        "death": {"path": "animations/humans/trebuchet/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": "sounds/humans/trebuchet/select.wav",
+        "acknowledge": "sounds/humans/trebuchet/ack.wav",
+        "attack": "sounds/trebuchet_fire.wav",
+        "impact": "sounds/massive_impact.wav",
+        "setup": "sounds/siege_setup_heavy.wav",
+        "move": "sounds/wheels_rolling_heavy.wav",
+        "death": "sounds/wood_destruction_large.wav"
+    },
+
+    "effects": {
+        "launch": "effects/trebuchet_launch.fx",
+        "impact_crater": "effects/crater_large.fx"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/trebuchet.png",
+        "icon": "textures/races/humans/icons/trebuchet.png",
+        "hotkey": "T"
+    }
+}

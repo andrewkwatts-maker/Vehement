@@ -1,0 +1,288 @@
+{
+  "id": "vampire_count",
+  "name": "Vampire Count",
+  "race": "vampires",
+  "type": "hero",
+  "class": "warrior",
+  "role": ["tank", "melee_dps", "transformation"],
+
+  "title": "Lord of the Night",
+  "description": "A powerful warrior-aristocrat who leads from the front. The Count excels in melee combat and can transform into bat, wolf, or mist forms.",
+  "lore": "The Vampire Count is the martial champion of the Blood Court, a noble who has spent centuries perfecting the art of war. In battle, he shifts between forms to confound enemies - a bat for mobility, a wolf for savagery, and mist for escape.",
+
+  "baseStats": {
+    "health": 750,
+    "healthRegen": 2.5,
+    "mana": 250,
+    "manaRegen": 1.0,
+    "armor": 5,
+    "armorType": "hero",
+    "moveSpeed": 320,
+    "turnRate": 0.6,
+    "collisionSize": 36,
+    "selectionScale": 1.25
+  },
+
+  "statsPerLevel": {
+    "health": 125,
+    "healthRegen": 0.35,
+    "mana": 30,
+    "manaRegen": 0.15,
+    "armor": 0.4,
+    "damage": 4
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 28,
+      "variance": 5,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.35,
+    "backswing": 0.35,
+    "primaryAttribute": "strength",
+    "lifeSteal": 0.25
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 25,
+      "perLevel": 3.2
+    },
+    "agility": {
+      "base": 18,
+      "perLevel": 2.0
+    },
+    "intelligence": {
+      "base": 16,
+      "perLevel": 1.5
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "armorBonus": 3,
+      "healthRegenBonus": 3.0,
+      "transformCooldownReduction": 0.5
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "vampiric_strike",
+      "name": "Vampiric Strike",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "Q",
+      "description": "A devastating melee attack that deals bonus damage and heals for the full amount",
+      "levels": [
+        {"manaCost": 50, "cooldown": 8, "bonusDamage": 75, "lifeStealMultiplier": 1.0},
+        {"manaCost": 50, "cooldown": 8, "bonusDamage": 125, "lifeStealMultiplier": 1.25},
+        {"manaCost": 50, "cooldown": 8, "bonusDamage": 175, "lifeStealMultiplier": 1.5}
+      ],
+      "effects": {
+        "range": 150,
+        "appliesAttackEffects": true
+      },
+      "icon": "icons/abilities/vampiric_strike.png"
+    },
+    {
+      "id": "transform",
+      "name": "Transform",
+      "type": "active",
+      "targetType": "self",
+      "hotkey": "W",
+      "description": "Transform into bat, wolf, or mist form, each with unique advantages",
+      "levels": [
+        {"manaCost": 75, "cooldown": 20, "duration": 15, "bloodCost": 15},
+        {"manaCost": 75, "cooldown": 18, "duration": 20, "bloodCost": 12},
+        {"manaCost": 75, "cooldown": 15, "duration": 25, "bloodCost": 10}
+      ],
+      "effects": {
+        "forms": {
+          "bat": {
+            "becomesFlying": true,
+            "speedBonus": 0.5,
+            "damagePenalty": 0.5,
+            "armorPenalty": 3
+          },
+          "wolf": {
+            "speedBonus": 0.25,
+            "damageBonus": 0.35,
+            "critChanceBonus": 0.15
+          },
+          "mist": {
+            "invulnerable": true,
+            "cannotAttack": true,
+            "speedBonus": 0.3,
+            "canPassThroughUnits": true
+          }
+        }
+      },
+      "icon": "icons/abilities/transform.png"
+    },
+    {
+      "id": "blood_frenzy_hero",
+      "name": "Blood Frenzy",
+      "type": "active",
+      "targetType": "self",
+      "hotkey": "E",
+      "description": "Enter a blood frenzy, gaining attack speed and life steal but taking increased damage",
+      "levels": [
+        {"manaCost": 100, "cooldown": 60, "duration": 15, "attackSpeedBonus": 0.50, "lifeStealBonus": 0.15, "damageTaken": 1.15},
+        {"manaCost": 100, "cooldown": 55, "duration": 18, "attackSpeedBonus": 0.75, "lifeStealBonus": 0.20, "damageTaken": 1.10},
+        {"manaCost": 100, "cooldown": 50, "duration": 20, "attackSpeedBonus": 1.00, "lifeStealBonus": 0.25, "damageTaken": 1.05}
+      ],
+      "effects": {
+        "movementBonus": 0.15
+      },
+      "icon": "icons/abilities/blood_frenzy_hero.png"
+    },
+    {
+      "id": "dominate",
+      "name": "Dominate",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "D",
+      "ultimate": true,
+      "description": "Dominate an enemy unit's mind, converting it permanently to your side",
+      "levels": [
+        {"manaCost": 200, "cooldown": 180, "range": 500, "targetHPLimit": 700, "bloodCost": 75}
+      ],
+      "effects": {
+        "permanent": true,
+        "cannotTargetHeroes": true,
+        "cannotTargetMechanical": true,
+        "targetStatPenalty": 0.1
+      },
+      "icon": "icons/abilities/dominate.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "coffin_vault",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "blood": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["coffin_vault"],
+      "technologies": [],
+      "age": "fledgling"
+    },
+    "hotkey": "C"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/vampire_count/ready.ogg",
+    "select": [
+      "audio/heroes/vampire_count/select1.ogg",
+      "audio/heroes/vampire_count/select2.ogg",
+      "audio/heroes/vampire_count/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/vampire_count/move1.ogg",
+      "audio/heroes/vampire_count/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/vampire_count/attack1.ogg",
+      "audio/heroes/vampire_count/attack2.ogg"
+    ],
+    "death": "audio/heroes/vampire_count/death.ogg",
+    "pissed": [
+      "audio/heroes/vampire_count/pissed1.ogg",
+      "audio/heroes/vampire_count/pissed2.ogg",
+      "audio/heroes/vampire_count/pissed3.ogg",
+      "audio/heroes/vampire_count/pissed4.ogg"
+    ],
+    "transform": "audio/heroes/vampire_count/transform.ogg",
+    "dominate": "audio/heroes/vampire_count/dominate.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/vampire_count.glb",
+    "texture": "textures/heroes/vampire_count.png",
+    "portrait": "textures/portraits/vampire_count_hero.png",
+    "icon": "textures/icons/vampire_count_hero.png",
+    "scale": 1.25,
+    "animations": {
+      "idle": "count_idle",
+      "walk": "count_walk",
+      "attack": "count_attack",
+      "death": "count_death",
+      "cast": "count_cast",
+      "batForm": "count_bat",
+      "wolfForm": "count_wolf",
+      "mistForm": "count_mist"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/vampire_hero_death.vfx",
+      "vampiricStrike": "effects/vampiric_strike.vfx",
+      "transform": "effects/count_transform.vfx",
+      "bloodFrenzy": "effects/blood_frenzy.vfx",
+      "dominate": "effects/dominate.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "frontline",
+    "useTransformTactically": true,
+    "dominateHighValue": true,
+    "bloodFrenzyWhenSafe": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isVampire": true,
+    "isUndead": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "immuneToPoison": true,
+    "canUseItems": true,
+    "canGainExperience": true,
+    "canTransform": true,
+    "hasLifeSteal": true,
+    "affectedByDayNight": true,
+    "autoRevivesAtCoffinVault": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 30,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 75,
+    "bloodPerLevel": 10
+  },
+  "autoRevive": {
+    "enabled": true,
+    "building": "coffin_vault",
+    "delay": 60,
+    "costReduction": 0.5
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 25,
+    "experienceBase": 100,
+    "experiencePerLevel": 30
+  }
+}

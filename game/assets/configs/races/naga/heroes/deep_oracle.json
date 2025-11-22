@@ -1,0 +1,163 @@
+{
+    "id": "naga_deep_oracle",
+    "name": "Deep Oracle",
+    "title": "Seer of the Abyss",
+    "class": "caster",
+    "primary_attribute": "intelligence",
+    "race": "naga",
+    "description": "A powerful Naga sorceress who channels the primordial magic of the ocean depths, wielding devastating frost and water spells.",
+    "lore": "Shal'dorei the Blind sacrificed her sight to the Abyssal Ones in exchange for vision beyond mortal ken. Now she sees the threads of fate itself, weaving devastating magic while guiding her people toward their destined glory.",
+
+    "base_stats": {
+        "health": 450,
+        "mana": 350,
+        "damage": 24,
+        "armor": 1,
+        "magic_resist": 5,
+        "move_speed": 300,
+        "turn_rate": 0.6,
+        "attack_range": 11.0,
+        "attack_speed": 1.7,
+        "health_regen": 1.5,
+        "mana_regen": 3.0,
+        "strength": 16,
+        "agility": 14,
+        "intelligence": 28,
+        "day_vision": 18,
+        "night_vision": 18
+    },
+
+    "stat_growth": {
+        "health_per_level": 35,
+        "mana_per_level": 30,
+        "damage_per_level": 0,
+        "armor_per_level": 0.1,
+        "strength_per_level": 1.5,
+        "agility_per_level": 1.2,
+        "intelligence_per_level": 3.5,
+        "health_regen_per_level": 0.1,
+        "mana_regen_per_level": 0.2
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_frost_bolt",
+            "name": "Frost Bolt",
+            "max_level": 4,
+            "description": "Hurls a bolt of freezing water at an enemy, dealing damage and slowing their movement and attack speed.",
+            "type": "active",
+            "targeting": "enemy_unit",
+            "cooldown": [8, 7, 6, 5],
+            "mana_cost": [75, 85, 95, 105],
+            "range": 12.0,
+            "effects": [
+                {"damage": [100, 150, 200, 250], "damage_type": "frost"},
+                {"move_slow": [30, 40, 50, 60]},
+                {"attack_slow": [20, 30, 40, 50]},
+                {"duration": [3, 3.5, 4, 4.5]}
+            ]
+        },
+        {
+            "slot": 2,
+            "id": "ability_mana_burn",
+            "name": "Mana Burn",
+            "max_level": 4,
+            "description": "Burns away enemy mana and deals damage equal to mana burned.",
+            "type": "active",
+            "targeting": "enemy_unit",
+            "cooldown": [12, 11, 10, 9],
+            "mana_cost": [60, 70, 80, 90],
+            "range": 10.0,
+            "effects": [
+                {"mana_burned": [100, 150, 200, 250]},
+                {"damage_per_mana": 1.0, "damage_type": "arcane"}
+            ]
+        },
+        {
+            "slot": 3,
+            "id": "ability_tornado",
+            "name": "Tornado",
+            "max_level": 4,
+            "description": "Summons a waterspout that travels forward, picking up and disabling enemies in its path.",
+            "type": "active",
+            "targeting": "direction",
+            "cooldown": [22, 20, 18, 16],
+            "mana_cost": [100, 110, 120, 130],
+            "range": 15.0,
+            "effects": [
+                {"damage": [60, 90, 120, 150], "damage_type": "water"},
+                {"cyclone_duration": [1.5, 2.0, 2.5, 3.0]},
+                {"travel_speed": [4, 5, 6, 7]},
+                {"width": [3, 3.5, 4, 4.5]}
+            ]
+        },
+        {
+            "slot": 4,
+            "id": "ability_whirlpool",
+            "name": "Whirlpool",
+            "max_level": 3,
+            "ultimate": true,
+            "unlock_level": 6,
+            "description": "Ultimate: Creates a massive whirlpool that pulls enemies toward its center, dealing damage and preventing escape.",
+            "type": "active",
+            "targeting": "ground",
+            "cooldown": [90, 80, 70],
+            "mana_cost": [200, 275, 350],
+            "range": 14.0,
+            "radius": [8, 10, 12],
+            "duration": [6, 8, 10],
+            "effects": [
+                {"damage_per_second": [75, 100, 125], "damage_type": "water"},
+                {"pull_strength": [3, 4, 5]},
+                {"slow": 60}
+            ]
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_frost_bolt_bounce", "talent_frost_bolt_shatter"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_mana_burn_silence", "talent_mana_burn_aoe"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_tornado_damage", "talent_tornado_stun"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_whirlpool_damage", "talent_whirlpool_size"]}
+    ],
+
+    "passive_abilities": [
+        {
+            "id": "abyssal_sight",
+            "name": "Abyssal Sight",
+            "description": "Has true sight within 8 range. Spell damage is increased by 20% against enemies below 40% health."
+        }
+    ],
+
+    "visuals": {
+        "model": "models/heroes/naga/deep_oracle.obj",
+        "skeleton": "models/heroes/naga/deep_oracle_skeleton.skl",
+        "portrait": "textures/heroes/deep_oracle_portrait.png",
+        "icon": "textures/heroes/deep_oracle_icon.png",
+        "minimap_icon": "textures/minimap/deep_oracle.png",
+        "animation_set": "animations/heroes/deep_oracle",
+        "scale": 1.0,
+        "attack_effect": "effects/frost_bolt.fx",
+        "cast_effect": "effects/oracle_cast.fx",
+        "death_effect": "effects/hero_death.fx",
+        "respawn_effect": "effects/hero_respawn.fx"
+    },
+
+    "sounds": {
+        "attack": "sounds/heroes/deep_oracle/attack.wav",
+        "hurt": "sounds/heroes/deep_oracle/hurt.wav",
+        "death": "sounds/heroes/deep_oracle/death.wav",
+        "select": "sounds/heroes/deep_oracle/select.wav",
+        "move": "sounds/heroes/deep_oracle/move.wav"
+    },
+
+    "tags": ["ranged", "intelligence", "nuker", "disabler", "pusher"],
+
+    "properties": {
+        "attack_type": "ranged",
+        "complexity": 2,
+        "roles": ["nuker", "disabler"],
+        "amphibious": true
+    }
+}

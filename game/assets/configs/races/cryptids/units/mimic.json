@@ -1,0 +1,211 @@
+{
+  "id": "mimic",
+  "name": "Mimic",
+  "race": "cryptids",
+  "tier": 2,
+  "type": "special",
+  "role": ["infiltrator", "copy", "spy"],
+
+  "description": "A shapeless horror that can perfectly replicate the appearance of enemy units. Mimics infiltrate enemy lines to sow confusion and gather intelligence.",
+  "lore": "No one knows what a Mimic truly looks like - perhaps they have no true form at all. They exist only as reflections of others, perfect copies that walk among the enemy until the moment to strike arrives.",
+
+  "stats": {
+    "health": 320,
+    "healthRegen": 1.0,
+    "mana": 250,
+    "manaRegen": 1.5,
+    "armor": 1,
+    "armorType": "medium",
+    "moveSpeed": 280,
+    "turnRate": 1.0,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 16,
+      "variance": 4,
+      "type": "normal"
+    },
+    "attackSpeed": 1.6,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "acquisitionRange": 400,
+    "aggroRange": 300
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "copy_form",
+      "name": "Copy Form",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Copies the appearance and basic abilities of an enemy unit",
+      "cooldown": 45.0,
+      "manaCost": 100,
+      "essenceCost": 30,
+      "range": 600,
+      "effects": {
+        "duration": 90.0,
+        "copiesAppearance": true,
+        "copiesBaseAbilities": true,
+        "abilityEffectiveness": 0.75,
+        "maintainsOriginalHealth": true,
+        "breaksOnDeath": true
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/copy_form.png"
+    },
+    {
+      "id": "infiltrate",
+      "name": "Infiltrate",
+      "type": "passive",
+      "description": "While disguised, appears as an allied unit to enemies",
+      "effects": {
+        "appearsAllied": true,
+        "canEnterEnemyBase": true,
+        "revealsIfAttacked": true
+      },
+      "icon": "icons/abilities/infiltrate.png"
+    },
+    {
+      "id": "reveal_true_form",
+      "name": "Reveal True Form",
+      "type": "active",
+      "targetType": "none",
+      "description": "Drops disguise and deals damage to all nearby enemies while stunning them",
+      "cooldown": 30.0,
+      "manaCost": 75,
+      "effects": {
+        "radius": 250,
+        "damage": 50,
+        "stunDuration": 1.5,
+        "removesDisguise": true
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/reveal_true_form.png"
+    },
+    {
+      "id": "steal_memory",
+      "name": "Steal Memory",
+      "type": "active",
+      "targetType": "unit",
+      "requiresResearch": "advanced_mimicry",
+      "description": "Copies a single ability from an enemy unit for temporary use",
+      "cooldown": 60.0,
+      "manaCost": 125,
+      "range": 400,
+      "effects": {
+        "duration": 45.0,
+        "copiesOneAbility": true,
+        "abilityEffectiveness": 0.9
+      },
+      "hotkey": "M",
+      "icon": "icons/abilities/steal_memory.png"
+    },
+    {
+      "id": "adaptive_physiology",
+      "name": "Adaptive Physiology",
+      "type": "passive",
+      "description": "Gains resistance to the last damage type received",
+      "effects": {
+        "resistanceGain": 0.2,
+        "duration": 10.0,
+        "stackable": false
+      },
+      "icon": "icons/abilities/adaptive_physiology.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "ritual_circle",
+    "buildTime": 35,
+    "cost": {
+      "gold": 200,
+      "lumber": 30,
+      "essence": 40
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["ritual_circle"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "M"
+  },
+
+  "upgrades": {
+    "special": ["advanced_mimicry", "perfect_copy", "memory_theft"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/mimic/ready.ogg",
+    "select": ["audio/units/mimic/select1.ogg", "audio/units/mimic/select2.ogg"],
+    "move": ["audio/units/mimic/move1.ogg", "audio/units/mimic/move2.ogg"],
+    "attack": ["audio/units/mimic/attack1.ogg"],
+    "death": "audio/units/mimic/death.ogg",
+    "transform": "audio/units/mimic/transform.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/mimic.glb",
+    "texture": "textures/units/cryptids/mimic.png",
+    "portrait": "textures/portraits/mimic.png",
+    "icon": "textures/icons/mimic.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "mimic_idle",
+      "walk": "mimic_walk",
+      "attack": "mimic_attack",
+      "death": "mimic_death",
+      "transform": "mimic_transform",
+      "reveal": "mimic_reveal"
+    },
+    "effects": {
+      "spawn": "effects/mimic_spawn.vfx",
+      "death": "effects/mimic_death.vfx",
+      "copy": "effects/copy_form.vfx",
+      "reveal": "effects/true_form_reveal.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 4,
+    "priority": "high",
+    "behavior": "infiltrator",
+    "fleeThreshold": 0.4,
+    "preferredTargets": ["high_value", "caster"],
+    "priorityCopyTargets": ["strong_melee", "caster", "support"],
+    "infiltrateBeforeCombat": true,
+    "revealWhenSurrounded": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "canDisguise": true,
+    "canCopyUnits": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 30,
+    "experience": 40
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

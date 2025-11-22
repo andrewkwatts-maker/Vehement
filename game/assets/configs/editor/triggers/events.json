@@ -1,0 +1,607 @@
+{
+  "version": "1.0",
+  "description": "Trigger event definitions for the editor",
+  "categories": [
+    {
+      "id": "game",
+      "name": "Game Events",
+      "icon": "game_icon"
+    },
+    {
+      "id": "unit",
+      "name": "Unit Events",
+      "icon": "unit_icon"
+    },
+    {
+      "id": "player",
+      "name": "Player Events",
+      "icon": "player_icon"
+    },
+    {
+      "id": "timer",
+      "name": "Timer Events",
+      "icon": "timer_icon"
+    },
+    {
+      "id": "region",
+      "name": "Region Events",
+      "icon": "region_icon"
+    },
+    {
+      "id": "combat",
+      "name": "Combat Events",
+      "icon": "combat_icon"
+    }
+  ],
+  "events": [
+    {
+      "id": "map_init",
+      "category": "game",
+      "name": "Map Initialization",
+      "description": "Fires once when the map starts loading",
+      "parameters": [],
+      "returnVariables": []
+    },
+    {
+      "id": "game_loaded",
+      "category": "game",
+      "name": "Game Loaded",
+      "description": "Fires after the game is fully loaded and ready",
+      "parameters": [],
+      "returnVariables": []
+    },
+    {
+      "id": "game_time_elapsed",
+      "category": "game",
+      "name": "Elapsed Game Time",
+      "description": "Fires when game time reaches a specific value",
+      "parameters": [
+        {
+          "name": "time",
+          "type": "real",
+          "description": "Time in seconds",
+          "default": 0.0
+        }
+      ],
+      "returnVariables": []
+    },
+    {
+      "id": "timer_expires",
+      "category": "timer",
+      "name": "Timer Expires",
+      "description": "Fires when a timer reaches zero",
+      "parameters": [
+        {
+          "name": "timer",
+          "type": "timer",
+          "description": "The timer to watch"
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "ExpiredTimer",
+          "type": "timer"
+        }
+      ]
+    },
+    {
+      "id": "periodic_event",
+      "category": "timer",
+      "name": "Periodic Event",
+      "description": "Fires repeatedly at a set interval",
+      "parameters": [
+        {
+          "name": "interval",
+          "type": "real",
+          "description": "Interval in seconds",
+          "default": 1.0
+        }
+      ],
+      "returnVariables": []
+    },
+    {
+      "id": "unit_enters_region",
+      "category": "region",
+      "name": "Unit Enters Region",
+      "description": "Fires when any unit enters a region",
+      "parameters": [
+        {
+          "name": "region",
+          "type": "region",
+          "description": "The region to watch"
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "EnteringUnit",
+          "type": "unit"
+        },
+        {
+          "name": "TriggeringRegion",
+          "type": "region"
+        }
+      ]
+    },
+    {
+      "id": "unit_leaves_region",
+      "category": "region",
+      "name": "Unit Leaves Region",
+      "description": "Fires when any unit leaves a region",
+      "parameters": [
+        {
+          "name": "region",
+          "type": "region",
+          "description": "The region to watch"
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "LeavingUnit",
+          "type": "unit"
+        },
+        {
+          "name": "TriggeringRegion",
+          "type": "region"
+        }
+      ]
+    },
+    {
+      "id": "unit_dies",
+      "category": "unit",
+      "name": "Unit Dies",
+      "description": "Fires when a unit is killed",
+      "parameters": [
+        {
+          "name": "unitType",
+          "type": "unittype",
+          "description": "Optional: specific unit type to watch",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "DyingUnit",
+          "type": "unit"
+        },
+        {
+          "name": "KillingUnit",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "unit_spawns",
+      "category": "unit",
+      "name": "Unit Spawns",
+      "description": "Fires when a unit is created",
+      "parameters": [
+        {
+          "name": "unitType",
+          "type": "unittype",
+          "description": "Optional: specific unit type to watch",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "SpawnedUnit",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "unit_attacked",
+      "category": "combat",
+      "name": "Unit Is Attacked",
+      "description": "Fires when a unit begins being attacked",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "AttackedUnit",
+          "type": "unit"
+        },
+        {
+          "name": "AttackingUnit",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "unit_takes_damage",
+      "category": "combat",
+      "name": "Unit Takes Damage",
+      "description": "Fires when a unit receives damage",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "DamagedUnit",
+          "type": "unit"
+        },
+        {
+          "name": "DamageSource",
+          "type": "unit"
+        },
+        {
+          "name": "DamageAmount",
+          "type": "real"
+        },
+        {
+          "name": "DamageType",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "unit_acquires_item",
+      "category": "unit",
+      "name": "Unit Acquires Item",
+      "description": "Fires when a unit picks up an item",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "AcquiringUnit",
+          "type": "unit"
+        },
+        {
+          "name": "AcquiredItem",
+          "type": "item"
+        }
+      ]
+    },
+    {
+      "id": "unit_uses_ability",
+      "category": "unit",
+      "name": "Unit Begins Casting",
+      "description": "Fires when a unit starts casting an ability",
+      "parameters": [
+        {
+          "name": "abilityId",
+          "type": "ability",
+          "description": "Optional: specific ability to watch",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "CastingUnit",
+          "type": "unit"
+        },
+        {
+          "name": "CastAbility",
+          "type": "ability"
+        },
+        {
+          "name": "TargetUnit",
+          "type": "unit"
+        },
+        {
+          "name": "TargetPoint",
+          "type": "location"
+        }
+      ]
+    },
+    {
+      "id": "unit_finishes_ability",
+      "category": "unit",
+      "name": "Unit Finishes Casting",
+      "description": "Fires when a unit completes casting an ability",
+      "parameters": [
+        {
+          "name": "abilityId",
+          "type": "ability",
+          "description": "Optional: specific ability to watch",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "CastingUnit",
+          "type": "unit"
+        },
+        {
+          "name": "CastAbility",
+          "type": "ability"
+        }
+      ]
+    },
+    {
+      "id": "unit_starts_construction",
+      "category": "unit",
+      "name": "Construction Starts",
+      "description": "Fires when a building starts construction",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "ConstructingUnit",
+          "type": "unit"
+        },
+        {
+          "name": "BuildingBeingBuilt",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "unit_finishes_construction",
+      "category": "unit",
+      "name": "Construction Finishes",
+      "description": "Fires when a building completes construction",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "CompletedBuilding",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "unit_trained",
+      "category": "unit",
+      "name": "Unit Training Finishes",
+      "description": "Fires when a unit finishes training",
+      "parameters": [
+        {
+          "name": "unitType",
+          "type": "unittype",
+          "description": "Optional: specific unit type",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "TrainedUnit",
+          "type": "unit"
+        },
+        {
+          "name": "TrainingBuilding",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "unit_upgraded",
+      "category": "unit",
+      "name": "Unit Upgrades",
+      "description": "Fires when a unit or building upgrades",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "UpgradedUnit",
+          "type": "unit"
+        },
+        {
+          "name": "PreviousType",
+          "type": "unittype"
+        },
+        {
+          "name": "NewType",
+          "type": "unittype"
+        }
+      ]
+    },
+    {
+      "id": "player_leaves",
+      "category": "player",
+      "name": "Player Leaves Game",
+      "description": "Fires when a player leaves the game",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "LeavingPlayer",
+          "type": "player"
+        },
+        {
+          "name": "LeaveReason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "player_chat",
+      "category": "player",
+      "name": "Player Chats",
+      "description": "Fires when a player sends a chat message",
+      "parameters": [
+        {
+          "name": "matchExact",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Message to match (optional)",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "ChattingPlayer",
+          "type": "player"
+        },
+        {
+          "name": "ChatMessage",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "player_selects_unit",
+      "category": "player",
+      "name": "Player Selects Unit",
+      "description": "Fires when a player selects a unit",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "SelectingPlayer",
+          "type": "player"
+        },
+        {
+          "name": "SelectedUnit",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "player_issues_order",
+      "category": "player",
+      "name": "Player Issues Order",
+      "description": "Fires when a player issues a command to units",
+      "parameters": [
+        {
+          "name": "orderType",
+          "type": "string",
+          "description": "Order type to match (optional)",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "OrderingPlayer",
+          "type": "player"
+        },
+        {
+          "name": "OrderedUnit",
+          "type": "unit"
+        },
+        {
+          "name": "OrderType",
+          "type": "string"
+        },
+        {
+          "name": "OrderTarget",
+          "type": "unit"
+        },
+        {
+          "name": "OrderPoint",
+          "type": "location"
+        }
+      ]
+    },
+    {
+      "id": "resource_gathered",
+      "category": "player",
+      "name": "Resource Gathered",
+      "description": "Fires when a player gathers resources",
+      "parameters": [
+        {
+          "name": "resourceType",
+          "type": "string",
+          "description": "Resource type (gold, lumber, etc.)",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "GatheringPlayer",
+          "type": "player"
+        },
+        {
+          "name": "GatheringUnit",
+          "type": "unit"
+        },
+        {
+          "name": "ResourceType",
+          "type": "string"
+        },
+        {
+          "name": "AmountGathered",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "id": "research_complete",
+      "category": "player",
+      "name": "Research Completed",
+      "description": "Fires when a player completes research",
+      "parameters": [
+        {
+          "name": "techId",
+          "type": "string",
+          "description": "Technology ID to match (optional)",
+          "optional": true
+        }
+      ],
+      "returnVariables": [
+        {
+          "name": "ResearchingPlayer",
+          "type": "player"
+        },
+        {
+          "name": "ResearchedTech",
+          "type": "string"
+        },
+        {
+          "name": "ResearchingBuilding",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "hero_levels_up",
+      "category": "unit",
+      "name": "Hero Levels Up",
+      "description": "Fires when a hero gains a level",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "LevelingHero",
+          "type": "unit"
+        },
+        {
+          "name": "NewLevel",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "id": "hero_learns_ability",
+      "category": "unit",
+      "name": "Hero Learns Ability",
+      "description": "Fires when a hero learns a new ability",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "LearningHero",
+          "type": "unit"
+        },
+        {
+          "name": "LearnedAbility",
+          "type": "ability"
+        }
+      ]
+    },
+    {
+      "id": "destructible_destroyed",
+      "category": "unit",
+      "name": "Destructible Destroyed",
+      "description": "Fires when a destructible object is destroyed",
+      "parameters": [],
+      "returnVariables": [
+        {
+          "name": "DestroyedDestructible",
+          "type": "destructible"
+        },
+        {
+          "name": "DestroyingUnit",
+          "type": "unit"
+        }
+      ]
+    },
+    {
+      "id": "custom",
+      "category": "game",
+      "name": "Custom Event",
+      "description": "User-defined custom event",
+      "parameters": [
+        {
+          "name": "eventId",
+          "type": "string",
+          "description": "Custom event identifier"
+        }
+      ],
+      "returnVariables": []
+    }
+  ]
+}

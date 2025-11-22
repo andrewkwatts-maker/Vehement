@@ -1,0 +1,113 @@
+{
+    "id": "naga_serpent_ward",
+    "type": "building",
+    "name": "Serpent Ward",
+    "description": "A defensive tower that launches venomous projectiles at enemies. Can be upgraded to apply additional effects.",
+    "race": "naga",
+    "tier": 1,
+    "category": "defense",
+
+    "tags": ["defense", "tower", "ranged", "tier1"],
+
+    "model": {
+        "path": "models/races/naga/buildings/serpent_ward.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/serpent_ward_diffuse.png",
+        "normal": "textures/races/naga/buildings/serpent_ward_normal.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [2, 2],
+        "visualSize": [4.0, 8.0, 4.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 140,
+            "coral": 80
+        },
+        "time": 35.0,
+        "builder_required": true
+    },
+
+    "stats": {
+        "maxHealth": 800,
+        "armor": 8,
+        "magicResist": 4
+    },
+
+    "defense": {
+        "damage": 25,
+        "attackSpeed": 1.2,
+        "range": 12.0,
+        "damageType": "pierce",
+        "projectile": {
+            "id": "venom_bolt",
+            "speed": 25.0,
+            "model": "models/projectiles/venom_bolt.obj"
+        }
+    },
+
+    "passive_effects": [
+        {
+            "id": "venomous_shots",
+            "name": "Venomous Shots",
+            "description": "Attacks apply venom dealing 4 damage per second for 5 seconds.",
+            "effect": {
+                "type": "dot",
+                "damage_per_tick": 4,
+                "duration": 5,
+                "stacks": true,
+                "max_stacks": 3
+            }
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "naga_serpent_ward_2",
+            "name": "Reinforced Serpent Ward",
+            "cost": {"gold": 100, "coral": 60},
+            "time": 25.0,
+            "stats_bonus": {
+                "health": 300,
+                "damage": 10,
+                "range": 2
+            }
+        },
+        {
+            "id": "naga_serpent_ward_3",
+            "name": "Elder Serpent Ward",
+            "cost": {"gold": 150, "coral": 100},
+            "time": 35.0,
+            "requirements": {"techs": ["naga_serpent_ward_2"]},
+            "stats_bonus": {
+                "health": 400,
+                "damage": 15,
+                "range": 2
+            },
+            "ability_unlock": "serpent_ward_multishot"
+        }
+    ],
+
+    "water_bonus": {
+        "near_water_radius": 5,
+        "damage_bonus": 0.15,
+        "attack_speed_bonus": 0.1
+    },
+
+    "requirements": {
+        "buildings": ["naga_spawning_pool"]
+    },
+
+    "visionRange": 14.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/serpent_ward/on_complete.py",
+        "on_attack": "scripts/buildings/naga/serpent_ward/on_attack.py"
+    }
+}

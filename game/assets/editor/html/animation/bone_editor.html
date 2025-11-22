@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bone Animation Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #4488ff;
+            --accent-secondary: #44ff88;
+            --accent-warning: #ffaa44;
+            --accent-danger: #ff4444;
+            --border-color: #404060;
+            --bone-color: #4488ff;
+            --bone-selected: #ffaa44;
+            --joint-color: #44ff88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .editor-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toolbar-separator {
+            width: 1px;
+            height: 24px;
+            background: var(--border-color);
+            margin: 0 5px;
+        }
+
+        /* Left Panel - Bone Hierarchy */
+        .left-panel {
+            width: 250px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bone-search {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .bone-search input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .bone-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .bone-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 1px 0;
+        }
+
+        .bone-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .bone-item.selected {
+            background: var(--accent-primary);
+        }
+
+        .bone-expand {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        .bone-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+        }
+
+        .bone-visibility {
+            margin-left: auto;
+            width: 16px;
+            height: 16px;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        .bone-visibility:hover {
+            opacity: 1;
+        }
+
+        .bone-children {
+            margin-left: 16px;
+        }
+
+        /* Main Viewport */
+        .viewport-container {
+            flex: 1;
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #viewport {
+            flex: 1;
+            background: #1a1a2a;
+        }
+
+        .viewport-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .viewport-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .viewport-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .viewport-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Right Panel - Properties */
+        .right-panel {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 70px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .property-input {
+            flex: 1;
+            display: flex;
+            gap: 4px;
+        }
+
+        .property-input input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            width: 50px;
+        }
+
+        .property-input input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .xyz-input {
+            display: flex;
+            gap: 4px;
+        }
+
+        .xyz-input .axis-label {
+            width: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .xyz-input .axis-label.x { color: #ff6666; }
+        .xyz-input .axis-label.y { color: #66ff66; }
+        .xyz-input .axis-label.z { color: #6666ff; }
+
+        .transform-mode-btns {
+            display: flex;
+            gap: 2px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .mode-btn:first-child {
+            border-radius: 3px 0 0 3px;
+        }
+
+        .mode-btn:last-child {
+            border-radius: 0 3px 3px 0;
+        }
+
+        .mode-btn:hover {
+            background: var(--bg-primary);
+        }
+
+        .mode-btn.active {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        /* IK Section */
+        .ik-chain-item {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .ik-chain-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .ik-chain-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .ik-chain-toggle {
+            width: 36px;
+            height: 20px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .ik-chain-toggle.active {
+            background: var(--accent-primary);
+        }
+
+        .ik-chain-toggle::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .ik-chain-toggle.active::after {
+            transform: translateX(16px);
+        }
+
+        /* Constraint Section */
+        .constraint-item {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .constraint-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .constraint-type {
+            font-size: 10px;
+            background: var(--accent-warning);
+            color: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
+        select.property-select {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Gizmo Indicator */
+        .gizmo-mode {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .gizmo-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="newBtn" title="New Animation">New</button>
+            <button class="toolbar-btn" id="openBtn" title="Open Animation">Open</button>
+            <button class="toolbar-btn" id="saveBtn" title="Save Animation">Save</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
+            <button class="toolbar-btn" id="redoBtn" title="Redo (Ctrl+Y)">Redo</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn active" id="translateBtn" title="Translate (W)">Move</button>
+            <button class="toolbar-btn" id="rotateBtn" title="Rotate (E)">Rotate</button>
+            <button class="toolbar-btn" id="scaleBtn" title="Scale (R)">Scale</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn active" id="localBtn" title="Local Space">Local</button>
+            <button class="toolbar-btn" id="worldBtn" title="World Space">World</button>
+            <button class="toolbar-btn" id="parentBtn" title="Parent Space">Parent</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="mirrorBtn" title="Mirror Selection">Mirror</button>
+            <button class="toolbar-btn" id="resetBtn" title="Reset Transform">Reset</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="ikModeBtn" title="Toggle IK Mode">IK Mode</button>
+        </div>
+    </div>
+
+    <div class="editor-container">
+        <!-- Left Panel - Bone Hierarchy -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <span>Bone Hierarchy</span>
+                <button class="toolbar-btn" style="padding: 2px 6px; font-size: 11px;">+</button>
+            </div>
+            <div class="bone-search">
+                <input type="text" placeholder="Search bones..." id="boneSearch">
+            </div>
+            <div class="bone-tree" id="boneTree">
+                <!-- Bone hierarchy populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Main Viewport -->
+        <div class="viewport-container">
+            <div id="viewport"></div>
+            <div class="gizmo-mode">
+                <svg class="gizmo-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l4 4h-3v6h6v-3l4 4-4 4v-3h-6v6h3l-4 4-4-4h3v-6H6v3l-4-4 4-4v3h6V6H9l3-4z"/>
+                </svg>
+                <span id="gizmoModeText">Translate (Local)</span>
+            </div>
+            <div class="viewport-controls">
+                <button class="viewport-btn" id="frameAllBtn" title="Frame All">F</button>
+                <button class="viewport-btn" id="frameSelectedBtn" title="Frame Selected">S</button>
+                <button class="viewport-btn" id="toggleGridBtn" title="Toggle Grid">G</button>
+                <button class="viewport-btn" id="toggleBonesBtn" title="Toggle Bones">B</button>
+            </div>
+            <div class="viewport-overlay">
+                <div>LMB: Select | RMB: Orbit | MMB: Pan | Scroll: Zoom</div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Properties -->
+        <div class="right-panel">
+            <!-- Transform Section -->
+            <div class="panel-section">
+                <div class="section-title">Transform</div>
+                <div class="property-row">
+                    <span class="property-label">Position</span>
+                    <div class="xyz-input">
+                        <span class="axis-label x">X</span>
+                        <input type="number" step="0.01" value="0" id="posX">
+                        <span class="axis-label y">Y</span>
+                        <input type="number" step="0.01" value="0" id="posY">
+                        <span class="axis-label z">Z</span>
+                        <input type="number" step="0.01" value="0" id="posZ">
+                    </div>
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Rotation</span>
+                    <div class="xyz-input">
+                        <span class="axis-label x">X</span>
+                        <input type="number" step="1" value="0" id="rotX">
+                        <span class="axis-label y">Y</span>
+                        <input type="number" step="1" value="0" id="rotY">
+                        <span class="axis-label z">Z</span>
+                        <input type="number" step="1" value="0" id="rotZ">
+                    </div>
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Scale</span>
+                    <div class="xyz-input">
+                        <span class="axis-label x">X</span>
+                        <input type="number" step="0.01" value="1" id="scaleX">
+                        <span class="axis-label y">Y</span>
+                        <input type="number" step="0.01" value="1" id="scaleY">
+                        <span class="axis-label z">Z</span>
+                        <input type="number" step="0.01" value="1" id="scaleZ">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keyframe Section -->
+            <div class="panel-section">
+                <div class="section-title">Keyframe</div>
+                <div class="property-row">
+                    <span class="property-label">Time</span>
+                    <input type="number" step="0.01" value="0" style="flex:1;background:var(--bg-tertiary);border:1px solid var(--border-color);color:var(--text-primary);padding:5px 8px;border-radius:3px;font-size:12px;">
+                </div>
+                <div class="property-row" style="gap: 8px;">
+                    <button class="toolbar-btn" style="flex:1;">Add Key</button>
+                    <button class="toolbar-btn" style="flex:1;">Delete Key</button>
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Interp.</span>
+                    <select class="property-select">
+                        <option>Linear</option>
+                        <option>Bezier</option>
+                        <option>Step</option>
+                        <option>Hermite</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- IK Chains Section -->
+            <div class="panel-section">
+                <div class="section-title">IK Chains</div>
+                <div class="ik-chain-item">
+                    <div class="ik-chain-header">
+                        <span class="ik-chain-name">Left Arm IK</span>
+                        <div class="ik-chain-toggle active"></div>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Length</span>
+                        <input type="number" value="3" style="width:60px;background:var(--bg-primary);border:1px solid var(--border-color);color:var(--text-primary);padding:4px 6px;border-radius:3px;font-size:11px;">
+                    </div>
+                </div>
+                <div class="ik-chain-item">
+                    <div class="ik-chain-header">
+                        <span class="ik-chain-name">Left Leg IK</span>
+                        <div class="ik-chain-toggle"></div>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Length</span>
+                        <input type="number" value="2" style="width:60px;background:var(--bg-primary);border:1px solid var(--border-color);color:var(--text-primary);padding:4px 6px;border-radius:3px;font-size:11px;">
+                    </div>
+                </div>
+                <button class="toolbar-btn" style="width:100%;justify-content:center;margin-top:8px;">+ Add IK Chain</button>
+            </div>
+
+            <!-- Constraints Section -->
+            <div class="panel-section">
+                <div class="section-title">Constraints</div>
+                <div class="constraint-item">
+                    <div class="constraint-header">
+                        <span class="constraint-type">LOOK AT</span>
+                        <span style="flex:1;font-size:12px;">Head -> Target</span>
+                        <button class="toolbar-btn" style="padding:2px 6px;font-size:10px;">X</button>
+                    </div>
+                </div>
+                <button class="toolbar-btn" style="width:100%;justify-content:center;margin-top:8px;">+ Add Constraint</button>
+            </div>
+
+            <!-- Mirror Settings -->
+            <div class="panel-section">
+                <div class="section-title">Mirror Settings</div>
+                <div class="property-row">
+                    <span class="property-label">Axis</span>
+                    <div class="transform-mode-btns">
+                        <button class="mode-btn active">X</button>
+                        <button class="mode-btn">Y</button>
+                        <button class="mode-btn">Z</button>
+                    </div>
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Naming</span>
+                    <select class="property-select">
+                        <option>L/R Suffix</option>
+                        <option>Left/Right</option>
+                        <option>.L/.R</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Bone Animation Editor JavaScript
+        class BoneAnimationEditor {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.skeleton = null;
+                this.selectedBone = null;
+                this.gizmoMode = 'translate';
+                this.transformSpace = 'local';
+                this.ikMode = false;
+
+                this.init();
+            }
+
+            init() {
+                this.initThreeJS();
+                this.initBoneHierarchy();
+                this.initEventListeners();
+                this.animate();
+            }
+
+            initThreeJS() {
+                const viewport = document.getElementById('viewport');
+                const width = viewport.clientWidth;
+                const height = viewport.clientHeight;
+
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x1a1a2a);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+                this.camera.position.set(5, 5, 5);
+                this.camera.lookAt(0, 1, 0);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(width, height);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                viewport.appendChild(this.renderer.domElement);
+
+                // Grid
+                const gridHelper = new THREE.GridHelper(10, 10, 0x404060, 0x303050);
+                this.scene.add(gridHelper);
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 7);
+                this.scene.add(directionalLight);
+
+                // Create sample skeleton
+                this.createSampleSkeleton();
+
+                // Handle resize
+                window.addEventListener('resize', () => this.onResize());
+            }
+
+            createSampleSkeleton() {
+                // Create skeleton visualization
+                const bones = [];
+                const boneData = [
+                    { name: 'Root', parent: -1, pos: [0, 0, 0] },
+                    { name: 'Spine', parent: 0, pos: [0, 0.3, 0] },
+                    { name: 'Spine1', parent: 1, pos: [0, 0.3, 0] },
+                    { name: 'Spine2', parent: 2, pos: [0, 0.3, 0] },
+                    { name: 'Neck', parent: 3, pos: [0, 0.2, 0] },
+                    { name: 'Head', parent: 4, pos: [0, 0.2, 0] },
+                    { name: 'LeftShoulder', parent: 3, pos: [-0.15, 0.1, 0] },
+                    { name: 'LeftArm', parent: 6, pos: [-0.3, 0, 0] },
+                    { name: 'LeftForeArm', parent: 7, pos: [-0.25, 0, 0] },
+                    { name: 'LeftHand', parent: 8, pos: [-0.2, 0, 0] },
+                    { name: 'RightShoulder', parent: 3, pos: [0.15, 0.1, 0] },
+                    { name: 'RightArm', parent: 10, pos: [0.3, 0, 0] },
+                    { name: 'RightForeArm', parent: 11, pos: [0.25, 0, 0] },
+                    { name: 'RightHand', parent: 12, pos: [0.2, 0, 0] },
+                    { name: 'LeftUpLeg', parent: 0, pos: [-0.1, -0.1, 0] },
+                    { name: 'LeftLeg', parent: 14, pos: [0, -0.4, 0] },
+                    { name: 'LeftFoot', parent: 15, pos: [0, -0.4, 0] },
+                    { name: 'RightUpLeg', parent: 0, pos: [0.1, -0.1, 0] },
+                    { name: 'RightLeg', parent: 17, pos: [0, -0.4, 0] },
+                    { name: 'RightFoot', parent: 18, pos: [0, -0.4, 0] }
+                ];
+
+                boneData.forEach((data, i) => {
+                    const bone = new THREE.Bone();
+                    bone.name = data.name;
+                    bone.position.set(data.pos[0], data.pos[1], data.pos[2]);
+                    bones.push(bone);
+
+                    if (data.parent >= 0) {
+                        bones[data.parent].add(bone);
+                    }
+                });
+
+                this.skeleton = new THREE.Skeleton(bones);
+
+                // Visualize bones
+                this.boneHelpers = new THREE.Group();
+                this.scene.add(this.boneHelpers);
+
+                this.updateBoneVisualization();
+            }
+
+            updateBoneVisualization() {
+                // Clear existing helpers
+                while (this.boneHelpers.children.length > 0) {
+                    this.boneHelpers.remove(this.boneHelpers.children[0]);
+                }
+
+                // Create bone visualizations
+                const boneMaterial = new THREE.MeshBasicMaterial({ color: 0x4488ff });
+                const selectedMaterial = new THREE.MeshBasicMaterial({ color: 0xffaa44 });
+                const jointGeometry = new THREE.SphereGeometry(0.03, 8, 8);
+
+                this.skeleton.bones.forEach((bone, index) => {
+                    // Joint sphere
+                    const worldPos = new THREE.Vector3();
+                    bone.getWorldPosition(worldPos);
+
+                    const joint = new THREE.Mesh(
+                        jointGeometry,
+                        bone === this.selectedBone ? selectedMaterial : boneMaterial
+                    );
+                    joint.position.copy(worldPos);
+                    joint.userData.boneIndex = index;
+                    this.boneHelpers.add(joint);
+
+                    // Bone line to parent
+                    if (bone.parent && bone.parent.isBone) {
+                        const parentPos = new THREE.Vector3();
+                        bone.parent.getWorldPosition(parentPos);
+
+                        const direction = worldPos.clone().sub(parentPos);
+                        const length = direction.length();
+
+                        if (length > 0.01) {
+                            const geometry = new THREE.CylinderGeometry(0.01, 0.02, length, 4);
+                            geometry.translate(0, length / 2, 0);
+                            geometry.rotateX(Math.PI / 2);
+
+                            const boneMesh = new THREE.Mesh(
+                                geometry,
+                                bone === this.selectedBone ? selectedMaterial : boneMaterial
+                            );
+                            boneMesh.position.copy(parentPos);
+                            boneMesh.lookAt(worldPos);
+                            this.boneHelpers.add(boneMesh);
+                        }
+                    }
+                });
+            }
+
+            initBoneHierarchy() {
+                const boneTree = document.getElementById('boneTree');
+                boneTree.innerHTML = '';
+
+                const buildTree = (bone, depth = 0) => {
+                    const item = document.createElement('div');
+                    item.className = 'bone-item';
+                    item.style.paddingLeft = `${8 + depth * 16}px`;
+                    item.dataset.boneName = bone.name;
+
+                    const hasChildren = bone.children.some(c => c.isBone);
+
+                    item.innerHTML = `
+                        <span class="bone-expand">${hasChildren ? '>' : ''}</span>
+                        <svg class="bone-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13 3L16 6H8L11 3L9 1L3 7V9H5V19H7V14H9V19H11V9H13V19H15V14H17V19H19V9H21Z"/>
+                        </svg>
+                        <span>${bone.name}</span>
+                        <svg class="bone-visibility" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12S10.34 15 12 15 15 13.66 15 12 13.66 9 12 9Z"/>
+                        </svg>
+                    `;
+
+                    item.addEventListener('click', () => this.selectBone(bone));
+                    boneTree.appendChild(item);
+
+                    bone.children.forEach(child => {
+                        if (child.isBone) {
+                            buildTree(child, depth + 1);
+                        }
+                    });
+                };
+
+                if (this.skeleton && this.skeleton.bones.length > 0) {
+                    buildTree(this.skeleton.bones[0]);
+                }
+            }
+
+            selectBone(bone) {
+                this.selectedBone = bone;
+
+                // Update UI
+                document.querySelectorAll('.bone-item').forEach(el => {
+                    el.classList.toggle('selected', el.dataset.boneName === bone.name);
+                });
+
+                // Update transform inputs
+                document.getElementById('posX').value = bone.position.x.toFixed(3);
+                document.getElementById('posY').value = bone.position.y.toFixed(3);
+                document.getElementById('posZ').value = bone.position.z.toFixed(3);
+
+                const euler = new THREE.Euler().setFromQuaternion(bone.quaternion, 'XYZ');
+                document.getElementById('rotX').value = THREE.MathUtils.radToDeg(euler.x).toFixed(1);
+                document.getElementById('rotY').value = THREE.MathUtils.radToDeg(euler.y).toFixed(1);
+                document.getElementById('rotZ').value = THREE.MathUtils.radToDeg(euler.z).toFixed(1);
+
+                document.getElementById('scaleX').value = bone.scale.x.toFixed(3);
+                document.getElementById('scaleY').value = bone.scale.y.toFixed(3);
+                document.getElementById('scaleZ').value = bone.scale.z.toFixed(3);
+
+                this.updateBoneVisualization();
+            }
+
+            initEventListeners() {
+                // Toolbar buttons
+                document.getElementById('translateBtn').addEventListener('click', () => this.setGizmoMode('translate'));
+                document.getElementById('rotateBtn').addEventListener('click', () => this.setGizmoMode('rotate'));
+                document.getElementById('scaleBtn').addEventListener('click', () => this.setGizmoMode('scale'));
+
+                document.getElementById('localBtn').addEventListener('click', () => this.setTransformSpace('local'));
+                document.getElementById('worldBtn').addEventListener('click', () => this.setTransformSpace('world'));
+                document.getElementById('parentBtn').addEventListener('click', () => this.setTransformSpace('parent'));
+
+                document.getElementById('ikModeBtn').addEventListener('click', () => {
+                    this.ikMode = !this.ikMode;
+                    document.getElementById('ikModeBtn').classList.toggle('active', this.ikMode);
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+
+                    switch (e.key.toLowerCase()) {
+                        case 'w': this.setGizmoMode('translate'); break;
+                        case 'e': this.setGizmoMode('rotate'); break;
+                        case 'r': this.setGizmoMode('scale'); break;
+                        case 'f': this.frameSelection(); break;
+                    }
+                });
+
+                // Transform inputs
+                ['posX', 'posY', 'posZ', 'rotX', 'rotY', 'rotZ', 'scaleX', 'scaleY', 'scaleZ'].forEach(id => {
+                    document.getElementById(id).addEventListener('change', () => this.updateBoneTransform());
+                });
+
+                // Search
+                document.getElementById('boneSearch').addEventListener('input', (e) => {
+                    const query = e.target.value.toLowerCase();
+                    document.querySelectorAll('.bone-item').forEach(el => {
+                        const name = el.dataset.boneName.toLowerCase();
+                        el.style.display = name.includes(query) ? '' : 'none';
+                    });
+                });
+
+                // Camera controls
+                this.initCameraControls();
+            }
+
+            initCameraControls() {
+                const viewport = document.getElementById('viewport');
+                let isOrbiting = false;
+                let isPanning = false;
+                let prevMouse = { x: 0, y: 0 };
+
+                viewport.addEventListener('mousedown', (e) => {
+                    if (e.button === 2) isOrbiting = true;
+                    if (e.button === 1) isPanning = true;
+                    prevMouse = { x: e.clientX, y: e.clientY };
+                });
+
+                viewport.addEventListener('mouseup', () => {
+                    isOrbiting = false;
+                    isPanning = false;
+                });
+
+                viewport.addEventListener('mousemove', (e) => {
+                    const dx = e.clientX - prevMouse.x;
+                    const dy = e.clientY - prevMouse.y;
+                    prevMouse = { x: e.clientX, y: e.clientY };
+
+                    if (isOrbiting) {
+                        // Orbit camera
+                        const spherical = new THREE.Spherical();
+                        spherical.setFromVector3(this.camera.position);
+                        spherical.theta -= dx * 0.01;
+                        spherical.phi += dy * 0.01;
+                        spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                        this.camera.position.setFromSpherical(spherical);
+                        this.camera.lookAt(0, 1, 0);
+                    }
+
+                    if (isPanning) {
+                        // Pan camera
+                        const right = new THREE.Vector3();
+                        const up = new THREE.Vector3();
+                        this.camera.getWorldDirection(right);
+                        right.cross(this.camera.up).normalize();
+                        up.copy(this.camera.up);
+
+                        this.camera.position.addScaledVector(right, -dx * 0.01);
+                        this.camera.position.addScaledVector(up, dy * 0.01);
+                    }
+                });
+
+                viewport.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const direction = new THREE.Vector3();
+                    this.camera.getWorldDirection(direction);
+                    this.camera.position.addScaledVector(direction, -e.deltaY * 0.01);
+                });
+
+                viewport.addEventListener('contextmenu', (e) => e.preventDefault());
+            }
+
+            setGizmoMode(mode) {
+                this.gizmoMode = mode;
+                ['translate', 'rotate', 'scale'].forEach(m => {
+                    document.getElementById(`${m}Btn`).classList.toggle('active', m === mode);
+                });
+                this.updateGizmoModeText();
+            }
+
+            setTransformSpace(space) {
+                this.transformSpace = space;
+                ['local', 'world', 'parent'].forEach(s => {
+                    document.getElementById(`${s}Btn`).classList.toggle('active', s === space);
+                });
+                this.updateGizmoModeText();
+            }
+
+            updateGizmoModeText() {
+                const modeNames = { translate: 'Translate', rotate: 'Rotate', scale: 'Scale' };
+                const spaceNames = { local: 'Local', world: 'World', parent: 'Parent' };
+                document.getElementById('gizmoModeText').textContent =
+                    `${modeNames[this.gizmoMode]} (${spaceNames[this.transformSpace]})`;
+            }
+
+            updateBoneTransform() {
+                if (!this.selectedBone) return;
+
+                this.selectedBone.position.set(
+                    parseFloat(document.getElementById('posX').value) || 0,
+                    parseFloat(document.getElementById('posY').value) || 0,
+                    parseFloat(document.getElementById('posZ').value) || 0
+                );
+
+                const euler = new THREE.Euler(
+                    THREE.MathUtils.degToRad(parseFloat(document.getElementById('rotX').value) || 0),
+                    THREE.MathUtils.degToRad(parseFloat(document.getElementById('rotY').value) || 0),
+                    THREE.MathUtils.degToRad(parseFloat(document.getElementById('rotZ').value) || 0),
+                    'XYZ'
+                );
+                this.selectedBone.quaternion.setFromEuler(euler);
+
+                this.selectedBone.scale.set(
+                    parseFloat(document.getElementById('scaleX').value) || 1,
+                    parseFloat(document.getElementById('scaleY').value) || 1,
+                    parseFloat(document.getElementById('scaleZ').value) || 1
+                );
+
+                this.skeleton.bones[0].updateMatrixWorld(true);
+                this.updateBoneVisualization();
+            }
+
+            frameSelection() {
+                if (this.selectedBone) {
+                    const pos = new THREE.Vector3();
+                    this.selectedBone.getWorldPosition(pos);
+                    this.camera.lookAt(pos);
+                }
+            }
+
+            onResize() {
+                const viewport = document.getElementById('viewport');
+                const width = viewport.clientWidth;
+                const height = viewport.clientHeight;
+
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(width, height);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Initialize editor
+        const editor = new BoneAnimationEditor();
+
+        // Native bridge for communication with C++ editor
+        window.BoneEditor = {
+            loadSkeleton: (data) => {
+                // Load skeleton data from C++
+                console.log('Loading skeleton:', data);
+            },
+            getBoneTransform: (boneName) => {
+                const bone = editor.skeleton.bones.find(b => b.name === boneName);
+                if (bone) {
+                    return {
+                        position: [bone.position.x, bone.position.y, bone.position.z],
+                        rotation: [bone.quaternion.x, bone.quaternion.y, bone.quaternion.z, bone.quaternion.w],
+                        scale: [bone.scale.x, bone.scale.y, bone.scale.z]
+                    };
+                }
+                return null;
+            },
+            setBoneTransform: (boneName, transform) => {
+                const bone = editor.skeleton.bones.find(b => b.name === boneName);
+                if (bone) {
+                    bone.position.set(transform.position[0], transform.position[1], transform.position[2]);
+                    bone.quaternion.set(transform.rotation[0], transform.rotation[1], transform.rotation[2], transform.rotation[3]);
+                    bone.scale.set(transform.scale[0], transform.scale[1], transform.scale[2]);
+                    editor.skeleton.bones[0].updateMatrixWorld(true);
+                    editor.updateBoneVisualization();
+                }
+            }
+        };
+    </script>
+</body>
+</html>

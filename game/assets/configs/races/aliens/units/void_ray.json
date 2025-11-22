@@ -1,0 +1,151 @@
+{
+  "id": "void_ray",
+  "name": "Void Ray",
+  "display_name": "Void Ray",
+  "description": "A powerful beam weapon platform that channels prismatic energy. The longer a Void Ray attacks a single target, the more damage it deals as its beam charges up through multiple intensity levels.",
+  "race": "aliens",
+  "tier": 3,
+  "unit_type": "assault",
+  "classification": ["mechanical", "flying", "armored"],
+
+  "stats": {
+    "health": 150,
+    "health_regen": 0,
+    "shield": 100,
+    "shield_regen": 2.0,
+    "shield_regen_delay": 10.0,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 3.5,
+    "acceleration": 2.8,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 6,
+    "attack_damage_charged": 16,
+    "attack_speed": 0.36,
+    "attack_range": 6,
+    "attack_type": "beam",
+    "damage_type": "normal",
+    "targets": ["ground", "air"],
+    "beam": {
+      "charge_time": 4.0,
+      "charge_levels": 3,
+      "damage_per_level": [6, 11, 16],
+      "bonus_vs_armored_per_level": [0, 0, 6],
+      "lose_charge_on_retarget": true
+    }
+  },
+
+  "production": {
+    "build_time": 60,
+    "warp_time": 0,
+    "supply_cost": 4,
+    "resource_cost": {
+      "minerals": 250,
+      "vespene": 150
+    },
+    "power_cost": 0,
+    "produced_at": "stargate",
+    "requirements": ["cybernetics_bay"],
+    "hotkey": "V"
+  },
+
+  "abilities": [
+    {
+      "id": "prismatic_alignment",
+      "name": "Prismatic Alignment",
+      "description": "Instantly activates the Void Ray's maximum beam charge for 14.3 seconds. During this time, the beam deals maximum damage and gains bonus damage against armored targets.",
+      "type": "active",
+      "cooldown": 60.0,
+      "duration": 14.3,
+      "hotkey": "A"
+    },
+    {
+      "id": "flux_vanes",
+      "name": "Flux Vanes",
+      "description": "Increases Void Ray movement speed.",
+      "type": "passive",
+      "speed_bonus": 1.15,
+      "requires_upgrade": "flux_vanes_upgrade",
+      "unlocked_default": false
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "flux_vanes_upgrade",
+      "name": "Flux Vanes",
+      "description": "Increases Void Ray movement speed",
+      "researched_at": "stargate",
+      "cost": {
+        "minerals": 100,
+        "vespene": 100
+      },
+      "research_time": 80
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_flying": true,
+    "is_armored": true,
+    "cargo_size": 4
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 22,
+    "selection_radius": 1.25,
+    "target_radius": 0.875
+  },
+
+  "visuals": {
+    "model": "models/aliens/void_ray.fbx",
+    "texture": "textures/aliens/void_ray.png",
+    "icon": "icons/aliens/void_ray.png",
+    "wireframe": "wireframes/aliens/void_ray.png",
+    "portrait": "portraits/aliens/void_ray.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack_low": "anim_attack_low",
+      "attack_med": "anim_attack_med",
+      "attack_high": "anim_attack_high",
+      "prismatic": "anim_prismatic",
+      "death": "anim_death"
+    },
+    "effects": {
+      "beam_low": "fx_void_beam_low",
+      "beam_med": "fx_void_beam_med",
+      "beam_high": "fx_void_beam_high",
+      "prismatic": "fx_prismatic_charge"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/void_ray_ready.ogg",
+    "selected": ["audio/aliens/void_ray_select1.ogg"],
+    "command": ["audio/aliens/void_ray_command1.ogg"],
+    "attack": "audio/aliens/void_ray_beam.ogg",
+    "charge_up": "audio/aliens/void_ray_charge.ogg",
+    "death": "audio/aliens/void_ray_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "siege",
+    "priority_targets": ["armored", "building", "massive"],
+    "flee_when_attacked": false,
+    "micro_level": "medium",
+    "focus_fire": true,
+    "stay_on_target": true
+  }
+}

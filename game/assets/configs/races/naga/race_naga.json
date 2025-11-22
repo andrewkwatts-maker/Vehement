@@ -1,0 +1,185 @@
+{
+    "id": "race_naga",
+    "name": "Depths of Nazjatar",
+    "description": "An ancient aquatic serpentine empire that rules the ocean depths. Masters of water magic and venom, the Naga command fearsome sea creatures and wield the power of the tides.",
+    "lore": "Once proud inhabitants of a glorious island kingdom, the Naga were transformed by dark magic when their home sank beneath the waves. Now they dwell in the crushing depths of the ocean, their bodies twisted into serpentine forms but their ambition unchanged. They seek to reclaim the surface world and establish dominion over all who breathe air.",
+    "icon": "icons/races/naga.png",
+    "banner": "textures/races/naga_banner.png",
+    "color": "#1E90FF",
+    "secondary_color": "#00CED1",
+    "accent_color": "#7B68EE",
+
+    "theme": {
+        "architecture": "coral_organic",
+        "aesthetic": "serpentine_aquatic",
+        "music_set": "music/races/naga",
+        "ambient_sounds": "sounds/ambient/underwater",
+        "ui_style": "naga_depths"
+    },
+
+    "strengths": [
+        {
+            "id": "water_magic",
+            "name": "Masters of the Tides",
+            "description": "Naga spellcasters excel at water and frost magic, able to call upon devastating tidal waves and freezing currents.",
+            "modifier": {"stat": "water_spell_power", "type": "percent", "value": 25}
+        },
+        {
+            "id": "amphibious_forces",
+            "name": "Amphibious Forces",
+            "description": "Most Naga units can traverse water freely, allowing unmatched map mobility on aquatic terrain.",
+            "modifier": {"stat": "water_movement_speed", "type": "percent", "value": 50}
+        },
+        {
+            "id": "venomous_attacks",
+            "name": "Venomous Strikes",
+            "description": "Many Naga units apply poison damage over time, wearing down enemies through attrition.",
+            "modifier": {"stat": "poison_damage", "type": "percent", "value": 20}
+        },
+        {
+            "id": "aquatic_regeneration",
+            "name": "Aquatic Regeneration",
+            "description": "Naga units regenerate health faster when in or near water.",
+            "modifier": {"stat": "water_health_regen", "type": "percent", "value": 100}
+        }
+    ],
+
+    "weaknesses": [
+        {
+            "id": "fire_vulnerability",
+            "name": "Vulnerable to Flame",
+            "description": "The aquatic nature of the Naga makes them especially susceptible to fire damage.",
+            "modifier": {"stat": "fire_resistance", "type": "percent", "value": -25}
+        },
+        {
+            "id": "expensive_structures",
+            "name": "Deep Construction",
+            "description": "Naga structures require exotic materials from the ocean depths, increasing building costs.",
+            "modifier": {"stat": "building_cost", "type": "percent", "value": 15}
+        },
+        {
+            "id": "desert_penalty",
+            "name": "Desiccation",
+            "description": "Naga units suffer penalties in arid environments far from water.",
+            "modifier": {"stat": "desert_stats", "type": "percent", "value": -20}
+        }
+    ],
+
+    "unique_mechanics": [
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Most Naga units can move through water terrain at full speed and attack while swimming.",
+            "icon": "icons/mechanics/amphibious.png"
+        },
+        {
+            "id": "tidal_power",
+            "name": "Tidal Power",
+            "description": "Naga units gain +15% damage and +25% ability power when within 10 tiles of deep water.",
+            "icon": "icons/mechanics/tidal_power.png",
+            "effect": {
+                "trigger": "near_water",
+                "radius": 10,
+                "modifiers": [
+                    {"stat": "damage", "type": "percent", "value": 15},
+                    {"stat": "ability_power", "type": "percent", "value": 25}
+                ]
+            }
+        },
+        {
+            "id": "venom",
+            "name": "Venom",
+            "description": "Many Naga attacks apply Venom, dealing damage over time and reducing healing received.",
+            "icon": "icons/mechanics/venom.png",
+            "effect": {
+                "id": "effect_naga_venom",
+                "damage_per_second": 5,
+                "duration": 8,
+                "healing_reduction": 30,
+                "stacks": 3
+            }
+        },
+        {
+            "id": "water_regeneration",
+            "name": "Water Regeneration",
+            "description": "Naga units regenerate 2% max HP per second while in water.",
+            "icon": "icons/mechanics/water_regen.png",
+            "effect": {
+                "trigger": "in_water",
+                "health_regen_percent": 2
+            }
+        }
+    ],
+
+    "resources": {
+        "primary": ["gold", "coral"],
+        "secondary": ["pearls", "abyssal_essence"],
+        "special": "tidal_favor",
+        "resource_bonuses": {
+            "water_tiles": {"coral": 1.5, "pearls": 2.0},
+            "coastal_tiles": {"gold": 1.2}
+        }
+    },
+
+    "starting_units": [
+        {"unit_id": "naga_slave", "count": 5},
+        {"unit_id": "naga_myrmidon", "count": 2}
+    ],
+
+    "starting_buildings": [
+        {"building_id": "naga_spawning_pool", "count": 1}
+    ],
+
+    "tech_tree_id": "tech_tree_naga",
+    "talent_tree_id": "talent_tree_naga",
+
+    "unit_categories": {
+        "workers": ["naga_slave"],
+        "tier1": ["naga_myrmidon", "naga_siren", "naga_snap_dragon"],
+        "tier2": ["naga_royal_guard", "naga_sea_witch", "naga_couatl", "naga_tidal_guardian", "naga_deep_one"],
+        "tier3": ["naga_kraken_spawn", "naga_hydra", "naga_dragon_turtle", "naga_leviathan_caller"],
+        "tier4": ["naga_ancient_hydra", "naga_tidal_lord", "naga_sea_giant", "naga_kraken"],
+        "heroes": ["naga_sea_empress", "naga_deep_oracle", "naga_tidehunter", "naga_siren_queen"]
+    },
+
+    "building_categories": {
+        "main": ["naga_spawning_pool", "naga_temple_of_tides", "naga_palace_of_waves"],
+        "military": ["naga_coral_barracks", "naga_siren_shrine", "naga_beast_den", "naga_hatchery", "naga_leviathan_pit"],
+        "economy": ["naga_tide_pools"],
+        "heroes": ["naga_altar_of_depths"],
+        "defense": ["naga_serpent_ward", "naga_coral_wall"],
+        "utility": ["naga_tidal_gate"]
+    },
+
+    "ages": [
+        {"id": "age_shallow", "name": "Shallow Age", "order": 1},
+        {"id": "age_reef", "name": "Reef Age", "order": 2},
+        {"id": "age_abyss", "name": "Abyss Age", "order": 3},
+        {"id": "age_trench", "name": "Trench Age", "order": 4},
+        {"id": "age_hadal", "name": "Hadal Age", "order": 5},
+        {"id": "age_primordial", "name": "Primordial Age", "order": 6},
+        {"id": "age_eternal", "name": "Eternal Age", "order": 7}
+    ],
+
+    "diplomacy": {
+        "natural_allies": ["merfolk", "water_elementals"],
+        "natural_enemies": ["fire_nation", "desert_nomads"],
+        "preferred_trade": ["pearls", "coral", "sea_silk"]
+    },
+
+    "voice_lines": {
+        "greeting": "sounds/voice/naga/greeting.wav",
+        "war_declaration": "sounds/voice/naga/war.wav",
+        "victory": "sounds/voice/naga/victory.wav",
+        "defeat": "sounds/voice/naga/defeat.wav"
+    },
+
+    "scripts": {
+        "on_game_start": "scripts/races/naga/on_game_start.py",
+        "on_age_advance": "scripts/races/naga/on_age_advance.py",
+        "on_unit_created": "scripts/races/naga/on_unit_created.py",
+        "on_building_complete": "scripts/races/naga/on_building_complete.py"
+    },
+
+    "tags": ["aquatic", "serpentine", "magic", "poison", "amphibious"]
+}

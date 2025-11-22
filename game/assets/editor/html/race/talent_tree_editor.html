@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talent Tree Editor - Vehement RTS</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --bg-color: #1a1a2e;
+            --panel-color: #16213e;
+            --text-color: #ecf0f1;
+            --border-color: #34495e;
+            --node-military: #e74c3c;
+            --node-economy: #f39c12;
+            --node-magic: #9b59b6;
+            --node-tech: #3498db;
+            --node-special: #1abc9c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background-color: var(--panel-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .toolbar h1 {
+            font-size: 1.3rem;
+            color: var(--secondary-color);
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-icon {
+            padding: 8px 12px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-icon:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-icon.active {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .separator {
+            width: 1px;
+            height: 30px;
+            background-color: var(--border-color);
+            margin: 0 10px;
+        }
+
+        /* Main Layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Node Palette */
+        .node-palette {
+            background-color: var(--panel-color);
+            border-right: 2px solid var(--border-color);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .palette-section {
+            margin-bottom: 20px;
+        }
+
+        .palette-section h3 {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .palette-node {
+            background-color: var(--bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all 0.3s ease;
+        }
+
+        .palette-node:hover {
+            border-color: var(--secondary-color);
+            transform: translateX(5px);
+        }
+
+        .palette-node.military { border-left-color: var(--node-military); border-left-width: 4px; }
+        .palette-node.economy { border-left-color: var(--node-economy); border-left-width: 4px; }
+        .palette-node.magic { border-left-color: var(--node-magic); border-left-width: 4px; }
+        .palette-node.tech { border-left-color: var(--node-tech); border-left-width: 4px; }
+        .palette-node.special { border-left-color: var(--node-special); border-left-width: 4px; }
+
+        .palette-node .name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .palette-node .cost {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+
+        /* Canvas Area */
+        .canvas-container {
+            position: relative;
+            overflow: hidden;
+            background-color: var(--bg-color);
+        }
+
+        .canvas {
+            position: absolute;
+            width: 4000px;
+            height: 3000px;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            cursor: grab;
+        }
+
+        .canvas.dragging {
+            cursor: grabbing;
+        }
+
+        .canvas.connecting {
+            cursor: crosshair;
+        }
+
+        /* Age Markers */
+        .age-marker {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-bottom: 2px dashed rgba(52, 152, 219, 0.3);
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            pointer-events: none;
+        }
+
+        /* Talent Nodes */
+        .talent-node {
+            position: absolute;
+            width: 120px;
+            background-color: var(--panel-color);
+            border: 3px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            cursor: move;
+            transition: box-shadow 0.3s ease;
+            user-select: none;
+        }
+
+        .talent-node:hover {
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .talent-node.selected {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+        }
+
+        .talent-node.military { border-color: var(--node-military); }
+        .talent-node.economy { border-color: var(--node-economy); }
+        .talent-node.magic { border-color: var(--node-magic); }
+        .talent-node.tech { border-color: var(--node-tech); }
+        .talent-node.special { border-color: var(--node-special); }
+
+        .talent-node .icon {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .talent-node .name {
+            font-size: 0.8rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .talent-node .tier {
+            font-size: 0.7rem;
+            text-align: center;
+            opacity: 0.6;
+            margin-top: 3px;
+        }
+
+        .talent-node .connector-in,
+        .talent-node .connector-out {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: var(--border-color);
+            border-radius: 50%;
+            cursor: crosshair;
+        }
+
+        .talent-node .connector-in {
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .talent-node .connector-out {
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .talent-node .connector-in:hover,
+        .talent-node .connector-out:hover {
+            background-color: var(--secondary-color);
+        }
+
+        /* Connections */
+        .connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .connection-line {
+            stroke: var(--border-color);
+            stroke-width: 3;
+            fill: none;
+        }
+
+        .connection-line.highlighted {
+            stroke: var(--secondary-color);
+            stroke-width: 4;
+        }
+
+        .connection-line.temp {
+            stroke: var(--secondary-color);
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+
+        /* Right Panel - Properties */
+        .properties-panel {
+            background-color: var(--panel-color);
+            border-left: 2px solid var(--border-color);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .properties-panel h2 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+
+        .property-section {
+            margin-bottom: 20px;
+        }
+
+        .property-section h3 {
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 0.85rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Modifier List */
+        .modifier-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .modifier-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background-color: var(--bg-color);
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+        }
+
+        .modifier-item .remove-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* Branch Colors */
+        .branch-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            margin-right: 5px;
+        }
+
+        .branch-tag.combat { background-color: var(--node-military); }
+        .branch-tag.economy { background-color: var(--node-economy); }
+        .branch-tag.magic { background-color: var(--node-magic); }
+        .branch-tag.tech { background-color: var(--node-tech); }
+        .branch-tag.special { background-color: var(--node-special); }
+
+        /* Minimap */
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background-color: rgba(22, 33, 62, 0.9);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .minimap-viewport {
+            position: absolute;
+            border: 2px solid var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.2);
+        }
+
+        .minimap-node {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 2px;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .zoom-controls button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background-color: var(--panel-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .zoom-controls button:hover {
+            background-color: var(--border-color);
+        }
+
+        .zoom-level {
+            padding: 8px 12px;
+            background-color: var(--panel-color);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            display: none;
+            position: fixed;
+            background-color: var(--panel-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 0;
+            min-width: 150px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .context-menu-item:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 5px 0;
+        }
+
+        /* Empty State */
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 0.5;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <h1>Talent Tree Editor</h1>
+                <div class="separator"></div>
+                <button class="btn btn-primary" onclick="newTree()">New Tree</button>
+                <button class="btn btn-primary" onclick="loadTree()">Load</button>
+                <button class="btn btn-success" onclick="saveTree()">Save</button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="btn btn-icon" id="tool-select" onclick="setTool('select')" title="Select (V)">&#9995;</button>
+                <button class="btn btn-icon" id="tool-connect" onclick="setTool('connect')" title="Connect (C)">&#8594;</button>
+                <button class="btn btn-icon" id="tool-delete" onclick="setTool('delete')" title="Delete (X)">&#10005;</button>
+                <div class="separator"></div>
+                <button class="btn btn-icon" onclick="toggleGrid()" title="Toggle Grid">&#9638;</button>
+                <button class="btn btn-icon" onclick="toggleAgeMarkers()" title="Toggle Age Markers">&#9776;</button>
+                <button class="btn btn-icon" onclick="centerView()" title="Center View">&#9678;</button>
+                <button class="btn btn-icon" onclick="fitToView()" title="Fit to View">&#9744;</button>
+            </div>
+
+            <div class="toolbar-group">
+                <label style="font-size: 0.85rem;">Preview Age:</label>
+                <select id="preview-age" onchange="setPreviewAge(this.value)">
+                    <option value="0">Age 1 (Stone)</option>
+                    <option value="1">Age 2 (Bronze)</option>
+                    <option value="2">Age 3 (Iron)</option>
+                    <option value="3">Age 4 (Medieval)</option>
+                    <option value="4">Age 5 (Industrial)</option>
+                    <option value="5">Age 6 (Modern)</option>
+                    <option value="6">Age 7 (Future)</option>
+                </select>
+                <button class="btn btn-primary" onclick="validateTree()">Validate</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Node Palette -->
+            <div class="node-palette">
+                <div class="palette-section">
+                    <h3>Military</h3>
+                    <div class="palette-node military" draggable="true" data-category="military" data-template="damage_boost">
+                        <div class="name">Damage Boost</div>
+                        <div class="cost">+10% damage</div>
+                    </div>
+                    <div class="palette-node military" draggable="true" data-category="military" data-template="armor_boost">
+                        <div class="name">Armor Boost</div>
+                        <div class="cost">+5 armor</div>
+                    </div>
+                    <div class="palette-node military" draggable="true" data-category="military" data-template="attack_speed">
+                        <div class="name">Attack Speed</div>
+                        <div class="cost">+15% attack speed</div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Economy</h3>
+                    <div class="palette-node economy" draggable="true" data-category="economy" data-template="gather_rate">
+                        <div class="name">Gather Rate</div>
+                        <div class="cost">+10% gather speed</div>
+                    </div>
+                    <div class="palette-node economy" draggable="true" data-category="economy" data-template="carry_capacity">
+                        <div class="name">Carry Capacity</div>
+                        <div class="cost">+20% capacity</div>
+                    </div>
+                    <div class="palette-node economy" draggable="true" data-category="economy" data-template="build_speed">
+                        <div class="name">Build Speed</div>
+                        <div class="cost">+15% build speed</div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Magic</h3>
+                    <div class="palette-node magic" draggable="true" data-category="magic" data-template="spell_power">
+                        <div class="name">Spell Power</div>
+                        <div class="cost">+15% spell damage</div>
+                    </div>
+                    <div class="palette-node magic" draggable="true" data-category="magic" data-template="mana_regen">
+                        <div class="name">Mana Regen</div>
+                        <div class="cost">+20% mana regen</div>
+                    </div>
+                    <div class="palette-node magic" draggable="true" data-category="magic" data-template="cooldown_reduction">
+                        <div class="name">Cooldown</div>
+                        <div class="cost">-10% cooldowns</div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Technology</h3>
+                    <div class="palette-node tech" draggable="true" data-category="tech" data-template="research_speed">
+                        <div class="name">Research Speed</div>
+                        <div class="cost">+15% research</div>
+                    </div>
+                    <div class="palette-node tech" draggable="true" data-category="tech" data-template="age_cost">
+                        <div class="name">Age Cost</div>
+                        <div class="cost">-10% age up cost</div>
+                    </div>
+                </div>
+
+                <div class="palette-section">
+                    <h3>Special</h3>
+                    <div class="palette-node special" draggable="true" data-category="special" data-template="unique_ability">
+                        <div class="name">Unique Ability</div>
+                        <div class="cost">Unlocks ability</div>
+                    </div>
+                    <div class="palette-node special" draggable="true" data-category="special" data-template="unit_unlock">
+                        <div class="name">Unit Unlock</div>
+                        <div class="cost">Unlocks unit</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="canvas-container">
+                <div class="canvas" id="canvas">
+                    <svg class="connections-svg" id="connections-svg"></svg>
+
+                    <!-- Age Markers -->
+                    <div class="age-marker" style="top: 0px;">Age 1 - Stone Age</div>
+                    <div class="age-marker" style="top: 400px;">Age 2 - Bronze Age</div>
+                    <div class="age-marker" style="top: 800px;">Age 3 - Iron Age</div>
+                    <div class="age-marker" style="top: 1200px;">Age 4 - Medieval</div>
+                    <div class="age-marker" style="top: 1600px;">Age 5 - Industrial</div>
+                    <div class="age-marker" style="top: 2000px;">Age 6 - Modern</div>
+                    <div class="age-marker" style="top: 2400px;">Age 7 - Future</div>
+
+                    <!-- Empty state -->
+                    <div class="empty-state" id="empty-state">
+                        <div class="icon">&#127795;</div>
+                        <p>Drag nodes from the palette to start building your talent tree</p>
+                    </div>
+                </div>
+
+                <!-- Minimap -->
+                <div class="minimap" id="minimap">
+                    <div class="minimap-viewport" id="minimap-viewport"></div>
+                </div>
+
+                <!-- Zoom Controls -->
+                <div class="zoom-controls">
+                    <button onclick="zoomOut()">-</button>
+                    <div class="zoom-level" id="zoom-level">100%</div>
+                    <button onclick="zoomIn()">+</button>
+                </div>
+            </div>
+
+            <!-- Properties Panel -->
+            <div class="properties-panel">
+                <h2>Node Properties</h2>
+
+                <div id="no-selection" style="text-align: center; opacity: 0.5; padding: 40px 0;">
+                    <p>Select a node to edit its properties</p>
+                </div>
+
+                <div id="node-properties" style="display: none;">
+                    <div class="property-section">
+                        <h3>Basic Info</h3>
+                        <div class="form-group">
+                            <label>Node ID</label>
+                            <input type="text" id="node-id" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="node-name" onchange="updateNodeProperty('name', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="node-description" rows="2" onchange="updateNodeProperty('description', this.value)"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="node-category" onchange="updateNodeProperty('category', this.value)">
+                                <option value="military">Military</option>
+                                <option value="economy">Economy</option>
+                                <option value="magic">Magic</option>
+                                <option value="tech">Technology</option>
+                                <option value="special">Special</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="property-section">
+                        <h3>Requirements</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tier</label>
+                                <input type="number" id="node-tier" min="1" max="7" onchange="updateNodeProperty('tier', this.value)">
+                            </div>
+                            <div class="form-group">
+                                <label>Point Cost</label>
+                                <input type="number" id="node-cost" min="1" max="10" onchange="updateNodeProperty('pointCost', this.value)">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Required Age</label>
+                            <select id="node-age" onchange="updateNodeProperty('requiredAge', this.value)">
+                                <option value="0">Age 1 (Stone)</option>
+                                <option value="1">Age 2 (Bronze)</option>
+                                <option value="2">Age 3 (Iron)</option>
+                                <option value="3">Age 4 (Medieval)</option>
+                                <option value="4">Age 5 (Industrial)</option>
+                                <option value="5">Age 6 (Modern)</option>
+                                <option value="6">Age 7 (Future)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Max Level</label>
+                            <input type="number" id="node-max-level" min="1" max="5" onchange="updateNodeProperty('maxLevel', this.value)">
+                        </div>
+                    </div>
+
+                    <div class="property-section">
+                        <h3>Modifiers</h3>
+                        <div class="modifier-list" id="modifier-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <button class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="addModifier()">Add Modifier</button>
+                    </div>
+
+                    <div class="property-section">
+                        <h3>Prerequisites</h3>
+                        <div id="prerequisite-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <p style="font-size: 0.75rem; opacity: 0.6; margin-top: 5px;">
+                            Use the connect tool to add prerequisites
+                        </p>
+                    </div>
+
+                    <div class="property-section">
+                        <h3>Actions</h3>
+                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 5px;" onclick="duplicateNode()">Duplicate Node</button>
+                        <button class="btn btn-danger" style="width: 100%;" onclick="deleteSelectedNode()">Delete Node</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="context-menu">
+        <div class="context-menu-item" onclick="duplicateNode()">Duplicate</div>
+        <div class="context-menu-item" onclick="deleteSelectedNode()">Delete</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="setTool('connect')">Connect From Here</div>
+        <div class="context-menu-item" onclick="disconnectAll()">Disconnect All</div>
+    </div>
+
+    <script>
+        // Talent Tree Editor JavaScript
+
+        // State
+        let nodes = [];
+        let connections = [];
+        let selectedNode = null;
+        let currentTool = 'select';
+        let isDragging = false;
+        let isPanning = false;
+        let isConnecting = false;
+        let connectingFrom = null;
+        let tempLine = null;
+
+        let viewOffset = { x: 0, y: 0 };
+        let zoom = 1;
+        let nodeIdCounter = 0;
+
+        const canvas = document.getElementById('canvas');
+        const svg = document.getElementById('connections-svg');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDragDrop();
+            initializeCanvasInteraction();
+            initializeKeyboard();
+            setTool('select');
+            updateMinimap();
+        });
+
+        function initializeDragDrop() {
+            const paletteNodes = document.querySelectorAll('.palette-node');
+            paletteNodes.forEach(node => {
+                node.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('template', node.dataset.template);
+                    e.dataTransfer.setData('category', node.dataset.category);
+                });
+            });
+
+            canvas.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            canvas.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const template = e.dataTransfer.getData('template');
+                const category = e.dataTransfer.getData('category');
+
+                if (template) {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = (e.clientX - rect.left - viewOffset.x) / zoom;
+                    const y = (e.clientY - rect.top - viewOffset.y) / zoom;
+                    createNode(template, category, x, y);
+                }
+            });
+        }
+
+        function initializeCanvasInteraction() {
+            let startX, startY;
+            let nodeStartX, nodeStartY;
+
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.target === canvas || e.target.classList.contains('connections-svg')) {
+                    if (e.button === 0 && !isConnecting) {
+                        isPanning = true;
+                        canvas.classList.add('dragging');
+                        startX = e.clientX;
+                        startY = e.clientY;
+                    }
+                    deselectNode();
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (isPanning) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    viewOffset.x += dx;
+                    viewOffset.y += dy;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    updateCanvasTransform();
+                }
+
+                if (isConnecting && connectingFrom) {
+                    updateTempLine(e);
+                }
+
+                if (isDragging && selectedNode) {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = (e.clientX - rect.left - viewOffset.x) / zoom - 60;
+                    const y = (e.clientY - rect.top - viewOffset.y) / zoom - 40;
+                    moveNode(selectedNode.id, snapToGrid(x), snapToGrid(y));
+                }
+            });
+
+            canvas.addEventListener('mouseup', (e) => {
+                isPanning = false;
+                isDragging = false;
+                canvas.classList.remove('dragging');
+
+                if (isConnecting) {
+                    finishConnection(e);
+                }
+            });
+
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                setZoom(zoom + delta);
+            });
+
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY);
+            });
+        }
+
+        function initializeKeyboard() {
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'v':
+                    case 'V':
+                        setTool('select');
+                        break;
+                    case 'c':
+                    case 'C':
+                        setTool('connect');
+                        break;
+                    case 'x':
+                    case 'X':
+                        setTool('delete');
+                        break;
+                    case 'Delete':
+                    case 'Backspace':
+                        if (selectedNode) deleteSelectedNode();
+                        break;
+                    case 'd':
+                    case 'D':
+                        if (e.ctrlKey && selectedNode) {
+                            e.preventDefault();
+                            duplicateNode();
+                        }
+                        break;
+                    case 'Escape':
+                        cancelConnection();
+                        deselectNode();
+                        break;
+                }
+            });
+        }
+
+        function createNode(template, category, x, y) {
+            const id = 'node_' + (++nodeIdCounter);
+            const templates = getNodeTemplates();
+            const templateData = templates[template] || templates.damage_boost;
+
+            const node = {
+                id: id,
+                name: templateData.name,
+                description: templateData.description,
+                category: category,
+                tier: 1,
+                pointCost: 1,
+                requiredAge: 0,
+                maxLevel: 1,
+                x: snapToGrid(x),
+                y: snapToGrid(y),
+                modifiers: templateData.modifiers || [],
+                prerequisites: []
+            };
+
+            nodes.push(node);
+            renderNode(node);
+            hideEmptyState();
+            updateMinimap();
+            return node;
+        }
+
+        function getNodeTemplates() {
+            return {
+                damage_boost: {
+                    name: 'Damage Boost',
+                    description: 'Increases damage output',
+                    modifiers: [{ stat: 'damage', type: 'percent', value: 10 }]
+                },
+                armor_boost: {
+                    name: 'Armor Boost',
+                    description: 'Increases armor',
+                    modifiers: [{ stat: 'armor', type: 'flat', value: 5 }]
+                },
+                attack_speed: {
+                    name: 'Attack Speed',
+                    description: 'Increases attack speed',
+                    modifiers: [{ stat: 'attackSpeed', type: 'percent', value: 15 }]
+                },
+                gather_rate: {
+                    name: 'Gather Rate',
+                    description: 'Increases resource gathering',
+                    modifiers: [{ stat: 'gatherRate', type: 'percent', value: 10 }]
+                },
+                carry_capacity: {
+                    name: 'Carry Capacity',
+                    description: 'Increases carry capacity',
+                    modifiers: [{ stat: 'carryCapacity', type: 'percent', value: 20 }]
+                },
+                build_speed: {
+                    name: 'Build Speed',
+                    description: 'Faster construction',
+                    modifiers: [{ stat: 'buildSpeed', type: 'percent', value: 15 }]
+                },
+                spell_power: {
+                    name: 'Spell Power',
+                    description: 'Increases spell damage',
+                    modifiers: [{ stat: 'spellDamage', type: 'percent', value: 15 }]
+                },
+                mana_regen: {
+                    name: 'Mana Regen',
+                    description: 'Faster mana regeneration',
+                    modifiers: [{ stat: 'manaRegen', type: 'percent', value: 20 }]
+                },
+                cooldown_reduction: {
+                    name: 'Cooldown Reduction',
+                    description: 'Reduces cooldowns',
+                    modifiers: [{ stat: 'cooldownReduction', type: 'percent', value: 10 }]
+                },
+                research_speed: {
+                    name: 'Research Speed',
+                    description: 'Faster research',
+                    modifiers: [{ stat: 'researchSpeed', type: 'percent', value: 15 }]
+                },
+                age_cost: {
+                    name: 'Age Cost',
+                    description: 'Reduces age up cost',
+                    modifiers: [{ stat: 'ageUpCost', type: 'percent', value: -10 }]
+                },
+                unique_ability: {
+                    name: 'Unique Ability',
+                    description: 'Unlocks a special ability',
+                    modifiers: []
+                },
+                unit_unlock: {
+                    name: 'Unit Unlock',
+                    description: 'Unlocks a special unit',
+                    modifiers: []
+                }
+            };
+        }
+
+        function renderNode(node) {
+            const div = document.createElement('div');
+            div.className = `talent-node ${node.category}`;
+            div.id = 'node-' + node.id;
+            div.style.left = node.x + 'px';
+            div.style.top = node.y + 'px';
+            div.innerHTML = `
+                <div class="connector-in"></div>
+                <div class="icon">${getCategoryIcon(node.category)}</div>
+                <div class="name">${node.name}</div>
+                <div class="tier">Tier ${node.tier}</div>
+                <div class="connector-out"></div>
+            `;
+
+            div.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                selectNode(node.id);
+
+                if (currentTool === 'delete') {
+                    deleteNode(node.id);
+                } else if (currentTool === 'connect') {
+                    startConnection(node.id);
+                } else if (currentTool === 'select') {
+                    isDragging = true;
+                }
+            });
+
+            div.querySelector('.connector-out').addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                setTool('connect');
+                startConnection(node.id);
+            });
+
+            div.querySelector('.connector-in').addEventListener('mouseup', (e) => {
+                if (isConnecting) {
+                    e.stopPropagation();
+                    finishConnectionTo(node.id);
+                }
+            });
+
+            canvas.appendChild(div);
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                military: '&#9876;',
+                economy: '&#128176;',
+                magic: '&#9733;',
+                tech: '&#9881;',
+                special: '&#10024;'
+            };
+            return icons[category] || '&#9679;';
+        }
+
+        function selectNode(nodeId) {
+            deselectNode();
+            const node = nodes.find(n => n.id === nodeId);
+            if (node) {
+                selectedNode = node;
+                const el = document.getElementById('node-' + nodeId);
+                if (el) el.classList.add('selected');
+                showNodeProperties(node);
+            }
+        }
+
+        function deselectNode() {
+            if (selectedNode) {
+                const el = document.getElementById('node-' + selectedNode.id);
+                if (el) el.classList.remove('selected');
+            }
+            selectedNode = null;
+            hideNodeProperties();
+        }
+
+        function moveNode(nodeId, x, y) {
+            const node = nodes.find(n => n.id === nodeId);
+            if (node) {
+                node.x = x;
+                node.y = y;
+                const el = document.getElementById('node-' + nodeId);
+                if (el) {
+                    el.style.left = x + 'px';
+                    el.style.top = y + 'px';
+                }
+                updateConnections();
+                updateMinimap();
+            }
+        }
+
+        function deleteNode(nodeId) {
+            const index = nodes.findIndex(n => n.id === nodeId);
+            if (index !== -1) {
+                nodes.splice(index, 1);
+                const el = document.getElementById('node-' + nodeId);
+                if (el) el.remove();
+
+                connections = connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+                nodes.forEach(n => {
+                    n.prerequisites = n.prerequisites.filter(p => p !== nodeId);
+                });
+
+                if (selectedNode && selectedNode.id === nodeId) {
+                    selectedNode = null;
+                    hideNodeProperties();
+                }
+
+                updateConnections();
+                updateMinimap();
+
+                if (nodes.length === 0) {
+                    showEmptyState();
+                }
+            }
+        }
+
+        function deleteSelectedNode() {
+            if (selectedNode) {
+                deleteNode(selectedNode.id);
+            }
+        }
+
+        function duplicateNode() {
+            if (!selectedNode) return;
+
+            const newNode = createNode(
+                'damage_boost',
+                selectedNode.category,
+                selectedNode.x + 50,
+                selectedNode.y + 50
+            );
+
+            newNode.name = selectedNode.name + ' (copy)';
+            newNode.description = selectedNode.description;
+            newNode.tier = selectedNode.tier;
+            newNode.pointCost = selectedNode.pointCost;
+            newNode.requiredAge = selectedNode.requiredAge;
+            newNode.maxLevel = selectedNode.maxLevel;
+            newNode.modifiers = JSON.parse(JSON.stringify(selectedNode.modifiers));
+
+            const el = document.getElementById('node-' + newNode.id);
+            if (el) {
+                el.querySelector('.name').textContent = newNode.name;
+                el.querySelector('.tier').textContent = 'Tier ' + newNode.tier;
+            }
+
+            selectNode(newNode.id);
+        }
+
+        // Connection functions
+        function startConnection(nodeId) {
+            isConnecting = true;
+            connectingFrom = nodeId;
+            canvas.classList.add('connecting');
+
+            const node = nodes.find(n => n.id === nodeId);
+            if (node) {
+                tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                tempLine.setAttribute('class', 'connection-line temp');
+                svg.appendChild(tempLine);
+            }
+        }
+
+        function updateTempLine(e) {
+            if (!tempLine || !connectingFrom) return;
+
+            const fromNode = nodes.find(n => n.id === connectingFrom);
+            if (!fromNode) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const toX = (e.clientX - rect.left - viewOffset.x) / zoom;
+            const toY = (e.clientY - rect.top - viewOffset.y) / zoom;
+
+            const fromX = fromNode.x + 60;
+            const fromY = fromNode.y + 80;
+
+            const path = `M ${fromX} ${fromY} C ${fromX} ${fromY + 50}, ${toX} ${toY - 50}, ${toX} ${toY}`;
+            tempLine.setAttribute('d', path);
+        }
+
+        function finishConnection(e) {
+            if (tempLine) {
+                tempLine.remove();
+                tempLine = null;
+            }
+            isConnecting = false;
+            connectingFrom = null;
+            canvas.classList.remove('connecting');
+        }
+
+        function finishConnectionTo(toNodeId) {
+            if (connectingFrom && connectingFrom !== toNodeId) {
+                addConnection(connectingFrom, toNodeId);
+            }
+            finishConnection();
+        }
+
+        function cancelConnection() {
+            finishConnection();
+        }
+
+        function addConnection(fromId, toId) {
+            if (connections.some(c => c.from === fromId && c.to === toId)) return;
+            if (wouldCreateCycle(fromId, toId)) {
+                alert('Cannot create circular dependency');
+                return;
+            }
+
+            connections.push({ from: fromId, to: toId });
+
+            const toNode = nodes.find(n => n.id === toId);
+            if (toNode && !toNode.prerequisites.includes(fromId)) {
+                toNode.prerequisites.push(fromId);
+            }
+
+            updateConnections();
+        }
+
+        function removeConnection(fromId, toId) {
+            connections = connections.filter(c => !(c.from === fromId && c.to === toId));
+
+            const toNode = nodes.find(n => n.id === toId);
+            if (toNode) {
+                toNode.prerequisites = toNode.prerequisites.filter(p => p !== fromId);
+            }
+
+            updateConnections();
+        }
+
+        function disconnectAll() {
+            if (!selectedNode) return;
+            const nodeId = selectedNode.id;
+
+            connections = connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+            selectedNode.prerequisites = [];
+
+            nodes.forEach(n => {
+                n.prerequisites = n.prerequisites.filter(p => p !== nodeId);
+            });
+
+            updateConnections();
+            showNodeProperties(selectedNode);
+        }
+
+        function wouldCreateCycle(fromId, toId) {
+            const visited = new Set();
+            const stack = [fromId];
+
+            while (stack.length > 0) {
+                const current = stack.pop();
+                if (current === toId) continue;
+                if (visited.has(current)) continue;
+                visited.add(current);
+
+                const node = nodes.find(n => n.id === current);
+                if (node) {
+                    node.prerequisites.forEach(p => stack.push(p));
+                }
+            }
+
+            return visited.has(toId);
+        }
+
+        function updateConnections() {
+            svg.innerHTML = '';
+
+            connections.forEach(conn => {
+                const fromNode = nodes.find(n => n.id === conn.from);
+                const toNode = nodes.find(n => n.id === conn.to);
+
+                if (fromNode && toNode) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    line.setAttribute('class', 'connection-line');
+
+                    const fromX = fromNode.x + 60;
+                    const fromY = fromNode.y + 80;
+                    const toX = toNode.x + 60;
+                    const toY = toNode.y;
+
+                    const path = `M ${fromX} ${fromY} C ${fromX} ${fromY + 50}, ${toX} ${toY - 50}, ${toX} ${toY}`;
+                    line.setAttribute('d', path);
+
+                    line.addEventListener('click', () => {
+                        if (currentTool === 'delete') {
+                            removeConnection(conn.from, conn.to);
+                        }
+                    });
+
+                    svg.appendChild(line);
+                }
+            });
+        }
+
+        // Tool functions
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.btn-icon').forEach(btn => btn.classList.remove('active'));
+            const btn = document.getElementById('tool-' + tool);
+            if (btn) btn.classList.add('active');
+
+            if (tool !== 'connect') {
+                cancelConnection();
+            }
+        }
+
+        // View functions
+        function updateCanvasTransform() {
+            canvas.style.transform = `translate(${viewOffset.x}px, ${viewOffset.y}px) scale(${zoom})`;
+            updateMinimap();
+        }
+
+        function setZoom(newZoom) {
+            zoom = Math.max(0.25, Math.min(2, newZoom));
+            document.getElementById('zoom-level').textContent = Math.round(zoom * 100) + '%';
+            updateCanvasTransform();
+        }
+
+        function zoomIn() {
+            setZoom(zoom + 0.1);
+        }
+
+        function zoomOut() {
+            setZoom(zoom - 0.1);
+        }
+
+        function centerView() {
+            viewOffset = { x: 100, y: 50 };
+            updateCanvasTransform();
+        }
+
+        function fitToView() {
+            if (nodes.length === 0) {
+                centerView();
+                return;
+            }
+
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            nodes.forEach(n => {
+                minX = Math.min(minX, n.x);
+                minY = Math.min(minY, n.y);
+                maxX = Math.max(maxX, n.x + 120);
+                maxY = Math.max(maxY, n.y + 80);
+            });
+
+            const container = document.querySelector('.canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const scaleX = (width - 100) / (maxX - minX);
+            const scaleY = (height - 100) / (maxY - minY);
+            const scale = Math.min(scaleX, scaleY, 1);
+
+            setZoom(scale);
+            viewOffset = {
+                x: -minX * scale + 50,
+                y: -minY * scale + 50
+            };
+            updateCanvasTransform();
+        }
+
+        function snapToGrid(value) {
+            return Math.round(value / 25) * 25;
+        }
+
+        function toggleGrid() {
+            const hasGrid = canvas.style.backgroundImage !== 'none';
+            canvas.style.backgroundImage = hasGrid ? 'none' : '';
+        }
+
+        function toggleAgeMarkers() {
+            const markers = document.querySelectorAll('.age-marker');
+            markers.forEach(m => {
+                m.style.display = m.style.display === 'none' ? 'flex' : 'none';
+            });
+        }
+
+        // Properties panel
+        function showNodeProperties(node) {
+            document.getElementById('no-selection').style.display = 'none';
+            document.getElementById('node-properties').style.display = 'block';
+
+            document.getElementById('node-id').value = node.id;
+            document.getElementById('node-name').value = node.name;
+            document.getElementById('node-description').value = node.description || '';
+            document.getElementById('node-category').value = node.category;
+            document.getElementById('node-tier').value = node.tier;
+            document.getElementById('node-cost').value = node.pointCost;
+            document.getElementById('node-age').value = node.requiredAge;
+            document.getElementById('node-max-level').value = node.maxLevel;
+
+            updateModifierList(node);
+            updatePrerequisiteList(node);
+        }
+
+        function hideNodeProperties() {
+            document.getElementById('no-selection').style.display = 'block';
+            document.getElementById('node-properties').style.display = 'none';
+        }
+
+        function updateNodeProperty(property, value) {
+            if (!selectedNode) return;
+
+            if (property === 'tier' || property === 'pointCost' || property === 'requiredAge' || property === 'maxLevel') {
+                value = parseInt(value);
+            }
+
+            selectedNode[property] = value;
+
+            const el = document.getElementById('node-' + selectedNode.id);
+            if (el) {
+                if (property === 'name') {
+                    el.querySelector('.name').textContent = value;
+                } else if (property === 'tier') {
+                    el.querySelector('.tier').textContent = 'Tier ' + value;
+                } else if (property === 'category') {
+                    el.className = `talent-node ${value}`;
+                    if (selectedNode) el.classList.add('selected');
+                    el.querySelector('.icon').innerHTML = getCategoryIcon(value);
+                }
+            }
+        }
+
+        function updateModifierList(node) {
+            const container = document.getElementById('modifier-list');
+            container.innerHTML = '';
+
+            node.modifiers.forEach((mod, index) => {
+                const div = document.createElement('div');
+                div.className = 'modifier-item';
+                div.innerHTML = `
+                    <span>${mod.stat}: ${mod.value > 0 ? '+' : ''}${mod.value}${mod.type === 'percent' ? '%' : ''}</span>
+                    <button class="remove-btn" onclick="removeModifier(${index})">x</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updatePrerequisiteList(node) {
+            const container = document.getElementById('prerequisite-list');
+            container.innerHTML = '';
+
+            node.prerequisites.forEach(prereqId => {
+                const prereq = nodes.find(n => n.id === prereqId);
+                if (prereq) {
+                    const div = document.createElement('div');
+                    div.className = 'modifier-item';
+                    div.innerHTML = `
+                        <span>${prereq.name}</span>
+                        <button class="remove-btn" onclick="removePrerequisite('${prereqId}')">x</button>
+                    `;
+                    container.appendChild(div);
+                }
+            });
+
+            if (node.prerequisites.length === 0) {
+                container.innerHTML = '<p style="font-size: 0.8rem; opacity: 0.5;">No prerequisites</p>';
+            }
+        }
+
+        function addModifier() {
+            if (!selectedNode) return;
+
+            const stat = prompt('Enter stat name (e.g., damage, armor, health):');
+            if (!stat) return;
+
+            const value = parseFloat(prompt('Enter value:', '10'));
+            if (isNaN(value)) return;
+
+            const type = confirm('Is this a percentage? (OK = %, Cancel = flat)') ? 'percent' : 'flat';
+
+            selectedNode.modifiers.push({ stat, type, value });
+            updateModifierList(selectedNode);
+        }
+
+        function removeModifier(index) {
+            if (!selectedNode) return;
+            selectedNode.modifiers.splice(index, 1);
+            updateModifierList(selectedNode);
+        }
+
+        function removePrerequisite(prereqId) {
+            if (!selectedNode) return;
+            removeConnection(prereqId, selectedNode.id);
+            updatePrerequisiteList(selectedNode);
+        }
+
+        // Minimap
+        function updateMinimap() {
+            const minimap = document.getElementById('minimap');
+            const viewport = document.getElementById('minimap-viewport');
+
+            minimap.querySelectorAll('.minimap-node').forEach(n => n.remove());
+
+            const scale = 0.05;
+
+            nodes.forEach(node => {
+                const dot = document.createElement('div');
+                dot.className = 'minimap-node';
+                dot.style.left = (node.x * scale) + 'px';
+                dot.style.top = (node.y * scale) + 'px';
+                dot.style.backgroundColor = getCategoryColor(node.category);
+                minimap.appendChild(dot);
+            });
+
+            const container = document.querySelector('.canvas-container');
+            const vw = (container.clientWidth / zoom) * scale;
+            const vh = (container.clientHeight / zoom) * scale;
+            const vx = (-viewOffset.x / zoom) * scale;
+            const vy = (-viewOffset.y / zoom) * scale;
+
+            viewport.style.width = vw + 'px';
+            viewport.style.height = vh + 'px';
+            viewport.style.left = vx + 'px';
+            viewport.style.top = vy + 'px';
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                military: '#e74c3c',
+                economy: '#f39c12',
+                magic: '#9b59b6',
+                tech: '#3498db',
+                special: '#1abc9c'
+            };
+            return colors[category] || '#ecf0f1';
+        }
+
+        // Context menu
+        function showContextMenu(x, y) {
+            const menu = document.getElementById('context-menu');
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.classList.add('active');
+
+            document.addEventListener('click', hideContextMenu, { once: true });
+        }
+
+        function hideContextMenu() {
+            document.getElementById('context-menu').classList.remove('active');
+        }
+
+        // Empty state
+        function showEmptyState() {
+            document.getElementById('empty-state').style.display = 'block';
+        }
+
+        function hideEmptyState() {
+            document.getElementById('empty-state').style.display = 'none';
+        }
+
+        // File operations
+        function newTree() {
+            if (nodes.length > 0 && !confirm('Create new tree? Unsaved changes will be lost.')) {
+                return;
+            }
+
+            nodes = [];
+            connections = [];
+            selectedNode = null;
+            nodeIdCounter = 0;
+
+            canvas.querySelectorAll('.talent-node').forEach(n => n.remove());
+            svg.innerHTML = '';
+
+            hideNodeProperties();
+            showEmptyState();
+            updateMinimap();
+        }
+
+        function loadTree() {
+            if (typeof TalentTreeEditorBridge !== 'undefined') {
+                TalentTreeEditorBridge.loadTree();
+            } else {
+                alert('Load functionality requires C++ integration');
+            }
+        }
+
+        function saveTree() {
+            const treeData = {
+                id: 'talent_tree_1',
+                name: 'Custom Talent Tree',
+                nodes: nodes,
+                connections: connections
+            };
+
+            if (typeof TalentTreeEditorBridge !== 'undefined') {
+                TalentTreeEditorBridge.saveTree(JSON.stringify(treeData));
+            } else {
+                console.log(JSON.stringify(treeData, null, 2));
+                alert('Tree data exported to console');
+            }
+        }
+
+        function validateTree() {
+            const errors = [];
+
+            // Check for disconnected nodes
+            nodes.forEach(node => {
+                if (node.tier > 1 && node.prerequisites.length === 0) {
+                    errors.push(`Node "${node.name}" is tier ${node.tier} but has no prerequisites`);
+                }
+            });
+
+            // Check for circular dependencies
+            nodes.forEach(node => {
+                if (hasCircularDependency(node.id)) {
+                    errors.push(`Node "${node.name}" has circular dependency`);
+                }
+            });
+
+            if (errors.length === 0) {
+                alert('Talent tree is valid!');
+            } else {
+                alert('Validation errors:\n\n' + errors.join('\n'));
+            }
+        }
+
+        function hasCircularDependency(nodeId) {
+            const visited = new Set();
+            const stack = [nodeId];
+
+            while (stack.length > 0) {
+                const current = stack.pop();
+                if (visited.has(current)) return true;
+                visited.add(current);
+
+                const node = nodes.find(n => n.id === current);
+                if (node) {
+                    node.prerequisites.forEach(p => {
+                        if (p !== nodeId) stack.push(p);
+                    });
+                }
+            }
+
+            return false;
+        }
+
+        function setPreviewAge(age) {
+            // Highlight nodes available at this age
+            const ageNum = parseInt(age);
+            nodes.forEach(node => {
+                const el = document.getElementById('node-' + node.id);
+                if (el) {
+                    if (node.requiredAge <= ageNum) {
+                        el.style.opacity = '1';
+                    } else {
+                        el.style.opacity = '0.3';
+                    }
+                }
+            });
+        }
+
+        // C++ Bridge
+        function setTreeFromCpp(jsonString) {
+            const data = JSON.parse(jsonString);
+            nodes = data.nodes || [];
+            connections = data.connections || [];
+
+            canvas.querySelectorAll('.talent-node').forEach(n => n.remove());
+            nodes.forEach(node => renderNode(node));
+            updateConnections();
+            updateMinimap();
+
+            if (nodes.length > 0) hideEmptyState();
+        }
+
+        function getTreeJson() {
+            return JSON.stringify({ nodes, connections });
+        }
+    </script>
+</body>
+</html>

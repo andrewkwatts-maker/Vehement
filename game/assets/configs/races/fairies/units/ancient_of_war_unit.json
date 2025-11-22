@@ -1,0 +1,182 @@
+{
+    "id": "fairy_ancient_of_war_unit",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Ancient of War",
+    "description": "An awakened Ancient that has uprooted itself to join battle. This walking tree fortress can train warriors and devastate enemy bases.",
+
+    "tags": ["military", "melee", "tier4", "siege", "massive", "fortress", "plant"],
+
+    "tier": 4,
+    "age_requirement": 6,
+
+    "model": {
+        "path": "models/races/fairies/units/ancient_of_war_unit.obj",
+        "scale": [2.0, 2.0, 2.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/ancient_of_war_unit_diffuse.png",
+        "normal": "textures/races/fairies/units/ancient_of_war_unit_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 1.2,
+                "height": 5.0,
+                "offset": [0.0, 2.5, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 2000.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 1400,
+        "maxHealth": 1400,
+        "healthRegen": 2.5,
+        "mana": 300,
+        "maxMana": 300,
+        "manaRegen": 1.0,
+        "armor": 8,
+        "magicResist": 20,
+        "moveSpeed": 2.5,
+        "turnRate": 100.0
+    },
+
+    "combat": {
+        "attackDamage": 42,
+        "attackSpeed": 2.5,
+        "attackRange": 3.0,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "attackType": "melee",
+        "splash_damage": 0.40,
+        "splash_radius": 3.5,
+        "building_damage_bonus": 2.5
+    },
+
+    "abilities": [
+        {
+            "id": "ability_uproot_ancient",
+            "name": "Uproot/Root",
+            "description": "Toggle between mobile siege mode and rooted production mode",
+            "hotkey": "R",
+            "toggle": true,
+            "effects_rooted": [
+                {"type": "immobilize", "value": true},
+                {"type": "enable_production", "value": true},
+                {"type": "health_regen_bonus", "value": 10.0},
+                {"type": "armor_bonus", "value": 5}
+            ],
+            "effects_uprooted": [
+                {"type": "can_move", "value": true},
+                {"type": "disable_production", "value": true}
+            ]
+        },
+        {
+            "id": "ability_spawn_treant",
+            "name": "Spawn Treant",
+            "description": "Spawn a Treant warrior from the Ancient's branches",
+            "hotkey": "T",
+            "cooldown": 45.0,
+            "mana_cost": 100,
+            "effects": [
+                {"type": "spawn_unit", "unit": "fairy_treant", "count": 1, "duration": 60.0}
+            ]
+        },
+        {
+            "id": "ability_natures_wrath",
+            "name": "Nature's Wrath",
+            "description": "Slam the ground, stunning and damaging all nearby enemies",
+            "hotkey": "W",
+            "cooldown": 30.0,
+            "mana_cost": 75,
+            "radius": 6.0,
+            "effects": [
+                {"type": "damage", "value": 150},
+                {"type": "stun", "duration": 2.5}
+            ]
+        },
+        {
+            "id": "ability_consume_tree_ancient",
+            "name": "Consume Tree",
+            "description": "Consume trees to restore health",
+            "hotkey": "E",
+            "cooldown": 20.0,
+            "range": 5.0,
+            "effects": [
+                {"type": "heal", "value": 500},
+                {"type": "destroy_tree", "value": true}
+            ]
+        }
+    ],
+
+    "production_when_rooted": {
+        "enabled": true,
+        "units": ["fairy_thornling", "fairy_satyr", "fairy_treant"]
+    },
+
+    "regeneration": {
+        "enabled": true,
+        "base_rate": 2.5,
+        "rooted_rate": 15.0,
+        "near_tree_bonus": 5.0
+    },
+
+    "night_bonus": {
+        "attackDamage": 0.25,
+        "healthRegen": 0.50
+    },
+
+    "production": {
+        "building": "fairy_tree_of_eternity",
+        "cost": {
+            "gold": 450,
+            "wood": 200,
+            "food": 8
+        },
+        "build_time": 70.0,
+        "population_cost": 7,
+        "prerequisites": ["upgrade_ancient_awakening"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/siege_fortress.bt",
+        "profile": "siege",
+        "aggroRange": 12.0,
+        "leashRange": 30.0,
+        "priority_targets": ["building", "siege", "heavy"],
+        "root_when_producing": true,
+        "use_wrath_on_clusters": true,
+        "wrath_cluster_threshold": 4
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/ancient_of_war_unit/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/ancient_of_war_unit/walk.anim", "loop": true},
+        "attack": {"path": "animations/fairies/ancient_of_war_unit/attack.anim", "loop": false},
+        "root": {"path": "animations/fairies/ancient_of_war_unit/root.anim", "loop": false},
+        "uproot": {"path": "animations/fairies/ancient_of_war_unit/uproot.anim", "loop": false},
+        "wrath": {"path": "animations/fairies/ancient_of_war_unit/wrath.anim", "loop": false},
+        "death": {"path": "animations/fairies/ancient_of_war_unit/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/ancient_of_war_unit/select_1.wav"],
+        "acknowledge": ["sounds/fairies/ancient_of_war_unit/ack_1.wav"],
+        "attack": "sounds/fairies/ancient_of_war_unit/attack.wav",
+        "wrath": "sounds/fairies/ancient_of_war_unit/wrath.wav",
+        "death": "sounds/fairies/ancient_of_war_unit/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/ancient_of_war_unit.png",
+        "icon": "textures/races/fairies/icons/ancient_of_war_unit.png",
+        "hotkey": "A"
+    }
+}

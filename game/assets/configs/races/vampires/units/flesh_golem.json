@@ -1,0 +1,220 @@
+{
+  "id": "flesh_golem",
+  "name": "Flesh Golem",
+  "race": "vampires",
+  "tier": 3,
+  "type": "construct",
+  "role": ["tank", "siege", "frontline"],
+
+  "description": "Hulking constructs stitched together from the corpses of victims. They absorb tremendous punishment and grow stronger from nearby death.",
+  "lore": "Flesh Golems are abominations created by vampire fleshcrafters from the bodies of fallen enemies. These shambling horrors feel no pain and can regenerate by absorbing the flesh of the freshly dead.",
+
+  "stats": {
+    "health": 1200,
+    "healthRegen": 1.0,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 4,
+    "armorType": "fortified",
+    "moveSpeed": 200,
+    "turnRate": 0.4,
+    "collisionSize": 48,
+    "selectionScale": 1.4
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 40,
+      "variance": 8,
+      "type": "siege"
+    },
+    "attackSpeed": 2.2,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.6,
+    "backswing": 0.6,
+    "acquisitionRange": 400,
+    "aggroRange": 350,
+    "lifeSteal": 0.0,
+    "cleave": {
+      "enabled": true,
+      "percent": 0.4,
+      "radius": 175
+    },
+    "bonusVsBuildings": 0.5
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "healthRegenBonus": 3.0,
+      "damageBonus": 0.2
+    },
+    "day": {
+      "healthRegenPenalty": 0.5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "corpse_absorption",
+      "name": "Corpse Absorption",
+      "type": "passive",
+      "description": "Automatically absorbs nearby corpses, healing 100 HP per corpse and gaining temporary damage",
+      "effects": {
+        "absorptionRadius": 300,
+        "healPerCorpse": 100,
+        "damagePerCorpse": 5,
+        "damageDuration": 30.0,
+        "maxDamageStacks": 10
+      },
+      "icon": "icons/abilities/corpse_absorption.png"
+    },
+    {
+      "id": "hook",
+      "name": "Meat Hook",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Throw a hook to pull an enemy unit to the golem",
+      "cooldown": 18,
+      "effects": {
+        "damage": 50,
+        "range": 700,
+        "pullSpeed": 1000,
+        "stunDuration": 1.0
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/hook.png"
+    },
+    {
+      "id": "dismember",
+      "name": "Dismember",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Grab and crush an enemy, dealing damage over time and healing self",
+      "cooldown": 25,
+      "effects": {
+        "damagePerSecond": 60,
+        "duration": 3.0,
+        "healPercent": 0.5,
+        "stunTarget": true,
+        "channeled": true,
+        "range": 150
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/dismember.png"
+    },
+    {
+      "id": "unholy_frenzy_passive",
+      "name": "Unholy Frenzy",
+      "type": "passive",
+      "description": "Below 30% health, gains 50% attack speed but takes 2% max health damage per second",
+      "effects": {
+        "healthThreshold": 0.3,
+        "attackSpeedBonus": 0.5,
+        "selfDamagePercent": 0.02
+      },
+      "icon": "icons/abilities/unholy_frenzy.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "torture_chamber",
+    "buildTime": 55,
+    "cost": {
+      "gold": 300,
+      "lumber": 50,
+      "blood": 30
+    },
+    "foodCost": 5,
+    "corpsesCost": 3,
+    "prerequisites": {
+      "buildings": ["torture_chamber", "citadel_of_night"],
+      "technologies": [],
+      "age": "count"
+    },
+    "hotkey": "F"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 5,
+      "maxLevel": 3,
+      "researchId": "reinforced_limbs"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "hardened_flesh"
+    },
+    "special": ["extended_hook", "improved_absorption", "disease_cloud"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/flesh_golem/ready.ogg",
+    "select": ["audio/units/flesh_golem/select1.ogg", "audio/units/flesh_golem/select2.ogg"],
+    "move": ["audio/units/flesh_golem/move1.ogg", "audio/units/flesh_golem/move2.ogg"],
+    "attack": ["audio/units/flesh_golem/attack1.ogg", "audio/units/flesh_golem/attack2.ogg"],
+    "death": "audio/units/flesh_golem/death.ogg",
+    "hook": "audio/units/flesh_golem/hook.ogg",
+    "dismember": "audio/units/flesh_golem/dismember.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/flesh_golem.glb",
+    "texture": "textures/units/vampires/flesh_golem.png",
+    "portrait": "textures/portraits/flesh_golem.png",
+    "icon": "textures/icons/flesh_golem.png",
+    "scale": 1.4,
+    "animations": {
+      "idle": "golem_idle",
+      "walk": "golem_walk",
+      "attack": "golem_attack",
+      "death": "golem_death",
+      "hook": "golem_hook",
+      "dismember": "golem_dismember",
+      "absorb": "golem_absorb"
+    },
+    "effects": {
+      "spawn": "effects/flesh_spawn.vfx",
+      "death": "effects/flesh_death.vfx",
+      "hook": "effects/meat_hook.vfx",
+      "absorb": "effects/corpse_absorb.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 7,
+    "priority": "high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.0,
+    "preferredTargets": ["building", "siege"],
+    "useHookOnRanged": true,
+    "prioritizeCorpseRichAreas": true
+  },
+
+  "flags": {
+    "isVampire": false,
+    "isUndead": true,
+    "isConstruct": true,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByDayNight": true,
+    "hasLifeSteal": false,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true
+  },
+
+  "bounty": {
+    "gold": 40,
+    "experience": 55,
+    "blood": 0
+  },
+
+  "pointValue": 5,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer - Conquest of Realms</title>
+    <link rel="stylesheet" href="../../css/ui_base.css">
+    <link rel="stylesheet" href="../../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../../css/ui_animations.css">
+    <link rel="stylesheet" href="../../css/menu_theme.css">
+</head>
+<body>
+    <div id="multiplayer-menu" class="menu-container">
+        <!-- Background -->
+        <div class="parallax-container">
+            <div class="parallax-layer layer-back"></div>
+            <div class="parallax-overlay"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="multiplayer-content">
+            <!-- Header -->
+            <div class="mp-header">
+                <button class="menu-btn menu-btn-sm" onclick="MultiplayerMenu.back()">
+                    &larr; Back
+                </button>
+                <h1 class="mp-title">Multiplayer</h1>
+                <div class="mp-status">
+                    <span class="status-indicator online" id="connection-status"></span>
+                    <span id="players-online">0 Players Online</span>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="menu-tabs" id="mp-tabs">
+                <button class="menu-tab active" data-tab="matchmaking" onclick="MultiplayerMenu.switchTab('matchmaking')">
+                    Global Matchmaking
+                </button>
+                <button class="menu-tab" data-tab="lobby" onclick="MultiplayerMenu.switchTab('lobby')">
+                    Private Lobby
+                </button>
+                <button class="menu-tab" data-tab="browser" onclick="MultiplayerMenu.switchTab('browser')">
+                    Game Browser
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="mp-tab-content">
+                <!-- Global Matchmaking Tab -->
+                <div class="menu-tab-content active" id="tab-matchmaking">
+                    <div class="matchmaking-layout">
+                        <div class="matchmaking-main">
+                            <div class="menu-panel matchmaking-panel">
+                                <h2>Find a Match</h2>
+                                <p class="mp-description">Join the global matchmaking queue to find opponents of similar skill.</p>
+
+                                <div class="match-type-selector">
+                                    <div class="match-type selected" data-type="ranked" onclick="MultiplayerMenu.selectMatchType('ranked')">
+                                        <div class="match-type-icon">🏆</div>
+                                        <div class="match-type-name">Ranked</div>
+                                        <div class="match-type-desc">Compete for ranking points</div>
+                                    </div>
+                                    <div class="match-type" data-type="unranked" onclick="MultiplayerMenu.selectMatchType('unranked')">
+                                        <div class="match-type-icon">⚔️</div>
+                                        <div class="match-type-name">Unranked</div>
+                                        <div class="match-type-desc">Casual matches</div>
+                                    </div>
+                                </div>
+
+                                <div class="game-mode-selector">
+                                    <h3>Game Mode</h3>
+                                    <div class="game-modes">
+                                        <label class="mode-option">
+                                            <input type="radio" name="gamemode" value="1v1" checked>
+                                            <span class="mode-label">1v1</span>
+                                        </label>
+                                        <label class="mode-option">
+                                            <input type="radio" name="gamemode" value="2v2">
+                                            <span class="mode-label">2v2</span>
+                                        </label>
+                                        <label class="mode-option">
+                                            <input type="radio" name="gamemode" value="3v3">
+                                            <span class="mode-label">3v3</span>
+                                        </label>
+                                        <label class="mode-option">
+                                            <input type="radio" name="gamemode" value="4v4">
+                                            <span class="mode-label">4v4</span>
+                                        </label>
+                                        <label class="mode-option">
+                                            <input type="radio" name="gamemode" value="ffa">
+                                            <span class="mode-label">FFA</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="region-selector">
+                                    <h3>Server Region</h3>
+                                    <select class="menu-select" id="region-select" onchange="MultiplayerMenu.selectRegion(this.value)">
+                                        <option value="auto">Auto (Best Ping)</option>
+                                        <option value="na">North America</option>
+                                        <option value="eu">Europe</option>
+                                        <option value="asia">Asia Pacific</option>
+                                        <option value="sa">South America</option>
+                                        <option value="oce">Oceania</option>
+                                    </select>
+                                    <div class="ping-display" id="ping-display">Ping: -- ms</div>
+                                </div>
+
+                                <button class="menu-btn menu-btn-primary menu-btn-lg" id="btn-find-match" onclick="MultiplayerMenu.findMatch()">
+                                    Find Match
+                                </button>
+
+                                <!-- Queue Status (hidden by default) -->
+                                <div class="queue-status" id="queue-status" style="display: none;">
+                                    <div class="queue-animation">
+                                        <div class="queue-spinner"></div>
+                                    </div>
+                                    <div class="queue-info">
+                                        <div class="queue-time" id="queue-time">00:00</div>
+                                        <div class="queue-text">Searching for match...</div>
+                                        <div class="queue-players" id="queue-players">0 players in queue</div>
+                                    </div>
+                                    <button class="menu-btn menu-btn-danger menu-btn-sm" onclick="MultiplayerMenu.cancelQueue()">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Player Stats -->
+                            <div class="menu-panel player-stats-panel">
+                                <h3>Your Stats</h3>
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="stat-rank">Unranked</div>
+                                        <div class="stat-label">Rank</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="stat-mmr">1000</div>
+                                        <div class="stat-label">MMR</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="stat-wins">0</div>
+                                        <div class="stat-label">Wins</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="stat-losses">0</div>
+                                        <div class="stat-label">Losses</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="stat-winrate">0%</div>
+                                        <div class="stat-label">Win Rate</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat & Friends -->
+                        <div class="matchmaking-sidebar">
+                            <div class="menu-panel friends-panel">
+                                <h3>Friends Online</h3>
+                                <div class="friends-list menu-scrollable" id="friends-list">
+                                    <!-- Friends populated dynamically -->
+                                </div>
+                            </div>
+
+                            <div class="chat-panel" id="global-chat">
+                                <div class="chat-header">
+                                    <span>Global Chat</span>
+                                    <select class="chat-channel-select" id="chat-channel">
+                                        <option value="global">Global</option>
+                                        <option value="region">Region</option>
+                                        <option value="clan">Clan</option>
+                                    </select>
+                                </div>
+                                <div class="chat-messages menu-scrollable" id="chat-messages">
+                                    <!-- Messages populated dynamically -->
+                                </div>
+                                <div class="chat-input-container">
+                                    <input type="text" class="chat-input" id="chat-input" placeholder="Type a message..." maxlength="200">
+                                    <button class="chat-send-btn" onclick="MultiplayerMenu.sendChat()">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Private Lobby Tab -->
+                <div class="menu-tab-content" id="tab-lobby">
+                    <div class="lobby-layout">
+                        <div class="lobby-options">
+                            <div class="menu-panel">
+                                <h2>Private Lobby</h2>
+                                <p class="mp-description">Create a private lobby or join a friend's game.</p>
+
+                                <div class="lobby-actions">
+                                    <button class="menu-btn menu-btn-primary" onclick="MultiplayerMenu.createLobby()">
+                                        Create Lobby
+                                    </button>
+                                    <div class="lobby-divider">
+                                        <span>OR</span>
+                                    </div>
+                                    <div class="join-code-input">
+                                        <input type="text" class="menu-input" id="lobby-code" placeholder="Enter lobby code" maxlength="8">
+                                        <button class="menu-btn" onclick="MultiplayerMenu.joinWithCode()">Join</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lobby Room (shown when in lobby) -->
+                            <div class="menu-panel lobby-room" id="lobby-room" style="display: none;">
+                                <div class="lobby-room-header">
+                                    <h3 id="lobby-name">Lobby</h3>
+                                    <div class="lobby-code-display">
+                                        <span>Code:</span>
+                                        <span class="code" id="display-lobby-code">XXXX-XXXX</span>
+                                        <button class="copy-btn" onclick="MultiplayerMenu.copyLobbyCode()">Copy</button>
+                                    </div>
+                                </div>
+
+                                <div class="lobby-teams">
+                                    <!-- Team 1 -->
+                                    <div class="lobby-team" id="team-1">
+                                        <h4 class="team-header">Team 1</h4>
+                                        <div class="player-slots" id="team-1-slots">
+                                            <!-- Slots populated dynamically -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Team 2 -->
+                                    <div class="lobby-team" id="team-2">
+                                        <h4 class="team-header">Team 2</h4>
+                                        <div class="player-slots" id="team-2-slots">
+                                            <!-- Slots populated dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="lobby-settings">
+                                    <div class="setting-row">
+                                        <label>Map:</label>
+                                        <select class="menu-select" id="lobby-map">
+                                            <option>Random</option>
+                                            <option>Contested Valley</option>
+                                            <option>Twin Rivers</option>
+                                            <option>Highland Fortress</option>
+                                        </select>
+                                    </div>
+                                    <div class="setting-row">
+                                        <label>Game Speed:</label>
+                                        <select class="menu-select" id="lobby-speed">
+                                            <option>Normal</option>
+                                            <option>Fast</option>
+                                            <option>Faster</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="lobby-actions-row">
+                                    <button class="menu-btn menu-btn-sm" onclick="MultiplayerMenu.leaveLobby()">Leave</button>
+                                    <button class="menu-btn menu-btn-sm" id="btn-ready" onclick="MultiplayerMenu.toggleReady()">Ready</button>
+                                    <button class="menu-btn menu-btn-primary" id="btn-start-game" onclick="MultiplayerMenu.startGame()" disabled>
+                                        Start Game
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Party Panel -->
+                        <div class="party-panel menu-panel">
+                            <h3>Your Party</h3>
+                            <div class="party-members" id="party-members">
+                                <div class="party-member self">
+                                    <img class="member-avatar" src="" alt="">
+                                    <span class="member-name" id="party-self-name">You</span>
+                                    <span class="member-status leader">Leader</span>
+                                </div>
+                                <!-- Additional party members added dynamically -->
+                            </div>
+                            <button class="menu-btn menu-btn-sm" onclick="MultiplayerMenu.inviteToParty()">
+                                Invite Friends
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Game Browser Tab -->
+                <div class="menu-tab-content" id="tab-browser">
+                    <div class="browser-layout">
+                        <!-- Filters -->
+                        <div class="browser-filters menu-panel">
+                            <h3>Filters</h3>
+                            <div class="filter-row">
+                                <label>Game Mode:</label>
+                                <select class="menu-select" id="filter-mode" onchange="MultiplayerMenu.applyFilters()">
+                                    <option value="">All</option>
+                                    <option value="1v1">1v1</option>
+                                    <option value="2v2">2v2</option>
+                                    <option value="3v3">3v3</option>
+                                    <option value="4v4">4v4</option>
+                                    <option value="ffa">FFA</option>
+                                </select>
+                            </div>
+                            <div class="filter-row">
+                                <label>Map:</label>
+                                <select class="menu-select" id="filter-map" onchange="MultiplayerMenu.applyFilters()">
+                                    <option value="">All Maps</option>
+                                    <option value="contested_valley">Contested Valley</option>
+                                    <option value="twin_rivers">Twin Rivers</option>
+                                    <option value="highland_fortress">Highland Fortress</option>
+                                </select>
+                            </div>
+                            <div class="filter-row">
+                                <label>Has Slots:</label>
+                                <input type="checkbox" id="filter-slots" onchange="MultiplayerMenu.applyFilters()" checked>
+                            </div>
+                            <div class="filter-row">
+                                <label>Max Ping:</label>
+                                <input type="range" class="menu-slider" id="filter-ping" min="0" max="500" value="200"
+                                       onchange="MultiplayerMenu.applyFilters()">
+                                <span id="filter-ping-value">200ms</span>
+                            </div>
+                            <button class="menu-btn menu-btn-sm" onclick="MultiplayerMenu.refreshGameList()">
+                                Refresh
+                            </button>
+                        </div>
+
+                        <!-- Game List -->
+                        <div class="game-list-container">
+                            <div class="game-list-header">
+                                <span class="col-name">Game Name</span>
+                                <span class="col-host">Host</span>
+                                <span class="col-map">Map</span>
+                                <span class="col-mode">Mode</span>
+                                <span class="col-players">Players</span>
+                                <span class="col-ping">Ping</span>
+                            </div>
+                            <div class="game-list menu-scrollable" id="game-list">
+                                <!-- Games populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Game Details -->
+                        <div class="game-details menu-panel" id="game-details">
+                            <h3>Game Details</h3>
+                            <div class="detail-content" id="detail-content">
+                                <p class="no-selection">Select a game to view details</p>
+                            </div>
+                            <button class="menu-btn menu-btn-primary" id="btn-join-game" onclick="MultiplayerMenu.joinSelectedGame()" disabled>
+                                Join Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/ui_core.js"></script>
+    <script src="../../js/menu_core.js"></script>
+    <script>
+        /**
+         * Multiplayer Menu Controller
+         */
+        const MultiplayerMenu = {
+            _currentTab: 'matchmaking',
+            _matchType: 'ranked',
+            _selectedRegion: 'auto',
+            _inQueue: false,
+            _queueStartTime: null,
+            _queueTimer: null,
+            _inLobby: false,
+            _isHost: false,
+            _isReady: false,
+            _selectedGame: null,
+            _games: [],
+
+            init: function() {
+                console.log('Multiplayer Menu initialized');
+                MenuCore.init();
+
+                this.loadPlayerStats();
+                this.loadFriendsList();
+                this.refreshGameList();
+                this.startPingCheck();
+                this.setupChatInput();
+            },
+
+            // Tab Navigation
+            switchTab: function(tab) {
+                this._currentTab = tab;
+
+                document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector(`.menu-tab[data-tab="${tab}"]`).classList.add('active');
+
+                document.querySelectorAll('.menu-tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`tab-${tab}`).classList.add('active');
+
+                MenuCore.Audio.playSound('tab_switch');
+            },
+
+            // Matchmaking
+            selectMatchType: function(type) {
+                this._matchType = type;
+                document.querySelectorAll('.match-type').forEach(t => t.classList.remove('selected'));
+                document.querySelector(`.match-type[data-type="${type}"]`).classList.add('selected');
+            },
+
+            selectRegion: function(region) {
+                this._selectedRegion = region;
+                this.updatePing();
+            },
+
+            findMatch: function() {
+                if (this._inQueue) return;
+
+                const gameMode = document.querySelector('input[name="gamemode"]:checked').value;
+
+                this._inQueue = true;
+                this._queueStartTime = Date.now();
+
+                document.getElementById('btn-find-match').style.display = 'none';
+                document.getElementById('queue-status').style.display = 'flex';
+
+                this._queueTimer = setInterval(() => this.updateQueueTime(), 1000);
+
+                Engine.call('Multiplayer.findMatch', {
+                    type: this._matchType,
+                    mode: gameMode,
+                    region: this._selectedRegion
+                });
+
+                MenuCore.Audio.playSound('queue_start');
+            },
+
+            cancelQueue: function() {
+                this._inQueue = false;
+                clearInterval(this._queueTimer);
+
+                document.getElementById('btn-find-match').style.display = 'block';
+                document.getElementById('queue-status').style.display = 'none';
+
+                Engine.call('Multiplayer.cancelQueue', {});
+                MenuCore.Audio.playSound('queue_cancel');
+            },
+
+            updateQueueTime: function() {
+                const elapsed = Math.floor((Date.now() - this._queueStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                document.getElementById('queue-time').textContent = `${minutes}:${seconds}`;
+            },
+
+            // Match Found (called from engine)
+            onMatchFound: function(data) {
+                this._inQueue = false;
+                clearInterval(this._queueTimer);
+
+                MenuCore.Audio.playSound('match_found');
+
+                // Show match found modal
+                MenuCore.Components.showModal({
+                    title: 'Match Found!',
+                    content: `
+                        <p>A ${data.mode} match has been found.</p>
+                        <p>Map: ${data.map}</p>
+                        <p>Opponent: ${data.opponent || 'Unknown'}</p>
+                    `,
+                    buttons: [
+                        { text: 'Accept', action: 'accept', primary: true },
+                        { text: 'Decline', action: 'decline', danger: true }
+                    ],
+                    onClose: (result) => {
+                        Engine.call('Multiplayer.matchResponse', { accept: result === 'accept' });
+                    }
+                });
+            },
+
+            // Private Lobby
+            createLobby: function() {
+                Engine.call('Multiplayer.createLobby', {}, (result) => {
+                    if (result && result.success) {
+                        this._inLobby = true;
+                        this._isHost = true;
+                        this.showLobbyRoom(result.lobby);
+                    }
+                });
+                MenuCore.Audio.playSound('button_click');
+            },
+
+            joinWithCode: function() {
+                const code = document.getElementById('lobby-code').value.trim();
+                if (!code) return;
+
+                Engine.call('Multiplayer.joinLobby', { code: code }, (result) => {
+                    if (result && result.success) {
+                        this._inLobby = true;
+                        this._isHost = false;
+                        this.showLobbyRoom(result.lobby);
+                    } else {
+                        MenuCore.Animations.shake(document.getElementById('lobby-code'));
+                    }
+                });
+            },
+
+            showLobbyRoom: function(lobby) {
+                document.getElementById('lobby-room').style.display = 'block';
+                document.getElementById('lobby-name').textContent = lobby.name || 'Private Lobby';
+                document.getElementById('display-lobby-code').textContent = lobby.code;
+
+                this.updateLobbyPlayers(lobby.players);
+            },
+
+            updateLobbyPlayers: function(players) {
+                const team1 = document.getElementById('team-1-slots');
+                const team2 = document.getElementById('team-2-slots');
+
+                team1.innerHTML = '';
+                team2.innerHTML = '';
+
+                for (let i = 0; i < 4; i++) {
+                    const player = players.find(p => p.slot === i && p.team === 1);
+                    team1.appendChild(this.createPlayerSlot(player, i, 1));
+
+                    const player2 = players.find(p => p.slot === i && p.team === 2);
+                    team2.appendChild(this.createPlayerSlot(player2, i, 2));
+                }
+            },
+
+            createPlayerSlot: function(player, slot, team) {
+                const div = document.createElement('div');
+                div.className = 'player-slot' + (player ? ' occupied' : ' empty');
+
+                if (player) {
+                    div.innerHTML = `
+                        <img class="slot-avatar" src="${player.avatar || ''}" alt="">
+                        <span class="slot-name">${player.name}</span>
+                        <span class="slot-status ${player.ready ? 'ready' : ''}">${player.ready ? 'Ready' : 'Not Ready'}</span>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <span class="slot-empty">Empty Slot</span>
+                        <button class="slot-add-ai" onclick="MultiplayerMenu.addAI(${slot}, ${team})">+ AI</button>
+                    `;
+                }
+
+                return div;
+            },
+
+            leaveLobby: function() {
+                Engine.call('Multiplayer.leaveLobby', {});
+                this._inLobby = false;
+                this._isHost = false;
+                document.getElementById('lobby-room').style.display = 'none';
+            },
+
+            toggleReady: function() {
+                this._isReady = !this._isReady;
+                const btn = document.getElementById('btn-ready');
+                btn.textContent = this._isReady ? 'Cancel Ready' : 'Ready';
+                btn.classList.toggle('menu-btn-primary', this._isReady);
+
+                Engine.call('Multiplayer.setReady', { ready: this._isReady });
+            },
+
+            startGame: function() {
+                if (!this._isHost) return;
+                Engine.call('Multiplayer.startGame', {});
+            },
+
+            copyLobbyCode: function() {
+                const code = document.getElementById('display-lobby-code').textContent;
+                navigator.clipboard.writeText(code);
+                MenuCore.Audio.playSound('button_click');
+            },
+
+            addAI: function(slot, team) {
+                Engine.call('Multiplayer.addAI', { slot: slot, team: team });
+            },
+
+            inviteToParty: function() {
+                Engine.call('Multiplayer.showInviteDialog', {});
+            },
+
+            // Game Browser
+            refreshGameList: function() {
+                const filters = {
+                    mode: document.getElementById('filter-mode').value,
+                    map: document.getElementById('filter-map').value,
+                    hasSlots: document.getElementById('filter-slots').checked,
+                    maxPing: parseInt(document.getElementById('filter-ping').value)
+                };
+
+                Engine.call('Multiplayer.getGameList', filters, (games) => {
+                    this._games = games || [];
+                    this.renderGameList();
+                });
+
+                // Mock data for demo
+                this._games = [
+                    { id: 1, name: "Pro Game Only", host: "MasterChief", map: "Contested Valley", mode: "1v1", players: "1/2", ping: 45 },
+                    { id: 2, name: "Casual Fun", host: "CoolPlayer", map: "Twin Rivers", mode: "2v2", players: "3/4", ping: 78 },
+                    { id: 3, name: "New Players Welcome", host: "Friendly", map: "Highland Fortress", mode: "3v3", players: "4/6", ping: 120 },
+                    { id: 4, name: "Tournament Practice", host: "ESports", map: "Random", mode: "1v1", players: "1/2", ping: 32 }
+                ];
+                this.renderGameList();
+            },
+
+            renderGameList: function() {
+                const list = document.getElementById('game-list');
+                list.innerHTML = '';
+
+                this._games.forEach(game => {
+                    const row = document.createElement('div');
+                    row.className = 'game-list-row';
+                    row.dataset.gameId = game.id;
+
+                    row.innerHTML = `
+                        <span class="col-name">${game.name}</span>
+                        <span class="col-host">${game.host}</span>
+                        <span class="col-map">${game.map}</span>
+                        <span class="col-mode">${game.mode}</span>
+                        <span class="col-players">${game.players}</span>
+                        <span class="col-ping ${game.ping < 50 ? 'good' : game.ping < 100 ? 'medium' : 'bad'}">${game.ping}ms</span>
+                    `;
+
+                    row.addEventListener('click', () => this.selectGame(game));
+                    list.appendChild(row);
+                });
+
+                MenuCore.Animations.staggerIn(list, '.game-list-row', 30);
+            },
+
+            selectGame: function(game) {
+                this._selectedGame = game;
+
+                document.querySelectorAll('.game-list-row').forEach(r => r.classList.remove('selected'));
+                document.querySelector(`.game-list-row[data-game-id="${game.id}"]`).classList.add('selected');
+
+                document.getElementById('detail-content').innerHTML = `
+                    <div class="detail-row"><strong>Name:</strong> ${game.name}</div>
+                    <div class="detail-row"><strong>Host:</strong> ${game.host}</div>
+                    <div class="detail-row"><strong>Map:</strong> ${game.map}</div>
+                    <div class="detail-row"><strong>Mode:</strong> ${game.mode}</div>
+                    <div class="detail-row"><strong>Players:</strong> ${game.players}</div>
+                    <div class="detail-row"><strong>Ping:</strong> ${game.ping}ms</div>
+                `;
+
+                document.getElementById('btn-join-game').disabled = false;
+            },
+
+            joinSelectedGame: function() {
+                if (!this._selectedGame) return;
+                Engine.call('Multiplayer.joinGame', { gameId: this._selectedGame.id });
+            },
+
+            applyFilters: function() {
+                document.getElementById('filter-ping-value').textContent = document.getElementById('filter-ping').value + 'ms';
+                this.refreshGameList();
+            },
+
+            // Chat
+            setupChatInput: function() {
+                document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendChat();
+                });
+            },
+
+            sendChat: function() {
+                const input = document.getElementById('chat-input');
+                const message = input.value.trim();
+                if (!message) return;
+
+                const channel = document.getElementById('chat-channel').value;
+                Engine.call('Chat.send', { channel: channel, message: message });
+
+                this.addChatMessage({ sender: 'You', text: message, time: new Date().toLocaleTimeString() });
+                input.value = '';
+            },
+
+            addChatMessage: function(msg) {
+                const container = document.getElementById('chat-messages');
+                const div = document.createElement('div');
+                div.className = 'chat-message';
+                div.innerHTML = `
+                    <span class="chat-message-time">${msg.time}</span>
+                    <span class="chat-message-sender">${msg.sender}:</span>
+                    <span class="chat-message-text">${msg.text}</span>
+                `;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            },
+
+            // Utility
+            loadPlayerStats: function() {
+                Engine.call('Multiplayer.getStats', {}, (stats) => {
+                    if (stats) {
+                        document.getElementById('stat-rank').textContent = stats.rank || 'Unranked';
+                        document.getElementById('stat-mmr').textContent = stats.mmr || 1000;
+                        document.getElementById('stat-wins').textContent = stats.wins || 0;
+                        document.getElementById('stat-losses').textContent = stats.losses || 0;
+                        document.getElementById('stat-winrate').textContent = (stats.winrate || 0) + '%';
+                    }
+                });
+            },
+
+            loadFriendsList: function() {
+                Engine.call('Social.getFriends', {}, (friends) => {
+                    const list = document.getElementById('friends-list');
+                    list.innerHTML = '';
+
+                    (friends || []).forEach(friend => {
+                        const div = document.createElement('div');
+                        div.className = 'friend-item' + (friend.online ? ' online' : '');
+                        div.innerHTML = `
+                            <img class="friend-avatar" src="${friend.avatar || ''}" alt="">
+                            <div class="friend-info">
+                                <span class="friend-name">${friend.name}</span>
+                                <span class="friend-status">${friend.status || 'Offline'}</span>
+                            </div>
+                            ${friend.online ? '<button class="invite-btn" onclick="MultiplayerMenu.inviteFriend(\'' + friend.id + '\')">Invite</button>' : ''}
+                        `;
+                        list.appendChild(div);
+                    });
+                });
+            },
+
+            inviteFriend: function(friendId) {
+                Engine.call('Multiplayer.inviteFriend', { friendId: friendId });
+            },
+
+            startPingCheck: function() {
+                this.updatePing();
+                setInterval(() => this.updatePing(), 30000);
+            },
+
+            updatePing: function() {
+                Engine.call('Network.getPing', { region: this._selectedRegion }, (ping) => {
+                    document.getElementById('ping-display').textContent = `Ping: ${ping || '--'} ms`;
+                });
+            },
+
+            updatePlayersOnline: function(count) {
+                document.getElementById('players-online').textContent = `${count.toLocaleString()} Players Online`;
+            },
+
+            back: function() {
+                if (this._inQueue) {
+                    this.cancelQueue();
+                }
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'main' });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => MultiplayerMenu.init());
+        window.MultiplayerMenu = MultiplayerMenu;
+    </script>
+
+    <style>
+        /* Multiplayer specific styles */
+        .multiplayer-content {
+            position: relative;
+            z-index: var(--menu-z-content);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: var(--menu-spacing-lg);
+        }
+
+        .mp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--menu-spacing-lg);
+        }
+
+        .mp-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-xxl);
+            color: var(--menu-gold-light);
+        }
+
+        .mp-status {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--menu-red);
+        }
+
+        .status-indicator.online {
+            background: var(--menu-green);
+            box-shadow: 0 0 10px var(--menu-green);
+        }
+
+        .mp-description {
+            color: var(--menu-text-secondary);
+            margin-bottom: var(--menu-spacing-lg);
+        }
+
+        /* Matchmaking Layout */
+        .matchmaking-layout {
+            display: flex;
+            gap: var(--menu-spacing-xl);
+        }
+
+        .matchmaking-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-lg);
+        }
+
+        .matchmaking-sidebar {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-lg);
+        }
+
+        .matchmaking-panel {
+            border-radius: var(--menu-radius-md);
+            text-align: center;
+        }
+
+        .matchmaking-panel h2 {
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-sm);
+        }
+
+        /* Match Type Selector */
+        .match-type-selector {
+            display: flex;
+            gap: var(--menu-spacing-md);
+            justify-content: center;
+            margin: var(--menu-spacing-lg) 0;
+        }
+
+        .match-type {
+            flex: 1;
+            max-width: 200px;
+            padding: var(--menu-spacing-lg);
+            background: rgba(25, 22, 35, 0.8);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all var(--menu-transition-fast);
+            text-align: center;
+        }
+
+        .match-type:hover {
+            border-color: rgba(212, 168, 75, 0.5);
+        }
+
+        .match-type.selected {
+            border-color: var(--menu-gold);
+            background: rgba(212, 168, 75, 0.1);
+        }
+
+        .match-type-icon {
+            font-size: 32px;
+            margin-bottom: var(--menu-spacing-sm);
+        }
+
+        .match-type-name {
+            font-weight: 600;
+            color: var(--menu-gold-light);
+        }
+
+        .match-type-desc {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-text-secondary);
+        }
+
+        /* Game Mode Selector */
+        .game-mode-selector {
+            margin: var(--menu-spacing-lg) 0;
+        }
+
+        .game-mode-selector h3 {
+            color: var(--menu-gold);
+            margin-bottom: var(--menu-spacing-md);
+        }
+
+        .game-modes {
+            display: flex;
+            justify-content: center;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .mode-option {
+            cursor: pointer;
+        }
+
+        .mode-option input {
+            display: none;
+        }
+
+        .mode-label {
+            display: block;
+            padding: var(--menu-spacing-sm) var(--menu-spacing-lg);
+            background: rgba(25, 22, 35, 0.8);
+            border: 1px solid var(--menu-gold-dark);
+            transition: all var(--menu-transition-fast);
+        }
+
+        .mode-option input:checked + .mode-label {
+            background: var(--menu-gold);
+            color: #1a1510;
+            border-color: var(--menu-gold);
+        }
+
+        /* Region Selector */
+        .region-selector {
+            margin: var(--menu-spacing-lg) 0;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .region-selector h3 {
+            color: var(--menu-gold);
+            margin-bottom: var(--menu-spacing-md);
+        }
+
+        .ping-display {
+            margin-top: var(--menu-spacing-sm);
+            color: var(--menu-green);
+        }
+
+        /* Queue Status */
+        .queue-status {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-lg);
+            padding: var(--menu-spacing-lg);
+            background: rgba(212, 168, 75, 0.1);
+            border: 1px solid var(--menu-gold-dark);
+            border-radius: var(--menu-radius-md);
+        }
+
+        .queue-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--menu-gold-dark);
+            border-top-color: var(--menu-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .queue-time {
+            font-size: var(--menu-font-size-xl);
+            font-weight: bold;
+            color: var(--menu-gold-light);
+        }
+
+        .queue-players {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-text-secondary);
+        }
+
+        /* Stats Panel */
+        .player-stats-panel {
+            border-radius: var(--menu-radius-md);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: var(--menu-spacing-md);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: var(--menu-font-size-xl);
+            font-weight: bold;
+            color: var(--menu-gold-light);
+        }
+
+        .stat-label {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-text-secondary);
+        }
+
+        /* Friends Panel */
+        .friends-panel {
+            border-radius: var(--menu-radius-md);
+        }
+
+        .friends-list {
+            max-height: 200px;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-sm);
+            padding: var(--menu-spacing-sm);
+            border-bottom: 1px solid rgba(212, 168, 75, 0.1);
+        }
+
+        .friend-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--menu-gold-dark);
+        }
+
+        .friend-info {
+            flex: 1;
+        }
+
+        .friend-name {
+            display: block;
+            font-weight: 600;
+        }
+
+        .friend-status {
+            font-size: var(--menu-font-size-xs);
+            color: var(--menu-text-secondary);
+        }
+
+        .friend-item.online .friend-status {
+            color: var(--menu-green);
+        }
+
+        .invite-btn {
+            padding: 4px 8px;
+            font-size: var(--menu-font-size-xs);
+            background: var(--menu-gold-dark);
+            border: none;
+            color: var(--menu-text-primary);
+            cursor: pointer;
+        }
+
+        /* Lobby */
+        .lobby-layout {
+            display: flex;
+            gap: var(--menu-spacing-xl);
+        }
+
+        .lobby-options {
+            flex: 1;
+        }
+
+        .lobby-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--menu-spacing-lg);
+        }
+
+        .lobby-divider {
+            color: var(--menu-text-secondary);
+        }
+
+        .join-code-input {
+            display: flex;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .lobby-room {
+            border-radius: var(--menu-radius-md);
+        }
+
+        .lobby-room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--menu-spacing-lg);
+        }
+
+        .lobby-code-display {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .lobby-code-display .code {
+            font-family: monospace;
+            font-size: var(--menu-font-size-lg);
+            color: var(--menu-gold-light);
+            padding: var(--menu-spacing-xs) var(--menu-spacing-sm);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--menu-gold-dark);
+        }
+
+        .lobby-teams {
+            display: flex;
+            gap: var(--menu-spacing-xl);
+            margin-bottom: var(--menu-spacing-lg);
+        }
+
+        .lobby-team {
+            flex: 1;
+        }
+
+        .team-header {
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-md);
+            text-align: center;
+        }
+
+        .player-slot {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-sm);
+            padding: var(--menu-spacing-md);
+            background: rgba(25, 22, 35, 0.8);
+            margin-bottom: var(--menu-spacing-sm);
+            border: 1px solid rgba(212, 168, 75, 0.2);
+        }
+
+        .player-slot.empty {
+            justify-content: space-between;
+        }
+
+        .slot-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        .slot-status.ready {
+            color: var(--menu-green);
+        }
+
+        /* Game Browser */
+        .browser-layout {
+            display: flex;
+            gap: var(--menu-spacing-lg);
+        }
+
+        .browser-filters {
+            width: 250px;
+            border-radius: var(--menu-radius-md);
+        }
+
+        .filter-row {
+            margin-bottom: var(--menu-spacing-md);
+        }
+
+        .filter-row label {
+            display: block;
+            margin-bottom: var(--menu-spacing-xs);
+            color: var(--menu-text-secondary);
+        }
+
+        .game-list-container {
+            flex: 1;
+        }
+
+        .game-list-header,
+        .game-list-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 0.5fr 0.5fr 0.5fr;
+            gap: var(--menu-spacing-md);
+            padding: var(--menu-spacing-md);
+        }
+
+        .game-list-header {
+            background: rgba(212, 168, 75, 0.2);
+            font-weight: 600;
+            color: var(--menu-gold-light);
+        }
+
+        .game-list {
+            max-height: 400px;
+        }
+
+        .game-list-row {
+            background: rgba(25, 22, 35, 0.8);
+            border-bottom: 1px solid rgba(212, 168, 75, 0.1);
+            cursor: pointer;
+            transition: background var(--menu-transition-fast);
+        }
+
+        .game-list-row:hover {
+            background: rgba(45, 40, 60, 0.9);
+        }
+
+        .game-list-row.selected {
+            background: rgba(212, 168, 75, 0.2);
+            border-left: 3px solid var(--menu-gold);
+        }
+
+        .col-ping.good { color: var(--menu-green); }
+        .col-ping.medium { color: var(--menu-gold); }
+        .col-ping.bad { color: var(--menu-red); }
+
+        .game-details {
+            width: 300px;
+            border-radius: var(--menu-radius-md);
+        }
+
+        .detail-row {
+            margin-bottom: var(--menu-spacing-sm);
+        }
+
+        .no-selection {
+            color: var(--menu-text-secondary);
+            font-style: italic;
+        }
+
+        /* Party Panel */
+        .party-panel {
+            width: 300px;
+            border-radius: var(--menu-radius-md);
+        }
+
+        .party-member {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-sm);
+            padding: var(--menu-spacing-sm);
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--menu-gold-dark);
+        }
+
+        .member-status.leader {
+            color: var(--menu-gold);
+            font-size: var(--menu-font-size-xs);
+        }
+    </style>
+</body>
+</html>

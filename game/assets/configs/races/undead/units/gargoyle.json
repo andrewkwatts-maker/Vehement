@@ -1,0 +1,181 @@
+{
+  "id": "gargoyle",
+  "name": "Gargoyle",
+  "race": "undead",
+  "tier": 3,
+  "type": "flying",
+  "role": ["air_superiority", "harasser", "stone_form"],
+
+  "description": "Animated stone creatures that rule the skies. Can turn to stone for massive defense and regeneration but cannot move or attack.",
+  "lore": "Ancient stone guardians corrupted by the Scourge's dark magic. Gargoyles patrol the skies above undead territories, swooping down to tear apart aerial threats with their razor claws.",
+
+  "stats": {
+    "health": 410,
+    "healthRegen": 0.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 3,
+    "armorType": "light",
+    "moveSpeed": 350,
+    "turnRate": 0.9,
+    "collisionSize": 32,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 22,
+      "variance": 4,
+      "type": "normal",
+      "bonusVsAir": 15
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 350,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/stone_shard.glb",
+      "speed": 1000,
+      "arc": 0
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.3,
+    "acquisitionRange": 450,
+    "aggroRange": 400,
+    "prioritizeAir": true
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 200,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "stone_form",
+      "name": "Stone Form",
+      "type": "active",
+      "targetType": "none",
+      "description": "Turn to stone, landing and becoming immobile but gaining massive armor and health regeneration",
+      "cooldown": 5.0,
+      "manaCost": 0,
+      "effects": {
+        "armorBonus": 8,
+        "healthRegenBonus": 10,
+        "cannotMove": true,
+        "cannotAttack": true,
+        "becomesGround": true,
+        "armorType": "fortified"
+      },
+      "hotkey": "F",
+      "icon": "icons/abilities/stone_form.png"
+    },
+    {
+      "id": "prioritize_air",
+      "name": "Prioritize Air",
+      "type": "toggle",
+      "description": "Toggle to prioritize attacking air units over ground",
+      "effects": {
+        "targetAirFirst": true
+      },
+      "hotkey": "A",
+      "icon": "icons/abilities/prioritize_air.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "boneyard",
+    "buildTime": 30,
+    "cost": {
+      "gold": 185,
+      "lumber": 30,
+      "corpses": 0
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["boneyard"],
+      "technologies": [],
+      "age": "blight"
+    },
+    "hotkey": "G"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "creature_attack"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "creature_carapace"
+    },
+    "special": ["stone_form_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/gargoyle/ready.ogg",
+    "select": ["audio/units/gargoyle/select1.ogg", "audio/units/gargoyle/select2.ogg"],
+    "move": ["audio/units/gargoyle/move1.ogg", "audio/units/gargoyle/move2.ogg"],
+    "attack": ["audio/units/gargoyle/attack1.ogg", "audio/units/gargoyle/attack2.ogg"],
+    "death": "audio/units/gargoyle/death.ogg",
+    "stoneForm": "audio/units/gargoyle/stone_form.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/gargoyle.glb",
+    "texture": "textures/units/undead/gargoyle.png",
+    "portrait": "textures/portraits/gargoyle.png",
+    "icon": "textures/icons/gargoyle.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "gargoyle_idle",
+      "walk": "gargoyle_fly",
+      "attack": "gargoyle_attack",
+      "death": "gargoyle_death",
+      "stoneForm": "gargoyle_stone",
+      "unstone": "gargoyle_unstone"
+    },
+    "effects": {
+      "spawn": "effects/stone_animate.vfx",
+      "death": "effects/gargoyle_shatter.vfx",
+      "stoneForm": "effects/petrify.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "medium",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.2,
+    "preferredTargets": ["air", "ranged"],
+    "useStoneFormWhenLow": true,
+    "stoneFormThreshold": 0.25,
+    "harassBehavior": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isFlying": true,
+    "canLand": true
+  },
+
+  "bounty": {
+    "gold": 25,
+    "experience": 45
+  },
+
+  "pointValue": 2.5,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

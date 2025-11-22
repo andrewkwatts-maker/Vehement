@@ -1,0 +1,242 @@
+{
+  "id": "mothman",
+  "name": "Mothman",
+  "race": "cryptids",
+  "tier": 4,
+  "type": "legendary",
+  "role": ["prophecy", "disaster", "support", "debuff"],
+
+  "description": "The legendary harbinger of doom. Mothman appears before disasters, and its presence alone can turn the tide of battle through prophecy and calamity.",
+  "lore": "First sighted before the Silver Bridge collapse in Point Pleasant, Mothman is no mere creature - it is an omen made manifest. Whether it causes disasters or merely foresees them is unclear. What is certain is that where Mothman appears, catastrophe follows.",
+
+  "stats": {
+    "health": 800,
+    "healthRegen": 2.0,
+    "mana": 500,
+    "manaRegen": 3.0,
+    "armor": 4,
+    "armorType": "medium",
+    "moveSpeed": 320,
+    "turnRate": 0.8,
+    "collisionSize": 48,
+    "selectionScale": 1.3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 22,
+      "variance": 6,
+      "type": "magic"
+    },
+    "attackSpeed": 1.8,
+    "attackRange": 600,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/doom_bolt.glb",
+      "speed": 800,
+      "arc": 0
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.6,
+    "acquisitionRange": 800,
+    "aggroRange": 600
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 250,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "prophecy_of_doom",
+      "name": "Prophecy of Doom",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Marks an enemy with a doom prophecy; after 8 seconds, they take massive damage",
+      "cooldown": 45.0,
+      "manaCost": 150,
+      "range": 800,
+      "effects": {
+        "delay": 8.0,
+        "damage": 400,
+        "canBeDispelled": true,
+        "visibleToTarget": true,
+        "spreadOnKill": true
+      },
+      "hotkey": "P",
+      "icon": "icons/abilities/prophecy_of_doom.png"
+    },
+    {
+      "id": "disaster_sight",
+      "name": "Disaster Sight",
+      "type": "active",
+      "targetType": "area",
+      "description": "Reveals an area and marks all enemies for increased damage",
+      "cooldown": 30.0,
+      "manaCost": 100,
+      "range": 2500,
+      "effects": {
+        "revealRadius": 800,
+        "duration": 15.0,
+        "damageAmplification": 0.15,
+        "revealsInvisible": true
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/disaster_sight.png"
+    },
+    {
+      "id": "wing_dust",
+      "name": "Wing Dust",
+      "type": "active",
+      "targetType": "area",
+      "description": "Releases scales that confuse enemies, causing them to attack randomly",
+      "cooldown": 25.0,
+      "manaCost": 125,
+      "range": 600,
+      "effects": {
+        "radius": 350,
+        "duration": 6.0,
+        "confusionChance": 0.4,
+        "blindChance": 0.3
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/wing_dust.png"
+    },
+    {
+      "id": "calamity",
+      "name": "Calamity",
+      "type": "passive",
+      "description": "When Mothman dies, it triggers a disaster that damages all nearby enemies",
+      "effects": {
+        "deathRadius": 500,
+        "deathDamage": 300,
+        "stunDuration": 2.0,
+        "fearDuration": 4.0
+      },
+      "icon": "icons/abilities/calamity.png"
+    },
+    {
+      "id": "harbinger_presence",
+      "name": "Harbinger Presence",
+      "type": "passive",
+      "description": "Nearby enemies have reduced armor and are more susceptible to fear",
+      "effects": {
+        "radius": 500,
+        "armorReduction": 3,
+        "fearSusceptibility": 0.25
+      },
+      "icon": "icons/abilities/harbinger_presence.png"
+    },
+    {
+      "id": "omen_of_ruin",
+      "name": "Omen of Ruin",
+      "type": "active",
+      "targetType": "ground",
+      "ultimate": true,
+      "description": "Calls down a catastrophic event at a target location after a delay",
+      "cooldown": 120.0,
+      "manaCost": 250,
+      "range": 1500,
+      "effects": {
+        "delay": 4.0,
+        "radius": 400,
+        "damage": 500,
+        "stunDuration": 3.0,
+        "destroysBuildings": true,
+        "buildingDamage": 800
+      },
+      "hotkey": "O",
+      "icon": "icons/abilities/omen_of_ruin.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "nightmare_gate",
+    "buildTime": 70,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "essence": 100,
+      "dread": 50
+    },
+    "foodCost": 6,
+    "prerequisites": {
+      "buildings": ["nightmare_gate", "nexus_of_fear"],
+      "technologies": ["harbinger_summoning"],
+      "age": "nightmare"
+    },
+    "hotkey": "M"
+  },
+
+  "upgrades": {
+    "special": ["inevitable_doom", "catastrophe_mastery", "prophet_wings"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/mothman/ready.ogg",
+    "select": ["audio/units/mothman/select1.ogg", "audio/units/mothman/select2.ogg"],
+    "move": ["audio/units/mothman/move1.ogg", "audio/units/mothman/move2.ogg"],
+    "attack": ["audio/units/mothman/attack1.ogg"],
+    "death": "audio/units/mothman/death.ogg",
+    "prophecy": "audio/units/mothman/prophecy.ogg",
+    "calamity": "audio/units/mothman/calamity.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/mothman.glb",
+    "texture": "textures/units/cryptids/mothman.png",
+    "portrait": "textures/portraits/mothman.png",
+    "icon": "textures/icons/mothman.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "mothman_hover",
+      "walk": "mothman_fly",
+      "attack": "mothman_attack",
+      "death": "mothman_death",
+      "prophecy": "mothman_prophecy"
+    },
+    "effects": {
+      "spawn": "effects/mothman_spawn.vfx",
+      "death": "effects/mothman_calamity.vfx",
+      "prophecy": "effects/doom_prophecy.vfx",
+      "omen": "effects/omen_of_ruin.vfx",
+      "ambient": "effects/harbinger_aura.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 9,
+    "priority": "critical",
+    "behavior": "support_debuffer",
+    "fleeThreshold": 0.25,
+    "preferredTargets": ["high_value", "grouped"],
+    "useProphecyOnHighValue": true,
+    "useOmenOnBuildings": true,
+    "stayBehindFrontline": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "isFlying": true,
+    "isLegendary": true,
+    "causesFear": true,
+    "deathEffect": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 80,
+    "experience": 120
+  },
+
+  "pointValue": 6,
+  "supplyProvided": 0,
+  "supplyUsed": 6
+}

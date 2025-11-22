@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "objective.schema.json",
+  "title": "Mission Objective",
+  "description": "Defines a mission objective",
+  "type": "object",
+  "required": ["id", "title", "type"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^obj_[a-z0-9_]+$",
+      "description": "Unique objective identifier"
+    },
+    "title": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Objective title"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Detailed description"
+    },
+    "shortDescription": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Brief version for HUD"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["kill", "escort", "capture", "survive", "collect", "build", "research", "defend", "destroy", "reach", "train", "custom"],
+      "description": "Objective type"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["primary", "secondary", "bonus", "hidden"],
+      "default": "primary"
+    },
+    "target": {
+      "$ref": "#/definitions/objectiveTarget"
+    },
+    "timeLimit": {
+      "type": "number",
+      "description": "Time limit in seconds (-1 for none)"
+    },
+    "failOnTimeout": {
+      "type": "boolean",
+      "default": false
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Objective IDs that must complete first"
+    },
+    "blockedBy": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Objectives that block this one"
+    },
+    "reward": {
+      "$ref": "#/definitions/objectiveReward"
+    },
+    "bonusReward": {
+      "$ref": "#/definitions/objectiveReward",
+      "description": "Extra reward for fast completion"
+    },
+    "bonusTimeThreshold": {
+      "type": "number",
+      "description": "Seconds to complete for bonus"
+    },
+    "hints": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/objectiveHint" }
+    },
+    "ui": {
+      "$ref": "#/definitions/objectiveUI"
+    },
+    "scripts": {
+      "$ref": "#/definitions/objectiveScripts"
+    }
+  },
+
+  "definitions": {
+    "objectiveTarget": {
+      "type": "object",
+      "properties": {
+        "targetType": {
+          "type": "string",
+          "description": "Unit type, building type, or location ID"
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Specific entity ID"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "radius": { "type": "number" }
+          }
+        },
+        "duration": {
+          "type": "number",
+          "description": "Time requirement in seconds"
+        },
+        "resourceType": {
+          "type": "string"
+        },
+        "resourceAmount": {
+          "type": "integer"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "objectiveReward": {
+      "type": "object",
+      "properties": {
+        "gold": { "type": "integer", "default": 0 },
+        "wood": { "type": "integer", "default": 0 },
+        "stone": { "type": "integer", "default": 0 },
+        "metal": { "type": "integer", "default": 0 },
+        "food": { "type": "integer", "default": 0 },
+        "experience": { "type": "integer", "default": 0 },
+        "unlockedUnits": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedBuildings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedAbilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "storyFlag": {
+          "type": "string"
+        }
+      }
+    },
+
+    "objectiveHint": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Hint text"
+        },
+        "showAfterSeconds": {
+          "type": "number",
+          "default": 60
+        },
+        "icon": {
+          "type": "string"
+        }
+      },
+      "required": ["text"]
+    },
+
+    "objectiveUI": {
+      "type": "object",
+      "properties": {
+        "icon": { "type": "string" },
+        "soundOnComplete": { "type": "string" },
+        "soundOnFail": { "type": "string" },
+        "soundOnUpdate": { "type": "string" },
+        "showNotification": { "type": "boolean", "default": true },
+        "showOnMinimap": { "type": "boolean", "default": true },
+        "minimapIcon": { "type": "string" }
+      }
+    },
+
+    "objectiveScripts": {
+      "type": "object",
+      "properties": {
+        "onActivate": { "type": "string" },
+        "onProgress": { "type": "string" },
+        "onComplete": { "type": "string" },
+        "onFail": { "type": "string" },
+        "customCondition": { "type": "string" }
+      }
+    }
+  }
+}

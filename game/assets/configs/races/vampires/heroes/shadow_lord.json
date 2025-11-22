@@ -1,0 +1,283 @@
+{
+  "id": "shadow_lord",
+  "name": "Shadow Lord",
+  "race": "vampires",
+  "type": "hero",
+  "class": "assassin",
+  "role": ["assassin", "burst_damage", "stealth"],
+
+  "title": "Master of Shadows",
+  "description": "A deadly assassin who strikes from darkness. The Shadow Lord teleports between shadows and drains life with every attack.",
+  "lore": "The Shadow Lord has merged with darkness itself, becoming one with the shadows. He appears without warning, drains his victim's life force, and vanishes before retaliation is possible. Few have seen him and lived.",
+
+  "baseStats": {
+    "health": 600,
+    "healthRegen": 2.0,
+    "mana": 300,
+    "manaRegen": 1.25,
+    "armor": 4,
+    "armorType": "hero",
+    "moveSpeed": 330,
+    "turnRate": 0.8,
+    "collisionSize": 32,
+    "selectionScale": 1.15
+  },
+
+  "statsPerLevel": {
+    "health": 100,
+    "healthRegen": 0.3,
+    "mana": 35,
+    "manaRegen": 0.15,
+    "armor": 0.35,
+    "damage": 4
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 26,
+      "variance": 5,
+      "diceSides": 8,
+      "diceCount": 2,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.2,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.25,
+    "backswing": 0.25,
+    "primaryAttribute": "agility",
+    "lifeSteal": 0.25,
+    "criticalStrike": {
+      "enabled": true,
+      "chance": 0.20,
+      "multiplier": 2.5
+    },
+    "backstab": {
+      "enabled": true,
+      "multiplier": 1.5
+    }
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 18,
+      "perLevel": 2.2
+    },
+    "agility": {
+      "base": 26,
+      "perLevel": 3.2
+    },
+    "intelligence": {
+      "base": 18,
+      "perLevel": 1.8
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "critChanceBonus": 0.1,
+      "stealthDurationBonus": 0.5,
+      "shadowStepCooldownReduction": 0.25
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "stealthDurationPenalty": 0.5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "shadow_step",
+      "name": "Shadow Step",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "Q",
+      "description": "Teleport behind a target and strike, dealing bonus damage from behind",
+      "levels": [
+        {"manaCost": 60, "cooldown": 10, "bonusDamage": 50, "range": 600},
+        {"manaCost": 60, "cooldown": 8, "bonusDamage": 100, "range": 750},
+        {"manaCost": 60, "cooldown": 6, "bonusDamage": 150, "range": 900}
+      ],
+      "effects": {
+        "teleportsBehind": true,
+        "appliesBackstab": true,
+        "grantsSlowImmunity": 2.0
+      },
+      "icon": "icons/abilities/shadow_step.png"
+    },
+    {
+      "id": "life_tap",
+      "name": "Life Tap",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "W",
+      "description": "Drain life from a target over time, healing self and slowing the target",
+      "levels": [
+        {"manaCost": 80, "cooldown": 15, "damagePerSecond": 40, "duration": 5, "slowPercent": 0.25, "range": 400},
+        {"manaCost": 90, "cooldown": 13, "damagePerSecond": 60, "duration": 5, "slowPercent": 0.35, "range": 450},
+        {"manaCost": 100, "cooldown": 11, "damagePerSecond": 80, "duration": 5, "slowPercent": 0.45, "range": 500}
+      ],
+      "effects": {
+        "healPercent": 1.0,
+        "channeled": false,
+        "canMove": true
+      },
+      "icon": "icons/abilities/life_tap.png"
+    },
+    {
+      "id": "dark_embrace",
+      "name": "Dark Embrace",
+      "type": "active",
+      "targetType": "self",
+      "hotkey": "E",
+      "description": "Cloak in shadows, becoming invisible and gaining bonus damage on the next attack",
+      "levels": [
+        {"manaCost": 75, "cooldown": 25, "duration": 20, "bonusDamage": 100, "fadeTime": 1.5},
+        {"manaCost": 75, "cooldown": 22, "duration": 25, "bonusDamage": 175, "fadeTime": 1.0},
+        {"manaCost": 75, "cooldown": 18, "duration": 30, "bonusDamage": 250, "fadeTime": 0.5}
+      ],
+      "effects": {
+        "invisible": true,
+        "speedBonus": 0.2,
+        "ambushDamageApplies": true
+      },
+      "icon": "icons/abilities/dark_embrace.png"
+    },
+    {
+      "id": "nightmare_realm",
+      "name": "Nightmare Realm",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "D",
+      "ultimate": true,
+      "description": "Create a realm of nightmares, trapping enemies and dealing damage while you gain stealth inside",
+      "levels": [
+        {"manaCost": 200, "cooldown": 120, "radius": 500, "duration": 8, "damagePerSecond": 50, "bloodCost": 75}
+      ],
+      "effects": {
+        "enemiesCannotEscape": true,
+        "heroGainsInvisibility": true,
+        "enemyMissChance": 0.25,
+        "shadowLordCanAttackInvis": true
+      },
+      "icon": "icons/abilities/nightmare_realm.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "coffin_vault",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "blood": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["coffin_vault"],
+      "technologies": [],
+      "age": "fledgling"
+    },
+    "hotkey": "S"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/shadow_lord/ready.ogg",
+    "select": [
+      "audio/heroes/shadow_lord/select1.ogg",
+      "audio/heroes/shadow_lord/select2.ogg",
+      "audio/heroes/shadow_lord/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/shadow_lord/move1.ogg",
+      "audio/heroes/shadow_lord/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/shadow_lord/attack1.ogg",
+      "audio/heroes/shadow_lord/attack2.ogg"
+    ],
+    "death": "audio/heroes/shadow_lord/death.ogg",
+    "pissed": [
+      "audio/heroes/shadow_lord/pissed1.ogg",
+      "audio/heroes/shadow_lord/pissed2.ogg",
+      "audio/heroes/shadow_lord/pissed3.ogg"
+    ],
+    "shadowStep": "audio/heroes/shadow_lord/shadow_step.ogg",
+    "stealth": "audio/heroes/shadow_lord/stealth.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/shadow_lord.glb",
+    "texture": "textures/heroes/shadow_lord.png",
+    "portrait": "textures/portraits/shadow_lord_hero.png",
+    "icon": "textures/icons/shadow_lord_hero.png",
+    "scale": 1.15,
+    "animations": {
+      "idle": "shadow_idle",
+      "walk": "shadow_walk",
+      "attack": "shadow_attack",
+      "death": "shadow_death",
+      "cast": "shadow_cast",
+      "stealth": "shadow_stealth",
+      "shadowStep": "shadow_blink"
+    },
+    "effects": {
+      "spawn": "effects/shadow_hero_spawn.vfx",
+      "death": "effects/vampire_hero_death.vfx",
+      "shadowStep": "effects/shadow_step.vfx",
+      "lifeTap": "effects/life_tap.vfx",
+      "darkEmbrace": "effects/dark_embrace.vfx",
+      "nightmareRealm": "effects/nightmare_realm.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "assassin",
+    "targetPriority": ["caster", "ranged", "hero"],
+    "useShadowStepToEngage": true,
+    "darkEmbraceForAmbush": true,
+    "nightmareRealmOnMultiple": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isVampire": true,
+    "isUndead": true,
+    "isAssassin": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "immuneToPoison": true,
+    "canUseItems": true,
+    "canGainExperience": true,
+    "canStealth": true,
+    "hasLifeSteal": true,
+    "affectedByDayNight": true,
+    "autoRevivesAtCoffinVault": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 30,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 75,
+    "bloodPerLevel": 10
+  },
+  "autoRevive": {
+    "enabled": true,
+    "building": "coffin_vault",
+    "delay": 60,
+    "costReduction": 0.5
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 25,
+    "experienceBase": 100,
+    "experiencePerLevel": 30
+  }
+}

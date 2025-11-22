@@ -1,0 +1,217 @@
+{
+  "id": "acolyte",
+  "name": "Acolyte",
+  "race": "undead",
+  "tier": 1,
+  "type": "worker",
+  "role": ["worker", "summoner", "gold_gatherer"],
+
+  "description": "Dark cultists who serve the Scourge by harvesting gold and summoning buildings from the nether. Unlike other workers, Acolytes do not need to remain at buildings during construction.",
+  "lore": "Former priests and scholars corrupted by the promise of eternal life, Acolytes have forsaken their mortal beliefs to serve the Lich King. Their dark rituals call forth structures from the realm of the dead.",
+
+  "stats": {
+    "health": 220,
+    "healthRegen": 0.25,
+    "mana": 200,
+    "manaRegen": 0.67,
+    "armor": 0,
+    "armorType": "unarmored",
+    "moveSpeed": 220,
+    "turnRate": 0.6,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 5,
+      "variance": 1,
+      "type": "normal"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 90,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.3,
+    "acquisitionRange": 300,
+    "aggroRange": 200
+  },
+
+  "abilities": [
+    {
+      "id": "summon_building",
+      "name": "Summon Building",
+      "type": "active",
+      "targetType": "point",
+      "description": "Begins summoning a building at the target location. Acolyte is free to perform other tasks while building constructs itself.",
+      "cooldown": 0,
+      "manaCost": 0,
+      "effects": {
+        "summonDuration": "varies_by_building",
+        "freeAfterCast": true,
+        "requiresBlight": true
+      },
+      "hotkey": "B",
+      "icon": "icons/abilities/summon_building.png"
+    },
+    {
+      "id": "gather_gold",
+      "name": "Mine Gold",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Enter a haunted gold mine to gather gold. Multiple Acolytes can mine simultaneously.",
+      "effects": {
+        "goldPerTrip": 10,
+        "tripTime": 5.0,
+        "maxMinersPerMine": 5
+      },
+      "hotkey": "G",
+      "icon": "icons/abilities/mine_gold.png"
+    },
+    {
+      "id": "sacrifice",
+      "name": "Sacrifice",
+      "type": "active",
+      "targetType": "building",
+      "requiresResearch": "sacrifice_upgrade",
+      "description": "Sacrifice the Acolyte to instantly heal a building",
+      "cooldown": 0,
+      "manaCost": 0,
+      "effects": {
+        "healAmount": 250,
+        "killsUnit": true
+      },
+      "hotkey": "S",
+      "icon": "icons/abilities/sacrifice.png"
+    },
+    {
+      "id": "unsummon",
+      "name": "Unsummon",
+      "type": "active",
+      "targetType": "building",
+      "description": "Unsummon a friendly building, returning some resources",
+      "effects": {
+        "refundPercent": 0.5,
+        "unsummonTime": 10.0
+      },
+      "hotkey": "U",
+      "icon": "icons/abilities/unsummon.png"
+    }
+  ],
+
+  "gathering": {
+    "canGatherLumber": false,
+    "canGatherGold": true,
+    "goldCapacity": 10,
+    "goldPerTrip": 10,
+    "gatherSpeed": 1.0,
+    "canGatherCorpses": false,
+    "miningBehavior": "haunted_mine"
+  },
+
+  "construction": {
+    "canBuild": true,
+    "summonStyle": true,
+    "freeAfterSummon": true,
+    "requiresBlight": true,
+    "buildSpeed": 1.0,
+    "repairSpeed": 0.5
+  },
+
+  "production": {
+    "producedAt": "necropolis",
+    "buildTime": 15,
+    "cost": {
+      "gold": 75,
+      "lumber": 0,
+      "corpses": 0
+    },
+    "foodCost": 1,
+    "prerequisites": {
+      "buildings": ["necropolis"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "A"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 0,
+      "maxLevel": 0,
+      "researchId": null
+    },
+    "armor": {
+      "perLevel": 0,
+      "maxLevel": 0,
+      "researchId": null
+    },
+    "special": ["sacrifice_upgrade", "acolyte_training"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/acolyte/ready.ogg",
+    "select": ["audio/units/acolyte/select1.ogg", "audio/units/acolyte/select2.ogg"],
+    "move": ["audio/units/acolyte/move1.ogg", "audio/units/acolyte/move2.ogg"],
+    "attack": ["audio/units/acolyte/attack1.ogg"],
+    "death": "audio/units/acolyte/death.ogg",
+    "pissed": [
+      "audio/units/acolyte/pissed1.ogg",
+      "audio/units/acolyte/pissed2.ogg",
+      "audio/units/acolyte/pissed3.ogg"
+    ]
+  },
+
+  "visuals": {
+    "model": "models/units/undead/acolyte.glb",
+    "texture": "textures/units/undead/acolyte.png",
+    "portrait": "textures/portraits/acolyte.png",
+    "icon": "textures/icons/acolyte.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "acolyte_idle",
+      "walk": "acolyte_walk",
+      "attack": "acolyte_attack",
+      "death": "acolyte_death",
+      "summon": "acolyte_summon",
+      "gather": "acolyte_gather"
+    },
+    "effects": {
+      "spawn": "effects/dark_summon.vfx",
+      "death": "effects/acolyte_death.vfx",
+      "summonBuilding": "effects/building_summon.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 1,
+    "priority": "high",
+    "behavior": "passive",
+    "fleeThreshold": 0.3,
+    "preferredTargets": [],
+    "protectWorkers": true,
+    "autoGather": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": true,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "summoner": true
+  },
+
+  "bounty": {
+    "gold": 10,
+    "experience": 12
+  },
+
+  "pointValue": 0.5,
+  "supplyProvided": 0,
+  "supplyUsed": 1
+}

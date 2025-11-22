@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Editor - Conquest of Realms</title>
+    <link rel="stylesheet" href="../../css/ui_base.css">
+    <link rel="stylesheet" href="../../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../../css/ui_animations.css">
+    <link rel="stylesheet" href="../../css/menu_theme.css">
+</head>
+<body>
+    <div id="editor-menu" class="menu-container">
+        <div class="parallax-container">
+            <div class="parallax-layer layer-back"></div>
+            <div class="parallax-overlay"></div>
+        </div>
+
+        <div class="editor-content">
+            <!-- Header -->
+            <div class="editor-header">
+                <button class="menu-btn menu-btn-sm" onclick="EditorMenu.back()">&larr; Back</button>
+                <h1 class="editor-title">Map Editor</h1>
+                <button class="menu-btn menu-btn-sm" onclick="EditorMenu.openTutorial()">? Tutorial</button>
+            </div>
+
+            <div class="editor-layout">
+                <!-- Main Actions -->
+                <div class="editor-main">
+                    <div class="editor-actions-grid">
+                        <!-- New Map -->
+                        <div class="editor-action-card" onclick="EditorMenu.newMap()">
+                            <div class="action-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            </div>
+                            <div class="action-title">New Map</div>
+                            <div class="action-desc">Create a new map from scratch</div>
+                        </div>
+
+                        <!-- Load Map -->
+                        <div class="editor-action-card" onclick="EditorMenu.loadMap()">
+                            <div class="action-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+                            </div>
+                            <div class="action-title">Load Map</div>
+                            <div class="action-desc">Open an existing map file</div>
+                        </div>
+
+                        <!-- Import -->
+                        <div class="editor-action-card" onclick="EditorMenu.importMap()">
+                            <div class="action-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                            </div>
+                            <div class="action-title">Import</div>
+                            <div class="action-desc">Import from file or URL</div>
+                        </div>
+
+                        <!-- Export -->
+                        <div class="editor-action-card" onclick="EditorMenu.exportMap()">
+                            <div class="action-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            </div>
+                            <div class="action-title">Export</div>
+                            <div class="action-desc">Export map to file</div>
+                        </div>
+                    </div>
+
+                    <!-- Templates Section -->
+                    <div class="menu-panel templates-panel">
+                        <div class="menu-panel-header">
+                            <h3 class="menu-panel-title">Map Templates</h3>
+                            <select class="menu-select" id="template-filter" onchange="EditorMenu.filterTemplates()">
+                                <option value="">All Templates</option>
+                                <option value="melee">Melee</option>
+                                <option value="coop">Co-op</option>
+                                <option value="scenario">Scenario</option>
+                            </select>
+                        </div>
+                        <div class="templates-grid menu-scrollable" id="templates-grid">
+                            <!-- Templates populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Maps Sidebar -->
+                <div class="editor-sidebar">
+                    <div class="menu-panel recent-maps-panel">
+                        <h3>Recent Maps</h3>
+                        <div class="recent-maps-list menu-scrollable" id="recent-maps">
+                            <!-- Recent maps populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="menu-panel editor-tips">
+                        <h3>Quick Tips</h3>
+                        <ul class="tips-list">
+                            <li>Press <kbd>Ctrl+S</kbd> to quick save</li>
+                            <li>Use <kbd>Tab</kbd> to cycle layers</li>
+                            <li>Hold <kbd>Shift</kbd> for multi-select</li>
+                            <li>Press <kbd>F5</kbd> to test play</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Map Modal -->
+        <div id="new-map-modal" class="menu-modal-overlay" style="display: none;">
+            <div class="menu-panel menu-panel-ornate new-map-modal">
+                <div class="menu-panel-header">
+                    <h3 class="menu-panel-title">Create New Map</h3>
+                    <button class="menu-panel-close" onclick="EditorMenu.closeNewMapModal()">&times;</button>
+                </div>
+                <div class="new-map-form">
+                    <div class="form-row">
+                        <label>Map Name</label>
+                        <input type="text" class="menu-input" id="new-map-name" placeholder="My Map" maxlength="50">
+                    </div>
+                    <div class="form-row">
+                        <label>Map Size</label>
+                        <div class="size-selector" id="size-selector">
+                            <div class="size-option" data-size="64" onclick="EditorMenu.selectSize(64)">
+                                <span class="size-value">64x64</span>
+                                <span class="size-label">Tiny</span>
+                            </div>
+                            <div class="size-option" data-size="128" onclick="EditorMenu.selectSize(128)">
+                                <span class="size-value">128x128</span>
+                                <span class="size-label">Small</span>
+                            </div>
+                            <div class="size-option selected" data-size="256" onclick="EditorMenu.selectSize(256)">
+                                <span class="size-value">256x256</span>
+                                <span class="size-label">Medium</span>
+                            </div>
+                            <div class="size-option" data-size="512" onclick="EditorMenu.selectSize(512)">
+                                <span class="size-value">512x512</span>
+                                <span class="size-label">Large</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label>Tileset</label>
+                        <select class="menu-select" id="new-map-tileset">
+                            <option value="grasslands">Grasslands</option>
+                            <option value="desert">Desert</option>
+                            <option value="snow">Snow</option>
+                            <option value="volcanic">Volcanic</option>
+                            <option value="swamp">Swamp</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Starting Template</label>
+                        <select class="menu-select" id="new-map-template">
+                            <option value="blank">Blank Canvas</option>
+                            <option value="terrain">Pre-generated Terrain</option>
+                            <option value="symmetric">Symmetric (2 players)</option>
+                            <option value="quad">Quad Symmetric (4 players)</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="menu-btn menu-btn-sm" onclick="EditorMenu.closeNewMapModal()">Cancel</button>
+                        <button class="menu-btn menu-btn-primary" onclick="EditorMenu.createNewMap()">Create</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/ui_core.js"></script>
+    <script src="../../js/menu_core.js"></script>
+    <script>
+        const EditorMenu = {
+            _selectedSize: 256,
+            _templates: [],
+            _recentMaps: [],
+
+            init: function() {
+                MenuCore.init();
+                this.loadTemplates();
+                this.loadRecentMaps();
+            },
+
+            loadTemplates: function() {
+                this._templates = [
+                    { id: 1, name: "Valley Battle", type: "melee", size: "256x256", players: "2-4", preview: "" },
+                    { id: 2, name: "Island Warfare", type: "melee", size: "512x512", players: "4-8", preview: "" },
+                    { id: 3, name: "Defense Hold", type: "coop", size: "256x256", players: "1-4", preview: "" },
+                    { id: 4, name: "The Siege", type: "scenario", size: "384x384", players: "1", preview: "" },
+                    { id: 5, name: "River Crossing", type: "melee", size: "256x256", players: "2", preview: "" },
+                    { id: 6, name: "Survival Arena", type: "coop", size: "128x128", players: "1-2", preview: "" }
+                ];
+                this.renderTemplates();
+            },
+
+            renderTemplates: function(filter = '') {
+                const grid = document.getElementById('templates-grid');
+                const filtered = filter ? this._templates.filter(t => t.type === filter) : this._templates;
+
+                grid.innerHTML = filtered.map(t => `
+                    <div class="template-card" onclick="EditorMenu.useTemplate(${t.id})">
+                        <div class="template-preview" style="background-image: url('${t.preview}')"></div>
+                        <div class="template-info">
+                            <div class="template-name">${t.name}</div>
+                            <div class="template-meta">${t.size} | ${t.players} players</div>
+                            <span class="template-type type-${t.type}">${t.type}</span>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            filterTemplates: function() {
+                this.renderTemplates(document.getElementById('template-filter').value);
+            },
+
+            loadRecentMaps: function() {
+                Engine.call('Editor.getRecentMaps', {}, (maps) => {
+                    this._recentMaps = maps || [
+                        { name: "My Battle Map", modified: "2 hours ago", size: "256x256" },
+                        { name: "Test Scenario", modified: "Yesterday", size: "128x128" },
+                        { name: "Co-op Defense v2", modified: "3 days ago", size: "384x384" }
+                    ];
+                    this.renderRecentMaps();
+                });
+            },
+
+            renderRecentMaps: function() {
+                const list = document.getElementById('recent-maps');
+                list.innerHTML = this._recentMaps.map((m, i) => `
+                    <div class="recent-map-item" onclick="EditorMenu.openRecentMap(${i})">
+                        <div class="map-icon">📄</div>
+                        <div class="map-info">
+                            <div class="map-name">${m.name}</div>
+                            <div class="map-meta">${m.size} - ${m.modified}</div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            newMap: function() {
+                document.getElementById('new-map-modal').style.display = 'flex';
+            },
+
+            closeNewMapModal: function() {
+                document.getElementById('new-map-modal').style.display = 'none';
+            },
+
+            selectSize: function(size) {
+                this._selectedSize = size;
+                document.querySelectorAll('.size-option').forEach(o => o.classList.remove('selected'));
+                document.querySelector(`.size-option[data-size="${size}"]`).classList.add('selected');
+            },
+
+            createNewMap: function() {
+                const settings = {
+                    name: document.getElementById('new-map-name').value || 'Untitled Map',
+                    size: this._selectedSize,
+                    tileset: document.getElementById('new-map-tileset').value,
+                    template: document.getElementById('new-map-template').value
+                };
+                Engine.call('Editor.createMap', settings);
+                this.closeNewMapModal();
+            },
+
+            loadMap: function() {
+                Engine.call('Editor.showOpenDialog', {});
+            },
+
+            importMap: function() {
+                Engine.call('Editor.showImportDialog', {});
+            },
+
+            exportMap: function() {
+                Engine.call('Editor.showExportDialog', {});
+            },
+
+            useTemplate: function(templateId) {
+                const template = this._templates.find(t => t.id === templateId);
+                if (template) {
+                    Engine.call('Editor.loadTemplate', { templateId: templateId });
+                }
+            },
+
+            openRecentMap: function(index) {
+                if (this._recentMaps[index]) {
+                    Engine.call('Editor.openRecent', { index: index });
+                }
+            },
+
+            openTutorial: function() {
+                Engine.call('Editor.openTutorial', {});
+            },
+
+            back: function() {
+                Engine.call('Menu.navigate', { page: 'main' });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => EditorMenu.init());
+        window.EditorMenu = EditorMenu;
+    </script>
+
+    <style>
+        .editor-content {
+            position: relative;
+            z-index: var(--menu-z-content);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: var(--menu-spacing-lg);
+        }
+
+        .editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--menu-spacing-xl);
+        }
+
+        .editor-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-xxl);
+            color: var(--menu-gold-light);
+        }
+
+        .editor-layout {
+            display: flex;
+            gap: var(--menu-spacing-xl);
+            flex: 1;
+        }
+
+        .editor-main { flex: 1; }
+        .editor-sidebar { width: 320px; display: flex; flex-direction: column; gap: var(--menu-spacing-lg); }
+
+        .editor-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--menu-spacing-lg);
+            margin-bottom: var(--menu-spacing-xl);
+        }
+
+        .editor-action-card {
+            padding: var(--menu-spacing-xl);
+            background: var(--menu-bg-panel);
+            border: 2px solid transparent;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--menu-transition-normal);
+        }
+
+        .editor-action-card:hover {
+            border-color: var(--menu-gold);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto var(--menu-spacing-md);
+            background: rgba(212, 168, 75, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-icon svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--menu-gold);
+        }
+
+        .action-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-lg);
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-xs);
+        }
+
+        .action-desc {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-text-secondary);
+        }
+
+        .templates-panel { border-radius: var(--menu-radius-md); }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--menu-spacing-md);
+            max-height: 350px;
+        }
+
+        .template-card {
+            background: rgba(25, 22, 35, 0.8);
+            border: 1px solid rgba(212, 168, 75, 0.2);
+            cursor: pointer;
+            transition: all var(--menu-transition-fast);
+            overflow: hidden;
+        }
+
+        .template-card:hover {
+            border-color: var(--menu-gold);
+            transform: scale(1.02);
+        }
+
+        .template-preview {
+            height: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .template-info { padding: var(--menu-spacing-sm); }
+        .template-name { font-weight: 600; color: var(--menu-text-primary); }
+        .template-meta { font-size: var(--menu-font-size-xs); color: var(--menu-text-secondary); }
+        .template-type { font-size: var(--menu-font-size-xs); padding: 2px 6px; border-radius: 3px; }
+        .type-melee { background: var(--menu-red); color: white; }
+        .type-coop { background: var(--menu-green); color: white; }
+        .type-scenario { background: var(--menu-purple); color: white; }
+
+        .recent-maps-panel { border-radius: var(--menu-radius-md); }
+        .recent-maps-list { max-height: 300px; }
+
+        .recent-map-item {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-md);
+            padding: var(--menu-spacing-md);
+            border-bottom: 1px solid rgba(212, 168, 75, 0.1);
+            cursor: pointer;
+            transition: background var(--menu-transition-fast);
+        }
+
+        .recent-map-item:hover { background: rgba(212, 168, 75, 0.1); }
+        .map-icon { font-size: 24px; }
+        .map-name { font-weight: 600; }
+        .map-meta { font-size: var(--menu-font-size-xs); color: var(--menu-text-secondary); }
+
+        .editor-tips { border-radius: var(--menu-radius-md); }
+        .tips-list { list-style: none; padding: 0; }
+        .tips-list li { margin-bottom: var(--menu-spacing-sm); color: var(--menu-text-secondary); }
+        .tips-list kbd {
+            background: rgba(212, 168, 75, 0.2);
+            border: 1px solid var(--menu-gold-dark);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .new-map-modal { width: 500px; }
+        .new-map-form { padding: var(--menu-spacing-md); }
+        .form-row { margin-bottom: var(--menu-spacing-lg); }
+        .form-row label { display: block; margin-bottom: var(--menu-spacing-sm); color: var(--menu-gold-light); }
+
+        .size-selector {
+            display: flex;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .size-option {
+            flex: 1;
+            padding: var(--menu-spacing-md);
+            background: rgba(25, 22, 35, 0.8);
+            border: 2px solid transparent;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--menu-transition-fast);
+        }
+
+        .size-option:hover { border-color: rgba(212, 168, 75, 0.5); }
+        .size-option.selected { border-color: var(--menu-gold); background: rgba(212, 168, 75, 0.1); }
+        .size-value { display: block; font-weight: 600; color: var(--menu-gold-light); }
+        .size-label { font-size: var(--menu-font-size-xs); color: var(--menu-text-secondary); }
+
+        .form-actions { display: flex; gap: var(--menu-spacing-md); justify-content: flex-end; }
+    </style>
+</body>
+</html>

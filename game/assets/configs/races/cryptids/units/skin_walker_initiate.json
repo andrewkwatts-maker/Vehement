@@ -1,0 +1,204 @@
+{
+  "id": "skin_walker_initiate",
+  "name": "Skinwalker Initiate",
+  "race": "cryptids",
+  "tier": 1,
+  "type": "melee",
+  "role": ["melee", "scout", "shapeshifter"],
+
+  "description": "A young skinwalker learning the ancient arts of transformation. Can assume a basic human disguise to infiltrate enemy lines.",
+  "lore": "Those who walk the path of the skin begin as initiates, learning to shed their true forms. They are taught that identity is merely a garment - one that can be changed at will.",
+
+  "stats": {
+    "health": 380,
+    "healthRegen": 1.0,
+    "mana": 150,
+    "manaRegen": 0.75,
+    "armor": 2,
+    "armorType": "medium",
+    "moveSpeed": 300,
+    "turnRate": 0.8,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 15,
+      "variance": 3,
+      "type": "normal"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "acquisitionRange": 500,
+    "aggroRange": 400
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "human_disguise",
+      "name": "Human Disguise",
+      "type": "active",
+      "targetType": "none",
+      "description": "Assumes the appearance of a human peasant, becoming undetectable as an enemy",
+      "cooldown": 30.0,
+      "manaCost": 40,
+      "essenceCost": 10,
+      "effects": {
+        "duration": 45.0,
+        "disguiseAs": "human_peasant",
+        "detectableByTowers": true,
+        "breaksOnAttack": true,
+        "breaksOnAbility": true
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/human_disguise.png"
+    },
+    {
+      "id": "wolf_form_basic",
+      "name": "Wolf Form",
+      "type": "active",
+      "targetType": "none",
+      "requiresResearch": "basic_transformation",
+      "description": "Transforms into a wolf, gaining speed and attack damage",
+      "cooldown": 20.0,
+      "manaCost": 30,
+      "essenceCost": 15,
+      "effects": {
+        "duration": 30.0,
+        "moveSpeedBonus": 80,
+        "attackDamageBonus": 8,
+        "newModel": "wolf",
+        "cannotCast": true
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/wolf_form.png"
+    },
+    {
+      "id": "ambush",
+      "name": "Ambush",
+      "type": "passive",
+      "description": "First attack from disguise or stealth deals 50% bonus damage",
+      "effects": {
+        "bonusDamage": 0.5,
+        "appliesOnFirstAttack": true
+      },
+      "icon": "icons/abilities/ambush.png"
+    },
+    {
+      "id": "unnerving_presence",
+      "name": "Unnerving Presence",
+      "type": "passive",
+      "description": "Nearby enemies have slightly reduced attack speed",
+      "effects": {
+        "attackSpeedReduction": 0.1,
+        "radius": 200
+      },
+      "icon": "icons/abilities/unnerving_presence.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "den",
+    "buildTime": 22,
+    "cost": {
+      "gold": 140,
+      "lumber": 20,
+      "essence": 10
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["den"],
+      "technologies": [],
+      "age": "whisper"
+    },
+    "hotkey": "S"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["basic_transformation", "enhanced_disguise", "scent_tracking"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/skinwalker_initiate/ready.ogg",
+    "select": ["audio/units/skinwalker_initiate/select1.ogg", "audio/units/skinwalker_initiate/select2.ogg"],
+    "move": ["audio/units/skinwalker_initiate/move1.ogg", "audio/units/skinwalker_initiate/move2.ogg"],
+    "attack": ["audio/units/skinwalker_initiate/attack1.ogg", "audio/units/skinwalker_initiate/attack2.ogg"],
+    "death": "audio/units/skinwalker_initiate/death.ogg",
+    "transform": "audio/units/skinwalker_initiate/transform.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/skinwalker_initiate.glb",
+    "texture": "textures/units/cryptids/skinwalker_initiate.png",
+    "portrait": "textures/portraits/skinwalker_initiate.png",
+    "icon": "textures/icons/skinwalker_initiate.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "skinwalker_idle",
+      "walk": "skinwalker_walk",
+      "attack": "skinwalker_attack",
+      "death": "skinwalker_death",
+      "transform": "skinwalker_transform"
+    },
+    "effects": {
+      "spawn": "effects/shadow_spawn.vfx",
+      "death": "effects/skinwalker_death.vfx",
+      "transform": "effects/transformation.vfx",
+      "disguise": "effects/disguise.vfx"
+    },
+    "alternateModels": {
+      "wolf": "models/units/cryptids/wolf_form.glb",
+      "human_disguise": "models/units/humans/peasant.glb"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 3,
+    "priority": "medium",
+    "behavior": "melee_assassin",
+    "fleeThreshold": 0.2,
+    "preferredTargets": ["worker", "caster"],
+    "useDisguiseToInfiltrate": true,
+    "transformInCombat": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": true,
+    "leavesCorpse": true,
+    "canTransform": true,
+    "canDisguise": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 18,
+    "experience": 25
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

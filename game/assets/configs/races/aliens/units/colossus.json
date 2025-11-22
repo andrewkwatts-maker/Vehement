@@ -1,0 +1,156 @@
+{
+  "id": "colossus",
+  "name": "Colossus",
+  "display_name": "Colossus",
+  "description": "A towering siege walker that strides across the battlefield on impossibly tall legs. The Colossus sweeps twin thermal lances across enemy formations, devastating tightly packed infantry with searing beam attacks.",
+  "race": "aliens",
+  "tier": 3,
+  "unit_type": "siege",
+  "classification": ["mechanical", "walker", "massive", "armored"],
+
+  "stats": {
+    "health": 350,
+    "health_regen": 0,
+    "shield": 150,
+    "shield_regen": 3.0,
+    "shield_regen_delay": 10.0,
+    "armor": 1,
+    "shield_armor": 0,
+    "move_speed": 3.15,
+    "acceleration": 999,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 15,
+    "attack_bonus_damage": 5,
+    "bonus_vs": ["light"],
+    "attacks_per_swing": 2,
+    "attack_speed": 1.65,
+    "attack_range": 7,
+    "extended_range": 9,
+    "attack_type": "beam",
+    "damage_type": "normal",
+    "targets": ["ground"],
+    "beam": {
+      "linear": true,
+      "width": 0.5,
+      "length": 7.0,
+      "sweep_speed": 2.0
+    },
+    "splash": {
+      "enabled": true,
+      "linear_splash": true,
+      "width": 0.5
+    }
+  },
+
+  "production": {
+    "build_time": 75,
+    "warp_time": 0,
+    "supply_cost": 6,
+    "resource_cost": {
+      "minerals": 300,
+      "vespene": 200
+    },
+    "power_cost": 0,
+    "produced_at": "robotics_facility",
+    "requirements": ["robotics_bay"],
+    "hotkey": "C"
+  },
+
+  "abilities": [
+    {
+      "id": "cliff_walk",
+      "name": "Cliff Walk",
+      "description": "The Colossus's long legs allow it to traverse cliffs and rough terrain that other ground units cannot cross.",
+      "type": "passive"
+    },
+    {
+      "id": "extended_thermal_lance",
+      "name": "Extended Thermal Lance",
+      "description": "Increases attack range.",
+      "type": "passive",
+      "range_bonus": 2,
+      "requires_upgrade": "extended_thermal_lance_upgrade",
+      "unlocked_default": false
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "extended_thermal_lance_upgrade",
+      "name": "Extended Thermal Lance",
+      "description": "Increases Colossus attack range by 2",
+      "researched_at": "robotics_bay",
+      "cost": {
+        "minerals": 150,
+        "vespene": 150
+      },
+      "research_time": 140
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_armored": true,
+    "is_massive": true,
+    "can_walk_cliffs": true,
+    "cliff_level": 2,
+    "height": "tall",
+    "targetable_by_air_weapons": true,
+    "cargo_size": 8
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 25,
+    "selection_radius": 1.5,
+    "target_radius": 1.0
+  },
+
+  "visuals": {
+    "model": "models/aliens/colossus.fbx",
+    "texture": "textures/aliens/colossus.png",
+    "icon": "icons/aliens/colossus.png",
+    "wireframe": "wireframes/aliens/colossus.png",
+    "portrait": "portraits/aliens/colossus.png",
+    "scale": 2.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "climb": "anim_climb",
+      "death": "anim_death"
+    },
+    "effects": {
+      "thermal_lance": "fx_thermal_lance",
+      "ground_impact": "fx_colossus_step",
+      "shields": "fx_colossus_shields"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/colossus_ready.ogg",
+    "selected": ["audio/aliens/colossus_select1.ogg"],
+    "command": ["audio/aliens/colossus_command1.ogg"],
+    "attack": "audio/aliens/colossus_beam.ogg",
+    "step": "audio/aliens/colossus_step.ogg",
+    "death": "audio/aliens/colossus_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "siege",
+    "priority_targets": ["light", "biological", "cluster"],
+    "flee_when_attacked": false,
+    "micro_level": "medium",
+    "preferred_formation": "back",
+    "requires_anti_air_escort": true
+  }
+}

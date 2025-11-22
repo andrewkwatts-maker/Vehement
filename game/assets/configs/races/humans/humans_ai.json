@@ -1,0 +1,212 @@
+{
+    "id": "human_ai",
+    "race": "humans",
+    "description": "AI behavior profile for the Kingdom of Valorheim",
+
+    "personality": {
+        "name": "Valorheim Commander",
+        "aggression": 0.6,
+        "expansion": 0.5,
+        "defense": 0.8,
+        "economy": 0.7,
+        "tech_focus": 0.6,
+        "risk_tolerance": 0.4
+    },
+
+    "build_orders": {
+        "standard": {
+            "name": "Balanced Build",
+            "description": "Well-rounded opening suitable for most situations",
+            "priority": 1,
+            "steps": [
+                {"action": "train", "unit": "human_peasant", "count": 3},
+                {"action": "build", "building": "human_farm"},
+                {"action": "train", "unit": "human_peasant", "count": 2},
+                {"action": "build", "building": "human_barracks"},
+                {"action": "train", "unit": "human_peasant", "count": 2},
+                {"action": "build", "building": "human_lumber_mill"},
+                {"action": "train", "unit": "human_militia", "count": 4},
+                {"action": "build", "building": "human_farm"},
+                {"action": "train", "unit": "human_peasant", "count": 2},
+                {"action": "advance_age", "target_age": 2}
+            ]
+        },
+        "rush": {
+            "name": "Military Rush",
+            "description": "Aggressive early military pressure",
+            "priority": 2,
+            "conditions": {"enemy_nearby": true, "map_size": "small"},
+            "steps": [
+                {"action": "train", "unit": "human_peasant", "count": 2},
+                {"action": "build", "building": "human_barracks"},
+                {"action": "train", "unit": "human_peasant", "count": 1},
+                {"action": "train", "unit": "human_militia", "count": 6},
+                {"action": "build", "building": "human_farm"},
+                {"action": "attack", "target": "enemy_base"}
+            ]
+        },
+        "turtle": {
+            "name": "Defensive Turtle",
+            "description": "Focus on defense and economy",
+            "priority": 2,
+            "conditions": {"enemy_aggressive": true},
+            "steps": [
+                {"action": "train", "unit": "human_peasant", "count": 5},
+                {"action": "build", "building": "human_farm"},
+                {"action": "build", "building": "human_barracks"},
+                {"action": "build", "building": "human_guard_tower"},
+                {"action": "build", "building": "human_wall_segment", "count": 10},
+                {"action": "train", "unit": "human_militia", "count": 4},
+                {"action": "advance_age", "target_age": 2},
+                {"action": "build", "building": "human_guard_tower", "count": 2}
+            ]
+        },
+        "fast_castle": {
+            "name": "Fast Castle",
+            "description": "Rush to Castle Age for powerful units",
+            "priority": 3,
+            "conditions": {"map_size": "large", "enemy_far": true},
+            "steps": [
+                {"action": "train", "unit": "human_peasant", "count": 8},
+                {"action": "build", "building": "human_farm", "count": 3},
+                {"action": "build", "building": "human_lumber_mill"},
+                {"action": "advance_age", "target_age": 2},
+                {"action": "build", "building": "human_blacksmith"},
+                {"action": "build", "building": "human_barracks"},
+                {"action": "advance_age", "target_age": 3},
+                {"action": "train", "unit": "human_knight", "count": 4}
+            ]
+        }
+    },
+
+    "unit_composition": {
+        "early_game": {
+            "human_militia": 0.6,
+            "human_archer": 0.3,
+            "human_scout": 0.1
+        },
+        "mid_game": {
+            "human_footman": 0.35,
+            "human_crossbowman": 0.25,
+            "human_knight": 0.20,
+            "human_priest": 0.15,
+            "human_siege_ram": 0.05
+        },
+        "late_game": {
+            "human_paladin": 0.25,
+            "human_champion": 0.20,
+            "human_mage": 0.15,
+            "human_griffon_rider": 0.15,
+            "human_crossbowman": 0.10,
+            "human_catapult": 0.10,
+            "human_priest": 0.05
+        },
+        "anti_air": {
+            "human_archer": 0.4,
+            "human_crossbowman": 0.3,
+            "human_mage": 0.2,
+            "human_griffon_rider": 0.1
+        },
+        "siege_assault": {
+            "human_footman": 0.2,
+            "human_siege_ram": 0.2,
+            "human_catapult": 0.2,
+            "human_trebuchet": 0.15,
+            "human_priest": 0.15,
+            "human_knight": 0.1
+        }
+    },
+
+    "hero_preferences": {
+        "first_hero": ["human_lord_commander", "human_archmage"],
+        "second_hero": ["human_high_priestess", "human_ranger_captain"],
+        "third_hero": ["human_archmage", "human_ranger_captain"],
+        "hero_ability_priorities": {
+            "human_lord_commander": ["ability_rallying_cry", "ability_blade_storm", "ability_shield_wall_hero"],
+            "human_high_priestess": ["ability_mass_heal", "ability_holy_light_hero", "ability_divine_shield_hero"],
+            "human_archmage": ["ability_blizzard_hero", "ability_fireball_hero", "ability_polymorph_hero"],
+            "human_ranger_captain": ["ability_multi_shot", "ability_summon_hawk", "ability_eagle_eye"]
+        }
+    },
+
+    "attack_timing": {
+        "first_attack_min_army": 8,
+        "first_attack_max_time": 300,
+        "subsequent_attack_interval": 180,
+        "min_army_percentage": 0.6,
+        "retreat_threshold": 0.3,
+        "siege_required_for_base_attack": true
+    },
+
+    "defense_priorities": {
+        "defend_main_base": 1.0,
+        "defend_expansion": 0.7,
+        "defend_ally": 0.5,
+        "tower_coverage": 0.8,
+        "wall_priority": 0.6,
+        "garrison_threshold": 0.4
+    },
+
+    "economic_targets": {
+        "peasant_count_early": 12,
+        "peasant_count_mid": 20,
+        "peasant_count_late": 25,
+        "farm_surplus": 2,
+        "gold_priority": 0.4,
+        "wood_priority": 0.35,
+        "stone_priority": 0.15,
+        "food_priority": 0.1
+    },
+
+    "tech_priorities": {
+        "age_advancement": 1.0,
+        "weapon_upgrades": 0.8,
+        "armor_upgrades": 0.7,
+        "economy_upgrades": 0.6,
+        "unit_unlocks": 0.9,
+        "ability_unlocks": 0.5
+    },
+
+    "scouting": {
+        "early_scout_count": 1,
+        "scout_frequency": 60,
+        "explore_priority": 0.7,
+        "watch_enemy_base": true
+    },
+
+    "counter_units": {
+        "infantry": ["human_knight", "human_mage"],
+        "cavalry": ["human_footman", "human_crossbowman"],
+        "ranged": ["human_knight", "human_griffon_rider"],
+        "siege": ["human_knight", "human_griffon_rider"],
+        "flying": ["human_archer", "human_crossbowman", "human_mage"],
+        "caster": ["human_spellbreaker", "human_knight"]
+    },
+
+    "difficulty_modifiers": {
+        "easy": {
+            "resource_bonus": 0.8,
+            "build_speed": 0.8,
+            "reaction_time": 2.0,
+            "aggression": 0.4
+        },
+        "normal": {
+            "resource_bonus": 1.0,
+            "build_speed": 1.0,
+            "reaction_time": 1.0,
+            "aggression": 0.6
+        },
+        "hard": {
+            "resource_bonus": 1.2,
+            "build_speed": 1.1,
+            "reaction_time": 0.7,
+            "aggression": 0.8
+        },
+        "insane": {
+            "resource_bonus": 1.5,
+            "build_speed": 1.3,
+            "reaction_time": 0.4,
+            "aggression": 0.9
+        }
+    }
+}

@@ -1,0 +1,169 @@
+{
+    "id": "human_griffon_rider",
+    "type": "unit",
+    "race": "humans",
+    "name": "Griffon Rider",
+    "description": "Elite warriors who soar into battle on the backs of mighty griffons. Their aerial superiority allows them to strike anywhere on the battlefield.",
+
+    "tags": ["military", "flying", "melee", "tier3", "medium", "air"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/humans/units/griffon_rider.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/griffon_rider_diffuse.png",
+        "normal": "textures/races/humans/units/griffon_rider_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.6,
+                "height": 2.0,
+                "offset": [0.0, 1.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 350.0,
+        "layer": "air_unit"
+    },
+
+    "stats": {
+        "health": 650,
+        "maxHealth": 650,
+        "healthRegen": 1.0,
+        "armor": 3,
+        "magicResist": 15,
+        "moveSpeed": 9.0,
+        "turnRate": 250.0,
+        "flight_height": 8.0
+    },
+
+    "movement": {
+        "type": "flying",
+        "fly_height": 8.0,
+        "can_land": true,
+        "landing_speed_multiplier": 0.6,
+        "ignore_terrain": true,
+        "ignore_walls": true
+    },
+
+    "combat": {
+        "attackDamage": 32,
+        "attackSpeed": 1.4,
+        "attackRange": 2.5,
+        "damageType": "normal",
+        "armorType": "medium",
+        "attackType": "melee",
+        "critChance": 0.12,
+        "critMultiplier": 2.0,
+        "can_attack_air": true,
+        "can_attack_ground": true,
+        "dive_damage_bonus": 0.50
+    },
+
+    "abilities": [
+        {
+            "id": "ability_dive_attack",
+            "name": "Dive Attack",
+            "description": "Dive from the sky dealing 150% damage and stunning for 1.5 seconds",
+            "hotkey": "Q",
+            "cooldown": 12.0,
+            "effects": [
+                {"type": "damage_multiplier", "value": 1.50},
+                {"type": "stun", "duration": 1.5}
+            ],
+            "requires_flight": true
+        },
+        {
+            "id": "ability_talon_strike",
+            "name": "Talon Strike",
+            "description": "The griffon slashes with its talons, dealing damage to up to 3 targets",
+            "hotkey": "W",
+            "cooldown": 8.0,
+            "max_targets": 3,
+            "damage": 45
+        },
+        {
+            "id": "ability_screech",
+            "name": "Screech",
+            "description": "Unleash a terrifying screech that reduces enemy attack damage by 25% for 6 seconds",
+            "hotkey": "E",
+            "cooldown": 20.0,
+            "radius": 8.0,
+            "duration": 6.0,
+            "effects": [
+                {"stat": "attackDamage", "value": -0.25}
+            ],
+            "target_type": "enemy"
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_griffon_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 5
+        },
+        {
+            "id": "upgrade_griffon_armor",
+            "stat": "armor",
+            "bonus_per_level": 2
+        }
+    ],
+
+    "production": {
+        "building": "human_gryphon_aviary",
+        "cost": {
+            "gold": 380,
+            "wood": 50,
+            "food": 4
+        },
+        "build_time": 45.0,
+        "population_cost": 3,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/flying_melee.bt",
+        "profile": "aggressive",
+        "aggroRange": 14.0,
+        "leashRange": 35.0,
+        "priority_targets": ["siege", "ranged", "caster"],
+        "use_dive_attack": true,
+        "dive_distance_min": 6.0
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/griffon_rider/idle.anim", "loop": true},
+        "fly": {"path": "animations/humans/griffon_rider/fly.anim", "loop": true},
+        "glide": {"path": "animations/humans/griffon_rider/glide.anim", "loop": true},
+        "attack": {"path": "animations/humans/griffon_rider/attack.anim", "loop": false, "events": [[0.35, "deal_damage"]]},
+        "dive": {"path": "animations/humans/griffon_rider/dive.anim", "loop": false},
+        "land": {"path": "animations/humans/griffon_rider/land.anim", "loop": false},
+        "takeoff": {"path": "animations/humans/griffon_rider/takeoff.anim", "loop": false},
+        "death": {"path": "animations/humans/griffon_rider/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/griffon_rider/select_1.wav", "sounds/humans/griffon_rider/select_2.wav"],
+        "acknowledge": ["sounds/humans/griffon_rider/ack_1.wav", "sounds/humans/griffon_rider/ack_2.wav"],
+        "attack": "sounds/griffon_attack.wav",
+        "screech": "sounds/griffon_screech.wav",
+        "wing_flap": "sounds/wing_flap_large.wav",
+        "death": "sounds/humans/griffon_rider/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/griffon_rider.png",
+        "icon": "textures/races/humans/icons/griffon_rider.png",
+        "hotkey": "G"
+    }
+}

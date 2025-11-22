@@ -1,0 +1,145 @@
+{
+  "id": "altar_of_darkness",
+  "type": "building",
+  "race": "vampires",
+  "name": "Altar of Darkness",
+  "description": "A profane altar where the darkest rituals are performed. Summons demons and produces the most powerful vampire units.",
+
+  "tags": ["ultimate", "ritual", "summoning"],
+  "tier": 3,
+  "age_requirement": 4,
+
+  "model": {
+    "path": "models/races/vampires/buildings/altar_of_darkness.obj",
+    "scale": [1.0, 1.0, 1.0]
+  },
+
+  "textures": {
+    "diffuse": "textures/races/vampires/buildings/altar_diffuse.png",
+    "normal": "textures/races/vampires/buildings/altar_normal.png",
+    "emissive": "textures/races/vampires/buildings/altar_emissive.png"
+  },
+
+  "footprint": {
+    "size": [4, 4],
+    "entrances": [[2, 0]],
+    "visualSize": [12.0, 8.0, 12.0]
+  },
+
+  "construction": {
+    "cost": {
+      "gold": 400,
+      "lumber": 150,
+      "blood": 100,
+      "souls": 10
+    },
+    "time": 90.0
+  },
+
+  "stats": {
+    "maxHealth": 1800,
+    "armor": 12,
+    "magicResist": 20
+  },
+
+  "production": [
+    {
+      "type": "unit",
+      "output": "ancient_one",
+      "cost": {"gold": 800, "lumber": 200, "blood": 150, "souls": 25, "food": 8},
+      "time": 90.0,
+      "maxQueue": 1,
+      "prerequisites": ["awaken_ancients"]
+    },
+    {
+      "type": "summon",
+      "output": "abyssal_horror",
+      "cost": {"blood": 100, "souls": 15},
+      "time": 10.0,
+      "maxQueue": 1,
+      "duration": 60,
+      "prerequisites": ["demonic_pact"]
+    }
+  ],
+
+  "researches": [
+    {
+      "id": "demonic_pact",
+      "name": "Demonic Pact",
+      "description": "Allows summoning of Abyssal Horrors",
+      "cost": {"gold": 300, "lumber": 100, "blood": 150, "souls": 20},
+      "time": 90.0
+    },
+    {
+      "id": "awaken_ancients",
+      "name": "Awaken Ancients",
+      "description": "Allows training of Ancient Ones",
+      "cost": {"gold": 500, "lumber": 200, "blood": 200, "souls": 30},
+      "time": 120.0
+    },
+    {
+      "id": "primordial_might",
+      "name": "Primordial Might",
+      "description": "Increases Ancient One and Abyssal Horror damage",
+      "cost": {"gold": 350, "blood": 150},
+      "time": 75.0,
+      "prerequisites": ["awaken_ancients"]
+    },
+    {
+      "id": "soul_harvest",
+      "name": "Soul Harvest",
+      "description": "All vampire units generate Souls on killing heroes or elites",
+      "cost": {"gold": 400, "blood": 100},
+      "time": 90.0
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "dark_ritual",
+      "name": "Dark Ritual",
+      "type": "active",
+      "targetType": "area",
+      "description": "Sacrifice 3 thralls to generate 50 Blood and 5 Souls",
+      "cooldown": 120,
+      "effects": {
+        "requiredSacrifices": 3,
+        "sacrificeType": "thrall",
+        "bloodGenerated": 50,
+        "soulsGenerated": 5
+      }
+    },
+    {
+      "id": "blood_moon",
+      "name": "Blood Moon",
+      "type": "active",
+      "targetType": "global",
+      "description": "Create a Blood Moon that grants night bonuses to all vampires globally for 60 seconds",
+      "cooldown": 300,
+      "manaCost": 0,
+      "bloodCost": 150,
+      "soulsCost": 15,
+      "effects": {
+        "duration": 60,
+        "global": true,
+        "grantsNightBonuses": true,
+        "bonusLifeSteal": 0.1
+      }
+    }
+  ],
+
+  "visionRange": 12.0,
+
+  "requirements": {
+    "buildings": ["citadel_of_night"]
+  },
+
+  "unique": true,
+  "maxCount": 1,
+
+  "ui": {
+    "portrait": "textures/races/vampires/portraits/buildings/altar_of_darkness.png",
+    "icon": "textures/races/vampires/icons/buildings/altar_of_darkness.png",
+    "hotkey": "A"
+  }
+}

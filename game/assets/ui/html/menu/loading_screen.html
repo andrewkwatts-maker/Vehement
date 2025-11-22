@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading - Conquest of Realms</title>
+    <link rel="stylesheet" href="../../css/ui_base.css">
+    <link rel="stylesheet" href="../../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../../css/ui_animations.css">
+    <link rel="stylesheet" href="../../css/menu_theme.css">
+</head>
+<body>
+    <div id="loading-screen" class="menu-container loading-container">
+        <!-- Background -->
+        <div class="loading-background" id="loading-bg">
+            <div class="loading-bg-overlay"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="loading-content">
+            <!-- Map Preview (for multiplayer) -->
+            <div class="loading-map-preview" id="map-preview-section" style="display: none;">
+                <div class="map-preview-image" id="map-preview-img"></div>
+                <div class="map-info">
+                    <h2 id="map-name">Map Name</h2>
+                    <div class="map-details">
+                        <span id="map-size">256x256</span> |
+                        <span id="map-players">2-8 Players</span> |
+                        <span id="game-mode">Melee</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players Panel (for multiplayer) -->
+            <div class="loading-players-panel" id="players-panel" style="display: none;">
+                <div class="teams-container">
+                    <div class="team-column" id="team-1-players">
+                        <h3 class="team-title team-1">Team 1</h3>
+                        <div class="team-players"></div>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="team-column" id="team-2-players">
+                        <h3 class="team-title team-2">Team 2</h3>
+                        <div class="team-players"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Info -->
+            <div class="loading-info-section">
+                <!-- Progress Bar -->
+                <div class="loading-progress-container">
+                    <div class="loading-progress-bar">
+                        <div class="loading-progress-fill" id="progress-fill"></div>
+                        <div class="loading-progress-glow"></div>
+                    </div>
+                    <div class="loading-progress-text">
+                        <span id="loading-status">Loading...</span>
+                        <span id="loading-percent">0%</span>
+                    </div>
+                </div>
+
+                <!-- Loading Tip -->
+                <div class="loading-tip-container">
+                    <div class="tip-icon">💡</div>
+                    <div class="tip-text" id="loading-tip">
+                        Build workers early to boost your economy.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Details (smaller text) -->
+            <div class="loading-details" id="loading-details">
+                <span id="current-task">Initializing...</span>
+            </div>
+        </div>
+
+        <!-- Animated Elements -->
+        <div class="loading-decorations">
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration top-right"></div>
+            <div class="corner-decoration bottom-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+        </div>
+    </div>
+
+    <script src="../../js/ui_core.js"></script>
+    <script src="../../js/menu_core.js"></script>
+    <script>
+        const LoadingScreen = {
+            _progress: 0,
+            _tips: [
+                "Build workers early to boost your economy.",
+                "Scout your enemy to learn their strategy.",
+                "Control resource points to gain map advantage.",
+                "Use hotkeys for faster unit production.",
+                "Mix unit types to counter your opponent.",
+                "Protect your siege units with infantry.",
+                "Research upgrades to strengthen your army.",
+                "Use terrain to your advantage in battles.",
+                "Build multiple production buildings for faster armies.",
+                "Keep your hero alive - they provide powerful abilities.",
+                "Flanking attacks deal bonus damage.",
+                "Night battles reduce vision range for all units.",
+                "Naval units can transport land forces.",
+                "Walls slow enemy advances significantly.",
+                "Markets allow trading resources with allies.",
+                "High ground gives ranged units bonus damage.",
+                "Fog of war hides enemy movements.",
+                "Use control groups to manage your army efficiently.",
+                "Buildings can be repaired by workers.",
+                "Some units have special abilities - use them wisely!"
+            ],
+            _tipInterval: null,
+
+            init: function() {
+                this.showRandomTip();
+                this.startTipRotation();
+            },
+
+            /**
+             * Set loading progress (0-100)
+             */
+            setProgress: function(percent, status) {
+                this._progress = Math.min(100, Math.max(0, percent));
+                document.getElementById('progress-fill').style.width = this._progress + '%';
+                document.getElementById('loading-percent').textContent = Math.round(this._progress) + '%';
+
+                if (status) {
+                    document.getElementById('loading-status').textContent = status;
+                }
+            },
+
+            /**
+             * Set current loading task
+             */
+            setTask: function(task) {
+                document.getElementById('current-task').textContent = task;
+            },
+
+            /**
+             * Set background image
+             */
+            setBackground: function(imageUrl) {
+                document.getElementById('loading-bg').style.backgroundImage = `url('${imageUrl}')`;
+            },
+
+            /**
+             * Configure for multiplayer match
+             */
+            setMultiplayerInfo: function(data) {
+                // Show map preview
+                if (data.map) {
+                    document.getElementById('map-preview-section').style.display = 'block';
+                    document.getElementById('map-name').textContent = data.map.name;
+                    document.getElementById('map-size').textContent = data.map.size;
+                    document.getElementById('map-players').textContent = data.map.playerCount + ' Players';
+                    document.getElementById('game-mode').textContent = data.mode;
+
+                    if (data.map.preview) {
+                        document.getElementById('map-preview-img').style.backgroundImage = `url('${data.map.preview}')`;
+                    }
+                }
+
+                // Show players
+                if (data.teams) {
+                    document.getElementById('players-panel').style.display = 'block';
+                    this.renderTeams(data.teams);
+                }
+            },
+
+            /**
+             * Render team players
+             */
+            renderTeams: function(teams) {
+                teams.forEach((team, index) => {
+                    const container = document.querySelector(`#team-${index + 1}-players .team-players`);
+                    if (container) {
+                        container.innerHTML = team.players.map(player => `
+                            <div class="player-card ${player.isReady ? 'ready' : ''}">
+                                <div class="player-race-icon" style="background-color: ${player.color}">
+                                    ${player.raceIcon ? `<img src="${player.raceIcon}" alt="">` : ''}
+                                </div>
+                                <div class="player-info">
+                                    <div class="player-name">${player.name}</div>
+                                    <div class="player-race">${player.race}</div>
+                                </div>
+                                <div class="player-status">
+                                    ${player.isReady ? '✓' : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                });
+            },
+
+            /**
+             * Configure for campaign mission
+             */
+            setCampaignInfo: function(data) {
+                document.getElementById('map-preview-section').style.display = 'block';
+                document.getElementById('map-name').textContent = data.chapterName || 'Campaign Mission';
+                document.getElementById('map-size').textContent = data.race || '';
+                document.getElementById('map-players').textContent = `Chapter ${data.chapter}`;
+                document.getElementById('game-mode').textContent = data.difficulty || 'Normal';
+
+                if (data.preview) {
+                    document.getElementById('map-preview-img').style.backgroundImage = `url('${data.preview}')`;
+                }
+            },
+
+            /**
+             * Show random tip
+             */
+            showRandomTip: function() {
+                const tip = this._tips[Math.floor(Math.random() * this._tips.length)];
+                const tipEl = document.getElementById('loading-tip');
+                tipEl.style.opacity = '0';
+
+                setTimeout(() => {
+                    tipEl.textContent = tip;
+                    tipEl.style.opacity = '1';
+                }, 300);
+            },
+
+            /**
+             * Start tip rotation
+             */
+            startTipRotation: function() {
+                this._tipInterval = setInterval(() => {
+                    this.showRandomTip();
+                }, 6000);
+            },
+
+            /**
+             * Stop tip rotation
+             */
+            stopTipRotation: function() {
+                if (this._tipInterval) {
+                    clearInterval(this._tipInterval);
+                    this._tipInterval = null;
+                }
+            },
+
+            /**
+             * Add custom tips
+             */
+            addTips: function(tips) {
+                this._tips = this._tips.concat(tips);
+            },
+
+            /**
+             * Complete loading (called when ready)
+             */
+            complete: function() {
+                this.setProgress(100, 'Ready!');
+                this.stopTipRotation();
+
+                // Fade out after a moment
+                setTimeout(() => {
+                    document.getElementById('loading-screen').classList.add('fade-out');
+                }, 500);
+            },
+
+            /**
+             * Show error
+             */
+            showError: function(message) {
+                document.getElementById('loading-status').textContent = 'Error';
+                document.getElementById('loading-status').classList.add('error');
+                document.getElementById('current-task').textContent = message;
+                this.stopTipRotation();
+            }
+        };
+
+        // Expose to engine
+        window.LoadingScreen = LoadingScreen;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => LoadingScreen.init());
+
+        // Simulate loading for demo (remove in production)
+        if (!window.NativeEngine) {
+            let progress = 0;
+            const tasks = [
+                'Initializing engine...',
+                'Loading textures...',
+                'Loading models...',
+                'Loading sounds...',
+                'Generating terrain...',
+                'Spawning units...',
+                'Preparing game...'
+            ];
+            let taskIndex = 0;
+
+            const simulate = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(simulate);
+                    LoadingScreen.complete();
+                }
+                LoadingScreen.setProgress(progress);
+                if (progress > (taskIndex + 1) * (100 / tasks.length) && taskIndex < tasks.length - 1) {
+                    taskIndex++;
+                    LoadingScreen.setTask(tasks[taskIndex]);
+                }
+            }, 500);
+        }
+    </script>
+
+    <style>
+        .loading-container {
+            background: #0a0810;
+        }
+
+        .loading-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            animation: subtle-zoom 30s ease-in-out infinite;
+        }
+
+        @keyframes subtle-zoom {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .loading-bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                180deg,
+                rgba(10, 8, 16, 0.7) 0%,
+                rgba(10, 8, 16, 0.4) 40%,
+                rgba(10, 8, 16, 0.4) 60%,
+                rgba(10, 8, 16, 0.9) 100%
+            );
+        }
+
+        .loading-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: var(--menu-spacing-xl);
+        }
+
+        /* Map Preview */
+        .loading-map-preview {
+            text-align: center;
+            margin-bottom: var(--menu-spacing-xl);
+        }
+
+        .map-preview-image {
+            width: 400px;
+            height: 225px;
+            background: rgba(0, 0, 0, 0.5);
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--menu-gold-dark);
+            margin-bottom: var(--menu-spacing-md);
+        }
+
+        .map-info h2 {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-xl);
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-xs);
+        }
+
+        .map-details {
+            color: var(--menu-text-secondary);
+            font-size: var(--menu-font-size-md);
+        }
+
+        /* Players Panel */
+        .loading-players-panel {
+            margin-bottom: var(--menu-spacing-xl);
+        }
+
+        .teams-container {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--menu-spacing-xl);
+        }
+
+        .team-column {
+            min-width: 250px;
+        }
+
+        .team-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-lg);
+            margin-bottom: var(--menu-spacing-md);
+            text-align: center;
+        }
+
+        .team-title.team-1 { color: var(--menu-blue-glow); }
+        .team-title.team-2 { color: var(--menu-red-glow); }
+
+        .vs-divider {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-xxl);
+            color: var(--menu-gold);
+            padding: var(--menu-spacing-xl) var(--menu-spacing-md);
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-sm);
+            padding: var(--menu-spacing-sm);
+            background: rgba(25, 22, 35, 0.8);
+            border: 1px solid rgba(212, 168, 75, 0.2);
+            margin-bottom: var(--menu-spacing-sm);
+        }
+
+        .player-race-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-race-icon img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: var(--menu-text-primary);
+        }
+
+        .player-race {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-text-secondary);
+        }
+
+        .player-status {
+            color: var(--menu-green);
+            font-size: 18px;
+        }
+
+        /* Progress Bar */
+        .loading-info-section {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .loading-progress-container {
+            margin-bottom: var(--menu-spacing-xl);
+        }
+
+        .loading-progress-bar {
+            position: relative;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--menu-gold-dark);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .loading-progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--menu-gradient-gold);
+            border-radius: 13px;
+            transition: width 0.3s ease-out;
+        }
+
+        .loading-progress-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: progress-shine 2s ease-in-out infinite;
+        }
+
+        @keyframes progress-shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .loading-progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--menu-spacing-sm);
+            font-size: var(--menu-font-size-md);
+        }
+
+        #loading-status {
+            color: var(--menu-text-primary);
+        }
+
+        #loading-status.error {
+            color: var(--menu-red);
+        }
+
+        #loading-percent {
+            color: var(--menu-gold-light);
+            font-weight: 600;
+        }
+
+        /* Loading Tip */
+        .loading-tip-container {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-md);
+            padding: var(--menu-spacing-md) var(--menu-spacing-lg);
+            background: rgba(212, 168, 75, 0.1);
+            border: 1px solid var(--menu-gold-dark);
+            border-radius: var(--menu-radius-md);
+        }
+
+        .tip-icon {
+            font-size: 24px;
+        }
+
+        .tip-text {
+            flex: 1;
+            color: var(--menu-text-primary);
+            font-size: var(--menu-font-size-md);
+            transition: opacity 0.3s ease;
+        }
+
+        /* Loading Details */
+        .loading-details {
+            margin-top: var(--menu-spacing-lg);
+            color: var(--menu-text-disabled);
+            font-size: var(--menu-font-size-sm);
+        }
+
+        /* Corner Decorations */
+        .loading-decorations {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .corner-decoration {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 2px solid var(--menu-gold-dark);
+            opacity: 0.5;
+        }
+
+        .corner-decoration.top-left {
+            top: 20px;
+            left: 20px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .corner-decoration.top-right {
+            top: 20px;
+            right: 20px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .corner-decoration.bottom-left {
+            bottom: 20px;
+            left: 20px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .corner-decoration.bottom-right {
+            bottom: 20px;
+            right: 20px;
+            border-left: none;
+            border-top: none;
+        }
+
+        /* Fade out animation */
+        .loading-container.fade-out {
+            animation: fade-out 0.5s ease-out forwards;
+        }
+
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+</body>
+</html>

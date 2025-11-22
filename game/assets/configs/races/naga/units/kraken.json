@@ -1,0 +1,288 @@
+{
+    "id": "naga_kraken",
+    "type": "unit",
+    "name": "Kraken",
+    "description": "The ultimate terror of the deep - an ancient leviathan of nightmarish proportions. This legendary sea monster can devastate entire armies and drag ships beneath the waves.",
+    "race": "naga",
+    "tier": 4,
+    "class": "ultimate_siege",
+
+    "tags": ["military", "beast", "melee", "tier4", "amphibious", "legendary", "siege", "ultimate"],
+
+    "model": {
+        "path": "models/races/naga/units/kraken.obj",
+        "scale": [3.0, 3.0, 3.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/kraken_diffuse.png",
+        "normal": "textures/races/naga/units/kraken_normal.png",
+        "specular": "textures/races/naga/units/kraken_spec.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "sphere",
+                "radius": 3.0,
+                "offset": [0.0, 3.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 2500.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 3.0,
+        "turnRate": 80.0,
+        "acceleration": 4.0,
+        "deceleration": 6.0,
+        "canSwim": true,
+        "swimSpeed": 7.0,
+        "amphibious": true,
+        "preferWater": true,
+        "terrainModifiers": {
+            "road": 0.6,
+            "forest": 0.2,
+            "water": 2.0,
+            "deep_water": 2.5,
+            "desert": 0.1
+        }
+    },
+
+    "combat": {
+        "health": 3500,
+        "maxHealth": 3500,
+        "armor": 15,
+        "magicResist": 10,
+        "attackDamage": 60,
+        "attackSpeed": 2.0,
+        "attackRange": 5.0,
+        "critChance": 0.1,
+        "critMultiplier": 1.8,
+        "physicalDamage": true,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "multiAttack": {
+            "count": 8,
+            "targets": "different",
+            "per_tentacle": true
+        },
+        "bonusDamage": {
+            "vs_buildings": 3.0,
+            "vs_ships": 5.0,
+            "vs_walls": 4.0
+        }
+    },
+
+    "tentacles": {
+        "count": 8,
+        "damage_per_tentacle": 60,
+        "range_per_tentacle": 5.0,
+        "regenerate_time": 25.0
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 15,
+            "damage_bonus": 0.3,
+            "health_regen_bonus": 15.0
+        },
+        "in_water": {
+            "health_regen": 50.0,
+            "damage_bonus": 0.5,
+            "tentacle_range_bonus": 3.0,
+            "speed_bonus": 1.0
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "terror_of_the_deep",
+            "name": "Terror of the Deep",
+            "description": "Eight tentacles attack independently, each dealing full damage. Deals 300% damage to buildings and 500% to ships.",
+            "effect": {
+                "type": "multi_attack",
+                "attacks": 8,
+                "building_bonus": 3.0,
+                "ship_bonus": 5.0
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain and is vastly more powerful in water."
+        },
+        {
+            "id": "abyssal_hide",
+            "name": "Abyssal Hide",
+            "description": "Takes 30% reduced damage from all sources. Immune to fear, charm, and mind control.",
+            "effect": {
+                "type": "damage_reduction",
+                "value": 0.3,
+                "immunities": ["fear", "charm", "mind_control"]
+            }
+        },
+        {
+            "id": "dread_presence",
+            "name": "Dread Presence",
+            "description": "Enemies within range have 25% reduced damage and attack speed. Non-hero units may flee in terror.",
+            "aura": {
+                "radius": 12.0,
+                "enemy_effects": [
+                    {"stat": "damage", "type": "percent", "value": -25},
+                    {"stat": "attack_speed", "type": "percent", "value": -25},
+                    {"type": "fear_chance", "value": 0.1, "non_heroes": true}
+                ]
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "tentacle_storm",
+            "name": "Tentacle Storm",
+            "description": "All tentacles attack in a frenzy for 8 seconds, attacking twice as fast and hitting all enemies in range.",
+            "icon": "icons/abilities/naga/tentacle_storm.png",
+            "cooldown": 45.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 8.0,
+            "effects": [
+                {"type": "attack_speed_bonus", "value": 1.0},
+                {"type": "hit_all_in_range"}
+            ],
+            "castAnimation": "storm",
+            "castSound": "sounds/abilities/tentacle_storm.wav"
+        },
+        {
+            "id": "drag_to_depths",
+            "name": "Drag to the Depths",
+            "description": "Grabs an enemy and drags them underwater, removing them from combat for 5 seconds while dealing 500 damage.",
+            "icon": "icons/abilities/naga/drag_depths.png",
+            "cooldown": 30.0,
+            "manaCost": 0,
+            "range": 8.0,
+            "targetType": "enemy_unit",
+            "duration": 5.0,
+            "effects": [
+                {"type": "grab"},
+                {"type": "remove_from_combat", "duration": 5.0},
+                {"type": "damage", "amount": 500}
+            ],
+            "castAnimation": "drag",
+            "castSound": "sounds/abilities/drag_depths.wav"
+        },
+        {
+            "id": "ink_shroud",
+            "name": "Ink Shroud",
+            "description": "Releases a massive cloud of ink, becoming invisible and gaining 50% damage reduction for 6 seconds.",
+            "icon": "icons/abilities/naga/ink_shroud.png",
+            "cooldown": 40.0,
+            "manaCost": 0,
+            "radius": 10.0,
+            "targetType": "self",
+            "duration": 6.0,
+            "effects": [
+                {"type": "invisibility"},
+                {"type": "damage_reduction", "value": 0.5},
+                {"type": "blind_enemies", "radius": 10.0, "miss_chance": 0.75}
+            ],
+            "castAnimation": "ink",
+            "castSound": "sounds/abilities/ink_shroud.wav"
+        },
+        {
+            "id": "wrath_of_the_ocean",
+            "name": "Wrath of the Ocean",
+            "description": "Ultimate ability: Calls upon the ocean's fury, creating massive waves that deal 400 damage to all enemies on screen and stun for 3 seconds.",
+            "icon": "icons/abilities/naga/wrath_ocean.png",
+            "cooldown": 120.0,
+            "manaCost": 0,
+            "targetType": "global",
+            "effects": [
+                {"type": "damage", "amount": 400, "damage_type": "water"},
+                {"type": "stun", "duration": 3.0},
+                {"type": "knockback", "distance": 5.0}
+            ],
+            "castTime": 3.0,
+            "castAnimation": "ultimate",
+            "castSound": "sounds/abilities/wrath_ocean.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/kraken/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/kraken/crawl.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/kraken/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/kraken/tentacle_attack.anim",
+            "loop": false,
+            "events": [[0.2, "tentacle_1"], [0.25, "tentacle_2"], [0.3, "tentacle_3"], [0.35, "tentacle_4"], [0.4, "tentacle_5"], [0.45, "tentacle_6"], [0.5, "tentacle_7"], [0.55, "tentacle_8"]]
+        },
+        "storm": {"path": "animations/naga/kraken/tentacle_storm.anim", "loop": true},
+        "drag": {"path": "animations/naga/kraken/drag.anim", "loop": false},
+        "ink": {"path": "animations/naga/kraken/ink_cloud.anim", "loop": false},
+        "ultimate": {"path": "animations/naga/kraken/ultimate.anim", "loop": false},
+        "death": {"path": "animations/naga/kraken/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "movement": {
+            "paths": ["sounds/footsteps/kraken_move.wav"],
+            "volume": 1.0
+        },
+        "attack": {
+            "paths": ["sounds/combat/tentacle_slam_1.wav", "sounds/combat/tentacle_slam_2.wav"],
+            "volume": 1.0
+        },
+        "death": {"paths": ["sounds/death/kraken_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/kraken_roar.wav",
+        "acknowledge": {"paths": ["sounds/voice/naga/kraken_screech.wav"]}
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_kraken.bt",
+        "profile": "ultimate_siege",
+        "aggroRange": 18.0,
+        "leashRange": 35.0,
+        "preferWater": true,
+        "targetPriority": ["building", "ship", "large_unit"],
+        "fearless": true
+    },
+
+    "production": {
+        "building": "naga_leviathan_pit",
+        "time": 150.0,
+        "cost": {
+            "gold": 1500,
+            "coral": 800,
+            "pearls": 400,
+            "abyssal_essence": 500
+        },
+        "requirements": {
+            "age": "age_eternal",
+            "techs": ["naga_kraken_awakening"],
+            "buildings": ["naga_palace_of_waves"]
+        },
+        "limit": 1
+    },
+
+    "properties": {
+        "populationCost": 15,
+        "supplyUpkeep": 12,
+        "squadSize": 1,
+        "experienceValue": 500,
+        "bountyGold": 400,
+        "isLegendary": true,
+        "isUltimate": true,
+        "size": "colossal"
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/kraken/on_spawn.py",
+        "on_death": "scripts/units/naga/kraken/on_death.py"
+    }
+}

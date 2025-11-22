@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pose Library</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #4488ff;
+            --accent-secondary: #44ff88;
+            --accent-warning: #ffaa44;
+            --accent-danger: #ff4444;
+            --border-color: #404060;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .library-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-primary);
+        }
+
+        .search-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            width: 200px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Category List */
+        .category-list {
+            width: 180px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .category-header {
+            padding: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .category-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            border-left: 3px solid transparent;
+        }
+
+        .category-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .category-item.selected {
+            background: var(--bg-tertiary);
+            border-left-color: var(--accent-primary);
+        }
+
+        .category-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            fill: currentColor;
+        }
+
+        .category-count {
+            margin-left: auto;
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Pose Grid */
+        .pose-grid-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .pose-grid-header {
+            padding: 10px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 2px;
+        }
+
+        .view-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .view-btn:first-child {
+            border-radius: 3px 0 0 3px;
+        }
+
+        .view-btn:last-child {
+            border-radius: 0 3px 3px 0;
+        }
+
+        .view-btn.active {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        .pose-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .sort-select {
+            margin-left: auto;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .pose-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            align-content: start;
+        }
+
+        .pose-grid.list-view {
+            grid-template-columns: 1fr;
+        }
+
+        /* Pose Card */
+        .pose-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.1s;
+        }
+
+        .pose-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+        }
+
+        .pose-card.selected {
+            border-color: var(--accent-warning);
+            border-width: 2px;
+        }
+
+        .pose-thumbnail {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #1a1a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .pose-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .pose-thumbnail-placeholder {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        .pose-favorite {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: var(--accent-warning);
+            font-size: 16px;
+            opacity: 0;
+        }
+
+        .pose-card:hover .pose-favorite,
+        .pose-card.favorited .pose-favorite {
+            opacity: 1;
+        }
+
+        .pose-info {
+            padding: 8px;
+        }
+
+        .pose-name {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pose-meta {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* List View Style */
+        .pose-grid.list-view .pose-card {
+            display: flex;
+            align-items: center;
+        }
+
+        .pose-grid.list-view .pose-thumbnail {
+            width: 60px;
+            height: 60px;
+            aspect-ratio: auto;
+            flex-shrink: 0;
+        }
+
+        .pose-grid.list-view .pose-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .pose-grid.list-view .pose-name {
+            margin-bottom: 0;
+            width: 150px;
+        }
+
+        .pose-grid.list-view .pose-meta {
+            flex: 1;
+        }
+
+        /* Details Panel */
+        .details-panel {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .details-header {
+            padding: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .details-preview {
+            height: 200px;
+            background: #1a1a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .details-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .detail-section {
+            margin-bottom: 15px;
+        }
+
+        .detail-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .detail-label {
+            width: 70px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            flex: 1;
+            font-size: 11px;
+        }
+
+        .detail-input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .detail-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .tag {
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .details-actions {
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .action-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .action-btn.primary {
+            background: var(--accent-primary);
+        }
+
+        .action-btn.primary:hover {
+            background: #5599ff;
+        }
+
+        .action-btn.danger {
+            background: var(--accent-danger);
+        }
+
+        /* Blend Slider */
+        .blend-slider-container {
+            margin-top: 10px;
+        }
+
+        .blend-slider-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .blend-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        .blend-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 0;
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .context-menu-item:hover {
+            background: var(--accent-primary);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="library-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="savePoseBtn">Save Pose</button>
+                <button class="toolbar-btn" id="newCategoryBtn">New Category</button>
+            </div>
+            <div class="toolbar-group">
+                <input type="text" class="search-input" placeholder="Search poses..." id="searchInput">
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="importBtn">Import</button>
+                <button class="toolbar-btn" id="exportBtn">Export</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Category List -->
+            <div class="category-list">
+                <div class="category-header">
+                    <span>Categories</span>
+                    <button class="toolbar-btn" style="padding:2px 6px;font-size:10px;">+</button>
+                </div>
+                <div class="category-content" id="categoryList">
+                    <!-- Categories populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Pose Grid -->
+            <div class="pose-grid-container">
+                <div class="pose-grid-header">
+                    <div class="view-toggle">
+                        <button class="view-btn active" id="gridViewBtn">Grid</button>
+                        <button class="view-btn" id="listViewBtn">List</button>
+                    </div>
+                    <span class="pose-count" id="poseCount">12 poses</span>
+                    <select class="sort-select" id="sortSelect">
+                        <option>Name A-Z</option>
+                        <option>Name Z-A</option>
+                        <option>Newest</option>
+                        <option>Oldest</option>
+                        <option>Most Used</option>
+                    </select>
+                </div>
+                <div class="pose-grid" id="poseGrid">
+                    <!-- Poses populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Details Panel -->
+            <div class="details-panel">
+                <div class="details-header">Pose Details</div>
+                <div class="details-preview" id="detailsPreview">
+                    Select a pose
+                </div>
+                <div class="details-content" id="detailsContent">
+                    <div class="detail-section">
+                        <div class="detail-section-title">Information</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Name</span>
+                            <input type="text" class="detail-input" id="poseName" value="">
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Category</span>
+                            <select class="detail-input" id="poseCategory">
+                                <option>Idle</option>
+                                <option>Combat</option>
+                                <option>Locomotion</option>
+                            </select>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Created</span>
+                            <span class="detail-value" id="poseCreated">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Modified</span>
+                            <span class="detail-value" id="poseModified">-</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Tags</div>
+                        <div class="tag-list" id="tagList">
+                            <span class="tag">standing</span>
+                            <span class="tag">relaxed</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Bones</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Count</span>
+                            <span class="detail-value" id="boneCount">0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Modified</span>
+                            <span class="detail-value" id="modifiedBones">0</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title">Blend</div>
+                        <div class="blend-slider-container">
+                            <div class="blend-slider-label">Blend Amount: <span id="blendValue">100%</span></div>
+                            <input type="range" class="blend-slider" id="blendSlider" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-actions">
+                    <button class="action-btn primary" id="applyPoseBtn">Apply Pose</button>
+                    <button class="action-btn" id="blendPoseBtn">Blend with Current</button>
+                    <button class="action-btn" id="updatePoseBtn">Update from Current</button>
+                    <button class="action-btn danger" id="deletePoseBtn">Delete Pose</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="apply">Apply Pose</div>
+        <div class="context-menu-item" data-action="blend">Blend with Current</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="duplicate">Duplicate</div>
+        <div class="context-menu-item" data-action="rename">Rename</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="export">Export...</div>
+        <div class="context-menu-item" data-action="delete">Delete</div>
+    </div>
+
+    <script>
+        class PoseLibrary {
+            constructor() {
+                this.poses = [];
+                this.categories = [];
+                this.selectedPose = null;
+                this.selectedCategory = 'All';
+                this.viewMode = 'grid';
+                this.searchQuery = '';
+
+                this.init();
+            }
+
+            init() {
+                this.initSampleData();
+                this.initEventListeners();
+                this.renderCategories();
+                this.renderPoses();
+            }
+
+            initSampleData() {
+                this.categories = [
+                    { name: 'All', icon: 'folder', count: 0 },
+                    { name: 'Idle', icon: 'person', count: 4 },
+                    { name: 'Combat', icon: 'sword', count: 5 },
+                    { name: 'Locomotion', icon: 'walk', count: 3 },
+                    { name: 'Expressions', icon: 'face', count: 2 },
+                    { name: 'Custom', icon: 'star', count: 1 }
+                ];
+
+                this.poses = [
+                    { id: 1, name: 'Idle Standing', category: 'Idle', thumbnail: null, tags: ['standing', 'relaxed'], created: '2024-01-15', modified: '2024-01-15', boneCount: 45, modifiedBones: 12, favorited: false },
+                    { id: 2, name: 'Idle Breathing', category: 'Idle', thumbnail: null, tags: ['standing', 'subtle'], created: '2024-01-16', modified: '2024-01-20', boneCount: 45, modifiedBones: 8, favorited: true },
+                    { id: 3, name: 'Combat Ready', category: 'Combat', thumbnail: null, tags: ['combat', 'ready'], created: '2024-01-17', modified: '2024-01-17', boneCount: 45, modifiedBones: 25, favorited: false },
+                    { id: 4, name: 'Sword Swing Start', category: 'Combat', thumbnail: null, tags: ['combat', 'attack'], created: '2024-01-18', modified: '2024-01-18', boneCount: 45, modifiedBones: 35, favorited: false },
+                    { id: 5, name: 'Sword Swing End', category: 'Combat', thumbnail: null, tags: ['combat', 'attack'], created: '2024-01-18', modified: '2024-01-19', boneCount: 45, modifiedBones: 38, favorited: false },
+                    { id: 6, name: 'Walk Contact', category: 'Locomotion', thumbnail: null, tags: ['walk', 'contact'], created: '2024-01-19', modified: '2024-01-19', boneCount: 45, modifiedBones: 30, favorited: true },
+                    { id: 7, name: 'Walk Passing', category: 'Locomotion', thumbnail: null, tags: ['walk', 'passing'], created: '2024-01-19', modified: '2024-01-19', boneCount: 45, modifiedBones: 28, favorited: false },
+                    { id: 8, name: 'Run Stride', category: 'Locomotion', thumbnail: null, tags: ['run', 'stride'], created: '2024-01-20', modified: '2024-01-20', boneCount: 45, modifiedBones: 42, favorited: false },
+                    { id: 9, name: 'Block High', category: 'Combat', thumbnail: null, tags: ['combat', 'defense'], created: '2024-01-20', modified: '2024-01-21', boneCount: 45, modifiedBones: 20, favorited: false },
+                    { id: 10, name: 'Block Low', category: 'Combat', thumbnail: null, tags: ['combat', 'defense'], created: '2024-01-21', modified: '2024-01-21', boneCount: 45, modifiedBones: 22, favorited: false },
+                    { id: 11, name: 'Idle Tired', category: 'Idle', thumbnail: null, tags: ['standing', 'tired'], created: '2024-01-22', modified: '2024-01-22', boneCount: 45, modifiedBones: 15, favorited: false },
+                    { id: 12, name: 'Custom Pose 1', category: 'Custom', thumbnail: null, tags: ['custom'], created: '2024-01-23', modified: '2024-01-23', boneCount: 45, modifiedBones: 10, favorited: false }
+                ];
+
+                // Update category counts
+                this.categories[0].count = this.poses.length;
+            }
+
+            initEventListeners() {
+                // View toggle
+                document.getElementById('gridViewBtn').addEventListener('click', () => {
+                    this.viewMode = 'grid';
+                    document.getElementById('gridViewBtn').classList.add('active');
+                    document.getElementById('listViewBtn').classList.remove('active');
+                    document.getElementById('poseGrid').classList.remove('list-view');
+                });
+
+                document.getElementById('listViewBtn').addEventListener('click', () => {
+                    this.viewMode = 'list';
+                    document.getElementById('listViewBtn').classList.add('active');
+                    document.getElementById('gridViewBtn').classList.remove('active');
+                    document.getElementById('poseGrid').classList.add('list-view');
+                });
+
+                // Search
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchQuery = e.target.value.toLowerCase();
+                    this.renderPoses();
+                });
+
+                // Sort
+                document.getElementById('sortSelect').addEventListener('change', (e) => {
+                    this.sortPoses(e.target.value);
+                });
+
+                // Blend slider
+                document.getElementById('blendSlider').addEventListener('input', (e) => {
+                    document.getElementById('blendValue').textContent = e.target.value + '%';
+                });
+
+                // Actions
+                document.getElementById('applyPoseBtn').addEventListener('click', () => this.applyPose());
+                document.getElementById('blendPoseBtn').addEventListener('click', () => this.blendPose());
+                document.getElementById('updatePoseBtn').addEventListener('click', () => this.updatePose());
+                document.getElementById('deletePoseBtn').addEventListener('click', () => this.deletePose());
+                document.getElementById('savePoseBtn').addEventListener('click', () => this.savePose());
+
+                // Context menu
+                document.addEventListener('click', () => this.hideContextMenu());
+                document.getElementById('contextMenu').addEventListener('click', (e) => {
+                    const action = e.target.dataset.action;
+                    if (action) this.handleContextAction(action);
+                });
+            }
+
+            renderCategories() {
+                const container = document.getElementById('categoryList');
+                container.innerHTML = '';
+
+                this.categories.forEach(cat => {
+                    const item = document.createElement('div');
+                    item.className = 'category-item' + (this.selectedCategory === cat.name ? ' selected' : '');
+                    item.innerHTML = `
+                        <svg class="category-icon" viewBox="0 0 24 24">
+                            <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                        </svg>
+                        <span>${cat.name}</span>
+                        <span class="category-count">${cat.count}</span>
+                    `;
+                    item.addEventListener('click', () => {
+                        this.selectedCategory = cat.name;
+                        this.renderCategories();
+                        this.renderPoses();
+                    });
+                    container.appendChild(item);
+                });
+            }
+
+            renderPoses() {
+                const container = document.getElementById('poseGrid');
+                container.innerHTML = '';
+
+                let filteredPoses = this.poses;
+
+                // Filter by category
+                if (this.selectedCategory !== 'All') {
+                    filteredPoses = filteredPoses.filter(p => p.category === this.selectedCategory);
+                }
+
+                // Filter by search
+                if (this.searchQuery) {
+                    filteredPoses = filteredPoses.filter(p =>
+                        p.name.toLowerCase().includes(this.searchQuery) ||
+                        p.tags.some(t => t.toLowerCase().includes(this.searchQuery))
+                    );
+                }
+
+                document.getElementById('poseCount').textContent = `${filteredPoses.length} poses`;
+
+                filteredPoses.forEach(pose => {
+                    const card = document.createElement('div');
+                    card.className = 'pose-card' + (this.selectedPose === pose ? ' selected' : '') + (pose.favorited ? ' favorited' : '');
+                    card.innerHTML = `
+                        <div class="pose-thumbnail">
+                            <span class="pose-thumbnail-placeholder">No Preview</span>
+                            <span class="pose-favorite">${pose.favorited ? '&#9733;' : '&#9734;'}</span>
+                        </div>
+                        <div class="pose-info">
+                            <div class="pose-name">${pose.name}</div>
+                            <div class="pose-meta">${pose.category} | ${pose.modifiedBones} bones</div>
+                        </div>
+                    `;
+
+                    card.addEventListener('click', () => this.selectPose(pose));
+                    card.addEventListener('dblclick', () => this.applyPose());
+                    card.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        this.selectPose(pose);
+                        this.showContextMenu(e.clientX, e.clientY);
+                    });
+
+                    // Favorite toggle
+                    card.querySelector('.pose-favorite').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        pose.favorited = !pose.favorited;
+                        this.renderPoses();
+                    });
+
+                    container.appendChild(card);
+                });
+            }
+
+            selectPose(pose) {
+                this.selectedPose = pose;
+                this.renderPoses();
+                this.updateDetails();
+            }
+
+            updateDetails() {
+                const pose = this.selectedPose;
+                if (!pose) {
+                    document.getElementById('detailsPreview').textContent = 'Select a pose';
+                    return;
+                }
+
+                document.getElementById('detailsPreview').textContent = pose.name;
+                document.getElementById('poseName').value = pose.name;
+                document.getElementById('poseCreated').textContent = pose.created;
+                document.getElementById('poseModified').textContent = pose.modified;
+                document.getElementById('boneCount').textContent = pose.boneCount;
+                document.getElementById('modifiedBones').textContent = pose.modifiedBones;
+
+                const tagList = document.getElementById('tagList');
+                tagList.innerHTML = pose.tags.map(t => `<span class="tag">${t}</span>`).join('');
+            }
+
+            sortPoses(sortBy) {
+                switch (sortBy) {
+                    case 'Name A-Z':
+                        this.poses.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 'Name Z-A':
+                        this.poses.sort((a, b) => b.name.localeCompare(a.name));
+                        break;
+                    case 'Newest':
+                        this.poses.sort((a, b) => new Date(b.created) - new Date(a.created));
+                        break;
+                    case 'Oldest':
+                        this.poses.sort((a, b) => new Date(a.created) - new Date(b.created));
+                        break;
+                }
+                this.renderPoses();
+            }
+
+            showContextMenu(x, y) {
+                const menu = document.getElementById('contextMenu');
+                menu.style.display = 'block';
+                menu.style.left = x + 'px';
+                menu.style.top = y + 'px';
+            }
+
+            hideContextMenu() {
+                document.getElementById('contextMenu').style.display = 'none';
+            }
+
+            handleContextAction(action) {
+                switch (action) {
+                    case 'apply': this.applyPose(); break;
+                    case 'blend': this.blendPose(); break;
+                    case 'duplicate': this.duplicatePose(); break;
+                    case 'delete': this.deletePose(); break;
+                }
+                this.hideContextMenu();
+            }
+
+            applyPose() {
+                if (!this.selectedPose) return;
+                console.log('Applying pose:', this.selectedPose.name);
+                // Notify native code
+                if (window.NativeBridge) {
+                    window.NativeBridge.applyPose(this.selectedPose.id);
+                }
+            }
+
+            blendPose() {
+                if (!this.selectedPose) return;
+                const blendAmount = parseInt(document.getElementById('blendSlider').value) / 100;
+                console.log('Blending pose:', this.selectedPose.name, 'at', blendAmount);
+            }
+
+            updatePose() {
+                if (!this.selectedPose) return;
+                console.log('Updating pose from current:', this.selectedPose.name);
+            }
+
+            deletePose() {
+                if (!this.selectedPose) return;
+                if (confirm(`Delete pose "${this.selectedPose.name}"?`)) {
+                    const index = this.poses.indexOf(this.selectedPose);
+                    if (index > -1) {
+                        this.poses.splice(index, 1);
+                        this.selectedPose = null;
+                        this.renderPoses();
+                        this.updateDetails();
+                    }
+                }
+            }
+
+            duplicatePose() {
+                if (!this.selectedPose) return;
+                const newPose = { ...this.selectedPose };
+                newPose.id = Date.now();
+                newPose.name = this.selectedPose.name + ' Copy';
+                newPose.created = new Date().toISOString().split('T')[0];
+                newPose.modified = newPose.created;
+                this.poses.push(newPose);
+                this.renderPoses();
+            }
+
+            savePose() {
+                const name = prompt('Enter pose name:');
+                if (!name) return;
+
+                const newPose = {
+                    id: Date.now(),
+                    name,
+                    category: this.selectedCategory === 'All' ? 'Custom' : this.selectedCategory,
+                    thumbnail: null,
+                    tags: [],
+                    created: new Date().toISOString().split('T')[0],
+                    modified: new Date().toISOString().split('T')[0],
+                    boneCount: 45,
+                    modifiedBones: 0,
+                    favorited: false
+                };
+
+                this.poses.push(newPose);
+                this.selectPose(newPose);
+                this.renderPoses();
+            }
+        }
+
+        // Initialize
+        const library = new PoseLibrary();
+
+        // Native bridge
+        window.PoseLibrary = {
+            loadPoses: (data) => {
+                library.poses = data.poses || [];
+                library.categories = data.categories || [];
+                library.renderCategories();
+                library.renderPoses();
+            },
+            getPoses: () => library.poses,
+            setThumbnail: (poseId, dataUrl) => {
+                const pose = library.poses.find(p => p.id === poseId);
+                if (pose) {
+                    pose.thumbnail = dataUrl;
+                    library.renderPoses();
+                }
+            }
+        };
+    </script>
+</body>
+</html>

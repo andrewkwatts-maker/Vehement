@@ -1,0 +1,276 @@
+{
+    "id": "naga_sea_giant",
+    "type": "unit",
+    "name": "Sea Giant",
+    "description": "Towering titans of the deep, these ancient giants serve the Naga as devastating shock troops. Their massive anchors crush anything in their path.",
+    "race": "naga",
+    "tier": 4,
+    "class": "giant",
+
+    "tags": ["military", "infantry", "melee", "tier4", "amphibious", "giant", "legendary", "siege"],
+
+    "model": {
+        "path": "models/races/naga/units/sea_giant.obj",
+        "scale": [2.5, 2.5, 2.5],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/sea_giant_diffuse.png",
+        "normal": "textures/races/naga/units/sea_giant_normal.png",
+        "specular": "textures/races/naga/units/sea_giant_spec.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 1.2,
+                "height": 6.0,
+                "offset": [0.0, 3.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 1500.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 3.5,
+        "turnRate": 100.0,
+        "acceleration": 5.0,
+        "deceleration": 8.0,
+        "canSwim": true,
+        "swimSpeed": 5.0,
+        "amphibious": true,
+        "canWadeDeepWater": true,
+        "terrainModifiers": {
+            "road": 1.1,
+            "forest": 0.4,
+            "water": 1.3,
+            "deep_water": 1.2,
+            "desert": 0.5
+        }
+    },
+
+    "combat": {
+        "health": 1800,
+        "maxHealth": 1800,
+        "armor": 10,
+        "magicResist": 6,
+        "attackDamage": 45,
+        "attackSpeed": 2.8,
+        "attackRange": 3.0,
+        "critChance": 0.15,
+        "critMultiplier": 2.2,
+        "physicalDamage": true,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "splashDamage": {
+            "radius": 3.5,
+            "falloff": [1.0, 0.6, 0.3],
+            "falloff_ranges": [1.0, 2.0, 3.5]
+        },
+        "bonusDamage": {
+            "vs_buildings": 2.0,
+            "vs_large": 1.5
+        }
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "damage_bonus": 0.2,
+            "armor_bonus": 3
+        },
+        "in_water": {
+            "health_regen": 15.0,
+            "attack_speed_bonus": 0.15
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "titan_strength",
+            "name": "Titan Strength",
+            "description": "Attacks deal splash damage and 200% damage to buildings. Cannot be knocked back or stunned for more than 1 second.",
+            "effect": {
+                "type": "splash",
+                "radius": 3.5,
+                "building_bonus": 2.0,
+                "cc_reduction": 0.5,
+                "immune_knockback": true
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and wade through deep water without swimming."
+        },
+        {
+            "id": "crushing_footsteps",
+            "name": "Crushing Footsteps",
+            "description": "Movement deals 20 damage per second to small units and slows them by 30%.",
+            "effect": {
+                "type": "movement_damage",
+                "damage_per_second": 20,
+                "slow": 0.3,
+                "targets": "small_units"
+            }
+        },
+        {
+            "id": "intimidating_presence",
+            "name": "Intimidating Presence",
+            "description": "Nearby enemies deal 15% less damage and have 20% reduced movement speed.",
+            "aura": {
+                "radius": 8.0,
+                "enemy_effects": [
+                    {"stat": "damage", "type": "percent", "value": -15},
+                    {"stat": "movement_speed", "type": "percent", "value": -20}
+                ]
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "anchor_slam",
+            "name": "Anchor Slam",
+            "description": "Slams anchor into the ground, dealing 250 damage and stunning enemies for 2.5 seconds in a large area.",
+            "icon": "icons/abilities/naga/anchor_slam.png",
+            "cooldown": 25.0,
+            "manaCost": 0,
+            "radius": 5.0,
+            "targetType": "self_aoe",
+            "effects": [
+                {"type": "damage", "amount": 250},
+                {"type": "stun", "duration": 2.5}
+            ],
+            "castAnimation": "slam",
+            "castSound": "sounds/abilities/anchor_slam.wav"
+        },
+        {
+            "id": "throw_anchor",
+            "name": "Throw Anchor",
+            "description": "Hurls the anchor at a distant target, dealing 300 damage and pulling them toward the giant.",
+            "icon": "icons/abilities/naga/throw_anchor.png",
+            "cooldown": 18.0,
+            "manaCost": 0,
+            "range": 15.0,
+            "targetType": "enemy_unit",
+            "effects": [
+                {"type": "damage", "amount": 300},
+                {"type": "pull", "to_caster": true, "distance": 10.0},
+                {"type": "stun", "duration": 1.0}
+            ],
+            "castAnimation": "throw",
+            "castSound": "sounds/abilities/throw_anchor.wav"
+        },
+        {
+            "id": "tidal_rage",
+            "name": "Tidal Rage",
+            "description": "Enters a water-empowered frenzy, gaining 40% attack speed, 20% movement speed, and regenerating 3% max HP per second for 12 seconds.",
+            "icon": "icons/abilities/naga/tidal_rage.png",
+            "cooldown": 60.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 12.0,
+            "effects": [
+                {"type": "attack_speed_bonus", "value": 0.4},
+                {"type": "movement_speed_bonus", "value": 0.2},
+                {"type": "regeneration", "percent_per_second": 3.0}
+            ],
+            "castAnimation": "rage",
+            "castSound": "sounds/abilities/tidal_rage.wav"
+        },
+        {
+            "id": "earthquake",
+            "name": "Earthquake",
+            "description": "Stomps the ground repeatedly, creating tremors that deal 80 damage per second and slow enemies by 50% for 5 seconds.",
+            "icon": "icons/abilities/naga/earthquake.png",
+            "cooldown": 35.0,
+            "manaCost": 0,
+            "radius": 8.0,
+            "targetType": "self_aoe",
+            "duration": 5.0,
+            "effects": [
+                {"type": "damage_over_time", "damage_per_second": 80},
+                {"type": "slow", "value": 0.5},
+                {"type": "building_damage", "multiplier": 2.0}
+            ],
+            "channeled": true,
+            "castAnimation": "stomp",
+            "castSound": "sounds/abilities/earthquake.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/sea_giant/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/sea_giant/walk.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/sea_giant/wade.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/sea_giant/anchor_swing.anim",
+            "loop": false,
+            "events": [[0.6, "deal_damage"]]
+        },
+        "slam": {"path": "animations/naga/sea_giant/anchor_slam.anim", "loop": false},
+        "throw": {"path": "animations/naga/sea_giant/anchor_throw.anim", "loop": false},
+        "rage": {"path": "animations/naga/sea_giant/rage.anim", "loop": false},
+        "stomp": {"path": "animations/naga/sea_giant/stomp_loop.anim", "loop": true},
+        "death": {"path": "animations/naga/sea_giant/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/giant_step_1.wav", "sounds/footsteps/giant_step_2.wav"],
+            "volume": 1.0,
+            "shake": true
+        },
+        "attack": "sounds/combat/anchor_swing.wav",
+        "death": {"paths": ["sounds/death/sea_giant_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/sea_giant_groan.wav",
+        "acknowledge": {"paths": ["sounds/voice/naga/sea_giant_roar.wav"]}
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_sea_giant.bt",
+        "profile": "giant",
+        "aggroRange": 14.0,
+        "leashRange": 25.0,
+        "preferWater": true,
+        "targetPriority": ["building", "large_unit", "hero"]
+    },
+
+    "production": {
+        "building": "naga_coral_barracks",
+        "time": 100.0,
+        "cost": {
+            "gold": 850,
+            "coral": 400,
+            "pearls": 120,
+            "abyssal_essence": 150
+        },
+        "requirements": {
+            "age": "age_primordial",
+            "techs": ["naga_giant_pact"],
+            "buildings": ["naga_palace_of_waves"]
+        },
+        "limit": 2
+    },
+
+    "properties": {
+        "populationCost": 8,
+        "supplyUpkeep": 6,
+        "squadSize": 1,
+        "experienceValue": 220,
+        "bountyGold": 180,
+        "isLegendary": true,
+        "size": "huge"
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/sea_giant/on_spawn.py",
+        "on_death": "scripts/units/naga/sea_giant/on_death.py"
+    }
+}

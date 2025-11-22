@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Menu - Conquest of Realms</title>
+    <link rel="stylesheet" href="../../css/ui_base.css">
+    <link rel="stylesheet" href="../../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../../css/ui_animations.css">
+    <link rel="stylesheet" href="../../css/menu_theme.css">
+</head>
+<body>
+    <div id="main-menu" class="menu-container">
+        <!-- Parallax Background -->
+        <div class="parallax-container">
+            <div class="parallax-layer layer-back" data-depth="0.1" id="bg-layer-1"></div>
+            <div class="parallax-layer layer-mid" data-depth="0.2" id="bg-layer-2"></div>
+            <div class="parallax-layer layer-front" data-depth="0.3" id="bg-layer-3"></div>
+            <div class="parallax-layer layer-particles" id="bg-particles"></div>
+            <div class="parallax-overlay"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="menu-main-content">
+            <!-- Game Logo -->
+            <div class="game-logo">
+                <img id="game-logo-img" src="" alt="Conquest of Realms" style="display: none;">
+                <div class="game-logo-text" id="game-title">Conquest of Realms</div>
+                <div class="game-logo-subtitle" id="game-subtitle">The Age of Empires</div>
+            </div>
+
+            <!-- Main Layout - Two Column -->
+            <div class="menu-layout">
+                <!-- Left Column - Menu Buttons -->
+                <div class="menu-left-column">
+                    <nav class="menu-buttons-container menu-stagger" id="main-menu-buttons">
+                        <button class="menu-btn menu-btn-primary" onclick="MainMenu.startCampaign()">
+                            Campaign
+                        </button>
+                        <button class="menu-btn" onclick="MainMenu.openMultiplayer()">
+                            Multiplayer
+                        </button>
+                        <button class="menu-btn" onclick="MainMenu.openCustomGames()">
+                            Custom Games
+                        </button>
+                        <button class="menu-btn" onclick="MainMenu.openEditor()">
+                            Map Editor
+                        </button>
+                        <button class="menu-btn" onclick="MainMenu.openSettings()">
+                            Settings
+                        </button>
+                        <button class="menu-btn" onclick="MainMenu.openCredits()">
+                            Credits
+                        </button>
+                        <button class="menu-btn menu-btn-danger" onclick="MainMenu.exitGame()">
+                            Exit Game
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Right Column - News & Profile -->
+                <div class="menu-right-column">
+                    <!-- Player Profile -->
+                    <div class="player-profile" id="player-profile">
+                        <div class="player-avatar">
+                            <img id="player-avatar-img" src="" alt="Avatar">
+                        </div>
+                        <div class="player-info">
+                            <div class="player-name" id="player-name">Player</div>
+                            <div class="player-rank">
+                                <img class="player-rank-icon" id="player-rank-icon" src="" alt="">
+                                <span id="player-rank-text">Unranked</span>
+                            </div>
+                            <div class="player-stats">
+                                <span class="player-stat">
+                                    <span class="stat-label">Level:</span>
+                                    <span class="stat-value" id="player-level">1</span>
+                                </span>
+                                <span class="player-stat">
+                                    <span class="stat-label">Wins:</span>
+                                    <span class="stat-value" id="player-wins">0</span>
+                                </span>
+                            </div>
+                        </div>
+                        <button class="menu-btn-sm" onclick="MainMenu.editProfile()" title="Edit Profile">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- News Panel -->
+                    <div class="menu-panel news-section">
+                        <div class="menu-panel-header">
+                            <h3 class="menu-panel-title">News & Updates</h3>
+                            <button class="menu-btn-sm" onclick="MainMenu.refreshNews()">Refresh</button>
+                        </div>
+                        <div class="news-panel menu-scrollable" id="news-container">
+                            <!-- News items populated dynamically -->
+                            <div class="news-item" onclick="MainMenu.openNewsItem(1)">
+                                <div class="news-date">Nov 20, 2025</div>
+                                <span class="news-tag patch">Patch</span>
+                                <div class="news-title">Version 2.1.0 Released</div>
+                                <div class="news-excerpt">New race added: The Shadowborn. Balance changes and bug fixes included.</div>
+                            </div>
+                            <div class="news-item" onclick="MainMenu.openNewsItem(2)">
+                                <div class="news-date">Nov 15, 2025</div>
+                                <span class="news-tag event">Event</span>
+                                <div class="news-title">Winter Tournament Begins</div>
+                                <div class="news-excerpt">Compete for exclusive rewards in our seasonal tournament!</div>
+                            </div>
+                            <div class="news-item" onclick="MainMenu.openNewsItem(3)">
+                                <div class="news-date">Nov 10, 2025</div>
+                                <span class="news-tag update">Update</span>
+                                <div class="news-title">Map Editor Enhanced</div>
+                                <div class="news-excerpt">New terrain tools and scripting capabilities added.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="menu-bottom-bar">
+            <!-- Music Controls -->
+            <div class="music-controls" id="music-controls">
+                <button class="music-btn" id="btn-prev" onclick="MainMenu.prevTrack()" title="Previous">
+                    <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+                <button class="music-btn" id="btn-play-pause" onclick="MainMenu.toggleMusic()" title="Play/Pause">
+                    <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <button class="music-btn" id="btn-next" onclick="MainMenu.nextTrack()" title="Next">
+                    <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </button>
+                <div class="music-track-info">
+                    <div class="music-track-name" id="track-name">Main Theme</div>
+                    <div class="music-track-artist" id="track-artist">Game Composer</div>
+                </div>
+                <div class="music-volume">
+                    <button class="music-btn" id="btn-mute" onclick="MainMenu.toggleMute()" title="Mute">
+                        <svg id="icon-volume" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        <svg id="icon-muted" viewBox="0 0 24 24" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                    </button>
+                    <input type="range" class="menu-slider" id="volume-slider" min="0" max="100" value="70"
+                           onchange="MainMenu.setVolume(this.value)" oninput="MainMenu.setVolume(this.value)">
+                </div>
+            </div>
+
+            <!-- Version -->
+            <div class="menu-version" id="game-version">Version 2.1.0</div>
+
+            <!-- Social Links -->
+            <div class="menu-social-links">
+                <a href="#" onclick="MainMenu.openLink('discord')" title="Discord">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                    </svg>
+                </a>
+                <a href="#" onclick="MainMenu.openLink('twitter')" title="Twitter">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M22.46 6c-.85.38-1.78.64-2.75.76 1-.6 1.76-1.55 2.12-2.68-.93.55-1.96.95-3.06 1.17-.88-.94-2.13-1.53-3.51-1.53-2.66 0-4.81 2.16-4.81 4.81 0 .38.04.75.13 1.1-4-.2-7.58-2.11-9.96-5.02-.42.72-.66 1.56-.66 2.46 0 1.68.85 3.16 2.14 4.02-.79-.02-1.53-.24-2.18-.6v.06c0 2.35 1.67 4.31 3.88 4.76-.4.1-.83.16-1.27.16-.31 0-.62-.03-.92-.08.63 1.96 2.45 3.39 4.61 3.43-1.69 1.32-3.83 2.1-6.15 2.1-.4 0-.8-.02-1.19-.07 2.19 1.4 4.78 2.22 7.57 2.22 9.07 0 14.02-7.52 14.02-14.02 0-.21 0-.43-.01-.64.96-.7 1.8-1.56 2.46-2.55z"/>
+                    </svg>
+                </a>
+                <a href="#" onclick="MainMenu.openLink('website')" title="Website">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Exit Confirmation Modal (hidden by default) -->
+        <div id="exit-modal" class="menu-modal-overlay" style="display: none;">
+            <div class="menu-panel menu-panel-ornate">
+                <div class="menu-panel-header">
+                    <h3 class="menu-panel-title">Exit Game</h3>
+                </div>
+                <div class="menu-panel-content menu-text-center">
+                    <p>Are you sure you want to exit?</p>
+                </div>
+                <div class="menu-flex-center menu-gap-md menu-mt-lg">
+                    <button class="menu-btn menu-btn-sm" onclick="MainMenu.cancelExit()">Cancel</button>
+                    <button class="menu-btn menu-btn-danger menu-btn-sm" onclick="MainMenu.confirmExit()">Exit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/ui_core.js"></script>
+    <script src="../../js/menu_core.js"></script>
+    <script>
+        /**
+         * Main Menu Controller
+         */
+        const MainMenu = {
+            _musicPlaying: true,
+            _currentTrack: 0,
+            _tracks: [
+                { name: 'Main Theme', artist: 'Game Composer', url: '' },
+                { name: 'Battle March', artist: 'Game Composer', url: '' },
+                { name: 'Peaceful Lands', artist: 'Game Composer', url: '' }
+            ],
+
+            /**
+             * Initialize main menu
+             */
+            init: function() {
+                console.log('Main Menu initialized');
+
+                // Initialize menu core systems
+                MenuCore.init();
+
+                // Load player profile
+                this.loadPlayerProfile();
+
+                // Load news
+                this.loadNews();
+
+                // Setup parallax layers
+                this.setupParallax();
+
+                // Start stagger animation for buttons
+                setTimeout(() => {
+                    const container = document.getElementById('main-menu-buttons');
+                    MenuCore.Animations.staggerIn(container, '.menu-btn', 80);
+                }, 100);
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.startCampaign();
+                    }
+                });
+            },
+
+            /**
+             * Setup parallax background
+             */
+            setupParallax: function() {
+                // Configure parallax layers (would normally load from game assets)
+                MenuCore.Parallax.setLayers([
+                    { image: '../../images/menu/bg_sky.jpg', depth: 0.05 },
+                    { image: '../../images/menu/bg_mountains.png', depth: 0.15 },
+                    { image: '../../images/menu/bg_trees.png', depth: 0.25 }
+                ]);
+            },
+
+            /**
+             * Load player profile from backend
+             */
+            loadPlayerProfile: function() {
+                MenuCore.Backend.getPlayerProfile().then(profile => {
+                    if (profile) {
+                        document.getElementById('player-name').textContent = profile.name || 'Player';
+                        document.getElementById('player-level').textContent = profile.level || 1;
+                        document.getElementById('player-wins').textContent = profile.wins || 0;
+                        document.getElementById('player-rank-text').textContent = profile.rank || 'Unranked';
+
+                        if (profile.avatar) {
+                            const avatarImg = document.getElementById('player-avatar-img');
+                            avatarImg.src = profile.avatar;
+                            avatarImg.style.display = 'block';
+                        }
+
+                        if (profile.rankIcon) {
+                            const rankIcon = document.getElementById('player-rank-icon');
+                            rankIcon.src = profile.rankIcon;
+                            rankIcon.style.display = 'inline';
+                        }
+                    }
+                }).catch(err => {
+                    console.log('Could not load player profile:', err);
+                });
+            },
+
+            /**
+             * Load news from backend
+             */
+            loadNews: function() {
+                MenuCore.Backend.getNews().then(news => {
+                    if (news && news.length > 0) {
+                        const container = document.getElementById('news-container');
+                        container.innerHTML = '';
+
+                        news.forEach((item, index) => {
+                            const newsEl = document.createElement('div');
+                            newsEl.className = 'news-item';
+                            newsEl.onclick = () => this.openNewsItem(item.id);
+                            newsEl.innerHTML = `
+                                <div class="news-date">${item.date}</div>
+                                <span class="news-tag ${item.type}">${item.type}</span>
+                                <div class="news-title">${item.title}</div>
+                                <div class="news-excerpt">${item.excerpt}</div>
+                            `;
+                            container.appendChild(newsEl);
+                        });
+
+                        MenuCore.Animations.staggerIn(container, '.news-item', 100);
+                    }
+                }).catch(err => {
+                    console.log('Could not load news:', err);
+                });
+            },
+
+            /**
+             * Navigation methods
+             */
+            startCampaign: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'campaign' });
+            },
+
+            openMultiplayer: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'multiplayer' });
+            },
+
+            openCustomGames: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'custom_games' });
+            },
+
+            openEditor: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'editor' });
+            },
+
+            openSettings: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'settings' });
+            },
+
+            openCredits: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'credits' });
+            },
+
+            /**
+             * Exit game
+             */
+            exitGame: function() {
+                MenuCore.Audio.playSound('button_click');
+                document.getElementById('exit-modal').style.display = 'flex';
+            },
+
+            cancelExit: function() {
+                document.getElementById('exit-modal').style.display = 'none';
+            },
+
+            confirmExit: function() {
+                MenuCore.Backend.exitGame();
+            },
+
+            /**
+             * Profile editing
+             */
+            editProfile: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.editProfile', {});
+            },
+
+            /**
+             * News
+             */
+            refreshNews: function() {
+                MenuCore.Audio.playSound('button_click');
+                this.loadNews();
+            },
+
+            openNewsItem: function(id) {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.openNews', { newsId: id });
+            },
+
+            /**
+             * Music controls
+             */
+            toggleMusic: function() {
+                this._musicPlaying = !this._musicPlaying;
+
+                const playIcon = document.getElementById('icon-play');
+                const pauseIcon = document.getElementById('icon-pause');
+
+                if (this._musicPlaying) {
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
+                    MenuCore.Audio.resumeMusic();
+                } else {
+                    playIcon.style.display = 'block';
+                    pauseIcon.style.display = 'none';
+                    MenuCore.Audio.pauseMusic();
+                }
+            },
+
+            prevTrack: function() {
+                this._currentTrack = (this._currentTrack - 1 + this._tracks.length) % this._tracks.length;
+                this.updateTrackDisplay();
+            },
+
+            nextTrack: function() {
+                this._currentTrack = (this._currentTrack + 1) % this._tracks.length;
+                this.updateTrackDisplay();
+            },
+
+            updateTrackDisplay: function() {
+                const track = this._tracks[this._currentTrack];
+                document.getElementById('track-name').textContent = track.name;
+                document.getElementById('track-artist').textContent = track.artist;
+
+                if (track.url) {
+                    MenuCore.Audio.playMusic(track.url);
+                }
+            },
+
+            toggleMute: function() {
+                const muted = MenuCore.Audio.toggleMute();
+
+                const volumeIcon = document.getElementById('icon-volume');
+                const mutedIcon = document.getElementById('icon-muted');
+
+                if (muted) {
+                    volumeIcon.style.display = 'none';
+                    mutedIcon.style.display = 'block';
+                } else {
+                    volumeIcon.style.display = 'block';
+                    mutedIcon.style.display = 'none';
+                }
+            },
+
+            setVolume: function(value) {
+                MenuCore.Audio.setMusicVolume(value / 100);
+            },
+
+            /**
+             * Social links
+             */
+            openLink: function(type) {
+                Engine.call('Menu.openExternalLink', { type: type });
+            },
+
+            /**
+             * Set game information
+             */
+            setGameInfo: function(data) {
+                if (data.title) {
+                    document.getElementById('game-title').textContent = data.title;
+                }
+                if (data.subtitle) {
+                    document.getElementById('game-subtitle').textContent = data.subtitle;
+                }
+                if (data.version) {
+                    document.getElementById('game-version').textContent = `Version ${data.version}`;
+                }
+                if (data.logo) {
+                    const logoImg = document.getElementById('game-logo-img');
+                    logoImg.src = data.logo;
+                    logoImg.style.display = 'block';
+                    document.getElementById('game-title').style.display = 'none';
+                }
+            },
+
+            /**
+             * Update player data (called from engine)
+             */
+            updatePlayer: function(data) {
+                if (data.name) document.getElementById('player-name').textContent = data.name;
+                if (data.level) document.getElementById('player-level').textContent = data.level;
+                if (data.wins) document.getElementById('player-wins').textContent = data.wins;
+                if (data.rank) document.getElementById('player-rank-text').textContent = data.rank;
+            }
+        };
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', () => MainMenu.init());
+
+        // Expose to engine
+        window.MainMenu = MainMenu;
+    </script>
+
+    <style>
+        /* Additional Main Menu Specific Styles */
+        .menu-main-content {
+            position: relative;
+            z-index: var(--menu-z-content);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: var(--menu-spacing-xl);
+        }
+
+        .menu-layout {
+            display: flex;
+            gap: var(--menu-spacing-xxl);
+            width: 100%;
+            max-width: 1200px;
+            margin-top: var(--menu-spacing-xl);
+        }
+
+        .menu-left-column {
+            flex: 0 0 360px;
+        }
+
+        .menu-right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-lg);
+            max-width: 500px;
+        }
+
+        .menu-buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .player-profile {
+            border-radius: var(--menu-radius-md);
+        }
+
+        .player-stats {
+            display: flex;
+            gap: var(--menu-spacing-lg);
+            margin-top: var(--menu-spacing-xs);
+            font-size: var(--menu-font-size-sm);
+        }
+
+        .stat-label {
+            color: var(--menu-text-secondary);
+        }
+
+        .stat-value {
+            color: var(--menu-gold-light);
+            font-weight: 600;
+        }
+
+        .news-section {
+            flex: 1;
+            border-radius: var(--menu-radius-md);
+        }
+
+        .menu-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--menu-spacing-md) var(--menu-spacing-xl);
+            background: linear-gradient(0deg, rgba(10, 8, 16, 0.95) 0%, transparent 100%);
+            z-index: var(--menu-z-content);
+        }
+
+        .menu-version {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-text-secondary);
+        }
+
+        .menu-social-links {
+            display: flex;
+            gap: var(--menu-spacing-md);
+        }
+
+        .menu-social-links a {
+            color: var(--menu-text-secondary);
+            transition: color var(--menu-transition-fast);
+        }
+
+        .menu-social-links a:hover {
+            color: var(--menu-gold-light);
+        }
+
+        .menu-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: var(--menu-z-modal);
+            animation: fade-in 0.2s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .menu-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .menu-right-column {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-bottom-bar {
+                flex-direction: column;
+                gap: var(--menu-spacing-md);
+            }
+
+            .music-controls {
+                width: 100%;
+            }
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,280 @@
+{
+    "id": "naga_leviathan_caller",
+    "type": "unit",
+    "name": "Leviathan Caller",
+    "description": "Ancient Naga priests who commune with the great sea beasts. These powerful summoners call forth water elementals and command the creatures of the deep.",
+    "race": "naga",
+    "tier": 3,
+    "class": "summoner",
+
+    "tags": ["military", "caster", "ranged", "tier3", "amphibious", "summoner", "water_magic"],
+
+    "model": {
+        "path": "models/races/naga/units/leviathan_caller.obj",
+        "scale": [1.1, 1.1, 1.1],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/leviathan_caller_diffuse.png",
+        "normal": "textures/races/naga/units/leviathan_caller_normal.png",
+        "emissive": "textures/races/naga/units/leviathan_caller_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.4,
+                "height": 2.0,
+                "offset": [0.0, 1.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 100.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 4.0,
+        "turnRate": 280.0,
+        "acceleration": 10.0,
+        "deceleration": 14.0,
+        "canSwim": true,
+        "swimSpeed": 5.5,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.1,
+            "forest": 0.85,
+            "water": 1.4,
+            "deep_water": 1.5,
+            "desert": 0.5
+        }
+    },
+
+    "combat": {
+        "health": 400,
+        "maxHealth": 400,
+        "mana": 350,
+        "maxMana": 350,
+        "manaRegen": 2.5,
+        "armor": 2,
+        "magicResist": 6,
+        "attackDamage": 22,
+        "attackSpeed": 2.0,
+        "attackRange": 10.0,
+        "critChance": 0.06,
+        "critMultiplier": 1.6,
+        "magicalDamage": true,
+        "damageType": "water",
+        "armorType": "light"
+    },
+
+    "projectile": {
+        "id": "water_bolt",
+        "model": "models/projectiles/water_bolt.obj",
+        "speed": 18.0,
+        "lifetime": 2.0,
+        "gravity": 0.0,
+        "trailEffect": "effects/water_trail.fx",
+        "impactEffect": "effects/water_splash.fx",
+        "soundOnFire": "sounds/spells/water_bolt.wav"
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "spell_power_bonus": 0.35,
+            "mana_regen_bonus": 1.5,
+            "summon_duration_bonus": 0.25
+        },
+        "in_water": {
+            "health_regen": 5.0,
+            "summon_count_bonus": 1
+        }
+    },
+
+    "summon_limits": {
+        "water_elemental": 3,
+        "total_summons": 5
+    },
+
+    "passive_abilities": [
+        {
+            "id": "master_of_tides",
+            "name": "Master of Tides",
+            "description": "Summoned water elementals deal 25% more damage and last 25% longer near water.",
+            "effect": {
+                "type": "summon_buff",
+                "near_water_damage": 0.25,
+                "near_water_duration": 0.25
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely."
+        },
+        {
+            "id": "elemental_link",
+            "name": "Elemental Link",
+            "description": "When a summoned elemental dies, restores 50 mana to the Leviathan Caller.",
+            "effect": {
+                "type": "on_summon_death",
+                "mana_restore": 50
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "summon_water_elemental",
+            "name": "Summon Water Elemental",
+            "description": "Summons a water elemental to fight for 45 seconds. Elementals deal water damage and slow enemies.",
+            "icon": "icons/abilities/naga/summon_water_elemental.png",
+            "cooldown": 20.0,
+            "manaCost": 80,
+            "range": 8.0,
+            "targetType": "ground",
+            "summon": {
+                "unit_id": "naga_water_elemental",
+                "count": 1,
+                "duration": 45.0,
+                "max_active": 3
+            },
+            "castTime": 1.5,
+            "castAnimation": "summon",
+            "castSound": "sounds/abilities/summon_water_elemental.wav"
+        },
+        {
+            "id": "call_of_the_depths",
+            "name": "Call of the Depths",
+            "description": "Summons 2 powerful Greater Water Elementals for 30 seconds.",
+            "icon": "icons/abilities/naga/call_of_depths.png",
+            "cooldown": 60.0,
+            "manaCost": 150,
+            "range": 10.0,
+            "targetType": "ground",
+            "summon": {
+                "unit_id": "naga_greater_water_elemental",
+                "count": 2,
+                "duration": 30.0
+            },
+            "castTime": 2.0,
+            "castAnimation": "channel_summon",
+            "castSound": "sounds/abilities/call_of_depths.wav"
+        },
+        {
+            "id": "tidal_surge",
+            "name": "Tidal Surge",
+            "description": "Empowers all summoned elementals, increasing their damage by 50% and attack speed by 30% for 12 seconds.",
+            "icon": "icons/abilities/naga/tidal_surge.png",
+            "cooldown": 35.0,
+            "manaCost": 70,
+            "targetType": "self",
+            "duration": 12.0,
+            "effects": [
+                {"type": "buff_summons", "damage_bonus": 0.5, "attack_speed_bonus": 0.3}
+            ],
+            "castAnimation": "empower",
+            "castSound": "sounds/abilities/tidal_surge.wav"
+        },
+        {
+            "id": "drown",
+            "name": "Drown",
+            "description": "Encases an enemy in water, silencing and dealing 150 damage over 4 seconds. Deals double damage to fire units.",
+            "icon": "icons/abilities/naga/drown.png",
+            "cooldown": 22.0,
+            "manaCost": 90,
+            "range": 10.0,
+            "targetType": "enemy_unit",
+            "duration": 4.0,
+            "effects": [
+                {"type": "silence", "duration": 4.0},
+                {"type": "damage_over_time", "total_damage": 150, "damage_type": "water"},
+                {"type": "bonus_damage", "vs_fire": 2.0}
+            ],
+            "castTime": 0.5,
+            "castAnimation": "drown_cast",
+            "castSound": "sounds/abilities/drown.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/leviathan_caller/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/leviathan_caller/slither.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/leviathan_caller/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/leviathan_caller/cast_attack.anim",
+            "loop": false,
+            "events": [[0.5, "fire_projectile"]]
+        },
+        "summon": {"path": "animations/naga/leviathan_caller/summon.anim", "loop": false},
+        "channel_summon": {"path": "animations/naga/leviathan_caller/channel.anim", "loop": true},
+        "empower": {"path": "animations/naga/leviathan_caller/empower.anim", "loop": false},
+        "drown_cast": {"path": "animations/naga/leviathan_caller/drown.anim", "loop": false},
+        "death": {"path": "animations/naga/leviathan_caller/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/naga_slither_1.wav", "sounds/footsteps/naga_slither_2.wav"],
+            "volume": 0.4
+        },
+        "attack": "sounds/combat/water_bolt.wav",
+        "death": {"paths": ["sounds/death/leviathan_caller_death.wav"], "volume": 0.9},
+        "select": "sounds/voice/naga/leviathan_caller_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/leviathan_caller_ack_1.wav",
+                "sounds/voice/naga/leviathan_caller_ack_2.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_leviathan_caller.bt",
+        "profile": "summoner",
+        "aggroRange": 14.0,
+        "leashRange": 20.0,
+        "preferWater": true,
+        "keepDistance": 12.0,
+        "prioritizeSummons": true
+    },
+
+    "production": {
+        "building": "naga_siren_shrine",
+        "time": 55.0,
+        "cost": {
+            "gold": 380,
+            "coral": 160,
+            "pearls": 100,
+            "abyssal_essence": 40
+        },
+        "requirements": {
+            "age": "age_abyss",
+            "techs": ["naga_elemental_pact"],
+            "buildings": ["naga_palace_of_waves"]
+        }
+    },
+
+    "properties": {
+        "populationCost": 4,
+        "supplyUpkeep": 3,
+        "squadSize": 1,
+        "experienceValue": 90,
+        "bountyGold": 75
+    },
+
+    "upgrades": {
+        "spell_power": ["naga_tidal_magic_1", "naga_tidal_magic_2", "naga_tidal_magic_3"],
+        "special": ["naga_elemental_mastery"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/leviathan_caller/on_spawn.py",
+        "on_death": "scripts/units/naga/leviathan_caller/on_death.py",
+        "on_summon": "scripts/units/naga/leviathan_caller/on_summon.py"
+    }
+}

@@ -1,0 +1,171 @@
+{
+    "id": "fairy_dryad",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Dryad",
+    "description": "Tree spirits with innate magic immunity. Dryads use poisoned spears and can dispel enemy magic with their Abolish Magic ability.",
+
+    "tags": ["military", "ranged", "tier2", "magic_immune", "anti_caster"],
+
+    "tier": 2,
+    "age_requirement": 3,
+
+    "model": {
+        "path": "models/races/fairies/units/dryad.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/dryad_diffuse.png",
+        "normal": "textures/races/fairies/units/dryad_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.3,
+                "height": 1.6,
+                "offset": [0.0, 0.8, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 50.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 435,
+        "maxHealth": 435,
+        "healthRegen": 0.75,
+        "mana": 200,
+        "maxMana": 200,
+        "manaRegen": 0.8,
+        "armor": 1,
+        "magicResist": 100,
+        "moveSpeed": 5.5,
+        "turnRate": 350.0
+    },
+
+    "combat": {
+        "attackDamage": 17,
+        "attackSpeed": 1.4,
+        "attackRange": 8.5,
+        "damageType": "piercing",
+        "armorType": "light",
+        "attackType": "ranged",
+        "projectile": "poison_spear",
+        "projectile_speed": 22.0
+    },
+
+    "magic_immunity": {
+        "enabled": true,
+        "blocks_friendly": false,
+        "blocks_enemy": true,
+        "exception_abilities": []
+    },
+
+    "abilities": [
+        {
+            "id": "ability_slow_poison_dryad",
+            "name": "Slow Poison",
+            "description": "Attacks apply a slowing poison that deals damage over time",
+            "passive": true,
+            "effects": [
+                {"type": "slow", "value": 0.25, "duration": 5.0},
+                {"type": "dot", "damage": 8, "duration": 8.0, "damage_type": "poison", "stacking": false}
+            ]
+        },
+        {
+            "id": "ability_abolish_magic",
+            "name": "Abolish Magic",
+            "description": "Dispels positive buffs from enemies and negative debuffs from allies",
+            "hotkey": "B",
+            "cooldown": 1.5,
+            "mana_cost": 50,
+            "range": 10.0,
+            "effects": [
+                {"type": "dispel", "target": "enemy", "removes": "buffs", "damage_to_summons": 300},
+                {"type": "dispel", "target": "friendly", "removes": "debuffs"}
+            ],
+            "auto_cast": true
+        },
+        {
+            "id": "ability_nature_blessing",
+            "name": "Nature's Blessing",
+            "description": "Grant a friendly unit magic immunity for 8 seconds",
+            "hotkey": "N",
+            "cooldown": 30.0,
+            "mana_cost": 75,
+            "range": 10.0,
+            "duration": 8.0,
+            "effects": [
+                {"type": "magic_immunity", "value": true}
+            ],
+            "requires_upgrade": "upgrade_natures_blessing"
+        }
+    ],
+
+    "night_bonus": {
+        "attackDamage": 0.25,
+        "moveSpeed": 0.20
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_dryad_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 3
+        },
+        {
+            "id": "upgrade_bark_hide",
+            "stat": "health",
+            "bonus_per_level": 40
+        }
+    ],
+
+    "production": {
+        "building": "fairy_ancient_of_lore",
+        "cost": {
+            "gold": 145,
+            "wood": 60,
+            "food": 3
+        },
+        "build_time": 28.0,
+        "population_cost": 2,
+        "prerequisites": ["fairy_hunters_hall"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/anti_caster.bt",
+        "profile": "support",
+        "aggroRange": 10.0,
+        "leashRange": 25.0,
+        "priority_targets": ["caster", "summoned"],
+        "use_abolish_on_cooldown": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/dryad/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/dryad/walk.anim", "loop": true},
+        "run": {"path": "animations/fairies/dryad/run.anim", "loop": true},
+        "attack": {"path": "animations/fairies/dryad/attack.anim", "loop": false},
+        "cast": {"path": "animations/fairies/dryad/cast.anim", "loop": false},
+        "death": {"path": "animations/fairies/dryad/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/dryad/select_1.wav", "sounds/fairies/dryad/select_2.wav"],
+        "acknowledge": ["sounds/fairies/dryad/ack_1.wav", "sounds/fairies/dryad/ack_2.wav"],
+        "attack": "sounds/fairies/dryad/attack.wav",
+        "cast": "sounds/fairies/dryad/abolish.wav",
+        "death": "sounds/fairies/dryad/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/dryad.png",
+        "icon": "textures/races/fairies/icons/dryad.png",
+        "hotkey": "D"
+    }
+}

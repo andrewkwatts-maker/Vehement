@@ -1,0 +1,191 @@
+{
+  "id": "death_knight_unit",
+  "name": "Death Knight",
+  "race": "undead",
+  "tier": 4,
+  "type": "cavalry",
+  "role": ["cavalry", "anti_caster", "elite_melee"],
+
+  "description": "Elite undead cavalry wielding runeblades imbued with dark power. Death Knights are devastating against enemy spellcasters.",
+  "lore": "Once noble paladins, Death Knights are fallen champions raised to serve the Scourge. Their runeblades drain life and their armor is enchanted to resist magical attacks.",
+
+  "stats": {
+    "health": 750,
+    "healthRegen": 1.0,
+    "mana": 200,
+    "manaRegen": 0.5,
+    "armor": 5,
+    "armorType": "heavy",
+    "moveSpeed": 340,
+    "turnRate": 0.6,
+    "collisionSize": 48,
+    "selectionScale": 1.3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 48,
+      "variance": 8,
+      "type": "chaos",
+      "bonusVsCasters": 25
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.5,
+    "backswing": 0.4,
+    "acquisitionRange": 500,
+    "aggroRange": 450
+  },
+
+  "abilities": [
+    {
+      "id": "soul_drain",
+      "name": "Soul Drain",
+      "type": "passive",
+      "description": "Attacks drain life from enemies, healing the Death Knight",
+      "effects": {
+        "lifestealPercent": 0.2
+      },
+      "icon": "icons/abilities/soul_drain.png"
+    },
+    {
+      "id": "runic_strike",
+      "name": "Runic Strike",
+      "type": "active",
+      "targetType": "unit",
+      "description": "A powerful strike that deals bonus damage and silences the target",
+      "cooldown": 12.0,
+      "manaCost": 50,
+      "range": 128,
+      "effects": {
+        "bonusDamage": 75,
+        "silenceDuration": 4.0
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/runic_strike.png"
+    },
+    {
+      "id": "death_grip",
+      "name": "Death Grip",
+      "type": "active",
+      "targetType": "unit",
+      "requiresResearch": "death_grip_upgrade",
+      "description": "Pulls an enemy unit to the Death Knight",
+      "cooldown": 20.0,
+      "manaCost": 75,
+      "range": 600,
+      "effects": {
+        "pullTarget": true,
+        "damage": 50,
+        "stunDuration": 1.0
+      },
+      "hotkey": "G",
+      "icon": "icons/abilities/death_grip.png"
+    },
+    {
+      "id": "magic_resistance",
+      "name": "Anti-Magic Plating",
+      "type": "passive",
+      "description": "Reduced damage from magical attacks",
+      "effects": {
+        "magicResistance": 0.4
+      },
+      "icon": "icons/abilities/magic_resistance.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "slaughterhouse",
+    "buildTime": 55,
+    "cost": {
+      "gold": 350,
+      "lumber": 80,
+      "corpses": 0
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["slaughterhouse", "black_citadel"],
+      "technologies": ["death_knight_training"],
+      "age": "damnation"
+    },
+    "hotkey": "D"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["death_grip_upgrade", "death_knight_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/death_knight/ready.ogg",
+    "select": ["audio/units/death_knight/select1.ogg", "audio/units/death_knight/select2.ogg"],
+    "move": ["audio/units/death_knight/move1.ogg", "audio/units/death_knight/move2.ogg"],
+    "attack": ["audio/units/death_knight/attack1.ogg", "audio/units/death_knight/attack2.ogg"],
+    "death": "audio/units/death_knight/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/death_knight_unit.glb",
+    "texture": "textures/units/undead/death_knight_unit.png",
+    "portrait": "textures/portraits/death_knight_unit.png",
+    "icon": "textures/icons/death_knight_unit.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "dk_idle",
+      "walk": "dk_ride",
+      "attack": "dk_attack",
+      "death": "dk_death",
+      "runicStrike": "dk_special"
+    },
+    "effects": {
+      "spawn": "effects/dk_spawn.vfx",
+      "death": "effects/dk_death.vfx",
+      "soulDrain": "effects/soul_drain.vfx",
+      "runicStrike": "effects/runic_strike.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 8,
+    "priority": "high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.1,
+    "preferredTargets": ["caster", "ranged", "hero"],
+    "useGripOnCasters": true,
+    "frontLineUnit": false
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isCavalry": true,
+    "isElite": true,
+    "hasLifesteal": true
+  },
+
+  "bounty": {
+    "gold": 55,
+    "experience": 85
+  },
+
+  "pointValue": 4.5,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

@@ -1,0 +1,259 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "campaign.schema.json",
+  "title": "Campaign Definition",
+  "description": "Defines a complete campaign for a race/faction",
+  "type": "object",
+  "required": ["id", "raceId", "title", "chapters"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^campaign_[a-z_]+$",
+      "description": "Unique campaign identifier"
+    },
+    "raceId": {
+      "type": "string",
+      "enum": ["human", "naga", "alien", "undead", "fairy", "vampire", "cryptid"],
+      "description": "Race this campaign belongs to"
+    },
+    "title": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Campaign title"
+    },
+    "subtitle": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Campaign subtitle"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Campaign description"
+    },
+    "shortDescription": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Brief description for UI"
+    },
+    "story": {
+      "$ref": "#/definitions/campaignStory"
+    },
+    "chapters": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Chapter IDs in order"
+    },
+    "cinematics": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Cinematic IDs available in campaign"
+    },
+    "introCinematic": {
+      "type": "string",
+      "description": "Cinematic to play at campaign start"
+    },
+    "outroCinematic": {
+      "type": "string",
+      "description": "Cinematic to play at campaign end"
+    },
+    "creditsSequence": {
+      "type": "string",
+      "description": "Credits cinematic ID"
+    },
+    "difficulty": {
+      "$ref": "#/definitions/difficultySettings"
+    },
+    "unlockRequirements": {
+      "$ref": "#/definitions/unlockRequirements"
+    },
+    "rewards": {
+      "$ref": "#/definitions/campaignRewards"
+    },
+    "settings": {
+      "$ref": "#/definitions/campaignSettings"
+    },
+    "ui": {
+      "$ref": "#/definitions/campaignUI"
+    },
+    "audio": {
+      "$ref": "#/definitions/campaignAudio"
+    },
+    "metadata": {
+      "$ref": "#/definitions/campaignMetadata"
+    }
+  },
+
+  "definitions": {
+    "campaignStory": {
+      "type": "object",
+      "properties": {
+        "prologue": {
+          "type": "string",
+          "description": "Story text shown at start"
+        },
+        "epilogue": {
+          "type": "string",
+          "description": "Story text shown at end"
+        },
+        "keyCharacters": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Important character IDs"
+        },
+        "setting": {
+          "type": "string",
+          "description": "Where the campaign takes place"
+        },
+        "timeframe": {
+          "type": "string",
+          "description": "When the campaign takes place"
+        },
+        "synopsis": {
+          "type": "string",
+          "description": "Brief story summary"
+        }
+      }
+    },
+
+    "difficultySettings": {
+      "type": "object",
+      "properties": {
+        "defaultDifficulty": {
+          "type": "string",
+          "enum": ["story", "normal", "veteran", "legendary"],
+          "default": "normal"
+        },
+        "availableDifficulties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["story", "normal", "veteran", "legendary"]
+          }
+        },
+        "difficultyModifiers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/difficultyModifier"
+          }
+        }
+      }
+    },
+
+    "difficultyModifier": {
+      "type": "object",
+      "properties": {
+        "playerDamageMultiplier": { "type": "number", "default": 1.0 },
+        "enemyDamageMultiplier": { "type": "number", "default": 1.0 },
+        "playerResourceMultiplier": { "type": "number", "default": 1.0 },
+        "enemyResourceMultiplier": { "type": "number", "default": 1.0 },
+        "experienceMultiplier": { "type": "number", "default": 1.0 },
+        "timeLimitMultiplier": { "type": "number", "default": 1.0 }
+      }
+    },
+
+    "unlockRequirements": {
+      "type": "object",
+      "properties": {
+        "prerequisiteCampaigns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Campaign IDs that must be completed"
+        },
+        "requiredFlags": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" },
+          "description": "Global flags required"
+        },
+        "requiredPlayerLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "isUnlockedByDefault": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "campaignRewards": {
+      "type": "object",
+      "properties": {
+        "experienceTotal": { "type": "integer", "default": 0 },
+        "unlockedCampaigns": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedRaces": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedHeroes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedMaps": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "achievements": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "campaignSettings": {
+      "type": "object",
+      "properties": {
+        "allowChapterSelect": { "type": "boolean", "default": true },
+        "allowMissionReplay": { "type": "boolean", "default": true },
+        "carryOverResources": { "type": "boolean", "default": false },
+        "carryOverUnits": { "type": "boolean", "default": false },
+        "persistentUpgrades": { "type": "boolean", "default": true },
+        "maxSaveSlots": { "type": "integer", "default": 10 }
+      }
+    },
+
+    "campaignUI": {
+      "type": "object",
+      "properties": {
+        "thumbnailImage": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "bannerImage": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "backgroundImage": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "logoImage": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "iconImage": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "themeColor": { "$ref": "common.schema.json#/definitions/color" }
+      }
+    },
+
+    "campaignAudio": {
+      "type": "object",
+      "properties": {
+        "menuMusic": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "mainTheme": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "victoryMusic": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "defeatMusic": { "$ref": "common.schema.json#/definitions/assetPath" }
+      }
+    },
+
+    "campaignMetadata": {
+      "type": "object",
+      "properties": {
+        "author": { "type": "string" },
+        "version": { "type": "string" },
+        "createdDate": { "type": "string", "format": "date" },
+        "lastModifiedDate": { "type": "string", "format": "date" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "estimatedPlaytime": {
+          "type": "integer",
+          "description": "Estimated hours to complete"
+        },
+        "minimumGameVersion": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,336 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "building_archetype.schema.json",
+  "title": "Building Archetype",
+  "description": "Schema for RTS building archetype definitions",
+  "type": "object",
+  "required": ["id", "name", "category"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the building",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the building",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "description": "Building description",
+      "maxLength": 512
+    },
+    "category": {
+      "type": "string",
+      "description": "Building category",
+      "enum": ["main_hall", "resource", "military", "defense", "research", "economic", "special"]
+    },
+    "tier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 7,
+      "default": 1,
+      "description": "Tech tier required"
+    },
+    "size": {
+      "type": "object",
+      "description": "Building footprint",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 2
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 2
+        }
+      }
+    },
+    "health": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 500,
+      "description": "Maximum health points"
+    },
+    "armor": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 5,
+      "description": "Damage reduction"
+    },
+    "cost": {
+      "$ref": "#/definitions/resourceCost"
+    },
+    "buildTime": {
+      "type": "number",
+      "minimum": 0,
+      "default": 30,
+      "description": "Construction time in seconds"
+    },
+    "requiredBuilding": {
+      "type": "string",
+      "description": "Prerequisite building"
+    },
+    "requiredTech": {
+      "type": "string",
+      "description": "Required technology"
+    },
+    "requiredAge": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 6,
+      "default": 0,
+      "description": "Minimum age required"
+    },
+    "providesPopulation": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Population cap increase"
+    },
+    "productionQueue": {
+      "type": "array",
+      "description": "Units/techs that can be produced",
+      "items": {
+        "$ref": "#/definitions/productionEntry"
+      }
+    },
+    "resourceGeneration": {
+      "$ref": "#/definitions/resourceGeneration"
+    },
+    "garrisonCapacity": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of units that can garrison"
+    },
+    "attackCapability": {
+      "$ref": "#/definitions/attackCapability"
+    },
+    "aura": {
+      "$ref": "#/definitions/aura"
+    },
+    "isUnique": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only one can be built"
+    },
+    "canRally": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can set rally point"
+    },
+    "canUpgrade": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can be upgraded"
+    },
+    "upgradesTo": {
+      "type": "string",
+      "description": "Building it upgrades to"
+    },
+    "visuals": {
+      "$ref": "#/definitions/buildingVisuals"
+    }
+  },
+  "definitions": {
+    "resourceCost": {
+      "type": "object",
+      "description": "Resource cost to build",
+      "properties": {
+        "gold": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "wood": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "food": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "stone": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "mana": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "productionEntry": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["unit", "tech", "upgrade"],
+          "description": "Type of production"
+        },
+        "id": {
+          "type": "string",
+          "description": "ID of the item to produce"
+        },
+        "requiredAge": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "default": 0
+        },
+        "requiredTech": {
+          "type": "string",
+          "description": "Technology requirement"
+        }
+      }
+    },
+    "resourceGeneration": {
+      "type": "object",
+      "description": "Passive resource generation",
+      "properties": {
+        "goldPerSecond": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "woodPerSecond": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "foodPerSecond": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "stonePerSecond": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "manaPerSecond": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "requiresWorker": {
+          "type": "boolean",
+          "default": false
+        },
+        "workerCapacity": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "attackCapability": {
+      "type": "object",
+      "description": "Defensive attack stats",
+      "properties": {
+        "canAttack": {
+          "type": "boolean",
+          "default": false
+        },
+        "damage": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "attackSpeed": {
+          "type": "number",
+          "minimum": 0.1,
+          "default": 1
+        },
+        "attackRange": {
+          "type": "number",
+          "minimum": 0,
+          "default": 8
+        },
+        "attackType": {
+          "type": "string",
+          "enum": ["normal", "pierce", "siege", "magic"],
+          "default": "pierce"
+        },
+        "targetAir": {
+          "type": "boolean",
+          "default": true
+        },
+        "targetGround": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "aura": {
+      "type": "object",
+      "description": "Area effect provided by building",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "effect": {
+          "type": "string",
+          "description": "Effect type"
+        },
+        "value": {
+          "type": "number",
+          "description": "Effect value"
+        },
+        "affectsAllies": {
+          "type": "boolean",
+          "default": true
+        },
+        "affectsEnemies": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "buildingVisuals": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "3D model path"
+        },
+        "icon": {
+          "type": "string",
+          "description": "UI icon path"
+        },
+        "constructionStages": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3
+        },
+        "hasDestructionAnimation": {
+          "type": "boolean",
+          "default": true
+        },
+        "smokeWhenDamaged": {
+          "type": "boolean",
+          "default": true
+        },
+        "damageThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.5,
+          "description": "Health % when visual damage shows"
+        }
+      }
+    }
+  }
+}

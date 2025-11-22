@@ -1,0 +1,127 @@
+{
+    "id": "human_siege_workshop",
+    "type": "building",
+    "race": "humans",
+    "name": "Siege Workshop",
+    "description": "Engineering facility for constructing siege weapons. Build rams, catapults, and trebuchets here.",
+
+    "tags": ["military", "production", "siege"],
+
+    "tier": 2,
+    "age_requirement": 4,
+
+    "model": {
+        "path": "models/races/humans/buildings/siege_workshop.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/siege_workshop_diffuse.png",
+        "normal": "textures/races/humans/buildings/siege_workshop_normal.png"
+    },
+
+    "footprint": {
+        "size": [4, 4],
+        "entrances": [[2, 0]],
+        "visualSize": [10.0, 6.0, 10.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 300,
+            "wood": 250
+        },
+        "time": 70.0
+    },
+
+    "stats": {
+        "maxHealth": 1200,
+        "armor": 12,
+        "magicResist": 5
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "human_siege_ram",
+            "cost": {"gold": 250, "wood": 150},
+            "time": 50.0,
+            "maxQueue": 3
+        },
+        {
+            "type": "unit",
+            "output": "human_catapult",
+            "cost": {"gold": 350, "wood": 200},
+            "time": 60.0,
+            "maxQueue": 3,
+            "prerequisites": ["upgrade_siege_engineering"]
+        },
+        {
+            "type": "unit",
+            "output": "human_trebuchet",
+            "cost": {"gold": 550, "wood": 350},
+            "time": 90.0,
+            "maxQueue": 2,
+            "prerequisites": ["human_castle", "upgrade_advanced_siege"]
+        }
+    ],
+
+    "researches": [
+        {
+            "id": "upgrade_siege_engineering",
+            "name": "Siege Engineering",
+            "description": "Allows construction of Catapults",
+            "cost": {"gold": 200, "wood": 150},
+            "time": 60.0
+        },
+        {
+            "id": "upgrade_advanced_siege",
+            "name": "Advanced Siege",
+            "description": "Allows construction of Trebuchets",
+            "cost": {"gold": 350, "wood": 200},
+            "time": 90.0,
+            "prerequisites": ["upgrade_siege_engineering", "human_castle"]
+        },
+        {
+            "id": "upgrade_flaming_ammunition",
+            "name": "Flaming Ammunition",
+            "description": "Siege weapons can fire flaming projectiles",
+            "cost": {"gold": 200, "wood": 100},
+            "time": 55.0
+        },
+        {
+            "id": "upgrade_explosive_ammunition",
+            "name": "Explosive Ammunition",
+            "description": "Trebuchets can fire explosive barrels",
+            "cost": {"gold": 300, "wood": 150},
+            "time": 75.0,
+            "prerequisites": ["upgrade_advanced_siege"]
+        },
+        {
+            "id": "upgrade_reinforced_frame",
+            "name": "Reinforced Frame",
+            "description": "+200 health for all siege weapons",
+            "cost": {"gold": 250, "wood": 200},
+            "time": 70.0,
+            "effects": [{"stat": "health", "value": 200, "scope": "siege"}]
+        }
+    ],
+
+    "can_repair_siege": true,
+    "repair_rate": 10.0,
+
+    "visionRange": 10.0,
+
+    "requirements": {
+        "buildings": ["human_keep", "human_blacksmith"]
+    },
+
+    "unique": true,
+    "maxCount": 2,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/siege_workshop.png",
+        "icon": "textures/races/humans/icons/buildings/siege_workshop.png",
+        "hotkey": "W"
+    }
+}

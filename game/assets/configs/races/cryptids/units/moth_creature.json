@@ -1,0 +1,196 @@
+{
+  "id": "moth_creature",
+  "name": "Moth Creature",
+  "race": "cryptids",
+  "tier": 1,
+  "type": "flying_scout",
+  "role": ["scout", "support", "light_manipulation"],
+
+  "description": "A large, moth-like being drawn to light and secrets. Its dust can blind enemies and its presence reveals hidden truths.",
+  "lore": "Lesser kin to the great Mothman, these creatures serve as eyes and ears for the Hidden Ones. They are drawn to places of power and impending doom, fluttering at the edge of perception.",
+
+  "stats": {
+    "health": 180,
+    "healthRegen": 0.75,
+    "mana": 200,
+    "manaRegen": 1.0,
+    "armor": 0,
+    "armorType": "unarmored",
+    "moveSpeed": 320,
+    "turnRate": 1.0,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 8,
+      "variance": 2,
+      "type": "magic"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 450,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/moth_dust.glb",
+      "speed": 600,
+      "arc": 0.1
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.6,
+    "acquisitionRange": 600,
+    "aggroRange": 400
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 150,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "true_sight",
+      "name": "True Sight",
+      "type": "passive",
+      "description": "Reveals invisible units within range",
+      "effects": {
+        "detectionRadius": 500,
+        "revealsInvisible": true,
+        "revealsBurrowed": true
+      },
+      "icon": "icons/abilities/true_sight.png"
+    },
+    {
+      "id": "blinding_dust",
+      "name": "Blinding Dust",
+      "type": "active",
+      "targetType": "area",
+      "description": "Releases a cloud of dust that blinds enemies, causing them to miss attacks",
+      "cooldown": 18.0,
+      "manaCost": 75,
+      "range": 500,
+      "effects": {
+        "radius": 250,
+        "missChance": 0.5,
+        "duration": 8.0
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/blinding_dust.png"
+    },
+    {
+      "id": "light_attraction",
+      "name": "Light Attraction",
+      "type": "active",
+      "targetType": "ground",
+      "description": "Creates a mesmerizing light that draws enemy units toward it",
+      "cooldown": 25.0,
+      "manaCost": 60,
+      "range": 600,
+      "effects": {
+        "radius": 300,
+        "duration": 5.0,
+        "pullStrength": 50
+      },
+      "hotkey": "A",
+      "icon": "icons/abilities/light_attraction.png"
+    },
+    {
+      "id": "omen_sense",
+      "name": "Omen Sense",
+      "type": "active",
+      "targetType": "none",
+      "description": "Briefly reveals a large area of the map",
+      "cooldown": 60.0,
+      "manaCost": 100,
+      "effects": {
+        "revealRadius": 2000,
+        "revealDuration": 4.0
+      },
+      "hotkey": "O",
+      "icon": "icons/abilities/omen_sense.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "dark_hollow",
+    "buildTime": 20,
+    "cost": {
+      "gold": 100,
+      "lumber": 25,
+      "essence": 15
+    },
+    "foodCost": 1,
+    "prerequisites": {
+      "buildings": ["dark_hollow"],
+      "technologies": [],
+      "age": "whisper"
+    },
+    "hotkey": "M"
+  },
+
+  "upgrades": {
+    "special": ["enhanced_dust", "prophetic_vision", "wing_shield"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/moth_creature/ready.ogg",
+    "select": ["audio/units/moth_creature/select1.ogg", "audio/units/moth_creature/select2.ogg"],
+    "move": ["audio/units/moth_creature/move1.ogg", "audio/units/moth_creature/move2.ogg"],
+    "attack": ["audio/units/moth_creature/attack1.ogg"],
+    "death": "audio/units/moth_creature/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/moth_creature.glb",
+    "texture": "textures/units/cryptids/moth_creature.png",
+    "portrait": "textures/portraits/moth_creature.png",
+    "icon": "textures/icons/moth_creature.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "moth_hover",
+      "walk": "moth_fly",
+      "attack": "moth_attack",
+      "death": "moth_death"
+    },
+    "effects": {
+      "spawn": "effects/moth_spawn.vfx",
+      "death": "effects/moth_death.vfx",
+      "dust": "effects/blinding_dust.vfx",
+      "light": "effects/light_attraction.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 2,
+    "priority": "medium",
+    "behavior": "scout_support",
+    "fleeThreshold": 0.4,
+    "preferredTargets": [],
+    "maintainDistance": true,
+    "useBlindingDustDefensively": true,
+    "scoutPatrolEnabled": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "isFlying": true,
+    "hasDetection": true,
+    "isCaster": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 12,
+    "experience": 18
+  },
+
+  "pointValue": 1,
+  "supplyProvided": 0,
+  "supplyUsed": 1
+}

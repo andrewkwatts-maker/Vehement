@@ -1,0 +1,187 @@
+{
+    "id": "human_champion",
+    "type": "unit",
+    "race": "humans",
+    "name": "Champion",
+    "description": "The finest warriors in all of Valorheim, Champions have mastered every form of combat. Their legendary skill and unwavering courage inspire all who fight alongside them.",
+
+    "tags": ["military", "infantry", "melee", "tier4", "heavy", "elite", "armored"],
+
+    "tier": 4,
+    "age_requirement": 7,
+
+    "model": {
+        "path": "models/races/humans/units/champion.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/champion_diffuse.png",
+        "normal": "textures/races/humans/units/champion_normal.png",
+        "specular": "textures/races/humans/units/champion_specular.png",
+        "emissive": "textures/races/humans/units/champion_emissive.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.4,
+                "height": 1.9,
+                "offset": [0.0, 0.95, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 110.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 850,
+        "maxHealth": 850,
+        "healthRegen": 2.0,
+        "armor": 10,
+        "magicResist": 25,
+        "moveSpeed": 5.2,
+        "turnRate": 320.0
+    },
+
+    "combat": {
+        "attackDamage": 45,
+        "attackSpeed": 1.2,
+        "attackRange": 1.5,
+        "damageType": "normal",
+        "armorType": "heavy",
+        "attackType": "melee",
+        "critChance": 0.20,
+        "critMultiplier": 2.5,
+        "cleave_percent": 0.35,
+        "cleave_radius": 2.5,
+        "lifesteal": 0.10
+    },
+
+    "aura": {
+        "id": "aura_valor",
+        "name": "Aura of Valor",
+        "description": "Nearby friendly units gain +15% damage and +5% move speed",
+        "radius": 12.0,
+        "effects": [
+            {"stat": "attackDamage", "value": 0.15, "type": "percent"},
+            {"stat": "moveSpeed", "value": 0.05, "type": "percent"}
+        ]
+    },
+
+    "abilities": [
+        {
+            "id": "ability_whirlwind",
+            "name": "Whirlwind",
+            "description": "Spin rapidly, dealing 60 damage to all nearby enemies over 3 seconds",
+            "hotkey": "Q",
+            "cooldown": 15.0,
+            "duration": 3.0,
+            "radius": 3.0,
+            "damage_per_second": 60,
+            "move_speed_while_active": 0.7
+        },
+        {
+            "id": "ability_heroic_strike",
+            "name": "Heroic Strike",
+            "description": "A mighty blow dealing 200% damage with guaranteed critical hit",
+            "hotkey": "W",
+            "cooldown": 10.0,
+            "effects": [
+                {"type": "damage_multiplier", "value": 2.0},
+                {"type": "guaranteed_crit", "value": true}
+            ]
+        },
+        {
+            "id": "ability_challenge",
+            "name": "Challenge",
+            "description": "Taunt nearby enemies, forcing them to attack the Champion for 4 seconds",
+            "hotkey": "E",
+            "cooldown": 25.0,
+            "radius": 8.0,
+            "duration": 4.0,
+            "taunt": true
+        },
+        {
+            "id": "ability_last_stand",
+            "name": "Last Stand",
+            "description": "When health drops below 25%, gain 100% attack speed and 50% damage for 8 seconds. Once per battle.",
+            "passive": true,
+            "trigger_threshold": 0.25,
+            "duration": 8.0,
+            "cooldown": 180.0,
+            "effects": [
+                {"stat": "attackSpeed", "value": 1.0, "type": "percent"},
+                {"stat": "attackDamage", "value": 0.50, "type": "percent"}
+            ]
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_champion_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 8
+        },
+        {
+            "id": "upgrade_champion_armor",
+            "stat": "armor",
+            "bonus_per_level": 3
+        }
+    ],
+
+    "production": {
+        "building": "human_barracks",
+        "cost": {
+            "gold": 500,
+            "food": 5
+        },
+        "build_time": 60.0,
+        "population_cost": 4,
+        "prerequisites": ["human_castle", "upgrade_champion_training"],
+        "max_count": 6
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/elite_melee.bt",
+        "profile": "aggressive",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "priority_targets": ["hero", "elite", "caster"],
+        "use_abilities": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/champion/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/champion/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/champion/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/champion/attack.anim", "loop": false, "events": [[0.35, "deal_damage"]]},
+        "whirlwind": {"path": "animations/humans/champion/whirlwind.anim", "loop": true},
+        "heroic_strike": {"path": "animations/humans/champion/heroic_strike.anim", "loop": false},
+        "challenge": {"path": "animations/humans/champion/challenge.anim", "loop": false},
+        "death": {"path": "animations/humans/champion/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/champion/select_1.wav", "sounds/humans/champion/select_2.wav"],
+        "acknowledge": ["sounds/humans/champion/ack_1.wav", "sounds/humans/champion/ack_2.wav"],
+        "attack": "sounds/greatsword_swing.wav",
+        "whirlwind": "sounds/whirlwind.wav",
+        "challenge": "sounds/challenge_roar.wav",
+        "death": "sounds/humans/champion/death.wav"
+    },
+
+    "effects": {
+        "valor_aura": "effects/valor_aura.fx",
+        "last_stand": "effects/last_stand.fx"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/champion.png",
+        "icon": "textures/races/humans/icons/champion.png",
+        "hotkey": "C"
+    }
+}

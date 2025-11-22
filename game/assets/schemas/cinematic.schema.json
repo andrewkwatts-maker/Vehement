@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cinematic.schema.json",
+  "title": "Cinematic Definition",
+  "description": "Defines a cinematic sequence",
+  "type": "object",
+  "required": ["id", "scenes"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^cinematic_[a-z0-9_]+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "scenes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/scene" },
+      "minItems": 1
+    },
+    "titleCard": {
+      "$ref": "#/definitions/titleCard"
+    },
+    "canSkip": {
+      "type": "boolean",
+      "default": true
+    },
+    "skipDelay": {
+      "type": "number",
+      "default": 2.0,
+      "description": "Seconds before skip allowed"
+    },
+    "backgroundMusic": {
+      "type": "string"
+    },
+    "musicVolume": {
+      "type": "number",
+      "default": 0.8
+    },
+    "mapFile": {
+      "type": "string",
+      "description": "Optional map to load"
+    },
+    "useGameWorld": {
+      "type": "boolean",
+      "default": true
+    },
+    "requiredUnits": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+
+  "definitions": {
+    "scene": {
+      "type": "object",
+      "required": ["id", "duration"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "startTime": { "type": "number", "default": 0 },
+        "duration": { "type": "number" },
+        "camera": { "$ref": "#/definitions/cameraMovement" },
+        "dialogs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/dialog" }
+        },
+        "audioCues": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/audioCue" }
+        },
+        "unitAnimations": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/unitAnimation" }
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/visualEffect" }
+        },
+        "transitionIn": {
+          "type": "string",
+          "enum": ["none", "fade", "crossfade", "wipe", "zoom"],
+          "default": "none"
+        },
+        "transitionOut": {
+          "type": "string",
+          "enum": ["none", "fade", "crossfade", "wipe", "zoom"],
+          "default": "none"
+        },
+        "transitionDuration": {
+          "type": "number",
+          "default": 0.5
+        },
+        "environment": {
+          "$ref": "#/definitions/environment"
+        },
+        "scripts": {
+          "type": "object",
+          "properties": {
+            "initScript": { "type": "string" },
+            "updateScript": { "type": "string" },
+            "endScript": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "cameraMovement": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["static", "pan", "zoom", "orbit", "shake", "follow", "bezier", "custom"],
+          "default": "static"
+        },
+        "keyframes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/cameraKeyframe" }
+        },
+        "followTargetId": { "type": "string" },
+        "followDistance": { "type": "number", "default": 10 },
+        "shakeIntensity": { "type": "number" },
+        "shakeDuration": { "type": "number" }
+      }
+    },
+
+    "cameraKeyframe": {
+      "type": "object",
+      "properties": {
+        "time": { "type": "number" },
+        "position": { "$ref": "#/definitions/position3D" },
+        "target": { "$ref": "#/definitions/position3D" },
+        "fov": { "type": "number", "default": 60 },
+        "easing": {
+          "type": "string",
+          "enum": ["linear", "ease-in", "ease-out", "ease-in-out"],
+          "default": "linear"
+        }
+      }
+    },
+
+    "position3D": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number", "default": 0 },
+        "y": { "type": "number", "default": 0 },
+        "z": { "type": "number", "default": 0 },
+        "pitch": { "type": "number", "default": 0 },
+        "yaw": { "type": "number", "default": 0 },
+        "roll": { "type": "number", "default": 0 }
+      }
+    },
+
+    "dialog": {
+      "type": "object",
+      "required": ["characterId", "text"],
+      "properties": {
+        "characterId": { "type": "string" },
+        "characterName": { "type": "string" },
+        "text": { "type": "string" },
+        "voiceoverFile": { "type": "string" },
+        "startTime": { "type": "number", "default": 0 },
+        "duration": { "type": "number" },
+        "portraitImage": { "type": "string" },
+        "emotion": {
+          "type": "string",
+          "enum": ["neutral", "happy", "sad", "angry", "surprised", "fearful"]
+        },
+        "showSubtitle": { "type": "boolean", "default": true },
+        "position": {
+          "type": "string",
+          "enum": ["left", "right", "center"],
+          "default": "left"
+        }
+      }
+    },
+
+    "audioCue": {
+      "type": "object",
+      "required": ["audioFile"],
+      "properties": {
+        "audioFile": { "type": "string" },
+        "startTime": { "type": "number", "default": 0 },
+        "volume": { "type": "number", "default": 1.0 },
+        "fadeIn": { "type": "number", "default": 0 },
+        "fadeOut": { "type": "number", "default": 0 },
+        "loop": { "type": "boolean", "default": false },
+        "isMusic": { "type": "boolean", "default": false },
+        "channel": { "type": "string" }
+      }
+    },
+
+    "unitAnimation": {
+      "type": "object",
+      "required": ["unitId"],
+      "properties": {
+        "unitId": { "type": "string" },
+        "animation": { "type": "string" },
+        "startTime": { "type": "number", "default": 0 },
+        "duration": { "type": "number" },
+        "moveTarget": { "$ref": "#/definitions/position3D" },
+        "moveSpeed": { "type": "number", "default": 1.0 },
+        "loop": { "type": "boolean", "default": false }
+      }
+    },
+
+    "visualEffect": {
+      "type": "object",
+      "required": ["effectId"],
+      "properties": {
+        "effectId": { "type": "string" },
+        "position": { "$ref": "#/definitions/position3D" },
+        "startTime": { "type": "number", "default": 0 },
+        "duration": { "type": "number" },
+        "scale": { "type": "number", "default": 1.0 },
+        "attachTo": { "type": "string" }
+      }
+    },
+
+    "environment": {
+      "type": "object",
+      "properties": {
+        "skybox": { "type": "string" },
+        "lighting": { "type": "string" },
+        "timeOfDay": { "type": "number", "default": 12.0 },
+        "weather": { "type": "string" }
+      }
+    },
+
+    "titleCard": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "backgroundImage": { "type": "string" },
+        "duration": { "type": "number", "default": 5.0 },
+        "transitionIn": {
+          "type": "string",
+          "enum": ["fade", "slide", "none"],
+          "default": "fade"
+        },
+        "transitionOut": {
+          "type": "string",
+          "enum": ["fade", "slide", "none"],
+          "default": "fade"
+        },
+        "font": { "type": "string" },
+        "textColor": { "type": "string" },
+        "animationType": {
+          "type": "string",
+          "enum": ["fade-in", "slide-in", "typewriter"],
+          "default": "fade-in"
+        }
+      }
+    }
+  }
+}

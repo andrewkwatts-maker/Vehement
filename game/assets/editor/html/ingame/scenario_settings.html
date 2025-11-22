@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scenario Settings - Vehement</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --accent: #e94560;
+            --accent-hover: #ff6b6b;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --border: #333;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            grid-template-rows: 48px 1fr 32px;
+            height: 100vh;
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .tool-btn.primary { background: var(--accent); color: white; }
+        .tool-btn svg { width: 16px; height: 16px; }
+
+        /* Navigation */
+        .nav-panel {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover { background: var(--bg-tertiary); }
+        .nav-item.active { background: var(--bg-tertiary); border-left-color: var(--accent); }
+
+        .nav-icon {
+            width: 20px; height: 20px;
+            margin-right: 12px;
+            color: var(--text-secondary);
+        }
+
+        .nav-item.active .nav-icon { color: var(--accent); }
+
+        .nav-label { font-size: 13px; }
+
+        /* Main Content */
+        .main-content {
+            background: var(--bg-primary);
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            background: var(--bg-tertiary);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header svg {
+            width: 18px; height: 18px;
+            color: var(--accent);
+        }
+
+        .section-body {
+            padding: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .form-row:last-child { margin-bottom: 0; }
+
+        .form-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .form-input input,
+        .form-input select,
+        .form-input textarea {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-input input:focus,
+        .form-input select:focus,
+        .form-input textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-input textarea { resize: vertical; min-height: 80px; }
+
+        .form-hint {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .form-row-inline {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row-inline > div { flex: 1; }
+
+        /* Player Slots */
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .player-slot {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .player-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .player-color {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .player-name { flex: 1; font-size: 13px; font-weight: 500; }
+
+        .player-toggle {
+            width: 40px; height: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .player-toggle.active { background: var(--success); }
+
+        .player-toggle::after {
+            content: '';
+            position: absolute;
+            width: 16px; height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 2px; left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .player-toggle.active::after { transform: translateX(20px); }
+
+        .player-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .player-setting {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .player-setting label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .player-setting select,
+        .player-setting input {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        /* Alliance Matrix */
+        .alliance-matrix {
+            display: grid;
+            gap: 2px;
+        }
+
+        .alliance-row {
+            display: flex;
+            gap: 2px;
+        }
+
+        .alliance-cell {
+            width: 36px; height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .alliance-cell.header {
+            background: var(--bg-tertiary);
+            font-weight: 500;
+        }
+
+        .alliance-cell.ally { background: var(--success); color: #000; }
+        .alliance-cell.neutral { background: var(--warning); color: #000; }
+        .alliance-cell.enemy { background: var(--error); }
+        .alliance-cell.self { background: var(--bg-primary); cursor: default; }
+
+        /* Victory Conditions */
+        .condition-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .condition-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .condition-item:hover { border-color: var(--accent); }
+
+        .condition-checkbox {
+            width: 18px; height: 18px;
+            margin-right: 12px;
+        }
+
+        .condition-info { flex: 1; }
+        .condition-name { font-size: 13px; font-weight: 500; }
+        .condition-desc { font-size: 11px; color: var(--text-secondary); }
+
+        .condition-config {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .condition-config input {
+            width: 80px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Resource Settings */
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .resource-item {
+            text-align: center;
+            padding: 16px 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+        }
+
+        .resource-icon {
+            width: 32px; height: 32px;
+            margin: 0 auto 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .resource-icon.gold { background: #ffd700; color: #000; }
+        .resource-icon.wood { background: #8b4513; }
+        .resource-icon.food { background: #4ade80; color: #000; }
+        .resource-icon.supply { background: #60a5fa; color: #000; }
+
+        .resource-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .resource-item input {
+            width: 80px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* Toggle Switch */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toggle-row:last-child { border-bottom: none; }
+
+        .toggle-info { flex: 1; }
+        .toggle-label { font-size: 13px; }
+        .toggle-hint { font-size: 11px; color: var(--text-secondary); }
+
+        .toggle-switch {
+            width: 48px; height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .toggle-switch.active { background: var(--success); }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px; left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after { transform: translateX(24px); }
+
+        /* Status Bar */
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-item { padding: 0 12px; border-right: 1px solid var(--border); }
+        .status-item:last-child { border-right: none; margin-left: auto; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1,4 1,10 7,10"/>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+                Reset to Defaults
+            </button>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Copy from Preset
+            </button>
+            <div style="flex:1;"></div>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5,3 19,12 5,21"/>
+                </svg>
+                Test Settings
+            </button>
+            <button class="tool-btn primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                </svg>
+                Save Settings
+            </button>
+        </div>
+
+        <div class="nav-panel">
+            <div class="nav-item active">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span class="nav-label">General</span>
+            </div>
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span class="nav-label">Players</span>
+            </div>
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span class="nav-label">Alliances</span>
+            </div>
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/>
+                    <path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                </svg>
+                <span class="nav-label">Resources</span>
+            </div>
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+                <span class="nav-label">Victory</span>
+            </div>
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span class="nav-label">Game Rules</span>
+            </div>
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                <span class="nav-label">Tech Tree</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- General Section -->
+            <div class="section">
+                <div class="section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    General Settings
+                </div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-label">Scenario Name</div>
+                        <div class="form-input">
+                            <input type="text" value="Battle for the Kingdom">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label">Description</div>
+                        <div class="form-input">
+                            <textarea>A classic 4-player melee map with balanced resources and strategic chokepoints.</textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label">Game Mode</div>
+                        <div class="form-input">
+                            <select>
+                                <option>Melee</option>
+                                <option>Free For All</option>
+                                <option selected>Team Game</option>
+                                <option>Capture the Flag</option>
+                                <option>King of the Hill</option>
+                                <option>Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row-inline">
+                        <div>
+                            <div class="form-label">Max Players</div>
+                            <div class="form-input">
+                                <select>
+                                    <option>2</option>
+                                    <option selected>4</option>
+                                    <option>6</option>
+                                    <option>8</option>
+                                    <option>12</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-label">Suggested Players</div>
+                            <div class="form-input">
+                                <input type="text" value="4v4">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players Section -->
+            <div class="section">
+                <div class="section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                    </svg>
+                    Player Slots
+                </div>
+                <div class="section-body">
+                    <div class="player-grid">
+                        <div class="player-slot">
+                            <div class="player-header">
+                                <div class="player-color" style="background: #e94560;"></div>
+                                <div class="player-name">Player 1</div>
+                                <div class="player-toggle active"></div>
+                            </div>
+                            <div class="player-settings">
+                                <div class="player-setting">
+                                    <label>Controller</label>
+                                    <select>
+                                        <option>User</option>
+                                        <option>Computer</option>
+                                        <option>None</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Race</label>
+                                    <select>
+                                        <option>Human</option>
+                                        <option>Orc</option>
+                                        <option>Random</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Team</label>
+                                    <select>
+                                        <option>Team 1</option>
+                                        <option>Team 2</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Start Location</label>
+                                    <select>
+                                        <option>Random</option>
+                                        <option>Fixed 1</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="player-slot">
+                            <div class="player-header">
+                                <div class="player-color" style="background: #60a5fa;"></div>
+                                <div class="player-name">Player 2</div>
+                                <div class="player-toggle active"></div>
+                            </div>
+                            <div class="player-settings">
+                                <div class="player-setting">
+                                    <label>Controller</label>
+                                    <select>
+                                        <option>User</option>
+                                        <option>Computer</option>
+                                        <option>None</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Race</label>
+                                    <select>
+                                        <option>Human</option>
+                                        <option>Orc</option>
+                                        <option>Random</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Team</label>
+                                    <select>
+                                        <option selected>Team 1</option>
+                                        <option>Team 2</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Start Location</label>
+                                    <select>
+                                        <option>Random</option>
+                                        <option>Fixed 2</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="player-slot">
+                            <div class="player-header">
+                                <div class="player-color" style="background: #4ade80;"></div>
+                                <div class="player-name">Player 3</div>
+                                <div class="player-toggle active"></div>
+                            </div>
+                            <div class="player-settings">
+                                <div class="player-setting">
+                                    <label>Controller</label>
+                                    <select>
+                                        <option>User</option>
+                                        <option selected>Computer</option>
+                                        <option>None</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Race</label>
+                                    <select>
+                                        <option>Human</option>
+                                        <option selected>Orc</option>
+                                        <option>Random</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Team</label>
+                                    <select>
+                                        <option>Team 1</option>
+                                        <option selected>Team 2</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Start Location</label>
+                                    <select>
+                                        <option>Random</option>
+                                        <option>Fixed 3</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="player-slot">
+                            <div class="player-header">
+                                <div class="player-color" style="background: #fbbf24;"></div>
+                                <div class="player-name">Player 4</div>
+                                <div class="player-toggle active"></div>
+                            </div>
+                            <div class="player-settings">
+                                <div class="player-setting">
+                                    <label>Controller</label>
+                                    <select>
+                                        <option>User</option>
+                                        <option selected>Computer</option>
+                                        <option>None</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Race</label>
+                                    <select>
+                                        <option>Human</option>
+                                        <option selected>Orc</option>
+                                        <option>Random</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Team</label>
+                                    <select>
+                                        <option>Team 1</option>
+                                        <option selected>Team 2</option>
+                                    </select>
+                                </div>
+                                <div class="player-setting">
+                                    <label>Start Location</label>
+                                    <select>
+                                        <option>Random</option>
+                                        <option>Fixed 4</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resources Section -->
+            <div class="section">
+                <div class="section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v12"/>
+                        <path d="M6 12h12"/>
+                    </svg>
+                    Starting Resources
+                </div>
+                <div class="section-body">
+                    <div class="resource-grid">
+                        <div class="resource-item">
+                            <div class="resource-icon gold">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="12" cy="12" r="10"/>
+                                </svg>
+                            </div>
+                            <div class="resource-name">Gold</div>
+                            <input type="number" value="500">
+                        </div>
+                        <div class="resource-item">
+                            <div class="resource-icon wood">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                                    <rect x="6" y="2" width="12" height="20" rx="2"/>
+                                </svg>
+                            </div>
+                            <div class="resource-name">Wood</div>
+                            <input type="number" value="200">
+                        </div>
+                        <div class="resource-item">
+                            <div class="resource-icon food">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+                                </svg>
+                            </div>
+                            <div class="resource-name">Food</div>
+                            <input type="number" value="10">
+                        </div>
+                        <div class="resource-item">
+                            <div class="resource-icon supply">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                                </svg>
+                            </div>
+                            <div class="resource-name">Supply Cap</div>
+                            <input type="number" value="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Victory Conditions -->
+            <div class="section">
+                <div class="section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    </svg>
+                    Victory Conditions
+                </div>
+                <div class="section-body">
+                    <div class="condition-list">
+                        <div class="condition-item">
+                            <input type="checkbox" class="condition-checkbox" checked>
+                            <div class="condition-info">
+                                <div class="condition-name">Destroy All Enemy Buildings</div>
+                                <div class="condition-desc">Win when all enemy structures are destroyed</div>
+                            </div>
+                        </div>
+                        <div class="condition-item">
+                            <input type="checkbox" class="condition-checkbox" checked>
+                            <div class="condition-info">
+                                <div class="condition-name">Destroy All Enemy Units</div>
+                                <div class="condition-desc">Win when all enemy units are eliminated</div>
+                            </div>
+                        </div>
+                        <div class="condition-item">
+                            <input type="checkbox" class="condition-checkbox">
+                            <div class="condition-info">
+                                <div class="condition-name">Time Limit</div>
+                                <div class="condition-desc">Game ends after specified duration</div>
+                            </div>
+                            <div class="condition-config">
+                                <input type="number" value="30" disabled>
+                                <span style="font-size:12px;color:var(--text-secondary);">min</span>
+                            </div>
+                        </div>
+                        <div class="condition-item">
+                            <input type="checkbox" class="condition-checkbox">
+                            <div class="condition-info">
+                                <div class="condition-name">Score Victory</div>
+                                <div class="condition-desc">Win by reaching target score</div>
+                            </div>
+                            <div class="condition-config">
+                                <input type="number" value="10000" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Rules -->
+            <div class="section">
+                <div class="section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    </svg>
+                    Game Rules
+                </div>
+                <div class="section-body">
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <div class="toggle-label">Fog of War</div>
+                            <div class="toggle-hint">Hide unexplored areas from players</div>
+                        </div>
+                        <div class="toggle-switch active"></div>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <div class="toggle-label">Observers Allowed</div>
+                            <div class="toggle-hint">Allow spectators to watch the game</div>
+                        </div>
+                        <div class="toggle-switch active"></div>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <div class="toggle-label">Teams Locked</div>
+                            <div class="toggle-hint">Prevent players from changing teams</div>
+                        </div>
+                        <div class="toggle-switch active"></div>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <div class="toggle-label">Random Races</div>
+                            <div class="toggle-hint">Force all players to random race</div>
+                        </div>
+                        <div class="toggle-switch"></div>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-info">
+                            <div class="toggle-label">Hero Respawn</div>
+                            <div class="toggle-hint">Allow heroes to revive at altars</div>
+                        </div>
+                        <div class="toggle-switch active"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">Mode: Team Game</div>
+            <div class="status-item">Players: 4</div>
+            <div class="status-item">Teams: 2</div>
+            <div class="status-item">Map: Battle for the Kingdom</div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        });
+
+        document.querySelectorAll('.player-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        });
+
+        document.querySelectorAll('.condition-checkbox').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const row = e.target.closest('.condition-item');
+                const inputs = row.querySelectorAll('.condition-config input');
+                inputs.forEach(input => {
+                    input.disabled = !e.target.checked;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+{
+    "id": "naga_temple_of_tides",
+    "type": "building",
+    "name": "Temple of Tides",
+    "description": "An evolved Spawning Pool that unlocks advanced units and technologies. Houses the Naga's tidal magic research.",
+    "race": "naga",
+    "tier": 2,
+    "category": "main",
+
+    "tags": ["main", "production", "resource_drop", "research", "tier2"],
+
+    "model": {
+        "path": "models/races/naga/buildings/temple_of_tides.obj",
+        "scale": [1.2, 1.2, 1.2]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/temple_of_tides_diffuse.png",
+        "normal": "textures/races/naga/buildings/temple_of_tides_normal.png",
+        "emissive": "textures/races/naga/buildings/temple_of_tides_glow.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [6, 6],
+        "entrances": [[3, 0], [3, 5]],
+        "visualSize": [12.0, 12.0, 12.0]
+    },
+
+    "construction": {
+        "upgrade_from": "naga_spawning_pool",
+        "cost": {
+            "gold": 350,
+            "coral": 200
+        },
+        "time": 80.0,
+        "stages": [
+            {"name": "evolution", "model": "models/races/naga/buildings/temple_of_tides_evolve.obj", "progressStart": 0, "progressEnd": 100}
+        ]
+    },
+
+    "stats": {
+        "maxHealth": 2500,
+        "armor": 8,
+        "magicResist": 8
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "naga_slave",
+            "amount": 1,
+            "time": 10.0,
+            "cost": {"gold": 50},
+            "maxQueue": 10
+        }
+    ],
+
+    "research": [
+        {
+            "id": "naga_elite_training",
+            "cost": {"gold": 200, "coral": 150},
+            "time": 60.0
+        },
+        {
+            "id": "naga_tidal_magic_1",
+            "cost": {"gold": 150, "coral": 100},
+            "time": 45.0
+        }
+    ],
+
+    "resource_drop": {
+        "accepts": ["gold", "coral", "pearls"],
+        "bonus_near_water": 1.2
+    },
+
+    "provides": {
+        "population": 20,
+        "coral_generation": 4,
+        "unlock_age": "age_reef"
+    },
+
+    "upgrades_to": {
+        "building": "naga_palace_of_waves",
+        "cost": {"gold": 600, "coral": 400, "pearls": 100},
+        "time": 120.0,
+        "requirements": {"age": "age_abyss"}
+    },
+
+    "water_bonus": {
+        "near_water_radius": 10,
+        "health_bonus": 400,
+        "regen_bonus": 8.0
+    },
+
+    "visionRange": 12.0,
+
+    "aura": {
+        "name": "Tidal Blessing",
+        "radius": 15.0,
+        "effects": [
+            {"stat": "mana_regen", "type": "flat", "value": 0.5, "targets": "friendly_units"}
+        ]
+    },
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/temple_of_tides/on_complete.py"
+    }
+}

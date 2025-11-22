@@ -1,0 +1,199 @@
+{
+    "id": "naga_myrmidon",
+    "type": "unit",
+    "name": "Naga Myrmidon",
+    "description": "A serpentine warrior wielding coral blades and a shell shield. The backbone of Naga armies, these amphibious fighters excel in both land and sea combat.",
+    "race": "naga",
+    "tier": 1,
+    "class": "melee_infantry",
+
+    "tags": ["military", "infantry", "melee", "tier1", "amphibious", "venomous"],
+
+    "model": {
+        "path": "models/races/naga/units/myrmidon.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/myrmidon_diffuse.png",
+        "normal": "textures/races/naga/units/myrmidon_normal.png",
+        "specular": "textures/races/naga/units/myrmidon_spec.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.4,
+                "height": 2.0,
+                "offset": [0.0, 1.0, 0.0],
+                "material": {
+                    "friction": 0.5,
+                    "restitution": 0.1,
+                    "density": 1100.0
+                }
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 120.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 5.5,
+        "turnRate": 320.0,
+        "acceleration": 14.0,
+        "deceleration": 18.0,
+        "canSwim": true,
+        "swimSpeed": 7.0,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.1,
+            "forest": 0.8,
+            "water": 1.3,
+            "deep_water": 1.4,
+            "desert": 0.7
+        }
+    },
+
+    "combat": {
+        "health": 350,
+        "maxHealth": 350,
+        "armor": 3,
+        "magicResist": 1,
+        "attackDamage": 14,
+        "attackSpeed": 1.4,
+        "attackRange": 1.8,
+        "critChance": 0.08,
+        "critMultiplier": 1.8,
+        "physicalDamage": true,
+        "damageType": "slash",
+        "armorType": "medium"
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "damage_bonus": 0.15,
+            "armor_bonus": 1
+        },
+        "in_water": {
+            "health_regen": 3.5,
+            "attack_speed_bonus": 0.1
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "venomous_blades",
+            "name": "Venomous Blades",
+            "description": "Attacks apply Naga Venom, dealing 4 damage per second for 6 seconds.",
+            "effect": {
+                "type": "dot",
+                "damage_per_tick": 4,
+                "duration": 6,
+                "tick_interval": 1.0,
+                "stacks": true,
+                "max_stacks": 3
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and gains combat bonuses while in water."
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "shell_guard",
+            "name": "Shell Guard",
+            "description": "Raises shell shield, reducing damage taken by 40% for 4 seconds.",
+            "icon": "icons/abilities/naga/shell_guard.png",
+            "cooldown": 18.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 4.0,
+            "effects": [
+                {"type": "damage_reduction", "value": 0.4}
+            ],
+            "castAnimation": "defend",
+            "castSound": "sounds/abilities/shell_guard.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/myrmidon/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/myrmidon/slither.anim", "speed": 1.0, "loop": true},
+        "run": {"path": "animations/naga/myrmidon/slither_fast.anim", "speed": 1.2, "loop": true},
+        "swim": {"path": "animations/naga/myrmidon/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/myrmidon/attack.anim",
+            "loop": false,
+            "events": [[0.3, "deal_damage"], [0.35, "apply_venom"]]
+        },
+        "defend": {"path": "animations/naga/myrmidon/shield_up.anim", "loop": false},
+        "death": {"path": "animations/naga/myrmidon/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/naga_slither_1.wav", "sounds/footsteps/naga_slither_2.wav"],
+            "volume": 0.5
+        },
+        "attack": "sounds/combat/blade_slash.wav",
+        "death": {"paths": ["sounds/death/naga_death_1.wav", "sounds/death/naga_death_2.wav"], "volume": 0.9},
+        "hurt": {"paths": ["sounds/hurt/naga_hurt_1.wav", "sounds/hurt/naga_hurt_2.wav"], "volume": 0.7},
+        "select": "sounds/voice/naga/myrmidon_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/myrmidon_ack_1.wav",
+                "sounds/voice/naga/myrmidon_ack_2.wav",
+                "sounds/voice/naga/myrmidon_ack_3.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_myrmidon.bt",
+        "profile": "balanced",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "preferWater": true
+    },
+
+    "production": {
+        "building": "naga_coral_barracks",
+        "time": 18.0,
+        "cost": {
+            "gold": 100,
+            "coral": 50
+        },
+        "requirements": {
+            "age": "age_shallow",
+            "techs": []
+        }
+    },
+
+    "properties": {
+        "populationCost": 2,
+        "supplyUpkeep": 1,
+        "squadSize": 1,
+        "experienceValue": 25,
+        "bountyGold": 20
+    },
+
+    "upgrades": {
+        "damage": ["naga_coral_weapons_1", "naga_coral_weapons_2", "naga_coral_weapons_3"],
+        "armor": ["naga_shell_armor_1", "naga_shell_armor_2", "naga_shell_armor_3"],
+        "special": ["naga_enhanced_venom"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/myrmidon/on_spawn.py",
+        "on_death": "scripts/units/naga/myrmidon/on_death.py",
+        "on_attack": "scripts/units/naga/myrmidon/on_attack.py"
+    }
+}

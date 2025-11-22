@@ -1,0 +1,355 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "unit_archetype.schema.json",
+  "title": "Unit Archetype",
+  "description": "Schema for RTS unit archetype definitions",
+  "type": "object",
+  "required": ["id", "name", "category", "baseStats", "cost"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the unit archetype",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the unit",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "description": "Unit description",
+      "maxLength": 512
+    },
+    "category": {
+      "type": "string",
+      "description": "Unit category",
+      "enum": ["worker", "infantry", "ranged", "cavalry", "siege", "naval", "air", "special"]
+    },
+    "tier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 7,
+      "default": 1,
+      "description": "Tech tier required"
+    },
+    "baseStats": {
+      "$ref": "#/definitions/unitStats"
+    },
+    "cost": {
+      "$ref": "#/definitions/resourceCost"
+    },
+    "abilities": {
+      "type": "array",
+      "description": "Special abilities",
+      "items": {
+        "$ref": "#/definitions/abilityRef"
+      }
+    },
+    "canGather": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can gather resources"
+    },
+    "canBuild": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can construct buildings"
+    },
+    "canRepair": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can repair buildings"
+    },
+    "isHero": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this a hero unit"
+    },
+    "isUnique": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only one can exist"
+    },
+    "requiredBuilding": {
+      "type": "string",
+      "description": "Building required to train this unit"
+    },
+    "requiredTech": {
+      "type": "string",
+      "description": "Technology required to unlock"
+    },
+    "requiredAge": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 6,
+      "default": 0,
+      "description": "Minimum age required"
+    },
+    "populationCost": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 1,
+      "description": "Population slots used"
+    },
+    "trainTime": {
+      "type": "number",
+      "minimum": 0,
+      "default": 10,
+      "description": "Training time in seconds"
+    },
+    "bonusVs": {
+      "type": "array",
+      "description": "Bonus damage against categories",
+      "items": {
+        "$ref": "#/definitions/bonusVs"
+      }
+    },
+    "armorType": {
+      "type": "string",
+      "enum": ["unarmored", "light", "medium", "heavy", "fortified", "hero"],
+      "default": "light"
+    },
+    "attackType": {
+      "type": "string",
+      "enum": ["normal", "pierce", "siege", "magic", "chaos", "hero"],
+      "default": "normal"
+    },
+    "movementType": {
+      "type": "string",
+      "enum": ["ground", "amphibious", "flying", "burrowing"],
+      "default": "ground"
+    },
+    "upgrades": {
+      "type": "array",
+      "description": "Available upgrades",
+      "items": {
+        "type": "string"
+      }
+    },
+    "visuals": {
+      "$ref": "#/definitions/unitVisuals"
+    },
+    "sounds": {
+      "$ref": "#/definitions/unitSounds"
+    }
+  },
+  "definitions": {
+    "unitStats": {
+      "type": "object",
+      "description": "Base combat statistics",
+      "properties": {
+        "health": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 100,
+          "description": "Maximum health points"
+        },
+        "healthRegen": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0,
+          "description": "Health regeneration per second"
+        },
+        "mana": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Maximum mana (for casters)"
+        },
+        "manaRegen": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0,
+          "description": "Mana regeneration per second"
+        },
+        "damage": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 10,
+          "description": "Base damage per attack"
+        },
+        "damageVariance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.1,
+          "description": "Random damage variance (0-1)"
+        },
+        "attackSpeed": {
+          "type": "number",
+          "minimum": 0.1,
+          "default": 1,
+          "description": "Attacks per second"
+        },
+        "attackRange": {
+          "type": "number",
+          "minimum": 0,
+          "default": 1,
+          "description": "Attack range in units"
+        },
+        "armor": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Damage reduction"
+        },
+        "magicResist": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Magic damage reduction"
+        },
+        "moveSpeed": {
+          "type": "number",
+          "minimum": 0,
+          "default": 5,
+          "description": "Movement speed"
+        },
+        "sightRange": {
+          "type": "number",
+          "minimum": 1,
+          "default": 10,
+          "description": "Vision range"
+        },
+        "critChance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Critical hit chance"
+        },
+        "critMultiplier": {
+          "type": "number",
+          "minimum": 1,
+          "default": 2,
+          "description": "Critical damage multiplier"
+        }
+      }
+    },
+    "resourceCost": {
+      "type": "object",
+      "description": "Resource cost to create",
+      "properties": {
+        "gold": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "wood": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "food": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "stone": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "mana": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      }
+    },
+    "abilityRef": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Ability identifier"
+        },
+        "unlockedByDefault": {
+          "type": "boolean",
+          "default": true
+        },
+        "requiredLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      }
+    },
+    "bonusVs": {
+      "type": "object",
+      "required": ["category", "multiplier"],
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Target category"
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Damage multiplier"
+        }
+      }
+    },
+    "unitVisuals": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "3D model path"
+        },
+        "portrait": {
+          "type": "string",
+          "description": "Portrait image path"
+        },
+        "icon": {
+          "type": "string",
+          "description": "UI icon path"
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0.1,
+          "default": 1,
+          "description": "Model scale"
+        },
+        "animations": {
+          "type": "object",
+          "properties": {
+            "idle": { "type": "string" },
+            "walk": { "type": "string" },
+            "attack": { "type": "string" },
+            "death": { "type": "string" },
+            "special": { "type": "string" }
+          }
+        }
+      }
+    },
+    "unitSounds": {
+      "type": "object",
+      "properties": {
+        "select": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "move": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "attack": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "death": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ready": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

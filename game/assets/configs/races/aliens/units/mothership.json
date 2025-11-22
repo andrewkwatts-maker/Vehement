@@ -1,0 +1,184 @@
+{
+  "id": "mothership",
+  "name": "Mothership",
+  "display_name": "Mothership",
+  "description": "The ultimate manifestation of Collective power, a colossal capital ship that dominates the battlefield. The Mothership generates a permanent cloaking field and can recall entire armies across vast distances with its powerful warp technology.",
+  "race": "aliens",
+  "tier": 4,
+  "unit_type": "capital",
+  "classification": ["mechanical", "flying", "massive", "heroic"],
+
+  "stats": {
+    "health": 350,
+    "health_regen": 0,
+    "shield": 350,
+    "shield_regen": 7.0,
+    "shield_regen_delay": 10.0,
+    "energy": 50,
+    "energy_max": 200,
+    "energy_regen": 0.5625,
+    "armor": 2,
+    "shield_armor": 0,
+    "move_speed": 2.62,
+    "acceleration": 1.5,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 6,
+    "attacks_per_swing": 6,
+    "attack_speed": 2.21,
+    "attack_range": 7,
+    "attack_type": "ranged",
+    "damage_type": "normal",
+    "targets": ["ground", "air"],
+    "projectile": {
+      "speed": 15,
+      "model": "fx_purifier_beam"
+    }
+  },
+
+  "production": {
+    "build_time": 114,
+    "warp_time": 0,
+    "supply_cost": 8,
+    "resource_cost": {
+      "minerals": 400,
+      "vespene": 400
+    },
+    "power_cost": 0,
+    "produced_at": "stargate",
+    "requirements": ["mothership_beacon"],
+    "limit": 1,
+    "hotkey": "M"
+  },
+
+  "abilities": [
+    {
+      "id": "cloaking_field",
+      "name": "Cloaking Field",
+      "description": "The Mothership generates a permanent cloaking field around itself. All nearby friendly units and structures are cloaked while within the field.",
+      "type": "passive",
+      "radius": 5.0
+    },
+    {
+      "id": "mass_recall",
+      "name": "Mass Recall",
+      "description": "Instantly teleports all units in the target area to the Mothership's location.",
+      "type": "active",
+      "cooldown": 89.0,
+      "energy_cost": 100,
+      "range": 0,
+      "target_range": "global",
+      "recall_radius": 6.5,
+      "hotkey": "R"
+    },
+    {
+      "id": "time_warp",
+      "name": "Time Warp",
+      "description": "Creates a temporal distortion field that slows all enemy units and projectiles within by 50%.",
+      "type": "active",
+      "cooldown": 60.0,
+      "energy_cost": 100,
+      "duration": 10.0,
+      "radius": 5.0,
+      "range": 9,
+      "slow_percent": 0.5,
+      "hotkey": "T"
+    },
+    {
+      "id": "strategic_recall",
+      "name": "Strategic Recall",
+      "description": "Teleports the Mothership and all nearby units to a target Nexus.",
+      "type": "active",
+      "cooldown": 130.0,
+      "energy_cost": 0,
+      "radius": 6.5,
+      "target": "nexus",
+      "requires_upgrade": "strategic_recall_upgrade",
+      "unlocked_default": false,
+      "hotkey": "S"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "strategic_recall_upgrade",
+      "name": "Strategic Recall",
+      "description": "Enables Strategic Recall ability for the Mothership",
+      "researched_at": "mothership_beacon",
+      "cost": {
+        "minerals": 200,
+        "vespene": 200
+      },
+      "research_time": 121
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_flying": true,
+    "is_armored": true,
+    "is_massive": true,
+    "is_heroic": true,
+    "unique": true,
+    "max_count": 1,
+    "cargo_size": 0
+  },
+
+  "sight": {
+    "vision_range": 14,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 30,
+    "selection_radius": 2.5,
+    "target_radius": 2.0
+  },
+
+  "visuals": {
+    "model": "models/aliens/mothership.fbx",
+    "texture": "textures/aliens/mothership.png",
+    "icon": "icons/aliens/mothership.png",
+    "wireframe": "wireframes/aliens/mothership.png",
+    "portrait": "portraits/aliens/mothership.png",
+    "scale": 3.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "mass_recall": "anim_recall",
+      "time_warp": "anim_time_warp",
+      "death": "anim_death"
+    },
+    "effects": {
+      "cloaking_field": "fx_cloak_field",
+      "mass_recall": "fx_mass_recall",
+      "time_warp": "fx_time_warp",
+      "attack": "fx_purifier_beam",
+      "engines": "fx_mothership_engines"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/mothership_ready.ogg",
+    "selected": ["audio/aliens/mothership_select1.ogg"],
+    "command": ["audio/aliens/mothership_command1.ogg"],
+    "attack": "audio/aliens/mothership_attack.ogg",
+    "mass_recall": "audio/aliens/mothership_recall.ogg",
+    "time_warp": "audio/aliens/mothership_timewarp.ogg",
+    "death": "audio/aliens/mothership_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "support",
+    "priority_targets": [],
+    "flee_when_attacked": true,
+    "micro_level": "very_high",
+    "stay_with_army": true,
+    "protect_priority": "highest"
+  }
+}

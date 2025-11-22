@@ -1,0 +1,177 @@
+{
+    "id": "human_high_priestess",
+    "type": "hero",
+    "race": "humans",
+    "name": "High Priestess",
+    "title": "Voice of the Light",
+    "class": "support",
+    "primary_attribute": "intelligence",
+    "description": "A powerful conduit of divine energy who heals allies, shields the faithful, and smites the unholy with righteous fury.",
+    "lore": "Lady Seraphina was chosen by the Light itself during the darkest hour of the Demon Wars. Her miracles turned the tide of countless battles, and her ability to bring the fallen back from death's door has made her a living legend throughout Valorheim.",
+
+    "base_stats": {
+        "health": 500,
+        "mana": 400,
+        "damage": 22,
+        "armor": 2,
+        "magic_resist": 35,
+        "move_speed": 5.0,
+        "turn_rate": 0.5,
+        "attack_range": 10.0,
+        "attack_speed": 1.8,
+        "health_regen": 1.5,
+        "mana_regen": 3.0,
+        "strength": 16,
+        "agility": 14,
+        "intelligence": 28,
+        "day_vision": 18,
+        "night_vision": 12
+    },
+
+    "stat_growth": {
+        "health_per_level": 45,
+        "mana_per_level": 50,
+        "damage_per_level": 2.0,
+        "armor_per_level": 0.2,
+        "strength_per_level": 1.6,
+        "agility_per_level": 1.2,
+        "intelligence_per_level": 3.5,
+        "health_regen_per_level": 0.15,
+        "mana_regen_per_level": 0.25
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_holy_light_hero",
+            "name": "Holy Light",
+            "description": "Heal a friendly unit for a large amount or deal heavy damage to undead enemies.",
+            "max_level": 4,
+            "hotkey": "Q",
+            "cooldown": [8, 7, 6, 5],
+            "mana_cost": [65, 70, 75, 80],
+            "range": 14.0,
+            "heal_amount": [200, 300, 400, 500],
+            "undead_damage": [150, 250, 350, 450],
+            "target_type": "unit"
+        },
+        {
+            "slot": 2,
+            "id": "ability_divine_shield_hero",
+            "name": "Divine Shield",
+            "description": "Encase a friendly unit in a protective shield of light, making them invulnerable.",
+            "max_level": 4,
+            "hotkey": "W",
+            "cooldown": [45, 40, 35, 30],
+            "mana_cost": [100, 110, 120, 130],
+            "range": 12.0,
+            "duration": [3, 4, 5, 6],
+            "target_type": "friendly_unit",
+            "can_target_self": true,
+            "dispellable": false
+        },
+        {
+            "slot": 3,
+            "id": "ability_mass_heal",
+            "name": "Mass Heal",
+            "description": "Heal all friendly units in a target area over time.",
+            "max_level": 4,
+            "hotkey": "E",
+            "cooldown": [20, 18, 16, 14],
+            "mana_cost": [120, 140, 160, 180],
+            "range": 16.0,
+            "radius": [8, 9, 10, 11],
+            "duration": 5.0,
+            "heal_per_second": [40, 55, 70, 85],
+            "target_type": "ground"
+        },
+        {
+            "slot": 4,
+            "id": "ability_resurrection",
+            "name": "Resurrection",
+            "description": "Bring fallen allied units back to life at the target location.",
+            "ultimate": true,
+            "unlock_level": 6,
+            "max_level": 3,
+            "hotkey": "R",
+            "cooldown": [180, 150, 120],
+            "mana_cost": [250, 350, 450],
+            "range": 20.0,
+            "radius": 8.0,
+            "max_units_revived": [4, 6, 8],
+            "revive_health_percent": [0.30, 0.50, 0.70],
+            "revive_mana_percent": [0.25, 0.40, 0.55],
+            "valid_corpse_time": 60.0
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_holy_light_bounce", "talent_holy_light_cooldown"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_divine_shield_reflect", "talent_divine_shield_heal"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_mass_heal_armor", "talent_mass_heal_cleanse"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_resurrection_instant", "talent_resurrection_buff"]}
+    ],
+
+    "passive": {
+        "id": "passive_blessing_of_light",
+        "name": "Blessing of Light",
+        "description": "The High Priestess passively heals the lowest health allied unit within range every 3 seconds",
+        "heal_amount": 30,
+        "heal_interval": 3.0,
+        "radius": 15.0
+    },
+
+    "aura": {
+        "id": "aura_inner_fire",
+        "name": "Inner Fire Aura",
+        "description": "Nearby friendly units gain increased health regeneration",
+        "radius": 12.0,
+        "effects": [
+            {"stat": "healthRegen", "value": 2.0, "type": "flat"}
+        ]
+    },
+
+    "visuals": {
+        "model": "models/races/humans/heroes/high_priestess.obj",
+        "skeleton": "models/races/humans/heroes/high_priestess_skeleton.skl",
+        "portrait": "textures/races/humans/portraits/high_priestess.png",
+        "icon": "textures/races/humans/icons/high_priestess.png",
+        "minimap_icon": "textures/minimap/high_priestess.png",
+        "animation_set": "animations/humans/heroes/high_priestess",
+        "scale": 1.0,
+        "attack_effect": "effects/holy_bolt.fx",
+        "cast_effect": "effects/holy_cast.fx",
+        "death_effect": "effects/hero_death_holy.fx",
+        "respawn_effect": "effects/holy_respawn.fx"
+    },
+
+    "events": {
+        "on_spawn": "scripts/heroes/high_priestess/on_spawn.py",
+        "on_level_up": "scripts/heroes/high_priestess/on_level_up.py",
+        "on_ability_learn": "scripts/heroes/high_priestess/on_ability_learn.py"
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/heroes/high_priestess/select_1.wav", "sounds/humans/heroes/high_priestess/select_2.wav"],
+        "move": ["sounds/humans/heroes/high_priestess/move_1.wav", "sounds/humans/heroes/high_priestess/move_2.wav"],
+        "attack": "sounds/humans/heroes/high_priestess/attack.wav",
+        "ability_q": "sounds/abilities/holy_light.wav",
+        "ability_w": "sounds/abilities/divine_shield.wav",
+        "ability_e": "sounds/abilities/mass_heal.wav",
+        "ability_r": "sounds/abilities/resurrection.wav",
+        "death": "sounds/humans/heroes/high_priestess/death.wav",
+        "respawn": "sounds/humans/heroes/high_priestess/respawn.wav"
+    },
+
+    "tags": ["ranged", "intelligence", "support", "healer", "buffer"],
+
+    "properties": {
+        "attack_type": "ranged",
+        "complexity": 2,
+        "roles": ["support", "healer"],
+        "summon_building": "human_altar_of_kings",
+        "summon_cost": {"gold": 500},
+        "respawn_time_base": 55,
+        "respawn_time_per_level": 4
+    }
+}

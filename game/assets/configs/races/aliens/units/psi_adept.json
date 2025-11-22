@@ -1,0 +1,172 @@
+{
+  "id": "psi_adept",
+  "name": "Psi Adept",
+  "display_name": "Psi Adept",
+  "description": "A psionic warrior trained in the mental arts, capable of unleashing devastating psionic attacks. Psi Adepts can shade through reality, creating mirror images that confuse enemies while dealing consistent psionic damage.",
+  "race": "aliens",
+  "tier": 2,
+  "unit_type": "caster",
+  "classification": ["biological", "psionic", "caster"],
+
+  "stats": {
+    "health": 80,
+    "health_regen": 0,
+    "shield": 60,
+    "shield_regen": 1.2,
+    "shield_regen_delay": 10.0,
+    "energy": 75,
+    "energy_max": 200,
+    "energy_regen": 0.7875,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 3.5,
+    "acceleration": 999,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 20,
+    "attack_speed": 1.81,
+    "attack_range": 5,
+    "attack_type": "ranged",
+    "damage_type": "psionic",
+    "targets": ["ground"],
+    "projectile": {
+      "speed": 20,
+      "model": "fx_psi_bolt"
+    }
+  },
+
+  "production": {
+    "build_time": 55,
+    "warp_time": 45,
+    "supply_cost": 2,
+    "resource_cost": {
+      "minerals": 100,
+      "vespene": 150
+    },
+    "power_cost": 0,
+    "produced_at": "gateway",
+    "warp_at": "warp_gate",
+    "requirements": ["psi_link"],
+    "hotkey": "A"
+  },
+
+  "abilities": [
+    {
+      "id": "psionic_transfer",
+      "name": "Psionic Transfer",
+      "description": "Project a shade that moves independently. Activate again to teleport to the shade's location. The shade can attack but deals reduced damage.",
+      "type": "active",
+      "cooldown": 21.0,
+      "energy_cost": 50,
+      "shade_duration": 7.0,
+      "shade_damage_percent": 0.5,
+      "hotkey": "F"
+    },
+    {
+      "id": "psi_shock",
+      "name": "Psionic Shock",
+      "description": "Channels psionic energy into a target, dealing damage over time and slowing movement.",
+      "type": "active",
+      "cooldown": 12.0,
+      "energy_cost": 75,
+      "damage": 40,
+      "duration": 4.0,
+      "slow_percent": 0.3,
+      "range": 7,
+      "hotkey": "Q"
+    },
+    {
+      "id": "resonant_wave",
+      "name": "Resonant Wave",
+      "description": "Releases a wave of psionic energy that damages and reveals enemies in an area.",
+      "type": "active",
+      "cooldown": 20.0,
+      "energy_cost": 100,
+      "damage": 50,
+      "radius": 3.0,
+      "reveal_duration": 5.0,
+      "requires_upgrade": "resonant_wave_upgrade",
+      "unlocked_default": false,
+      "hotkey": "E"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "resonant_wave_upgrade",
+      "name": "Resonant Wave",
+      "description": "Enables the Resonant Wave ability for Psi Adepts",
+      "researched_at": "psi_link",
+      "cost": {
+        "minerals": 100,
+        "vespene": 100
+      },
+      "research_time": 90
+    }
+  ],
+
+  "attributes": {
+    "is_biological": true,
+    "is_psionic": true,
+    "is_light": true,
+    "is_caster": true,
+    "cargo_size": 2,
+    "can_be_warped": true
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 18,
+    "selection_radius": 0.75,
+    "target_radius": 0.5
+  },
+
+  "visuals": {
+    "model": "models/aliens/psi_adept.fbx",
+    "texture": "textures/aliens/psi_adept.png",
+    "icon": "icons/aliens/psi_adept.png",
+    "wireframe": "wireframes/aliens/psi_adept.png",
+    "portrait": "portraits/aliens/psi_adept.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "cast": "anim_cast",
+      "shade": "anim_shade",
+      "death": "anim_death"
+    },
+    "effects": {
+      "psi_transfer": "fx_psi_transfer",
+      "psi_shock": "fx_psi_shock",
+      "resonant_wave": "fx_resonant_wave",
+      "shade": "fx_shade_form"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/psi_adept_ready.ogg",
+    "selected": ["audio/aliens/psi_adept_select1.ogg", "audio/aliens/psi_adept_select2.ogg"],
+    "command": ["audio/aliens/psi_adept_command1.ogg"],
+    "attack": "audio/aliens/psi_adept_attack.ogg",
+    "cast": "audio/aliens/psi_adept_cast.ogg",
+    "death": "audio/aliens/psi_adept_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "caster",
+    "priority_targets": ["caster", "worker"],
+    "flee_when_attacked": true,
+    "micro_level": "high",
+    "preferred_formation": "back",
+    "use_shade_to_escape": true
+  }
+}

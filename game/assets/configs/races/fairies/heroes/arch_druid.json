@@ -1,0 +1,173 @@
+{
+    "id": "fairy_arch_druid",
+    "type": "hero",
+    "race": "fairies",
+    "name": "Arch Druid",
+    "title": "Voice of the Wild",
+    "class": "druid",
+    "primary_attribute": "intelligence",
+    "description": "An ancient druid who channels the raw power of nature. The Arch Druid can summon treant armies, entangle enemies in living roots, and call down the fury of the stars themselves.",
+    "lore": "Malfurion the Emerald is the oldest druid in the known world, having studied under Cenarius himself. His connection to the Dream is so deep that plants grow where he walks and animals heed his call.",
+
+    "base_stats": {
+        "health": 550,
+        "mana": 550,
+        "damage": 32,
+        "armor": 3,
+        "magic_resist": 35,
+        "move_speed": 4.8,
+        "turn_rate": 0.5,
+        "attack_range": 9.0,
+        "attack_speed": 2.0,
+        "health_regen": 2.0,
+        "mana_regen": 4.5,
+        "strength": 20,
+        "agility": 15,
+        "intelligence": 30,
+        "day_vision": 16,
+        "night_vision": 16
+    },
+
+    "stat_growth": {
+        "health_per_level": 55,
+        "mana_per_level": 60,
+        "damage_per_level": 3.0,
+        "armor_per_level": 0.25,
+        "strength_per_level": 2.2,
+        "agility_per_level": 1.5,
+        "intelligence_per_level": 3.8,
+        "health_regen_per_level": 0.2,
+        "mana_regen_per_level": 0.35
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_entangling_roots_hero",
+            "name": "Entangling Roots",
+            "description": "Causes roots to burst from the ground, immobilizing and damaging a target enemy unit.",
+            "max_level": 4,
+            "hotkey": "Q",
+            "cooldown": [10, 9, 8, 7],
+            "mana_cost": [75, 85, 95, 105],
+            "range": 14.0,
+            "duration": [4, 5, 6, 7],
+            "effects": [
+                {"type": "root", "value": true},
+                {"type": "dot", "damage": [20, 30, 40, 50], "tick_rate": 1.0}
+            ]
+        },
+        {
+            "slot": 2,
+            "id": "ability_force_of_nature_hero",
+            "name": "Force of Nature",
+            "description": "Convert nearby trees into powerful Treant warriors.",
+            "max_level": 4,
+            "hotkey": "W",
+            "cooldown": [40, 35, 30, 25],
+            "mana_cost": [100, 120, 140, 160],
+            "range": 15.0,
+            "radius": 10.0,
+            "treant_count": [2, 3, 4, 5],
+            "treant_duration": [60, 60, 60, 60],
+            "effects": [
+                {"type": "convert_trees_to_treants", "max_treants": [2, 3, 4, 5]},
+                {"type": "treant_damage_bonus", "value": [0, 0.10, 0.20, 0.30]}
+            ]
+        },
+        {
+            "slot": 3,
+            "id": "ability_thorns_aura_hero",
+            "name": "Thorns Aura",
+            "description": "An aura that causes damage to melee attackers who strike nearby allied units.",
+            "max_level": 4,
+            "hotkey": "E",
+            "passive": true,
+            "radius": [10, 12, 14, 16],
+            "effects": [
+                {"type": "damage_return", "value": [0.15, 0.20, 0.25, 0.30], "condition": "melee_attacker", "scope": "allies_in_radius"}
+            ]
+        },
+        {
+            "slot": 4,
+            "id": "ability_starfall_hero",
+            "name": "Starfall",
+            "description": "Calls down waves of falling stars that damage nearby enemy units. Each wave deals damage in a large area.",
+            "ultimate": true,
+            "unlock_level": 6,
+            "max_level": 3,
+            "hotkey": "R",
+            "cooldown": [120, 100, 80],
+            "mana_cost": [200, 250, 300],
+            "radius": [15, 18, 21],
+            "duration": 12.0,
+            "channeled": true,
+            "can_be_interrupted": true,
+            "waves": 12,
+            "damage_per_wave": [50, 70, 90],
+            "effects": [
+                {"type": "damage_per_wave", "value": [50, 70, 90], "damage_type": "magic"},
+                {"type": "slow", "value": 0.25, "duration": 1.5}
+            ]
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_roots_area", "talent_roots_pull"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_treant_permanent", "talent_treant_siege"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_thorns_heal", "talent_thorns_stun"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_starfall_global", "talent_starfall_meteor"]}
+    ],
+
+    "passive": {
+        "id": "passive_natures_blessing",
+        "name": "Nature's Blessing",
+        "description": "The Arch Druid regenerates health faster when near trees",
+        "tree_proximity_bonus": 5.0,
+        "tree_detection_radius": 8.0
+    },
+
+    "night_bonus": {
+        "manaRegen": 0.50,
+        "spell_power": 0.20,
+        "treant_health": 0.25
+    },
+
+    "visuals": {
+        "model": "models/races/fairies/heroes/arch_druid.obj",
+        "skeleton": "models/races/fairies/heroes/arch_druid_skeleton.skl",
+        "portrait": "textures/races/fairies/portraits/arch_druid.png",
+        "icon": "textures/races/fairies/icons/arch_druid.png",
+        "minimap_icon": "textures/minimap/arch_druid.png",
+        "animation_set": "animations/fairies/heroes/arch_druid",
+        "scale": 1.2,
+        "attack_effect": "effects/nature_bolt.fx",
+        "cast_effect": "effects/druid_cast.fx",
+        "death_effect": "effects/hero_death_nature.fx",
+        "respawn_effect": "effects/druid_respawn.fx"
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/heroes/arch_druid/select_1.wav", "sounds/fairies/heroes/arch_druid/select_2.wav"],
+        "move": ["sounds/fairies/heroes/arch_druid/move_1.wav", "sounds/fairies/heroes/arch_druid/move_2.wav"],
+        "attack": "sounds/fairies/heroes/arch_druid/attack.wav",
+        "ability_q": "sounds/abilities/entangling_roots.wav",
+        "ability_w": "sounds/abilities/force_of_nature.wav",
+        "ability_e": "sounds/abilities/thorns_aura.wav",
+        "ability_r": "sounds/abilities/starfall.wav",
+        "death": "sounds/fairies/heroes/arch_druid/death.wav",
+        "respawn": "sounds/fairies/heroes/arch_druid/respawn.wav"
+    },
+
+    "tags": ["ranged", "intelligence", "summoner", "nuker", "support"],
+
+    "properties": {
+        "attack_type": "ranged",
+        "complexity": 2,
+        "roles": ["summoner", "nuker", "pusher"],
+        "summon_building": "fairy_altar_of_elders",
+        "summon_cost": {"gold": 500},
+        "respawn_time_base": 50,
+        "respawn_time_per_level": 4
+    }
+}

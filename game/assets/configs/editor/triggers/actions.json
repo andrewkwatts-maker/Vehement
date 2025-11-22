@@ -1,0 +1,1005 @@
+{
+  "version": "1.0",
+  "description": "Trigger action definitions for the editor",
+  "categories": [
+    {
+      "id": "general",
+      "name": "General",
+      "icon": "general_icon"
+    },
+    {
+      "id": "unit",
+      "name": "Unit Actions",
+      "icon": "unit_icon"
+    },
+    {
+      "id": "player",
+      "name": "Player Actions",
+      "icon": "player_icon"
+    },
+    {
+      "id": "camera",
+      "name": "Camera",
+      "icon": "camera_icon"
+    },
+    {
+      "id": "ui",
+      "name": "UI & Display",
+      "icon": "ui_icon"
+    },
+    {
+      "id": "flow",
+      "name": "Control Flow",
+      "icon": "flow_icon"
+    },
+    {
+      "id": "effect",
+      "name": "Effects & Sound",
+      "icon": "effect_icon"
+    },
+    {
+      "id": "game",
+      "name": "Game",
+      "icon": "game_icon"
+    }
+  ],
+  "actions": [
+    {
+      "id": "wait",
+      "category": "general",
+      "name": "Wait",
+      "description": "Pause trigger execution for a duration",
+      "parameters": [
+        {
+          "name": "duration",
+          "type": "real",
+          "description": "Duration in seconds",
+          "default": 1.0
+        }
+      ]
+    },
+    {
+      "id": "set_variable",
+      "category": "general",
+      "name": "Set Variable",
+      "description": "Set a variable to a value",
+      "parameters": [
+        {
+          "name": "variable",
+          "type": "variable",
+          "description": "Variable to set"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "description": "Value to assign"
+        }
+      ]
+    },
+    {
+      "id": "create_unit",
+      "category": "unit",
+      "name": "Create Unit",
+      "description": "Create a new unit",
+      "parameters": [
+        {
+          "name": "unitType",
+          "type": "unittype",
+          "description": "Type of unit to create"
+        },
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Owning player"
+        },
+        {
+          "name": "position",
+          "type": "location",
+          "description": "Spawn position"
+        },
+        {
+          "name": "facing",
+          "type": "real",
+          "description": "Initial facing angle",
+          "default": 0.0
+        }
+      ],
+      "returnValue": {
+        "name": "LastCreatedUnit",
+        "type": "unit"
+      }
+    },
+    {
+      "id": "remove_unit",
+      "category": "unit",
+      "name": "Remove Unit",
+      "description": "Remove a unit from the game (no death)",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to remove"
+        }
+      ]
+    },
+    {
+      "id": "kill_unit",
+      "category": "unit",
+      "name": "Kill Unit",
+      "description": "Kill a unit (triggers death events)",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to kill"
+        }
+      ]
+    },
+    {
+      "id": "move_unit",
+      "category": "unit",
+      "name": "Move Unit Instantly",
+      "description": "Instantly move a unit to a position",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to move"
+        },
+        {
+          "name": "position",
+          "type": "location",
+          "description": "Target position"
+        },
+        {
+          "name": "facing",
+          "type": "real",
+          "description": "New facing angle (optional)",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "order_unit",
+      "category": "unit",
+      "name": "Order Unit",
+      "description": "Issue an order to a unit",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to order"
+        },
+        {
+          "name": "orderType",
+          "type": "string",
+          "enum": ["move", "attack", "patrol", "hold", "stop", "smart", "build", "train", "custom"],
+          "default": "move"
+        },
+        {
+          "name": "target",
+          "type": "any",
+          "description": "Target (unit, location, or building type)",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "modify_unit_stat",
+      "category": "unit",
+      "name": "Modify Unit Stat",
+      "description": "Modify a unit's stat value",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to modify"
+        },
+        {
+          "name": "stat",
+          "type": "string",
+          "enum": ["health", "maxHealth", "mana", "maxMana", "damage", "armor", "moveSpeed", "attackSpeed", "level"],
+          "default": "health"
+        },
+        {
+          "name": "operation",
+          "type": "string",
+          "enum": ["set", "add", "multiply"],
+          "default": "set"
+        },
+        {
+          "name": "value",
+          "type": "real",
+          "description": "Value to apply"
+        }
+      ]
+    },
+    {
+      "id": "add_ability",
+      "category": "unit",
+      "name": "Add Ability",
+      "description": "Give a unit an ability",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to modify"
+        },
+        {
+          "name": "ability",
+          "type": "ability",
+          "description": "Ability to add"
+        }
+      ]
+    },
+    {
+      "id": "remove_ability",
+      "category": "unit",
+      "name": "Remove Ability",
+      "description": "Remove an ability from a unit",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to modify"
+        },
+        {
+          "name": "ability",
+          "type": "ability",
+          "description": "Ability to remove"
+        }
+      ]
+    },
+    {
+      "id": "apply_buff",
+      "category": "unit",
+      "name": "Apply Buff",
+      "description": "Apply a buff/debuff to a unit",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to buff"
+        },
+        {
+          "name": "buffType",
+          "type": "string",
+          "description": "Buff type ID"
+        },
+        {
+          "name": "duration",
+          "type": "real",
+          "description": "Duration in seconds (-1 for permanent)",
+          "default": -1.0
+        },
+        {
+          "name": "source",
+          "type": "unit",
+          "description": "Source unit (optional)",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "remove_buff",
+      "category": "unit",
+      "name": "Remove Buff",
+      "description": "Remove a buff from a unit",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to modify"
+        },
+        {
+          "name": "buffType",
+          "type": "string",
+          "description": "Buff type ID"
+        }
+      ]
+    },
+    {
+      "id": "play_animation",
+      "category": "unit",
+      "name": "Play Animation",
+      "description": "Play an animation on a unit",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to animate"
+        },
+        {
+          "name": "animation",
+          "type": "string",
+          "enum": ["stand", "walk", "attack", "spell", "death", "born", "stand_ready", "custom"],
+          "default": "stand"
+        },
+        {
+          "name": "customName",
+          "type": "string",
+          "description": "Custom animation name",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "add_resource",
+      "category": "player",
+      "name": "Add Resources",
+      "description": "Add resources to a player",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player"
+        },
+        {
+          "name": "resourceType",
+          "type": "string",
+          "enum": ["gold", "lumber", "food"],
+          "default": "gold"
+        },
+        {
+          "name": "amount",
+          "type": "integer",
+          "description": "Amount to add"
+        }
+      ]
+    },
+    {
+      "id": "set_resource",
+      "category": "player",
+      "name": "Set Resources",
+      "description": "Set a player's resources to a value",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player"
+        },
+        {
+          "name": "resourceType",
+          "type": "string",
+          "enum": ["gold", "lumber", "food"],
+          "default": "gold"
+        },
+        {
+          "name": "amount",
+          "type": "integer",
+          "description": "New amount"
+        }
+      ]
+    },
+    {
+      "id": "set_player_alliance",
+      "category": "player",
+      "name": "Set Alliance",
+      "description": "Set alliance status between players",
+      "parameters": [
+        {
+          "name": "player1",
+          "type": "player",
+          "description": "First player"
+        },
+        {
+          "name": "player2",
+          "type": "player",
+          "description": "Second player"
+        },
+        {
+          "name": "alliance",
+          "type": "string",
+          "enum": ["ally", "neutral", "enemy"],
+          "default": "ally"
+        },
+        {
+          "name": "mutual",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "create_effect",
+      "category": "effect",
+      "name": "Create Effect",
+      "description": "Create a visual effect",
+      "parameters": [
+        {
+          "name": "effectType",
+          "type": "string",
+          "description": "Effect type ID"
+        },
+        {
+          "name": "position",
+          "type": "location",
+          "description": "Effect position"
+        },
+        {
+          "name": "duration",
+          "type": "real",
+          "description": "Duration in seconds (-1 for permanent)",
+          "default": 3.0
+        },
+        {
+          "name": "scale",
+          "type": "real",
+          "description": "Effect scale",
+          "default": 1.0
+        }
+      ],
+      "returnValue": {
+        "name": "LastCreatedEffect",
+        "type": "effect"
+      }
+    },
+    {
+      "id": "attach_effect",
+      "category": "effect",
+      "name": "Attach Effect to Unit",
+      "description": "Attach a visual effect to a unit",
+      "parameters": [
+        {
+          "name": "effectType",
+          "type": "string",
+          "description": "Effect type ID"
+        },
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to attach to"
+        },
+        {
+          "name": "attachPoint",
+          "type": "string",
+          "enum": ["origin", "overhead", "chest", "head", "hand_left", "hand_right", "weapon"],
+          "default": "origin"
+        },
+        {
+          "name": "duration",
+          "type": "real",
+          "default": 3.0
+        }
+      ],
+      "returnValue": {
+        "name": "LastCreatedEffect",
+        "type": "effect"
+      }
+    },
+    {
+      "id": "destroy_effect",
+      "category": "effect",
+      "name": "Destroy Effect",
+      "description": "Destroy a visual effect",
+      "parameters": [
+        {
+          "name": "effect",
+          "type": "effect",
+          "description": "Effect to destroy"
+        }
+      ]
+    },
+    {
+      "id": "play_sound",
+      "category": "effect",
+      "name": "Play Sound",
+      "description": "Play a sound effect",
+      "parameters": [
+        {
+          "name": "soundId",
+          "type": "string",
+          "description": "Sound ID"
+        },
+        {
+          "name": "volume",
+          "type": "real",
+          "description": "Volume (0-1)",
+          "default": 1.0
+        },
+        {
+          "name": "position",
+          "type": "location",
+          "description": "3D position (optional)",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "play_music",
+      "category": "effect",
+      "name": "Play Music",
+      "description": "Play background music",
+      "parameters": [
+        {
+          "name": "musicId",
+          "type": "string",
+          "description": "Music track ID"
+        },
+        {
+          "name": "loop",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "fadeTime",
+          "type": "real",
+          "description": "Fade transition time",
+          "default": 2.0
+        }
+      ]
+    },
+    {
+      "id": "display_text",
+      "category": "ui",
+      "name": "Display Text Message",
+      "description": "Show a text message to players",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player (or all)"
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "description": "Message text"
+        },
+        {
+          "name": "duration",
+          "type": "real",
+          "description": "Display duration",
+          "default": 5.0
+        }
+      ]
+    },
+    {
+      "id": "display_dialog",
+      "category": "ui",
+      "name": "Display Dialog",
+      "description": "Show a dialog box",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "Dialog title"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Dialog message"
+        },
+        {
+          "name": "button1",
+          "type": "string",
+          "default": "OK"
+        },
+        {
+          "name": "button2",
+          "type": "string",
+          "description": "Second button (optional)",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "cinematic_fade",
+      "category": "ui",
+      "name": "Cinematic Fade",
+      "description": "Fade screen in/out",
+      "parameters": [
+        {
+          "name": "fadeType",
+          "type": "string",
+          "enum": ["in", "out"],
+          "default": "out"
+        },
+        {
+          "name": "duration",
+          "type": "real",
+          "default": 1.0
+        },
+        {
+          "name": "color",
+          "type": "string",
+          "description": "Fade color",
+          "default": "black"
+        }
+      ]
+    },
+    {
+      "id": "pan_camera",
+      "category": "camera",
+      "name": "Pan Camera",
+      "description": "Pan camera to a location",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player"
+        },
+        {
+          "name": "position",
+          "type": "location",
+          "description": "Target position"
+        },
+        {
+          "name": "duration",
+          "type": "real",
+          "description": "Pan duration",
+          "default": 0.0
+        }
+      ]
+    },
+    {
+      "id": "lock_camera",
+      "category": "camera",
+      "name": "Lock Camera to Unit",
+      "description": "Lock camera to follow a unit",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player"
+        },
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to follow"
+        }
+      ]
+    },
+    {
+      "id": "unlock_camera",
+      "category": "camera",
+      "name": "Unlock Camera",
+      "description": "Return camera control to player",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player"
+        }
+      ]
+    },
+    {
+      "id": "set_camera_bounds",
+      "category": "camera",
+      "name": "Set Camera Bounds",
+      "description": "Set camera movement bounds",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Target player"
+        },
+        {
+          "name": "minX",
+          "type": "real"
+        },
+        {
+          "name": "minY",
+          "type": "real"
+        },
+        {
+          "name": "maxX",
+          "type": "real"
+        },
+        {
+          "name": "maxY",
+          "type": "real"
+        }
+      ]
+    },
+    {
+      "id": "create_timer",
+      "category": "general",
+      "name": "Create Timer",
+      "description": "Create a new timer",
+      "parameters": [
+        {
+          "name": "variable",
+          "type": "variable",
+          "description": "Variable to store timer"
+        }
+      ],
+      "returnValue": {
+        "name": "LastCreatedTimer",
+        "type": "timer"
+      }
+    },
+    {
+      "id": "start_timer",
+      "category": "general",
+      "name": "Start Timer",
+      "description": "Start a timer",
+      "parameters": [
+        {
+          "name": "timer",
+          "type": "timer",
+          "description": "Timer to start"
+        },
+        {
+          "name": "duration",
+          "type": "real",
+          "description": "Duration in seconds"
+        },
+        {
+          "name": "periodic",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    {
+      "id": "pause_timer",
+      "category": "general",
+      "name": "Pause/Resume Timer",
+      "description": "Pause or resume a timer",
+      "parameters": [
+        {
+          "name": "timer",
+          "type": "timer",
+          "description": "Timer to modify"
+        },
+        {
+          "name": "pause",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "enable_trigger",
+      "category": "general",
+      "name": "Enable Trigger",
+      "description": "Enable a trigger",
+      "parameters": [
+        {
+          "name": "triggerId",
+          "type": "integer",
+          "description": "ID of trigger to enable"
+        }
+      ]
+    },
+    {
+      "id": "disable_trigger",
+      "category": "general",
+      "name": "Disable Trigger",
+      "description": "Disable a trigger",
+      "parameters": [
+        {
+          "name": "triggerId",
+          "type": "integer",
+          "description": "ID of trigger to disable"
+        }
+      ]
+    },
+    {
+      "id": "run_trigger",
+      "category": "general",
+      "name": "Run Trigger",
+      "description": "Immediately execute a trigger",
+      "parameters": [
+        {
+          "name": "triggerId",
+          "type": "integer",
+          "description": "ID of trigger to run"
+        },
+        {
+          "name": "checkConditions",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    },
+    {
+      "id": "victory",
+      "category": "game",
+      "name": "Victory",
+      "description": "Award victory to a player",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Winning player"
+        },
+        {
+          "name": "showDialog",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "defeat",
+      "category": "game",
+      "name": "Defeat",
+      "description": "Defeat a player",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Defeated player"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Defeat message",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "set_game_speed",
+      "category": "game",
+      "name": "Set Game Speed",
+      "description": "Change game speed",
+      "parameters": [
+        {
+          "name": "speed",
+          "type": "real",
+          "description": "Speed multiplier",
+          "default": 1.0
+        }
+      ]
+    },
+    {
+      "id": "pause_game",
+      "category": "game",
+      "name": "Pause/Unpause Game",
+      "description": "Pause or unpause the game",
+      "parameters": [
+        {
+          "name": "pause",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "if_then_else",
+      "category": "flow",
+      "name": "If/Then/Else",
+      "description": "Conditional branch",
+      "parameters": [
+        {
+          "name": "condition",
+          "type": "condition",
+          "description": "Condition to check"
+        }
+      ],
+      "hasChildren": true,
+      "hasElseBranch": true
+    },
+    {
+      "id": "loop",
+      "category": "flow",
+      "name": "Loop",
+      "description": "Repeat actions",
+      "parameters": [
+        {
+          "name": "loopType",
+          "type": "string",
+          "enum": ["count", "while", "forever"],
+          "default": "count"
+        },
+        {
+          "name": "count",
+          "type": "integer",
+          "description": "Number of iterations (for count)",
+          "default": 10
+        },
+        {
+          "name": "condition",
+          "type": "condition",
+          "description": "Loop condition (for while)",
+          "optional": true
+        },
+        {
+          "name": "indexVariable",
+          "type": "variable",
+          "description": "Loop index variable",
+          "optional": true
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "id": "for_each_unit",
+      "category": "flow",
+      "name": "For Each Unit",
+      "description": "Loop through a group of units",
+      "parameters": [
+        {
+          "name": "group",
+          "type": "group",
+          "description": "Unit group to iterate"
+        },
+        {
+          "name": "unitVariable",
+          "type": "variable",
+          "description": "Variable for current unit"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "id": "for_each_player",
+      "category": "flow",
+      "name": "For Each Player",
+      "description": "Loop through players",
+      "parameters": [
+        {
+          "name": "force",
+          "type": "force",
+          "description": "Player group to iterate"
+        },
+        {
+          "name": "playerVariable",
+          "type": "variable",
+          "description": "Variable for current player"
+        }
+      ],
+      "hasChildren": true
+    },
+    {
+      "id": "break",
+      "category": "flow",
+      "name": "Break",
+      "description": "Exit the current loop",
+      "parameters": []
+    },
+    {
+      "id": "return",
+      "category": "flow",
+      "name": "Return",
+      "description": "Exit the current trigger/function",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "any",
+          "description": "Return value (for functions)",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "call_function",
+      "category": "flow",
+      "name": "Call Function",
+      "description": "Call a custom function",
+      "parameters": [
+        {
+          "name": "functionName",
+          "type": "string",
+          "description": "Function name"
+        },
+        {
+          "name": "arguments",
+          "type": "array",
+          "description": "Function arguments",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "custom",
+      "category": "general",
+      "name": "Custom Action",
+      "description": "User-defined custom action",
+      "parameters": [
+        {
+          "name": "script",
+          "type": "string",
+          "description": "Custom script"
+        }
+      ]
+    }
+  ]
+}

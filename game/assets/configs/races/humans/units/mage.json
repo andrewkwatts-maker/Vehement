@@ -1,0 +1,188 @@
+{
+    "id": "human_mage",
+    "type": "unit",
+    "race": "humans",
+    "name": "Mage",
+    "description": "Wielders of arcane power trained in the Valorheim Academy. Their devastating spells can turn the tide of battle through fire, ice, and lightning.",
+
+    "tags": ["military", "caster", "ranged", "tier3", "light", "magic"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/humans/units/mage.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/mage_diffuse.png",
+        "normal": "textures/races/humans/units/mage_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.28,
+                "height": 1.75,
+                "offset": [0.0, 0.875, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 65.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 280,
+        "maxHealth": 280,
+        "healthRegen": 0.5,
+        "mana": 400,
+        "maxMana": 400,
+        "manaRegen": 2.5,
+        "armor": 0,
+        "magicResist": 30,
+        "moveSpeed": 4.5,
+        "turnRate": 340.0
+    },
+
+    "combat": {
+        "attackDamage": 18,
+        "attackSpeed": 1.8,
+        "attackRange": 10.0,
+        "damageType": "magic",
+        "armorType": "light",
+        "attackType": "ranged",
+        "spell_power": 100,
+        "projectile_id": "arcane_bolt"
+    },
+
+    "projectile": {
+        "id": "arcane_bolt",
+        "model": "models/projectiles/arcane_bolt.obj",
+        "speed": 25.0,
+        "lifetime": 3.0,
+        "gravity": 0.0,
+        "trailEffect": "effects/arcane_trail.fx",
+        "impactEffect": "effects/arcane_impact.fx"
+    },
+
+    "abilities": [
+        {
+            "id": "ability_fireball",
+            "name": "Fireball",
+            "description": "Hurl a ball of fire dealing 120 damage to target and 60 splash damage",
+            "hotkey": "Q",
+            "cooldown": 8.0,
+            "mana_cost": 75,
+            "range": 14.0,
+            "damage": 120,
+            "splash_damage": 60,
+            "splash_radius": 3.0,
+            "damage_type": "fire"
+        },
+        {
+            "id": "ability_blizzard",
+            "name": "Blizzard",
+            "description": "Call down waves of ice dealing 40 damage per second for 6 seconds",
+            "hotkey": "W",
+            "cooldown": 20.0,
+            "mana_cost": 120,
+            "range": 16.0,
+            "radius": 5.0,
+            "duration": 6.0,
+            "damage_per_tick": 40,
+            "tick_rate": 1.0,
+            "slow_percent": 0.30,
+            "damage_type": "frost"
+        },
+        {
+            "id": "ability_polymorph",
+            "name": "Polymorph",
+            "description": "Transform an enemy unit into a harmless sheep for 15 seconds",
+            "hotkey": "E",
+            "cooldown": 25.0,
+            "mana_cost": 80,
+            "range": 12.0,
+            "duration": 15.0,
+            "target_type": "enemy_unit",
+            "excludes": ["hero", "massive", "mechanical"]
+        },
+        {
+            "id": "ability_arcane_brilliance",
+            "name": "Arcane Brilliance",
+            "description": "Increase mana regeneration of nearby friendly units by 100% for 30 seconds",
+            "hotkey": "R",
+            "cooldown": 60.0,
+            "mana_cost": 100,
+            "radius": 12.0,
+            "duration": 30.0,
+            "effects": [
+                {"stat": "manaRegen", "value": 1.0, "type": "percent"}
+            ],
+            "required_upgrade": "upgrade_arcane_brilliance"
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_mage_spell_power",
+            "stat": "spell_power",
+            "bonus_per_level": 15
+        },
+        {
+            "id": "upgrade_mage_mana",
+            "stat": "maxMana",
+            "bonus_per_level": 50
+        }
+    ],
+
+    "production": {
+        "building": "human_mage_tower",
+        "cost": {
+            "gold": 280,
+            "food": 3
+        },
+        "build_time": 40.0,
+        "population_cost": 2,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/caster.bt",
+        "profile": "caster",
+        "aggroRange": 10.0,
+        "leashRange": 18.0,
+        "preferred_distance": 12.0,
+        "mana_conservation_threshold": 0.2,
+        "priority_abilities": ["ability_blizzard", "ability_fireball"]
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/mage/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/mage/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/mage/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/mage/attack.anim", "loop": false, "events": [[0.5, "fire_projectile"]]},
+        "cast_fireball": {"path": "animations/humans/mage/cast_fire.anim", "loop": false},
+        "cast_blizzard": {"path": "animations/humans/mage/cast_ice.anim", "loop": false},
+        "cast_polymorph": {"path": "animations/humans/mage/cast_arcane.anim", "loop": false},
+        "death": {"path": "animations/humans/mage/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/mage/select_1.wav", "sounds/humans/mage/select_2.wav"],
+        "acknowledge": ["sounds/humans/mage/ack_1.wav", "sounds/humans/mage/ack_2.wav"],
+        "attack": "sounds/arcane_bolt.wav",
+        "cast_fire": "sounds/fireball_cast.wav",
+        "cast_ice": "sounds/blizzard_cast.wav",
+        "death": "sounds/humans/mage/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/mage.png",
+        "icon": "textures/races/humans/icons/mage.png",
+        "hotkey": "M"
+    }
+}

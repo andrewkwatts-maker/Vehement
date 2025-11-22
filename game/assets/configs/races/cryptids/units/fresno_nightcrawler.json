@@ -1,0 +1,219 @@
+{
+  "id": "fresno_nightcrawler",
+  "name": "Fresno Nightcrawler",
+  "race": "cryptids",
+  "tier": 3,
+  "type": "eldritch_support",
+  "role": ["support", "debuff", "area_denial"],
+
+  "description": "A bizarre, walking pair of legs with no visible body. The Nightcrawler warps reality around it, weakening enemies and empowering allies.",
+  "lore": "Captured on security cameras in Fresno and Yosemite, these impossible creatures seem to exist partially outside our reality. Their presence distorts space and time, and their gaze sees into dimensions unknown.",
+
+  "stats": {
+    "health": 380,
+    "healthRegen": 1.5,
+    "mana": 400,
+    "manaRegen": 2.0,
+    "armor": 1,
+    "armorType": "light",
+    "moveSpeed": 280,
+    "turnRate": 0.8,
+    "collisionSize": 32,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 15,
+      "variance": 5,
+      "type": "magic"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 500,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/void_bolt.glb",
+      "speed": 700,
+      "arc": 0
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.6,
+    "acquisitionRange": 600,
+    "aggroRange": 400
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "reality_warp",
+      "name": "Reality Warp",
+      "type": "active",
+      "targetType": "area",
+      "description": "Creates a zone where enemy attacks deal reduced damage",
+      "cooldown": 25.0,
+      "manaCost": 100,
+      "range": 700,
+      "effects": {
+        "radius": 350,
+        "duration": 12.0,
+        "enemyDamageReduction": 0.3,
+        "allyDamageBonus": 0.15
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/reality_warp.png"
+    },
+    {
+      "id": "dimensional_anchor",
+      "name": "Dimensional Anchor",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Prevents a target from using movement abilities or teleporting",
+      "cooldown": 20.0,
+      "manaCost": 75,
+      "range": 600,
+      "effects": {
+        "duration": 8.0,
+        "preventsTeleport": true,
+        "preventsBlink": true,
+        "preventsPhase": true,
+        "slowPercent": 0.2
+      },
+      "hotkey": "A",
+      "icon": "icons/abilities/dimensional_anchor.png"
+    },
+    {
+      "id": "eldritch_sight",
+      "name": "Eldritch Sight",
+      "type": "active",
+      "targetType": "area",
+      "description": "Reveals an area and grants vision of enemy unit abilities on cooldown",
+      "cooldown": 30.0,
+      "manaCost": 50,
+      "range": 2000,
+      "effects": {
+        "revealRadius": 600,
+        "duration": 10.0,
+        "showsAbilityCooldowns": true,
+        "revealsInvisible": true
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/eldritch_sight.png"
+    },
+    {
+      "id": "otherworldly_presence",
+      "name": "Otherworldly Presence",
+      "type": "passive",
+      "description": "Nearby enemies have increased ability cooldowns",
+      "effects": {
+        "radius": 400,
+        "cooldownIncrease": 0.2
+      },
+      "icon": "icons/abilities/otherworldly_presence.png"
+    },
+    {
+      "id": "void_step",
+      "name": "Void Step",
+      "type": "active",
+      "targetType": "ground",
+      "description": "Short-range teleport that leaves behind a slowing field",
+      "cooldown": 15.0,
+      "manaCost": 60,
+      "range": 500,
+      "effects": {
+        "slowRadius": 200,
+        "slowPercent": 0.4,
+        "slowDuration": 3.0
+      },
+      "hotkey": "V",
+      "icon": "icons/abilities/void_step.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "nightmare_gate",
+    "buildTime": 42,
+    "cost": {
+      "gold": 260,
+      "lumber": 45,
+      "essence": 50
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["nightmare_gate"],
+      "technologies": [],
+      "age": "myth"
+    },
+    "hotkey": "F"
+  },
+
+  "upgrades": {
+    "special": ["deeper_warp", "void_mastery", "dimension_lock"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/nightcrawler/ready.ogg",
+    "select": ["audio/units/nightcrawler/select1.ogg", "audio/units/nightcrawler/select2.ogg"],
+    "move": ["audio/units/nightcrawler/move1.ogg", "audio/units/nightcrawler/move2.ogg"],
+    "attack": ["audio/units/nightcrawler/attack1.ogg"],
+    "death": "audio/units/nightcrawler/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/fresno_nightcrawler.glb",
+    "texture": "textures/units/cryptids/fresno_nightcrawler.png",
+    "portrait": "textures/portraits/fresno_nightcrawler.png",
+    "icon": "textures/icons/fresno_nightcrawler.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "nightcrawler_idle",
+      "walk": "nightcrawler_walk",
+      "attack": "nightcrawler_attack",
+      "death": "nightcrawler_death",
+      "teleport": "nightcrawler_void_step"
+    },
+    "effects": {
+      "spawn": "effects/nightcrawler_spawn.vfx",
+      "death": "effects/nightcrawler_death.vfx",
+      "warp": "effects/reality_warp.vfx",
+      "teleport": "effects/void_step.vfx",
+      "ambient": "effects/eldritch_ambient.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "high",
+    "behavior": "support_caster",
+    "fleeThreshold": 0.4,
+    "preferredTargets": [],
+    "prioritizeDebuffing": true,
+    "useWarpDefensively": true,
+    "teleportToSafety": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "isCaster": true,
+    "isEldritch": true,
+    "canTeleport": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 38,
+    "experience": 50
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

@@ -1,0 +1,157 @@
+{
+    "id": "naga_tidehunter",
+    "name": "Tidehunter",
+    "title": "Leviathan's Champion",
+    "class": "tank",
+    "primary_attribute": "strength",
+    "race": "naga",
+    "description": "A massive Naga warrior bonded with the great Kraken. This nearly indestructible tank excels at disrupting enemies and protecting allies.",
+    "lore": "Kunkka'mar was swallowed by the great Kraken as a youth, yet emerged decades later bonded with the beast's essence. His shell-like hide turns aside the mightiest blows, and he can call upon his patron's power to devastate foes.",
+
+    "base_stats": {
+        "health": 800,
+        "mana": 150,
+        "damage": 28,
+        "armor": 6,
+        "magic_resist": 3,
+        "move_speed": 290,
+        "turn_rate": 0.4,
+        "attack_range": 2.0,
+        "attack_speed": 1.6,
+        "health_regen": 4.0,
+        "mana_regen": 1.0,
+        "strength": 30,
+        "agility": 12,
+        "intelligence": 16,
+        "day_vision": 16,
+        "night_vision": 10
+    },
+
+    "stat_growth": {
+        "health_per_level": 70,
+        "mana_per_level": 10,
+        "damage_per_level": 2,
+        "armor_per_level": 0.4,
+        "strength_per_level": 3.8,
+        "agility_per_level": 1.0,
+        "intelligence_per_level": 1.5,
+        "health_regen_per_level": 0.35,
+        "mana_regen_per_level": 0.05
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_anchor_smash",
+            "name": "Anchor Smash",
+            "max_level": 4,
+            "description": "Slams anchor into the ground, dealing damage and reducing enemy damage output in an area.",
+            "type": "active",
+            "targeting": "instant",
+            "cooldown": [7, 6, 5, 4],
+            "mana_cost": [40, 45, 50, 55],
+            "radius": [3.5, 4.0, 4.5, 5.0],
+            "effects": [
+                {"damage": [75, 125, 175, 225]},
+                {"damage_reduction": [40, 50, 60, 70]},
+                {"reduction_duration": 4.0}
+            ]
+        },
+        {
+            "slot": 2,
+            "id": "ability_kraken_shell",
+            "name": "Kraken Shell",
+            "max_level": 4,
+            "description": "Passive: Reduces damage taken and purges debuffs when taking a certain amount of damage.",
+            "type": "passive",
+            "effects": [
+                {"damage_block": [12, 24, 36, 48]},
+                {"damage_threshold": [600, 550, 500, 450]},
+                {"debuff_immunity_duration": [1, 1.5, 2, 2.5]}
+            ]
+        },
+        {
+            "slot": 3,
+            "id": "ability_gush",
+            "name": "Gush",
+            "max_level": 4,
+            "description": "Sprays an enemy with water, dealing damage, slowing movement, and reducing armor.",
+            "type": "active",
+            "targeting": "enemy_unit",
+            "cooldown": [12, 11, 10, 9],
+            "mana_cost": [90, 100, 110, 120],
+            "range": 8.0,
+            "effects": [
+                {"damage": [100, 150, 200, 250], "damage_type": "water"},
+                {"move_slow": [40, 45, 50, 55]},
+                {"armor_reduction": [3, 4, 5, 6]},
+                {"duration": [4, 4.5, 5, 5.5]}
+            ]
+        },
+        {
+            "slot": 4,
+            "id": "ability_ravage",
+            "name": "Ravage",
+            "max_level": 3,
+            "ultimate": true,
+            "unlock_level": 6,
+            "description": "Ultimate: Summons tentacles from the ground that damage and stun all enemies in a large area.",
+            "type": "active",
+            "targeting": "instant",
+            "cooldown": [150, 130, 110],
+            "mana_cost": [150, 225, 300],
+            "radius": [10, 11, 12],
+            "effects": [
+                {"damage": [200, 325, 450], "damage_type": "water"},
+                {"stun_duration": [2.0, 2.5, 3.0]},
+                {"tentacle_travel_speed": 7.0}
+            ]
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_anchor_smash_damage", "talent_anchor_smash_radius"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_kraken_shell_block", "talent_kraken_shell_regen"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_gush_aoe", "talent_gush_armor"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_ravage_cooldown", "talent_ravage_damage"]}
+    ],
+
+    "passive_abilities": [
+        {
+            "id": "leviathan_bond",
+            "name": "Leviathan Bond",
+            "description": "Regenerates 2% max health per second while in water. Takes 15% reduced damage from all sources."
+        }
+    ],
+
+    "visuals": {
+        "model": "models/heroes/naga/tidehunter.obj",
+        "skeleton": "models/heroes/naga/tidehunter_skeleton.skl",
+        "portrait": "textures/heroes/tidehunter_portrait.png",
+        "icon": "textures/heroes/tidehunter_icon.png",
+        "minimap_icon": "textures/minimap/tidehunter.png",
+        "animation_set": "animations/heroes/tidehunter",
+        "scale": 1.4,
+        "attack_effect": "effects/anchor_swing.fx",
+        "cast_effect": "effects/water_cast.fx",
+        "death_effect": "effects/hero_death.fx",
+        "respawn_effect": "effects/hero_respawn.fx"
+    },
+
+    "sounds": {
+        "attack": "sounds/heroes/tidehunter/attack.wav",
+        "hurt": "sounds/heroes/tidehunter/hurt.wav",
+        "death": "sounds/heroes/tidehunter/death.wav",
+        "select": "sounds/heroes/tidehunter/select.wav",
+        "move": "sounds/heroes/tidehunter/move.wav"
+    },
+
+    "tags": ["melee", "strength", "durable", "initiator", "disabler", "tank"],
+
+    "properties": {
+        "attack_type": "melee",
+        "complexity": 1,
+        "roles": ["durable", "initiator", "disabler"],
+        "amphibious": true
+    }
+}

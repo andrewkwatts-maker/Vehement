@@ -1,0 +1,200 @@
+{
+  "id": "dogman",
+  "name": "Dogman",
+  "race": "cryptids",
+  "tier": 2,
+  "type": "beast",
+  "role": ["fast_melee", "pack_hunter", "tracker"],
+
+  "description": "A massive, bipedal canine that hunts in packs. Dogmen are relentless trackers that can follow prey across any terrain.",
+  "lore": "Sightings of the Dogman stretch from Michigan to Wisconsin and beyond. These werewolf-like creatures are not cursed humans but a separate species entirely - apex predators that have learned to hunt the most dangerous prey of all.",
+
+  "stats": {
+    "health": 480,
+    "healthRegen": 2.0,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 2,
+    "armorType": "medium",
+    "moveSpeed": 360,
+    "turnRate": 0.85,
+    "collisionSize": 36,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 22,
+      "variance": 4,
+      "type": "normal"
+    },
+    "attackSpeed": 1.3,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.35,
+    "backswing": 0.4,
+    "acquisitionRange": 700,
+    "aggroRange": 600
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "pack_tactics",
+      "name": "Pack Tactics",
+      "type": "passive",
+      "description": "Gains bonus damage and armor when near other Dogmen",
+      "effects": {
+        "bonusDamagePerAlly": 3,
+        "bonusArmorPerAlly": 1,
+        "maxAllies": 4,
+        "radius": 400
+      },
+      "icon": "icons/abilities/pack_tactics.png"
+    },
+    {
+      "id": "howl",
+      "name": "Howl",
+      "type": "active",
+      "targetType": "none",
+      "description": "Howls to increase attack speed of nearby allied beasts",
+      "cooldown": 30.0,
+      "manaCost": 0,
+      "effects": {
+        "radius": 600,
+        "attackSpeedBonus": 0.25,
+        "duration": 12.0,
+        "affectsBeasts": true
+      },
+      "hotkey": "H",
+      "icon": "icons/abilities/howl.png"
+    },
+    {
+      "id": "relentless_pursuit",
+      "name": "Relentless Pursuit",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Marks an enemy, gaining movement speed when chasing them and preventing stealth",
+      "cooldown": 20.0,
+      "manaCost": 0,
+      "range": 800,
+      "effects": {
+        "duration": 15.0,
+        "moveSpeedBonus": 60,
+        "revealsStealth": true,
+        "preventsInvisibility": true
+      },
+      "hotkey": "P",
+      "icon": "icons/abilities/relentless_pursuit.png"
+    },
+    {
+      "id": "hamstring",
+      "name": "Hamstring",
+      "type": "passive",
+      "description": "Attacks have a chance to cripple the target, reducing their movement speed",
+      "effects": {
+        "procChance": 0.25,
+        "slowPercent": 0.4,
+        "slowDuration": 3.0
+      },
+      "icon": "icons/abilities/hamstring.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "den",
+    "buildTime": 26,
+    "cost": {
+      "gold": 165,
+      "lumber": 25,
+      "essence": 15
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["den", "sacred_ground"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "D"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["alpha_instincts", "blood_scent", "pack_alpha"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/dogman/ready.ogg",
+    "select": ["audio/units/dogman/select1.ogg", "audio/units/dogman/select2.ogg"],
+    "move": ["audio/units/dogman/move1.ogg", "audio/units/dogman/move2.ogg"],
+    "attack": ["audio/units/dogman/attack1.ogg", "audio/units/dogman/attack2.ogg"],
+    "death": "audio/units/dogman/death.ogg",
+    "howl": "audio/units/dogman/howl.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/dogman.glb",
+    "texture": "textures/units/cryptids/dogman.png",
+    "portrait": "textures/portraits/dogman.png",
+    "icon": "textures/icons/dogman.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "dogman_idle",
+      "walk": "dogman_run",
+      "attack": "dogman_attack",
+      "death": "dogman_death",
+      "howl": "dogman_howl"
+    },
+    "effects": {
+      "spawn": "effects/beast_spawn.vfx",
+      "death": "effects/dogman_death.vfx",
+      "howl": "effects/howl.vfx",
+      "pursuit": "effects/pursuit_mark.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "medium",
+    "behavior": "pack_hunter",
+    "fleeThreshold": 0.2,
+    "preferredTargets": ["isolated", "fleeing"],
+    "stayNearPackmates": true,
+    "useHowlInGroup": true,
+    "pursuitPriority": "fleeing"
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": true,
+    "leavesCorpse": true,
+    "isBeast": true,
+    "nightBonus": true,
+    "hasTracking": true
+  },
+
+  "bounty": {
+    "gold": 25,
+    "experience": 35
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

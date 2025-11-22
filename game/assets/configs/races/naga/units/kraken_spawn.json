@@ -1,0 +1,214 @@
+{
+    "id": "naga_kraken_spawn",
+    "type": "unit",
+    "name": "Kraken Spawn",
+    "description": "A writhing mass of tentacles summoned from the deep. These lesser spawn of the great Kraken grapple and constrict enemies while supporting Naga forces.",
+    "race": "naga",
+    "tier": 3,
+    "class": "summoned_beast",
+
+    "tags": ["military", "beast", "melee", "tier3", "amphibious", "summoned", "grapple"],
+
+    "model": {
+        "path": "models/races/naga/units/kraken_spawn.obj",
+        "scale": [1.4, 1.4, 1.4],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/kraken_spawn_diffuse.png",
+        "normal": "textures/races/naga/units/kraken_spawn_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "sphere",
+                "radius": 1.2,
+                "offset": [0.0, 1.2, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 300.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 4.5,
+        "turnRate": 200.0,
+        "acceleration": 10.0,
+        "deceleration": 14.0,
+        "canSwim": true,
+        "swimSpeed": 7.0,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 0.9,
+            "forest": 0.5,
+            "water": 1.6,
+            "deep_water": 1.8,
+            "desert": 0.3
+        }
+    },
+
+    "combat": {
+        "health": 700,
+        "maxHealth": 700,
+        "armor": 4,
+        "magicResist": 3,
+        "attackDamage": 24,
+        "attackSpeed": 1.4,
+        "attackRange": 3.0,
+        "critChance": 0.1,
+        "critMultiplier": 1.7,
+        "physicalDamage": true,
+        "damageType": "constrict",
+        "armorType": "heavy",
+        "multiAttack": {
+            "count": 3,
+            "targets": "different"
+        }
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "damage_bonus": 0.25,
+            "attack_range_bonus": 1.0
+        },
+        "in_water": {
+            "health_regen": 10.0,
+            "multiattack_bonus": 2
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "tentacle_flurry",
+            "name": "Tentacle Flurry",
+            "description": "Can attack up to 3 different targets simultaneously with its tentacles.",
+            "effect": {
+                "type": "multi_target",
+                "max_targets": 3
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and gains additional attacks in water."
+        },
+        {
+            "id": "slippery",
+            "name": "Slippery",
+            "description": "Cannot be rooted or entangled. 25% chance to evade melee attacks.",
+            "effect": {
+                "type": "immunity",
+                "immune_to": ["root", "entangle"],
+                "melee_dodge": 0.25
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "tentacle_grapple",
+            "name": "Tentacle Grapple",
+            "description": "Grasps an enemy, pulling them in and stunning them for 2 seconds while dealing damage over time.",
+            "icon": "icons/abilities/naga/tentacle_grapple.png",
+            "cooldown": 20.0,
+            "manaCost": 0,
+            "range": 8.0,
+            "targetType": "enemy_unit",
+            "duration": 2.0,
+            "effects": [
+                {"type": "pull", "to_self": true},
+                {"type": "stun", "duration": 2.0},
+                {"type": "damage_over_time", "damage_per_second": 30, "duration": 2.0}
+            ],
+            "castAnimation": "grapple",
+            "castSound": "sounds/abilities/tentacle_grapple.wav"
+        },
+        {
+            "id": "ink_cloud",
+            "name": "Ink Cloud",
+            "description": "Releases a cloud of ink, blinding enemies and reducing their accuracy by 50% for 6 seconds.",
+            "icon": "icons/abilities/naga/ink_cloud.png",
+            "cooldown": 25.0,
+            "manaCost": 0,
+            "radius": 6.0,
+            "targetType": "self_aoe",
+            "duration": 6.0,
+            "effects": [
+                {"type": "blind", "miss_chance": 0.5},
+                {"type": "vision_reduction", "value": 0.7}
+            ],
+            "castAnimation": "ink",
+            "castSound": "sounds/abilities/ink_cloud.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/kraken_spawn/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/kraken_spawn/crawl.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/kraken_spawn/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/kraken_spawn/tentacle_strike.anim",
+            "loop": false,
+            "events": [[0.3, "deal_damage"], [0.5, "deal_damage"], [0.7, "deal_damage"]]
+        },
+        "grapple": {"path": "animations/naga/kraken_spawn/grapple.anim", "loop": false},
+        "ink": {"path": "animations/naga/kraken_spawn/ink.anim", "loop": false},
+        "death": {"path": "animations/naga/kraken_spawn/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "movement": {
+            "paths": ["sounds/footsteps/wet_slither_1.wav", "sounds/footsteps/wet_slither_2.wav"],
+            "volume": 0.5
+        },
+        "attack": "sounds/combat/tentacle_slap.wav",
+        "death": {"paths": ["sounds/death/kraken_spawn_death.wav"], "volume": 0.9},
+        "select": "sounds/voice/naga/kraken_spawn_gurgle.wav",
+        "acknowledge": {"paths": ["sounds/voice/naga/kraken_spawn_screech.wav"]}
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_kraken_spawn.bt",
+        "profile": "grappler",
+        "aggroRange": 14.0,
+        "leashRange": 25.0,
+        "preferWater": true,
+        "targetMultiple": true
+    },
+
+    "production": {
+        "building": "naga_leviathan_pit",
+        "time": 45.0,
+        "cost": {
+            "gold": 350,
+            "coral": 200,
+            "abyssal_essence": 50
+        },
+        "requirements": {
+            "age": "age_abyss",
+            "techs": ["naga_kraken_pact"],
+            "buildings": ["naga_palace_of_waves"]
+        }
+    },
+
+    "summoned_by": ["naga_tidehunter", "naga_leviathan_caller"],
+    "summon_duration": 60.0,
+
+    "properties": {
+        "populationCost": 4,
+        "supplyUpkeep": 3,
+        "squadSize": 1,
+        "experienceValue": 80,
+        "bountyGold": 70
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/kraken_spawn/on_spawn.py",
+        "on_death": "scripts/units/naga/kraken_spawn/on_death.py"
+    }
+}

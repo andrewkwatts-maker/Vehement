@@ -1,0 +1,223 @@
+{
+    "id": "naga_royal_guard",
+    "type": "unit",
+    "name": "Naga Royal Guard",
+    "description": "Elite serpentine warriors sworn to protect Naga royalty. Armed with enchanted tridents that deliver devastating splash attacks, these formidable soldiers are the pride of the Naga military.",
+    "race": "naga",
+    "tier": 2,
+    "class": "elite_melee",
+
+    "tags": ["military", "infantry", "melee", "tier2", "amphibious", "elite", "splash_damage"],
+
+    "model": {
+        "path": "models/races/naga/units/royal_guard.obj",
+        "scale": [1.1, 1.1, 1.1],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/royal_guard_diffuse.png",
+        "normal": "textures/races/naga/units/royal_guard_normal.png",
+        "specular": "textures/races/naga/units/royal_guard_spec.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.45,
+                "height": 2.2,
+                "offset": [0.0, 1.1, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 150.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 5.0,
+        "turnRate": 300.0,
+        "acceleration": 12.0,
+        "deceleration": 16.0,
+        "canSwim": true,
+        "swimSpeed": 6.5,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.1,
+            "forest": 0.75,
+            "water": 1.3,
+            "deep_water": 1.35,
+            "desert": 0.65
+        }
+    },
+
+    "combat": {
+        "health": 650,
+        "maxHealth": 650,
+        "armor": 6,
+        "magicResist": 2,
+        "attackDamage": 22,
+        "attackSpeed": 1.5,
+        "attackRange": 2.5,
+        "critChance": 0.1,
+        "critMultiplier": 1.9,
+        "physicalDamage": true,
+        "damageType": "pierce",
+        "armorType": "heavy",
+        "splashDamage": {
+            "radius": 2.0,
+            "falloff": [1.0, 0.5, 0.25],
+            "falloff_ranges": [0.5, 1.0, 2.0]
+        }
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "damage_bonus": 0.2,
+            "armor_bonus": 2
+        },
+        "in_water": {
+            "health_regen": 5.0,
+            "attack_speed_bonus": 0.15
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "trident_sweep",
+            "name": "Trident Sweep",
+            "description": "Attacks deal splash damage to nearby enemies.",
+            "effect": {
+                "type": "splash",
+                "radius": 2.0,
+                "damage_percent": [100, 50, 25]
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely."
+        },
+        {
+            "id": "royal_presence",
+            "name": "Royal Presence",
+            "description": "Nearby Naga units gain +10% damage. Stacks up to 3 times from different Royal Guards.",
+            "aura": {
+                "radius": 8.0,
+                "effect": {"stat": "damage", "type": "percent", "value": 10},
+                "targets": "friendly_naga"
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "impaling_strike",
+            "name": "Impaling Strike",
+            "description": "Thrusts trident forward, dealing 200% damage and pinning the target for 2 seconds.",
+            "icon": "icons/abilities/naga/impaling_strike.png",
+            "cooldown": 16.0,
+            "manaCost": 0,
+            "range": 3.0,
+            "targetType": "enemy_unit",
+            "effects": [
+                {"type": "damage", "multiplier": 2.0},
+                {"type": "root", "duration": 2.0}
+            ],
+            "castAnimation": "thrust",
+            "castSound": "sounds/abilities/impaling_strike.wav"
+        },
+        {
+            "id": "tidal_stance",
+            "name": "Tidal Stance",
+            "description": "Enters a defensive stance, increasing armor by 8 and reflecting 20% of melee damage for 6 seconds.",
+            "icon": "icons/abilities/naga/tidal_stance.png",
+            "cooldown": 25.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 6.0,
+            "effects": [
+                {"type": "armor_bonus", "value": 8},
+                {"type": "damage_reflect", "percent": 20, "melee_only": true}
+            ],
+            "castAnimation": "stance",
+            "castSound": "sounds/abilities/tidal_stance.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/royal_guard/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/royal_guard/slither.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/royal_guard/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/royal_guard/trident_sweep.anim",
+            "loop": false,
+            "events": [[0.35, "deal_damage"], [0.4, "splash_damage"]]
+        },
+        "thrust": {"path": "animations/naga/royal_guard/thrust.anim", "loop": false},
+        "stance": {"path": "animations/naga/royal_guard/stance.anim", "loop": true},
+        "death": {"path": "animations/naga/royal_guard/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/naga_heavy_1.wav", "sounds/footsteps/naga_heavy_2.wav"],
+            "volume": 0.6
+        },
+        "attack": "sounds/combat/trident_sweep.wav",
+        "death": {"paths": ["sounds/death/naga_elite_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/royal_guard_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/royal_guard_ack_1.wav",
+                "sounds/voice/naga/royal_guard_ack_2.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_royal_guard.bt",
+        "profile": "elite_melee",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "preferWater": true,
+        "protectAllies": true
+    },
+
+    "production": {
+        "building": "naga_coral_barracks",
+        "time": 32.0,
+        "cost": {
+            "gold": 220,
+            "coral": 120,
+            "pearls": 30
+        },
+        "requirements": {
+            "age": "age_reef",
+            "techs": ["naga_elite_training"],
+            "buildings": ["naga_temple_of_tides"]
+        }
+    },
+
+    "properties": {
+        "populationCost": 3,
+        "supplyUpkeep": 2,
+        "squadSize": 1,
+        "experienceValue": 60,
+        "bountyGold": 45
+    },
+
+    "upgrades": {
+        "damage": ["naga_coral_weapons_1", "naga_coral_weapons_2", "naga_coral_weapons_3"],
+        "armor": ["naga_shell_armor_1", "naga_shell_armor_2", "naga_shell_armor_3"],
+        "special": ["naga_royal_trident"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/royal_guard/on_spawn.py",
+        "on_death": "scripts/units/naga/royal_guard/on_death.py"
+    }
+}

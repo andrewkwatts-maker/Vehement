@@ -1,0 +1,133 @@
+{
+    "id": "fairy_tree_of_life",
+    "type": "building",
+    "race": "fairies",
+    "name": "Tree of Life",
+    "description": "The heart of a Fae settlement. This sacred living tree trains Wisps and Pixies, stores resources, and can be upgraded to Tree of Ages.",
+
+    "tags": ["main", "production", "resource_depot", "living", "tier1"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/fairies/buildings/tree_of_life.obj",
+        "scale": [1.5, 1.5, 1.5]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/buildings/tree_of_life_diffuse.png",
+        "normal": "textures/races/fairies/buildings/tree_of_life_normal.png"
+    },
+
+    "footprint": {
+        "size": [4, 4],
+        "entrances": [[2, 0]],
+        "visualSize": [12.0, 15.0, 12.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 350,
+            "wood": 100
+        },
+        "time": 100.0,
+        "requires_wisp_sacrifice": true,
+        "stages": [
+            {"name": "seed", "progress": [0, 25]},
+            {"name": "sapling", "progress": [25, 50]},
+            {"name": "growing", "progress": [50, 75]},
+            {"name": "mature", "progress": [75, 100]}
+        ]
+    },
+
+    "stats": {
+        "maxHealth": 1300,
+        "armor": 3,
+        "magicResist": 10,
+        "healthRegen": 2.0
+    },
+
+    "living_building": {
+        "enabled": true,
+        "regeneration": 2.0,
+        "can_uproot": true,
+        "uproot_speed": 1.5,
+        "rooted_armor_bonus": 3
+    },
+
+    "resource_depot": {
+        "enabled": true,
+        "accepted_resources": ["gold", "wood", "stone", "food", "mana"]
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "fairy_wisp",
+            "cost": {"gold": 60, "food": 1},
+            "time": 12.0,
+            "maxQueue": 5
+        },
+        {
+            "type": "unit",
+            "output": "fairy_pixie",
+            "cost": {"gold": 60, "food": 1},
+            "time": 14.0,
+            "maxQueue": 5
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "ability_entangle_gold",
+            "name": "Entangle Gold Mine",
+            "description": "Entangle a gold mine, allowing up to 5 wisps to harvest it simultaneously",
+            "hotkey": "G",
+            "cooldown": 60.0,
+            "range": 15.0,
+            "effects": [
+                {"type": "entangle_mine", "capacity": 5}
+            ]
+        },
+        {
+            "id": "ability_natures_blessing_building",
+            "name": "Nature's Blessing",
+            "description": "Heal all nearby friendly units",
+            "hotkey": "N",
+            "cooldown": 45.0,
+            "mana_cost": 50,
+            "radius": 15.0,
+            "effects": [
+                {"type": "heal", "value": 200, "scope": "allies_in_radius"}
+            ]
+        }
+    ],
+
+    "upgrades_to": "fairy_tree_of_ages",
+
+    "aura": {
+        "id": "aura_tree_of_life",
+        "radius": 15.0,
+        "effects": [
+            {"stat": "healthRegen", "value": 1.0, "scope": "allies"}
+        ]
+    },
+
+    "visionRange": 14.0,
+
+    "unique": false,
+    "maxCount": 3,
+    "starting_building": true,
+
+    "night_bonus": {
+        "healthRegen": 1.0,
+        "aura_radius": 5.0
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/buildings/tree_of_life.png",
+        "icon": "textures/races/fairies/icons/buildings/tree_of_life.png",
+        "hotkey": "T"
+    }
+}

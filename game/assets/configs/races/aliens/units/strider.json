@@ -1,0 +1,151 @@
+{
+  "id": "strider",
+  "name": "Strider",
+  "display_name": "Strider",
+  "description": "A lightning-fast attack walker designed for rapid assault and harassment. Striders excel at hit-and-run tactics, using their incredible speed to overwhelm isolated units and escape before reinforcements arrive.",
+  "race": "aliens",
+  "tier": 2,
+  "unit_type": "assault",
+  "classification": ["mechanical", "walker", "light"],
+
+  "stats": {
+    "health": 100,
+    "health_regen": 0,
+    "shield": 50,
+    "shield_regen": 1.0,
+    "shield_regen_delay": 10.0,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 5.95,
+    "acceleration": 3.2,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 8,
+    "attack_bonus_damage": 6,
+    "bonus_vs": ["light"],
+    "attacks_per_swing": 2,
+    "attack_speed": 0.74,
+    "attack_range": 4,
+    "attack_type": "ranged",
+    "damage_type": "normal",
+    "targets": ["ground"],
+    "projectile": {
+      "speed": 25,
+      "model": "fx_phase_disruptor"
+    }
+  },
+
+  "production": {
+    "build_time": 38,
+    "warp_time": 0,
+    "supply_cost": 2,
+    "resource_cost": {
+      "minerals": 100,
+      "vespene": 100
+    },
+    "power_cost": 0,
+    "produced_at": "robotics_facility",
+    "requirements": [],
+    "hotkey": "R"
+  },
+
+  "abilities": [
+    {
+      "id": "speed_boost",
+      "name": "Speed Boost",
+      "description": "Temporarily increases movement speed by 50%, allowing rapid engagement or escape.",
+      "type": "active",
+      "cooldown": 20.0,
+      "duration": 4.0,
+      "speed_multiplier": 1.5,
+      "hotkey": "B"
+    },
+    {
+      "id": "disruption_field",
+      "name": "Disruption Field",
+      "description": "Generates a field around the Strider that slows enemy movement and attack speed.",
+      "type": "toggle",
+      "radius": 3.0,
+      "slow_movement": 0.25,
+      "slow_attack": 0.25,
+      "requires_upgrade": "disruption_field_upgrade",
+      "unlocked_default": false,
+      "hotkey": "D"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "disruption_field_upgrade",
+      "name": "Disruption Field",
+      "description": "Enables the Disruption Field ability for Striders",
+      "researched_at": "robotics_facility",
+      "cost": {
+        "minerals": 100,
+        "vespene": 100
+      },
+      "research_time": 100
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_light": true,
+    "is_armored": false,
+    "cargo_size": 4,
+    "can_be_warped": false
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 20,
+    "selection_radius": 1.0,
+    "target_radius": 0.75
+  },
+
+  "visuals": {
+    "model": "models/aliens/strider.fbx",
+    "texture": "textures/aliens/strider.png",
+    "icon": "icons/aliens/strider.png",
+    "wireframe": "wireframes/aliens/strider.png",
+    "portrait": "portraits/aliens/strider.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "speed_boost": "anim_boost",
+      "death": "anim_death"
+    },
+    "effects": {
+      "speed_boost": "fx_speed_boost",
+      "disruption_field": "fx_disruption_field",
+      "attack": "fx_phase_disruptor"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/strider_ready.ogg",
+    "selected": ["audio/aliens/strider_select1.ogg"],
+    "command": ["audio/aliens/strider_command1.ogg"],
+    "attack": "audio/aliens/strider_attack.ogg",
+    "death": "audio/aliens/strider_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "harassment",
+    "priority_targets": ["worker", "light", "caster"],
+    "flee_when_attacked": true,
+    "micro_level": "high",
+    "preferred_formation": "flank",
+    "hit_and_run": true
+  }
+}

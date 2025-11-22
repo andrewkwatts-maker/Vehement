@@ -1,0 +1,244 @@
+{
+  "id": "fleet_commander",
+  "name": "Fleet Commander",
+  "display_name": "Fleet Commander",
+  "title": "Admiral of the Void",
+  "description": "A strategic mastermind who commands the Collective's space forces. The Fleet Commander excels at supporting allies and calling down devastating orbital strikes, turning the battlefield into a coordinated killing ground.",
+  "race": "aliens",
+  "hero_class": "support",
+  "classification": ["biological", "psionic", "support", "hero"],
+
+  "base_stats": {
+    "health": 250,
+    "health_per_level": 35,
+    "health_regen": 1.8,
+    "shield": 200,
+    "shield_per_level": 25,
+    "shield_regen": 4.0,
+    "shield_regen_delay": 8.0,
+    "energy": 250,
+    "energy_max": 250,
+    "energy_regen": 2.0,
+    "armor": 2,
+    "armor_per_level": 0.4,
+    "shield_armor": 1,
+    "move_speed": 3.15,
+    "attack_damage": 30,
+    "attack_damage_per_level": 4,
+    "attack_speed": 1.5,
+    "attack_range": 5
+  },
+
+  "primary_attribute": "intelligence",
+  "attributes": {
+    "strength": {
+      "base": 20,
+      "per_level": 2.0,
+      "health_per_point": 20,
+      "regen_per_point": 0.1
+    },
+    "agility": {
+      "base": 15,
+      "per_level": 1.8,
+      "armor_per_point": 0.15,
+      "attack_speed_per_point": 0.01
+    },
+    "intelligence": {
+      "base": 25,
+      "per_level": 3.0,
+      "energy_per_point": 12,
+      "energy_regen_per_point": 0.06
+    }
+  },
+
+  "abilities": {
+    "Q": {
+      "id": "carrier_strike",
+      "name": "Carrier Strike",
+      "description": "Calls down interceptors from an orbiting Carrier to strafe a target area, dealing damage over time.",
+      "type": "active",
+      "cooldown": [18, 16, 14, 12],
+      "energy_cost": [80, 85, 90, 95],
+      "range": 12,
+      "radius": 3.0,
+      "damage": [100, 150, 200, 250],
+      "duration": 4.0,
+      "interceptor_count": [4, 6, 8, 10],
+      "max_level": 4,
+      "hotkey": "Q"
+    },
+    "W": {
+      "id": "shield_battery",
+      "name": "Shield Battery",
+      "description": "Deploys a shield battery that restores shields to nearby allied units over time.",
+      "type": "active",
+      "cooldown": [25, 22, 19, 16],
+      "energy_cost": [75, 75, 75, 75],
+      "range": 8,
+      "radius": 4.0,
+      "shield_restore_per_second": [15, 20, 25, 30],
+      "duration": [10, 12, 14, 16],
+      "max_level": 4,
+      "hotkey": "W"
+    },
+    "E": {
+      "id": "recall",
+      "name": "Recall",
+      "description": "Instantly teleports the Fleet Commander and nearby allies to a target allied Nexus or Pylon.",
+      "type": "active",
+      "cooldown": [60, 50, 40, 30],
+      "energy_cost": [100, 100, 100, 100],
+      "radius": [3, 4, 5, 6],
+      "max_units": [5, 8, 12, 16],
+      "target": ["nexus", "pylon"],
+      "max_level": 4,
+      "hotkey": "E"
+    },
+    "R": {
+      "id": "mass_recall",
+      "name": "Mass Recall",
+      "description": "Teleports ALL friendly units on the map to the Fleet Commander's location.",
+      "type": "active",
+      "ultimate": true,
+      "cooldown": [180, 150, 120],
+      "energy_cost": [200, 200, 200],
+      "charge_time": [3, 2.5, 2],
+      "target": "global",
+      "excludes": ["buildings"],
+      "max_level": 3,
+      "unlock_level": 6,
+      "hotkey": "R"
+    }
+  },
+
+  "auras": [
+    {
+      "id": "command_aura",
+      "name": "Command Presence",
+      "description": "Nearby allied units gain increased shield regeneration rate.",
+      "radius": 10,
+      "effect": "shield_regen_percent",
+      "value": 0.25
+    }
+  ],
+
+  "talents": {
+    "level_10": [
+      {
+        "id": "precision_strike",
+        "name": "Precision Strike",
+        "description": "Carrier Strike deals 30% more damage to structures"
+      },
+      {
+        "id": "fortified_batteries",
+        "name": "Fortified Batteries",
+        "description": "Shield Battery also provides +2 armor to affected units"
+      }
+    ],
+    "level_15": [
+      {
+        "id": "rapid_deployment",
+        "name": "Rapid Deployment",
+        "description": "Recall cooldown reduced by 50%"
+      },
+      {
+        "id": "sustained_barrage",
+        "name": "Sustained Barrage",
+        "description": "Carrier Strike duration doubled"
+      }
+    ],
+    "level_20": [
+      {
+        "id": "mobile_battery",
+        "name": "Mobile Battery",
+        "description": "Shield Battery follows the Fleet Commander"
+      },
+      {
+        "id": "tactical_genius",
+        "name": "Tactical Genius",
+        "description": "Command Presence also increases attack damage by 15%"
+      }
+    ],
+    "level_25": [
+      {
+        "id": "orbital_bombardment",
+        "name": "Orbital Bombardment",
+        "description": "Carrier Strike can be cast globally and stuns for 2 seconds"
+      },
+      {
+        "id": "instant_recall",
+        "name": "Instant Recall",
+        "description": "Mass Recall has no charge time and cooldown reduced by 30 seconds"
+      }
+    ]
+  },
+
+  "production": {
+    "produced_at": "nexus",
+    "build_time": 75,
+    "resource_cost": {
+      "minerals": 450,
+      "vespene": 350
+    },
+    "supply_cost": 6,
+    "requirements": ["stargate"],
+    "limit": 1,
+    "respawn_time_base": 60,
+    "respawn_time_per_level": 5
+  },
+
+  "visuals": {
+    "model": "models/aliens/heroes/fleet_commander.fbx",
+    "texture": "textures/aliens/heroes/fleet_commander.png",
+    "icon": "icons/aliens/heroes/fleet_commander.png",
+    "portrait": "portraits/aliens/heroes/fleet_commander.png",
+    "scale": 1.15,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "cast": "anim_cast",
+      "carrier_strike": "anim_strike",
+      "recall": "anim_recall",
+      "death": "anim_death"
+    },
+    "effects": {
+      "carrier_strike": "fx_carrier_strike",
+      "shield_battery": "fx_shield_battery",
+      "recall": "fx_recall",
+      "mass_recall": "fx_mass_recall",
+      "command_aura": "fx_command_aura"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/heroes/fleet_commander_ready.ogg",
+    "selected": ["audio/aliens/heroes/fleet_commander_select1.ogg"],
+    "command": ["audio/aliens/heroes/fleet_commander_command1.ogg"],
+    "attack": "audio/aliens/heroes/fleet_commander_attack.ogg",
+    "ability": "audio/aliens/heroes/fleet_commander_ability.ogg",
+    "ultimate": "audio/aliens/heroes/fleet_commander_ultimate.ogg",
+    "death": "audio/aliens/heroes/fleet_commander_death.ogg",
+    "respawn": "audio/aliens/heroes/fleet_commander_respawn.ogg"
+  },
+
+  "voice_lines": {
+    "spawn": "The fleet stands ready.",
+    "attack": "Target acquired. Fire at will.",
+    "ability": "Deploying tactical assets.",
+    "kill": "Hostile eliminated.",
+    "death": "Fleet command... offline..."
+  },
+
+  "ai_hints": {
+    "role": "support",
+    "aggression": "low",
+    "preferred_targets": ["structure", "cluster"],
+    "ability_usage": {
+      "carrier_strike": "on_structures_or_clusters",
+      "shield_battery": "when_allies_damaged",
+      "recall": "to_escape_or_reinforce",
+      "mass_recall": "for_major_reposition"
+    }
+  }
+}

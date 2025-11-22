@@ -1,0 +1,229 @@
+{
+  "id": "zombie_dragon",
+  "name": "Zombie Dragon",
+  "race": "undead",
+  "tier": 4,
+  "type": "flying",
+  "role": ["ultimate", "area_damage", "plague_spreader"],
+
+  "description": "The ultimate undead air unit. Massive decaying dragons that spread plague and death with every breath.",
+  "lore": "Unlike the frozen Frost Wyrms, Zombie Dragons retain their rotting flesh, filled with disease and corruption. Their toxic breath spreads plague across the battlefield, and their massive forms blot out the sun.",
+
+  "stats": {
+    "health": 1800,
+    "healthRegen": 2.0,
+    "mana": 400,
+    "manaRegen": 1.0,
+    "armor": 4,
+    "armorType": "heavy",
+    "moveSpeed": 260,
+    "turnRate": 0.35,
+    "collisionSize": 128,
+    "selectionScale": 2.5
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 400,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 110,
+      "variance": 20,
+      "type": "chaos"
+    },
+    "attackSpeed": 2.8,
+    "attackRange": 350,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/plague_breath.glb",
+      "speed": 500,
+      "arc": 0,
+      "splashRadius": 250,
+      "fullSplashRadius": 100
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.8,
+    "acquisitionRange": 600,
+    "aggroRange": 500
+  },
+
+  "abilities": [
+    {
+      "id": "plague_breath",
+      "name": "Plague Breath",
+      "type": "passive",
+      "description": "Attacks spread a virulent plague that damages enemies over time",
+      "effects": {
+        "plagueDoT": 15,
+        "plagueDuration": 10.0,
+        "spreadRadius": 150,
+        "spreadOnDeath": true
+      },
+      "icon": "icons/abilities/plague_breath.png"
+    },
+    {
+      "id": "corpse_rain",
+      "name": "Corpse Rain",
+      "type": "active",
+      "targetType": "area",
+      "description": "Drops a payload of diseased corpses, dealing damage and creating corpses for Necromancers",
+      "cooldown": 45.0,
+      "manaCost": 150,
+      "range": 900,
+      "effects": {
+        "damage": 150,
+        "radius": 300,
+        "corpsesCreated": 6,
+        "plagueCloud": true,
+        "plagueCloudDuration": 10.0
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/corpse_rain.png"
+    },
+    {
+      "id": "decay_aura",
+      "name": "Decay Aura",
+      "type": "passive",
+      "description": "Nearby enemies have reduced armor and healing",
+      "effects": {
+        "auraRadius": 400,
+        "armorReduction": 3,
+        "healingReduction": 0.5
+      },
+      "icon": "icons/abilities/decay_aura.png"
+    },
+    {
+      "id": "consume_undead",
+      "name": "Consume Undead",
+      "type": "active",
+      "targetType": "unit",
+      "requiresResearch": "consume_undead_upgrade",
+      "description": "Devours a friendly undead unit to regenerate health",
+      "cooldown": 30.0,
+      "manaCost": 0,
+      "range": 200,
+      "effects": {
+        "healPercent": 0.5,
+        "killsTarget": true,
+        "targetMustBeUndead": true
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/consume_undead.png"
+    },
+    {
+      "id": "undying",
+      "name": "Undying",
+      "type": "passive",
+      "requiresResearch": "undying_upgrade",
+      "description": "Upon death, has a chance to resurrect after a short delay",
+      "effects": {
+        "resurrectChance": 0.25,
+        "resurrectDelay": 10.0,
+        "resurrectHealthPercent": 0.3
+      }
+    }
+  ],
+
+  "production": {
+    "producedAt": "boneyard",
+    "buildTime": 90,
+    "cost": {
+      "gold": 550,
+      "lumber": 180,
+      "corpses": 6
+    },
+    "foodCost": 10,
+    "prerequisites": {
+      "buildings": ["boneyard", "black_citadel"],
+      "technologies": ["zombie_dragon_training"],
+      "age": "apocalypse"
+    },
+    "maxCount": 3,
+    "hotkey": "Z"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 8,
+      "maxLevel": 3,
+      "researchId": "creature_attack"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "creature_carapace"
+    },
+    "special": ["consume_undead_upgrade", "undying_upgrade", "plague_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/zombie_dragon/ready.ogg",
+    "select": ["audio/units/zombie_dragon/select1.ogg", "audio/units/zombie_dragon/select2.ogg"],
+    "move": ["audio/units/zombie_dragon/move1.ogg", "audio/units/zombie_dragon/move2.ogg"],
+    "attack": ["audio/units/zombie_dragon/attack1.ogg", "audio/units/zombie_dragon/attack2.ogg"],
+    "death": "audio/units/zombie_dragon/death.ogg",
+    "corpseRain": "audio/units/zombie_dragon/corpse_rain.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/zombie_dragon.glb",
+    "texture": "textures/units/undead/zombie_dragon.png",
+    "portrait": "textures/portraits/zombie_dragon.png",
+    "icon": "textures/icons/zombie_dragon.png",
+    "scale": 2.5,
+    "animations": {
+      "idle": "zombie_dragon_idle",
+      "walk": "zombie_dragon_fly",
+      "attack": "zombie_dragon_attack",
+      "death": "zombie_dragon_death",
+      "corpseRain": "zombie_dragon_special"
+    },
+    "effects": {
+      "spawn": "effects/dragon_rise.vfx",
+      "death": "effects/zombie_dragon_death.vfx",
+      "plagueBreath": "effects/plague_breath.vfx",
+      "corpseRain": "effects/corpse_rain.vfx",
+      "decayAura": "effects/decay_aura.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 10,
+    "priority": "critical",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.1,
+    "preferredTargets": ["cluster", "hero", "building"],
+    "useCorpseRainOnGroups": true,
+    "consumeWhenLow": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isFlying": true,
+    "isElite": true,
+    "isUltimate": true,
+    "hasSplash": true,
+    "plagueSpreader": true
+  },
+
+  "bounty": {
+    "gold": 120,
+    "experience": 180
+  },
+
+  "pointValue": 10,
+  "supplyProvided": 0,
+  "supplyUsed": 10
+}

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Minimap</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+</head>
+<body>
+    <div id="minimap-widget" class="minimap-widget">
+        <!-- Map Container -->
+        <div class="minimap-frame">
+            <div id="minimap-canvas" class="minimap-canvas">
+                <!-- Background texture -->
+                <div id="minimap-texture" class="minimap-texture"></div>
+
+                <!-- Fog of war overlay -->
+                <div id="minimap-fog" class="minimap-fog"></div>
+
+                <!-- Markers layer -->
+                <div id="minimap-markers" class="minimap-markers"></div>
+
+                <!-- Player indicator -->
+                <div id="minimap-player" class="minimap-player">
+                    <div class="player-icon"></div>
+                    <div class="player-cone"></div>
+                </div>
+
+                <!-- Camera viewport indicator -->
+                <div id="minimap-viewport" class="minimap-viewport"></div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="minimap-controls">
+            <button class="minimap-btn" onclick="Minimap.zoomIn()" title="Zoom In">+</button>
+            <button class="minimap-btn" onclick="Minimap.zoomOut()" title="Zoom Out">-</button>
+            <button class="minimap-btn" onclick="Minimap.toggleFullMap()" title="Full Map">M</button>
+        </div>
+
+        <!-- Coordinates -->
+        <div class="minimap-coords">
+            <span id="coord-display">0, 0</span>
+        </div>
+
+        <!-- Legend -->
+        <div id="minimap-legend" class="minimap-legend" style="display: none;">
+            <div class="legend-item"><span class="marker-enemy"></span> Enemy</div>
+            <div class="legend-item"><span class="marker-ally"></span> Ally</div>
+            <div class="legend-item"><span class="marker-objective"></span> Objective</div>
+            <div class="legend-item"><span class="marker-resource"></span> Resource</div>
+        </div>
+    </div>
+
+    <!-- Full Map Overlay -->
+    <div id="fullmap-overlay" class="fullmap-overlay" style="display: none;">
+        <div class="fullmap-container">
+            <div class="fullmap-header">
+                <h2>World Map</h2>
+                <button onclick="Minimap.toggleFullMap()">X</button>
+            </div>
+            <div id="fullmap-canvas" class="fullmap-canvas"></div>
+            <div class="fullmap-controls">
+                <button onclick="Minimap.fullmapZoomIn()">+</button>
+                <button onclick="Minimap.fullmapZoomOut()">-</button>
+                <button onclick="Minimap.fullmapReset()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const Minimap = {
+            zoom: 1,
+            fullMapOpen: false,
+            markers: [],
+            bounds: { minX: 0, minY: 0, maxX: 1000, maxY: 1000 },
+
+            init: function() {
+                const canvas = document.getElementById('minimap-canvas');
+                canvas.addEventListener('click', (e) => this.onClick(e));
+                canvas.addEventListener('contextmenu', (e) => { e.preventDefault(); this.onRightClick(e); });
+            },
+
+            setTexture: function(path) {
+                const texture = document.getElementById('minimap-texture');
+                texture.style.backgroundImage = `url('${path}')`;
+            },
+
+            setBounds: function(minX, minY, maxX, maxY) {
+                this.bounds = { minX, minY, maxX, maxY };
+            },
+
+            setPlayerPosition: function(x, y, rotation) {
+                const player = document.getElementById('minimap-player');
+                const mapX = this.worldToMapX(x);
+                const mapY = this.worldToMapY(y);
+
+                player.style.left = mapX + '%';
+                player.style.top = mapY + '%';
+                player.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+
+                document.getElementById('coord-display').textContent =
+                    `${Math.round(x)}, ${Math.round(y)}`;
+            },
+
+            addMarker: function(marker) {
+                const container = document.getElementById('minimap-markers');
+                const el = document.createElement('div');
+                el.id = 'marker-' + marker.id;
+                el.className = 'minimap-marker marker-' + marker.type;
+                el.style.left = this.worldToMapX(marker.x) + '%';
+                el.style.top = this.worldToMapY(marker.y) + '%';
+                if (marker.color) el.style.backgroundColor = marker.color;
+                if (marker.blinking) el.classList.add('blinking');
+
+                el.onclick = () => this.onMarkerClick(marker.id);
+                container.appendChild(el);
+                this.markers.push(marker);
+            },
+
+            removeMarker: function(markerId) {
+                const el = document.getElementById('marker-' + markerId);
+                if (el) el.remove();
+                this.markers = this.markers.filter(m => m.id !== markerId);
+            },
+
+            clearMarkers: function() {
+                document.getElementById('minimap-markers').innerHTML = '';
+                this.markers = [];
+            },
+
+            updateMarkers: function(markers) {
+                this.clearMarkers();
+                markers.forEach(m => this.addMarker(m));
+            },
+
+            worldToMapX: function(x) {
+                return ((x - this.bounds.minX) / (this.bounds.maxX - this.bounds.minX)) * 100;
+            },
+
+            worldToMapY: function(y) {
+                return ((y - this.bounds.minY) / (this.bounds.maxY - this.bounds.minY)) * 100;
+            },
+
+            mapToWorldX: function(mapX) {
+                return this.bounds.minX + (mapX / 100) * (this.bounds.maxX - this.bounds.minX);
+            },
+
+            mapToWorldY: function(mapY) {
+                return this.bounds.minY + (mapY / 100) * (this.bounds.maxY - this.bounds.minY);
+            },
+
+            onClick: function(e) {
+                const rect = e.target.getBoundingClientRect();
+                const mapX = ((e.clientX - rect.left) / rect.width) * 100;
+                const mapY = ((e.clientY - rect.top) / rect.height) * 100;
+                const worldX = this.mapToWorldX(mapX);
+                const worldY = this.mapToWorldY(mapY);
+
+                if (typeof Engine !== 'undefined') {
+                    Engine.call('Minimap.onClick', { x: worldX, y: worldY });
+                }
+            },
+
+            onRightClick: function(e) {
+                const rect = e.target.getBoundingClientRect();
+                const mapX = ((e.clientX - rect.left) / rect.width) * 100;
+                const mapY = ((e.clientY - rect.top) / rect.height) * 100;
+
+                if (typeof Engine !== 'undefined') {
+                    Engine.call('Minimap.onPing', { x: this.mapToWorldX(mapX), y: this.mapToWorldY(mapY) });
+                }
+            },
+
+            onMarkerClick: function(markerId) {
+                if (typeof Engine !== 'undefined') {
+                    Engine.call('Minimap.onMarkerClick', { id: markerId });
+                }
+            },
+
+            zoomIn: function() {
+                this.zoom = Math.min(4, this.zoom * 1.5);
+                this.applyZoom();
+            },
+
+            zoomOut: function() {
+                this.zoom = Math.max(0.5, this.zoom / 1.5);
+                this.applyZoom();
+            },
+
+            applyZoom: function() {
+                const canvas = document.getElementById('minimap-canvas');
+                canvas.style.transform = `scale(${this.zoom})`;
+            },
+
+            toggleFullMap: function() {
+                this.fullMapOpen = !this.fullMapOpen;
+                document.getElementById('fullmap-overlay').style.display =
+                    this.fullMapOpen ? 'flex' : 'none';
+            },
+
+            setViewport: function(x, y, width, height) {
+                const viewport = document.getElementById('minimap-viewport');
+                viewport.style.left = this.worldToMapX(x) + '%';
+                viewport.style.top = this.worldToMapY(y) + '%';
+                viewport.style.width = (width / (this.bounds.maxX - this.bounds.minX)) * 100 + '%';
+                viewport.style.height = (height / (this.bounds.maxY - this.bounds.minY)) * 100 + '%';
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => Minimap.init());
+        window.Minimap = Minimap;
+    </script>
+</body>
+</html>

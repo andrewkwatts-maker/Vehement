@@ -1,0 +1,142 @@
+{
+  "streaming": {
+    "version": "1.0",
+    "description": "Nova3D Resource Streaming Configuration",
+
+    "memory_budgets": {
+      "texture_budget_mb": 512,
+      "mesh_budget_mb": 256,
+      "audio_budget_mb": 128,
+      "total_budget_mb": 1024,
+      "reserve_percent": 10
+    },
+
+    "texture_streaming": {
+      "enabled": true,
+      "max_mip_levels_to_drop": 4,
+      "min_resident_mip": 2,
+      "mip_bias": 0,
+      "prefetch_distance": 100.0,
+      "update_rate_hz": 30,
+      "load_priority": "visible_first",
+      "unload_delay_seconds": 5.0,
+      "async_load": true,
+      "max_pending_loads": 16
+    },
+
+    "mesh_streaming": {
+      "enabled": true,
+      "lod_levels": 8,
+      "lod_distances": [10, 25, 50, 100, 200, 400, 800, 1600],
+      "screen_size_threshold": 0.02,
+      "prefetch_distance": 150.0,
+      "update_rate_hz": 20,
+      "load_priority": "distance",
+      "unload_delay_seconds": 10.0,
+      "async_load": true,
+      "max_pending_loads": 8
+    },
+
+    "audio_streaming": {
+      "enabled": true,
+      "buffer_size_kb": 64,
+      "num_buffers": 3,
+      "preload_time_seconds": 0.5,
+      "min_file_size_for_streaming_kb": 256,
+      "max_concurrent_streams": 8
+    },
+
+    "loading": {
+      "async_loading": true,
+      "background_threads": 2,
+      "io_threads": 2,
+      "decompress_threads": 2,
+      "batch_size": 16,
+      "max_load_time_per_frame_ms": 2.0,
+      "priority_boost_visible": 2.0,
+      "priority_boost_near": 1.5
+    },
+
+    "unloading": {
+      "aggressive_unload": false,
+      "unload_threshold_percent": 90,
+      "unload_target_percent": 80,
+      "lru_enabled": true,
+      "min_lifetime_seconds": 30.0
+    },
+
+    "prefetching": {
+      "enabled": true,
+      "prediction_enabled": true,
+      "prediction_time_seconds": 2.0,
+      "camera_velocity_scale": 1.5,
+      "portal_prefetch": true,
+      "portal_prefetch_depth": 2
+    },
+
+    "compression": {
+      "texture_compression": "bc7",
+      "texture_formats": ["bc7", "bc3", "bc1", "astc", "etc2"],
+      "mesh_compression": true,
+      "audio_compression": "ogg"
+    },
+
+    "cache": {
+      "enabled": true,
+      "directory": "cache/",
+      "max_size_mb": 2048,
+      "eviction_policy": "lru",
+      "persistent": true
+    },
+
+    "priority_system": {
+      "base_priority_visible": 100,
+      "base_priority_nearby": 75,
+      "base_priority_far": 25,
+      "base_priority_background": 10,
+      "distance_scale": 1.0,
+      "screen_size_scale": 2.0,
+      "time_scale": 0.1
+    },
+
+    "quality_scaling": {
+      "enabled": true,
+      "target_frame_time_ms": 16.67,
+      "adjustment_rate": 0.1,
+      "min_quality": 0.5,
+      "max_quality": 1.0,
+      "texture_quality_levels": [0.25, 0.5, 0.75, 1.0],
+      "mesh_quality_levels": [0.25, 0.5, 0.75, 1.0]
+    },
+
+    "platform_specific": {
+      "pc": {
+        "texture_budget_mb": 1024,
+        "mesh_budget_mb": 512,
+        "background_threads": 4
+      },
+      "console": {
+        "texture_budget_mb": 512,
+        "mesh_budget_mb": 256,
+        "background_threads": 2
+      },
+      "mobile": {
+        "texture_budget_mb": 256,
+        "mesh_budget_mb": 128,
+        "background_threads": 1
+      }
+    },
+
+    "debug": {
+      "log_load_events": false,
+      "log_unload_events": false,
+      "log_memory_usage": false,
+      "show_streaming_overlay": false,
+      "visualize_lod_levels": false,
+      "visualize_mip_levels": false,
+      "show_pending_requests": false,
+      "memory_warning_threshold": 0.9,
+      "memory_critical_threshold": 0.95
+    }
+  }
+}

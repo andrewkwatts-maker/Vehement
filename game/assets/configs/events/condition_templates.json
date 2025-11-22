@@ -1,0 +1,1204 @@
+{
+  "$schema": "../schemas/event_binding_extended.schema.json",
+  "version": "1.0",
+  "metadata": {
+    "name": "Condition Templates Configuration",
+    "description": "Reusable condition templates for event bindings and triggers",
+    "author": "Game Development Team",
+    "lastModified": "2024-01-15T10:30:00Z"
+  },
+
+  "templates": [
+    {
+      "id": "player_is_alive",
+      "name": "Player Is Alive",
+      "description": "Check if the player is alive",
+      "category": "player",
+      "condition": {
+        "type": "gameState",
+        "check": "player_alive",
+        "parameters": {
+          "playerId": "{{playerId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true,
+          "description": "The player's unique identifier"
+        }
+      ],
+      "tags": ["player", "state", "common"]
+    },
+    {
+      "id": "player_health_below",
+      "name": "Player Health Below Threshold",
+      "description": "Check if player health is below a percentage",
+      "category": "player",
+      "condition": {
+        "type": "property",
+        "source": "player",
+        "property": "healthPercent",
+        "operator": "lessThan",
+        "value": "{{threshold}}"
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "threshold",
+          "type": "number",
+          "required": true,
+          "default": 25,
+          "min": 0,
+          "max": 100,
+          "description": "Health percentage threshold"
+        }
+      ],
+      "tags": ["player", "health", "threshold"]
+    },
+    {
+      "id": "player_health_above",
+      "name": "Player Health Above Threshold",
+      "description": "Check if player health is above a percentage",
+      "category": "player",
+      "condition": {
+        "type": "property",
+        "source": "player",
+        "property": "healthPercent",
+        "operator": "greaterThan",
+        "value": "{{threshold}}"
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "threshold",
+          "type": "number",
+          "required": true,
+          "default": 75,
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "tags": ["player", "health", "threshold"]
+    },
+    {
+      "id": "player_level_range",
+      "name": "Player Level in Range",
+      "description": "Check if player level is within a range",
+      "category": "player",
+      "condition": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "type": "property",
+            "source": "player",
+            "property": "level",
+            "operator": "greaterThanOrEqual",
+            "value": "{{minLevel}}"
+          },
+          {
+            "type": "property",
+            "source": "player",
+            "property": "level",
+            "operator": "lessThanOrEqual",
+            "value": "{{maxLevel}}"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "minLevel",
+          "type": "integer",
+          "required": true,
+          "default": 1,
+          "min": 1
+        },
+        {
+          "name": "maxLevel",
+          "type": "integer",
+          "required": true,
+          "default": 100,
+          "min": 1
+        }
+      ],
+      "tags": ["player", "level", "range"]
+    },
+    {
+      "id": "player_has_item",
+      "name": "Player Has Item",
+      "description": "Check if player has a specific item",
+      "category": "inventory",
+      "condition": {
+        "type": "inventory",
+        "check": "has_item",
+        "parameters": {
+          "playerId": "{{playerId}}",
+          "itemId": "{{itemId}}",
+          "minQuantity": "{{quantity}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "itemId",
+          "type": "string",
+          "required": true,
+          "description": "Item identifier to check for"
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "required": false,
+          "default": 1,
+          "min": 1,
+          "description": "Minimum quantity required"
+        }
+      ],
+      "tags": ["inventory", "items", "check"]
+    },
+    {
+      "id": "player_has_currency",
+      "name": "Player Has Currency",
+      "description": "Check if player has minimum amount of currency",
+      "category": "inventory",
+      "condition": {
+        "type": "inventory",
+        "check": "has_currency",
+        "parameters": {
+          "playerId": "{{playerId}}",
+          "currencyType": "{{currencyType}}",
+          "minAmount": "{{amount}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "currencyType",
+          "type": "string",
+          "required": true,
+          "enum": ["gold", "gems", "tokens", "credits"],
+          "default": "gold"
+        },
+        {
+          "name": "amount",
+          "type": "integer",
+          "required": true,
+          "min": 0
+        }
+      ],
+      "tags": ["inventory", "currency", "check"]
+    },
+    {
+      "id": "inventory_has_space",
+      "name": "Inventory Has Space",
+      "description": "Check if inventory has available slots",
+      "category": "inventory",
+      "condition": {
+        "type": "inventory",
+        "check": "has_space",
+        "parameters": {
+          "inventoryId": "{{inventoryId}}",
+          "requiredSlots": "{{slots}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "inventoryId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "slots",
+          "type": "integer",
+          "required": false,
+          "default": 1,
+          "min": 1
+        }
+      ],
+      "tags": ["inventory", "space", "check"]
+    },
+    {
+      "id": "quest_active",
+      "name": "Quest Is Active",
+      "description": "Check if a quest is currently active",
+      "category": "quest",
+      "condition": {
+        "type": "quest",
+        "check": "is_active",
+        "parameters": {
+          "playerId": "{{playerId}}",
+          "questId": "{{questId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "questId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["quest", "state", "check"]
+    },
+    {
+      "id": "quest_completed",
+      "name": "Quest Is Completed",
+      "description": "Check if a quest has been completed",
+      "category": "quest",
+      "condition": {
+        "type": "quest",
+        "check": "is_completed",
+        "parameters": {
+          "playerId": "{{playerId}}",
+          "questId": "{{questId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "questId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["quest", "state", "check"]
+    },
+    {
+      "id": "quest_objective_progress",
+      "name": "Quest Objective Progress",
+      "description": "Check quest objective completion percentage",
+      "category": "quest",
+      "condition": {
+        "type": "quest",
+        "check": "objective_progress",
+        "parameters": {
+          "playerId": "{{playerId}}",
+          "questId": "{{questId}}",
+          "objectiveId": "{{objectiveId}}",
+          "minProgress": "{{progress}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "questId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "objectiveId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "progress",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 100,
+          "description": "Minimum progress percentage"
+        }
+      ],
+      "tags": ["quest", "objective", "progress"]
+    },
+    {
+      "id": "in_combat",
+      "name": "Entity In Combat",
+      "description": "Check if an entity is currently in combat",
+      "category": "combat",
+      "condition": {
+        "type": "combat",
+        "check": "in_combat",
+        "parameters": {
+          "entityId": "{{entityId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["combat", "state", "common"]
+    },
+    {
+      "id": "out_of_combat",
+      "name": "Entity Out of Combat",
+      "description": "Check if an entity is not in combat",
+      "category": "combat",
+      "condition": {
+        "type": "not",
+        "condition": {
+          "type": "combat",
+          "check": "in_combat",
+          "parameters": {
+            "entityId": "{{entityId}}"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["combat", "state"]
+    },
+    {
+      "id": "combat_target_type",
+      "name": "Combat Target Is Type",
+      "description": "Check if current combat target is of a specific type",
+      "category": "combat",
+      "condition": {
+        "type": "combat",
+        "check": "target_type",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "targetType": "{{targetType}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "targetType",
+          "type": "string",
+          "required": true,
+          "enum": ["player", "npc", "monster", "boss", "elite", "critter"]
+        }
+      ],
+      "tags": ["combat", "target", "type"]
+    },
+    {
+      "id": "in_zone",
+      "name": "Entity In Zone",
+      "description": "Check if entity is in a specific zone",
+      "category": "world",
+      "condition": {
+        "type": "world",
+        "check": "in_zone",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "zoneId": "{{zoneId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "zoneId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["world", "zone", "location"]
+    },
+    {
+      "id": "in_zone_type",
+      "name": "Entity In Zone Type",
+      "description": "Check if entity is in a zone of specific type",
+      "category": "world",
+      "condition": {
+        "type": "world",
+        "check": "in_zone_type",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "zoneType": "{{zoneType}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "zoneType",
+          "type": "string",
+          "required": true,
+          "enum": ["safe", "combat", "dungeon", "raid", "pvp", "city", "wilderness"]
+        }
+      ],
+      "tags": ["world", "zone", "type"]
+    },
+    {
+      "id": "near_entity",
+      "name": "Near Entity",
+      "description": "Check if entity is within range of another entity",
+      "category": "world",
+      "condition": {
+        "type": "world",
+        "check": "distance",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "targetEntityId": "{{targetId}}",
+          "maxDistance": "{{distance}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "targetId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "distance",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "description": "Maximum distance in game units"
+        }
+      ],
+      "tags": ["world", "distance", "proximity"]
+    },
+    {
+      "id": "time_of_day",
+      "name": "Time of Day",
+      "description": "Check if current game time is within a range",
+      "category": "world",
+      "condition": {
+        "type": "world",
+        "check": "time_range",
+        "parameters": {
+          "startHour": "{{startHour}}",
+          "endHour": "{{endHour}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "startHour",
+          "type": "integer",
+          "required": true,
+          "min": 0,
+          "max": 23
+        },
+        {
+          "name": "endHour",
+          "type": "integer",
+          "required": true,
+          "min": 0,
+          "max": 23
+        }
+      ],
+      "tags": ["world", "time", "schedule"]
+    },
+    {
+      "id": "weather_is",
+      "name": "Weather Condition",
+      "description": "Check current weather condition",
+      "category": "world",
+      "condition": {
+        "type": "world",
+        "check": "weather",
+        "parameters": {
+          "weatherType": "{{weatherType}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "weatherType",
+          "type": "string",
+          "required": true,
+          "enum": ["clear", "cloudy", "rain", "storm", "snow", "fog"]
+        }
+      ],
+      "tags": ["world", "weather", "environment"]
+    },
+    {
+      "id": "has_buff",
+      "name": "Entity Has Buff",
+      "description": "Check if entity has a specific buff active",
+      "category": "buffs",
+      "condition": {
+        "type": "buff",
+        "check": "has_buff",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "buffId": "{{buffId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "buffId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["buffs", "status", "check"]
+    },
+    {
+      "id": "has_debuff",
+      "name": "Entity Has Debuff",
+      "description": "Check if entity has a specific debuff active",
+      "category": "buffs",
+      "condition": {
+        "type": "buff",
+        "check": "has_debuff",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "debuffId": "{{debuffId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "debuffId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["buffs", "debuffs", "status"]
+    },
+    {
+      "id": "buff_stacks",
+      "name": "Buff Stack Count",
+      "description": "Check if buff has minimum number of stacks",
+      "category": "buffs",
+      "condition": {
+        "type": "buff",
+        "check": "stack_count",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "buffId": "{{buffId}}",
+          "minStacks": "{{stacks}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "buffId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "stacks",
+          "type": "integer",
+          "required": true,
+          "min": 1
+        }
+      ],
+      "tags": ["buffs", "stacks", "check"]
+    },
+    {
+      "id": "ability_available",
+      "name": "Ability Available",
+      "description": "Check if ability is available (not on cooldown)",
+      "category": "abilities",
+      "condition": {
+        "type": "ability",
+        "check": "available",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "abilityId": "{{abilityId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "abilityId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["abilities", "cooldown", "check"]
+    },
+    {
+      "id": "ability_cooldown_remaining",
+      "name": "Ability Cooldown Check",
+      "description": "Check remaining ability cooldown",
+      "category": "abilities",
+      "condition": {
+        "type": "ability",
+        "check": "cooldown_remaining",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "abilityId": "{{abilityId}}",
+          "maxSeconds": "{{seconds}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "abilityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "seconds",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "description": "Maximum remaining cooldown in seconds"
+        }
+      ],
+      "tags": ["abilities", "cooldown", "timing"]
+    },
+    {
+      "id": "resource_above",
+      "name": "Resource Above Threshold",
+      "description": "Check if resource (mana, energy, etc.) is above threshold",
+      "category": "resources",
+      "condition": {
+        "type": "resource",
+        "check": "above_percent",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "resourceType": "{{resourceType}}",
+          "threshold": "{{threshold}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "resourceType",
+          "type": "string",
+          "required": true,
+          "enum": ["mana", "energy", "rage", "focus", "stamina"]
+        },
+        {
+          "name": "threshold",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "tags": ["resources", "threshold", "check"]
+    },
+    {
+      "id": "resource_below",
+      "name": "Resource Below Threshold",
+      "description": "Check if resource is below threshold",
+      "category": "resources",
+      "condition": {
+        "type": "resource",
+        "check": "below_percent",
+        "parameters": {
+          "entityId": "{{entityId}}",
+          "resourceType": "{{resourceType}}",
+          "threshold": "{{threshold}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "resourceType",
+          "type": "string",
+          "required": true,
+          "enum": ["mana", "energy", "rage", "focus", "stamina"]
+        },
+        {
+          "name": "threshold",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "tags": ["resources", "threshold", "check"]
+    },
+    {
+      "id": "achievement_unlocked",
+      "name": "Achievement Unlocked",
+      "description": "Check if player has unlocked an achievement",
+      "category": "progression",
+      "condition": {
+        "type": "achievement",
+        "check": "unlocked",
+        "parameters": {
+          "playerId": "{{playerId}}",
+          "achievementId": "{{achievementId}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "achievementId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["achievement", "progression", "check"]
+    },
+    {
+      "id": "game_state_is",
+      "name": "Game State Check",
+      "description": "Check current game state",
+      "category": "system",
+      "condition": {
+        "type": "gameState",
+        "check": "state_equals",
+        "parameters": {
+          "state": "{{state}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "state",
+          "type": "string",
+          "required": true,
+          "enum": ["menu", "loading", "playing", "paused", "cutscene", "dialog"]
+        }
+      ],
+      "tags": ["system", "state", "common"]
+    },
+    {
+      "id": "is_debug_build",
+      "name": "Is Debug Build",
+      "description": "Check if running in debug build",
+      "category": "system",
+      "condition": {
+        "type": "system",
+        "check": "build_config",
+        "parameters": {
+          "config": "debug"
+        }
+      },
+      "parameters": [],
+      "tags": ["system", "debug", "build"]
+    },
+    {
+      "id": "platform_is",
+      "name": "Platform Check",
+      "description": "Check current platform",
+      "category": "system",
+      "condition": {
+        "type": "system",
+        "check": "platform",
+        "parameters": {
+          "platform": "{{platform}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "platform",
+          "type": "string",
+          "required": true,
+          "enum": ["windows", "linux", "macos", "ios", "android", "web"]
+        }
+      ],
+      "tags": ["system", "platform", "conditional"]
+    },
+    {
+      "id": "cooldown_elapsed",
+      "name": "Cooldown Elapsed",
+      "description": "Check if enough time has passed since last trigger",
+      "category": "timing",
+      "condition": {
+        "type": "timing",
+        "check": "cooldown_elapsed",
+        "parameters": {
+          "cooldownId": "{{cooldownId}}",
+          "duration": "{{duration}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "cooldownId",
+          "type": "string",
+          "required": true,
+          "description": "Unique identifier for this cooldown"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "description": "Cooldown duration in seconds"
+        }
+      ],
+      "tags": ["timing", "cooldown", "rate_limit"]
+    },
+    {
+      "id": "random_chance",
+      "name": "Random Chance",
+      "description": "Random chance condition (for probabilistic triggers)",
+      "category": "utility",
+      "condition": {
+        "type": "random",
+        "check": "chance",
+        "parameters": {
+          "probability": "{{probability}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "probability",
+          "type": "number",
+          "required": true,
+          "min": 0,
+          "max": 100,
+          "description": "Chance percentage (0-100)"
+        }
+      ],
+      "tags": ["utility", "random", "probability"]
+    },
+    {
+      "id": "count_threshold",
+      "name": "Counter Threshold",
+      "description": "Check if a counter has reached a threshold",
+      "category": "utility",
+      "condition": {
+        "type": "counter",
+        "check": "threshold",
+        "parameters": {
+          "counterId": "{{counterId}}",
+          "threshold": "{{threshold}}",
+          "operator": "{{operator}}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "counterId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "threshold",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "name": "operator",
+          "type": "string",
+          "required": false,
+          "enum": ["equals", "greaterThan", "lessThan", "greaterThanOrEqual", "lessThanOrEqual"],
+          "default": "greaterThanOrEqual"
+        }
+      ],
+      "tags": ["utility", "counter", "threshold"]
+    }
+  ],
+
+  "categories": [
+    {
+      "id": "player",
+      "name": "Player Conditions",
+      "description": "Conditions related to player state and properties",
+      "icon": "user",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "inventory",
+      "name": "Inventory Conditions",
+      "description": "Conditions for checking inventory state",
+      "icon": "backpack",
+      "color": "#FF9800"
+    },
+    {
+      "id": "quest",
+      "name": "Quest Conditions",
+      "description": "Conditions for quest progress and state",
+      "icon": "scroll",
+      "color": "#9C27B0"
+    },
+    {
+      "id": "combat",
+      "name": "Combat Conditions",
+      "description": "Conditions related to combat state",
+      "icon": "sword",
+      "color": "#F44336"
+    },
+    {
+      "id": "world",
+      "name": "World Conditions",
+      "description": "Conditions for world state and location",
+      "icon": "globe",
+      "color": "#2196F3"
+    },
+    {
+      "id": "buffs",
+      "name": "Buff/Debuff Conditions",
+      "description": "Conditions for status effects",
+      "icon": "sparkles",
+      "color": "#00BCD4"
+    },
+    {
+      "id": "abilities",
+      "name": "Ability Conditions",
+      "description": "Conditions for ability state and cooldowns",
+      "icon": "bolt",
+      "color": "#E91E63"
+    },
+    {
+      "id": "resources",
+      "name": "Resource Conditions",
+      "description": "Conditions for resource levels",
+      "icon": "battery",
+      "color": "#3F51B5"
+    },
+    {
+      "id": "progression",
+      "name": "Progression Conditions",
+      "description": "Conditions for achievements and progression",
+      "icon": "trophy",
+      "color": "#FFC107"
+    },
+    {
+      "id": "system",
+      "name": "System Conditions",
+      "description": "System and build configuration conditions",
+      "icon": "cog",
+      "color": "#607D8B"
+    },
+    {
+      "id": "timing",
+      "name": "Timing Conditions",
+      "description": "Time-based and cooldown conditions",
+      "icon": "clock",
+      "color": "#795548"
+    },
+    {
+      "id": "utility",
+      "name": "Utility Conditions",
+      "description": "General utility conditions",
+      "icon": "tools",
+      "color": "#9E9E9E"
+    }
+  ],
+
+  "compoundTemplates": [
+    {
+      "id": "player_ready_for_combat",
+      "name": "Player Ready for Combat",
+      "description": "Comprehensive check that player is ready for combat",
+      "condition": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "template": "player_is_alive",
+            "parameters": { "playerId": "{{playerId}}" }
+          },
+          {
+            "template": "player_health_above",
+            "parameters": { "playerId": "{{playerId}}", "threshold": 20 }
+          },
+          {
+            "template": "out_of_combat",
+            "parameters": { "entityId": "{{playerId}}" }
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["compound", "player", "combat"]
+    },
+    {
+      "id": "player_needs_healing",
+      "name": "Player Needs Healing",
+      "description": "Check if player should receive healing",
+      "condition": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "template": "player_is_alive",
+            "parameters": { "playerId": "{{playerId}}" }
+          },
+          {
+            "template": "player_health_below",
+            "parameters": { "playerId": "{{playerId}}", "threshold": "{{healthThreshold}}" }
+          },
+          {
+            "type": "not",
+            "condition": {
+              "template": "has_buff",
+              "parameters": { "entityId": "{{playerId}}", "buffId": "healing_received" }
+            }
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "playerId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "healthThreshold",
+          "type": "number",
+          "required": false,
+          "default": 50
+        }
+      ],
+      "tags": ["compound", "player", "healing"]
+    },
+    {
+      "id": "can_use_ability",
+      "name": "Can Use Ability",
+      "description": "Full check if entity can use an ability",
+      "condition": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "template": "player_is_alive",
+            "parameters": { "playerId": "{{entityId}}" }
+          },
+          {
+            "template": "ability_available",
+            "parameters": { "entityId": "{{entityId}}", "abilityId": "{{abilityId}}" }
+          },
+          {
+            "template": "resource_above",
+            "parameters": {
+              "entityId": "{{entityId}}",
+              "resourceType": "{{resourceType}}",
+              "threshold": "{{resourceCost}}"
+            }
+          },
+          {
+            "type": "not",
+            "condition": {
+              "template": "has_debuff",
+              "parameters": { "entityId": "{{entityId}}", "debuffId": "silenced" }
+            }
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "abilityId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "resourceType",
+          "type": "string",
+          "required": true,
+          "default": "mana"
+        },
+        {
+          "name": "resourceCost",
+          "type": "number",
+          "required": true,
+          "default": 10
+        }
+      ],
+      "tags": ["compound", "abilities", "validation"]
+    },
+    {
+      "id": "safe_zone_activity",
+      "name": "Safe Zone Activity Allowed",
+      "description": "Check if player can perform safe-zone only activities",
+      "condition": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "template": "in_zone_type",
+            "parameters": { "entityId": "{{entityId}}", "zoneType": "safe" }
+          },
+          {
+            "template": "out_of_combat",
+            "parameters": { "entityId": "{{entityId}}" }
+          },
+          {
+            "template": "game_state_is",
+            "parameters": { "state": "playing" }
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "entityId",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "tags": ["compound", "zone", "safety"]
+    }
+  ]
+}

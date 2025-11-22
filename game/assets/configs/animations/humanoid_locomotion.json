@@ -1,0 +1,312 @@
+{
+  "id": "humanoid_locomotion",
+  "name": "Humanoid Locomotion State Machine",
+  "defaultState": "idle",
+
+  "parameters": [
+    { "name": "speed", "type": "float", "defaultValue": 0 },
+    { "name": "directionX", "type": "float", "defaultValue": 0 },
+    { "name": "directionY", "type": "float", "defaultValue": 1 },
+    { "name": "velocityY", "type": "float", "defaultValue": 0 },
+    { "name": "grounded", "type": "bool", "defaultValue": true },
+    { "name": "crouching", "type": "bool", "defaultValue": false },
+    { "name": "sprinting", "type": "bool", "defaultValue": false },
+    { "name": "jump", "type": "trigger" },
+    { "name": "land", "type": "trigger" },
+    { "name": "landImpact", "type": "float", "defaultValue": 0 }
+  ],
+
+  "states": [
+    {
+      "name": "idle",
+      "clip": "animations/humanoid/idle",
+      "speed": 1,
+      "loop": true,
+      "events": [
+        { "time": 0.25, "name": "breath_in", "data": {} },
+        { "time": 0.75, "name": "breath_out", "data": {} }
+      ],
+      "transitions": [
+        {
+          "to": "walk",
+          "conditions": [
+            { "parameter": "speed", "mode": "greater", "threshold": 0.1 },
+            { "parameter": "crouching", "mode": "if_false" }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "crouch_idle",
+          "conditions": [
+            { "parameter": "crouching", "mode": "if_true" }
+          ],
+          "duration": 0.3
+        },
+        {
+          "to": "jump_start",
+          "conditions": [
+            { "parameter": "jump", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "walk",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "speed",
+        "children": [
+          { "clip": "animations/humanoid/walk_slow", "threshold": 0.1 },
+          { "clip": "animations/humanoid/walk", "threshold": 0.5 },
+          { "clip": "animations/humanoid/walk_fast", "threshold": 0.8 }
+        ]
+      },
+      "loop": true,
+      "events": [
+        { "time": 0.0, "name": "footstep", "data": { "foot": "left" } },
+        { "time": 0.5, "name": "footstep", "data": { "foot": "right" } }
+      ],
+      "transitions": [
+        {
+          "to": "idle",
+          "conditions": [
+            { "parameter": "speed", "mode": "less", "threshold": 0.1 }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "run",
+          "conditions": [
+            { "parameter": "speed", "mode": "greater", "threshold": 0.6 },
+            { "parameter": "sprinting", "mode": "if_false" }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "sprint",
+          "conditions": [
+            { "parameter": "sprinting", "mode": "if_true" },
+            { "parameter": "speed", "mode": "greater", "threshold": 0.5 }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "crouch_walk",
+          "conditions": [
+            { "parameter": "crouching", "mode": "if_true" }
+          ],
+          "duration": 0.3
+        },
+        {
+          "to": "jump_start",
+          "conditions": [
+            { "parameter": "jump", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "run",
+      "blendTree": {
+        "type": "simple_2d",
+        "parameterX": "directionX",
+        "parameterY": "directionY",
+        "children": [
+          { "clip": "animations/humanoid/run_forward", "position": { "x": 0, "y": 1 } },
+          { "clip": "animations/humanoid/run_backward", "position": { "x": 0, "y": -1 } },
+          { "clip": "animations/humanoid/run_left", "position": { "x": -1, "y": 0 } },
+          { "clip": "animations/humanoid/run_right", "position": { "x": 1, "y": 0 } }
+        ]
+      },
+      "loop": true,
+      "events": [
+        { "time": 0.0, "name": "footstep", "data": { "foot": "left", "intensity": 1.2 } },
+        { "time": 0.5, "name": "footstep", "data": { "foot": "right", "intensity": 1.2 } }
+      ],
+      "transitions": [
+        {
+          "to": "walk",
+          "conditions": [
+            { "parameter": "speed", "mode": "less", "threshold": 0.5 }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "sprint",
+          "conditions": [
+            { "parameter": "sprinting", "mode": "if_true" }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "jump_start",
+          "conditions": [
+            { "parameter": "jump", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "sprint",
+      "clip": "animations/humanoid/sprint",
+      "speed": 1.2,
+      "loop": true,
+      "events": [
+        { "time": 0.0, "name": "footstep", "data": { "foot": "left", "intensity": 1.5 } },
+        { "time": 0.5, "name": "footstep", "data": { "foot": "right", "intensity": 1.5 } }
+      ],
+      "transitions": [
+        {
+          "to": "run",
+          "conditions": [
+            { "parameter": "sprinting", "mode": "if_false" }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "walk",
+          "conditions": [
+            { "parameter": "speed", "mode": "less", "threshold": 0.5 }
+          ],
+          "duration": 0.3
+        },
+        {
+          "to": "jump_start",
+          "conditions": [
+            { "parameter": "jump", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "crouch_idle",
+      "clip": "animations/humanoid/crouch_idle",
+      "loop": true,
+      "transitions": [
+        {
+          "to": "idle",
+          "conditions": [
+            { "parameter": "crouching", "mode": "if_false" }
+          ],
+          "duration": 0.3
+        },
+        {
+          "to": "crouch_walk",
+          "conditions": [
+            { "parameter": "speed", "mode": "greater", "threshold": 0.1 }
+          ],
+          "duration": 0.2
+        }
+      ]
+    },
+    {
+      "name": "crouch_walk",
+      "clip": "animations/humanoid/crouch_walk",
+      "speedMultiplierParameter": "speed",
+      "loop": true,
+      "events": [
+        { "time": 0.0, "name": "footstep", "data": { "foot": "left", "intensity": 0.5 } },
+        { "time": 0.5, "name": "footstep", "data": { "foot": "right", "intensity": 0.5 } }
+      ],
+      "transitions": [
+        {
+          "to": "crouch_idle",
+          "conditions": [
+            { "parameter": "speed", "mode": "less", "threshold": 0.1 }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "walk",
+          "conditions": [
+            { "parameter": "crouching", "mode": "if_false" }
+          ],
+          "duration": 0.3
+        }
+      ]
+    },
+    {
+      "name": "jump_start",
+      "clip": "animations/humanoid/jump_start",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "jump_air",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "jump_air",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "velocityY",
+        "children": [
+          { "clip": "animations/humanoid/fall", "threshold": -5 },
+          { "clip": "animations/humanoid/jump_apex", "threshold": 0 },
+          { "clip": "animations/humanoid/jump_up", "threshold": 5 }
+        ]
+      },
+      "loop": true,
+      "transitions": [
+        {
+          "to": "land",
+          "conditions": [
+            { "parameter": "land", "mode": "if_true" }
+          ],
+          "duration": 0.05
+        },
+        {
+          "to": "land",
+          "conditions": [
+            { "parameter": "grounded", "mode": "if_true" }
+          ],
+          "duration": 0.05
+        }
+      ]
+    },
+    {
+      "name": "land",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "landImpact",
+        "children": [
+          { "clip": "animations/humanoid/land_soft", "threshold": 0 },
+          { "clip": "animations/humanoid/land_medium", "threshold": 3 },
+          { "clip": "animations/humanoid/land_hard", "threshold": 6 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.05, "name": "footstep", "data": { "foot": "both", "intensity": 2.0 } },
+        { "time": 0.05, "name": "play_sound", "data": { "sound": "sfx/land" } }
+      ],
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "conditions": [
+            { "parameter": "speed", "mode": "less", "threshold": 0.1 }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "walk",
+          "hasExitTime": true,
+          "exitTime": 0.5,
+          "conditions": [
+            { "parameter": "speed", "mode": "greater", "threshold": 0.1 }
+          ],
+          "duration": 0.15
+        }
+      ]
+    }
+  ]
+}

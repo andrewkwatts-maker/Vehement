@@ -1,0 +1,466 @@
+{
+    "version": "1.0",
+    "description": "UI to Game Engine Bindings Configuration",
+
+    "namespaces": {
+        "player": "PlayerController",
+        "inventory": "InventorySystem",
+        "dialogue": "DialogueManager",
+        "quest": "QuestManager",
+        "combat": "CombatSystem",
+        "world": "WorldManager",
+        "settings": "SettingsManager",
+        "audio": "AudioManager",
+        "network": "NetworkManager"
+    },
+
+    "properties": {
+        "player.name": {
+            "getter": "PlayerController::GetPlayerName",
+            "type": "string",
+            "cached": true
+        },
+        "player.level": {
+            "getter": "PlayerController::GetLevel",
+            "type": "int",
+            "cached": false
+        },
+        "player.health": {
+            "getter": "PlayerController::GetHealth",
+            "setter": "PlayerController::SetHealth",
+            "type": "float",
+            "cached": false,
+            "onChange": "onHealthChanged"
+        },
+        "player.maxHealth": {
+            "getter": "PlayerController::GetMaxHealth",
+            "type": "float",
+            "cached": true
+        },
+        "player.mana": {
+            "getter": "PlayerController::GetMana",
+            "setter": "PlayerController::SetMana",
+            "type": "float",
+            "cached": false
+        },
+        "player.maxMana": {
+            "getter": "PlayerController::GetMaxMana",
+            "type": "float",
+            "cached": true
+        },
+        "player.experience": {
+            "getter": "PlayerController::GetExperience",
+            "type": "int",
+            "cached": false
+        },
+        "player.experienceToLevel": {
+            "getter": "PlayerController::GetExperienceToLevel",
+            "type": "int",
+            "cached": true
+        },
+        "player.gold": {
+            "getter": "PlayerController::GetGold",
+            "setter": "PlayerController::SetGold",
+            "type": "int",
+            "cached": false
+        },
+        "player.position": {
+            "getter": "PlayerController::GetPosition",
+            "type": "vector3",
+            "cached": false
+        },
+        "player.abilities": {
+            "getter": "PlayerController::GetAbilities",
+            "type": "array",
+            "cached": true
+        },
+        "player.buffs": {
+            "getter": "PlayerController::GetActiveBuffs",
+            "type": "array",
+            "cached": false
+        },
+
+        "target.exists": {
+            "getter": "CombatSystem::HasTarget",
+            "type": "bool",
+            "cached": false
+        },
+        "target.name": {
+            "getter": "CombatSystem::GetTargetName",
+            "type": "string",
+            "cached": false
+        },
+        "target.health": {
+            "getter": "CombatSystem::GetTargetHealth",
+            "type": "float",
+            "cached": false
+        },
+        "target.maxHealth": {
+            "getter": "CombatSystem::GetTargetMaxHealth",
+            "type": "float",
+            "cached": false
+        },
+
+        "inventory.items": {
+            "getter": "InventorySystem::GetItems",
+            "type": "array",
+            "cached": false
+        },
+        "inventory.capacity": {
+            "getter": "InventorySystem::GetCapacity",
+            "type": "int",
+            "cached": true
+        },
+        "inventory.gold": {
+            "getter": "InventorySystem::GetGold",
+            "type": "int",
+            "cached": false
+        },
+
+        "quests.active": {
+            "getter": "QuestManager::GetActiveQuests",
+            "type": "array",
+            "cached": false
+        },
+        "quests.tracked": {
+            "getter": "QuestManager::GetTrackedQuests",
+            "type": "array",
+            "cached": false
+        },
+
+        "settings.masterVolume": {
+            "getter": "SettingsManager::GetMasterVolume",
+            "setter": "SettingsManager::SetMasterVolume",
+            "type": "float",
+            "cached": true
+        },
+        "settings.musicVolume": {
+            "getter": "SettingsManager::GetMusicVolume",
+            "setter": "SettingsManager::SetMusicVolume",
+            "type": "float",
+            "cached": true
+        },
+        "settings.sfxVolume": {
+            "getter": "SettingsManager::GetSFXVolume",
+            "setter": "SettingsManager::SetSFXVolume",
+            "type": "float",
+            "cached": true
+        },
+        "settings.fullscreen": {
+            "getter": "SettingsManager::IsFullscreen",
+            "setter": "SettingsManager::SetFullscreen",
+            "type": "bool",
+            "cached": true
+        },
+        "settings.vsync": {
+            "getter": "SettingsManager::IsVSyncEnabled",
+            "setter": "SettingsManager::SetVSync",
+            "type": "bool",
+            "cached": true
+        }
+    },
+
+    "functions": {
+        "inventory.useItem": {
+            "handler": "InventorySystem::UseItem",
+            "params": [
+                { "name": "slotIndex", "type": "int" }
+            ],
+            "returns": "bool"
+        },
+        "inventory.dropItem": {
+            "handler": "InventorySystem::DropItem",
+            "params": [
+                { "name": "slotIndex", "type": "int" },
+                { "name": "quantity", "type": "int", "default": 1 }
+            ],
+            "returns": "bool"
+        },
+        "inventory.moveItem": {
+            "handler": "InventorySystem::MoveItem",
+            "params": [
+                { "name": "fromSlot", "type": "int" },
+                { "name": "toSlot", "type": "int" }
+            ],
+            "returns": "bool"
+        },
+        "inventory.splitStack": {
+            "handler": "InventorySystem::SplitStack",
+            "params": [
+                { "name": "slotIndex", "type": "int" },
+                { "name": "quantity", "type": "int" }
+            ],
+            "returns": "bool"
+        },
+        "inventory.equipItem": {
+            "handler": "InventorySystem::EquipItem",
+            "params": [
+                { "name": "slotIndex", "type": "int" }
+            ],
+            "returns": "bool"
+        },
+        "inventory.unequipItem": {
+            "handler": "InventorySystem::UnequipItem",
+            "params": [
+                { "name": "equipSlot", "type": "string" }
+            ],
+            "returns": "bool"
+        },
+        "inventory.sortItems": {
+            "handler": "InventorySystem::SortInventory",
+            "params": [
+                { "name": "sortType", "type": "string", "default": "type" }
+            ],
+            "returns": "void"
+        },
+
+        "ability.use": {
+            "handler": "CombatSystem::UseAbility",
+            "params": [
+                { "name": "abilityId", "type": "string" }
+            ],
+            "returns": "bool"
+        },
+        "ability.cancel": {
+            "handler": "CombatSystem::CancelAbility",
+            "params": [],
+            "returns": "void"
+        },
+
+        "dialogue.selectChoice": {
+            "handler": "DialogueManager::SelectChoice",
+            "params": [
+                { "name": "choiceIndex", "type": "int" }
+            ],
+            "returns": "void"
+        },
+        "dialogue.advance": {
+            "handler": "DialogueManager::AdvanceDialogue",
+            "params": [],
+            "returns": "bool"
+        },
+        "dialogue.skip": {
+            "handler": "DialogueManager::SkipToEnd",
+            "params": [],
+            "returns": "void"
+        },
+
+        "quest.track": {
+            "handler": "QuestManager::TrackQuest",
+            "params": [
+                { "name": "questId", "type": "string" }
+            ],
+            "returns": "void"
+        },
+        "quest.untrack": {
+            "handler": "QuestManager::UntrackQuest",
+            "params": [
+                { "name": "questId", "type": "string" }
+            ],
+            "returns": "void"
+        },
+        "quest.abandon": {
+            "handler": "QuestManager::AbandonQuest",
+            "params": [
+                { "name": "questId", "type": "string" }
+            ],
+            "returns": "bool"
+        },
+
+        "menu.startNewGame": {
+            "handler": "GameManager::StartNewGame",
+            "params": [],
+            "returns": "void"
+        },
+        "menu.continueGame": {
+            "handler": "GameManager::ContinueGame",
+            "params": [],
+            "returns": "void"
+        },
+        "menu.loadGame": {
+            "handler": "GameManager::LoadGame",
+            "params": [
+                { "name": "saveSlot", "type": "int" }
+            ],
+            "returns": "bool"
+        },
+        "menu.saveGame": {
+            "handler": "GameManager::SaveGame",
+            "params": [
+                { "name": "saveSlot", "type": "int" }
+            ],
+            "returns": "bool"
+        },
+        "menu.quitToMenu": {
+            "handler": "GameManager::QuitToMainMenu",
+            "params": [],
+            "returns": "void"
+        },
+        "menu.quitGame": {
+            "handler": "GameManager::QuitGame",
+            "params": [],
+            "returns": "void"
+        },
+
+        "settings.apply": {
+            "handler": "SettingsManager::ApplySettings",
+            "params": [
+                { "name": "settings", "type": "object" }
+            ],
+            "returns": "void"
+        },
+        "settings.reset": {
+            "handler": "SettingsManager::ResetToDefaults",
+            "params": [],
+            "returns": "void"
+        },
+
+        "chat.sendMessage": {
+            "handler": "ChatManager::SendMessage",
+            "params": [
+                { "name": "channel", "type": "string" },
+                { "name": "message", "type": "string" }
+            ],
+            "returns": "bool"
+        },
+
+        "minimap.ping": {
+            "handler": "MinimapManager::SendPing",
+            "params": [
+                { "name": "x", "type": "float" },
+                { "name": "y", "type": "float" },
+                { "name": "type", "type": "string", "default": "default" }
+            ],
+            "returns": "void"
+        },
+        "minimap.setWaypoint": {
+            "handler": "MinimapManager::SetWaypoint",
+            "params": [
+                { "name": "x", "type": "float" },
+                { "name": "y", "type": "float" }
+            ],
+            "returns": "void"
+        }
+    },
+
+    "events": {
+        "onPlayerDamaged": {
+            "source": "CombatSystem",
+            "data": {
+                "damage": "float",
+                "source": "string",
+                "isCritical": "bool"
+            },
+            "uiTriggers": ["healthBar.flash", "screen.damageVignette"]
+        },
+        "onPlayerHealed": {
+            "source": "CombatSystem",
+            "data": {
+                "amount": "float",
+                "source": "string"
+            },
+            "uiTriggers": ["healthBar.healEffect"]
+        },
+        "onLevelUp": {
+            "source": "PlayerController",
+            "data": {
+                "newLevel": "int",
+                "rewards": "array"
+            },
+            "uiTriggers": ["notification.levelUp", "screen.levelUpEffect"]
+        },
+        "onQuestComplete": {
+            "source": "QuestManager",
+            "data": {
+                "questId": "string",
+                "questName": "string",
+                "rewards": "array"
+            },
+            "uiTriggers": ["notification.questComplete"]
+        },
+        "onQuestObjectiveComplete": {
+            "source": "QuestManager",
+            "data": {
+                "questId": "string",
+                "objectiveIndex": "int"
+            },
+            "uiTriggers": ["questTracker.update"]
+        },
+        "onItemPickup": {
+            "source": "InventorySystem",
+            "data": {
+                "itemId": "string",
+                "itemName": "string",
+                "quantity": "int",
+                "rarity": "string"
+            },
+            "uiTriggers": ["notification.itemPickup", "inventory.highlight"]
+        },
+        "onAchievementUnlocked": {
+            "source": "AchievementManager",
+            "data": {
+                "achievementId": "string",
+                "name": "string",
+                "description": "string",
+                "icon": "string"
+            },
+            "uiTriggers": ["notification.achievement"]
+        },
+        "onCombatStart": {
+            "source": "CombatSystem",
+            "data": {},
+            "uiTriggers": ["hud.combatMode"]
+        },
+        "onCombatEnd": {
+            "source": "CombatSystem",
+            "data": {},
+            "uiTriggers": ["hud.explorationMode"]
+        },
+        "onTargetChanged": {
+            "source": "CombatSystem",
+            "data": {
+                "targetId": "string",
+                "targetName": "string"
+            },
+            "uiTriggers": ["targetInfo.update"]
+        },
+        "onDialogueStart": {
+            "source": "DialogueManager",
+            "data": {
+                "npcId": "string",
+                "npcName": "string"
+            },
+            "uiTriggers": ["dialogue.open"]
+        },
+        "onDialogueEnd": {
+            "source": "DialogueManager",
+            "data": {},
+            "uiTriggers": ["dialogue.close"]
+        },
+        "onNotification": {
+            "source": "NotificationManager",
+            "data": {
+                "type": "string",
+                "title": "string",
+                "message": "string",
+                "icon": "string",
+                "duration": "float"
+            },
+            "uiTriggers": ["notification.show"]
+        }
+    },
+
+    "updateFrequency": {
+        "realtime": ["player.health", "player.mana", "target.health"],
+        "frequent": ["player.position", "player.buffs"],
+        "normal": ["inventory.items", "quests.tracked"],
+        "lazy": ["settings.*", "player.level"]
+    },
+
+    "intervals": {
+        "realtime": 16,
+        "frequent": 100,
+        "normal": 500,
+        "lazy": 2000
+    }
+}

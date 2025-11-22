@@ -2,63 +2,114 @@
 
 /**
  * @file WindowsPlatform.hpp
- * @brief Windows-specific platform implementation (stub)
+ * @brief Windows-specific platform implementation
  *
- * Full implementation would use Win32 API with GLFW for windowing.
+ * Full Windows platform layer with:
+ * - Win32 window management
+ * - High-DPI support
+ * - Multiple monitor support
+ * - Native file dialogs
+ * - Clipboard access
+ * - System information
  */
 
 #include "../Platform.hpp"
 
 #ifdef NOVA_PLATFORM_WINDOWS
 
-#include <GLFW/glfw3.h>
+#include <memory>
+#include <string>
+#include <vector>
+#include <utility>
+
+// Forward declarations for Win32 types
+struct HWND__;
+typedef HWND__* HWND;
+struct HDC__;
+typedef HDC__* HDC;
+struct HGLRC__;
+typedef HGLRC__* HGLRC;
 
 namespace Nova {
+
+// Forward declaration
+class WindowsPlatformImpl;
+
+/**
+ * @brief Monitor information structure
+ */
+struct MonitorInfo {
+    std::string name;
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    int workAreaX = 0;
+    int workAreaY = 0;
+    int workAreaWidth = 0;
+    int workAreaHeight = 0;
+    float dpiScale = 1.0f;
+    bool isPrimary = false;
+};
 
 /**
  * @brief Windows platform implementation
  *
  * Features:
- * - GLFW-based windowing
+ * - GLFW or native Win32 windowing
  * - Win32 API integration
  * - DirectX/OpenGL/Vulkan support
+ * - High-DPI awareness
+ * - Multi-monitor support
  */
 class WindowsPlatform : public Platform {
 public:
     WindowsPlatform();
     ~WindowsPlatform() override;
 
+    // -------------------------------------------------------------------------
     // Lifecycle
+    // -------------------------------------------------------------------------
+
     bool Initialize() override;
     void Shutdown() override;
-    [[nodiscard]] bool IsInitialized() const noexcept override { return m_initialized; }
+    [[nodiscard]] bool IsInitialized() const noexcept override { return m_state != PlatformState::Unknown; }
     [[nodiscard]] PlatformState GetState() const override { return m_state; }
 
+    // -------------------------------------------------------------------------
     // Window Management
+    // -------------------------------------------------------------------------
+
     bool CreateWindow(const WindowConfig& config) override;
     void DestroyWindow() override;
-    [[nodiscard]] bool HasWindow() const noexcept override { return m_window != nullptr; }
+    [[nodiscard]] bool HasWindow() const noexcept override;
     void SwapBuffers() override;
 
     [[nodiscard]] glm::ivec2 GetWindowSize() const override;
     [[nodiscard]] glm::ivec2 GetFramebufferSize() const override;
     [[nodiscard]] float GetDisplayScale() const override;
-    [[nodiscard]] bool IsFullscreen() const override { return m_fullscreen; }
+    [[nodiscard]] bool IsFullscreen() const override;
     void SetFullscreen(bool fullscreen) override;
     void SetWindowTitle(const std::string& title) override;
     void SetWindowSize(int width, int height) override;
 
-    [[nodiscard]] void* GetNativeWindowHandle() const override;
-    [[nodiscard]] void* GetNativeDisplayHandle() const override;
+    [[nodiscard]] void* GetNativeWindowHandle() const override;  // Returns HWND
+    [[nodiscard]] void* GetNativeDisplayHandle() const override; // Returns HDC
 
+    // -------------------------------------------------------------------------
     // Input/Events
+    // -------------------------------------------------------------------------
+
     void PollEvents() override;
     void WaitEvents() override;
     void WaitEventsTimeout(double timeout) override;
     [[nodiscard]] bool ShouldClose() const override;
     void RequestClose() override;
 
-    // File System (Win32 paths)
+    // -------------------------------------------------------------------------
+    // File System
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] std::string GetDataPath() const override;
     [[nodiscard]] std::string GetCachePath() const override;
     [[nodiscard]] std::string GetDocumentsPath() const override;
@@ -75,13 +126,19 @@ public:
     bool DeleteFile(const std::string& path) override;
     [[nodiscard]] std::vector<std::string> ListFiles(const std::string& path, bool recursive) override;
 
-    // Permissions (Desktop - no-ops)
+    // -------------------------------------------------------------------------
+    // Permissions
+    // -------------------------------------------------------------------------
+
     void RequestPermission(Permission permission, PermissionCallback callback) override;
     [[nodiscard]] bool HasPermission(Permission permission) const override;
     [[nodiscard]] PermissionResult GetPermissionStatus(Permission permission) const override;
     void OpenPermissionSettings() override;
 
+    // -------------------------------------------------------------------------
     // GPS/Location
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] bool IsLocationAvailable() const override;
     [[nodiscard]] bool IsLocationEnabled() const override;
     void StartLocationUpdates(const LocationConfig& config, LocationCallback callback,
@@ -91,7 +148,10 @@ public:
     void RequestSingleLocation(LocationCallback callback) override;
     [[nodiscard]] GPSCoordinates GetLastKnownLocation() const override;
 
+    // -------------------------------------------------------------------------
     // System Information
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] uint64_t GetAvailableMemory() const override;
     [[nodiscard]] uint64_t GetTotalMemory() const override;
     [[nodiscard]] int GetCPUCores() const override;
@@ -104,30 +164,97 @@ public:
     [[nodiscard]] int GetTimezoneOffset() const override;
     [[nodiscard]] bool HasHardwareFeature(const std::string& feature) const override;
 
+    // -------------------------------------------------------------------------
     // Battery/Network
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] float GetBatteryLevel() const override;
     [[nodiscard]] bool IsBatteryCharging() const override;
     [[nodiscard]] bool IsNetworkAvailable() const override;
     [[nodiscard]] bool IsWifiConnected() const override;
     [[nodiscard]] bool IsCellularConnected() const override;
 
+    // -------------------------------------------------------------------------
     // Lifecycle & Haptics
+    // -------------------------------------------------------------------------
+
     void SetLifecycleCallbacks(LifecycleCallbacks callbacks) override;
     void TriggerHaptic(HapticType type) override;
     [[nodiscard]] bool HasHaptics() const override { return false; }
 
-    // Windows-specific
-    [[nodiscard]] GLFWwindow* GetGLFWWindow() const noexcept { return m_window; }
+    // -------------------------------------------------------------------------
+    // Windows-Specific Extensions
+    // -------------------------------------------------------------------------
+
+    /**
+     * @brief Get native Win32 window handle
+     */
+    [[nodiscard]] HWND GetHWND() const;
+
+    /**
+     * @brief Get device context
+     */
+    [[nodiscard]] HDC GetHDC() const;
+
+    /**
+     * @brief Get OpenGL rendering context (if using WGL)
+     */
+    [[nodiscard]] HGLRC GetHGLRC() const;
+
+    /**
+     * @brief Copy text to clipboard
+     */
+    bool SetClipboardText(const std::string& text);
+
+    /**
+     * @brief Get text from clipboard
+     */
+    [[nodiscard]] std::string GetClipboardText() const;
+
+    /**
+     * @brief Show native file open dialog
+     * @param title Dialog title
+     * @param defaultPath Default directory
+     * @param filters File filters (e.g., {"Images", "*.png;*.jpg"})
+     * @return Selected file path, empty if cancelled
+     */
+    std::string OpenFileDialog(
+        const std::string& title = "Open File",
+        const std::string& defaultPath = "",
+        const std::vector<std::pair<std::string, std::string>>& filters = {});
+
+    /**
+     * @brief Show native file save dialog
+     */
+    std::string SaveFileDialog(
+        const std::string& title = "Save File",
+        const std::string& defaultPath = "",
+        const std::string& defaultName = "",
+        const std::vector<std::pair<std::string, std::string>>& filters = {});
+
+    /**
+     * @brief Get number of connected monitors
+     */
+    [[nodiscard]] int GetMonitorCount() const;
+
+    /**
+     * @brief Get monitor information
+     */
+    [[nodiscard]] MonitorInfo GetMonitorInfo(int index) const;
+
+    /**
+     * @brief Show/hide system cursor
+     */
+    void SetCursorVisible(bool visible);
+
+    /**
+     * @brief Capture/release cursor within window
+     */
+    void SetCursorCaptured(bool captured);
 
 private:
-    GLFWwindow* m_window = nullptr;
-    glm::ivec2 m_windowSize{1920, 1080};
-    glm::ivec2 m_framebufferSize{1920, 1080};
-    float m_displayScale = 1.0f;
-    bool m_fullscreen = false;
-    bool m_initialized = false;
+    std::unique_ptr<WindowsPlatformImpl> m_impl;
     PlatformState m_state = PlatformState::Unknown;
-    GPSCoordinates m_lastLocation;
 };
 
 } // namespace Nova

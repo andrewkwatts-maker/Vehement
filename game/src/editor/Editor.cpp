@@ -269,6 +269,7 @@ void Editor::Render() {
     if (m_showNewProjectDialog) ShowNewProjectDialog();
     if (m_showOpenProjectDialog) ShowOpenProjectDialog();
     if (m_showSaveAsDialog) ShowSaveAsDialog();
+    if (m_showUnsavedChangesDialog) ShowUnsavedChangesDialog();
 
     // Demo window for debugging
     if (m_showDemoWindow) {
@@ -386,20 +387,62 @@ void Editor::RenderEditMenu() {
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Cut", "Ctrl+X")) {
-            // TODO: Implement cut
+            // Cut - copy then delete selected entity
+            if (m_selectedEntityId != 0 && m_entityManager) {
+                m_clipboardEntityId = m_selectedEntityId;
+                m_clipboardHasData = true;
+                m_entityManager->DestroyEntity(m_selectedEntityId);
+                m_selectedEntityId = 0;
+                MarkDirty();
+            }
         }
         if (ImGui::MenuItem("Copy", "Ctrl+C")) {
-            // TODO: Implement copy
+            // Copy selected entity to clipboard
+            if (m_selectedEntityId != 0) {
+                m_clipboardEntityId = m_selectedEntityId;
+                m_clipboardHasData = true;
+            }
         }
         if (ImGui::MenuItem("Paste", "Ctrl+V")) {
-            // TODO: Implement paste
+            // Paste entity from clipboard
+            if (m_clipboardHasData && m_entityManager && m_clipboardEntityId != 0) {
+                // Duplicate the copied entity
+                auto* sourceEntity = m_entityManager->GetEntity(m_clipboardEntityId);
+                if (sourceEntity) {
+                    auto* newEntity = m_entityManager->CreateEntity(sourceEntity->GetTypeName());
+                    if (newEntity) {
+                        // Copy transform with offset
+                        glm::vec3 pos = sourceEntity->GetPosition();
+                        pos.x += 2.0f;  // Offset so it doesn't overlap
+                        newEntity->SetPosition(pos);
+                        newEntity->SetRotation(sourceEntity->GetEulerRotation());
+                        newEntity->SetScale(sourceEntity->GetScale());
+                        newEntity->SetName(sourceEntity->GetName() + "_copy");
+                        m_selectedEntityId = newEntity->GetId();
+                        MarkDirty();
+                    }
+                }
+            }
         }
         if (ImGui::MenuItem("Delete", "Delete")) {
-            // TODO: Implement delete
+            // Delete selected entity
+            if (m_selectedEntityId != 0 && m_entityManager) {
+                m_entityManager->DestroyEntity(m_selectedEntityId);
+                m_selectedEntityId = 0;
+                MarkDirty();
+            }
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Select All", "Ctrl+A")) {
-            // TODO: Implement select all
+            // Select all entities - would need multi-selection support
+            // For now, just select the first entity
+            if (m_entityManager) {
+                m_entityManager->ForEachEntity([this](Entity& e) {
+                    if (m_selectedEntityId == 0) {
+                        m_selectedEntityId = e.GetId();
+                    }
+                });
+            }
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Settings...")) {
@@ -453,17 +496,41 @@ void Editor::RenderToolsMenu() {
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Build All Configs")) {
-            // TODO: Implement
+            // Build/compile all configs
+            auto& registry = Config::ConfigRegistry::Instance();
+            int builtCount = registry.BuildAll();
+            if (m_console) {
+                m_console->Log("Built " + std::to_string(builtCount) + " configs", Console::LogLevel::Info);
+            }
         }
         if (ImGui::MenuItem("Validate All Configs")) {
-            // TODO: Implement
+            // Validate all configs against their schemas
+            auto& registry = Config::ConfigRegistry::Instance();
+            auto errors = registry.ValidateAll();
+            if (m_console) {
+                if (errors.empty()) {
+                    m_console->Log("All configs valid", Console::LogLevel::Info);
+                } else {
+                    m_console->Log("Found " + std::to_string(errors.size()) + " validation errors", Console::LogLevel::Warning);
+                    for (const auto& err : errors) {
+                        m_console->Log("  " + err, Console::LogLevel::Error);
+                    }
+                }
+            }
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Generate World")) {
             m_showPCGPanel = true;
         }
         if (ImGui::MenuItem("Export World")) {
-            // TODO: Implement
+            // Export world data
+            if (m_world) {
+                std::string exportPath = "exports/world_" + std::to_string(time(nullptr)) + ".json";
+                m_world->ExportToFile(exportPath);
+                if (m_console) {
+                    m_console->Log("World exported to: " + exportPath, Console::LogLevel::Info);
+                }
+            }
         }
         ImGui::EndMenu();
     }
@@ -475,7 +542,14 @@ void Editor::RenderHelpMenu() {
             m_showShortcutsDialog = true;
         }
         if (ImGui::MenuItem("Documentation")) {
-            // TODO: Open docs
+            // Open documentation in default browser
+            #ifdef _WIN32
+                system("start https://github.com/vehement-engine/docs");
+            #elif __APPLE__
+                system("open https://github.com/vehement-engine/docs");
+            #else
+                system("xdg-open https://github.com/vehement-engine/docs");
+            #endif
         }
         ImGui::Separator();
         if (ImGui::MenuItem("About Nova3D Editor")) {
@@ -561,7 +635,44 @@ void Editor::ShowNewProjectDialog() {
         ImGui::InputText("Location", projectPath, sizeof(projectPath));
         ImGui::SameLine();
         if (ImGui::Button("Browse...")) {
-            // TODO: File dialog
+            // File browser for project location
+            ImGui::OpenPopup("ProjectLocationBrowser");
+        }
+
+        // File browser popup
+        if (ImGui::BeginPopup("ProjectLocationBrowser")) {
+            static std::string currentPath = ".";
+            ImGui::Text("Select Project Location");
+            ImGui::Separator();
+            ImGui::Text("Current: %s", currentPath.c_str());
+            ImGui::Separator();
+
+            if (ImGui::Selectable("[..]")) {
+                currentPath = std::filesystem::path(currentPath).parent_path().string();
+                if (currentPath.empty()) currentPath = ".";
+            }
+
+            if (std::filesystem::exists(currentPath)) {
+                for (const auto& entry : std::filesystem::directory_iterator(currentPath)) {
+                    if (entry.is_directory()) {
+                        std::string dirName = "[" + entry.path().filename().string() + "]";
+                        if (ImGui::Selectable(dirName.c_str())) {
+                            currentPath = entry.path().string();
+                        }
+                    }
+                }
+            }
+
+            ImGui::Separator();
+            if (ImGui::Button("Select This Folder")) {
+                strncpy(projectPath, currentPath.c_str(), sizeof(projectPath) - 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel##browse")) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
 
         ImGui::Separator();
@@ -590,7 +701,47 @@ void Editor::ShowOpenProjectDialog() {
         ImGui::InputText("Project File", projectPath, sizeof(projectPath));
         ImGui::SameLine();
         if (ImGui::Button("Browse...")) {
-            // TODO: File dialog
+            ImGui::OpenPopup("OpenProjectBrowser");
+        }
+
+        // File browser popup for opening projects
+        if (ImGui::BeginPopup("OpenProjectBrowser")) {
+            static std::string currentPath = ".";
+            ImGui::Text("Select Project File");
+            ImGui::Separator();
+            ImGui::Text("Current: %s", currentPath.c_str());
+            ImGui::Separator();
+
+            if (ImGui::Selectable("[..]")) {
+                currentPath = std::filesystem::path(currentPath).parent_path().string();
+                if (currentPath.empty()) currentPath = ".";
+            }
+
+            if (std::filesystem::exists(currentPath)) {
+                for (const auto& entry : std::filesystem::directory_iterator(currentPath)) {
+                    if (entry.is_directory()) {
+                        std::string dirName = "[" + entry.path().filename().string() + "]";
+                        if (ImGui::Selectable(dirName.c_str())) {
+                            currentPath = entry.path().string();
+                        }
+                    } else {
+                        // Show project files (.vehement, .nova, .json)
+                        std::string ext = entry.path().extension().string();
+                        if (ext == ".vehement" || ext == ".nova" || ext == ".json") {
+                            if (ImGui::Selectable(entry.path().filename().string().c_str())) {
+                                strncpy(projectPath, entry.path().string().c_str(), sizeof(projectPath) - 1);
+                                ImGui::CloseCurrentPopup();
+                            }
+                        }
+                    }
+                }
+            }
+
+            ImGui::Separator();
+            if (ImGui::Button("Cancel##openbrowse")) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
 
         ImGui::Separator();
@@ -618,7 +769,48 @@ void Editor::ShowSaveAsDialog() {
         ImGui::InputText("Save Location", savePath, sizeof(savePath));
         ImGui::SameLine();
         if (ImGui::Button("Browse...")) {
-            // TODO: File dialog
+            ImGui::OpenPopup("SaveAsBrowser");
+        }
+
+        // File browser popup for Save As
+        if (ImGui::BeginPopup("SaveAsBrowser")) {
+            static std::string currentPath = ".";
+            static char fileName[256] = "project.vehement";
+            ImGui::Text("Select Save Location");
+            ImGui::Separator();
+            ImGui::Text("Current: %s", currentPath.c_str());
+            ImGui::Separator();
+
+            if (ImGui::Selectable("[..]")) {
+                currentPath = std::filesystem::path(currentPath).parent_path().string();
+                if (currentPath.empty()) currentPath = ".";
+            }
+
+            if (std::filesystem::exists(currentPath)) {
+                for (const auto& entry : std::filesystem::directory_iterator(currentPath)) {
+                    if (entry.is_directory()) {
+                        std::string dirName = "[" + entry.path().filename().string() + "]";
+                        if (ImGui::Selectable(dirName.c_str())) {
+                            currentPath = entry.path().string();
+                        }
+                    }
+                }
+            }
+
+            ImGui::Separator();
+            ImGui::InputText("File Name", fileName, sizeof(fileName));
+            ImGui::Separator();
+
+            if (ImGui::Button("Save Here")) {
+                std::string fullPath = currentPath + "/" + fileName;
+                strncpy(savePath, fullPath.c_str(), sizeof(savePath) - 1);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel##savebrowse")) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
 
         ImGui::Separator();
@@ -721,7 +913,87 @@ void Editor::ShowSettingsDialog() {
 
             if (ImGui::BeginTabItem("Shortcuts")) {
                 ImGui::Text("Customize keyboard shortcuts:");
-                // TODO: Shortcut customization
+                ImGui::Separator();
+
+                static int selectedShortcut = -1;
+                static bool waitingForKey = false;
+
+                if (ImGui::BeginTable("ShortcutEditor", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
+                    ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+                    ImGui::TableSetupColumn("Current Shortcut", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+                    ImGui::TableSetupColumn("Edit", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableHeadersRow();
+
+                    for (int i = 0; i < (int)m_shortcuts.size(); i++) {
+                        auto& shortcut = m_shortcuts[i];
+                        ImGui::TableNextRow();
+                        ImGui::PushID(i);
+
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%s", shortcut.description.c_str());
+
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%s", shortcut.action.c_str());
+
+                        ImGui::TableNextColumn();
+                        if (selectedShortcut == i && waitingForKey) {
+                            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Press key...");
+
+                            // Check for key press to reassign
+                            for (int key = GLFW_KEY_A; key <= GLFW_KEY_Z; key++) {
+                                if (m_window && glfwGetKey(m_window, key) == GLFW_PRESS) {
+                                    // Build new shortcut string
+                                    std::string newAction;
+                                    if (glfwGetKey(m_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+                                        glfwGetKey(m_window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
+                                        newAction += "Ctrl+";
+                                        shortcut.modifiers |= GLFW_MOD_CONTROL;
+                                    } else {
+                                        shortcut.modifiers &= ~GLFW_MOD_CONTROL;
+                                    }
+                                    if (glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                                        glfwGetKey(m_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+                                        newAction += "Shift+";
+                                        shortcut.modifiers |= GLFW_MOD_SHIFT;
+                                    } else {
+                                        shortcut.modifiers &= ~GLFW_MOD_SHIFT;
+                                    }
+                                    if (glfwGetKey(m_window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS ||
+                                        glfwGetKey(m_window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
+                                        newAction += "Alt+";
+                                        shortcut.modifiers |= GLFW_MOD_ALT;
+                                    } else {
+                                        shortcut.modifiers &= ~GLFW_MOD_ALT;
+                                    }
+                                    newAction += (char)('A' + (key - GLFW_KEY_A));
+                                    shortcut.key = key;
+                                    shortcut.action = newAction;
+                                    waitingForKey = false;
+                                    selectedShortcut = -1;
+                                    break;
+                                }
+                            }
+
+                            if (ImGui::Button("Cancel")) {
+                                waitingForKey = false;
+                                selectedShortcut = -1;
+                            }
+                        } else {
+                            if (ImGui::Button("Change")) {
+                                selectedShortcut = i;
+                                waitingForKey = true;
+                            }
+                        }
+
+                        ImGui::PopID();
+                    }
+                    ImGui::EndTable();
+                }
+
+                ImGui::Separator();
+                if (ImGui::Button("Reset to Defaults")) {
+                    RegisterDefaultShortcuts();
+                }
                 ImGui::EndTabItem();
             }
 
@@ -904,7 +1176,64 @@ bool Editor::OpenProject(const std::string& path) {
 bool Editor::SaveProject() {
     if (!HasOpenProject()) return false;
 
-    // TODO: Implement actual save logic
+    // Build project data as JSON
+    nlohmann::json projectData;
+    projectData["version"] = "1.0.0";
+    projectData["name"] = std::filesystem::path(m_projectPath).stem().string();
+    projectData["lastModified"] = std::time(nullptr);
+
+    // Save editor state
+    projectData["editor"]["showConfigEditor"] = m_showConfigEditor;
+    projectData["editor"]["showWorldView"] = m_showWorldView;
+    projectData["editor"]["showTileInspector"] = m_showTileInspector;
+    projectData["editor"]["showPCGPanel"] = m_showPCGPanel;
+    projectData["editor"]["showLocationCrafter"] = m_showLocationCrafter;
+    projectData["editor"]["showScriptEditor"] = m_showScriptEditor;
+    projectData["editor"]["showAssetBrowser"] = m_showAssetBrowser;
+    projectData["editor"]["showHierarchy"] = m_showHierarchy;
+    projectData["editor"]["showInspector"] = m_showInspector;
+    projectData["editor"]["showConsole"] = m_showConsole;
+
+    // Save entities if entity manager exists
+    if (m_entityManager) {
+        nlohmann::json entitiesArray = nlohmann::json::array();
+        m_entityManager->ForEachEntity([&entitiesArray](Entity& entity) {
+            nlohmann::json entityJson;
+            entityJson["id"] = entity.GetId();
+            entityJson["name"] = entity.GetName();
+            entityJson["type"] = entity.GetTypeName();
+
+            glm::vec3 pos = entity.GetPosition();
+            entityJson["position"] = {pos.x, pos.y, pos.z};
+
+            glm::vec3 rot = entity.GetEulerRotation();
+            entityJson["rotation"] = {rot.x, rot.y, rot.z};
+
+            glm::vec3 scale = entity.GetScale();
+            entityJson["scale"] = {scale.x, scale.y, scale.z};
+
+            entitiesArray.push_back(entityJson);
+        });
+        projectData["entities"] = entitiesArray;
+    }
+
+    // Save world data if world exists
+    if (m_world) {
+        projectData["world"]["name"] = m_world->GetName();
+    }
+
+    // Write to file
+    std::ofstream file(m_projectPath);
+    if (!file.is_open()) {
+        if (m_console) {
+            m_console->Log("Failed to save project: Could not open file", Console::LogLevel::Error);
+        }
+        return false;
+    }
+
+    file << projectData.dump(2);  // Pretty print with 2-space indent
+    file.close();
+
     m_hasUnsavedChanges = false;
 
     if (OnProjectSave) OnProjectSave();
@@ -922,13 +1251,61 @@ bool Editor::SaveProjectAs(const std::string& path) {
 void Editor::CloseProject() {
     if (!HasOpenProject()) return;
 
-    // TODO: Check for unsaved changes
+    // Check for unsaved changes and prompt user
+    if (m_hasUnsavedChanges) {
+        // Set flag to show confirmation dialog
+        m_showUnsavedChangesDialog = true;
+        m_pendingCloseAction = true;
+        return;  // Wait for user response
+    }
 
+    // Actually close the project
+    DoCloseProject();
+}
+
+void Editor::DoCloseProject() {
     ClearHistory();
     m_projectPath.clear();
     m_hasUnsavedChanges = false;
+    m_pendingCloseAction = false;
 
     if (OnProjectClose) OnProjectClose();
+}
+
+void Editor::ShowUnsavedChangesDialog() {
+    if (!m_showUnsavedChangesDialog) return;
+
+    ImGui::OpenPopup("Unsaved Changes");
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Unsaved Changes", &m_showUnsavedChangesDialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("You have unsaved changes.");
+        ImGui::Text("Do you want to save before closing?");
+        ImGui::Separator();
+
+        if (ImGui::Button("Save", ImVec2(100, 0))) {
+            SaveProject();
+            m_showUnsavedChangesDialog = false;
+            if (m_pendingCloseAction) {
+                DoCloseProject();
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Don't Save", ImVec2(100, 0))) {
+            m_showUnsavedChangesDialog = false;
+            if (m_pendingCloseAction) {
+                m_hasUnsavedChanges = false;  // Discard changes
+                DoCloseProject();
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(100, 0))) {
+            m_showUnsavedChangesDialog = false;
+            m_pendingCloseAction = false;
+        }
+        ImGui::EndPopup();
+    }
 }
 
 bool Editor::SaveLayout(const std::string& path) {

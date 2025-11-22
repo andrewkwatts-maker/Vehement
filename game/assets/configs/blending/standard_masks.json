@@ -1,0 +1,500 @@
+{
+  "$schema": "../../schemas/blend_mask.schema.json",
+  "id": "standard_humanoid_masks",
+  "name": "Standard Humanoid Mask Library",
+  "type": "mask_library",
+  "skeleton": "assets/skeletons/humanoid_standard.skeleton",
+
+  "categories": [
+    {
+      "id": "body_regions",
+      "name": "Body Regions",
+      "description": "Standard body region masks",
+      "color": "#4A90D9",
+      "icon": "body"
+    },
+    {
+      "id": "limbs",
+      "name": "Limbs",
+      "description": "Individual limb masks",
+      "color": "#50C878",
+      "icon": "arm"
+    },
+    {
+      "id": "combat",
+      "name": "Combat",
+      "description": "Combat-specific masks",
+      "color": "#DC143C",
+      "icon": "sword"
+    },
+    {
+      "id": "facial",
+      "name": "Facial",
+      "description": "Face and expression masks",
+      "color": "#FFB347",
+      "icon": "face"
+    },
+    {
+      "id": "special",
+      "name": "Special",
+      "description": "Special purpose masks",
+      "color": "#9B59B6",
+      "icon": "star"
+    }
+  ],
+
+  "masks": [
+    {
+      "id": "full_body_mask",
+      "name": "Full Body",
+      "description": "Complete skeleton - all bones at full weight",
+      "category": "body_regions",
+      "tags": ["full", "all", "complete"],
+      "preset": "full_body"
+    },
+    {
+      "id": "upper_body_mask",
+      "name": "Upper Body",
+      "description": "Spine, arms, and head",
+      "category": "body_regions",
+      "tags": ["upper", "torso", "arms"],
+      "preset": "upper_body",
+      "feathering": {
+        "enabled": true,
+        "depth": 2,
+        "falloff": "smooth",
+        "strength": 0.8,
+        "boundaryBones": ["Spine"]
+      }
+    },
+    {
+      "id": "lower_body_mask",
+      "name": "Lower Body",
+      "description": "Hips and legs",
+      "category": "body_regions",
+      "tags": ["lower", "legs", "hips"],
+      "preset": "lower_body",
+      "feathering": {
+        "enabled": true,
+        "depth": 2,
+        "falloff": "smooth",
+        "strength": 0.8,
+        "boundaryBones": ["Hips"]
+      }
+    },
+    {
+      "id": "spine_mask",
+      "name": "Spine Only",
+      "description": "Spine chain without arms or head",
+      "category": "body_regions",
+      "tags": ["spine", "torso", "core"],
+      "bones": {
+        "Hips": 0.3,
+        "Spine": 1.0,
+        "Spine1": 1.0,
+        "Spine2": 1.0,
+        "Chest": 0.8,
+        "Neck": 0.3
+      },
+      "feathering": {
+        "enabled": true,
+        "depth": 1,
+        "falloff": "linear"
+      }
+    },
+    {
+      "id": "head_mask",
+      "name": "Head",
+      "description": "Head and neck bones",
+      "category": "body_regions",
+      "tags": ["head", "neck", "look"],
+      "preset": "head",
+      "bones": {
+        "Neck": 0.5,
+        "Head": 1.0
+      }
+    },
+    {
+      "id": "left_arm_mask",
+      "name": "Left Arm",
+      "description": "Left arm including shoulder",
+      "category": "limbs",
+      "tags": ["arm", "left", "limb"],
+      "preset": "left_arm",
+      "bones": {
+        "LeftShoulder": {
+          "weight": 0.7,
+          "includeChildren": true
+        },
+        "LeftArm": 1.0,
+        "LeftForeArm": 1.0,
+        "LeftHand": 1.0
+      }
+    },
+    {
+      "id": "right_arm_mask",
+      "name": "Right Arm",
+      "description": "Right arm including shoulder",
+      "category": "limbs",
+      "tags": ["arm", "right", "limb"],
+      "preset": "right_arm",
+      "bones": {
+        "RightShoulder": {
+          "weight": 0.7,
+          "includeChildren": true
+        },
+        "RightArm": 1.0,
+        "RightForeArm": 1.0,
+        "RightHand": 1.0
+      }
+    },
+    {
+      "id": "arms_mask",
+      "name": "Both Arms",
+      "description": "Both arms with shoulders",
+      "category": "limbs",
+      "tags": ["arms", "both", "limbs"],
+      "basedOn": "left_arm_mask",
+      "modifications": [
+        {
+          "operation": "union",
+          "otherMask": "right_arm_mask"
+        }
+      ]
+    },
+    {
+      "id": "left_leg_mask",
+      "name": "Left Leg",
+      "description": "Left leg from hip",
+      "category": "limbs",
+      "tags": ["leg", "left", "limb"],
+      "preset": "left_leg",
+      "bones": {
+        "LeftUpLeg": 1.0,
+        "LeftLeg": 1.0,
+        "LeftFoot": 1.0,
+        "LeftToeBase": 1.0
+      }
+    },
+    {
+      "id": "right_leg_mask",
+      "name": "Right Leg",
+      "description": "Right leg from hip",
+      "category": "limbs",
+      "tags": ["leg", "right", "limb"],
+      "preset": "right_leg",
+      "bones": {
+        "RightUpLeg": 1.0,
+        "RightLeg": 1.0,
+        "RightFoot": 1.0,
+        "RightToeBase": 1.0
+      }
+    },
+    {
+      "id": "legs_mask",
+      "name": "Both Legs",
+      "description": "Both legs without hips",
+      "category": "limbs",
+      "tags": ["legs", "both", "limbs"],
+      "basedOn": "left_leg_mask",
+      "modifications": [
+        {
+          "operation": "union",
+          "otherMask": "right_leg_mask"
+        }
+      ]
+    },
+    {
+      "id": "left_hand_mask",
+      "name": "Left Hand",
+      "description": "Left hand and fingers",
+      "category": "limbs",
+      "tags": ["hand", "left", "fingers"],
+      "bones": {
+        "LeftHand": {
+          "weight": 1.0,
+          "includeChildren": true
+        }
+      }
+    },
+    {
+      "id": "right_hand_mask",
+      "name": "Right Hand",
+      "description": "Right hand and fingers",
+      "category": "limbs",
+      "tags": ["hand", "right", "fingers"],
+      "bones": {
+        "RightHand": {
+          "weight": 1.0,
+          "includeChildren": true
+        }
+      }
+    },
+    {
+      "id": "hands_mask",
+      "name": "Both Hands",
+      "description": "Both hands with all fingers",
+      "category": "limbs",
+      "tags": ["hands", "fingers", "grip"],
+      "basedOn": "left_hand_mask",
+      "modifications": [
+        {
+          "operation": "union",
+          "otherMask": "right_hand_mask"
+        }
+      ]
+    },
+    {
+      "id": "weapon_arm_mask",
+      "name": "Weapon Arm (Right)",
+      "description": "Right arm optimized for weapon animations",
+      "category": "combat",
+      "tags": ["weapon", "combat", "attack"],
+      "bones": {
+        "RightShoulder": 0.5,
+        "RightArm": 1.0,
+        "RightForeArm": 1.0,
+        "RightHand": 1.0,
+        "Spine2": 0.3,
+        "Chest": 0.4
+      },
+      "feathering": {
+        "enabled": true,
+        "depth": 1,
+        "falloff": "smooth",
+        "strength": 0.6,
+        "direction": "inward"
+      }
+    },
+    {
+      "id": "shield_arm_mask",
+      "name": "Shield Arm (Left)",
+      "description": "Left arm optimized for shield/offhand",
+      "category": "combat",
+      "tags": ["shield", "combat", "block"],
+      "bones": {
+        "LeftShoulder": 0.5,
+        "LeftArm": 1.0,
+        "LeftForeArm": 1.0,
+        "LeftHand": 1.0,
+        "Spine2": 0.2,
+        "Chest": 0.3
+      },
+      "feathering": {
+        "enabled": true,
+        "depth": 1,
+        "falloff": "smooth",
+        "strength": 0.5,
+        "direction": "inward"
+      }
+    },
+    {
+      "id": "hit_reaction_upper_mask",
+      "name": "Hit Reaction (Upper)",
+      "description": "Upper body hit reactions with falloff",
+      "category": "combat",
+      "tags": ["hit", "reaction", "combat"],
+      "basedOn": "upper_body_mask",
+      "modifications": [
+        {
+          "operation": "multiply_weight",
+          "bones": ["Head", "Neck"],
+          "value": 0.5
+        },
+        {
+          "operation": "set_weight",
+          "bones": ["LeftHand", "RightHand"],
+          "value": 0.3,
+          "recursive": true
+        }
+      ],
+      "feathering": {
+        "enabled": true,
+        "depth": 2,
+        "falloff": "exponential",
+        "strength": 0.9
+      }
+    },
+    {
+      "id": "aim_offset_mask",
+      "name": "Aim Offset",
+      "description": "Spine and arms for aim offset layer",
+      "category": "combat",
+      "tags": ["aim", "offset", "ranged"],
+      "bones": {
+        "Spine1": 0.3,
+        "Spine2": 0.6,
+        "Chest": 0.8,
+        "Neck": 0.4,
+        "Head": 0.5,
+        "LeftShoulder": 0.7,
+        "LeftArm": 0.9,
+        "LeftForeArm": 1.0,
+        "LeftHand": 1.0,
+        "RightShoulder": 0.7,
+        "RightArm": 0.9,
+        "RightForeArm": 1.0,
+        "RightHand": 1.0
+      }
+    },
+    {
+      "id": "face_mask",
+      "name": "Face",
+      "description": "Facial bones for expressions",
+      "category": "facial",
+      "tags": ["face", "expression", "morph"],
+      "bones": {
+        "Head": 0.2
+      },
+      "boneGroups": [
+        {
+          "name": "Eyes",
+          "bones": ["LeftEye", "RightEye"],
+          "weight": 1.0
+        },
+        {
+          "name": "Jaw",
+          "bones": ["Jaw"],
+          "weight": 1.0
+        },
+        {
+          "name": "Brows",
+          "bones": ["LeftBrow", "RightBrow", "BrowCenter"],
+          "weight": 1.0
+        }
+      ]
+    },
+    {
+      "id": "look_at_mask",
+      "name": "Look At",
+      "description": "Head and eyes for look-at IK",
+      "category": "facial",
+      "tags": ["look", "eyes", "head"],
+      "bones": {
+        "Neck": 0.3,
+        "Head": 0.7,
+        "LeftEye": 1.0,
+        "RightEye": 1.0
+      }
+    },
+    {
+      "id": "additive_breathing_mask",
+      "name": "Breathing Additive",
+      "description": "Subtle breathing animation overlay",
+      "category": "special",
+      "tags": ["breathing", "additive", "idle"],
+      "bones": {
+        "Spine": 0.2,
+        "Spine1": 0.4,
+        "Spine2": 0.6,
+        "Chest": 0.8,
+        "LeftShoulder": 0.2,
+        "RightShoulder": 0.2
+      }
+    },
+    {
+      "id": "ik_feet_mask",
+      "name": "Foot IK",
+      "description": "Feet and lower legs for foot IK",
+      "category": "special",
+      "tags": ["ik", "feet", "ground"],
+      "bones": {
+        "LeftLeg": 0.3,
+        "LeftFoot": 1.0,
+        "LeftToeBase": 1.0,
+        "RightLeg": 0.3,
+        "RightFoot": 1.0,
+        "RightToeBase": 1.0
+      }
+    },
+    {
+      "id": "ik_hands_mask",
+      "name": "Hand IK",
+      "description": "Hands and forearms for hand IK",
+      "category": "special",
+      "tags": ["ik", "hands", "reach"],
+      "bones": {
+        "LeftForeArm": 0.3,
+        "LeftHand": 1.0,
+        "RightForeArm": 0.3,
+        "RightHand": 1.0
+      }
+    },
+    {
+      "id": "cape_physics_mask",
+      "name": "Cape/Cloth Physics",
+      "description": "Back bones for cape/cloth simulation influence",
+      "category": "special",
+      "tags": ["physics", "cloth", "cape"],
+      "bones": {
+        "Spine2": 0.2,
+        "Chest": 0.4
+      },
+      "boneGroups": [
+        {
+          "name": "Cape Bones",
+          "bones": ["Cape1", "Cape2", "Cape3", "Cape4"],
+          "weight": 1.0,
+          "includeChildren": true
+        }
+      ]
+    },
+    {
+      "id": "procedural_motion_mask",
+      "name": "Procedural Motion",
+      "description": "Bones affected by procedural animation",
+      "category": "special",
+      "tags": ["procedural", "secondary", "jiggle"],
+      "bones": {
+        "Head": 0.3,
+        "Chest": 0.2
+      },
+      "boneGroups": [
+        {
+          "name": "Hair",
+          "bones": ["Hair1", "Hair2", "Hair3"],
+          "weight": 1.0,
+          "includeChildren": true
+        },
+        {
+          "name": "Accessories",
+          "bones": ["Earring_L", "Earring_R", "Necklace"],
+          "weight": 1.0
+        }
+      ]
+    },
+    {
+      "id": "locomotion_only_mask",
+      "name": "Locomotion Only",
+      "description": "Lower body plus minimal spine for locomotion layer",
+      "category": "body_regions",
+      "tags": ["locomotion", "walk", "run"],
+      "basedOn": "lower_body_mask",
+      "modifications": [
+        {
+          "operation": "set_weight",
+          "bones": ["Spine"],
+          "value": 0.4
+        },
+        {
+          "operation": "set_weight",
+          "bones": ["Spine1"],
+          "value": 0.2
+        }
+      ]
+    },
+    {
+      "id": "inverse_upper_body_mask",
+      "name": "Inverse Upper Body",
+      "description": "Inverse of upper body mask",
+      "category": "body_regions",
+      "tags": ["inverse", "lower", "complement"],
+      "basedOn": "upper_body_mask",
+      "modifications": [
+        {
+          "operation": "invert"
+        }
+      ]
+    }
+  ]
+}

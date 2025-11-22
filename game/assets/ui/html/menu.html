@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Menu</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../css/ui_animations.css">
+</head>
+<body class="menu-body">
+    <div id="menu-container" class="menu-container">
+        <!-- Background -->
+        <div id="menu-background" class="menu-background"></div>
+
+        <!-- Logo -->
+        <div id="menu-logo" class="menu-logo">
+            <img src="" alt="Game Logo" id="logo-img">
+        </div>
+
+        <!-- Menu Content -->
+        <div class="menu-content">
+            <!-- Page Title -->
+            <h2 id="menu-title" class="menu-title"></h2>
+
+            <!-- Menu Items -->
+            <div id="menu-items" class="menu-items"></div>
+
+            <!-- Back Button -->
+            <button id="btn-back" class="menu-btn-back" onclick="Menu.back()" style="display: none;">
+                &lt; Back
+            </button>
+        </div>
+
+        <!-- Version -->
+        <div id="menu-version" class="menu-version"></div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const Menu = {
+            init: function() {
+                // Setup keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') this.back();
+                });
+            },
+
+            setBackground: function(data) {
+                const bg = document.getElementById('menu-background');
+                if (data.path) {
+                    bg.style.backgroundImage = `url('${data.path}')`;
+                }
+            },
+
+            setLogo: function(data) {
+                const logo = document.getElementById('logo-img');
+                if (data.path) {
+                    logo.src = data.path;
+                    logo.style.display = 'block';
+                }
+            },
+
+            setVersion: function(data) {
+                document.getElementById('menu-version').textContent = data.version || '';
+            },
+
+            setTitle: function(data) {
+                const title = document.getElementById('menu-title');
+                title.textContent = data.title || '';
+                title.style.display = data.title ? 'block' : 'none';
+            },
+
+            setItems: function(items) {
+                const container = document.getElementById('menu-items');
+                container.innerHTML = '';
+
+                items.forEach((item, index) => {
+                    const element = this.createMenuItem(item, index);
+                    container.appendChild(element);
+                });
+
+                // Show/hide back button
+                document.getElementById('btn-back').style.display =
+                    items.some(i => i.type === 'back') ? 'none' : 'block';
+            },
+
+            createMenuItem: function(item, index) {
+                const div = document.createElement('div');
+                div.className = 'menu-item' + (!item.enabled ? ' disabled' : '');
+                div.dataset.itemId = item.id;
+
+                switch (item.type) {
+                    case 0: // Button
+                        div.innerHTML = `<button class="menu-button" ${!item.enabled ? 'disabled' : ''}>${item.label}</button>`;
+                        div.querySelector('button').onclick = () => this.onItemClick(item.id);
+                        break;
+
+                    case 1: // Toggle
+                        div.innerHTML = `
+                            <span class="menu-item-label">${item.label}</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" ${item.value ? 'checked' : ''} ${!item.enabled ? 'disabled' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>`;
+                        div.querySelector('input').onchange = (e) => this.onToggle(item.id, e.target.checked);
+                        break;
+
+                    case 2: // Slider
+                        div.innerHTML = `
+                            <span class="menu-item-label">${item.label}</span>
+                            <div class="slider-container">
+                                <input type="range" min="${item.min}" max="${item.max}" step="${item.step}" value="${item.value}" ${!item.enabled ? 'disabled' : ''}>
+                                <span class="slider-value">${item.value}</span>
+                            </div>`;
+                        const slider = div.querySelector('input[type="range"]');
+                        const valueDisplay = div.querySelector('.slider-value');
+                        slider.oninput = (e) => {
+                            valueDisplay.textContent = e.target.value;
+                            this.onSlider(item.id, parseFloat(e.target.value));
+                        };
+                        break;
+
+                    case 3: // Dropdown
+                        let options = item.options.map((opt, i) =>
+                            `<option value="${i}" ${i === item.selected ? 'selected' : ''}>${opt}</option>`
+                        ).join('');
+                        div.innerHTML = `
+                            <span class="menu-item-label">${item.label}</span>
+                            <select class="menu-dropdown" ${!item.enabled ? 'disabled' : ''}>${options}</select>`;
+                        div.querySelector('select').onchange = (e) =>
+                            this.onDropdown(item.id, parseInt(e.target.value), e.target.options[e.target.selectedIndex].text);
+                        break;
+
+                    case 4: // KeyBind
+                        div.innerHTML = `
+                            <span class="menu-item-label">${item.label}</span>
+                            <button class="keybind-button" data-action="${item.action}">${item.key || 'Not Set'}</button>`;
+                        div.querySelector('button').onclick = () => this.startKeyCapture(item.action);
+                        break;
+
+                    case 5: // Separator
+                        div.className = 'menu-separator';
+                        div.innerHTML = `<hr><span>${item.label || ''}</span><hr>`;
+                        break;
+
+                    default:
+                        div.innerHTML = `<button class="menu-button">${item.label}</button>`;
+                        div.querySelector('button').onclick = () => this.onItemClick(item.id);
+                }
+
+                return div;
+            },
+
+            onItemClick: function(itemId) {
+                Engine.call('Menu.onItemClick', { itemId: itemId });
+            },
+
+            onToggle: function(itemId, value) {
+                Engine.call('Menu.onToggle', { itemId: itemId, value: value });
+            },
+
+            onSlider: function(itemId, value) {
+                Engine.call('Menu.onSlider', { itemId: itemId, value: value });
+            },
+
+            onDropdown: function(itemId, index, text) {
+                Engine.call('Menu.onDropdown', { itemId: itemId, index: index, text: text });
+            },
+
+            startKeyCapture: function(action) {
+                const btn = document.querySelector(`[data-action="${action}"]`);
+                if (btn) {
+                    btn.textContent = 'Press any key...';
+                    btn.classList.add('capturing');
+
+                    const handler = (e) => {
+                        e.preventDefault();
+                        btn.textContent = e.key;
+                        btn.classList.remove('capturing');
+                        Engine.call('Settings.onKeyPress', { action: action, key: e.key });
+                        document.removeEventListener('keydown', handler);
+                    };
+                    document.addEventListener('keydown', handler);
+                }
+            },
+
+            back: function() {
+                Engine.call('Menu.onBack', {});
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => Menu.init());
+        window.Menu = Menu;
+    </script>
+</body>
+</html>

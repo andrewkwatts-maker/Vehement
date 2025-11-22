@@ -1,0 +1,562 @@
+#include "UIWindow.hpp"
+#include "RuntimeUIManager.hpp"
+
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+
+namespace Engine {
+namespace UI {
+
+UIWindow::UIWindow(const std::string& id, RuntimeUIManager* manager)
+    : m_id(id)
+    , m_manager(manager)
+    , m_layer(UILayer::Windows)
+{
+}
+
+UIWindow::~UIWindow() = default;
+
+bool UIWindow::LoadHTML(const std::string& path) {
+    m_htmlPath = path;
+
+    // Read file
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    m_htmlContent = buffer.str();
+
+    return LoadHTMLString(m_htmlContent);
+}
+
+bool UIWindow::LoadHTMLString(const std::string& html) {
+    m_htmlContent = html;
+
+    // Parse HTML
+    auto& renderer = m_manager->GetRenderer();
+    m_rootElement = renderer.ParseHTML(html);
+
+    if (!m_rootElement) {
+        return false;
+    }
+
+    // Extract and parse embedded CSS
+    // Look for <style> tags
+    size_t styleStart = html.find("<style>");
+    while (styleStart != std::string::npos) {
+        size_t styleEnd = html.find("</style>", styleStart);
+        if (styleEnd != std::string::npos) {
+            std::string css = html.substr(styleStart + 7, styleEnd - styleStart - 7);
+            auto rules = renderer.ParseCSS(css);
+            m_styles.insert(m_styles.end(), rules.begin(), rules.end());
+        }
+        styleStart = html.find("<style>", styleEnd);
+    }
+
+    // Apply styles
+    ApplyStyles();
+
+    // Layout content
+    LayoutContent();
+
+    return true;
+}
+
+void UIWindow::Reload() {
+    if (!m_htmlPath.empty()) {
+        LoadHTML(m_htmlPath);
+    } else if (!m_htmlContent.empty()) {
+        LoadHTMLString(m_htmlContent);
+    }
+}
+
+void UIWindow::Show() {
+    m_visible = true;
+    if (m_state == WindowState::Closed) {
+        m_state = WindowState::Normal;
+    }
+}
+
+void UIWindow::Hide() {
+    m_visible = false;
+}
+
+void UIWindow::Close() {
+    m_visible = false;
+    m_state = WindowState::Closed;
+}
+
+void UIWindow::Minimize() {
+    if (m_state != WindowState::Minimized) {
+        m_savedX = m_x;
+        m_savedY = m_y;
+        m_savedWidth = m_width;
+        m_savedHeight = m_height;
+        m_state = WindowState::Minimized;
+        m_height = TITLE_BAR_HEIGHT;
+    }
+}
+
+void UIWindow::Maximize() {
+    if (m_state != WindowState::Maximized) {
+        m_savedX = m_x;
+        m_savedY = m_y;
+        m_savedWidth = m_width;
+        m_savedHeight = m_height;
+        m_state = WindowState::Maximized;
+
+        // Get viewport size from manager
+        m_x = 0;
+        m_y = 0;
+        // Would get actual viewport size in production
+        m_width = 1920;
+        m_height = 1080;
+
+        LayoutContent();
+    }
+}
+
+void UIWindow::Restore() {
+    if (m_state == WindowState::Minimized || m_state == WindowState::Maximized) {
+        m_x = m_savedX;
+        m_y = m_savedY;
+        m_width = m_savedWidth;
+        m_height = m_savedHeight;
+        m_state = WindowState::Normal;
+
+        LayoutContent();
+    }
+}
+
+void UIWindow::Move(int x, int y) {
+    m_x = x;
+    m_y = y;
+}
+
+void UIWindow::Resize(int width, int height) {
+    // Apply constraints
+    if (m_minWidth > 0) width = std::max(width, m_minWidth);
+    if (m_minHeight > 0) height = std::max(height, m_minHeight);
+    if (m_maxWidth > 0) width = std::min(width, m_maxWidth);
+    if (m_maxHeight > 0) height = std::min(height, m_maxHeight);
+
+    m_width = width;
+    m_height = height;
+
+    LayoutContent();
+}
+
+void UIWindow::SetBounds(int x, int y, int width, int height) {
+    Move(x, y);
+    Resize(width, height);
+}
+
+void UIWindow::Center() {
+    // Would get actual viewport size
+    int viewportWidth = 1920;
+    int viewportHeight = 1080;
+
+    m_x = (viewportWidth - m_width) / 2;
+    m_y = (viewportHeight - m_height) / 2;
+}
+
+void UIWindow::SetMinSize(int minWidth, int minHeight) {
+    m_minWidth = minWidth;
+    m_minHeight = minHeight;
+
+    // Apply constraints if needed
+    if (m_width < m_minWidth) Resize(m_minWidth, m_height);
+    if (m_height < m_minHeight) Resize(m_width, m_minHeight);
+}
+
+void UIWindow::SetMaxSize(int maxWidth, int maxHeight) {
+    m_maxWidth = maxWidth;
+    m_maxHeight = maxHeight;
+
+    // Apply constraints if needed
+    if (m_maxWidth > 0 && m_width > m_maxWidth) Resize(m_maxWidth, m_height);
+    if (m_maxHeight > 0 && m_height > m_maxHeight) Resize(m_width, m_maxHeight);
+}
+
+void UIWindow::SetTitle(const std::string& title) {
+    m_title = title;
+    UpdateTitleBar();
+}
+
+void UIWindow::SetTitleBarVisible(bool visible) {
+    m_showTitleBar = visible;
+    LayoutContent();
+}
+
+void UIWindow::SetResizable(bool resizable) {
+    m_resizable = resizable;
+}
+
+void UIWindow::SetDraggable(bool draggable) {
+    m_draggable = draggable;
+}
+
+void UIWindow::SetBackgroundColor(const Color& color) {
+    m_backgroundColor = color;
+}
+
+void UIWindow::SetOpacity(float opacity) {
+    m_opacity = std::max(0.0f, std::min(1.0f, opacity));
+}
+
+void UIWindow::SetLayer(UILayer layer) {
+    m_layer = layer;
+}
+
+void UIWindow::SetZIndex(int zIndex) {
+    m_zIndex = zIndex;
+}
+
+void UIWindow::SetModal(bool modal) {
+    m_modal = modal;
+}
+
+void UIWindow::SetCallback(std::function<void(ModalResult, const std::string&)> callback) {
+    m_modalCallback = callback;
+}
+
+std::string UIWindow::AddTab(const TabData& tabData) {
+    TabData tab = tabData;
+    if (tab.id.empty()) {
+        tab.id = "tab_" + std::to_string(m_tabs.size());
+    }
+
+    // Load tab content if path provided
+    if (!tab.htmlPath.empty()) {
+        auto& renderer = m_manager->GetRenderer();
+        std::ifstream file(tab.htmlPath);
+        if (file.is_open()) {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            tab.content = renderer.ParseHTML(buffer.str());
+        }
+    }
+
+    m_tabs.push_back(std::move(tab));
+
+    // Set as active if first tab
+    if (m_tabs.size() == 1) {
+        SetActiveTab(m_tabs[0].id);
+    }
+
+    UpdateTitleBar();
+    return m_tabs.back().id;
+}
+
+void UIWindow::RemoveTab(const std::string& tabId) {
+    auto it = std::find_if(m_tabs.begin(), m_tabs.end(),
+        [&](const TabData& tab) { return tab.id == tabId; });
+
+    if (it != m_tabs.end()) {
+        bool wasActive = it->active;
+        m_tabs.erase(it);
+
+        // Set new active tab if needed
+        if (wasActive && !m_tabs.empty()) {
+            SetActiveTab(m_tabs[0].id);
+        }
+
+        UpdateTitleBar();
+    }
+}
+
+void UIWindow::SetActiveTab(const std::string& tabId) {
+    for (auto& tab : m_tabs) {
+        tab.active = (tab.id == tabId);
+        if (tab.active) {
+            m_activeTabId = tabId;
+        }
+    }
+
+    LayoutContent();
+}
+
+std::string UIWindow::GetActiveTab() const {
+    return m_activeTabId;
+}
+
+void UIWindow::ReorderTabs(const std::vector<std::string>& tabOrder) {
+    std::vector<TabData> reorderedTabs;
+
+    for (const auto& id : tabOrder) {
+        auto it = std::find_if(m_tabs.begin(), m_tabs.end(),
+            [&](const TabData& tab) { return tab.id == id; });
+        if (it != m_tabs.end()) {
+            reorderedTabs.push_back(std::move(*it));
+        }
+    }
+
+    m_tabs = std::move(reorderedTabs);
+    UpdateTitleBar();
+}
+
+void UIWindow::SetDockPosition(DockPosition position) {
+    m_dockPosition = position;
+
+    // Adjust window based on dock position
+    switch (position) {
+        case DockPosition::Left:
+            m_x = 0;
+            m_y = 0;
+            m_width = 300; // Default dock width
+            m_height = 1080; // Full height
+            break;
+        case DockPosition::Right:
+            m_x = 1920 - 300;
+            m_y = 0;
+            m_width = 300;
+            m_height = 1080;
+            break;
+        case DockPosition::Top:
+            m_x = 0;
+            m_y = 0;
+            m_width = 1920;
+            m_height = 200;
+            break;
+        case DockPosition::Bottom:
+            m_x = 0;
+            m_y = 1080 - 200;
+            m_width = 1920;
+            m_height = 200;
+            break;
+        default:
+            break;
+    }
+
+    LayoutContent();
+}
+
+void UIWindow::Undock() {
+    m_dockPosition = DockPosition::None;
+    m_dockedToWindow.clear();
+}
+
+void UIWindow::DockTo(const std::string& targetWindowId, DockPosition position) {
+    m_dockedToWindow = targetWindowId;
+    m_dockPosition = position;
+}
+
+WindowLayout UIWindow::GetLayout() const {
+    WindowLayout layout;
+    layout.id = m_id;
+    layout.x = m_x;
+    layout.y = m_y;
+    layout.width = m_width;
+    layout.height = m_height;
+    layout.state = m_state;
+    layout.dockPosition = m_dockPosition;
+    layout.visible = m_visible;
+    layout.activeTab = m_activeTabId;
+
+    for (const auto& tab : m_tabs) {
+        layout.tabOrder.push_back(tab.id);
+    }
+
+    return layout;
+}
+
+void UIWindow::ApplyLayout(const WindowLayout& layout) {
+    m_x = layout.x;
+    m_y = layout.y;
+    m_width = layout.width;
+    m_height = layout.height;
+    m_state = layout.state;
+    m_dockPosition = layout.dockPosition;
+    m_visible = layout.visible;
+
+    if (!layout.tabOrder.empty()) {
+        ReorderTabs(layout.tabOrder);
+    }
+
+    if (!layout.activeTab.empty()) {
+        SetActiveTab(layout.activeTab);
+    }
+
+    LayoutContent();
+}
+
+DOMElement* UIWindow::GetElementById(const std::string& id) {
+    if (m_rootElement) {
+        return m_rootElement->FindById(id);
+    }
+    return nullptr;
+}
+
+std::vector<DOMElement*> UIWindow::GetElementsByClass(const std::string& className) {
+    if (m_rootElement) {
+        return m_rootElement->FindByClass(className);
+    }
+    return {};
+}
+
+DOMElement* UIWindow::QuerySelector(const std::string& selector) {
+    if (m_rootElement) {
+        return m_rootElement->QuerySelector(selector);
+    }
+    return nullptr;
+}
+
+std::vector<DOMElement*> UIWindow::QuerySelectorAll(const std::string& selector) {
+    if (m_rootElement) {
+        return m_rootElement->QuerySelectorAll(selector);
+    }
+    return {};
+}
+
+std::string UIWindow::ExecuteScript(const std::string& script) {
+    // JavaScript execution would be handled by embedded JS engine
+    // This is a placeholder that stores script for later execution
+    return "";
+}
+
+std::string UIWindow::CallFunction(const std::string& functionName, const std::vector<std::string>& args) {
+    std::string script = functionName + "(";
+    for (size_t i = 0; i < args.size(); ++i) {
+        if (i > 0) script += ",";
+        script += "\"" + args[i] + "\"";
+    }
+    script += ")";
+
+    return ExecuteScript(script);
+}
+
+bool UIWindow::HitTest(int x, int y) const {
+    return x >= m_x && x < m_x + m_width &&
+           y >= m_y && y < m_y + m_height;
+}
+
+bool UIWindow::IsTitleBarHit(int x, int y) const {
+    if (!m_showTitleBar || !m_draggable) return false;
+
+    return x >= m_x && x < m_x + m_width &&
+           y >= m_y && y < m_y + TITLE_BAR_HEIGHT;
+}
+
+int UIWindow::GetResizeHandle(int x, int y) const {
+    if (!m_resizable) return 0;
+
+    int handle = 0;
+
+    // Check edges
+    if (x >= m_x && x < m_x + RESIZE_BORDER) handle |= 1; // Left
+    if (x >= m_x + m_width - RESIZE_BORDER && x < m_x + m_width) handle |= 2; // Right
+    if (y >= m_y && y < m_y + RESIZE_BORDER) handle |= 4; // Top
+    if (y >= m_y + m_height - RESIZE_BORDER && y < m_y + m_height) handle |= 8; // Bottom
+
+    return handle;
+}
+
+void UIWindow::OnFocusGained() {
+    m_focused = true;
+
+    // Trigger focus event on root element
+    if (m_rootElement) {
+        auto it = m_rootElement->eventHandlers.find("focus");
+        if (it != m_rootElement->eventHandlers.end()) {
+            it->second("");
+        }
+    }
+}
+
+void UIWindow::OnFocusLost() {
+    m_focused = false;
+
+    // Trigger blur event on root element
+    if (m_rootElement) {
+        auto it = m_rootElement->eventHandlers.find("blur");
+        if (it != m_rootElement->eventHandlers.end()) {
+            it->second("");
+        }
+    }
+}
+
+void UIWindow::OnViewportResize(int viewportWidth, int viewportHeight) {
+    // Adjust position if window is outside viewport
+    if (m_x + m_width > viewportWidth) {
+        m_x = std::max(0, viewportWidth - m_width);
+    }
+    if (m_y + m_height > viewportHeight) {
+        m_y = std::max(0, viewportHeight - m_height);
+    }
+
+    // If maximized, resize to new viewport
+    if (m_state == WindowState::Maximized) {
+        m_width = viewportWidth;
+        m_height = viewportHeight;
+        LayoutContent();
+    }
+
+    // Handle docked windows
+    switch (m_dockPosition) {
+        case DockPosition::Left:
+            m_height = viewportHeight;
+            break;
+        case DockPosition::Right:
+            m_x = viewportWidth - m_width;
+            m_height = viewportHeight;
+            break;
+        case DockPosition::Top:
+            m_width = viewportWidth;
+            break;
+        case DockPosition::Bottom:
+            m_y = viewportHeight - m_height;
+            m_width = viewportWidth;
+            break;
+        default:
+            break;
+    }
+}
+
+void UIWindow::Update(float deltaTime) {
+    // Update animations, transitions, etc.
+    // This would integrate with UIAnimation system
+}
+
+void UIWindow::UpdateTitleBar() {
+    // Update title bar DOM elements if they exist
+    if (auto* titleElement = GetElementById("window-title")) {
+        titleElement->textContent = m_title;
+    }
+}
+
+void UIWindow::LayoutContent() {
+    if (!m_rootElement) return;
+
+    // Calculate content area
+    int contentX = 0;
+    int contentY = m_showTitleBar ? TITLE_BAR_HEIGHT : 0;
+    int contentWidth = m_width;
+    int contentHeight = m_height - contentY;
+
+    // If we have tabs, account for tab bar
+    if (!m_tabs.empty()) {
+        contentY += 30; // Tab bar height
+        contentHeight -= 30;
+    }
+
+    // Compute layout for DOM tree
+    auto& renderer = m_manager->GetRenderer();
+    renderer.ComputeStyles(m_rootElement.get(), m_styles);
+    renderer.ComputeLayout(m_rootElement.get(),
+                          static_cast<float>(contentWidth),
+                          static_cast<float>(contentHeight));
+}
+
+void UIWindow::ApplyStyles() {
+    if (!m_rootElement) return;
+
+    auto& renderer = m_manager->GetRenderer();
+    renderer.ComputeStyles(m_rootElement.get(), m_styles);
+}
+
+} // namespace UI
+} // namespace Engine

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tooltip</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+</head>
+<body>
+    <!-- Generic Tooltip Container -->
+    <div id="tooltip" class="tooltip" style="display: none;">
+        <div id="tooltip-content" class="tooltip-content"></div>
+    </div>
+
+    <!-- Item Tooltip Template -->
+    <template id="item-tooltip-template">
+        <div class="item-tooltip">
+            <div class="tooltip-header">
+                <span class="item-name"></span>
+                <span class="item-rarity"></span>
+            </div>
+            <div class="tooltip-type"></div>
+            <div class="tooltip-stats"></div>
+            <div class="tooltip-description"></div>
+            <div class="tooltip-requirements"></div>
+            <div class="tooltip-footer">
+                <span class="item-value"></span>
+                <span class="item-stack"></span>
+            </div>
+        </div>
+    </template>
+
+    <!-- Ability Tooltip Template -->
+    <template id="ability-tooltip-template">
+        <div class="ability-tooltip">
+            <div class="tooltip-header">
+                <span class="ability-name"></span>
+                <span class="ability-hotkey"></span>
+            </div>
+            <div class="ability-cost">
+                <span class="mana-cost"></span>
+                <span class="cooldown"></span>
+            </div>
+            <div class="ability-description"></div>
+            <div class="ability-effects"></div>
+        </div>
+    </template>
+
+    <!-- Unit Tooltip Template -->
+    <template id="unit-tooltip-template">
+        <div class="unit-tooltip">
+            <div class="tooltip-header">
+                <span class="unit-name"></span>
+                <span class="unit-level"></span>
+            </div>
+            <div class="unit-type"></div>
+            <div class="unit-stats">
+                <div class="stat-row"><span>Health:</span><span class="stat-value health"></span></div>
+                <div class="stat-row"><span>Attack:</span><span class="stat-value attack"></span></div>
+                <div class="stat-row"><span>Defense:</span><span class="stat-value defense"></span></div>
+            </div>
+            <div class="unit-abilities"></div>
+        </div>
+    </template>
+
+    <script>
+        const Tooltip = {
+            element: null,
+            offset: { x: 15, y: 15 },
+            visible: false,
+
+            init: function() {
+                this.element = document.getElementById('tooltip');
+
+                // Follow mouse
+                document.addEventListener('mousemove', (e) => {
+                    if (this.visible) {
+                        this.position(e.clientX, e.clientY);
+                    }
+                });
+            },
+
+            show: function(html, x, y) {
+                const content = document.getElementById('tooltip-content');
+                content.innerHTML = html;
+
+                this.element.style.display = 'block';
+                this.visible = true;
+
+                this.position(x, y);
+            },
+
+            hide: function() {
+                this.element.style.display = 'none';
+                this.visible = false;
+            },
+
+            position: function(x, y) {
+                const tooltip = this.element;
+                const rect = tooltip.getBoundingClientRect();
+
+                let left = x + this.offset.x;
+                let top = y + this.offset.y;
+
+                // Keep within viewport
+                if (left + rect.width > window.innerWidth) {
+                    left = x - rect.width - this.offset.x;
+                }
+                if (top + rect.height > window.innerHeight) {
+                    top = y - rect.height - this.offset.y;
+                }
+
+                tooltip.style.left = Math.max(0, left) + 'px';
+                tooltip.style.top = Math.max(0, top) + 'px';
+            },
+
+            showItem: function(item, x, y) {
+                const template = document.getElementById('item-tooltip-template');
+                const content = template.content.cloneNode(true);
+
+                content.querySelector('.item-name').textContent = item.name;
+                content.querySelector('.item-name').className = 'item-name rarity-' + item.rarity;
+                content.querySelector('.item-rarity').textContent = item.rarity;
+                content.querySelector('.tooltip-type').textContent = item.type;
+                content.querySelector('.tooltip-description').textContent = item.description || '';
+
+                // Stats
+                const statsContainer = content.querySelector('.tooltip-stats');
+                if (item.stats) {
+                    Object.entries(item.stats).forEach(([stat, value]) => {
+                        const statEl = document.createElement('div');
+                        statEl.className = 'stat-row';
+                        statEl.innerHTML = `<span>${stat}:</span><span class="stat-value">${value}</span>`;
+                        statsContainer.appendChild(statEl);
+                    });
+                }
+
+                // Requirements
+                const reqContainer = content.querySelector('.tooltip-requirements');
+                if (item.requirements) {
+                    reqContainer.innerHTML = '<div class="req-header">Requirements:</div>';
+                    Object.entries(item.requirements).forEach(([req, value]) => {
+                        const reqEl = document.createElement('div');
+                        reqEl.className = 'req-row';
+                        reqEl.textContent = `${req}: ${value}`;
+                        reqContainer.appendChild(reqEl);
+                    });
+                }
+
+                // Value and stack
+                if (item.value) {
+                    content.querySelector('.item-value').textContent = `Value: ${item.value}g`;
+                }
+                if (item.stackCount > 1) {
+                    content.querySelector('.item-stack').textContent = `Stack: ${item.stackCount}/${item.maxStack}`;
+                }
+
+                const div = document.createElement('div');
+                div.appendChild(content);
+                this.show(div.innerHTML, x, y);
+            },
+
+            showAbility: function(ability, x, y) {
+                const template = document.getElementById('ability-tooltip-template');
+                const content = template.content.cloneNode(true);
+
+                content.querySelector('.ability-name').textContent = ability.name;
+                content.querySelector('.ability-hotkey').textContent = ability.hotkey ? `[${ability.hotkey}]` : '';
+                content.querySelector('.mana-cost').textContent = ability.manaCost ? `${ability.manaCost} Mana` : '';
+                content.querySelector('.cooldown').textContent = ability.cooldown ? `${ability.cooldown}s Cooldown` : '';
+                content.querySelector('.ability-description').textContent = ability.description || '';
+
+                // Effects
+                const effectsContainer = content.querySelector('.ability-effects');
+                if (ability.effects) {
+                    ability.effects.forEach(effect => {
+                        const effectEl = document.createElement('div');
+                        effectEl.className = 'effect-row';
+                        effectEl.textContent = effect;
+                        effectsContainer.appendChild(effectEl);
+                    });
+                }
+
+                const div = document.createElement('div');
+                div.appendChild(content);
+                this.show(div.innerHTML, x, y);
+            },
+
+            showUnit: function(unit, x, y) {
+                const template = document.getElementById('unit-tooltip-template');
+                const content = template.content.cloneNode(true);
+
+                content.querySelector('.unit-name').textContent = unit.name;
+                content.querySelector('.unit-level').textContent = unit.level ? `Lv.${unit.level}` : '';
+                content.querySelector('.unit-type').textContent = unit.type || '';
+                content.querySelector('.stat-value.health').textContent = `${unit.health}/${unit.maxHealth}`;
+                content.querySelector('.stat-value.attack').textContent = unit.attack || '0';
+                content.querySelector('.stat-value.defense').textContent = unit.defense || '0';
+
+                const div = document.createElement('div');
+                div.appendChild(content);
+                this.show(div.innerHTML, x, y);
+            },
+
+            showText: function(text, x, y) {
+                this.show(`<div class="simple-tooltip">${text}</div>`, x, y);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => Tooltip.init());
+
+        // Expose to engine
+        window.UI = window.UI || {};
+        Object.assign(window.UI, {
+            showTooltip: (data) => Tooltip.show(data.html, data.x, data.y),
+            hideTooltip: () => Tooltip.hide(),
+            showItemTooltip: (data) => Tooltip.showItem(data, data.x, data.y),
+            showAbilityTooltip: (data) => Tooltip.showAbility(data, data.x, data.y)
+        });
+    </script>
+</body>
+</html>

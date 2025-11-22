@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+</head>
+<body>
+    <div class="settings-panel">
+        <!-- Categories Sidebar -->
+        <div class="settings-sidebar">
+            <div id="settings-categories" class="settings-categories"></div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-content">
+            <h2 id="settings-category-title" class="settings-title">Settings</h2>
+            <div id="settings-items" class="settings-items"></div>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="settings-footer">
+            <button class="btn-secondary" onclick="Settings.reset()">Reset to Default</button>
+            <button class="btn-secondary" onclick="Settings.cancel()">Cancel</button>
+            <button class="btn-primary" onclick="Settings.apply()">Apply</button>
+        </div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const Settings = {
+            categories: [],
+            currentCategory: null,
+            values: {},
+            originalValues: {},
+
+            init: function() {
+                this.originalValues = JSON.parse(JSON.stringify(this.values));
+            },
+
+            setCategories: function(categories) {
+                this.categories = categories;
+                const container = document.getElementById('settings-categories');
+                container.innerHTML = '';
+
+                categories.forEach((cat, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn' + (index === 0 ? ' active' : '');
+                    btn.innerHTML = `<img src="${cat.icon}" alt=""><span>${cat.name}</span>`;
+                    btn.onclick = () => this.selectCategory(cat.id);
+                    container.appendChild(btn);
+                });
+
+                if (categories.length > 0) {
+                    this.selectCategory(categories[0].id);
+                }
+            },
+
+            selectCategory: function(categoryId) {
+                this.currentCategory = categoryId;
+
+                // Update active button
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                const activeBtn = document.querySelector(`.category-btn:has(span:contains("${categoryId}"))`);
+                if (activeBtn) activeBtn.classList.add('active');
+
+                Engine.call('Settings.onCategorySelect', { id: categoryId });
+            },
+
+            setSettings: function(settings) {
+                const container = document.getElementById('settings-items');
+                container.innerHTML = '';
+
+                settings.forEach(setting => {
+                    const item = this.createSettingItem(setting);
+                    container.appendChild(item);
+                });
+            },
+
+            createSettingItem: function(setting) {
+                const div = document.createElement('div');
+                div.className = 'setting-item';
+                div.dataset.settingId = setting.id;
+
+                let control = '';
+                switch (setting.type) {
+                    case 'toggle':
+                        control = `
+                            <label class="toggle-switch">
+                                <input type="checkbox" ${setting.value ? 'checked' : ''} data-setting="${setting.id}">
+                                <span class="toggle-slider"></span>
+                            </label>`;
+                        break;
+
+                    case 'slider':
+                        control = `
+                            <div class="setting-slider">
+                                <input type="range" min="${setting.min || 0}" max="${setting.max || 100}"
+                                       step="${setting.step || 1}" value="${setting.value || 50}" data-setting="${setting.id}">
+                                <span class="value">${setting.value || 50}${setting.unit || ''}</span>
+                            </div>`;
+                        break;
+
+                    case 'dropdown':
+                        const options = setting.options.map((opt, i) =>
+                            `<option value="${i}" ${i === setting.value ? 'selected' : ''}>${opt}</option>`
+                        ).join('');
+                        control = `<select class="setting-dropdown" data-setting="${setting.id}">${options}</select>`;
+                        break;
+
+                    case 'keybind':
+                        control = `<button class="keybind-btn" data-action="${setting.action}">${setting.value || 'Not Set'}</button>`;
+                        break;
+
+                    case 'color':
+                        control = `<input type="color" value="${setting.value || '#ffffff'}" data-setting="${setting.id}">`;
+                        break;
+
+                    case 'text':
+                        control = `<input type="text" value="${setting.value || ''}" data-setting="${setting.id}">`;
+                        break;
+                }
+
+                div.innerHTML = `
+                    <div class="setting-label">
+                        <span class="label-text">${setting.label}</span>
+                        ${setting.description ? `<span class="label-desc">${setting.description}</span>` : ''}
+                    </div>
+                    <div class="setting-control">${control}</div>`;
+
+                // Setup event handlers
+                const input = div.querySelector('[data-setting]');
+                if (input) {
+                    input.addEventListener('change', (e) => {
+                        let value = e.target.type === 'checkbox' ? e.target.checked :
+                                   e.target.type === 'range' ? parseFloat(e.target.value) :
+                                   e.target.value;
+                        this.setValue(setting.id, value);
+
+                        // Update display for sliders
+                        const valueSpan = div.querySelector('.value');
+                        if (valueSpan) valueSpan.textContent = value + (setting.unit || '');
+                    });
+
+                    if (input.type === 'range') {
+                        input.addEventListener('input', (e) => {
+                            const valueSpan = div.querySelector('.value');
+                            if (valueSpan) valueSpan.textContent = e.target.value + (setting.unit || '');
+                        });
+                    }
+                }
+
+                const keybindBtn = div.querySelector('.keybind-btn');
+                if (keybindBtn) {
+                    keybindBtn.addEventListener('click', () => this.startKeyCapture(setting.action));
+                }
+
+                return div;
+            },
+
+            setValue: function(settingId, value) {
+                this.values[settingId] = value;
+                Engine.call('Settings.onValueChange', { setting: settingId, value: value });
+            },
+
+            startKeyCapture: function(action) {
+                Engine.call('Settings.startKeyCapture', { action: action });
+            },
+
+            showKeyBindings: function() {
+                // Switch to key bindings view
+            },
+
+            setKeyBindings: function(bindings) {
+                // Update key binding display
+                Object.entries(bindings).forEach(([action, key]) => {
+                    const btn = document.querySelector(`[data-action="${action}"]`);
+                    if (btn) btn.textContent = key;
+                });
+            },
+
+            updateKeyBind: function(data) {
+                const btn = document.querySelector(`[data-action="${data.action}"]`);
+                if (btn) {
+                    btn.textContent = data.key;
+                    btn.classList.remove('capturing');
+                }
+            },
+
+            apply: function() {
+                this.originalValues = JSON.parse(JSON.stringify(this.values));
+                Engine.call('Settings.onApply', this.values);
+            },
+
+            cancel: function() {
+                this.values = JSON.parse(JSON.stringify(this.originalValues));
+                Engine.call('Settings.onCancel', {});
+            },
+
+            reset: function() {
+                Engine.call('Settings.onReset', {});
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => Settings.init());
+        window.Settings = Settings;
+    </script>
+</body>
+</html>

@@ -322,4 +322,65 @@ private:
     Config m_config;
 };
 
+/**
+ * @brief Platform-native location provider
+ *
+ * Wraps the Nova::Platform::ILocationService to work with
+ * the Vehement ILocationProvider interface.
+ */
+class PlatformLocationProvider : public ILocationProvider {
+public:
+    PlatformLocationProvider();
+    ~PlatformLocationProvider() override;
+
+    void RequestLocation(std::function<void(std::optional<GPSCoordinates>)> callback) override;
+    [[nodiscard]] bool IsAvailable() const override;
+    [[nodiscard]] std::string GetName() const override;
+
+    /**
+     * @brief Request location permission
+     * @param alwaysAccess Request background location access
+     */
+    bool RequestPermission(bool alwaysAccess = false);
+
+    /**
+     * @brief Check if permission is granted
+     */
+    [[nodiscard]] bool HasPermission() const;
+
+    /**
+     * @brief Start continuous location updates
+     */
+    void StartContinuousUpdates(std::function<void(GPSCoordinates)> callback);
+
+    /**
+     * @brief Stop continuous updates
+     */
+    void StopContinuousUpdates();
+
+    /**
+     * @brief Check if updates are active
+     */
+    [[nodiscard]] bool IsUpdating() const;
+
+    /**
+     * @brief Check if location appears to be mocked/spoofed
+     */
+    [[nodiscard]] bool IsMockLocationDetected() const;
+
+    /**
+     * @brief Set whether to reject mock locations
+     */
+    void SetRejectMockLocations(bool reject);
+
+    /**
+     * @brief Get platform service name
+     */
+    [[nodiscard]] std::string GetPlatformServiceName() const;
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> m_impl;
+};
+
 } // namespace Vehement

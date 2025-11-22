@@ -1,0 +1,427 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "blend_mask.schema.json",
+  "title": "Blend Mask Configuration",
+  "description": "Schema for animation blend masks and mask libraries",
+  "type": "object",
+
+  "oneOf": [
+    { "$ref": "#/definitions/singleMask" },
+    { "$ref": "#/definitions/maskLibrary" }
+  ],
+
+  "definitions": {
+    "singleMask": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique mask identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Mask description"
+        },
+        "type": {
+          "const": "mask",
+          "description": "Document type identifier"
+        },
+        "skeleton": {
+          "type": "string",
+          "description": "Target skeleton (for validation)"
+        },
+        "preset": {
+          "$ref": "#/definitions/maskPreset",
+          "description": "Start from a preset"
+        },
+        "bones": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/boneWeight" },
+          "description": "Per-bone weight configuration"
+        },
+        "boneGroups": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/boneGroup" },
+          "description": "Grouped bone selections"
+        },
+        "includeBones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bones to include (weight 1.0)"
+        },
+        "excludeBones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bones to exclude (weight 0.0)"
+        },
+        "feathering": {
+          "$ref": "#/definitions/featheringConfig",
+          "description": "Feathering/falloff settings"
+        },
+        "mirroring": {
+          "$ref": "#/definitions/mirroringConfig",
+          "description": "Symmetry configuration"
+        },
+        "operations": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/maskOperation" },
+          "description": "Operations to build mask procedurally"
+        }
+      }
+    },
+
+    "maskLibrary": {
+      "type": "object",
+      "required": ["type", "masks"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Library identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Library display name"
+        },
+        "type": {
+          "const": "mask_library",
+          "description": "Document type identifier"
+        },
+        "skeleton": {
+          "type": "string",
+          "description": "Target skeleton for all masks"
+        },
+        "masks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/libraryMask" },
+          "description": "Masks in this library"
+        },
+        "categories": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/maskCategory" },
+          "description": "Mask categories for organization"
+        }
+      }
+    },
+
+    "libraryMask": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category for organization"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Searchable tags"
+        },
+        "preset": {
+          "$ref": "#/definitions/maskPreset"
+        },
+        "bones": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/boneWeight" }
+        },
+        "boneGroups": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/boneGroup" }
+        },
+        "includeBones": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "excludeBones": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "feathering": {
+          "$ref": "#/definitions/featheringConfig"
+        },
+        "basedOn": {
+          "type": "string",
+          "description": "Inherit from another mask in library"
+        },
+        "modifications": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/maskOperation" },
+          "description": "Modifications to base mask"
+        }
+      }
+    },
+
+    "maskPreset": {
+      "enum": [
+        "full_body",
+        "upper_body",
+        "lower_body",
+        "left_arm",
+        "right_arm",
+        "left_leg",
+        "right_leg",
+        "spine",
+        "head",
+        "hands",
+        "feet",
+        "fingers",
+        "face",
+        "torso",
+        "arms",
+        "legs"
+      ],
+      "description": "Built-in mask preset"
+    },
+
+    "boneWeight": {
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Simple weight value"
+        },
+        {
+          "type": "object",
+          "required": ["weight"],
+          "properties": {
+            "weight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "includeChildren": {
+              "type": "boolean",
+              "default": true,
+              "description": "Apply weight to child bones"
+            },
+            "childrenWeight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Override weight for children"
+            },
+            "childrenFalloff": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight falloff per child level"
+            },
+            "blendMode": {
+              "enum": ["set", "add", "multiply", "min", "max"],
+              "default": "set",
+              "description": "How to apply this weight"
+            }
+          }
+        }
+      ]
+    },
+
+    "boneGroup": {
+      "type": "object",
+      "required": ["name", "bones"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Group name"
+        },
+        "bones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bones in this group"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "includeChildren": {
+          "type": "boolean",
+          "default": true
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+
+    "featheringConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "depth": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Number of bone levels to feather"
+        },
+        "falloff": {
+          "enum": ["linear", "smooth", "exponential"],
+          "default": "linear",
+          "description": "Falloff curve type"
+        },
+        "strength": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Feathering intensity"
+        },
+        "direction": {
+          "enum": ["outward", "inward", "both"],
+          "default": "outward",
+          "description": "Feathering direction"
+        },
+        "boundaryBones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bones where feathering applies"
+        }
+      }
+    },
+
+    "mirroringConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "axis": {
+          "enum": ["x", "y", "z"],
+          "default": "x",
+          "description": "Mirror axis"
+        },
+        "leftPrefix": {
+          "type": "string",
+          "default": "L_",
+          "description": "Left side bone prefix"
+        },
+        "rightPrefix": {
+          "type": "string",
+          "default": "R_",
+          "description": "Right side bone prefix"
+        },
+        "leftSuffix": {
+          "type": "string",
+          "default": "_L",
+          "description": "Left side bone suffix"
+        },
+        "rightSuffix": {
+          "type": "string",
+          "default": "_R",
+          "description": "Right side bone suffix"
+        },
+        "centerBones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bones on center line (not mirrored)"
+        },
+        "customPairs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["left", "right"],
+            "properties": {
+              "left": { "type": "string" },
+              "right": { "type": "string" }
+            }
+          },
+          "description": "Custom bone pair mappings"
+        }
+      }
+    },
+
+    "maskOperation": {
+      "type": "object",
+      "required": ["operation"],
+      "properties": {
+        "operation": {
+          "enum": [
+            "set_weight",
+            "add_weight",
+            "multiply_weight",
+            "invert",
+            "expand",
+            "contract",
+            "smooth",
+            "union",
+            "intersect",
+            "subtract",
+            "mirror",
+            "apply_preset",
+            "include_hierarchy",
+            "exclude_hierarchy"
+          ],
+          "description": "Operation type"
+        },
+        "bones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Target bones for operation"
+        },
+        "value": {
+          "type": "number",
+          "description": "Value parameter for operation"
+        },
+        "otherMask": {
+          "type": "string",
+          "description": "Other mask ID for binary operations"
+        },
+        "preset": {
+          "$ref": "#/definitions/maskPreset",
+          "description": "Preset for apply_preset operation"
+        },
+        "recursive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Apply to child bones"
+        }
+      }
+    },
+
+    "maskCategory": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Category color for editor"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Category icon name"
+        }
+      }
+    }
+  }
+}

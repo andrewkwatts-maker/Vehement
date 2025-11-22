@@ -813,10 +813,23 @@ void UnitBrowser::RenderUnitCard(const UnitStats& unit) {
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Duplicate")) {
-            // TODO: Duplicate
+            // Duplicate the unit with a new ID
+            UnitEntry newUnit = unit;
+            newUnit.id = "copy_" + unit.id + "_" + std::to_string(rand() % 1000);
+            newUnit.name = unit.name + " (Copy)";
+            m_allUnits.push_back(newUnit);
+            ApplyFilters();
+            if (m_editor) m_editor->MarkDirty();
         }
         if (ImGui::MenuItem("Delete")) {
-            // TODO: Delete
+            // Delete the unit from the list
+            auto it = std::find_if(m_allUnits.begin(), m_allUnits.end(),
+                [&unit](const UnitEntry& u) { return u.id == unit.id; });
+            if (it != m_allUnits.end()) {
+                m_allUnits.erase(it);
+                ApplyFilters();
+                if (m_editor) m_editor->MarkDirty();
+            }
         }
         ImGui::EndPopup();
     }

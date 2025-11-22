@@ -1,0 +1,202 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "unit_animation_config.schema.json",
+  "title": "Unit Animation Configuration",
+  "description": "Complete animation configuration for a game unit",
+  "type": "object",
+  "required": ["id", "type"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Configuration identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "type": {
+      "enum": ["humanoid", "creature", "vehicle", "prop"],
+      "description": "Unit type"
+    },
+    "basedOn": {
+      "type": "string",
+      "description": "Configuration to inherit from"
+    },
+    "stateMachine": {
+      "type": "string",
+      "description": "Path to state machine config"
+    },
+    "locomotionBlendTree": {
+      "type": "string",
+      "description": "Path to locomotion blend tree config"
+    },
+    "combatStateMachine": {
+      "type": "string",
+      "description": "Path to combat state machine config"
+    },
+    "abilityStateMachine": {
+      "type": "string",
+      "description": "Path to ability state machine config"
+    },
+    "eventBindings": {
+      "type": "string",
+      "description": "Path to event bindings config"
+    },
+    "animations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/animationMapping" },
+      "description": "Animation clip mappings"
+    },
+    "sounds": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/soundMapping" },
+      "description": "Sound mappings"
+    },
+    "vfx": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/vfxMapping" },
+      "description": "VFX mappings"
+    },
+    "masks": {
+      "type": "object",
+      "properties": {
+        "upperBody": { "type": "string" },
+        "lowerBody": { "type": "string" },
+        "fullBody": { "type": "string" },
+        "headOnly": { "type": "string" },
+        "handsOnly": { "type": "string" }
+      },
+      "description": "Animation mask IDs"
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "locomotionBlendSpeed": { "type": "number", "default": 5 },
+        "combatBlendSpeed": { "type": "number", "default": 8 },
+        "transitionBlendTime": { "type": "number", "default": 0.2 },
+        "hitReactionDuration": { "type": "number", "default": 0.3 },
+        "stunRecoveryTime": { "type": "number", "default": 0.5 }
+      },
+      "description": "Timing configuration"
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "useRootMotion": { "type": "boolean", "default": false },
+        "useFootIK": { "type": "boolean", "default": false },
+        "useLookAt": { "type": "boolean", "default": false },
+        "useLayeredAnimation": { "type": "boolean", "default": true }
+      },
+      "description": "Feature flags"
+    }
+  },
+
+  "definitions": {
+    "animationMapping": {
+      "type": "object",
+      "required": ["id", "clip"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Logical animation name"
+        },
+        "clip": {
+          "type": "string",
+          "description": "Animation clip path"
+        },
+        "speed": {
+          "type": "number",
+          "default": 1,
+          "description": "Playback speed"
+        },
+        "loop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Loop animation"
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mirror animation"
+        },
+        "variants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Alternative clips"
+        }
+      }
+    },
+
+    "soundMapping": {
+      "type": "object",
+      "required": ["id", "sound"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Sound identifier"
+        },
+        "sound": {
+          "type": "string",
+          "description": "Sound file path"
+        },
+        "volume": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Volume"
+        },
+        "pitchRange": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Pitch range [min, max]"
+        },
+        "variants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Alternative sounds"
+        }
+      }
+    },
+
+    "vfxMapping": {
+      "type": "object",
+      "required": ["id", "vfx"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "VFX identifier"
+        },
+        "vfx": {
+          "type": "string",
+          "description": "VFX path"
+        },
+        "bone": {
+          "type": "string",
+          "description": "Attach bone"
+        },
+        "offset": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Position offset [x, y, z]"
+        },
+        "scale": {
+          "type": "number",
+          "default": 1,
+          "description": "Scale"
+        },
+        "attachToUnit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Follow unit movement"
+        }
+      }
+    }
+  }
+}

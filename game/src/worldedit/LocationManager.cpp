@@ -3,10 +3,174 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <array>
+#include <memory>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 
 namespace Vehement {
+
+// =============================================================================
+// Quadtree Spatial Index Implementation
+// =============================================================================
+
+/**
+ * @brief Quadtree node for spatial indexing of locations
+ */
+class QuadtreeNode {
+public:
+    static constexpr int MAX_OBJECTS = 8;
+    static constexpr int MAX_DEPTH = 8;
+    static constexpr float MIN_SIZE = 10.0f;
+
+    QuadtreeNode(float x, float z, float width, float height, int depth = 0)
+        : m_x(x), m_z(z), m_width(width), m_height(height), m_depth(depth) {}
+
+    void Insert(LocationDefinition* location) {
+        // If we have children, insert into them
+        if (m_children[0]) {
+            int index = GetChildIndex(location);
+            if (index != -1) {
+                m_children[index]->Insert(location);
+                return;
+            }
+        }
+
+        m_objects.push_back(location);
+
+        // Subdivide if needed
+        if (m_objects.size() > MAX_OBJECTS && m_depth < MAX_DEPTH &&
+            m_width > MIN_SIZE && m_height > MIN_SIZE) {
+            if (!m_children[0]) {
+                Subdivide();
+            }
+
+            // Re-insert objects into children
+            auto it = m_objects.begin();
+            while (it != m_objects.end()) {
+                int index = GetChildIndex(*it);
+                if (index != -1) {
+                    m_children[index]->Insert(*it);
+                    it = m_objects.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+    }
+
+    void Remove(LocationDefinition* location) {
+        if (m_children[0]) {
+            int index = GetChildIndex(location);
+            if (index != -1) {
+                m_children[index]->Remove(location);
+                return;
+            }
+        }
+
+        auto it = std::find(m_objects.begin(), m_objects.end(), location);
+        if (it != m_objects.end()) {
+            m_objects.erase(it);
+        }
+    }
+
+    void Query(const glm::vec2& min, const glm::vec2& max, std::vector<LocationDefinition*>& results) {
+        // Check if query bounds intersect this node
+        if (max.x < m_x || min.x > m_x + m_width ||
+            max.y < m_z || min.y > m_z + m_height) {
+            return;
+        }
+
+        // Add objects from this node
+        for (auto* obj : m_objects) {
+            const auto& bounds = obj->GetWorldBounds();
+            if (bounds.max.x >= min.x && bounds.min.x <= max.x &&
+                bounds.max.z >= min.y && bounds.min.z <= max.y) {
+                results.push_back(obj);
+            }
+        }
+
+        // Query children
+        if (m_children[0]) {
+            for (auto& child : m_children) {
+                child->Query(min, max, results);
+            }
+        }
+    }
+
+    void QueryPoint(const glm::vec2& point, std::vector<LocationDefinition*>& results) {
+        // Check if point is in this node
+        if (point.x < m_x || point.x > m_x + m_width ||
+            point.y < m_z || point.y > m_z + m_height) {
+            return;
+        }
+
+        // Add objects from this node that contain the point
+        for (auto* obj : m_objects) {
+            if (obj->GetWorldBounds().Contains2D(point)) {
+                results.push_back(obj);
+            }
+        }
+
+        // Query children
+        if (m_children[0]) {
+            for (auto& child : m_children) {
+                child->QueryPoint(point, results);
+            }
+        }
+    }
+
+    void Clear() {
+        m_objects.clear();
+        for (auto& child : m_children) {
+            if (child) {
+                child->Clear();
+                child.reset();
+            }
+        }
+    }
+
+private:
+    void Subdivide() {
+        float halfW = m_width / 2;
+        float halfH = m_height / 2;
+
+        m_children[0] = std::make_unique<QuadtreeNode>(m_x, m_z, halfW, halfH, m_depth + 1);
+        m_children[1] = std::make_unique<QuadtreeNode>(m_x + halfW, m_z, halfW, halfH, m_depth + 1);
+        m_children[2] = std::make_unique<QuadtreeNode>(m_x, m_z + halfH, halfW, halfH, m_depth + 1);
+        m_children[3] = std::make_unique<QuadtreeNode>(m_x + halfW, m_z + halfH, halfW, halfH, m_depth + 1);
+    }
+
+    int GetChildIndex(LocationDefinition* location) {
+        const auto& bounds = location->GetWorldBounds();
+        float midX = m_x + m_width / 2;
+        float midZ = m_z + m_height / 2;
+
+        bool topQuadrant = bounds.min.z >= midZ;
+        bool bottomQuadrant = bounds.max.z < midZ;
+        bool leftQuadrant = bounds.max.x < midX;
+        bool rightQuadrant = bounds.min.x >= midX;
+
+        if (leftQuadrant) {
+            if (bottomQuadrant) return 0;
+            if (topQuadrant) return 2;
+        } else if (rightQuadrant) {
+            if (bottomQuadrant) return 1;
+            if (topQuadrant) return 3;
+        }
+
+        return -1;  // Object spans multiple quadrants
+    }
+
+    float m_x, m_z, m_width, m_height;
+    int m_depth;
+    std::vector<LocationDefinition*> m_objects;
+    std::array<std::unique_ptr<QuadtreeNode>, 4> m_children;
+};
+
+// Global spatial index
+static std::unique_ptr<QuadtreeNode> s_spatialIndex;
 
 // =============================================================================
 // Constructor / Destructor
@@ -636,19 +800,66 @@ void LocationManager::ForEachEnabled(const std::function<void(LocationDefinition
 }
 
 // =============================================================================
-// Spatial Index (placeholder for future optimization)
+// Spatial Index Implementation
 // =============================================================================
 
 void LocationManager::RebuildSpatialIndex() {
-    // TODO: Implement spatial index (R-tree or quadtree) for faster queries
+    // Clear existing index
+    if (s_spatialIndex) {
+        s_spatialIndex->Clear();
+    }
+
+    // Determine world bounds from all locations
+    float minX = -10000.0f, minZ = -10000.0f;
+    float maxX = 10000.0f, maxZ = 10000.0f;
+
+    if (!m_locations.empty()) {
+        minX = maxX = m_locations[0]->GetWorldBounds().min.x;
+        minZ = maxZ = m_locations[0]->GetWorldBounds().min.z;
+
+        for (const auto& loc : m_locations) {
+            const auto& bounds = loc->GetWorldBounds();
+            minX = std::min(minX, bounds.min.x);
+            minZ = std::min(minZ, bounds.min.z);
+            maxX = std::max(maxX, bounds.max.x);
+            maxZ = std::max(maxZ, bounds.max.z);
+        }
+
+        // Add some padding
+        float padding = 100.0f;
+        minX -= padding;
+        minZ -= padding;
+        maxX += padding;
+        maxZ += padding;
+    }
+
+    // Create new index with world bounds
+    float width = maxX - minX;
+    float height = maxZ - minZ;
+    s_spatialIndex = std::make_unique<QuadtreeNode>(minX, minZ, width, height, 0);
+
+    // Insert all locations
+    for (auto& loc : m_locations) {
+        s_spatialIndex->Insert(loc.get());
+    }
 }
 
-void LocationManager::AddToSpatialIndex(LocationDefinition* /*location*/) {
-    // TODO: Implement
+void LocationManager::AddToSpatialIndex(LocationDefinition* location) {
+    if (!location) return;
+
+    // Create index if it doesn't exist
+    if (!s_spatialIndex) {
+        RebuildSpatialIndex();
+        return;  // RebuildSpatialIndex already inserted all locations
+    }
+
+    s_spatialIndex->Insert(location);
 }
 
-void LocationManager::RemoveFromSpatialIndex(LocationDefinition* /*location*/) {
-    // TODO: Implement
+void LocationManager::RemoveFromSpatialIndex(LocationDefinition* location) {
+    if (!location || !s_spatialIndex) return;
+
+    s_spatialIndex->Remove(location);
 }
 
 } // namespace Vehement

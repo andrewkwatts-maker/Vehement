@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Animation Blending System</title>
+    <link rel="stylesheet" href="../editor.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        .blend-system-container {
+            display: grid;
+            grid-template-columns: 250px 1fr 350px;
+            grid-template-rows: auto 1fr 180px;
+            height: 100vh;
+            gap: 1px;
+            background: #1a1a1a;
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: #252530;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #333;
+        }
+
+        .layer-panel {
+            background: #1e1e24;
+            overflow-y: auto;
+            grid-row: 2 / 4;
+        }
+
+        .preview-panel {
+            background: #0a0a0a;
+            position: relative;
+        }
+
+        .tree-panel {
+            background: #1e1e24;
+            overflow: hidden;
+        }
+
+        .parameter-panel {
+            grid-column: 2 / -1;
+            background: #252530;
+            padding: 16px;
+            overflow-y: auto;
+            border-top: 1px solid #333;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: #252530;
+            font-weight: 600;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .layer-list {
+            padding: 8px;
+        }
+
+        .layer-item {
+            background: #2a2a35;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .layer-item:hover {
+            background: #303040;
+        }
+
+        .layer-item.selected {
+            border-color: #4a9eff;
+        }
+
+        .layer-item.dragging {
+            opacity: 0.5;
+        }
+
+        .layer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .layer-name {
+            font-weight: 500;
+        }
+
+        .layer-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .layer-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            background: #3a3a45;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .layer-btn:hover {
+            background: #4a4a55;
+            color: #fff;
+        }
+
+        .layer-btn.active {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .layer-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weight-slider {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #444;
+            border-radius: 2px;
+        }
+
+        .weight-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .weight-value {
+            width: 40px;
+            text-align: right;
+            color: #888;
+            font-size: 12px;
+        }
+
+        .blend-mode-select {
+            width: 100%;
+            margin-top: 8px;
+            padding: 6px;
+            background: #1e1e24;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .preview-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .preview-controls {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .param-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .param-item {
+            background: #1e1e24;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .param-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .tree-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .drop-indicator {
+            height: 4px;
+            background: #4a9eff;
+            border-radius: 2px;
+            margin: 4px 0;
+        }
+
+        .add-layer-btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: transparent;
+            border: 2px dashed #444;
+            border-radius: 6px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .add-layer-btn:hover {
+            border-color: #4a9eff;
+            color: #4a9eff;
+        }
+    </style>
+</head>
+<body>
+    <div class="blend-system-container">
+        <div class="toolbar">
+            <button class="btn btn-icon" onclick="goBack()" title="Back">&#x2190;</button>
+            <h2 id="file-name">Blend Tree</h2>
+            <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            <div style="flex: 1;"></div>
+            <button class="btn" onclick="newBlendTree()">New</button>
+            <button class="btn" onclick="loadFile()">Load</button>
+            <button class="btn btn-primary" onclick="saveFile()">Save</button>
+        </div>
+
+        <div class="layer-panel">
+            <div class="panel-header">
+                <span>Layers</span>
+                <button class="btn btn-icon" onclick="clearSolo()" title="Clear Solo">&#x23F9;</button>
+            </div>
+            <div class="layer-list" id="layer-list"></div>
+            <button class="add-layer-btn" onclick="addLayer()">+ Add Layer</button>
+        </div>
+
+        <div class="preview-panel">
+            <canvas id="preview-canvas" class="preview-canvas"></canvas>
+            <div class="preview-controls">
+                <button class="btn btn-icon" id="play-btn" onclick="togglePlay()">&#x25B6;</button>
+                <button class="btn btn-icon" onclick="resetPreview()">&#x23EE;</button>
+                <input type="range" id="time-slider" min="0" max="100" value="0" style="width: 150px;">
+            </div>
+        </div>
+
+        <div class="tree-panel">
+            <div class="panel-header">
+                <span>Blend Tree</span>
+                <button class="btn btn-icon" onclick="editTree()" title="Edit">&#x270E;</button>
+            </div>
+            <canvas id="tree-canvas" class="tree-canvas"></canvas>
+        </div>
+
+        <div class="parameter-panel">
+            <div class="panel-header" style="padding: 0; background: transparent; border: none;">
+                <span>Parameters</span>
+                <button class="btn btn-icon" onclick="addParameter()" title="Add Parameter">+</button>
+            </div>
+            <div class="param-grid" id="param-grid"></div>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script>
+        // State
+        var state = {
+            layers: [],
+            parameters: {},
+            selectedLayerIndex: -1,
+            isPlaying: false,
+            previewTime: 0,
+            isDirty: false
+        };
+
+        // Three.js setup for preview
+        var scene, camera, renderer, skeleton;
+
+        function initPreview() {
+            var canvas = document.getElementById('preview-canvas');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+
+            camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+            camera.position.set(0, 1.5, 3);
+            camera.lookAt(0, 1, 0);
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+            // Add grid
+            var grid = new THREE.GridHelper(4, 10, 0x333333, 0x222222);
+            scene.add(grid);
+
+            // Add lights
+            var ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambient);
+            var directional = new THREE.DirectionalLight(0xffffff, 0.8);
+            directional.position.set(5, 10, 5);
+            scene.add(directional);
+
+            // Create simple skeleton visualization
+            createSkeletonPreview();
+
+            animate();
+        }
+
+        function createSkeletonPreview() {
+            // Simple humanoid skeleton visualization
+            var material = new THREE.MeshLambertMaterial({ color: 0x4a9eff });
+            var jointMaterial = new THREE.MeshLambertMaterial({ color: 0xff9e4a });
+
+            // Body parts as simple shapes
+            var bodyGroup = new THREE.Group();
+
+            // Torso
+            var torso = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.4, 0.15),
+                material
+            );
+            torso.position.y = 1.2;
+            bodyGroup.add(torso);
+
+            // Head
+            var head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.12, 16, 16),
+                material
+            );
+            head.position.y = 1.55;
+            bodyGroup.add(head);
+
+            // Arms
+            [-1, 1].forEach(function(side) {
+                var arm = new THREE.Mesh(
+                    new THREE.CapsuleGeometry(0.04, 0.3, 8, 8),
+                    material
+                );
+                arm.position.set(side * 0.25, 1.15, 0);
+                arm.rotation.z = side * 0.3;
+                bodyGroup.add(arm);
+            });
+
+            // Legs
+            [-1, 1].forEach(function(side) {
+                var leg = new THREE.Mesh(
+                    new THREE.CapsuleGeometry(0.05, 0.4, 8, 8),
+                    material
+                );
+                leg.position.set(side * 0.1, 0.6, 0);
+                bodyGroup.add(leg);
+            });
+
+            scene.add(bodyGroup);
+            skeleton = bodyGroup;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (state.isPlaying && skeleton) {
+                state.previewTime += 0.016;
+                if (state.previewTime > 1) state.previewTime = 0;
+
+                // Animate skeleton
+                skeleton.rotation.y = Math.sin(state.previewTime * Math.PI * 2) * 0.2;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function renderLayers() {
+            var container = document.getElementById('layer-list');
+            container.innerHTML = '';
+
+            state.layers.forEach(function(layer, index) {
+                var item = document.createElement('div');
+                item.className = 'layer-item' + (index === state.selectedLayerIndex ? ' selected' : '');
+                item.draggable = true;
+                item.onclick = function() { selectLayer(index); };
+                item.ondragstart = function(e) { e.dataTransfer.setData('layerIndex', index); };
+                item.ondragover = function(e) { e.preventDefault(); };
+                item.ondrop = function(e) {
+                    var fromIndex = parseInt(e.dataTransfer.getData('layerIndex'));
+                    moveLayer(fromIndex, index);
+                };
+
+                item.innerHTML = '\
+                    <div class="layer-header">\
+                        <span class="layer-name">' + layer.name + '</span>\
+                        <div class="layer-buttons">\
+                            <button class="layer-btn' + (layer.solo ? ' active' : '') + '" onclick="event.stopPropagation(); toggleSolo(' + index + ')" title="Solo">S</button>\
+                            <button class="layer-btn' + (layer.muted ? ' active' : '') + '" onclick="event.stopPropagation(); toggleMute(' + index + ')" title="Mute">M</button>\
+                            <button class="layer-btn" onclick="event.stopPropagation(); deleteLayer(' + index + ')" title="Delete">&#x2715;</button>\
+                        </div>\
+                    </div>\
+                    <div class="layer-controls">\
+                        <input type="checkbox" ' + (layer.enabled ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleEnabled(' + index + ')">\
+                        <input type="range" class="weight-slider" min="0" max="100" value="' + (layer.weight * 100) + '" oninput="setLayerWeight(' + index + ', this.value / 100)">\
+                        <span class="weight-value">' + Math.round(layer.weight * 100) + '%</span>\
+                    </div>\
+                    <select class="blend-mode-select" onchange="setLayerBlendMode(' + index + ', this.value)">\
+                        <option value="override"' + (layer.blendMode === 'override' ? ' selected' : '') + '>Override</option>\
+                        <option value="additive"' + (layer.blendMode === 'additive' ? ' selected' : '') + '>Additive</option>\
+                        <option value="multiply"' + (layer.blendMode === 'multiply' ? ' selected' : '') + '>Multiply</option>\
+                    </select>\
+                ';
+
+                container.appendChild(item);
+            });
+        }
+
+        function renderParameters() {
+            var container = document.getElementById('param-grid');
+            container.innerHTML = '';
+
+            Object.keys(state.parameters).forEach(function(name) {
+                var param = state.parameters[name];
+                var item = document.createElement('div');
+                item.className = 'param-item';
+                item.innerHTML = '\
+                    <div class="param-label">\
+                        <span>' + name + '</span>\
+                        <span>' + param.value.toFixed(2) + '</span>\
+                    </div>\
+                    <input type="range" class="param-slider" min="' + (param.min * 100) + '" max="' + (param.max * 100) + '" value="' + (param.value * 100) + '" oninput="setParameter(\'' + name + '\', this.value / 100)">\
+                ';
+                container.appendChild(item);
+            });
+        }
+
+        function addLayer() {
+            var name = 'Layer ' + (state.layers.length + 1);
+            state.layers.push({
+                name: name,
+                weight: 1.0,
+                enabled: true,
+                solo: false,
+                muted: false,
+                blendMode: 'override',
+                mask: null
+            });
+            setDirty(true);
+            renderLayers();
+
+            // Notify C++
+            if (window.bridge) {
+                window.bridge.addLayer(name);
+            }
+        }
+
+        function deleteLayer(index) {
+            state.layers.splice(index, 1);
+            if (state.selectedLayerIndex >= state.layers.length) {
+                state.selectedLayerIndex = state.layers.length - 1;
+            }
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.removeLayer(index);
+            }
+        }
+
+        function selectLayer(index) {
+            state.selectedLayerIndex = index;
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.selectLayer(index);
+            }
+        }
+
+        function setLayerWeight(index, weight) {
+            state.layers[index].weight = weight;
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.setLayerWeight(index, weight);
+            }
+        }
+
+        function setLayerBlendMode(index, mode) {
+            state.layers[index].blendMode = mode;
+            setDirty(true);
+
+            if (window.bridge) {
+                window.bridge.setLayerBlendMode(index, mode);
+            }
+        }
+
+        function toggleEnabled(index) {
+            state.layers[index].enabled = !state.layers[index].enabled;
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.setLayerEnabled(index, state.layers[index].enabled);
+            }
+        }
+
+        function toggleSolo(index) {
+            state.layers[index].solo = !state.layers[index].solo;
+            if (state.layers[index].solo) {
+                state.layers.forEach(function(l, i) {
+                    if (i !== index) l.solo = false;
+                });
+            }
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.soloLayer(index);
+            }
+        }
+
+        function toggleMute(index) {
+            state.layers[index].muted = !state.layers[index].muted;
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.muteLayer(index, state.layers[index].muted);
+            }
+        }
+
+        function clearSolo() {
+            state.layers.forEach(function(l) { l.solo = false; });
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.clearSolo();
+            }
+        }
+
+        function moveLayer(fromIndex, toIndex) {
+            var layer = state.layers.splice(fromIndex, 1)[0];
+            state.layers.splice(toIndex, 0, layer);
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.moveLayer(fromIndex, toIndex);
+            }
+        }
+
+        function addParameter() {
+            var name = prompt('Parameter name:', 'NewParam');
+            if (name && !state.parameters[name]) {
+                state.parameters[name] = { value: 0, min: -1, max: 1 };
+                setDirty(true);
+                renderParameters();
+
+                if (window.bridge) {
+                    window.bridge.addParameter(name, 0);
+                }
+            }
+        }
+
+        function setParameter(name, value) {
+            state.parameters[name].value = value;
+            renderParameters();
+
+            if (window.bridge) {
+                window.bridge.setParameter(name, value);
+            }
+        }
+
+        function togglePlay() {
+            state.isPlaying = !state.isPlaying;
+            document.getElementById('play-btn').innerHTML = state.isPlaying ? '&#x23F8;' : '&#x25B6;';
+        }
+
+        function resetPreview() {
+            state.previewTime = 0;
+            state.isPlaying = false;
+            document.getElementById('play-btn').innerHTML = '&#x25B6;';
+        }
+
+        function editTree() {
+            if (state.selectedLayerIndex >= 0) {
+                if (window.bridge) {
+                    window.bridge.editLayerTree(state.selectedLayerIndex);
+                }
+            }
+        }
+
+        function setDirty(dirty) {
+            state.isDirty = dirty;
+            document.getElementById('dirty-indicator').style.display = dirty ? 'inline' : 'none';
+        }
+
+        function newBlendTree() {
+            state.layers = [];
+            state.parameters = {};
+            state.selectedLayerIndex = -1;
+            setDirty(false);
+            renderLayers();
+            renderParameters();
+        }
+
+        function loadFile() {
+            if (window.bridge) {
+                window.bridge.loadFile();
+            }
+        }
+
+        function saveFile() {
+            if (window.bridge) {
+                window.bridge.saveFile();
+            }
+            setDirty(false);
+        }
+
+        function goBack() {
+            if (state.isDirty) {
+                if (!confirm('Unsaved changes will be lost. Continue?')) return;
+            }
+            history.back();
+        }
+
+        // Initialize
+        window.onload = function() {
+            initPreview();
+
+            // Add default base layer
+            addLayer();
+            state.layers[0].name = 'Base Layer';
+
+            // Add some default parameters
+            state.parameters['Speed'] = { value: 0, min: 0, max: 2 };
+            state.parameters['Direction'] = { value: 0, min: -1, max: 1 };
+
+            renderLayers();
+            renderParameters();
+
+            // Handle resize
+            window.addEventListener('resize', function() {
+                var canvas = document.getElementById('preview-canvas');
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            });
+        };
+
+        // Bridge interface for C++ communication
+        window.updateFromCpp = function(data) {
+            if (data.layers) state.layers = data.layers;
+            if (data.parameters) state.parameters = data.parameters;
+            renderLayers();
+            renderParameters();
+        };
+    </script>
+</body>
+</html>

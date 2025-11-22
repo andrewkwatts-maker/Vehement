@@ -409,10 +409,38 @@ void ScriptContext::RegisterBuiltinFunctions() {
 uint32_t ScriptContext::SpawnEntity(const std::string& type, float x, float y, float z) {
     if (!m_entityManager) return 0;
 
-    // TODO: Implement entity spawning based on type
-    // For now, return 0 as placeholder
-    LogInfo("SpawnEntity: " + type + " at (" + std::to_string(x) + ", " +
-            std::to_string(y) + ", " + std::to_string(z) + ")");
+    // Create entity based on type string
+    Vehement::Entity* entity = nullptr;
+
+    // Map type string to entity type and create
+    if (type == "zombie" || type == "enemy") {
+        entity = m_entityManager->CreateEntity("enemy");
+    } else if (type == "npc" || type == "villager") {
+        entity = m_entityManager->CreateEntity("npc");
+    } else if (type == "player") {
+        entity = m_entityManager->CreateEntity("player");
+    } else if (type == "item" || type == "pickup") {
+        entity = m_entityManager->CreateEntity("item");
+    } else if (type == "projectile") {
+        entity = m_entityManager->CreateEntity("projectile");
+    } else if (type == "building") {
+        entity = m_entityManager->CreateEntity("building");
+    } else if (type == "resource") {
+        entity = m_entityManager->CreateEntity("resource");
+    } else {
+        // Generic entity type
+        entity = m_entityManager->CreateEntity(type);
+    }
+
+    if (entity) {
+        entity->SetPosition(glm::vec3(x, y, z));
+        LogInfo("SpawnEntity: " + type + " at (" + std::to_string(x) + ", " +
+                std::to_string(y) + ", " + std::to_string(z) + ") -> ID: " +
+                std::to_string(entity->GetId()));
+        return entity->GetId();
+    }
+
+    LogError("SpawnEntity: Failed to create entity of type: " + type);
     return 0;
 }
 
@@ -573,8 +601,44 @@ ScriptContext::RaycastResult ScriptContext::Raycast(float startX, float startY, 
                                                     float dirX, float dirY, float dirZ,
                                                     float maxDistance) {
     RaycastResult result;
-    // TODO: Implement raycast using physics or spatial queries
-    // For now, return empty result
+    result.hit = false;
+
+    // Simple brute-force raycast against entity positions
+    if (!m_entityManager) return result;
+
+    glm::vec3 rayStart(startX, startY, startZ);
+    glm::vec3 rayDir = glm::normalize(glm::vec3(dirX, dirY, dirZ));
+
+    float closestDist = maxDistance;
+
+    m_entityManager->ForEachEntity([&](Vehement::Entity& entity) {
+        glm::vec3 entityPos = entity.GetPosition();
+
+        // Simple sphere-ray intersection (using entity radius or default)
+        float entityRadius = 1.0f;  // Default radius
+        glm::vec3 toEntity = entityPos - rayStart;
+
+        float tca = glm::dot(toEntity, rayDir);
+        if (tca < 0.0f) return;  // Entity is behind ray
+
+        float d2 = glm::dot(toEntity, toEntity) - tca * tca;
+        float r2 = entityRadius * entityRadius;
+
+        if (d2 > r2) return;  // Ray misses entity sphere
+
+        float thc = std::sqrt(r2 - d2);
+        float t0 = tca - thc;
+
+        if (t0 < closestDist && t0 > 0.0f) {
+            closestDist = t0;
+            result.hit = true;
+            result.entityId = entity.GetId();
+            result.hitPoint = rayStart + rayDir * t0;
+            result.hitNormal = glm::normalize(result.hitPoint - entityPos);
+            result.distance = t0;
+        }
+    });
+
     return result;
 }
 
@@ -661,22 +725,78 @@ bool ScriptContext::CanAfford(const std::string& resourceType, int amount) const
 // ============================================================================
 
 uint32_t ScriptContext::GetBuildingAt(int tileX, int tileY) const {
-    // TODO: Implement building lookup by tile position
-    return 0;
+    // Find building entity at the specified tile position
+    if (!m_entityManager) return 0;
+
+    glm::vec3 tileWorldPos(tileX * 1.0f, 0.0f, tileY * 1.0f);  // Assuming 1 unit per tile
+
+    uint32_t foundBuildingId = 0;
+    m_entityManager->ForEachEntity([&](Vehement::Entity& entity) {
+        if (entity.GetTypeName() == "building") {
+            glm::vec3 buildingPos = entity.GetPosition();
+            // Check if building occupies this tile (simple check)
+            float dx = std::abs(buildingPos.x - tileWorldPos.x);
+            float dz = std::abs(buildingPos.z - tileWorldPos.z);
+            if (dx < 0.5f && dz < 0.5f) {
+                foundBuildingId = entity.GetId();
+            }
+        }
+    });
+
+    return foundBuildingId;
 }
 
 std::string ScriptContext::GetBuildingType(uint32_t buildingId) const {
-    // TODO: Implement building type lookup
+    // Get the building subtype from entity properties
+    if (!m_entityManager) return "";
+
+    auto* entity = m_entityManager->GetEntity(buildingId);
+    if (entity && entity->GetTypeName() == "building") {
+        // Get building subtype from entity name or property
+        std::string name = entity->GetName();
+        if (name.find("House") != std::string::npos) return "House";
+        if (name.find("Barracks") != std::string::npos) return "Barracks";
+        if (name.find("Farm") != std::string::npos) return "Farm";
+        if (name.find("Workshop") != std::string::npos) return "Workshop";
+        if (name.find("Tower") != std::string::npos) return "Tower";
+        if (name.find("Wall") != std::string::npos) return "Wall";
+        if (name.find("Gate") != std::string::npos) return "Gate";
+        return "Building";  // Generic
+    }
     return "";
 }
 
 bool ScriptContext::IsBuildingOperational(uint32_t buildingId) const {
-    // TODO: Implement building state check
+    // Check if building is completed and functional
+    if (!m_entityManager) return false;
+
+    auto* entity = m_entityManager->GetEntity(buildingId);
+    if (entity && entity->GetTypeName() == "building") {
+        // Building is operational if health > 0 and not under construction
+        if (!entity->IsAlive()) return false;
+
+        // Check if building has a "construction_complete" property or similar
+        // For now, assume building is operational if it exists and is alive
+        return true;
+    }
     return false;
 }
 
 float ScriptContext::GetBuildingProgress(uint32_t buildingId) const {
-    // TODO: Implement building progress check
+    // Get construction progress (0.0 to 1.0)
+    if (!m_entityManager) return 0.0f;
+
+    auto* entity = m_entityManager->GetEntity(buildingId);
+    if (entity && entity->GetTypeName() == "building") {
+        // Check for construction progress property
+        // For now, assume completed buildings have progress 1.0
+        // Buildings could store progress in health ratio during construction
+        float maxHealth = entity->GetMaxHealth();
+        if (maxHealth > 0.0f) {
+            return entity->GetHealth() / maxHealth;
+        }
+        return 1.0f;  // Assume complete
+    }
     return 0.0f;
 }
 
@@ -685,25 +805,41 @@ float ScriptContext::GetBuildingProgress(uint32_t buildingId) const {
 // ============================================================================
 
 void ScriptContext::PlaySound(const std::string& soundName, float x, float y, float z) {
-    // TODO: Integrate with audio system
-    LogDebug("PlaySound: " + soundName + " at (" + std::to_string(x) + ", " +
-             std::to_string(y) + ", " + std::to_string(z) + ")");
+    // Integrate with audio system
+    if (m_audioSystem) {
+        m_audioSystem->Play3DSound(soundName, glm::vec3(x, y, z));
+    } else {
+        LogDebug("PlaySound: " + soundName + " at (" + std::to_string(x) + ", " +
+                 std::to_string(y) + ", " + std::to_string(z) + ")");
+    }
 }
 
 void ScriptContext::PlayMusic(const std::string& musicName) {
-    // TODO: Integrate with audio system
-    LogDebug("PlayMusic: " + musicName);
+    // Integrate with audio system
+    if (m_audioSystem) {
+        m_audioSystem->PlayMusic(musicName);
+    } else {
+        LogDebug("PlayMusic: " + musicName);
+    }
 }
 
 void ScriptContext::SpawnEffect(const std::string& effectName, float x, float y, float z) {
-    // TODO: Integrate with particle/effect system
-    LogDebug("SpawnEffect: " + effectName + " at (" + std::to_string(x) + ", " +
-             std::to_string(y) + ", " + std::to_string(z) + ")");
+    // Integrate with particle/effect system
+    if (m_effectSystem) {
+        m_effectSystem->SpawnEffect(effectName, glm::vec3(x, y, z));
+    } else {
+        LogDebug("SpawnEffect: " + effectName + " at (" + std::to_string(x) + ", " +
+                 std::to_string(y) + ", " + std::to_string(z) + ")");
+    }
 }
 
 void ScriptContext::SpawnParticles(const std::string& particleType, float x, float y, float z, int count) {
-    // TODO: Integrate with particle system
-    LogDebug("SpawnParticles: " + particleType + " x" + std::to_string(count));
+    // Integrate with particle system
+    if (m_particleSystem) {
+        m_particleSystem->Emit(particleType, glm::vec3(x, y, z), count);
+    } else {
+        LogDebug("SpawnParticles: " + particleType + " x" + std::to_string(count));
+    }
 }
 
 // ============================================================================
@@ -711,22 +847,34 @@ void ScriptContext::SpawnParticles(const std::string& particleType, float x, flo
 // ============================================================================
 
 void ScriptContext::ShowNotification(const std::string& message, float duration) {
-    // TODO: Integrate with UI system
+    // Integrate with UI system
+    if (m_uiManager) {
+        m_uiManager->ShowNotification(message, duration);
+    }
     LogInfo("[NOTIFICATION] " + message);
 }
 
 void ScriptContext::ShowWarning(const std::string& message) {
-    // TODO: Integrate with UI system
+    // Integrate with UI system
+    if (m_uiManager) {
+        m_uiManager->ShowWarning(message);
+    }
     LogWarning("[WARNING] " + message);
 }
 
 void ScriptContext::ShowError(const std::string& message) {
-    // TODO: Integrate with UI system
+    // Integrate with UI system
+    if (m_uiManager) {
+        m_uiManager->ShowError(message);
+    }
     LogError("[ERROR] " + message);
 }
 
 void ScriptContext::ShowTooltip(const std::string& text, float x, float y) {
-    // TODO: Integrate with UI system
+    // Integrate with UI system
+    if (m_uiManager) {
+        m_uiManager->ShowTooltip(text, x, y);
+    }
 }
 
 // ============================================================================
@@ -766,16 +914,15 @@ glm::vec3 ScriptContext::RandomDirection() const {
 // ============================================================================
 
 void ScriptContext::LogInfo(const std::string& message) {
-    // TODO: Use Nova::Logger
-    std::printf("[Script INFO] %s\n", message.c_str());
+    Nova::Logger::Info("[Script] " + message);
 }
 
 void ScriptContext::LogWarning(const std::string& message) {
-    std::printf("[Script WARN] %s\n", message.c_str());
+    Nova::Logger::Warning("[Script] " + message);
 }
 
 void ScriptContext::LogError(const std::string& message) {
-    std::fprintf(stderr, "[Script ERROR] %s\n", message.c_str());
+    Nova::Logger::Error("[Script] " + message);
 }
 
 void ScriptContext::LogDebug(const std::string& message) {

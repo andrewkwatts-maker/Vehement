@@ -1,5 +1,7 @@
 #include "Hierarchy.hpp"
 #include "Editor.hpp"
+#include "WorldView.hpp"
+#include "../entities/EntityManager.hpp"
 #include <imgui.h>
 #include <algorithm>
 
@@ -77,7 +79,19 @@ void Hierarchy::RenderToolbar() {
 
     // Delete button
     if (ImGui::Button("X") && m_selectedEntity != 0) {
-        // TODO: Delete selected entity
+        // Delete selected entity
+        // First delete from entity manager
+        if (m_editor && m_editor->GetEntityManager()) {
+            m_editor->GetEntityManager()->DestroyEntity(m_selectedEntity);
+        }
+        // Then remove from hierarchy list
+        auto it = std::find_if(m_entities.begin(), m_entities.end(),
+            [this](const HierarchyNode& node) { return node.id == m_selectedEntity; });
+        if (it != m_entities.end()) {
+            m_entities.erase(it);
+        }
+        m_selectedEntity = 0;
+        if (m_editor) m_editor->MarkDirty();
     }
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Delete Selected");
 
@@ -157,7 +171,36 @@ void Hierarchy::RenderEntityTree() {
             if (ImGui::BeginDragDropTarget()) {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_ID")) {
                     uint64_t droppedId = *(uint64_t*)payload->Data;
-                    // TODO: Reparent entity
+                    // Reparent entity
+                    if (droppedId != entity.id) {  // Don't parent to self
+                        // Find the dropped entity and update its parent
+                        for (auto& e : m_entities) {
+                            if (e.id == droppedId) {
+                                // Check to prevent circular parenting
+                                bool wouldBeCircular = false;
+                                uint64_t checkId = entity.id;
+                                while (checkId != 0) {
+                                    if (checkId == droppedId) {
+                                        wouldBeCircular = true;
+                                        break;
+                                    }
+                                    // Find parent
+                                    for (const auto& p : m_entities) {
+                                        if (p.id == checkId) {
+                                            checkId = p.parentId;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (!wouldBeCircular) {
+                                    e.parentId = entity.id;
+                                    if (m_editor) m_editor->MarkDirty();
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
                 ImGui::EndDragDropTarget();
             }
@@ -177,20 +220,120 @@ void Hierarchy::RenderEntityTree() {
 
 void Hierarchy::RenderContextMenu(uint64_t entityId) {
     if (ImGui::BeginPopupContextItem()) {
-        if (ImGui::MenuItem("Rename")) {}
-        if (ImGui::MenuItem("Duplicate")) {}
-        if (ImGui::MenuItem("Delete")) {}
+        if (ImGui::MenuItem("Rename")) {
+            // Open rename popup (would need modal)
+        }
+        if (ImGui::MenuItem("Duplicate")) {
+            // Duplicate the entity
+            for (const auto& e : m_entities) {
+                if (e.id == entityId) {
+                    HierarchyNode newNode = e;
+                    newNode.id = m_entities.size() + 1 + (rand() % 1000);  // Generate new ID
+                    newNode.name = e.name + "_copy";
+                    m_entities.push_back(newNode);
+
+                    // Also duplicate in entity manager
+                    if (m_editor && m_editor->GetEntityManager()) {
+                        // Would call entity manager duplicate here
+                        m_editor->MarkDirty();
+                    }
+                    break;
+                }
+            }
+        }
+        if (ImGui::MenuItem("Delete")) {
+            // Delete entity
+            if (m_editor && m_editor->GetEntityManager()) {
+                m_editor->GetEntityManager()->DestroyEntity(entityId);
+            }
+            auto it = std::find_if(m_entities.begin(), m_entities.end(),
+                [entityId](const HierarchyNode& node) { return node.id == entityId; });
+            if (it != m_entities.end()) {
+                m_entities.erase(it);
+            }
+            if (m_selectedEntity == entityId) m_selectedEntity = 0;
+            if (m_editor) m_editor->MarkDirty();
+        }
         ImGui::Separator();
         if (ImGui::MenuItem("Focus")) {
-            // TODO: Focus camera on entity
+            // Focus camera on entity using WorldView
+            if (m_editor) {
+                if (auto* worldView = m_editor->GetWorldView()) {
+                    // Find entity position
+                    if (auto* entityMgr = m_editor->GetEntityManager()) {
+                        auto* entity = entityMgr->GetEntity(entityId);
+                        if (entity) {
+                            glm::vec3 pos = entity->GetPosition();
+                            worldView->GoToLocation(pos.x, pos.y, pos.z);
+                            worldView->FocusOnSelection();
+                        }
+                    }
+                }
+            }
         }
-        if (ImGui::MenuItem("Select Children")) {}
+        if (ImGui::MenuItem("Select Children")) {
+            // Select all children
+            std::vector<uint64_t> childIds;
+            std::function<void(uint64_t)> findChildren = [&](uint64_t parentId) {
+                for (const auto& e : m_entities) {
+                    if (e.parentId == parentId) {
+                        childIds.push_back(e.id);
+                        findChildren(e.id);
+                    }
+                }
+            };
+            findChildren(entityId);
+            // Would need multi-selection support to use childIds
+        }
         ImGui::EndPopup();
     }
 }
 
 void Hierarchy::Refresh() {
-    // TODO: Refresh from EntityManager
+    // Refresh from EntityManager
+    if (!m_editor || !m_editor->GetEntityManager()) return;
+
+    auto* entityMgr = m_editor->GetEntityManager();
+
+    // Clear existing entities
+    m_entities.clear();
+
+    // Create root node
+    m_entities.push_back({1, "World", "root", 0, true});
+
+    // Add category groups
+    uint64_t unitsGroupId = 2;
+    uint64_t buildingsGroupId = 3;
+    uint64_t resourcesGroupId = 4;
+
+    m_entities.push_back({unitsGroupId, "Units", "group", 1, true});
+    m_entities.push_back({buildingsGroupId, "Buildings", "group", 1, true});
+    m_entities.push_back({resourcesGroupId, "Resources", "group", 1, true});
+
+    // Populate from entity manager
+    entityMgr->ForEachEntity([&](Entity& entity) {
+        HierarchyNode node;
+        node.id = entity.GetId();
+        node.name = entity.GetName();
+        if (node.name.empty()) {
+            node.name = "Entity_" + std::to_string(node.id);
+        }
+        node.type = entity.GetTypeName();
+        node.expanded = false;
+
+        // Assign to appropriate group based on type
+        if (node.type == "unit" || node.type == "npc" || node.type == "enemy") {
+            node.parentId = unitsGroupId;
+        } else if (node.type == "building") {
+            node.parentId = buildingsGroupId;
+        } else if (node.type == "resource") {
+            node.parentId = resourcesGroupId;
+        } else {
+            node.parentId = 1;  // World root
+        }
+
+        m_entities.push_back(node);
+    });
 }
 
 void Hierarchy::SetFilter(const std::string& filter) {

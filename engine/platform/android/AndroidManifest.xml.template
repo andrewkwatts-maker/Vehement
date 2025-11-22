@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Nova3D Engine - AndroidManifest.xml Template
+
+    Copy this file to your app's main directory and customize as needed.
+    Replace placeholders:
+      - ${APPLICATION_ID} - Your app's package name (e.g., com.example.mygame)
+      - ${VERSION_CODE} - Integer version code (e.g., 1)
+      - ${VERSION_NAME} - User-visible version (e.g., "1.0.0")
+      - ${APP_NAME} - Display name of your app
+      - ${MIN_SDK_VERSION} - Minimum SDK (recommended: 24)
+      - ${TARGET_SDK_VERSION} - Target SDK (recommended: 34)
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="${APPLICATION_ID}"
+    android:versionCode="${VERSION_CODE}"
+    android:versionName="${VERSION_NAME}">
+
+    <!-- ================================================================== -->
+    <!-- SDK Version Requirements                                            -->
+    <!-- ================================================================== -->
+    <uses-sdk
+        android:minSdkVersion="${MIN_SDK_VERSION}"
+        android:targetSdkVersion="${TARGET_SDK_VERSION}" />
+
+    <!-- ================================================================== -->
+    <!-- Hardware Features                                                   -->
+    <!-- ================================================================== -->
+
+    <!-- OpenGL ES 3.0 required for modern rendering -->
+    <uses-feature
+        android:glEsVersion="0x00030000"
+        android:required="true" />
+
+    <!-- Vulkan support (optional, for high-performance rendering) -->
+    <uses-feature
+        android:name="android.hardware.vulkan.level"
+        android:required="false"
+        android:version="1" />
+
+    <uses-feature
+        android:name="android.hardware.vulkan.version"
+        android:required="false"
+        android:version="0x00401000" />
+
+    <!-- Touchscreen (required for mobile games) -->
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="true" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen.multitouch"
+        android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen.multitouch.distinct"
+        android:required="false" />
+
+    <!-- GPS/Location (optional) -->
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+
+    <!-- Sensors (optional) -->
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.sensor.gyroscope"
+        android:required="false" />
+
+    <!-- Camera (optional, for AR features) -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+
+    <!-- Vibration/Haptics (optional) -->
+    <uses-feature
+        android:name="android.hardware.haptics"
+        android:required="false" />
+
+    <!-- ================================================================== -->
+    <!-- Permissions                                                         -->
+    <!-- ================================================================== -->
+
+    <!-- Internet access (for multiplayer, analytics, ads) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- Prevent device from sleeping during gameplay -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Vibration for haptic feedback -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- GPS/Location (request at runtime on Android 6.0+) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Background location (Android 10+, requires special justification) -->
+    <!-- Only include if your app needs location updates in background -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> -->
+
+    <!-- Storage permissions (legacy, scoped storage on Android 10+) -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+
+    <!-- Media images (Android 13+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Foreground service for long-running operations -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- Bluetooth (for controllers) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Camera (for AR) -->
+    <!-- <uses-permission android:name="android.permission.CAMERA" /> -->
+
+    <!-- Microphone (for voice chat) -->
+    <!-- <uses-permission android:name="android.permission.RECORD_AUDIO" /> -->
+
+    <!-- ================================================================== -->
+    <!-- Queries (Android 11+ package visibility) -->
+    <!-- ================================================================== -->
+    <queries>
+        <!-- Allow opening URLs in browser -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+
+        <!-- Allow sharing content -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+    </queries>
+
+    <!-- ================================================================== -->
+    <!-- Application Configuration                                           -->
+    <!-- ================================================================== -->
+    <application
+        android:name=".Nova3DApplication"
+        android:label="${APP_NAME}"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.Nova3D"
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:extractNativeLibs="true"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="34">
+
+        <!-- ============================================================== -->
+        <!-- Main Game Activity                                              -->
+        <!-- ============================================================== -->
+        <activity
+            android:name=".Nova3DActivity"
+            android:label="${APP_NAME}"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode|density"
+            android:screenOrientation="sensorLandscape"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/Theme.Nova3D.Fullscreen"
+            android:resizeableActivity="false"
+            android:supportsPictureInPicture="false"
+            android:windowSoftInputMode="adjustPan">
+
+            <!-- Main launcher intent -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Support for game category (shows in Games folder) -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+
+            <!-- Deep linking support (optional) -->
+            <!-- <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="yourdomain.com"
+                    android:pathPrefix="/game" />
+            </intent-filter> -->
+
+            <!-- Metadata for native activity -->
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="nova3d" />
+        </activity>
+
+        <!-- ============================================================== -->
+        <!-- Services                                                        -->
+        <!-- ============================================================== -->
+
+        <!-- Location service for background updates (if needed) -->
+        <!-- <service
+            android:name=".LocationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" /> -->
+
+        <!-- ============================================================== -->
+        <!-- Receivers                                                       -->
+        <!-- ============================================================== -->
+
+        <!-- Boot completed receiver (for scheduled tasks) -->
+        <!-- <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver> -->
+
+        <!-- ============================================================== -->
+        <!-- Providers (for sharing files) -->
+        <!-- ============================================================== -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${APPLICATION_ID}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- ============================================================== -->
+        <!-- Metadata                                                        -->
+        <!-- ============================================================== -->
+
+        <!-- Google Play Games (if using Play Games Services) -->
+        <!-- <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/app_id" /> -->
+
+        <!-- Firebase Configuration (if using Firebase) -->
+        <!-- <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="true" /> -->
+
+        <!-- AdMob App ID (if using ads) -->
+        <!-- <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY" /> -->
+
+        <!-- Disable analytics if needed -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+
+        <!-- Vulkan validation layers (debug builds only) -->
+        <meta-data
+            android:name="com.android.graphics.injectLayers.enable"
+            android:value="true" />
+
+    </application>
+
+</manifest>

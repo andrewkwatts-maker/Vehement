@@ -1,0 +1,361 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "blend_space.schema.json",
+  "title": "Blend Space Configuration",
+  "description": "Schema for defining 1D and 2D blend spaces",
+  "type": "object",
+  "required": ["id", "type"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique blend space identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Documentation description"
+    },
+    "type": {
+      "enum": ["1d", "2d"],
+      "description": "Blend space dimensionality"
+    },
+    "skeleton": {
+      "type": "string",
+      "description": "Target skeleton asset"
+    },
+    "previewMesh": {
+      "type": "string",
+      "description": "Preview mesh for editor visualization"
+    }
+  },
+
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "1d" } }
+      },
+      "then": {
+        "required": ["axis", "samples"],
+        "properties": {
+          "axis": { "$ref": "#/definitions/blendAxis" },
+          "samples": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/sample1D" },
+            "minItems": 2,
+            "description": "Sample animations along the axis"
+          },
+          "interpolation": {
+            "$ref": "#/definitions/interpolationMode"
+          },
+          "syncMarkers": {
+            "$ref": "#/definitions/syncMarkersConfig"
+          },
+          "extrapolation": {
+            "$ref": "#/definitions/extrapolationConfig"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "2d" } }
+      },
+      "then": {
+        "required": ["axisX", "axisY", "samples"],
+        "properties": {
+          "axisX": { "$ref": "#/definitions/blendAxis" },
+          "axisY": { "$ref": "#/definitions/blendAxis" },
+          "samples": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/sample2D" },
+            "minItems": 3,
+            "description": "Sample animations in 2D space"
+          },
+          "blendMode": {
+            "enum": ["simple", "freeform_directional", "freeform_cartesian"],
+            "default": "simple",
+            "description": "2D blending algorithm"
+          },
+          "triangulation": {
+            "$ref": "#/definitions/triangulationConfig"
+          },
+          "syncMarkers": {
+            "$ref": "#/definitions/syncMarkersConfig"
+          }
+        }
+      }
+    }
+  ],
+
+  "definitions": {
+    "blendAxis": {
+      "type": "object",
+      "required": ["parameter"],
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "description": "Parameter name bound to this axis"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for editor"
+        },
+        "min": {
+          "type": "number",
+          "default": 0,
+          "description": "Axis minimum value"
+        },
+        "max": {
+          "type": "number",
+          "default": 1,
+          "description": "Axis maximum value"
+        },
+        "snapToSamples": {
+          "type": "boolean",
+          "default": false,
+          "description": "Snap to nearest sample position"
+        },
+        "gridSnap": {
+          "type": "number",
+          "description": "Snap to grid increments"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Display unit (e.g., 'm/s', 'degrees')"
+        }
+      }
+    },
+
+    "sample1D": {
+      "type": "object",
+      "required": ["position", "animation"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Sample identifier"
+        },
+        "position": {
+          "type": "number",
+          "description": "Position on the blend axis"
+        },
+        "animation": {
+          "type": "string",
+          "description": "Animation clip asset path"
+        },
+        "playbackSpeed": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Speed multiplier for this sample"
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mirror animation"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Base weight influence"
+        },
+        "syncMarkers": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/syncMarker" },
+          "description": "Animation sync markers"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Custom metadata for this sample"
+        }
+      }
+    },
+
+    "sample2D": {
+      "type": "object",
+      "required": ["position", "animation"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Sample identifier"
+        },
+        "position": {
+          "type": "object",
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          },
+          "description": "2D position in blend space"
+        },
+        "animation": {
+          "type": "string",
+          "description": "Animation clip asset path"
+        },
+        "playbackSpeed": {
+          "type": "number",
+          "default": 1.0
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false
+        },
+        "weight": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "syncMarkers": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/syncMarker" }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "syncMarker": {
+      "type": "object",
+      "required": ["name", "time"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Marker name (e.g., 'left_foot_down', 'right_foot_down')"
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized time (0-1) in animation"
+        },
+        "type": {
+          "enum": ["sync", "event", "blend_point"],
+          "default": "sync",
+          "description": "Marker type"
+        }
+      }
+    },
+
+    "interpolationMode": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": ["linear", "smooth", "cubic", "step"],
+          "default": "linear",
+          "description": "Interpolation algorithm"
+        },
+        "smoothness": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Smoothness factor for smooth/cubic modes"
+        },
+        "tension": {
+          "type": "number",
+          "default": 0.5,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Tension for cubic interpolation"
+        }
+      }
+    },
+
+    "extrapolationConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow values outside sample range"
+        },
+        "minMode": {
+          "enum": ["clamp", "linear", "constant"],
+          "default": "clamp",
+          "description": "Extrapolation below minimum"
+        },
+        "maxMode": {
+          "enum": ["clamp", "linear", "constant"],
+          "default": "clamp",
+          "description": "Extrapolation above maximum"
+        },
+        "limit": {
+          "type": "number",
+          "description": "Maximum extrapolation distance"
+        }
+      }
+    },
+
+    "triangulationConfig": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "enum": ["delaunay", "grid", "manual"],
+          "default": "delaunay",
+          "description": "Triangulation algorithm"
+        },
+        "updateOnSampleChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-recalculate triangulation when samples change"
+        },
+        "manualTriangles": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 3,
+            "maxItems": 3,
+            "description": "Triangle defined by three sample IDs"
+          },
+          "description": "Manually defined triangles (for manual mode)"
+        },
+        "debugShowTriangles": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show triangulation in editor"
+        }
+      }
+    },
+
+    "syncMarkersConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable sync marker system"
+        },
+        "autoDetect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-detect markers from animations"
+        },
+        "syncMode": {
+          "enum": ["phase", "time", "normalized"],
+          "default": "phase",
+          "description": "Synchronization mode"
+        },
+        "primaryMarker": {
+          "type": "string",
+          "description": "Primary marker for phase alignment"
+        },
+        "tolerancePercent": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0,
+          "maximum": 50,
+          "description": "Tolerance for marker matching"
+        }
+      }
+    }
+  }
+}

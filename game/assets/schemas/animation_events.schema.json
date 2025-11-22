@@ -1,0 +1,213 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "animation_events.schema.json",
+  "title": "Animation Events and Triggers",
+  "description": "Defines animation event bindings and triggers",
+  "type": "object",
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Event configuration identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "triggers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/trigger" },
+      "description": "Animation triggers"
+    },
+    "bindings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/eventBinding" },
+      "description": "Event to handler bindings"
+    },
+    "combos": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/combo" },
+      "description": "Input combo definitions"
+    },
+    "footstepSounds": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Surface type to sound mappings"
+    },
+    "eventVFX": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Event type to VFX mappings"
+    }
+  },
+
+  "definitions": {
+    "trigger": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Trigger identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "type": {
+          "enum": ["time", "state_enter", "state_exit", "property", "combo", "custom"],
+          "description": "Trigger type"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether trigger is active"
+        },
+        "priority": {
+          "type": "integer",
+          "default": 0,
+          "description": "Trigger priority"
+        },
+        "cooldown": {
+          "type": "number",
+          "default": 0,
+          "description": "Minimum time between activations"
+        },
+        "time": {
+          "type": "number",
+          "description": "Trigger time (for time triggers)"
+        },
+        "isFrameBased": {
+          "type": "boolean",
+          "default": false,
+          "description": "Time is frame number instead of normalized"
+        },
+        "targetState": {
+          "type": "string",
+          "description": "State name (for state triggers)"
+        },
+        "property": {
+          "type": "string",
+          "description": "Property name (for property triggers)"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Threshold value (for property triggers)"
+        },
+        "compareMode": {
+          "enum": ["cross_above", "cross_below", "while_above", "while_below", "on_change"],
+          "description": "Comparison mode (for property triggers)"
+        },
+        "comboSequence": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/comboInput" },
+          "description": "Input sequence (for combo triggers)"
+        },
+        "comboWindow": {
+          "type": "number",
+          "default": 1,
+          "description": "Time window for combo (seconds)"
+        },
+        "event": {
+          "type": "string",
+          "description": "Event to dispatch when triggered"
+        },
+        "eventData": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Data to include with event"
+        },
+        "script": {
+          "type": "string",
+          "description": "Script function to call"
+        },
+        "scriptArgs": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Arguments for script"
+        }
+      }
+    },
+
+    "comboInput": {
+      "type": "object",
+      "required": ["input"],
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "Input name"
+        },
+        "maxDelay": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Max delay since previous input"
+        },
+        "mustRelease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Input must be released first"
+        }
+      }
+    },
+
+    "eventBinding": {
+      "type": "object",
+      "required": ["eventName", "handlerType"],
+      "properties": {
+        "eventName": {
+          "type": "string",
+          "description": "Event name to bind"
+        },
+        "handlerType": {
+          "enum": ["footstep", "hit", "projectile", "vfx", "sound", "equipment", "custom"],
+          "description": "Handler type"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Handler parameters"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether binding is active"
+        }
+      }
+    },
+
+    "combo": {
+      "type": "object",
+      "required": ["id", "sequence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Combo identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "sequence": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/comboInput" },
+          "minItems": 2,
+          "description": "Input sequence"
+        },
+        "windowTime": {
+          "type": "number",
+          "default": 1,
+          "description": "Total time allowed for combo"
+        },
+        "onComplete": {
+          "type": "string",
+          "description": "Event to fire on completion"
+        },
+        "completionData": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Data to include with completion event"
+        }
+      }
+    }
+  }
+}

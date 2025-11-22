@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation State Machine Editor</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #4488ff;
+            --accent-secondary: #44ff88;
+            --accent-warning: #ffaa44;
+            --accent-danger: #ff4444;
+            --border-color: #404060;
+            --node-default: #4488ff;
+            --node-selected: #66aaff;
+            --node-entry: #44ff88;
+            --transition-color: #a0a0b0;
+            --transition-selected: #ffffff;
+            --grid-color: #2a2a3e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .editor-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-primary);
+        }
+
+        /* Side Panel */
+        .side-panel {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            margin-top: 40px;
+        }
+
+        .panel-section {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px;
+        }
+
+        .panel-section h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 80px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .property-input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        select.property-input {
+            cursor: pointer;
+        }
+
+        /* Canvas Area */
+        .canvas-container {
+            flex: 1;
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+        }
+
+        #canvas.dragging {
+            cursor: grabbing;
+        }
+
+        #canvas.connecting {
+            cursor: crosshair;
+        }
+
+        /* Minimap */
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 200px;
+            height: 150px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .minimap-viewport {
+            position: absolute;
+            border: 2px solid var(--accent-primary);
+            background: rgba(68, 136, 255, 0.1);
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 5px 0;
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu.visible {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .context-menu-item:hover {
+            background: var(--accent-primary);
+        }
+
+        .context-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 5px 0;
+        }
+
+        /* State Node */
+        .state-node {
+            position: absolute;
+            min-width: 150px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--node-default);
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+        }
+
+        .state-node.selected {
+            border-color: var(--node-selected);
+            box-shadow: 0 0 15px rgba(68, 136, 255, 0.5);
+        }
+
+        .state-node.entry {
+            border-color: var(--node-entry);
+        }
+
+        .state-node-header {
+            padding: 8px 12px;
+            background: var(--node-default);
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .state-node.entry .state-node-header {
+            background: var(--node-entry);
+            color: var(--bg-primary);
+        }
+
+        .state-node-body {
+            padding: 10px 12px;
+            font-size: 11px;
+        }
+
+        .state-node-clip {
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .state-node-ports {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .state-node-port {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-primary);
+            cursor: crosshair;
+        }
+
+        .state-node-port:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Parameters Panel */
+        .parameters-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .parameter-item {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            margin-bottom: 5px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        .parameter-type {
+            width: 60px;
+            font-size: 10px;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+        }
+
+        .parameter-name {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .parameter-value {
+            width: 60px;
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Transitions Panel */
+        .transitions-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .transition-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .transition-item:hover {
+            background: var(--bg-primary);
+        }
+
+        .transition-item.selected {
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .transition-states {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .transition-condition {
+            color: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        /* Add State Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 400px;
+        }
+
+        .modal h2 {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 25px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-item {
+            margin-right: 20px;
+        }
+
+        .status-item span {
+            color: var(--text-primary);
+        }
+
+        /* Preview Panel */
+        .preview-controls {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .preview-btn {
+            width: 30px;
+            height: 30px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .preview-state {
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .preview-state-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent-secondary);
+        }
+
+        .preview-state-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="newStateMachine()">New</button>
+            <button class="toolbar-btn" onclick="loadStateMachine()">Load</button>
+            <button class="toolbar-btn" onclick="saveStateMachine()">Save</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="undo()" id="undoBtn" disabled>Undo</button>
+            <button class="toolbar-btn" onclick="redo()" id="redoBtn" disabled>Redo</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="addState()">Add State</button>
+            <button class="toolbar-btn" onclick="setEntryState()" id="entryBtn" disabled>Set Entry</button>
+            <button class="toolbar-btn" onclick="deleteSelected()" id="deleteBtn" disabled>Delete</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="autoLayout()">Auto Layout</button>
+            <button class="toolbar-btn" onclick="zoomToFit()">Fit View</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="togglePreview()" id="previewBtn">Preview</button>
+        </div>
+    </div>
+
+    <div class="editor-container">
+        <!-- Canvas -->
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+
+            <!-- Minimap -->
+            <div class="minimap" id="minimap">
+                <canvas id="minimapCanvas"></canvas>
+                <div class="minimap-viewport" id="minimapViewport"></div>
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="side-panel">
+            <!-- State Properties -->
+            <div class="panel-section" id="stateProperties" style="display: none;">
+                <h3>State Properties</h3>
+                <div class="property-row">
+                    <span class="property-label">Name</span>
+                    <input type="text" class="property-input" id="stateName" onchange="updateStateName()">
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Clip</span>
+                    <input type="text" class="property-input" id="stateClip" onchange="updateStateClip()">
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Loop</span>
+                    <input type="checkbox" id="stateLoop" onchange="updateStateLoop()">
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Speed</span>
+                    <input type="number" class="property-input" id="stateSpeed" step="0.1" value="1" onchange="updateStateSpeed()">
+                </div>
+            </div>
+
+            <!-- Transition Properties -->
+            <div class="panel-section" id="transitionProperties" style="display: none;">
+                <h3>Transition Properties</h3>
+                <div class="property-row">
+                    <span class="property-label">From</span>
+                    <input type="text" class="property-input" id="transFrom" readonly>
+                </div>
+                <div class="property-row">
+                    <span class="property-label">To</span>
+                    <input type="text" class="property-input" id="transTo" readonly>
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Duration</span>
+                    <input type="number" class="property-input" id="transDuration" step="0.01" value="0.1" onchange="updateTransDuration()">
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Exit Time</span>
+                    <input type="checkbox" id="transHasExitTime" onchange="updateTransExitTime()">
+                    <input type="number" class="property-input" id="transExitTime" step="0.01" value="0.9" style="width: 60px; margin-left: 10px;">
+                </div>
+                <div class="property-row">
+                    <span class="property-label">Condition</span>
+                    <input type="text" class="property-input" id="transCondition" placeholder="e.g., speed > 0.1" onchange="updateTransCondition()">
+                </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="panel-section">
+                <h3>Parameters</h3>
+                <div class="parameters-list" id="parametersList"></div>
+                <button class="toolbar-btn" style="width: 100%; margin-top: 10px;" onclick="addParameter()">Add Parameter</button>
+            </div>
+
+            <!-- Transitions List -->
+            <div class="panel-section">
+                <h3>Transitions</h3>
+                <div class="transitions-list" id="transitionsList"></div>
+            </div>
+
+            <!-- Preview -->
+            <div class="panel-section" id="previewPanel" style="display: none;">
+                <h3>Preview</h3>
+                <div class="preview-controls">
+                    <button class="preview-btn" onclick="previewPlay()">&#9658;</button>
+                    <button class="preview-btn" onclick="previewPause()">&#10074;&#10074;</button>
+                    <button class="preview-btn" onclick="previewStop()">&#9632;</button>
+                </div>
+                <div class="preview-state">
+                    <div class="preview-state-name" id="previewStateName">idle</div>
+                    <div class="preview-state-time" id="previewStateTime">0.00s</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="addStateAtCursor()">Add State</div>
+        <div class="context-menu-item" onclick="startConnection()">Connect From</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" onclick="setEntryState()">Set as Entry</div>
+        <div class="context-menu-item" onclick="duplicateState()">Duplicate</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" onclick="deleteSelected()">Delete</div>
+    </div>
+
+    <!-- Add State Modal -->
+    <div class="modal-overlay" id="addStateModal">
+        <div class="modal">
+            <h2>Add New State</h2>
+            <div class="property-row">
+                <span class="property-label">Name</span>
+                <input type="text" class="property-input" id="newStateName" placeholder="state_name">
+            </div>
+            <div class="property-row">
+                <span class="property-label">Clip Path</span>
+                <input type="text" class="property-input" id="newStateClip" placeholder="animations/clip_name">
+            </div>
+            <div class="modal-buttons">
+                <button class="toolbar-btn" onclick="closeAddStateModal()">Cancel</button>
+                <button class="toolbar-btn" onclick="confirmAddState()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Parameter Modal -->
+    <div class="modal-overlay" id="addParameterModal">
+        <div class="modal">
+            <h2>Add Parameter</h2>
+            <div class="property-row">
+                <span class="property-label">Name</span>
+                <input type="text" class="property-input" id="newParamName" placeholder="parameter_name">
+            </div>
+            <div class="property-row">
+                <span class="property-label">Type</span>
+                <select class="property-input" id="newParamType">
+                    <option value="float">Float</option>
+                    <option value="int">Int</option>
+                    <option value="bool">Bool</option>
+                    <option value="trigger">Trigger</option>
+                </select>
+            </div>
+            <div class="property-row">
+                <span class="property-label">Default</span>
+                <input type="text" class="property-input" id="newParamDefault" placeholder="0">
+            </div>
+            <div class="modal-buttons">
+                <button class="toolbar-btn" onclick="closeAddParamModal()">Cancel</button>
+                <button class="toolbar-btn" onclick="confirmAddParam()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">Zoom: <span id="zoomLevel">100%</span></div>
+        <div class="status-item">States: <span id="stateCount">0</span></div>
+        <div class="status-item">Transitions: <span id="transitionCount">0</span></div>
+        <div class="status-item" id="dirtyIndicator" style="display: none; color: var(--accent-warning);">* Unsaved Changes</div>
+    </div>
+
+    <script>
+        // State Machine Data
+        let stateMachine = {
+            id: 'new_state_machine',
+            name: 'New State Machine',
+            defaultState: '',
+            parameters: [],
+            states: []
+        };
+
+        // Editor State
+        let canvas, ctx;
+        let viewOffset = { x: 0, y: 0 };
+        let zoom = 1;
+        let isDragging = false;
+        let isPanning = false;
+        let isConnecting = false;
+        let connectingFrom = null;
+        let selectedState = null;
+        let selectedTransition = null;
+        let dragOffset = { x: 0, y: 0 };
+        let contextMenuPos = { x: 0, y: 0 };
+        let undoStack = [];
+        let redoStack = [];
+        let isDirty = false;
+        let isPreviewMode = false;
+        let previewTime = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            setupEventListeners();
+            render();
+        });
+
+        function resizeCanvas() {
+            const container = document.querySelector('.canvas-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            render();
+        }
+
+        function setupEventListeners() {
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('wheel', onWheel);
+            canvas.addEventListener('contextmenu', onContextMenu);
+            canvas.addEventListener('dblclick', onDoubleClick);
+
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('click', hideContextMenu);
+        }
+
+        // Canvas Rendering
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            drawGrid();
+
+            // Draw transitions
+            drawTransitions();
+
+            // Draw states
+            drawStates();
+
+            // Draw connecting line
+            if (isConnecting && connectingFrom) {
+                drawConnectingLine();
+            }
+
+            // Update status
+            updateStatus();
+        }
+
+        function drawGrid() {
+            const gridSize = 20 * zoom;
+            const offsetX = viewOffset.x % gridSize;
+            const offsetY = viewOffset.y % gridSize;
+
+            ctx.strokeStyle = '#2a2a3e';
+            ctx.lineWidth = 1;
+
+            for (let x = -offsetX; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            for (let y = -offsetY; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawStates() {
+            stateMachine.states.forEach(state => {
+                const screenPos = worldToScreen(state.x || 100, state.y || 100);
+                const width = 150 * zoom;
+                const height = 60 * zoom;
+
+                // Node background
+                ctx.fillStyle = '#363650';
+                ctx.strokeStyle = state === selectedState ? '#66aaff' :
+                                  state.name === stateMachine.defaultState ? '#44ff88' : '#4488ff';
+                ctx.lineWidth = 2 * zoom;
+
+                roundRect(ctx, screenPos.x, screenPos.y, width, height, 8 * zoom);
+                ctx.fill();
+                ctx.stroke();
+
+                // Header
+                ctx.fillStyle = state.name === stateMachine.defaultState ? '#44ff88' : '#4488ff';
+                roundRectTop(ctx, screenPos.x, screenPos.y, width, 25 * zoom, 8 * zoom);
+                ctx.fill();
+
+                // State name
+                ctx.fillStyle = state.name === stateMachine.defaultState ? '#1e1e2e' : '#e0e0e0';
+                ctx.font = `bold ${12 * zoom}px 'Segoe UI'`;
+                ctx.textAlign = 'center';
+                ctx.fillText(state.name, screenPos.x + width / 2, screenPos.y + 17 * zoom);
+
+                // Clip name
+                ctx.fillStyle = '#a0a0b0';
+                ctx.font = `${10 * zoom}px 'Segoe UI'`;
+                const clipText = state.clip || 'No clip';
+                ctx.fillText(clipText.substring(0, 20), screenPos.x + width / 2, screenPos.y + 45 * zoom);
+
+                // Selection glow
+                if (state === selectedState) {
+                    ctx.shadowColor = '#4488ff';
+                    ctx.shadowBlur = 15 * zoom;
+                    ctx.strokeStyle = '#66aaff';
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            });
+        }
+
+        function drawTransitions() {
+            stateMachine.states.forEach(state => {
+                if (state.transitions) {
+                    state.transitions.forEach(trans => {
+                        const toState = stateMachine.states.find(s => s.name === trans.to);
+                        if (toState) {
+                            drawTransition(state, toState, trans);
+                        }
+                    });
+                }
+            });
+        }
+
+        function drawTransition(fromState, toState, transition) {
+            const fromPos = worldToScreen(fromState.x || 100, fromState.y || 100);
+            const toPos = worldToScreen(toState.x || 100, toState.y || 100);
+
+            const fromCenter = {
+                x: fromPos.x + 75 * zoom,
+                y: fromPos.y + 30 * zoom
+            };
+            const toCenter = {
+                x: toPos.x + 75 * zoom,
+                y: toPos.y + 30 * zoom
+            };
+
+            // Calculate control point for curve
+            const midX = (fromCenter.x + toCenter.x) / 2;
+            const midY = (fromCenter.y + toCenter.y) / 2;
+            const dx = toCenter.x - fromCenter.x;
+            const dy = toCenter.y - fromCenter.y;
+            const offset = 30 * zoom;
+            const controlX = midX - dy * 0.2;
+            const controlY = midY + dx * 0.2;
+
+            const isSelected = selectedTransition &&
+                              selectedTransition.from === fromState.name &&
+                              selectedTransition.to === transition.to;
+
+            ctx.strokeStyle = isSelected ? '#ffffff' : '#a0a0b0';
+            ctx.lineWidth = isSelected ? 3 * zoom : 2 * zoom;
+
+            ctx.beginPath();
+            ctx.moveTo(fromCenter.x, fromCenter.y);
+            ctx.quadraticCurveTo(controlX, controlY, toCenter.x, toCenter.y);
+            ctx.stroke();
+
+            // Draw arrow
+            drawArrow(controlX, controlY, toCenter.x, toCenter.y, isSelected);
+
+            // Draw condition label
+            if (transition.conditions && transition.conditions.length > 0) {
+                const labelX = controlX;
+                const labelY = controlY - 10 * zoom;
+                ctx.fillStyle = '#a0a0b0';
+                ctx.font = `${9 * zoom}px 'Segoe UI'`;
+                ctx.textAlign = 'center';
+                const condText = transition.conditions.map(c => c.parameter).join(', ');
+                ctx.fillText(condText, labelX, labelY);
+            }
+        }
+
+        function drawArrow(fromX, fromY, toX, toY, selected) {
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            const arrowLength = 12 * zoom;
+            const arrowWidth = 8 * zoom;
+
+            ctx.fillStyle = selected ? '#ffffff' : '#a0a0b0';
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - arrowLength * Math.cos(angle - Math.PI / 6),
+                      toY - arrowLength * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - arrowLength * Math.cos(angle + Math.PI / 6),
+                      toY - arrowLength * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawConnectingLine() {
+            const fromState = stateMachine.states.find(s => s.name === connectingFrom);
+            if (!fromState) return;
+
+            const fromPos = worldToScreen(fromState.x || 100, fromState.y || 100);
+            const fromCenter = {
+                x: fromPos.x + 75 * zoom,
+                y: fromPos.y + 30 * zoom
+            };
+
+            ctx.strokeStyle = '#4488ff';
+            ctx.lineWidth = 2 * zoom;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(fromCenter.x, fromCenter.y);
+            ctx.lineTo(lastMousePos.x, lastMousePos.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Helper functions
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function roundRectTop(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h);
+            ctx.lineTo(x, y + h);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function worldToScreen(x, y) {
+            return {
+                x: (x - viewOffset.x) * zoom,
+                y: (y - viewOffset.y) * zoom
+            };
+        }
+
+        function screenToWorld(x, y) {
+            return {
+                x: x / zoom + viewOffset.x,
+                y: y / zoom + viewOffset.y
+            };
+        }
+
+        // Event Handlers
+        let lastMousePos = { x: 0, y: 0 };
+
+        function onMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            lastMousePos = { x, y };
+
+            if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+                // Middle click or Ctrl+click - pan
+                isPanning = true;
+                canvas.classList.add('dragging');
+                return;
+            }
+
+            if (e.button === 0) {
+                // Left click
+                const clickedState = getStateAtPosition(x, y);
+
+                if (isConnecting) {
+                    // Complete connection
+                    if (clickedState && clickedState.name !== connectingFrom) {
+                        addTransition(connectingFrom, clickedState.name);
+                    }
+                    isConnecting = false;
+                    connectingFrom = null;
+                    canvas.classList.remove('connecting');
+                    return;
+                }
+
+                if (clickedState) {
+                    selectState(clickedState);
+                    isDragging = true;
+                    const screenPos = worldToScreen(clickedState.x || 100, clickedState.y || 100);
+                    dragOffset = {
+                        x: x - screenPos.x,
+                        y: y - screenPos.y
+                    };
+                } else {
+                    // Check for transition click
+                    const clickedTrans = getTransitionAtPosition(x, y);
+                    if (clickedTrans) {
+                        selectTransition(clickedTrans);
+                    } else {
+                        clearSelection();
+                    }
+                }
+            }
+        }
+
+        function onMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (isPanning) {
+                viewOffset.x -= (x - lastMousePos.x) / zoom;
+                viewOffset.y -= (y - lastMousePos.y) / zoom;
+                render();
+            } else if (isDragging && selectedState) {
+                const worldPos = screenToWorld(x - dragOffset.x, y - dragOffset.y);
+                selectedState.x = Math.round(worldPos.x / 20) * 20;
+                selectedState.y = Math.round(worldPos.y / 20) * 20;
+                setDirty();
+                render();
+            }
+
+            lastMousePos = { x, y };
+
+            if (isConnecting) {
+                render();
+            }
+        }
+
+        function onMouseUp(e) {
+            isDragging = false;
+            isPanning = false;
+            canvas.classList.remove('dragging');
+        }
+
+        function onWheel(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const worldBefore = screenToWorld(x, y);
+
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            zoom = Math.max(0.25, Math.min(4, zoom * delta));
+
+            const worldAfter = screenToWorld(x, y);
+            viewOffset.x += worldBefore.x - worldAfter.x;
+            viewOffset.y += worldBefore.y - worldAfter.y;
+
+            render();
+        }
+
+        function onContextMenu(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            contextMenuPos = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.add('visible');
+        }
+
+        function onDoubleClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const clickedState = getStateAtPosition(x, y);
+            if (!clickedState) {
+                // Add new state at position
+                const worldPos = screenToWorld(x, y);
+                addStateAtPosition(worldPos.x, worldPos.y);
+            }
+        }
+
+        function onKeyDown(e) {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedState || selectedTransition) {
+                    deleteSelected();
+                }
+            } else if (e.ctrlKey && e.key === 'z') {
+                undo();
+            } else if (e.ctrlKey && e.key === 'y') {
+                redo();
+            } else if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveStateMachine();
+            } else if (e.key === 'Escape') {
+                if (isConnecting) {
+                    isConnecting = false;
+                    connectingFrom = null;
+                    canvas.classList.remove('connecting');
+                    render();
+                }
+            }
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').classList.remove('visible');
+        }
+
+        // State Management
+        function getStateAtPosition(x, y) {
+            for (let i = stateMachine.states.length - 1; i >= 0; i--) {
+                const state = stateMachine.states[i];
+                const screenPos = worldToScreen(state.x || 100, state.y || 100);
+                const width = 150 * zoom;
+                const height = 60 * zoom;
+
+                if (x >= screenPos.x && x <= screenPos.x + width &&
+                    y >= screenPos.y && y <= screenPos.y + height) {
+                    return state;
+                }
+            }
+            return null;
+        }
+
+        function getTransitionAtPosition(x, y) {
+            // Simple hit test for transitions (would need improvement for production)
+            for (const state of stateMachine.states) {
+                if (state.transitions) {
+                    for (const trans of state.transitions) {
+                        const toState = stateMachine.states.find(s => s.name === trans.to);
+                        if (toState) {
+                            // Simplified hit test
+                            const fromPos = worldToScreen(state.x || 100, state.y || 100);
+                            const toPos = worldToScreen(toState.x || 100, toState.y || 100);
+                            const midX = (fromPos.x + toPos.x) / 2 + 75 * zoom;
+                            const midY = (fromPos.y + toPos.y) / 2 + 30 * zoom;
+
+                            if (Math.abs(x - midX) < 30 && Math.abs(y - midY) < 30) {
+                                return { from: state.name, to: trans.to, transition: trans };
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function selectState(state) {
+            selectedState = state;
+            selectedTransition = null;
+
+            document.getElementById('stateProperties').style.display = 'block';
+            document.getElementById('transitionProperties').style.display = 'none';
+            document.getElementById('stateName').value = state.name;
+            document.getElementById('stateClip').value = state.clip || '';
+            document.getElementById('stateLoop').checked = state.loop !== false;
+            document.getElementById('stateSpeed').value = state.speed || 1;
+
+            document.getElementById('entryBtn').disabled = false;
+            document.getElementById('deleteBtn').disabled = false;
+
+            render();
+        }
+
+        function selectTransition(trans) {
+            selectedState = null;
+            selectedTransition = trans;
+
+            document.getElementById('stateProperties').style.display = 'none';
+            document.getElementById('transitionProperties').style.display = 'block';
+            document.getElementById('transFrom').value = trans.from;
+            document.getElementById('transTo').value = trans.to;
+            document.getElementById('transDuration').value = trans.transition.duration || 0.1;
+            document.getElementById('transHasExitTime').checked = trans.transition.hasExitTime || false;
+            document.getElementById('transExitTime').value = trans.transition.exitTime || 0.9;
+
+            const conditions = trans.transition.conditions || [];
+            const condStr = conditions.map(c => `${c.parameter} ${c.mode} ${c.threshold || ''}`).join(' && ');
+            document.getElementById('transCondition').value = condStr;
+
+            document.getElementById('entryBtn').disabled = true;
+            document.getElementById('deleteBtn').disabled = false;
+
+            render();
+        }
+
+        function clearSelection() {
+            selectedState = null;
+            selectedTransition = null;
+
+            document.getElementById('stateProperties').style.display = 'none';
+            document.getElementById('transitionProperties').style.display = 'none';
+            document.getElementById('entryBtn').disabled = true;
+            document.getElementById('deleteBtn').disabled = true;
+
+            render();
+        }
+
+        // Actions
+        function addState() {
+            document.getElementById('addStateModal').classList.add('visible');
+            document.getElementById('newStateName').value = 'state_' + stateMachine.states.length;
+            document.getElementById('newStateClip').value = '';
+            document.getElementById('newStateName').focus();
+        }
+
+        function addStateAtCursor() {
+            hideContextMenu();
+            const worldPos = screenToWorld(contextMenuPos.x, contextMenuPos.y);
+            addStateAtPosition(worldPos.x, worldPos.y);
+        }
+
+        function addStateAtPosition(x, y) {
+            const name = 'state_' + stateMachine.states.length;
+            pushUndo();
+
+            const newState = {
+                name: name,
+                clip: '',
+                loop: true,
+                x: Math.round(x / 20) * 20,
+                y: Math.round(y / 20) * 20,
+                transitions: []
+            };
+
+            stateMachine.states.push(newState);
+
+            if (stateMachine.states.length === 1) {
+                stateMachine.defaultState = name;
+            }
+
+            setDirty();
+            selectState(newState);
+            updateTransitionsList();
+        }
+
+        function confirmAddState() {
+            const name = document.getElementById('newStateName').value.trim();
+            const clip = document.getElementById('newStateClip').value.trim();
+
+            if (!name) {
+                alert('Please enter a state name');
+                return;
+            }
+
+            if (stateMachine.states.find(s => s.name === name)) {
+                alert('A state with this name already exists');
+                return;
+            }
+
+            pushUndo();
+
+            const newState = {
+                name: name,
+                clip: clip,
+                loop: true,
+                x: 100 + stateMachine.states.length * 50,
+                y: 100 + stateMachine.states.length * 30,
+                transitions: []
+            };
+
+            stateMachine.states.push(newState);
+
+            if (stateMachine.states.length === 1) {
+                stateMachine.defaultState = name;
+            }
+
+            closeAddStateModal();
+            setDirty();
+            selectState(newState);
+            updateTransitionsList();
+        }
+
+        function closeAddStateModal() {
+            document.getElementById('addStateModal').classList.remove('visible');
+        }
+
+        function startConnection() {
+            hideContextMenu();
+            if (selectedState) {
+                isConnecting = true;
+                connectingFrom = selectedState.name;
+                canvas.classList.add('connecting');
+            }
+        }
+
+        function addTransition(fromName, toName) {
+            const fromState = stateMachine.states.find(s => s.name === fromName);
+            if (!fromState) return;
+
+            if (!fromState.transitions) {
+                fromState.transitions = [];
+            }
+
+            // Check if transition already exists
+            if (fromState.transitions.find(t => t.to === toName)) {
+                return;
+            }
+
+            pushUndo();
+
+            fromState.transitions.push({
+                to: toName,
+                duration: 0.1,
+                conditions: []
+            });
+
+            setDirty();
+            updateTransitionsList();
+            render();
+        }
+
+        function setEntryState() {
+            hideContextMenu();
+            if (selectedState) {
+                pushUndo();
+                stateMachine.defaultState = selectedState.name;
+                setDirty();
+                render();
+            }
+        }
+
+        function duplicateState() {
+            hideContextMenu();
+            if (selectedState) {
+                pushUndo();
+
+                const newState = JSON.parse(JSON.stringify(selectedState));
+                newState.name = selectedState.name + '_copy';
+                newState.x = (selectedState.x || 100) + 50;
+                newState.y = (selectedState.y || 100) + 50;
+
+                stateMachine.states.push(newState);
+                setDirty();
+                selectState(newState);
+                updateTransitionsList();
+            }
+        }
+
+        function deleteSelected() {
+            hideContextMenu();
+
+            if (selectedState) {
+                pushUndo();
+
+                // Remove transitions to this state
+                stateMachine.states.forEach(s => {
+                    if (s.transitions) {
+                        s.transitions = s.transitions.filter(t => t.to !== selectedState.name);
+                    }
+                });
+
+                // Remove state
+                stateMachine.states = stateMachine.states.filter(s => s !== selectedState);
+
+                // Update default state if needed
+                if (stateMachine.defaultState === selectedState.name) {
+                    stateMachine.defaultState = stateMachine.states.length > 0 ?
+                                                stateMachine.states[0].name : '';
+                }
+
+                clearSelection();
+                setDirty();
+                updateTransitionsList();
+            } else if (selectedTransition) {
+                pushUndo();
+
+                const fromState = stateMachine.states.find(s => s.name === selectedTransition.from);
+                if (fromState && fromState.transitions) {
+                    fromState.transitions = fromState.transitions.filter(
+                        t => t.to !== selectedTransition.to
+                    );
+                }
+
+                clearSelection();
+                setDirty();
+                updateTransitionsList();
+            }
+        }
+
+        // Property Updates
+        function updateStateName() {
+            if (!selectedState) return;
+            const newName = document.getElementById('stateName').value.trim();
+            if (!newName || newName === selectedState.name) return;
+
+            if (stateMachine.states.find(s => s.name === newName)) {
+                alert('A state with this name already exists');
+                document.getElementById('stateName').value = selectedState.name;
+                return;
+            }
+
+            pushUndo();
+
+            const oldName = selectedState.name;
+
+            // Update transitions referencing this state
+            stateMachine.states.forEach(s => {
+                if (s.transitions) {
+                    s.transitions.forEach(t => {
+                        if (t.to === oldName) {
+                            t.to = newName;
+                        }
+                    });
+                }
+            });
+
+            // Update default state if needed
+            if (stateMachine.defaultState === oldName) {
+                stateMachine.defaultState = newName;
+            }
+
+            selectedState.name = newName;
+            setDirty();
+            updateTransitionsList();
+            render();
+        }
+
+        function updateStateClip() {
+            if (!selectedState) return;
+            pushUndo();
+            selectedState.clip = document.getElementById('stateClip').value;
+            setDirty();
+            render();
+        }
+
+        function updateStateLoop() {
+            if (!selectedState) return;
+            pushUndo();
+            selectedState.loop = document.getElementById('stateLoop').checked;
+            setDirty();
+        }
+
+        function updateStateSpeed() {
+            if (!selectedState) return;
+            pushUndo();
+            selectedState.speed = parseFloat(document.getElementById('stateSpeed').value) || 1;
+            setDirty();
+        }
+
+        function updateTransDuration() {
+            if (!selectedTransition) return;
+            pushUndo();
+            selectedTransition.transition.duration = parseFloat(document.getElementById('transDuration').value) || 0.1;
+            setDirty();
+        }
+
+        function updateTransExitTime() {
+            if (!selectedTransition) return;
+            pushUndo();
+            selectedTransition.transition.hasExitTime = document.getElementById('transHasExitTime').checked;
+            selectedTransition.transition.exitTime = parseFloat(document.getElementById('transExitTime').value) || 0.9;
+            setDirty();
+        }
+
+        function updateTransCondition() {
+            if (!selectedTransition) return;
+            // Parse simple condition string - would need more sophisticated parsing in production
+            const condStr = document.getElementById('transCondition').value.trim();
+            // For now, just store as simple condition
+            // Production would parse expressions like "speed > 0.1 && isGrounded"
+            pushUndo();
+            setDirty();
+        }
+
+        // Parameters
+        function addParameter() {
+            document.getElementById('addParameterModal').classList.add('visible');
+            document.getElementById('newParamName').value = '';
+            document.getElementById('newParamType').value = 'float';
+            document.getElementById('newParamDefault').value = '0';
+            document.getElementById('newParamName').focus();
+        }
+
+        function confirmAddParam() {
+            const name = document.getElementById('newParamName').value.trim();
+            const type = document.getElementById('newParamType').value;
+            const defaultValue = document.getElementById('newParamDefault').value;
+
+            if (!name) {
+                alert('Please enter a parameter name');
+                return;
+            }
+
+            if (stateMachine.parameters.find(p => p.name === name)) {
+                alert('A parameter with this name already exists');
+                return;
+            }
+
+            pushUndo();
+
+            stateMachine.parameters.push({
+                name: name,
+                type: type,
+                defaultValue: type === 'bool' ? defaultValue === 'true' :
+                              type === 'trigger' ? false :
+                              parseFloat(defaultValue) || 0
+            });
+
+            closeAddParamModal();
+            setDirty();
+            updateParametersList();
+        }
+
+        function closeAddParamModal() {
+            document.getElementById('addParameterModal').classList.remove('visible');
+        }
+
+        function updateParametersList() {
+            const list = document.getElementById('parametersList');
+            list.innerHTML = '';
+
+            stateMachine.parameters.forEach(param => {
+                const item = document.createElement('div');
+                item.className = 'parameter-item';
+                item.innerHTML = `
+                    <span class="parameter-type">${param.type}</span>
+                    <span class="parameter-name">${param.name}</span>
+                    <span class="parameter-value">${param.defaultValue}</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateTransitionsList() {
+            const list = document.getElementById('transitionsList');
+            list.innerHTML = '';
+
+            stateMachine.states.forEach(state => {
+                if (state.transitions) {
+                    state.transitions.forEach(trans => {
+                        const item = document.createElement('div');
+                        item.className = 'transition-item';
+                        if (selectedTransition &&
+                            selectedTransition.from === state.name &&
+                            selectedTransition.to === trans.to) {
+                            item.classList.add('selected');
+                        }
+
+                        const condText = trans.conditions && trans.conditions.length > 0 ?
+                            trans.conditions.map(c => c.parameter).join(', ') : 'No conditions';
+
+                        item.innerHTML = `
+                            <div class="transition-states">${state.name} → ${trans.to}</div>
+                            <div class="transition-condition">${condText}</div>
+                        `;
+
+                        item.onclick = () => {
+                            selectTransition({
+                                from: state.name,
+                                to: trans.to,
+                                transition: trans
+                            });
+                        };
+
+                        list.appendChild(item);
+                    });
+                }
+            });
+        }
+
+        // Undo/Redo
+        function pushUndo() {
+            undoStack.push(JSON.stringify(stateMachine));
+            redoStack = [];
+            if (undoStack.length > 50) {
+                undoStack.shift();
+            }
+            updateUndoButtons();
+        }
+
+        function undo() {
+            if (undoStack.length === 0) return;
+            redoStack.push(JSON.stringify(stateMachine));
+            stateMachine = JSON.parse(undoStack.pop());
+            clearSelection();
+            updateParametersList();
+            updateTransitionsList();
+            updateUndoButtons();
+            render();
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            undoStack.push(JSON.stringify(stateMachine));
+            stateMachine = JSON.parse(redoStack.pop());
+            clearSelection();
+            updateParametersList();
+            updateTransitionsList();
+            updateUndoButtons();
+            render();
+        }
+
+        function updateUndoButtons() {
+            document.getElementById('undoBtn').disabled = undoStack.length === 0;
+            document.getElementById('redoBtn').disabled = redoStack.length === 0;
+        }
+
+        // File Operations
+        function newStateMachine() {
+            if (isDirty && !confirm('Discard unsaved changes?')) return;
+
+            stateMachine = {
+                id: 'new_state_machine',
+                name: 'New State Machine',
+                defaultState: '',
+                parameters: [],
+                states: []
+            };
+
+            undoStack = [];
+            redoStack = [];
+            clearSelection();
+            updateParametersList();
+            updateTransitionsList();
+            updateUndoButtons();
+            isDirty = false;
+            document.getElementById('dirtyIndicator').style.display = 'none';
+            render();
+        }
+
+        function loadStateMachine() {
+            // In production, this would open a file dialog
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        const data = JSON.parse(reader.result);
+                        stateMachine = data;
+
+                        // Add positions if not present
+                        stateMachine.states.forEach((state, i) => {
+                            if (state.x === undefined) {
+                                state.x = 100 + (i % 4) * 200;
+                                state.y = 100 + Math.floor(i / 4) * 150;
+                            }
+                        });
+
+                        undoStack = [];
+                        redoStack = [];
+                        clearSelection();
+                        updateParametersList();
+                        updateTransitionsList();
+                        updateUndoButtons();
+                        isDirty = false;
+                        document.getElementById('dirtyIndicator').style.display = 'none';
+                        zoomToFit();
+                    } catch (err) {
+                        alert('Error loading file: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function saveStateMachine() {
+            // Create clean export (remove editor-only data)
+            const exportData = JSON.parse(JSON.stringify(stateMachine));
+
+            // Keep position data in a separate _editor field
+            exportData._editor = {
+                positions: {}
+            };
+            exportData.states.forEach(state => {
+                exportData._editor.positions[state.name] = { x: state.x, y: state.y };
+                delete state.x;
+                delete state.y;
+            });
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (stateMachine.id || 'state_machine') + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            isDirty = false;
+            document.getElementById('dirtyIndicator').style.display = 'none';
+        }
+
+        // Layout
+        function autoLayout() {
+            pushUndo();
+
+            // Simple hierarchical layout
+            const visited = new Set();
+            const levels = [];
+
+            // Start from default state
+            function assignLevel(stateName, level) {
+                if (visited.has(stateName)) return;
+                visited.add(stateName);
+
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(stateName);
+
+                const state = stateMachine.states.find(s => s.name === stateName);
+                if (state && state.transitions) {
+                    state.transitions.forEach(t => {
+                        assignLevel(t.to, level + 1);
+                    });
+                }
+            }
+
+            if (stateMachine.defaultState) {
+                assignLevel(stateMachine.defaultState, 0);
+            }
+
+            // Assign remaining states
+            stateMachine.states.forEach(state => {
+                if (!visited.has(state.name)) {
+                    assignLevel(state.name, levels.length);
+                }
+            });
+
+            // Position states
+            levels.forEach((level, levelIndex) => {
+                const startX = 100;
+                const spacing = 200;
+                level.forEach((stateName, stateIndex) => {
+                    const state = stateMachine.states.find(s => s.name === stateName);
+                    if (state) {
+                        state.x = startX + stateIndex * spacing;
+                        state.y = 100 + levelIndex * 150;
+                    }
+                });
+            });
+
+            setDirty();
+            render();
+        }
+
+        function zoomToFit() {
+            if (stateMachine.states.length === 0) return;
+
+            let minX = Infinity, minY = Infinity;
+            let maxX = -Infinity, maxY = -Infinity;
+
+            stateMachine.states.forEach(state => {
+                const x = state.x || 100;
+                const y = state.y || 100;
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x + 150);
+                maxY = Math.max(maxY, y + 60);
+            });
+
+            const padding = 50;
+            const contentWidth = maxX - minX + padding * 2;
+            const contentHeight = maxY - minY + padding * 2;
+
+            zoom = Math.min(
+                canvas.width / contentWidth,
+                canvas.height / contentHeight,
+                2
+            );
+            zoom = Math.max(0.25, zoom);
+
+            viewOffset.x = minX - padding;
+            viewOffset.y = minY - padding;
+
+            render();
+        }
+
+        // Preview
+        function togglePreview() {
+            isPreviewMode = !isPreviewMode;
+            document.getElementById('previewPanel').style.display = isPreviewMode ? 'block' : 'none';
+            document.getElementById('previewBtn').classList.toggle('active', isPreviewMode);
+
+            if (isPreviewMode) {
+                previewTime = 0;
+                updatePreviewDisplay();
+            }
+        }
+
+        function previewPlay() {
+            // Would animate through states based on parameters
+        }
+
+        function previewPause() {
+            // Pause preview
+        }
+
+        function previewStop() {
+            previewTime = 0;
+            updatePreviewDisplay();
+        }
+
+        function updatePreviewDisplay() {
+            document.getElementById('previewStateName').textContent =
+                stateMachine.defaultState || 'No default state';
+            document.getElementById('previewStateTime').textContent =
+                previewTime.toFixed(2) + 's';
+        }
+
+        // Status
+        function setDirty() {
+            isDirty = true;
+            document.getElementById('dirtyIndicator').style.display = 'block';
+        }
+
+        function updateStatus() {
+            document.getElementById('zoomLevel').textContent = Math.round(zoom * 100) + '%';
+            document.getElementById('stateCount').textContent = stateMachine.states.length;
+
+            let transCount = 0;
+            stateMachine.states.forEach(s => {
+                if (s.transitions) transCount += s.transitions.length;
+            });
+            document.getElementById('transitionCount').textContent = transCount;
+        }
+
+        // Communication with native editor
+        function sendToNative(action, data) {
+            if (window.NativeEditor) {
+                window.NativeEditor.postMessage(JSON.stringify({ action, data }));
+            }
+        }
+
+        // Receive data from native editor
+        window.receiveFromNative = function(message) {
+            const { action, data } = JSON.parse(message);
+
+            switch (action) {
+                case 'load':
+                    stateMachine = data;
+                    updateParametersList();
+                    updateTransitionsList();
+                    render();
+                    break;
+                case 'setParameter':
+                    // Update parameter value for preview
+                    break;
+            }
+        };
+    </script>
+</body>
+</html>

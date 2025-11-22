@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+</head>
+<body>
+    <div class="inventory-panel">
+        <!-- Equipment Section -->
+        <div class="equipment-section">
+            <h3>Equipment</h3>
+            <div class="equipment-grid">
+                <div class="equipment-slot" data-slot="head">
+                    <div class="slot-label">Head</div>
+                    <div class="slot-content" id="equip-head"></div>
+                </div>
+                <div class="equipment-slot" data-slot="chest">
+                    <div class="slot-label">Chest</div>
+                    <div class="slot-content" id="equip-chest"></div>
+                </div>
+                <div class="equipment-slot" data-slot="legs">
+                    <div class="slot-label">Legs</div>
+                    <div class="slot-content" id="equip-legs"></div>
+                </div>
+                <div class="equipment-slot" data-slot="feet">
+                    <div class="slot-label">Feet</div>
+                    <div class="slot-content" id="equip-feet"></div>
+                </div>
+                <div class="equipment-slot" data-slot="weapon">
+                    <div class="slot-label">Weapon</div>
+                    <div class="slot-content" id="equip-weapon"></div>
+                </div>
+                <div class="equipment-slot" data-slot="offhand">
+                    <div class="slot-label">Off-hand</div>
+                    <div class="slot-content" id="equip-offhand"></div>
+                </div>
+                <div class="equipment-slot" data-slot="accessory1">
+                    <div class="slot-label">Ring 1</div>
+                    <div class="slot-content" id="equip-accessory1"></div>
+                </div>
+                <div class="equipment-slot" data-slot="accessory2">
+                    <div class="slot-label">Ring 2</div>
+                    <div class="slot-content" id="equip-accessory2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Section -->
+        <div class="inventory-section">
+            <div class="inventory-header">
+                <h3>Inventory</h3>
+                <div class="inventory-controls">
+                    <select id="filter-type" onchange="Inventory.setFilter(this.value)">
+                        <option value="">All</option>
+                        <option value="weapon">Weapons</option>
+                        <option value="armor">Armor</option>
+                        <option value="consumable">Consumables</option>
+                        <option value="material">Materials</option>
+                        <option value="quest">Quest Items</option>
+                    </select>
+                    <button onclick="Inventory.sort('name')">Sort</button>
+                </div>
+            </div>
+
+            <div id="inventory-grid" class="inventory-grid"></div>
+
+            <div class="inventory-footer">
+                <div class="inventory-weight">
+                    <span>Weight:</span>
+                    <span id="weight-current" data-bind="inventory.weight.current">0</span> /
+                    <span id="weight-max" data-bind="inventory.weight.max">100</span>
+                </div>
+                <div class="inventory-currency">
+                    <span class="currency-gold">
+                        <img src="icons/gold.png" alt="Gold">
+                        <span id="currency-gold" data-bind="inventory.currency.gold">0</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const Inventory = {
+            slots: [],
+            draggedSlot: null,
+
+            init: function() {
+                this.buildGrid();
+                this.setupDragDrop();
+            },
+
+            buildGrid: function() {
+                const grid = document.getElementById('inventory-grid');
+                const rows = 4;
+                const cols = 8;
+
+                grid.innerHTML = '';
+                for (let i = 0; i < rows * cols; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'inventory-slot';
+                    slot.dataset.index = i;
+                    slot.innerHTML = '<div class="slot-content"></div><div class="stack-count"></div>';
+                    slot.draggable = true;
+
+                    slot.addEventListener('mouseenter', (e) => this.onHover(i, e));
+                    slot.addEventListener('mouseleave', () => this.onHoverEnd());
+                    slot.addEventListener('contextmenu', (e) => { e.preventDefault(); this.onRightClick(i); });
+                    slot.addEventListener('dblclick', () => this.onDoubleClick(i));
+
+                    grid.appendChild(slot);
+                    this.slots.push(slot);
+                }
+            },
+
+            setupDragDrop: function() {
+                this.slots.forEach((slot, index) => {
+                    slot.addEventListener('dragstart', (e) => {
+                        this.draggedSlot = index;
+                        e.dataTransfer.effectAllowed = 'move';
+                        slot.classList.add('dragging');
+                        Engine.call('Inventory.onDragStart', { slot: index });
+                    });
+
+                    slot.addEventListener('dragend', () => {
+                        slot.classList.remove('dragging');
+                        this.draggedSlot = null;
+                    });
+
+                    slot.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                    });
+
+                    slot.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (this.draggedSlot !== null) {
+                            Engine.call('Inventory.onDrop', { slot: index });
+                        }
+                    });
+                });
+            },
+
+            updateSlots: function(slotsData) {
+                slotsData.forEach((data, index) => {
+                    if (index >= this.slots.length) return;
+
+                    const slot = this.slots[index];
+                    const content = slot.querySelector('.slot-content');
+                    const stackCount = slot.querySelector('.stack-count');
+
+                    slot.className = 'inventory-slot';
+                    if (data.isLocked) slot.classList.add('locked');
+                    if (data.isHighlighted) slot.classList.add('highlighted');
+                    if (data.filtered) slot.classList.add('filtered');
+
+                    if (!data.isEmpty) {
+                        content.innerHTML = `<img src="${data.icon}" alt="${data.name}" class="item-icon rarity-${data.rarity}">`;
+                        stackCount.textContent = data.stackCount > 1 ? data.stackCount : '';
+                        slot.classList.add('has-item');
+                        slot.classList.add('rarity-' + data.rarity);
+                    } else {
+                        content.innerHTML = '';
+                        stackCount.textContent = '';
+                    }
+                });
+            },
+
+            onHover: function(index, e) {
+                Engine.call('Inventory.onHover', { slot: index, x: e.clientX, y: e.clientY });
+            },
+
+            onHoverEnd: function() {
+                Engine.call('Inventory.onHoverEnd', {});
+            },
+
+            onRightClick: function(index) {
+                Engine.call('Inventory.onRightClick', { slot: index });
+            },
+
+            onDoubleClick: function(index) {
+                Engine.call('Inventory.onSlotClick', { slot: index });
+            },
+
+            setFilter: function(type) {
+                Engine.call('Inventory.setFilter', { type: type });
+            },
+
+            sort: function(sortBy) {
+                Engine.call('Inventory.sort', { sortBy: sortBy });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => Inventory.init());
+
+        // Expose to engine
+        window.Inventory = window.Inventory || {};
+        Object.assign(window.Inventory, {
+            updateSlots: (data) => Inventory.updateSlots(data)
+        });
+    </script>
+</body>
+</html>

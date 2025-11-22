@@ -1,0 +1,620 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nova3d.engine/schemas/event_binding_extended.schema.json",
+  "title": "Extended Event Binding Schema",
+  "description": "Comprehensive schema for event bindings with custom events, compound conditions, and action chains",
+  "type": "object",
+
+  "definitions": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Valid identifier string"
+    },
+
+    "jsonPath": {
+      "type": "string",
+      "pattern": "^\\$(\\.([a-zA-Z_][a-zA-Z0-9_]*|\\[\\d+\\]|\\*))*$",
+      "description": "JSON path expression (e.g., $.entities[0].health)"
+    },
+
+    "duration": {
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "string", "pattern": "^\\d+(\\.\\d+)?(ms|s|m|h)?$" }
+      ],
+      "description": "Duration in milliseconds or with unit suffix"
+    },
+
+    "comparator": {
+      "type": "string",
+      "enum": [
+        "==", "!=", "<", "<=", ">", ">=",
+        "changed", "unchanged",
+        "contains", "notContains", "startsWith", "endsWith", "matches",
+        "inRange", "notInRange",
+        "isNull", "isNotNull", "isEmpty", "isNotEmpty",
+        "bitSet", "bitClear", "bitAnySet", "bitAllSet",
+        "typeOf", "instanceOf"
+      ],
+      "description": "Comparison operator for conditions"
+    },
+
+    "logicalOperator": {
+      "type": "string",
+      "enum": ["and", "or", "not", "xor", "nand", "nor"],
+      "description": "Logical operator for compound conditions"
+    },
+
+    "conditionValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "integer" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array" },
+        { "type": "object" }
+      ],
+      "description": "Value for condition comparison"
+    },
+
+    "propertyCondition": {
+      "type": "object",
+      "description": "Condition based on property value",
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "description": { "type": "string" },
+        "propertyPath": {
+          "type": "string",
+          "description": "Dot-notation path to property"
+        },
+        "comparator": { "$ref": "#/definitions/comparator" },
+        "compareValue": { "$ref": "#/definitions/conditionValue" },
+        "rangeMin": { "$ref": "#/definitions/conditionValue" },
+        "rangeMax": { "$ref": "#/definitions/conditionValue" },
+        "regexPattern": {
+          "type": "string",
+          "description": "Regex pattern for matches comparator"
+        },
+        "caseSensitive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Case sensitivity for string comparisons"
+        },
+        "negate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Negate the condition result"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": ["propertyPath", "comparator"]
+    },
+
+    "eventCondition": {
+      "type": "object",
+      "description": "Condition based on event properties",
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "description": { "type": "string" },
+        "eventName": {
+          "type": "string",
+          "description": "Name of event to match (* for any)"
+        },
+        "eventTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags the event must have"
+        },
+        "sourceType": {
+          "type": "string",
+          "description": "Type of source entity"
+        },
+        "sourceId": {
+          "type": "string",
+          "description": "Specific source entity ID"
+        },
+        "targetType": {
+          "type": "string",
+          "description": "Type of target entity"
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Specific target entity ID"
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/propertyCondition" },
+          "description": "Additional property conditions on event data"
+        }
+      },
+      "required": ["eventName"]
+    },
+
+    "pythonCondition": {
+      "type": "object",
+      "description": "Condition evaluated by Python",
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "description": { "type": "string" },
+        "expression": {
+          "type": "string",
+          "description": "Inline Python expression (returns bool)"
+        },
+        "module": {
+          "type": "string",
+          "description": "Python module containing condition function"
+        },
+        "function": {
+          "type": "string",
+          "description": "Function name that returns bool"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Additional parameters passed to function"
+        }
+      },
+      "oneOf": [
+        { "required": ["expression"] },
+        { "required": ["module", "function"] }
+      ]
+    },
+
+    "compoundCondition": {
+      "type": "object",
+      "description": "Compound condition combining multiple conditions",
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "description": { "type": "string" },
+        "operator": { "$ref": "#/definitions/logicalOperator" },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/condition" },
+          "minItems": 1,
+          "description": "Child conditions"
+        },
+        "negate": {
+          "type": "boolean",
+          "default": false
+        },
+        "shortCircuit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Stop evaluation on first determining result"
+        }
+      },
+      "required": ["operator", "conditions"]
+    },
+
+    "condition": {
+      "oneOf": [
+        { "$ref": "#/definitions/eventCondition" },
+        { "$ref": "#/definitions/propertyCondition" },
+        { "$ref": "#/definitions/pythonCondition" },
+        { "$ref": "#/definitions/compoundCondition" }
+      ],
+      "description": "Any type of condition"
+    },
+
+    "retryPolicy": {
+      "type": "object",
+      "description": "Retry policy for failed actions",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3
+        },
+        "retryDelay": {
+          "$ref": "#/definitions/duration",
+          "description": "Delay between retries"
+        },
+        "backoffMultiplier": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 2,
+          "description": "Multiply delay by this factor each retry"
+        },
+        "maxDelay": {
+          "$ref": "#/definitions/duration",
+          "description": "Maximum delay between retries"
+        },
+        "retryOn": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Error types to retry on"
+        }
+      }
+    },
+
+    "timeoutConfig": {
+      "type": "object",
+      "description": "Timeout configuration for actions",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "duration": {
+          "$ref": "#/definitions/duration",
+          "description": "Maximum execution time"
+        },
+        "onTimeout": {
+          "type": "string",
+          "enum": ["cancel", "continue", "error"],
+          "default": "error",
+          "description": "Action to take on timeout"
+        }
+      }
+    },
+
+    "actionBase": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "description": { "type": "string" },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "delay": {
+          "$ref": "#/definitions/duration",
+          "description": "Delay before executing"
+        },
+        "condition": {
+          "$ref": "#/definitions/condition",
+          "description": "Condition that must be true to execute"
+        },
+        "retry": { "$ref": "#/definitions/retryPolicy" },
+        "timeout": { "$ref": "#/definitions/timeoutConfig" },
+        "onSuccess": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/action" },
+          "description": "Actions to execute on success"
+        },
+        "onFailure": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/action" },
+          "description": "Actions to execute on failure"
+        }
+      }
+    },
+
+    "pythonAction": {
+      "allOf": [
+        { "$ref": "#/definitions/actionBase" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "python" },
+            "script": {
+              "type": "string",
+              "description": "Inline Python code"
+            },
+            "file": {
+              "type": "string",
+              "description": "Path to Python script file"
+            },
+            "module": {
+              "type": "string",
+              "description": "Python module name"
+            },
+            "function": {
+              "type": "string",
+              "description": "Function to call"
+            },
+            "async": {
+              "type": "boolean",
+              "default": false,
+              "description": "Execute asynchronously"
+            },
+            "parameters": {
+              "type": "object",
+              "description": "Parameters to pass to function"
+            }
+          },
+          "required": ["type"]
+        }
+      ]
+    },
+
+    "nativeAction": {
+      "allOf": [
+        { "$ref": "#/definitions/actionBase" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "native" },
+            "function": {
+              "type": "string",
+              "description": "Native C++ function name"
+            },
+            "parameters": {
+              "type": "object",
+              "description": "Parameters to pass"
+            }
+          },
+          "required": ["type", "function"]
+        }
+      ]
+    },
+
+    "emitEventAction": {
+      "allOf": [
+        { "$ref": "#/definitions/actionBase" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "emitEvent" },
+            "eventType": {
+              "type": "string",
+              "description": "Event type to emit"
+            },
+            "eventData": {
+              "type": "object",
+              "description": "Data to include in event"
+            },
+            "broadcast": {
+              "type": "boolean",
+              "default": false,
+              "description": "Broadcast to all listeners"
+            },
+            "targetId": {
+              "type": "string",
+              "description": "Specific target entity ID"
+            }
+          },
+          "required": ["type", "eventType"]
+        }
+      ]
+    },
+
+    "setPropertyAction": {
+      "allOf": [
+        { "$ref": "#/definitions/actionBase" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "setProperty" },
+            "target": {
+              "type": "string",
+              "enum": ["source", "target", "world", "config"],
+              "default": "source"
+            },
+            "targetId": {
+              "type": "string",
+              "description": "Specific entity ID"
+            },
+            "propertyPath": {
+              "type": "string",
+              "description": "Path to property"
+            },
+            "value": {
+              "description": "Value to set"
+            },
+            "operation": {
+              "type": "string",
+              "enum": ["set", "add", "subtract", "multiply", "divide", "toggle", "append", "remove"],
+              "default": "set"
+            }
+          },
+          "required": ["type", "propertyPath"]
+        }
+      ]
+    },
+
+    "actionChain": {
+      "allOf": [
+        { "$ref": "#/definitions/actionBase" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "chain" },
+            "actions": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/action" },
+              "description": "Actions to execute in sequence"
+            },
+            "parallel": {
+              "type": "boolean",
+              "default": false,
+              "description": "Execute actions in parallel"
+            },
+            "stopOnError": {
+              "type": "boolean",
+              "default": true,
+              "description": "Stop chain on first error"
+            }
+          },
+          "required": ["type", "actions"]
+        }
+      ]
+    },
+
+    "action": {
+      "oneOf": [
+        { "$ref": "#/definitions/pythonAction" },
+        { "$ref": "#/definitions/nativeAction" },
+        { "$ref": "#/definitions/emitEventAction" },
+        { "$ref": "#/definitions/setPropertyAction" },
+        { "$ref": "#/definitions/actionChain" }
+      ]
+    },
+
+    "customEventDefinition": {
+      "type": "object",
+      "description": "Definition of a custom event type",
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category for organization"
+        },
+        "description": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["string", "number", "boolean", "object", "array", "any"]
+              },
+              "required": { "type": "boolean", "default": false },
+              "default": {},
+              "description": { "type": "string" }
+            },
+            "required": ["name", "type"]
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon identifier for UI"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Color for UI display"
+        }
+      },
+      "required": ["id", "name"]
+    },
+
+    "eventBinding": {
+      "type": "object",
+      "description": "Complete event binding definition",
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -100,
+          "maximum": 100,
+          "default": 0
+        },
+        "condition": { "$ref": "#/definitions/condition" },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/action" },
+          "minItems": 1
+        },
+        "cooldown": {
+          "$ref": "#/definitions/duration",
+          "description": "Minimum time between executions"
+        },
+        "maxExecutions": {
+          "type": "integer",
+          "default": -1,
+          "description": "Maximum executions (-1 for unlimited)"
+        },
+        "oneShot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable after first execution"
+        },
+        "async": {
+          "type": "boolean",
+          "default": false
+        },
+        "debounce": {
+          "$ref": "#/definitions/duration",
+          "description": "Debounce time for rapid events"
+        },
+        "throttle": {
+          "$ref": "#/definitions/duration",
+          "description": "Throttle time for rate limiting"
+        },
+        "logExecution": {
+          "type": "boolean",
+          "default": false
+        },
+        "breakOnExecute": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["id", "condition", "actions"]
+    }
+  },
+
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "default": "2.0"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "author": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "modified": { "type": "string", "format": "date-time" }
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Path to another config file to import"
+      }
+    },
+    "customEvents": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/customEventDefinition" },
+      "description": "Custom event type definitions"
+    },
+    "conditionTemplates": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/condition" },
+      "description": "Reusable condition templates (key is template name)"
+    },
+    "actionTemplates": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/action" },
+      "description": "Reusable action templates"
+    },
+    "bindings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/eventBinding" },
+      "description": "Event binding definitions"
+    }
+  },
+  "required": ["bindings"]
+}

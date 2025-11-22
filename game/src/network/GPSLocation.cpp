@@ -365,4 +365,196 @@ bool IPGeolocationProvider::IsAvailable() const {
     return true;
 }
 
+// ==================== PlatformLocationProvider ====================
+
+// Forward declare platform service creation
+namespace Nova { namespace Platform {
+    std::unique_ptr<ILocationService> CreateLocationService();
+}}
+
+class PlatformLocationProvider::Impl {
+public:
+    std::unique_ptr<Nova::Platform::ILocationService> service;
+    std::function<void(GPSCoordinates)> continuousCallback;
+    bool mockDetected = false;
+    bool rejectMock = false;
+
+    Impl() {
+        service = Nova::Platform::CreateLocationService();
+    }
+
+    GPSCoordinates ConvertLocation(const Nova::Platform::LocationData& data) {
+        GPSCoordinates coords;
+        coords.latitude = data.coordinate.latitude;
+        coords.longitude = data.coordinate.longitude;
+        return coords;
+    }
+};
+
+PlatformLocationProvider::PlatformLocationProvider()
+    : m_impl(std::make_unique<Impl>()) {
+    GPS_LOG_INFO("PlatformLocationProvider created");
+}
+
+PlatformLocationProvider::~PlatformLocationProvider() {
+    StopContinuousUpdates();
+}
+
+void PlatformLocationProvider::RequestLocation(
+    std::function<void(std::optional<GPSCoordinates>)> callback) {
+
+    if (!callback) return;
+
+    if (!m_impl->service) {
+        GPS_LOG_WARN("No platform location service available");
+        callback(std::nullopt);
+        return;
+    }
+
+    m_impl->service->RequestSingleUpdate(
+        [this, callback](const Nova::Platform::LocationData& location) {
+            if (location.IsValid()) {
+                // Check for mock location
+                if (location.isMockLocation) {
+                    m_impl->mockDetected = true;
+                    if (m_impl->rejectMock) {
+                        GPS_LOG_WARN("Rejecting mock location");
+                        callback(std::nullopt);
+                        return;
+                    }
+                }
+
+                GPSCoordinates coords = m_impl->ConvertLocation(location);
+                GPS_LOG_INFO("Platform location received: " + std::to_string(coords.latitude) +
+                            ", " + std::to_string(coords.longitude));
+                callback(coords);
+            } else {
+                callback(std::nullopt);
+            }
+        },
+        [callback](Nova::Platform::LocationError error, const std::string& message) {
+            GPS_LOG_ERROR("Platform location error: " + message);
+            callback(std::nullopt);
+        }
+    );
+}
+
+bool PlatformLocationProvider::IsAvailable() const {
+    return m_impl->service && m_impl->service->AreLocationServicesEnabled();
+}
+
+std::string PlatformLocationProvider::GetName() const {
+    if (m_impl->service) {
+        return "Platform (" + m_impl->service->GetServiceName() + ")";
+    }
+    return "Platform (unavailable)";
+}
+
+bool PlatformLocationProvider::RequestPermission(bool alwaysAccess) {
+    if (!m_impl->service) return false;
+    return m_impl->service->RequestPermission(alwaysAccess);
+}
+
+bool PlatformLocationProvider::HasPermission() const {
+    if (!m_impl->service) return false;
+    return m_impl->service->HasPermission();
+}
+
+void PlatformLocationProvider::StartContinuousUpdates(
+    std::function<void(GPSCoordinates)> callback) {
+
+    if (!m_impl->service || !callback) return;
+
+    m_impl->continuousCallback = callback;
+
+    m_impl->service->StartUpdates([this](const Nova::Platform::LocationData& location) {
+        if (!location.IsValid()) return;
+
+        if (location.isMockLocation) {
+            m_impl->mockDetected = true;
+            if (m_impl->rejectMock) return;
+        }
+
+        if (m_impl->continuousCallback) {
+            GPSCoordinates coords = m_impl->ConvertLocation(location);
+            m_impl->continuousCallback(coords);
+        }
+    });
+
+    GPS_LOG_INFO("Platform continuous updates started");
+}
+
+void PlatformLocationProvider::StopContinuousUpdates() {
+    if (m_impl->service && m_impl->service->IsUpdating()) {
+        m_impl->service->StopUpdates();
+        GPS_LOG_INFO("Platform continuous updates stopped");
+    }
+    m_impl->continuousCallback = nullptr;
+}
+
+bool PlatformLocationProvider::IsUpdating() const {
+    return m_impl->service && m_impl->service->IsUpdating();
+}
+
+bool PlatformLocationProvider::IsMockLocationDetected() const {
+    return m_impl->mockDetected;
+}
+
+void PlatformLocationProvider::SetRejectMockLocations(bool reject) {
+    m_impl->rejectMock = reject;
+    if (m_impl->service) {
+        m_impl->service->SetRejectMockLocations(reject);
+    }
+}
+
+std::string PlatformLocationProvider::GetPlatformServiceName() const {
+    if (m_impl->service) {
+        return m_impl->service->GetServiceName();
+    }
+    return "None";
+}
+
 } // namespace Vehement
+
+// ==================== Platform Service Factory ====================
+
+namespace Nova {
+namespace Platform {
+
+std::unique_ptr<ILocationService> CreateLocationService() {
+#if defined(__ANDROID__)
+    return std::make_unique<AndroidLocationService>();
+#elif defined(__APPLE__)
+    #include <TargetConditionals.h>
+    #if TARGET_OS_IPHONE
+        return std::make_unique<IOSLocationService>();
+    #else
+        return std::make_unique<MacOSLocationService>();
+    #endif
+#elif defined(_WIN32)
+    return std::make_unique<WindowsLocationService>();
+#elif defined(__linux__)
+    return std::make_unique<LinuxLocationService>();
+#else
+    // Fallback - return nullptr or a stub implementation
+    return nullptr;
+#endif
+}
+
+// LocationServiceManager implementation
+LocationServiceManager& LocationServiceManager::Instance() {
+    static LocationServiceManager instance;
+    return instance;
+}
+
+void LocationServiceManager::Initialize() {
+    if (m_service) return;
+    m_service = CreateLocationService();
+}
+
+void LocationServiceManager::Shutdown() {
+    m_service.reset();
+}
+
+} // namespace Platform
+} // namespace Nova

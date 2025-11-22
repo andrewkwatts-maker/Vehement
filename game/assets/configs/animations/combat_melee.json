@@ -1,0 +1,469 @@
+{
+  "id": "combat_melee",
+  "name": "Melee Combat State Machine",
+  "defaultState": "idle",
+
+  "parameters": [
+    { "name": "attack", "type": "trigger" },
+    { "name": "attackIndex", "type": "int", "defaultValue": 0 },
+    { "name": "blocking", "type": "bool", "defaultValue": false },
+    { "name": "dodge", "type": "trigger" },
+    { "name": "dodgeX", "type": "float", "defaultValue": 0 },
+    { "name": "dodgeY", "type": "float", "defaultValue": 0 },
+    { "name": "hurt", "type": "trigger" },
+    { "name": "hurtIntensity", "type": "float", "defaultValue": 0.5 },
+    { "name": "stun", "type": "trigger" },
+    { "name": "knockdown", "type": "trigger" },
+    { "name": "death", "type": "trigger" },
+    { "name": "deathType", "type": "int", "defaultValue": 0 },
+    { "name": "revive", "type": "trigger" }
+  ],
+
+  "states": [
+    {
+      "name": "idle",
+      "clip": "animations/combat/combat_idle",
+      "loop": true,
+      "transitions": [
+        {
+          "to": "attack_1",
+          "conditions": [
+            { "parameter": "attack", "mode": "if_true" },
+            { "parameter": "attackIndex", "mode": "equals", "threshold": 0 }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "attack_2",
+          "conditions": [
+            { "parameter": "attack", "mode": "if_true" },
+            { "parameter": "attackIndex", "mode": "equals", "threshold": 1 }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "attack_3",
+          "conditions": [
+            { "parameter": "attack", "mode": "if_true" },
+            { "parameter": "attackIndex", "mode": "equals", "threshold": 2 }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "block_start",
+          "conditions": [
+            { "parameter": "blocking", "mode": "if_true" }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "dodge",
+          "conditions": [
+            { "parameter": "dodge", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "hurt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05
+        },
+        {
+          "to": "stun",
+          "conditions": [
+            { "parameter": "stun", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "knockdown",
+          "conditions": [
+            { "parameter": "knockdown", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "death",
+          "conditions": [
+            { "parameter": "death", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 100
+        }
+      ]
+    },
+    {
+      "name": "attack_1",
+      "clip": "animations/combat/attack_slash_1",
+      "loop": false,
+      "speed": 1.2,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/whoosh_light" } },
+        {
+          "time": 0.35,
+          "name": "attack_hit",
+          "data": {
+            "attackId": "slash_1",
+            "damageMultiplier": 1.0,
+            "hitboxOffset": { "x": 0, "y": 1, "z": 1.5 },
+            "hitboxSize": { "x": 1.5, "y": 1, "z": 2 }
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "to": "attack_2",
+          "hasExitTime": true,
+          "exitTime": 0.6,
+          "conditions": [
+            { "parameter": "attack", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.2
+        },
+        {
+          "to": "hurt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 10
+        }
+      ],
+      "behaviors": [
+        {
+          "type": "combat",
+          "onEnter": [
+            { "type": "set_variable", "params": { "name": "canCombo", "value": false } }
+          ],
+          "onUpdate": []
+        }
+      ]
+    },
+    {
+      "name": "attack_2",
+      "clip": "animations/combat/attack_slash_2",
+      "loop": false,
+      "speed": 1.1,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/whoosh_medium" } },
+        {
+          "time": 0.4,
+          "name": "attack_hit",
+          "data": {
+            "attackId": "slash_2",
+            "damageMultiplier": 1.2,
+            "hitboxOffset": { "x": 0, "y": 1, "z": 1.5 },
+            "hitboxSize": { "x": 2, "y": 1.2, "z": 2.5 }
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "to": "attack_3",
+          "hasExitTime": true,
+          "exitTime": 0.6,
+          "conditions": [
+            { "parameter": "attack", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.2
+        }
+      ]
+    },
+    {
+      "name": "attack_3",
+      "clip": "animations/combat/attack_heavy",
+      "loop": false,
+      "speed": 1.0,
+      "events": [
+        { "time": 0.2, "name": "play_sound", "data": { "sound": "sfx/whoosh_heavy" } },
+        {
+          "time": 0.5,
+          "name": "attack_hit",
+          "data": {
+            "attackId": "heavy",
+            "damageMultiplier": 2.0,
+            "hitboxOffset": { "x": 0, "y": 1, "z": 2 },
+            "hitboxSize": { "x": 2.5, "y": 1.5, "z": 3 }
+          }
+        },
+        { "time": 0.5, "name": "spawn_vfx", "data": { "vfx": "vfx/impact_heavy" } }
+      ],
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.95,
+          "duration": 0.25
+        }
+      ]
+    },
+    {
+      "name": "block_start",
+      "clip": "animations/combat/block_start",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "block_hold",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "conditions": [
+            { "parameter": "blocking", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "block_end",
+          "conditions": [
+            { "parameter": "blocking", "mode": "if_false" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "block_hold",
+      "clip": "animations/combat/block_hold",
+      "loop": true,
+      "transitions": [
+        {
+          "to": "block_end",
+          "conditions": [
+            { "parameter": "blocking", "mode": "if_false" }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "block_impact",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05
+        }
+      ]
+    },
+    {
+      "name": "block_impact",
+      "clip": "animations/combat/block_impact",
+      "loop": false,
+      "events": [
+        { "time": 0.05, "name": "play_sound", "data": { "sound": "sfx/block_impact" } },
+        { "time": 0.05, "name": "spawn_vfx", "data": { "vfx": "vfx/block_sparks" } }
+      ],
+      "transitions": [
+        {
+          "to": "block_hold",
+          "hasExitTime": true,
+          "exitTime": 0.7,
+          "conditions": [
+            { "parameter": "blocking", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "block_end",
+          "hasExitTime": true,
+          "exitTime": 0.7,
+          "conditions": [
+            { "parameter": "blocking", "mode": "if_false" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "block_end",
+      "clip": "animations/combat/block_end",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "duration": 0.15
+        }
+      ]
+    },
+    {
+      "name": "dodge",
+      "blendTree": {
+        "type": "simple_2d",
+        "parameterX": "dodgeX",
+        "parameterY": "dodgeY",
+        "children": [
+          { "clip": "animations/combat/dodge_forward", "position": { "x": 0, "y": 1 } },
+          { "clip": "animations/combat/dodge_backward", "position": { "x": 0, "y": -1 } },
+          { "clip": "animations/combat/dodge_left", "position": { "x": -1, "y": 0 } },
+          { "clip": "animations/combat/dodge_right", "position": { "x": 1, "y": 0 } }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/dodge_whoosh" } }
+      ],
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.85,
+          "duration": 0.15
+        }
+      ]
+    },
+    {
+      "name": "hurt",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "hurtIntensity",
+        "children": [
+          { "clip": "animations/combat/hurt_light", "threshold": 0 },
+          { "clip": "animations/combat/hurt_medium", "threshold": 0.5 },
+          { "clip": "animations/combat/hurt_heavy", "threshold": 1.0 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.05, "name": "play_sound", "data": { "sound": "sfx/hurt_grunt" } }
+      ],
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "duration": 0.2
+        },
+        {
+          "to": "death",
+          "conditions": [
+            { "parameter": "death", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 100
+        }
+      ]
+    },
+    {
+      "name": "stun",
+      "clip": "animations/combat/stun",
+      "loop": true,
+      "transitions": []
+    },
+    {
+      "name": "knockdown",
+      "clip": "animations/combat/knockdown",
+      "loop": false,
+      "events": [
+        { "time": 0.3, "name": "play_sound", "data": { "sound": "sfx/body_fall" } }
+      ],
+      "transitions": [
+        {
+          "to": "getup",
+          "hasExitTime": true,
+          "exitTime": 0.95,
+          "duration": 0.1
+        },
+        {
+          "to": "death",
+          "conditions": [
+            { "parameter": "death", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 100
+        }
+      ]
+    },
+    {
+      "name": "getup",
+      "clip": "animations/combat/getup",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.15
+        }
+      ]
+    },
+    {
+      "name": "death",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "deathType",
+        "children": [
+          { "clip": "animations/combat/death_forward", "threshold": 0 },
+          { "clip": "animations/combat/death_backward", "threshold": 1 },
+          { "clip": "animations/combat/death_left", "threshold": 2 },
+          { "clip": "animations/combat/death_right", "threshold": 3 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/death_cry" } },
+        { "time": 0.5, "name": "play_sound", "data": { "sound": "sfx/body_fall" } }
+      ],
+      "transitions": [
+        {
+          "to": "dead",
+          "hasExitTime": true,
+          "exitTime": 0.95,
+          "duration": 0.05
+        }
+      ]
+    },
+    {
+      "name": "dead",
+      "clip": "animations/combat/dead_pose",
+      "loop": true,
+      "transitions": [
+        {
+          "to": "revive",
+          "conditions": [
+            { "parameter": "revive", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "revive",
+      "clip": "animations/combat/revive",
+      "loop": false,
+      "events": [
+        { "time": 0.5, "name": "spawn_vfx", "data": { "vfx": "vfx/revive_glow" } }
+      ],
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.2
+        }
+      ]
+    }
+  ],
+
+  "anyStateTransitions": [
+    {
+      "to": "death",
+      "conditions": [
+        { "parameter": "death", "mode": "if_true" }
+      ],
+      "duration": 0.05,
+      "priority": 100
+    }
+  ]
+}

@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Model Import Settings</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        .model-import {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .panel-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 3D Viewport */
+        .viewport-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+        }
+
+        .viewport-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .viewport-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Viewport toolbar */
+        .viewport-toolbar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            gap: 4px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .viewport-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .viewport-btn.active {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        /* Viewport stats */
+        .viewport-stats {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .viewport-stats-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary, #888);
+        }
+
+        /* LOD Slider */
+        .lod-slider-container {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 8px 12px;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        .lod-slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+
+        .lod-slider {
+            width: 100%;
+        }
+
+        .lod-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        /* View presets */
+        .view-presets {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            width: 380px;
+            border-left: 1px solid var(--border-color, #3c3c3c);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary, #252525);
+        }
+
+        .settings-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .settings-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary, #888);
+            font-size: 12px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .settings-tab.active {
+            color: var(--text-primary, #e0e0e0);
+            border-bottom-color: var(--accent-color, #0078d4);
+        }
+
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .settings-group {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .settings-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .settings-group-header h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .settings-row label {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .settings-row select,
+        .settings-row input[type="number"],
+        .settings-row input[type="text"] {
+            width: 120px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+            font-size: 12px;
+        }
+
+        /* Presets */
+        .preset-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent-color, #0078d4);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        /* Material List */
+        .material-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .material-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+
+        .material-item:hover {
+            background: var(--bg-hover, #2a2a2a);
+        }
+
+        .material-item.selected {
+            background: var(--selection-bg, #094771);
+        }
+
+        .material-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .material-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .material-name {
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .material-textures {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        /* Mesh List */
+        .mesh-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .mesh-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+
+        .mesh-item:hover {
+            background: var(--bg-hover, #2a2a2a);
+        }
+
+        .mesh-item.selected {
+            background: var(--selection-bg, #094771);
+        }
+
+        .mesh-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .mesh-info {
+            flex: 1;
+        }
+
+        .mesh-name {
+            font-size: 12px;
+        }
+
+        .mesh-stats {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        .mesh-toggle {
+            width: 18px;
+            height: 18px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 3px;
+            background: var(--bg-primary, #1e1e1e);
+            cursor: pointer;
+        }
+
+        .mesh-toggle.checked {
+            background: var(--accent-color, #0078d4);
+        }
+
+        /* Bone Hierarchy */
+        .bone-tree {
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .bone-node {
+            padding-left: 16px;
+        }
+
+        .bone-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .bone-item:hover {
+            background: var(--bg-hover, #2a2a2a);
+        }
+
+        .bone-expand {
+            width: 16px;
+            text-align: center;
+            color: var(--text-secondary, #888);
+        }
+
+        .bone-icon {
+            color: var(--text-secondary, #888);
+        }
+
+        /* LOD Table */
+        .lod-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .lod-table th,
+        .lod-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .lod-table th {
+            color: var(--text-secondary, #888);
+            font-weight: normal;
+        }
+
+        .lod-table input {
+            width: 60px;
+            padding: 4px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 3px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+            font-size: 11px;
+        }
+
+        /* Stats Box */
+        .stats-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        /* Collision Preview */
+        .collision-preview {
+            height: 100px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        /* Footer */
+        .panel-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-top: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .panel-footer .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .panel-footer .btn-primary {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        /* Hidden tabs */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="model-import">
+    <div class="panel-header">
+        <h2>Model Import Settings</h2>
+        <span id="model-name" style="color: var(--text-secondary);">No model loaded</span>
+    </div>
+
+    <div class="panel-body">
+        <!-- 3D Viewport -->
+        <div class="viewport-section">
+            <div class="viewport-container">
+                <canvas class="viewport-canvas" id="viewport-canvas"></canvas>
+
+                <!-- Viewport Toolbar -->
+                <div class="viewport-toolbar">
+                    <button class="viewport-btn active" onclick="setViewMode('solid')" title="Solid">S</button>
+                    <button class="viewport-btn" onclick="setViewMode('wireframe')" title="Wireframe">W</button>
+                    <button class="viewport-btn" onclick="setViewMode('uv')" title="UV Layout">UV</button>
+                    <button class="viewport-btn" onclick="toggleNormals()" title="Show Normals">N</button>
+                    <button class="viewport-btn" onclick="toggleBones()" title="Show Bones">B</button>
+                    <button class="viewport-btn" onclick="toggleCollision()" title="Show Collision">C</button>
+                </div>
+
+                <!-- View Presets -->
+                <div class="view-presets">
+                    <button class="viewport-btn" onclick="setView('front')" title="Front">F</button>
+                    <button class="viewport-btn" onclick="setView('side')" title="Side">R</button>
+                    <button class="viewport-btn" onclick="setView('top')" title="Top">T</button>
+                    <button class="viewport-btn" onclick="resetView()" title="Reset">O</button>
+                </div>
+
+                <!-- Viewport Stats -->
+                <div class="viewport-stats">
+                    <div class="viewport-stats-row">
+                        <span class="stat-label">Verts:</span>
+                        <span id="stat-verts">0</span>
+                    </div>
+                    <div class="viewport-stats-row">
+                        <span class="stat-label">Tris:</span>
+                        <span id="stat-tris">0</span>
+                    </div>
+                    <div class="viewport-stats-row">
+                        <span class="stat-label">Meshes:</span>
+                        <span id="stat-meshes">0</span>
+                    </div>
+                </div>
+
+                <!-- LOD Slider -->
+                <div class="lod-slider-container" id="lod-slider-container" style="display: none;">
+                    <div class="lod-slider-header">
+                        <span>LOD Level</span>
+                        <span id="lod-level-display">LOD 0</span>
+                    </div>
+                    <input type="range" class="lod-slider" id="lod-slider" min="0" max="4" value="0"
+                           oninput="onLODChange(this.value)">
+                    <div class="lod-info">
+                        <span id="lod-tris">100% tris</span>
+                        <span id="lod-distance">0m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+            <div class="settings-tabs">
+                <button class="settings-tab active" onclick="showTab('general')">General</button>
+                <button class="settings-tab" onclick="showTab('meshes')">Meshes</button>
+                <button class="settings-tab" onclick="showTab('materials')">Materials</button>
+                <button class="settings-tab" onclick="showTab('skeleton')">Skeleton</button>
+            </div>
+
+            <div class="settings-content">
+                <!-- General Tab -->
+                <div class="tab-content active" id="tab-general">
+                    <!-- Presets -->
+                    <div class="settings-group">
+                        <div class="preset-row">
+                            <button class="preset-btn" onclick="applyPreset('mobile')">Mobile</button>
+                            <button class="preset-btn active" onclick="applyPreset('desktop')">Desktop</button>
+                            <button class="preset-btn" onclick="applyPreset('highQuality')">High Quality</button>
+                        </div>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Statistics</h3>
+                        </div>
+                        <div class="stats-box">
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-verts">0</div>
+                                <div class="stat-label">Vertices</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-tris">0</div>
+                                <div class="stat-label">Triangles</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-meshes">0</div>
+                                <div class="stat-label">Meshes</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-materials">0</div>
+                                <div class="stat-label">Materials</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-bones">0</div>
+                                <div class="stat-label">Bones</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="bounds-size">0x0x0</div>
+                                <div class="stat-label">Bounds (m)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transform Settings -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Transform</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Scale Factor</label>
+                            <input type="number" id="scale-factor" step="0.01" value="1.0" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Source Units</label>
+                            <select id="source-units" onchange="onSettingChange()">
+                                <option value="meters">Meters</option>
+                                <option value="centimeters">Centimeters</option>
+                                <option value="millimeters">Millimeters</option>
+                                <option value="inches">Inches</option>
+                                <option value="feet">Feet</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <label>Convert to</label>
+                            <select id="target-units" onchange="onSettingChange()">
+                                <option value="meters" selected>Meters</option>
+                                <option value="centimeters">Centimeters</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <label>Swap Y/Z (Z-up to Y-up)</label>
+                            <input type="checkbox" id="swap-yz" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Flip Winding Order</label>
+                            <input type="checkbox" id="flip-winding" onchange="onSettingChange()">
+                        </div>
+                    </div>
+
+                    <!-- Mesh Processing -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Mesh Processing</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Optimize Mesh</label>
+                            <input type="checkbox" id="optimize-mesh" checked onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Generate Normals</label>
+                            <input type="checkbox" id="generate-normals" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Generate Tangents</label>
+                            <input type="checkbox" id="generate-tangents" checked onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Merge Vertices</label>
+                            <input type="checkbox" id="merge-vertices" onchange="onSettingChange()">
+                        </div>
+                    </div>
+
+                    <!-- LOD Generation -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>LOD Generation</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Generate LODs</label>
+                            <input type="checkbox" id="generate-lods" onchange="onLODToggle()">
+                        </div>
+                        <div id="lod-settings" style="display: none;">
+                            <table class="lod-table">
+                                <thead>
+                                    <tr>
+                                        <th>Level</th>
+                                        <th>Distance</th>
+                                        <th>Reduction</th>
+                                        <th>Triangles</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lod-table-body">
+                                    <tr>
+                                        <td>LOD 0</td>
+                                        <td>0m</td>
+                                        <td>100%</td>
+                                        <td id="lod0-tris">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LOD 1</td>
+                                        <td><input type="number" value="10" onchange="updateLODPreview()"></td>
+                                        <td><input type="number" value="50" onchange="updateLODPreview()">%</td>
+                                        <td id="lod1-tris">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LOD 2</td>
+                                        <td><input type="number" value="25" onchange="updateLODPreview()"></td>
+                                        <td><input type="number" value="25" onchange="updateLODPreview()">%</td>
+                                        <td id="lod2-tris">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LOD 3</td>
+                                        <td><input type="number" value="50" onchange="updateLODPreview()"></td>
+                                        <td><input type="number" value="10" onchange="updateLODPreview()">%</td>
+                                        <td id="lod3-tris">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Collision -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Collision</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Generate Collision</label>
+                            <input type="checkbox" id="generate-collision" onchange="onCollisionToggle()">
+                        </div>
+                        <div id="collision-settings" style="display: none;">
+                            <div class="settings-row">
+                                <label>Collision Type</label>
+                                <select id="collision-type" onchange="onSettingChange()">
+                                    <option value="box">Box</option>
+                                    <option value="sphere">Sphere</option>
+                                    <option value="capsule">Capsule</option>
+                                    <option value="convex">Convex Hull</option>
+                                    <option value="mesh">Mesh (Expensive)</option>
+                                </select>
+                            </div>
+                            <div class="settings-row">
+                                <label>Convex Decomposition</label>
+                                <input type="checkbox" id="convex-decomp" onchange="onSettingChange()">
+                            </div>
+                            <div class="settings-row">
+                                <label>Max Convex Hulls</label>
+                                <input type="number" id="max-hulls" value="8" min="1" max="32" onchange="onSettingChange()">
+                            </div>
+                            <div class="collision-preview" id="collision-preview">
+                                <span style="color: var(--text-secondary);">Collision Preview</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meshes Tab -->
+                <div class="tab-content" id="tab-meshes">
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Mesh List</h3>
+                            <div>
+                                <button class="preset-btn" onclick="selectAllMeshes()">All</button>
+                                <button class="preset-btn" onclick="selectNoMeshes()">None</button>
+                            </div>
+                        </div>
+                        <div class="mesh-list" id="mesh-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="settings-group" id="mesh-details" style="display: none;">
+                        <div class="settings-group-header">
+                            <h3>Selected Mesh</h3>
+                        </div>
+                        <div class="stats-box">
+                            <div class="stat-item">
+                                <div class="stat-value" id="mesh-verts">0</div>
+                                <div class="stat-label">Vertices</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="mesh-tris">0</div>
+                                <div class="stat-label">Triangles</div>
+                            </div>
+                        </div>
+                        <div class="settings-row" style="margin-top: 12px;">
+                            <label>Material</label>
+                            <select id="mesh-material">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Materials Tab -->
+                <div class="tab-content" id="tab-materials">
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Material List</h3>
+                        </div>
+                        <div class="material-list" id="material-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="settings-group" id="material-details" style="display: none;">
+                        <div class="settings-group-header">
+                            <h3>Material Properties</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Name</label>
+                            <input type="text" id="mat-name" readonly>
+                        </div>
+                        <div class="settings-row">
+                            <label>Diffuse</label>
+                            <input type="color" id="mat-diffuse">
+                        </div>
+                        <div class="settings-row">
+                            <label>Metallic</label>
+                            <input type="number" id="mat-metallic" min="0" max="1" step="0.1" value="0">
+                        </div>
+                        <div class="settings-row">
+                            <label>Roughness</label>
+                            <input type="number" id="mat-roughness" min="0" max="1" step="0.1" value="0.5">
+                        </div>
+                        <div id="material-textures">
+                            <p style="font-size: 12px; margin: 8px 0;">Textures:</p>
+                            <!-- Texture list populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skeleton Tab -->
+                <div class="tab-content" id="tab-skeleton">
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Skeleton Settings</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Import Skeleton</label>
+                            <input type="checkbox" id="import-skeleton" checked onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Import Skin Weights</label>
+                            <input type="checkbox" id="import-weights" checked onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Max Bones per Vertex</label>
+                            <select id="max-bones" onchange="onSettingChange()">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="4" selected>4</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Bone Hierarchy</h3>
+                        </div>
+                        <div class="bone-tree" id="bone-tree">
+                            <p style="color: var(--text-secondary); font-size: 12px;">No skeleton found</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-footer">
+        <button class="btn" onclick="resetSettings()">Reset</button>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn" onclick="cancel()">Cancel</button>
+            <button class="btn btn-primary" onclick="applySettings()">Apply</button>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script>
+        // State
+        let currentTab = 'general';
+        let viewMode = 'solid';
+        let showNormals = false;
+        let showBones = false;
+        let showCollision = false;
+        let currentLOD = 0;
+        let selectedMeshIndex = -1;
+        let selectedMaterialIndex = -1;
+
+        let modelInfo = {
+            name: 'model.fbx',
+            vertices: 12456,
+            triangles: 8234,
+            meshes: 3,
+            materials: 2,
+            bones: 45,
+            bounds: { x: 1.5, y: 2.0, z: 0.8 }
+        };
+
+        // Mock data
+        const meshes = [
+            { name: 'Body', vertices: 8000, triangles: 5000, material: 0, enabled: true },
+            { name: 'Head', vertices: 3000, triangles: 2000, material: 0, enabled: true },
+            { name: 'Weapon', vertices: 1456, triangles: 1234, material: 1, enabled: true }
+        ];
+
+        const materials = [
+            { name: 'Character_MAT', color: '#8B7355', metallic: 0, roughness: 0.7, textures: ['diffuse.png', 'normal.png'] },
+            { name: 'Metal_MAT', color: '#A0A0A0', metallic: 0.9, roughness: 0.2, textures: ['metal_diffuse.png'] }
+        ];
+
+        const bones = [
+            { name: 'Root', children: [
+                { name: 'Hips', children: [
+                    { name: 'Spine', children: [
+                        { name: 'Chest', children: [
+                            { name: 'Neck', children: [{ name: 'Head', children: [] }] },
+                            { name: 'LeftShoulder', children: [{ name: 'LeftArm', children: [] }] },
+                            { name: 'RightShoulder', children: [{ name: 'RightArm', children: [] }] }
+                        ]}
+                    ]},
+                    { name: 'LeftUpLeg', children: [{ name: 'LeftLeg', children: [] }] },
+                    { name: 'RightUpLeg', children: [{ name: 'RightLeg', children: [] }] }
+                ]}
+            ]}
+        ];
+
+        // Tab navigation
+        function showTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.toLowerCase() === tabId);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === 'tab-' + tabId);
+            });
+        }
+
+        // View mode
+        function setViewMode(mode) {
+            viewMode = mode;
+            document.querySelectorAll('.viewport-toolbar .viewport-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === ['solid', 'wireframe', 'uv'].indexOf(mode));
+            });
+            updateViewport();
+        }
+
+        function toggleNormals() {
+            showNormals = !showNormals;
+            document.querySelectorAll('.viewport-toolbar .viewport-btn')[3].classList.toggle('active', showNormals);
+            updateViewport();
+        }
+
+        function toggleBones() {
+            showBones = !showBones;
+            document.querySelectorAll('.viewport-toolbar .viewport-btn')[4].classList.toggle('active', showBones);
+            updateViewport();
+        }
+
+        function toggleCollision() {
+            showCollision = !showCollision;
+            document.querySelectorAll('.viewport-toolbar .viewport-btn')[5].classList.toggle('active', showCollision);
+            updateViewport();
+        }
+
+        function setView(view) {
+            // Set camera to preset view
+            updateViewport();
+        }
+
+        function resetView() {
+            // Reset camera to default position
+            updateViewport();
+        }
+
+        // LOD
+        function onLODToggle() {
+            const enabled = document.getElementById('generate-lods').checked;
+            document.getElementById('lod-settings').style.display = enabled ? 'block' : 'none';
+            document.getElementById('lod-slider-container').style.display = enabled ? 'block' : 'none';
+            updateLODPreview();
+        }
+
+        function onLODChange(level) {
+            currentLOD = parseInt(level);
+            document.getElementById('lod-level-display').textContent = 'LOD ' + level;
+
+            const reductions = [100, 50, 25, 10];
+            const distances = [0, 10, 25, 50];
+            document.getElementById('lod-tris').textContent = reductions[level] + '% tris';
+            document.getElementById('lod-distance').textContent = distances[level] + 'm';
+            updateViewport();
+        }
+
+        function updateLODPreview() {
+            const baseTris = modelInfo.triangles;
+            document.getElementById('lod0-tris').textContent = baseTris.toLocaleString();
+            document.getElementById('lod1-tris').textContent = Math.round(baseTris * 0.5).toLocaleString();
+            document.getElementById('lod2-tris').textContent = Math.round(baseTris * 0.25).toLocaleString();
+            document.getElementById('lod3-tris').textContent = Math.round(baseTris * 0.1).toLocaleString();
+        }
+
+        // Collision
+        function onCollisionToggle() {
+            const enabled = document.getElementById('generate-collision').checked;
+            document.getElementById('collision-settings').style.display = enabled ? 'block' : 'none';
+        }
+
+        // Presets
+        function applyPreset(preset) {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            switch (preset) {
+                case 'mobile':
+                    document.getElementById('generate-lods').checked = true;
+                    document.getElementById('optimize-mesh').checked = true;
+                    document.getElementById('generate-collision').checked = false;
+                    onLODToggle();
+                    break;
+                case 'desktop':
+                    document.getElementById('generate-lods').checked = false;
+                    document.getElementById('optimize-mesh').checked = true;
+                    document.getElementById('generate-collision').checked = true;
+                    onLODToggle();
+                    onCollisionToggle();
+                    break;
+                case 'highQuality':
+                    document.getElementById('generate-lods').checked = false;
+                    document.getElementById('optimize-mesh').checked = false;
+                    document.getElementById('generate-tangents').checked = true;
+                    onLODToggle();
+                    break;
+            }
+        }
+
+        // Mesh list
+        function populateMeshList() {
+            const list = document.getElementById('mesh-list');
+            list.innerHTML = meshes.map((mesh, i) => `
+                <div class="mesh-item ${selectedMeshIndex === i ? 'selected' : ''}" onclick="selectMesh(${i})">
+                    <div class="mesh-toggle ${mesh.enabled ? 'checked' : ''}" onclick="toggleMesh(${i}, event)"></div>
+                    <div class="mesh-icon">M</div>
+                    <div class="mesh-info">
+                        <div class="mesh-name">${mesh.name}</div>
+                        <div class="mesh-stats">${mesh.triangles.toLocaleString()} tris</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectMesh(index) {
+            selectedMeshIndex = index;
+            populateMeshList();
+            document.getElementById('mesh-details').style.display = 'block';
+
+            const mesh = meshes[index];
+            document.getElementById('mesh-verts').textContent = mesh.vertices.toLocaleString();
+            document.getElementById('mesh-tris').textContent = mesh.triangles.toLocaleString();
+
+            const matSelect = document.getElementById('mesh-material');
+            matSelect.innerHTML = materials.map((mat, i) =>
+                `<option value="${i}" ${mesh.material === i ? 'selected' : ''}>${mat.name}</option>`
+            ).join('');
+        }
+
+        function toggleMesh(index, event) {
+            event.stopPropagation();
+            meshes[index].enabled = !meshes[index].enabled;
+            populateMeshList();
+            updateViewport();
+        }
+
+        function selectAllMeshes() {
+            meshes.forEach(m => m.enabled = true);
+            populateMeshList();
+            updateViewport();
+        }
+
+        function selectNoMeshes() {
+            meshes.forEach(m => m.enabled = false);
+            populateMeshList();
+            updateViewport();
+        }
+
+        // Material list
+        function populateMaterialList() {
+            const list = document.getElementById('material-list');
+            list.innerHTML = materials.map((mat, i) => `
+                <div class="material-item ${selectedMaterialIndex === i ? 'selected' : ''}" onclick="selectMaterial(${i})">
+                    <div class="material-swatch" style="background: ${mat.color}"></div>
+                    <div class="material-info">
+                        <div class="material-name">${mat.name}</div>
+                        <div class="material-textures">${mat.textures.length} textures</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectMaterial(index) {
+            selectedMaterialIndex = index;
+            populateMaterialList();
+            document.getElementById('material-details').style.display = 'block';
+
+            const mat = materials[index];
+            document.getElementById('mat-name').value = mat.name;
+            document.getElementById('mat-diffuse').value = mat.color;
+            document.getElementById('mat-metallic').value = mat.metallic;
+            document.getElementById('mat-roughness').value = mat.roughness;
+
+            document.getElementById('material-textures').innerHTML = `
+                <p style="font-size: 12px; margin: 8px 0;">Textures:</p>
+                ${mat.textures.map(tex => `<div style="font-size: 11px; padding: 4px 0;">${tex}</div>`).join('')}
+            `;
+        }
+
+        // Bone tree
+        function renderBoneTree(boneArray, container) {
+            const html = boneArray.map(bone => `
+                <div class="bone-item">
+                    <span class="bone-expand">${bone.children.length > 0 ? '+' : ''}</span>
+                    <span class="bone-icon">B</span>
+                    <span>${bone.name}</span>
+                </div>
+                ${bone.children.length > 0 ? `<div class="bone-node">${renderBoneTreeHTML(bone.children)}</div>` : ''}
+            `).join('');
+            container.innerHTML = html || '<p style="color: var(--text-secondary); font-size: 12px;">No skeleton found</p>';
+        }
+
+        function renderBoneTreeHTML(bones) {
+            return bones.map(bone => `
+                <div class="bone-item">
+                    <span class="bone-expand">${bone.children.length > 0 ? '+' : ''}</span>
+                    <span class="bone-icon">B</span>
+                    <span>${bone.name}</span>
+                </div>
+                ${bone.children.length > 0 ? `<div class="bone-node">${renderBoneTreeHTML(bone.children)}</div>` : ''}
+            `).join('');
+        }
+
+        // Stats update
+        function updateStats() {
+            document.getElementById('stat-verts').textContent = modelInfo.vertices.toLocaleString();
+            document.getElementById('stat-tris').textContent = modelInfo.triangles.toLocaleString();
+            document.getElementById('stat-meshes').textContent = modelInfo.meshes;
+
+            document.getElementById('total-verts').textContent = modelInfo.vertices.toLocaleString();
+            document.getElementById('total-tris').textContent = modelInfo.triangles.toLocaleString();
+            document.getElementById('total-meshes').textContent = modelInfo.meshes;
+            document.getElementById('total-materials').textContent = modelInfo.materials;
+            document.getElementById('total-bones').textContent = modelInfo.bones;
+            document.getElementById('bounds-size').textContent =
+                `${modelInfo.bounds.x}x${modelInfo.bounds.y}x${modelInfo.bounds.z}`;
+        }
+
+        function updateViewport() {
+            // Would update WebGL 3D viewport
+        }
+
+        function onSettingChange() {
+            // Handle setting changes
+        }
+
+        function resetSettings() {
+            document.getElementById('scale-factor').value = 1.0;
+            document.getElementById('source-units').value = 'meters';
+            document.getElementById('target-units').value = 'meters';
+            document.getElementById('swap-yz').checked = false;
+            document.getElementById('flip-winding').checked = false;
+            document.getElementById('optimize-mesh').checked = true;
+            document.getElementById('generate-normals').checked = false;
+            document.getElementById('generate-tangents').checked = true;
+            document.getElementById('merge-vertices').checked = false;
+            document.getElementById('generate-lods').checked = false;
+            document.getElementById('generate-collision').checked = false;
+            onLODToggle();
+            onCollisionToggle();
+        }
+
+        function cancel() {
+            if (window.engine) {
+                window.engine.closeModelImportPanel();
+            }
+        }
+
+        function applySettings() {
+            const settings = {
+                scaleFactor: parseFloat(document.getElementById('scale-factor').value),
+                sourceUnits: document.getElementById('source-units').value,
+                targetUnits: document.getElementById('target-units').value,
+                swapYZ: document.getElementById('swap-yz').checked,
+                flipWinding: document.getElementById('flip-winding').checked,
+                optimizeMesh: document.getElementById('optimize-mesh').checked,
+                generateNormals: document.getElementById('generate-normals').checked,
+                generateTangents: document.getElementById('generate-tangents').checked,
+                mergeVertices: document.getElementById('merge-vertices').checked,
+                generateLODs: document.getElementById('generate-lods').checked,
+                generateCollision: document.getElementById('generate-collision').checked,
+                importSkeleton: document.getElementById('import-skeleton').checked,
+                importWeights: document.getElementById('import-weights').checked,
+                maxBonesPerVertex: parseInt(document.getElementById('max-bones').value)
+            };
+
+            if (window.engine) {
+                window.engine.applyModelImportSettings(settings);
+            }
+        }
+
+        // Initialize
+        updateStats();
+        populateMeshList();
+        populateMaterialList();
+        renderBoneTree(bones, document.getElementById('bone-tree'));
+        updateLODPreview();
+    </script>
+</body>
+</html>

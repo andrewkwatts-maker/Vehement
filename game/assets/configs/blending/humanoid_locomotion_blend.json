@@ -1,0 +1,419 @@
+{
+  "$schema": "../../schemas/blend_tree.schema.json",
+  "id": "humanoid_locomotion",
+  "name": "Humanoid Locomotion Blend Tree",
+  "description": "Complete locomotion system for humanoid characters with walk/run blending, directional movement, and idle variations",
+  "version": "1.0.0",
+  "skeleton": "assets/skeletons/humanoid_standard.skeleton",
+
+  "parameters": {
+    "Speed": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 10,
+      "smoothing": 0.15,
+      "description": "Movement speed in m/s"
+    },
+    "Direction": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": -180,
+      "max": 180,
+      "smoothing": 0.1,
+      "description": "Movement direction in degrees"
+    },
+    "Strafe": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": -1,
+      "max": 1,
+      "smoothing": 0.2,
+      "description": "Strafe amount (-1 left, 1 right)"
+    },
+    "TurnRate": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": -180,
+      "max": 180,
+      "smoothing": 0.1,
+      "description": "Turn rate in degrees/second"
+    },
+    "Slope": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": -45,
+      "max": 45,
+      "smoothing": 0.3,
+      "description": "Ground slope angle"
+    },
+    "IsCrouching": {
+      "type": "bool",
+      "defaultValue": false,
+      "description": "Crouching state"
+    },
+    "IdleVariation": {
+      "type": "int",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 3,
+      "description": "Current idle animation variation"
+    }
+  },
+
+  "rootNode": {
+    "id": "locomotion_root",
+    "type": "blend1d",
+    "parameter": "Speed",
+    "interpolation": "smooth",
+    "syncMarkers": true,
+    "samples": [
+      {
+        "position": 0,
+        "node": {
+          "id": "idle_selector",
+          "type": "random_selector",
+          "avoidRepeat": true,
+          "options": [
+            {
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/idle_stand_01.anim",
+                "loop": true
+              },
+              "weight": 1.0
+            },
+            {
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/idle_stand_02.anim",
+                "loop": true
+              },
+              "weight": 0.5
+            },
+            {
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/idle_look_around.anim",
+                "loop": true
+              },
+              "weight": 0.3
+            },
+            {
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/idle_weight_shift.anim",
+                "loop": true
+              },
+              "weight": 0.4
+            }
+          ]
+        }
+      },
+      {
+        "position": 1.5,
+        "node": {
+          "id": "walk_directional",
+          "type": "blend2d",
+          "parameterX": "Strafe",
+          "parameterY": "Direction",
+          "blendMode": "freeform_directional",
+          "syncMarkers": true,
+          "samples": [
+            {
+              "position": { "x": 0, "y": 0 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_forward.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": 0, "y": 180 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_backward.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": -1, "y": 0 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_strafe_left.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": 1, "y": 0 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_strafe_right.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": -0.7, "y": 45 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_forward_left.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": 0.7, "y": 45 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_forward_right.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": -0.7, "y": 135 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_backward_left.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": 0.7, "y": 135 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/walk_backward_right.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "position": 4.0,
+        "node": {
+          "id": "jog_directional",
+          "type": "blend2d",
+          "parameterX": "Strafe",
+          "parameterY": "Direction",
+          "blendMode": "freeform_directional",
+          "syncMarkers": true,
+          "samples": [
+            {
+              "position": { "x": 0, "y": 0 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/jog_forward.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": 0, "y": 180 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/jog_backward.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": -1, "y": 0 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/jog_strafe_left.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": 1, "y": 0 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/jog_strafe_right.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "position": 7.0,
+        "node": {
+          "id": "run_directional",
+          "type": "blend2d",
+          "parameterX": "Strafe",
+          "parameterY": "Direction",
+          "blendMode": "simple",
+          "syncMarkers": true,
+          "samples": [
+            {
+              "position": { "x": 0, "y": 0 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/run_forward.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": -0.5, "y": 30 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/run_forward_left.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            },
+            {
+              "position": { "x": 0.5, "y": 30 },
+              "node": {
+                "type": "clip",
+                "clip": "animations/locomotion/run_forward_right.anim",
+                "loop": true,
+                "syncGroup": "locomotion"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "position": 10.0,
+        "node": {
+          "id": "sprint",
+          "type": "clip",
+          "clip": "animations/locomotion/sprint.anim",
+          "loop": true,
+          "syncGroup": "locomotion"
+        }
+      }
+    ]
+  },
+
+  "layers": [
+    {
+      "name": "Locomotion Base",
+      "node": {
+        "type": "clip",
+        "clip": "animations/locomotion/idle_stand_01.anim",
+        "loop": true
+      },
+      "weight": 1.0,
+      "blendMode": "override"
+    },
+    {
+      "name": "Turn In Place",
+      "node": {
+        "id": "turn_blend",
+        "type": "blend1d",
+        "parameter": "TurnRate",
+        "interpolation": "linear",
+        "samples": [
+          {
+            "position": -90,
+            "node": {
+              "type": "clip",
+              "clip": "animations/locomotion/turn_left_90.anim",
+              "loop": false
+            }
+          },
+          {
+            "position": 0,
+            "node": {
+              "type": "clip",
+              "clip": "animations/locomotion/idle_stand_01.anim",
+              "loop": true
+            }
+          },
+          {
+            "position": 90,
+            "node": {
+              "type": "clip",
+              "clip": "animations/locomotion/turn_right_90.anim",
+              "loop": false
+            }
+          }
+        ]
+      },
+      "weight": 0.0,
+      "weightParameter": "TurnRate",
+      "blendMode": "additive",
+      "mask": {
+        "preset": "lower_body"
+      }
+    },
+    {
+      "name": "Slope Adjustment",
+      "node": {
+        "id": "slope_blend",
+        "type": "blend1d",
+        "parameter": "Slope",
+        "interpolation": "smooth",
+        "samples": [
+          {
+            "position": -45,
+            "node": {
+              "type": "clip",
+              "clip": "animations/locomotion/slope_down_45.anim",
+              "loop": true
+            }
+          },
+          {
+            "position": 0,
+            "node": {
+              "type": "clip",
+              "clip": "animations/locomotion/idle_stand_01.anim",
+              "loop": true
+            }
+          },
+          {
+            "position": 45,
+            "node": {
+              "type": "clip",
+              "clip": "animations/locomotion/slope_up_45.anim",
+              "loop": true
+            }
+          }
+        ]
+      },
+      "weight": 0.3,
+      "blendMode": "additive",
+      "mask": {
+        "preset": "legs",
+        "featherDepth": 2
+      }
+    }
+  ],
+
+  "syncGroups": [
+    {
+      "name": "locomotion",
+      "leaderPolicy": "highest_weight"
+    }
+  ],
+
+  "rootMotion": {
+    "enabled": true,
+    "extractPosition": {
+      "x": true,
+      "y": false,
+      "z": true
+    },
+    "extractRotation": true,
+    "rootBone": "Hips"
+  },
+
+  "debugSettings": {
+    "showSkeleton": false,
+    "showBoneNames": false,
+    "highlightActiveBones": true,
+    "logEvaluations": false
+  }
+}

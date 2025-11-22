@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curve Editor Component</title>
+    <link rel="stylesheet" href="../design/design_tokens.css">
+    <link rel="stylesheet" href="../design/components.css">
+    <link rel="stylesheet" href="../design/layout.css">
+    <style>
+        /* Curve Editor Styles */
+        .curve-editor {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .curve-editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-2) var(--space-3);
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .curve-editor-title {
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+        }
+
+        .curve-editor-canvas-container {
+            position: relative;
+            background: var(--bg-primary);
+        }
+
+        .curve-editor-canvas {
+            display: block;
+            width: 100%;
+        }
+
+        .curve-editor-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .curve-editor-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-primary);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: move;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .curve-editor-point:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .curve-editor-point.selected {
+            background: var(--status-warning);
+        }
+
+        .curve-editor-handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border: 1px solid var(--bg-secondary);
+            border-radius: 50%;
+            cursor: move;
+            transform: translate(-50%, -50%);
+        }
+
+        .curve-editor-handle-line {
+            position: absolute;
+            background: var(--text-muted);
+            height: 1px;
+            transform-origin: left center;
+            pointer-events: none;
+        }
+
+        .curve-editor-presets {
+            display: flex;
+            gap: var(--space-1);
+            padding: var(--space-2) var(--space-3);
+            border-top: 1px solid var(--border-default);
+            overflow-x: auto;
+        }
+
+        .curve-preset {
+            flex-shrink: 0;
+            width: 48px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-default);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .curve-preset:hover {
+            border-color: var(--border-emphasis);
+        }
+
+        .curve-preset.active {
+            border-color: var(--accent-primary);
+        }
+
+        .curve-preset svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .curve-editor-controls {
+            display: flex;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            border-top: 1px solid var(--border-default);
+        }
+
+        .curve-editor-value {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            font-family: var(--font-mono);
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-default);
+        }
+
+        /* Demo Container */
+        .demo-container {
+            padding: var(--space-6);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            margin-bottom: var(--space-6);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="text-2xl font-semibold mb-6">Animation Curve Editor</h1>
+
+        <div class="demo-section">
+            <div class="curve-editor" id="curve-editor">
+                <div class="curve-editor-header">
+                    <span class="curve-editor-title">Easing Curve</span>
+                    <div class="btn-group">
+                        <button class="btn btn-ghost btn-xs" id="reset-btn" title="Reset">Reset</button>
+                        <button class="btn btn-ghost btn-xs" id="copy-btn" title="Copy">Copy</button>
+                    </div>
+                </div>
+
+                <div class="curve-editor-canvas-container" id="canvas-container">
+                    <canvas id="curve-canvas" width="500" height="300"></canvas>
+                </div>
+
+                <div class="curve-editor-presets" id="presets">
+                    <!-- Presets will be populated by JS -->
+                </div>
+
+                <div class="curve-editor-controls">
+                    <div class="form-group" style="flex:1; margin:0;">
+                        <label class="form-label">Duration (ms)</label>
+                        <input type="number" id="duration-input" value="300" min="0" step="50">
+                    </div>
+                    <div class="form-group" style="flex:1; margin:0;">
+                        <label class="form-label">Tension</label>
+                        <input type="range" id="tension-input" value="0" min="-1" max="1" step="0.1">
+                    </div>
+                </div>
+
+                <div class="curve-editor-value">
+                    <span>CSS:</span>
+                    <code id="css-output">cubic-bezier(0.25, 0.1, 0.25, 1)</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="demo-section">
+            <h3 class="text-md font-semibold mb-4">Preview</h3>
+            <div class="card">
+                <div class="card-body">
+                    <div style="display: flex; align-items: center; gap: var(--space-4);">
+                        <div id="preview-ball" style="width: 40px; height: 40px; background: var(--accent-primary); border-radius: 50%;"></div>
+                        <button class="btn btn-primary" id="play-btn">Play Animation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../design/design_tokens.js"></script>
+    <script>
+    /**
+     * Cubic Bezier Curve Editor
+     */
+    class CurveEditor {
+        constructor(container) {
+            this.container = typeof container === 'string' ? document.querySelector(container) : container;
+            this.canvas = this.container.querySelector('#curve-canvas');
+            this.ctx = this.canvas.getContext('2d');
+
+            // Bezier control points (P0 and P3 are fixed at 0,0 and 1,1)
+            this.p1 = { x: 0.25, y: 0.1 };  // Control point 1
+            this.p2 = { x: 0.25, y: 1.0 };  // Control point 2
+
+            this.selectedPoint = null;
+            this.padding = 30;
+
+            this._init();
+        }
+
+        _init() {
+            this._setupPresets();
+            this._setupEventListeners();
+            this._draw();
+        }
+
+        _setupPresets() {
+            const presets = [
+                { name: 'Linear', p1: { x: 0, y: 0 }, p2: { x: 1, y: 1 } },
+                { name: 'Ease', p1: { x: 0.25, y: 0.1 }, p2: { x: 0.25, y: 1 } },
+                { name: 'Ease In', p1: { x: 0.42, y: 0 }, p2: { x: 1, y: 1 } },
+                { name: 'Ease Out', p1: { x: 0, y: 0 }, p2: { x: 0.58, y: 1 } },
+                { name: 'Ease In Out', p1: { x: 0.42, y: 0 }, p2: { x: 0.58, y: 1 } },
+                { name: 'Bounce', p1: { x: 0.68, y: -0.55 }, p2: { x: 0.27, y: 1.55 } },
+                { name: 'Elastic', p1: { x: 0.68, y: -0.6 }, p2: { x: 0.32, y: 1.6 } }
+            ];
+
+            const presetsContainer = this.container.querySelector('#presets');
+
+            presets.forEach((preset, i) => {
+                const div = document.createElement('div');
+                div.className = 'curve-preset';
+                div.title = preset.name;
+                div.innerHTML = this._createPresetSVG(preset.p1, preset.p2);
+                div.addEventListener('click', () => {
+                    this.p1 = { ...preset.p1 };
+                    this.p2 = { ...preset.p2 };
+                    this._draw();
+                    this._updateOutput();
+
+                    presetsContainer.querySelectorAll('.curve-preset').forEach(p => p.classList.remove('active'));
+                    div.classList.add('active');
+                });
+                presetsContainer.appendChild(div);
+            });
+        }
+
+        _createPresetSVG(p1, p2) {
+            const w = 48, h = 32, pad = 4;
+            const scaleX = (x) => pad + x * (w - pad * 2);
+            const scaleY = (y) => h - pad - y * (h - pad * 2);
+
+            return `<svg viewBox="0 0 ${w} ${h}" fill="none" stroke="var(--accent-primary)" stroke-width="1.5">
+                <path d="M${scaleX(0)},${scaleY(0)} C${scaleX(p1.x)},${scaleY(p1.y)} ${scaleX(p2.x)},${scaleY(p2.y)} ${scaleX(1)},${scaleY(1)}"/>
+            </svg>`;
+        }
+
+        _setupEventListeners() {
+            // Canvas mouse events
+            this.canvas.addEventListener('mousedown', (e) => this._onMouseDown(e));
+            document.addEventListener('mousemove', (e) => this._onMouseMove(e));
+            document.addEventListener('mouseup', () => this._onMouseUp());
+
+            // Buttons
+            this.container.querySelector('#reset-btn').addEventListener('click', () => this._reset());
+            this.container.querySelector('#copy-btn').addEventListener('click', () => this._copy());
+
+            // Preview
+            document.getElementById('play-btn').addEventListener('click', () => this._playPreview());
+
+            // Resize
+            window.addEventListener('resize', () => this._resize());
+            this._resize();
+        }
+
+        _resize() {
+            const container = this.container.querySelector('#canvas-container');
+            this.canvas.width = container.clientWidth;
+            this.canvas.height = 250;
+            this._draw();
+        }
+
+        _getCanvasCoords(e) {
+            const rect = this.canvas.getBoundingClientRect();
+            const w = this.canvas.width - this.padding * 2;
+            const h = this.canvas.height - this.padding * 2;
+
+            return {
+                x: Math.max(0, Math.min(1, (e.clientX - rect.left - this.padding) / w)),
+                y: Math.max(-0.5, Math.min(1.5, 1 - (e.clientY - rect.top - this.padding) / h))
+            };
+        }
+
+        _onMouseDown(e) {
+            const coords = this._getCanvasCoords(e);
+            const threshold = 0.05;
+
+            // Check if clicking near P1 or P2
+            if (Math.abs(coords.x - this.p1.x) < threshold && Math.abs(coords.y - this.p1.y) < threshold) {
+                this.selectedPoint = 'p1';
+            } else if (Math.abs(coords.x - this.p2.x) < threshold && Math.abs(coords.y - this.p2.y) < threshold) {
+                this.selectedPoint = 'p2';
+            }
+        }
+
+        _onMouseMove(e) {
+            if (!this.selectedPoint) return;
+
+            const coords = this._getCanvasCoords(e);
+
+            if (this.selectedPoint === 'p1') {
+                this.p1 = coords;
+            } else if (this.selectedPoint === 'p2') {
+                this.p2 = coords;
+            }
+
+            this._draw();
+            this._updateOutput();
+        }
+
+        _onMouseUp() {
+            this.selectedPoint = null;
+        }
+
+        _draw() {
+            const ctx = this.ctx;
+            const w = this.canvas.width;
+            const h = this.canvas.height;
+            const pad = this.padding;
+            const gw = w - pad * 2;
+            const gh = h - pad * 2;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Draw grid
+            ctx.strokeStyle = 'var(--border-muted)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+
+            for (let i = 0; i <= 4; i++) {
+                const x = pad + (gw * i / 4);
+                const y = pad + (gh * i / 4);
+
+                ctx.beginPath();
+                ctx.moveTo(x, pad);
+                ctx.lineTo(x, pad + gh);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(pad, y);
+                ctx.lineTo(pad + gw, y);
+                ctx.stroke();
+            }
+
+            ctx.setLineDash([]);
+
+            // Draw axis labels
+            ctx.fillStyle = 'var(--text-muted)';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('0', pad, h - 8);
+            ctx.fillText('1', w - pad, h - 8);
+            ctx.fillText('Time', w / 2, h - 5);
+
+            ctx.save();
+            ctx.translate(12, h / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Progress', 0, 0);
+            ctx.restore();
+
+            // Transform helpers
+            const toScreen = (x, y) => ({
+                x: pad + x * gw,
+                y: pad + (1 - y) * gh
+            });
+
+            // Draw handle lines
+            ctx.strokeStyle = 'var(--text-muted)';
+            ctx.lineWidth = 1;
+
+            const p0 = toScreen(0, 0);
+            const p1 = toScreen(this.p1.x, this.p1.y);
+            const p2 = toScreen(this.p2.x, this.p2.y);
+            const p3 = toScreen(1, 1);
+
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            ctx.lineTo(p1.x, p1.y);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(p3.x, p3.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+
+            // Draw curve
+            ctx.strokeStyle = 'var(--accent-primary)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+            ctx.stroke();
+
+            // Draw control points
+            const drawPoint = (p, isHandle = false) => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, isHandle ? 5 : 7, 0, Math.PI * 2);
+                ctx.fillStyle = isHandle ? 'var(--text-muted)' : 'var(--accent-primary)';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            };
+
+            drawPoint(p1);
+            drawPoint(p2);
+        }
+
+        _updateOutput() {
+            const css = `cubic-bezier(${this.p1.x.toFixed(2)}, ${this.p1.y.toFixed(2)}, ${this.p2.x.toFixed(2)}, ${this.p2.y.toFixed(2)})`;
+            this.container.querySelector('#css-output').textContent = css;
+        }
+
+        _reset() {
+            this.p1 = { x: 0.25, y: 0.1 };
+            this.p2 = { x: 0.25, y: 1.0 };
+            this._draw();
+            this._updateOutput();
+        }
+
+        _copy() {
+            const css = `cubic-bezier(${this.p1.x.toFixed(2)}, ${this.p1.y.toFixed(2)}, ${this.p2.x.toFixed(2)}, ${this.p2.y.toFixed(2)})`;
+            navigator.clipboard.writeText(css);
+            console.log('Copied:', css);
+        }
+
+        _playPreview() {
+            const ball = document.getElementById('preview-ball');
+            const css = `cubic-bezier(${this.p1.x.toFixed(2)}, ${this.p1.y.toFixed(2)}, ${this.p2.x.toFixed(2)}, ${this.p2.y.toFixed(2)})`;
+            const duration = parseInt(document.getElementById('duration-input').value) || 300;
+
+            ball.style.transition = 'none';
+            ball.style.transform = 'translateX(0)';
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    ball.style.transition = `transform ${duration}ms ${css}`;
+                    ball.style.transform = 'translateX(200px)';
+
+                    setTimeout(() => {
+                        ball.style.transform = 'translateX(0)';
+                    }, duration + 500);
+                });
+            });
+        }
+
+        getValue() {
+            return { p1: { ...this.p1 }, p2: { ...this.p2 } };
+        }
+
+        setValue(p1, p2) {
+            this.p1 = { ...p1 };
+            this.p2 = { ...p2 };
+            this._draw();
+            this._updateOutput();
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        window.curveEditor = new CurveEditor('#curve-editor');
+    });
+    </script>
+</body>
+</html>

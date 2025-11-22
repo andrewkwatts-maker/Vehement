@@ -1,0 +1,378 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nova3d.engine/schemas/config_manifest.schema.json",
+  "title": "Config Manifest Schema",
+  "description": "Schema for project configuration manifest - lists all config files, dependencies, and load order",
+  "type": "object",
+
+  "definitions": {
+    "configFile": {
+      "type": "object",
+      "description": "Configuration file entry",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative path to config file from assets/configs/"
+        },
+        "schema": {
+          "type": "string",
+          "description": "Path to JSON schema for validation"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "core",
+            "entities",
+            "events",
+            "ui",
+            "audio",
+            "graphics",
+            "gameplay",
+            "ai",
+            "network",
+            "localization",
+            "debug",
+            "custom"
+          ],
+          "description": "Configuration category"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to configs this file depends on"
+        },
+        "loadOrder": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Explicit load order (lower = earlier). If not specified, calculated from dependencies"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this config is required for game to run"
+        },
+        "hotReloadable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether changes can be hot-reloaded"
+        },
+        "watchForChanges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch file for changes during development"
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "strict": {
+              "type": "boolean",
+              "default": false,
+              "description": "Fail on any validation warning"
+            },
+            "customValidator": {
+              "type": "string",
+              "description": "Python module.function for custom validation"
+            }
+          }
+        },
+        "preprocessing": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "preprocessor": {
+              "type": "string",
+              "description": "Python module.function for preprocessing"
+            },
+            "parameters": {
+              "type": "object",
+              "description": "Parameters passed to preprocessor"
+            }
+          }
+        },
+        "postprocessing": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "processor": {
+              "type": "string",
+              "description": "Python module.function for postprocessing"
+            }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags for filtering and organization"
+        },
+        "platform": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["windows", "linux", "macos", "ios", "android", "web", "all"]
+          },
+          "default": ["all"],
+          "description": "Platforms this config applies to"
+        },
+        "buildConfig": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["debug", "release", "all"]
+          },
+          "default": ["all"],
+          "description": "Build configurations this config applies to"
+        }
+      },
+      "required": ["path"]
+    },
+
+    "validationRule": {
+      "type": "object",
+      "description": "Custom validation rule",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "default": "error"
+        },
+        "applies_to": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Config file paths or patterns this rule applies to"
+        },
+        "condition": {
+          "type": "object",
+          "description": "Condition that must be true for rule to pass",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "jsonPath_exists",
+                "jsonPath_notEmpty",
+                "jsonPath_unique",
+                "jsonPath_references",
+                "cross_reference",
+                "custom"
+              ]
+            },
+            "jsonPath": {
+              "type": "string"
+            },
+            "referenceFile": {
+              "type": "string"
+            },
+            "referencePath": {
+              "type": "string"
+            },
+            "customValidator": {
+              "type": "string"
+            }
+          },
+          "required": ["type"]
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message when rule fails"
+        }
+      },
+      "required": ["id", "condition"]
+    },
+
+    "configGroup": {
+      "type": "object",
+      "description": "Group of related config files",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "configs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Config file paths in this group"
+        },
+        "loadTogether": {
+          "type": "boolean",
+          "default": false,
+          "description": "Load all configs in group atomically"
+        },
+        "reloadTogether": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reload all configs in group together"
+        }
+      },
+      "required": ["id", "configs"]
+    }
+  },
+
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "project": {
+      "type": "object",
+      "description": "Project metadata",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "engine_version": {
+          "type": "string",
+          "description": "Minimum engine version required"
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "description": "Global manifest settings",
+      "properties": {
+        "configBasePath": {
+          "type": "string",
+          "default": "assets/configs/",
+          "description": "Base path for config files"
+        },
+        "schemaBasePath": {
+          "type": "string",
+          "default": "assets/schemas/",
+          "description": "Base path for schema files"
+        },
+        "enableHotReload": {
+          "type": "boolean",
+          "default": true
+        },
+        "watchInterval": {
+          "type": "number",
+          "default": 0.5,
+          "description": "File watch interval in seconds"
+        },
+        "validateOnLoad": {
+          "type": "boolean",
+          "default": true
+        },
+        "strictValidation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Treat warnings as errors"
+        },
+        "enableCaching": {
+          "type": "boolean",
+          "default": true
+        },
+        "cacheDirectory": {
+          "type": "string",
+          "default": ".cache/configs/"
+        },
+        "enableCompression": {
+          "type": "boolean",
+          "default": false,
+          "description": "Compress cached configs"
+        },
+        "parallelLoading": {
+          "type": "boolean",
+          "default": true,
+          "description": "Load independent configs in parallel"
+        },
+        "maxParallelLoads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "default": 4
+        }
+      }
+    },
+    "configs": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/configFile" },
+      "description": "List of all configuration files"
+    },
+    "groups": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/configGroup" },
+      "description": "Config file groups"
+    },
+    "validationRules": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/validationRule" },
+      "description": "Custom validation rules"
+    },
+    "loadProfiles": {
+      "type": "object",
+      "description": "Named load profiles for different scenarios",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "includes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Config paths or tags to include"
+          },
+          "excludes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Config paths or tags to exclude"
+          }
+        }
+      }
+    },
+    "migrations": {
+      "type": "array",
+      "description": "Config migration scripts",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fromVersion": { "type": "string" },
+          "toVersion": { "type": "string" },
+          "script": {
+            "type": "string",
+            "description": "Python module.function for migration"
+          },
+          "description": { "type": "string" }
+        },
+        "required": ["fromVersion", "toVersion", "script"]
+      }
+    }
+  },
+  "required": ["configs"]
+}

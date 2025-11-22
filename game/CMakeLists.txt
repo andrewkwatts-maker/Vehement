@@ -59,6 +59,21 @@ if(NOT TARGET nlohmann_json::nlohmann_json)
 endif()
 
 # =============================================================================
+# CURL for HTTP requests (geodata system)
+# =============================================================================
+find_package(CURL QUIET)
+if(NOT CURL_FOUND)
+    # Try to fetch CURL via FetchContent if not found
+    message(STATUS "CURL not found, attempting to use system libcurl...")
+    # On most systems, libcurl should be available
+    # If not, install via: apt-get install libcurl4-openssl-dev (Linux)
+    #                      brew install curl (macOS)
+    #                      vcpkg install curl (Windows)
+    find_package(CURL REQUIRED)
+endif()
+message(STATUS "Found CURL: ${CURL_LIBRARIES}")
+
+# =============================================================================
 # Game Source Files
 # =============================================================================
 set(VEHEMENT_CORE_SOURCES
@@ -85,6 +100,29 @@ set(VEHEMENT_ENTITY_SOURCES
 
 set(VEHEMENT_WORLD_SOURCES
     # Placeholder for world sources
+)
+
+set(VEHEMENT_GEODATA_SOURCES
+    src/geodata/GeoDataProvider.cpp
+    src/geodata/OSMDataProvider.cpp
+    src/geodata/ElevationProvider.cpp
+    src/geodata/BiomeClassifier.cpp
+    src/geodata/RoadNetwork.cpp
+    src/geodata/BuildingFootprints.cpp
+    src/geodata/GeoTileCache.cpp
+    src/geodata/WorldDataQuery.cpp
+)
+
+set(VEHEMENT_GEODATA_HEADERS
+    src/geodata/GeoTypes.hpp
+    src/geodata/GeoDataProvider.hpp
+    src/geodata/OSMDataProvider.hpp
+    src/geodata/ElevationProvider.hpp
+    src/geodata/BiomeClassifier.hpp
+    src/geodata/RoadNetwork.hpp
+    src/geodata/BuildingFootprints.hpp
+    src/geodata/GeoTileCache.hpp
+    src/geodata/WorldDataQuery.hpp
 )
 
 set(VEHEMENT_COMBAT_SOURCES
@@ -114,6 +152,8 @@ add_executable(vehement2
     ${VEHEMENT_ASSET_HEADERS}
     ${VEHEMENT_ENTITY_SOURCES}
     ${VEHEMENT_WORLD_SOURCES}
+    ${VEHEMENT_GEODATA_SOURCES}
+    ${VEHEMENT_GEODATA_HEADERS}
     ${VEHEMENT_COMBAT_SOURCES}
     ${VEHEMENT_NETWORK_SOURCES}
     ${VEHEMENT_UI_SOURCES}
@@ -123,11 +163,13 @@ add_executable(vehement2
 target_include_directories(vehement2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../engine
+    ${CURL_INCLUDE_DIRS}
 )
 
 target_link_libraries(vehement2 PRIVATE
     nova3d
     nlohmann_json::nlohmann_json
+    ${CURL_LIBRARIES}
 )
 
 # Platform-specific settings
@@ -192,4 +234,6 @@ message(STATUS "  C++ Standard:  ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type:    ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Editor:        ${VEHEMENT_ENABLE_EDITOR}")
 message(STATUS "  Debug:         ${VEHEMENT_ENABLE_DEBUG}")
+message(STATUS "  GeoData:       Enabled (OSM, Elevation, Biome)")
+message(STATUS "  CURL:          ${CURL_LIBRARIES}")
 message(STATUS "")

@@ -1,0 +1,232 @@
+{
+    // Zombie Unit Configuration
+    // Basic enemy unit that attacks in melee
+
+    "id": "unit_zombie",
+    "type": "unit",
+    "name": "Zombie",
+    "description": "A shambling undead creature. Slow but relentless, attacks anything living.",
+
+    "tags": ["enemy", "undead", "melee", "tier1", "horde"],
+
+    // Visual Configuration
+    "model": {
+        "path": "models/units/zombie.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/units/zombie_diffuse.png",
+    "textures": {
+        "diffuse": "textures/units/zombie_diffuse.png",
+        "normal": "textures/units/zombie_normal.png",
+        "emissive": "textures/units/zombie_eyes_glow.png"
+    },
+
+    "material": {
+        "diffuse": "textures/units/zombie_diffuse.png",
+        "roughness": 0.9,
+        "emissiveStrength": 0.2
+    },
+
+    // Physics - Nova3D Collision System
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.35,
+                "height": 1.7,
+                "offset": [0.0, 0.85, 0.0],
+                "material": {
+                    "friction": 0.4,
+                    "restitution": 0.0,
+                    "density": 950.0
+                }
+            },
+            {
+                "type": "sphere",
+                "radius": 0.4,
+                "offset": [0.0, 0.85, 0.0],
+                "is_trigger": true,
+                "trigger_event": "melee_hitbox"
+            },
+            {
+                "type": "sphere",
+                "radius": 0.2,
+                "offset": [0.0, 1.65, 0.0],
+                "is_trigger": true,
+                "trigger_event": "head_hitbox"
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 75.0,
+        "layer": "enemy",
+        "mask": ["terrain", "unit", "building", "player"],
+        "linear_damping": 0.1,
+        "angular_damping": 0.15,
+        "gravity_scale": 1.0
+    },
+
+    // Movement - Slow shambling
+    "movement": {
+        "speed": 2.5,
+        "turnRate": 180.0,
+        "acceleration": 8.0,
+        "deceleration": 5.0,
+        "terrainModifiers": {
+            "road": 1.1,
+            "water": 0.5
+        }
+    },
+
+    // Combat - Melee focused
+    "combat": {
+        "health": 80,
+        "maxHealth": 80,
+        "armor": 2,
+        "attackDamage": 20,
+        "attackSpeed": 0.8,
+        "attackRange": 1.5,
+        "critChance": 0.05,
+        "critMultiplier": 1.5,
+        "physicalDamage": true
+    },
+
+    // AI Configuration
+    "ai": {
+        "behaviorTree": "ai/behaviors/zombie_basic.bt",
+        "profile": "aggressive",
+        "aggroRange": 20.0,
+        "leashRange": 100.0
+    },
+
+    // Abilities
+    "abilities": [
+        {
+            "id": "lunge",
+            "name": "Lunge",
+            "description": "Lunges forward to close distance with target.",
+            "icon": "icons/abilities/lunge.png",
+            "cooldown": 8.0,
+            "range": 5.0,
+            "targetType": "unit",
+            "targetsEnemy": true,
+            "script": "scripts/abilities/zombie_lunge.py",
+            "castAnimation": "lunge"
+        },
+        {
+            "id": "infectious_bite",
+            "name": "Infectious Bite",
+            "description": "Bite attack that can infect the target.",
+            "icon": "icons/abilities/bite.png",
+            "cooldown": 15.0,
+            "range": 1.5,
+            "targetType": "unit",
+            "script": "scripts/abilities/infectious_bite.py"
+        }
+    ],
+
+    // Animation Mappings
+    "animations": {
+        "idle": {
+            "path": "animations/zombie/idle.anim",
+            "loop": true,
+            "speed": 0.8
+        },
+        "walk": {
+            "path": "animations/zombie/shamble.anim",
+            "loop": true
+        },
+        "run": {
+            "path": "animations/zombie/run.anim",
+            "loop": true,
+            "speed": 0.9
+        },
+        "attack": {
+            "path": "animations/zombie/attack.anim",
+            "loop": false,
+            "events": [
+                [0.4, "deal_damage"]
+            ]
+        },
+        "lunge": {
+            "path": "animations/zombie/lunge.anim",
+            "loop": false
+        },
+        "death": {
+            "path": "animations/zombie/death.anim",
+            "loop": false
+        },
+        "spawn": {
+            "path": "animations/zombie/rise.anim",
+            "loop": false
+        }
+    },
+
+    // Sound Effects
+    "sounds": {
+        "footstep": {
+            "paths": [
+                "sounds/footsteps/shuffle_1.wav",
+                "sounds/footsteps/shuffle_2.wav"
+            ],
+            "volume": 0.4,
+            "pitchVariation": 0.2
+        },
+        "idle": {
+            "paths": [
+                "sounds/zombie/groan_1.wav",
+                "sounds/zombie/groan_2.wav",
+                "sounds/zombie/groan_3.wav"
+            ],
+            "volume": 0.5
+        },
+        "attack": {
+            "paths": [
+                "sounds/zombie/attack_1.wav",
+                "sounds/zombie/attack_2.wav"
+            ],
+            "volume": 0.8
+        },
+        "death": {
+            "paths": [
+                "sounds/zombie/death_1.wav",
+                "sounds/zombie/death_2.wav"
+            ]
+        },
+        "aggro": {
+            "paths": [
+                "sounds/zombie/scream_1.wav",
+                "sounds/zombie/scream_2.wav"
+            ],
+            "volume": 1.0
+        },
+        "spawn": "sounds/zombie/rise.wav"
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_spawn": "scripts/units/zombie/on_spawn.py",
+        "on_death": "scripts/units/zombie/on_death.py",
+        "on_attack": "scripts/units/zombie/on_attack.py",
+        "on_damaged": "scripts/units/zombie/on_damaged.py",
+        "on_target_acquired": "scripts/units/zombie/on_target_acquired.py"
+    },
+
+    // Classification
+    "class": "undead",
+    "faction": "zombie",
+    "tier": 1,
+    "isHero": false,
+
+    // Custom Properties
+    "properties": {
+        "infectionChance": 0.15,
+        "canReanimate": true,
+        "reanimateTime": 30.0,
+        "dropTable": "loot/zombie_drops.json",
+        "xpValue": 25,
+        "goldValue": 5,
+        "spawnWeight": 100,
+        "nightSpeedBonus": 0.3
+    }
+}

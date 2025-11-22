@@ -10,6 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(NOVA_BUILD_EXAMPLES "Build example applications" ON)
 option(NOVA_BUILD_TESTS "Build unit tests" OFF)
 option(NOVA_USE_ASAN "Enable Address Sanitizer" OFF)
+option(NOVA_ENABLE_SCRIPTING "Enable Python scripting support" ON)
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -196,6 +197,16 @@ FetchContent_Declare(
 set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "" FORCE)
 set(FASTNOISE2_TESTS OFF CACHE BOOL "" FORCE)
 
+# pybind11 - Python bindings for C++ (for scripting support)
+if(NOVA_ENABLE_SCRIPTING)
+    FetchContent_Declare(
+        pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11.git
+        GIT_TAG        v2.12.0
+        GIT_SHALLOW    TRUE
+    )
+endif()
+
 # Make dependencies available
 message(STATUS "Fetching dependencies...")
 FetchContent_MakeAvailable(glfw glm json spdlog)
@@ -226,6 +237,19 @@ FetchContent_GetProperties(fastnoise2)
 if(NOT fastnoise2_POPULATED)
     FetchContent_Populate(fastnoise2)
     add_subdirectory(${fastnoise2_SOURCE_DIR} ${fastnoise2_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# Handle pybind11 and Python (for scripting)
+if(NOVA_ENABLE_SCRIPTING)
+    # Find Python first
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+    message(STATUS "Found Python ${Python3_VERSION}: ${Python3_EXECUTABLE}")
+    message(STATUS "Python include dirs: ${Python3_INCLUDE_DIRS}")
+    message(STATUS "Python libraries: ${Python3_LIBRARIES}")
+
+    # Make pybind11 available
+    FetchContent_MakeAvailable(pybind11)
+    add_definitions(-DNOVA_SCRIPTING_ENABLED)
 endif()
 
 # =============================================================================
@@ -336,6 +360,33 @@ add_library(nova3d STATIC
     ${NOVA_PLATFORM_SOURCES}
 )
 
+# =============================================================================
+# Python Scripting Support (conditionally compiled)
+# =============================================================================
+if(NOVA_ENABLE_SCRIPTING)
+    target_sources(nova3d PRIVATE
+        engine/scripting/PythonEngine.cpp
+        engine/scripting/ScriptContext.cpp
+        engine/scripting/EventDispatcher.cpp
+        engine/scripting/AIBehavior.cpp
+        engine/scripting/ScriptBindings.cpp
+        engine/scripting/ScriptableComponent.cpp
+    )
+
+    target_include_directories(nova3d PUBLIC
+        ${Python3_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(nova3d PUBLIC
+        pybind11::embed
+        ${Python3_LIBRARIES}
+    )
+
+    message(STATUS "Python scripting support: ENABLED")
+else()
+    message(STATUS "Python scripting support: DISABLED")
+endif()
+
 target_include_directories(nova3d PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/engine
@@ -420,4 +471,8 @@ message(STATUS "  C++ Standard:   ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type:     ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Build Examples: ${NOVA_BUILD_EXAMPLES}")
 message(STATUS "  Build Tests:    ${NOVA_BUILD_TESTS}")
+message(STATUS "  Scripting:      ${NOVA_ENABLE_SCRIPTING}")
+if(NOVA_ENABLE_SCRIPTING)
+    message(STATUS "  Python Version: ${Python3_VERSION}")
+endif()
 message(STATUS "")

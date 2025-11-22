@@ -1,0 +1,182 @@
+{
+    // Worker Unit Configuration
+    // Civilian unit for resource gathering and construction
+
+    "id": "unit_worker",
+    "type": "unit",
+    "name": "Worker",
+    "description": "Civilian worker capable of gathering resources and constructing buildings.",
+
+    "tags": ["civilian", "gatherer", "builder", "tier1"],
+
+    // Visual Configuration
+    "model": {
+        "path": "models/units/worker.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/units/worker_diffuse.png",
+
+    "material": {
+        "diffuse": "textures/units/worker_diffuse.png",
+        "roughness": 0.8
+    },
+
+    // Physics
+    "collision": {
+        "type": "capsule",
+        "params": {
+            "radius": 0.25,
+            "height": 1.6
+        },
+        "mass": 70.0
+    },
+
+    // Movement - Slower than soldiers
+    "movement": {
+        "speed": 4.0,
+        "turnRate": 300.0,
+        "acceleration": 12.0,
+        "canSwim": false,
+        "terrainModifiers": {
+            "road": 1.3,
+            "forest": 0.6
+        }
+    },
+
+    // Combat - Workers can fight but are weak
+    "combat": {
+        "health": 60,
+        "maxHealth": 60,
+        "armor": 0,
+        "attackDamage": 5,
+        "attackSpeed": 0.8,
+        "attackRange": 1.5,
+        "physicalDamage": true
+    },
+
+    // AI Configuration
+    "ai": {
+        "behaviorTree": "ai/behaviors/worker.bt",
+        "profile": "passive",
+        "aggroRange": 3.0,
+        "leashRange": 10.0
+    },
+
+    // Abilities
+    "abilities": [
+        {
+            "id": "gather_resources",
+            "name": "Gather",
+            "description": "Gather resources from a nearby resource node.",
+            "icon": "icons/abilities/gather.png",
+            "cooldown": 0.0,
+            "targetType": "unit",
+            "targetsFriendly": true,
+            "targetsEnemy": false,
+            "script": "scripts/abilities/gather_resources.py"
+        },
+        {
+            "id": "construct_building",
+            "name": "Build",
+            "description": "Construct or repair a building.",
+            "icon": "icons/abilities/build.png",
+            "cooldown": 0.0,
+            "targetType": "ground",
+            "script": "scripts/abilities/construct_building.py"
+        },
+        {
+            "id": "repair",
+            "name": "Repair",
+            "description": "Repair a damaged building or vehicle.",
+            "icon": "icons/abilities/repair.png",
+            "cooldown": 0.0,
+            "targetType": "unit",
+            "targetsFriendly": true,
+            "script": "scripts/abilities/repair.py"
+        }
+    ],
+
+    // Animation Mappings
+    "animations": {
+        "idle": "animations/worker/idle.anim",
+        "walk": "animations/worker/walk.anim",
+        "run": "animations/worker/run.anim",
+        "attack": "animations/worker/swing.anim",
+        "death": "animations/worker/death.anim",
+        "gather": {
+            "path": "animations/worker/gather.anim",
+            "loop": true,
+            "events": [
+                [0.5, "gather_tick"]
+            ]
+        },
+        "build": {
+            "path": "animations/worker/hammer.anim",
+            "loop": true,
+            "events": [
+                [0.3, "hammer_hit"]
+            ]
+        },
+        "carry": {
+            "path": "animations/worker/carry.anim",
+            "loop": true
+        }
+    },
+
+    // Sound Effects
+    "sounds": {
+        "footstep": {
+            "paths": [
+                "sounds/footsteps/leather_1.wav",
+                "sounds/footsteps/leather_2.wav"
+            ],
+            "volume": 0.5
+        },
+        "gather": {
+            "paths": [
+                "sounds/gather/chop_1.wav",
+                "sounds/gather/chop_2.wav",
+                "sounds/gather/mine_1.wav"
+            ]
+        },
+        "build": {
+            "paths": [
+                "sounds/build/hammer_1.wav",
+                "sounds/build/hammer_2.wav"
+            ]
+        },
+        "death": "sounds/death/civilian_death.wav",
+        "select": "sounds/voice/worker_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/worker_ack_1.wav",
+                "sounds/voice/worker_ack_2.wav"
+            ]
+        }
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_spawn": "scripts/units/worker/on_spawn.py",
+        "on_death": "scripts/units/worker/on_death.py",
+        "on_idle": "scripts/units/worker/on_idle.py"
+    },
+
+    // Classification
+    "class": "civilian",
+    "faction": "human",
+    "tier": 1,
+    "isHero": false,
+
+    // Custom Properties
+    "properties": {
+        "gatherSpeed": 1.0,
+        "buildSpeed": 1.0,
+        "carryCapacity": 20,
+        "gatherableResources": ["wood", "stone", "food", "metal"],
+        "trainingTime": 10.0,
+        "populationCost": 1,
+        "supplyUpkeep": 0
+    }
+}

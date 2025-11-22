@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Browser V2</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        /* Content Browser V2 Specific Styles */
+        .content-browser-v2 {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--bg-primary, #1e1e2e);
+            color: var(--text-primary, #e0e0e0);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Toolbar */
+        .cb-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-secondary, #252536);
+            border-bottom: 1px solid var(--border-color, #3a3a4a);
+        }
+
+        .cb-toolbar .search-container {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .cb-toolbar .search-input {
+            width: 100%;
+            padding: 6px 32px 6px 12px;
+            border: 1px solid var(--border-color, #3a3a4a);
+            border-radius: 4px;
+            background: var(--bg-input, #2a2a3a);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .cb-toolbar .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color, #4a9eff);
+        }
+
+        .cb-toolbar .search-clear {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .cb-toolbar .btn-group {
+            display: flex;
+            gap: 2px;
+        }
+
+        .cb-toolbar .btn {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-button, #2a2a3a);
+            color: var(--text-primary);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .cb-toolbar .btn:hover {
+            background: var(--bg-hover, #3a3a4a);
+        }
+
+        .cb-toolbar .btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        /* Main Content Area */
+        .cb-main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Folder Tree */
+        .cb-folder-tree {
+            width: 220px;
+            min-width: 150px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .cb-folder-tree .tree-header {
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cb-folder-tree .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cb-folder-tree .tree-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .cb-folder-tree .tree-item.selected {
+            background: var(--accent-color);
+        }
+
+        .cb-folder-tree .tree-item .icon {
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+
+        .cb-folder-tree .tree-item .count {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--bg-primary);
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+
+        .cb-folder-tree .tree-item.indent-1 { padding-left: 24px; }
+        .cb-folder-tree .tree-item.indent-2 { padding-left: 36px; }
+        .cb-folder-tree .tree-item.indent-3 { padding-left: 48px; }
+
+        /* Favorites Section */
+        .cb-favorites {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        /* Asset Grid */
+        .cb-asset-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .cb-asset-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cb-asset-header .path {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .cb-asset-header .path span {
+            cursor: pointer;
+        }
+
+        .cb-asset-header .path span:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .cb-asset-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 12px;
+            align-content: start;
+        }
+
+        .cb-asset-grid.list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* Asset Item - Grid View */
+        .cb-asset-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .cb-asset-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .cb-asset-item.selected {
+            background: rgba(74, 158, 255, 0.2);
+            outline: 2px solid var(--accent-color);
+        }
+
+        .cb-asset-item.dragging {
+            opacity: 0.5;
+        }
+
+        .cb-asset-item .thumbnail {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 32px;
+            position: relative;
+        }
+
+        .cb-asset-item .thumbnail .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cb-asset-item .thumbnail .badge.error {
+            background: #ff4444;
+            color: white;
+        }
+
+        .cb-asset-item .thumbnail .badge.modified {
+            background: #ffaa00;
+            color: black;
+        }
+
+        .cb-asset-item .thumbnail .badge.favorite {
+            background: #ffdd00;
+            color: black;
+        }
+
+        .cb-asset-item .name {
+            font-size: 12px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+            max-width: 100px;
+        }
+
+        .cb-asset-item .type {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Asset Item - List View */
+        .cb-asset-grid.list-view .cb-asset-item {
+            flex-direction: row;
+            padding: 6px 12px;
+            border-radius: 3px;
+        }
+
+        .cb-asset-grid.list-view .cb-asset-item .thumbnail {
+            width: 24px;
+            height: 24px;
+            font-size: 16px;
+            margin-bottom: 0;
+            margin-right: 10px;
+        }
+
+        .cb-asset-grid.list-view .cb-asset-item .name {
+            flex: 1;
+            text-align: left;
+            max-width: none;
+        }
+
+        .cb-asset-grid.list-view .cb-asset-item .type {
+            width: 80px;
+            margin-top: 0;
+            margin-left: 12px;
+        }
+
+        .cb-asset-grid.list-view .cb-asset-item .modified {
+            width: 120px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Preview Panel */
+        .cb-preview-panel {
+            width: 280px;
+            min-width: 200px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .cb-preview-panel.hidden {
+            display: none;
+        }
+
+        .cb-preview-header {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cb-preview-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .cb-preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .cb-preview-thumbnail {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 64px;
+        }
+
+        .cb-preview-info h4 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+        }
+
+        .cb-preview-info .field {
+            display: flex;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .cb-preview-info .field .label {
+            width: 80px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .cb-preview-info .field .value {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .cb-preview-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .cb-preview-tags .tag {
+            padding: 2px 8px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .cb-preview-actions {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .cb-preview-actions .btn {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .cb-preview-actions .btn-primary {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .cb-preview-actions .btn-danger {
+            background: #cc4444;
+            border-color: #cc4444;
+        }
+
+        /* Context Menu */
+        .cb-context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            min-width: 180px;
+            z-index: 1000;
+            padding: 4px 0;
+            display: none;
+        }
+
+        .cb-context-menu.visible {
+            display: block;
+        }
+
+        .cb-context-menu .menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .cb-context-menu .menu-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .cb-context-menu .menu-item.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .cb-context-menu .menu-item.danger {
+            color: #ff6666;
+        }
+
+        .cb-context-menu .menu-separator {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        .cb-context-menu .menu-item .shortcut {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Filter Dropdown */
+        .cb-filter-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            min-width: 250px;
+            z-index: 100;
+            padding: 12px;
+            display: none;
+        }
+
+        .cb-filter-dropdown.visible {
+            display: block;
+        }
+
+        .cb-filter-dropdown .filter-section {
+            margin-bottom: 12px;
+        }
+
+        .cb-filter-dropdown .filter-section h5 {
+            margin: 0 0 6px 0;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .cb-filter-dropdown .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            cursor: pointer;
+        }
+
+        .cb-filter-dropdown .filter-option input {
+            margin: 0;
+        }
+
+        /* Status Bar */
+        .cb-status-bar {
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Hover Preview Tooltip */
+        .cb-hover-preview {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            padding: 12px;
+            z-index: 1001;
+            max-width: 300px;
+            display: none;
+            pointer-events: none;
+        }
+
+        .cb-hover-preview.visible {
+            display: block;
+        }
+
+        /* Virtual Scroll Container */
+        .cb-virtual-scroll {
+            position: relative;
+        }
+
+        .cb-virtual-scroll .viewport {
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .cb-virtual-scroll .content {
+            position: relative;
+        }
+
+        /* Drag Ghost */
+        .cb-drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0.8;
+            z-index: 1002;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cb-drag-ghost .count {
+            background: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        /* Loading State */
+        .cb-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-secondary);
+        }
+
+        .cb-loading .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .cb-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-secondary);
+        }
+
+        .cb-empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .cb-empty-state h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+        }
+
+        .cb-empty-state p {
+            margin: 0;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body class="content-browser-v2">
+    <!-- Toolbar -->
+    <div class="cb-toolbar">
+        <div class="search-container">
+            <input type="text" class="search-input" id="search-input" placeholder="Search assets..." autocomplete="off">
+            <button class="search-clear" id="search-clear" style="display:none;">&times;</button>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" id="btn-filter" title="Filter">
+                <span>Filter</span>
+            </button>
+            <button class="btn active" id="btn-grid" title="Grid View">
+                <span>&#x2630;</span>
+            </button>
+            <button class="btn" id="btn-list" title="List View">
+                <span>&#x2637;</span>
+            </button>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" id="btn-refresh" title="Refresh">
+                <span>&#x21bb;</span>
+            </button>
+            <button class="btn" id="btn-create" title="Create New">
+                <span>+</span>
+            </button>
+        </div>
+
+        <select id="sort-select" class="btn">
+            <option value="name">Name</option>
+            <option value="type">Type</option>
+            <option value="modified">Modified</option>
+            <option value="size">Size</option>
+        </select>
+        <button class="btn" id="btn-sort-dir" title="Sort Direction">
+            <span id="sort-dir-icon">&#x25B2;</span>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="cb-main">
+        <!-- Folder Tree -->
+        <div class="cb-folder-tree" id="folder-tree">
+            <div class="tree-header">Favorites</div>
+            <div class="cb-favorites" id="favorites-list">
+                <!-- Favorites populated by JS -->
+            </div>
+
+            <div class="tree-header">Content</div>
+            <div id="folder-list">
+                <div class="tree-item selected" data-type="all" data-path="">
+                    <span class="icon">&#x1F4C2;</span>
+                    <span class="name">All Content</span>
+                    <span class="count" id="count-all">0</span>
+                </div>
+                <div class="tree-item" data-type="units" data-path="units">
+                    <span class="icon">&#x2694;</span>
+                    <span class="name">Units</span>
+                    <span class="count" id="count-units">0</span>
+                </div>
+                <div class="tree-item" data-type="buildings" data-path="buildings">
+                    <span class="icon">&#x1F3E0;</span>
+                    <span class="name">Buildings</span>
+                    <span class="count" id="count-buildings">0</span>
+                </div>
+                <div class="tree-item" data-type="spells" data-path="spells">
+                    <span class="icon">&#x2728;</span>
+                    <span class="name">Spells</span>
+                    <span class="count" id="count-spells">0</span>
+                </div>
+                <div class="tree-item" data-type="effects" data-path="effects">
+                    <span class="icon">&#x2747;</span>
+                    <span class="name">Effects</span>
+                    <span class="count" id="count-effects">0</span>
+                </div>
+                <div class="tree-item" data-type="tiles" data-path="tiles">
+                    <span class="icon">&#x25A6;</span>
+                    <span class="name">Tiles</span>
+                    <span class="count" id="count-tiles">0</span>
+                </div>
+                <div class="tree-item" data-type="heroes" data-path="heroes">
+                    <span class="icon">&#x1F451;</span>
+                    <span class="name">Heroes</span>
+                    <span class="count" id="count-heroes">0</span>
+                </div>
+                <div class="tree-item" data-type="abilities" data-path="abilities">
+                    <span class="icon">&#x26A1;</span>
+                    <span class="name">Abilities</span>
+                    <span class="count" id="count-abilities">0</span>
+                </div>
+                <div class="tree-item" data-type="techtrees" data-path="techtrees">
+                    <span class="icon">&#x1F333;</span>
+                    <span class="name">Tech Trees</span>
+                    <span class="count" id="count-techtrees">0</span>
+                </div>
+                <div class="tree-item" data-type="projectiles" data-path="projectiles">
+                    <span class="icon">&#x27A4;</span>
+                    <span class="name">Projectiles</span>
+                    <span class="count" id="count-projectiles">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Asset Container -->
+        <div class="cb-asset-container">
+            <div class="cb-asset-header">
+                <div class="path" id="current-path">
+                    <span data-path="">All Content</span>
+                </div>
+            </div>
+
+            <div class="cb-asset-grid" id="asset-grid">
+                <!-- Assets populated by JS -->
+            </div>
+
+            <div class="cb-loading" id="loading-state" style="display:none;">
+                <div class="spinner"></div>
+                <span>Loading assets...</span>
+            </div>
+
+            <div class="cb-empty-state" id="empty-state" style="display:none;">
+                <div class="icon">&#x1F4C2;</div>
+                <h3>No assets found</h3>
+                <p>Try adjusting your filters or create a new asset</p>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="cb-preview-panel" id="preview-panel">
+            <div class="cb-preview-header">
+                <h3>Preview</h3>
+                <button class="btn" id="btn-close-preview">&times;</button>
+            </div>
+            <div class="cb-preview-content" id="preview-content">
+                <p style="text-align:center; color:var(--text-secondary);">Select an asset to preview</p>
+            </div>
+            <div class="cb-preview-actions" id="preview-actions" style="display:none;">
+                <button class="btn btn-primary" id="btn-edit">Edit</button>
+                <button class="btn" id="btn-duplicate">Duplicate</button>
+                <button class="btn btn-danger" id="btn-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="cb-status-bar">
+        <span id="status-count">0 items</span>
+        <span id="status-selected">0 selected</span>
+        <span id="status-filter" style="display:none;"></span>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="cb-context-menu" id="context-menu">
+        <div class="menu-item" data-action="open">
+            <span class="icon">&#x1F4DD;</span>
+            <span>Open</span>
+            <span class="shortcut">Enter</span>
+        </div>
+        <div class="menu-item" data-action="edit">
+            <span class="icon">&#x270F;</span>
+            <span>Edit</span>
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" data-action="duplicate">
+            <span class="icon">&#x1F4CB;</span>
+            <span>Duplicate</span>
+            <span class="shortcut">Ctrl+D</span>
+        </div>
+        <div class="menu-item" data-action="rename">
+            <span class="icon">&#x1F4DD;</span>
+            <span>Rename</span>
+            <span class="shortcut">F2</span>
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" data-action="copy">
+            <span class="icon">&#x1F4CB;</span>
+            <span>Copy</span>
+            <span class="shortcut">Ctrl+C</span>
+        </div>
+        <div class="menu-item" data-action="cut">
+            <span class="icon">&#x2702;</span>
+            <span>Cut</span>
+            <span class="shortcut">Ctrl+X</span>
+        </div>
+        <div class="menu-item" data-action="paste" class="disabled">
+            <span class="icon">&#x1F4CB;</span>
+            <span>Paste</span>
+            <span class="shortcut">Ctrl+V</span>
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" data-action="favorite">
+            <span class="icon">&#x2B50;</span>
+            <span>Add to Favorites</span>
+        </div>
+        <div class="menu-item" data-action="show-in-explorer">
+            <span class="icon">&#x1F4C1;</span>
+            <span>Show in Explorer</span>
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item danger" data-action="delete">
+            <span class="icon">&#x1F5D1;</span>
+            <span>Delete</span>
+            <span class="shortcut">Del</span>
+        </div>
+    </div>
+
+    <!-- Hover Preview -->
+    <div class="cb-hover-preview" id="hover-preview">
+        <!-- Populated by JS -->
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script>
+    /**
+     * Content Browser V2 - Enhanced JavaScript
+     */
+    (function() {
+        'use strict';
+
+        // ====================================================================
+        // State
+        // ====================================================================
+        const state = {
+            assets: [],
+            filteredAssets: [],
+            selectedIds: new Set(),
+            primarySelectedId: null,
+            currentPath: '',
+            currentType: 'all',
+            searchQuery: '',
+            sortField: 'name',
+            sortAscending: true,
+            viewMode: 'grid',
+            showPreview: true,
+            favorites: new Set(),
+            clipboard: [],
+            clipboardIsCut: false,
+            isDragging: false,
+            draggedIds: [],
+            hoverTimeout: null,
+            virtualScrollStart: 0,
+            virtualScrollEnd: 100
+        };
+
+        // ====================================================================
+        // DOM References
+        // ====================================================================
+        const dom = {
+            searchInput: document.getElementById('search-input'),
+            searchClear: document.getElementById('search-clear'),
+            assetGrid: document.getElementById('asset-grid'),
+            previewPanel: document.getElementById('preview-panel'),
+            previewContent: document.getElementById('preview-content'),
+            previewActions: document.getElementById('preview-actions'),
+            contextMenu: document.getElementById('context-menu'),
+            hoverPreview: document.getElementById('hover-preview'),
+            loadingState: document.getElementById('loading-state'),
+            emptyState: document.getElementById('empty-state'),
+            statusCount: document.getElementById('status-count'),
+            statusSelected: document.getElementById('status-selected'),
+            sortDirIcon: document.getElementById('sort-dir-icon'),
+            folderList: document.getElementById('folder-list'),
+            currentPathEl: document.getElementById('current-path')
+        };
+
+        // ====================================================================
+        // Type Icons
+        // ====================================================================
+        const typeIcons = {
+            units: '\u2694',
+            buildings: '\u1F3E0',
+            spells: '\u2728',
+            effects: '\u2747',
+            tiles: '\u25A6',
+            heroes: '\u1F451',
+            abilities: '\u26A1',
+            techtrees: '\u1F333',
+            projectiles: '\u27A4',
+            default: '\u1F4C4'
+        };
+
+        // ====================================================================
+        // Initialization
+        // ====================================================================
+        function init() {
+            setupEventListeners();
+            loadContent();
+            setupKeyboardShortcuts();
+        }
+
+        function setupEventListeners() {
+            // Search
+            dom.searchInput.addEventListener('input', debounce(handleSearch, 200));
+            dom.searchClear.addEventListener('click', clearSearch);
+
+            // View mode buttons
+            document.getElementById('btn-grid').addEventListener('click', () => setViewMode('grid'));
+            document.getElementById('btn-list').addEventListener('click', () => setViewMode('list'));
+
+            // Sort
+            document.getElementById('sort-select').addEventListener('change', handleSortChange);
+            document.getElementById('btn-sort-dir').addEventListener('click', toggleSortDirection);
+
+            // Toolbar buttons
+            document.getElementById('btn-refresh').addEventListener('click', loadContent);
+            document.getElementById('btn-create').addEventListener('click', showCreateDialog);
+            document.getElementById('btn-filter').addEventListener('click', toggleFilterDropdown);
+
+            // Preview panel
+            document.getElementById('btn-close-preview').addEventListener('click', togglePreviewPanel);
+            document.getElementById('btn-edit').addEventListener('click', editSelected);
+            document.getElementById('btn-duplicate').addEventListener('click', duplicateSelected);
+            document.getElementById('btn-delete').addEventListener('click', deleteSelected);
+
+            // Folder tree
+            dom.folderList.addEventListener('click', handleFolderClick);
+
+            // Context menu
+            dom.contextMenu.addEventListener('click', handleContextMenuClick);
+            document.addEventListener('click', hideContextMenu);
+
+            // Grid events (delegated)
+            dom.assetGrid.addEventListener('click', handleAssetClick);
+            dom.assetGrid.addEventListener('dblclick', handleAssetDoubleClick);
+            dom.assetGrid.addEventListener('contextmenu', handleAssetContextMenu);
+            dom.assetGrid.addEventListener('mouseenter', handleAssetHover, true);
+            dom.assetGrid.addEventListener('mouseleave', hideHoverPreview, true);
+
+            // Drag and drop
+            dom.assetGrid.addEventListener('dragstart', handleDragStart);
+            dom.assetGrid.addEventListener('dragend', handleDragEnd);
+            dom.assetGrid.addEventListener('dragover', handleDragOver);
+            dom.assetGrid.addEventListener('drop', handleDrop);
+
+            // External file drop
+            document.body.addEventListener('dragover', (e) => e.preventDefault());
+            document.body.addEventListener('drop', handleExternalDrop);
+
+            // Virtual scrolling
+            dom.assetGrid.addEventListener('scroll', handleScroll);
+        }
+
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT') return;
+
+                switch(e.key) {
+                    case 'Delete':
+                        deleteSelected();
+                        break;
+                    case 'Enter':
+                        editSelected();
+                        break;
+                    case 'Escape':
+                        clearSelection();
+                        hideContextMenu();
+                        break;
+                    case 'a':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            selectAll();
+                        }
+                        break;
+                    case 'c':
+                        if (e.ctrlKey || e.metaKey) {
+                            copySelected();
+                        }
+                        break;
+                    case 'x':
+                        if (e.ctrlKey || e.metaKey) {
+                            cutSelected();
+                        }
+                        break;
+                    case 'v':
+                        if (e.ctrlKey || e.metaKey) {
+                            paste();
+                        }
+                        break;
+                    case 'd':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            duplicateSelected();
+                        }
+                        break;
+                    case 'F2':
+                        renameSelected();
+                        break;
+                    case 'ArrowDown':
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        selectNext();
+                        break;
+                    case 'ArrowUp':
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        selectPrevious();
+                        break;
+                }
+            });
+        }
+
+        // ====================================================================
+        // Content Loading
+        // ====================================================================
+        function loadContent() {
+            showLoading(true);
+
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.getContent', [], (err, content) => {
+                    showLoading(false);
+                    if (err) {
+                        console.error('Failed to load content:', err);
+                        showEmpty(true);
+                        return;
+                    }
+                    state.assets = content || [];
+                    updateCategoryCounts();
+                    applyFilters();
+                });
+            } else {
+                // Demo data for testing
+                showLoading(false);
+                state.assets = generateDemoData();
+                updateCategoryCounts();
+                applyFilters();
+            }
+        }
+
+        function generateDemoData() {
+            const types = ['units', 'buildings', 'spells', 'effects', 'tiles', 'heroes'];
+            const data = [];
+            for (let i = 0; i < 50; i++) {
+                const type = types[i % types.length];
+                data.push({
+                    id: `${type}_${i}`,
+                    name: `${type.slice(0,-1).charAt(0).toUpperCase() + type.slice(0,-1).slice(1)} ${i}`,
+                    type: type,
+                    description: `A sample ${type} asset for testing`,
+                    tags: ['sample', type],
+                    lastModified: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
+                    isDirty: Math.random() > 0.8,
+                    hasErrors: Math.random() > 0.95
+                });
+            }
+            return data;
+        }
+
+        function updateCategoryCounts() {
+            const counts = { all: state.assets.length };
+
+            state.assets.forEach(asset => {
+                counts[asset.type] = (counts[asset.type] || 0) + 1;
+            });
+
+            Object.keys(counts).forEach(type => {
+                const el = document.getElementById(`count-${type}`);
+                if (el) el.textContent = counts[type];
+            });
+        }
+
+        // ====================================================================
+        // Filtering & Sorting
+        // ====================================================================
+        function applyFilters() {
+            let filtered = state.assets.slice();
+
+            // Type filter
+            if (state.currentType !== 'all') {
+                filtered = filtered.filter(a => a.type === state.currentType);
+            }
+
+            // Path filter
+            if (state.currentPath) {
+                filtered = filtered.filter(a => a.type === state.currentPath);
+            }
+
+            // Search filter
+            if (state.searchQuery) {
+                const query = state.searchQuery.toLowerCase();
+                filtered = filtered.filter(a =>
+                    (a.name && a.name.toLowerCase().includes(query)) ||
+                    (a.id && a.id.toLowerCase().includes(query)) ||
+                    (a.description && a.description.toLowerCase().includes(query))
+                );
+            }
+
+            // Sort
+            filtered.sort((a, b) => {
+                let aVal, bVal;
+                switch (state.sortField) {
+                    case 'name': aVal = a.name || ''; bVal = b.name || ''; break;
+                    case 'type': aVal = a.type || ''; bVal = b.type || ''; break;
+                    case 'modified': aVal = a.lastModified || ''; bVal = b.lastModified || ''; break;
+                    default: aVal = a.name || ''; bVal = b.name || '';
+                }
+                let result = aVal < bVal ? -1 : (aVal > bVal ? 1 : 0);
+                return state.sortAscending ? result : -result;
+            });
+
+            state.filteredAssets = filtered;
+            renderAssets();
+            updateStatus();
+        }
+
+        function handleSearch(e) {
+            state.searchQuery = e.target.value;
+            dom.searchClear.style.display = state.searchQuery ? 'block' : 'none';
+            applyFilters();
+        }
+
+        function clearSearch() {
+            dom.searchInput.value = '';
+            state.searchQuery = '';
+            dom.searchClear.style.display = 'none';
+            applyFilters();
+        }
+
+        function handleSortChange(e) {
+            state.sortField = e.target.value;
+            applyFilters();
+        }
+
+        function toggleSortDirection() {
+            state.sortAscending = !state.sortAscending;
+            dom.sortDirIcon.innerHTML = state.sortAscending ? '&#x25B2;' : '&#x25BC;';
+            applyFilters();
+        }
+
+        function handleFolderClick(e) {
+            const item = e.target.closest('.tree-item');
+            if (!item) return;
+
+            const type = item.dataset.type;
+            const path = item.dataset.path;
+
+            // Update selection
+            dom.folderList.querySelectorAll('.tree-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+
+            state.currentType = type;
+            state.currentPath = path;
+            applyFilters();
+        }
+
+        // ====================================================================
+        // Rendering
+        // ====================================================================
+        function renderAssets() {
+            if (state.filteredAssets.length === 0) {
+                showEmpty(true);
+                return;
+            }
+            showEmpty(false);
+
+            dom.assetGrid.innerHTML = '';
+
+            // Virtual scrolling - only render visible items
+            const itemsToRender = state.filteredAssets.slice(
+                state.virtualScrollStart,
+                state.virtualScrollEnd
+            );
+
+            itemsToRender.forEach(asset => {
+                const el = createAssetElement(asset);
+                dom.assetGrid.appendChild(el);
+            });
+        }
+
+        function createAssetElement(asset) {
+            const el = document.createElement('div');
+            el.className = 'cb-asset-item';
+            el.dataset.id = asset.id;
+            el.draggable = true;
+
+            if (state.selectedIds.has(asset.id)) {
+                el.classList.add('selected');
+            }
+
+            const icon = typeIcons[asset.type] || typeIcons.default;
+
+            el.innerHTML = `
+                <div class="thumbnail">
+                    ${icon}
+                    ${asset.hasErrors ? '<span class="badge error">!</span>' : ''}
+                    ${asset.isDirty ? '<span class="badge modified">*</span>' : ''}
+                    ${state.favorites.has(asset.id) ? '<span class="badge favorite">&#x2605;</span>' : ''}
+                </div>
+                <div class="name" title="${asset.name}">${asset.name}</div>
+                <div class="type">${asset.type}</div>
+                ${state.viewMode === 'list' ? `<div class="modified">${formatDate(asset.lastModified)}</div>` : ''}
+            `;
+
+            return el;
+        }
+
+        function setViewMode(mode) {
+            state.viewMode = mode;
+
+            document.getElementById('btn-grid').classList.toggle('active', mode === 'grid');
+            document.getElementById('btn-list').classList.toggle('active', mode === 'list');
+
+            dom.assetGrid.classList.toggle('list-view', mode === 'list');
+            renderAssets();
+        }
+
+        function showLoading(show) {
+            dom.loadingState.style.display = show ? 'flex' : 'none';
+            dom.assetGrid.style.display = show ? 'none' : '';
+        }
+
+        function showEmpty(show) {
+            dom.emptyState.style.display = show ? 'flex' : 'none';
+            dom.assetGrid.style.display = show ? 'none' : '';
+        }
+
+        function updateStatus() {
+            dom.statusCount.textContent = `${state.filteredAssets.length} items`;
+            dom.statusSelected.textContent = `${state.selectedIds.size} selected`;
+        }
+
+        // ====================================================================
+        // Selection
+        // ====================================================================
+        function handleAssetClick(e) {
+            const item = e.target.closest('.cb-asset-item');
+            if (!item) {
+                clearSelection();
+                return;
+            }
+
+            const id = item.dataset.id;
+
+            if (e.ctrlKey || e.metaKey) {
+                // Toggle selection
+                if (state.selectedIds.has(id)) {
+                    state.selectedIds.delete(id);
+                    item.classList.remove('selected');
+                } else {
+                    state.selectedIds.add(id);
+                    item.classList.add('selected');
+                }
+            } else if (e.shiftKey && state.primarySelectedId) {
+                // Range selection
+                selectRange(state.primarySelectedId, id);
+            } else {
+                // Single selection
+                clearSelection();
+                state.selectedIds.add(id);
+                item.classList.add('selected');
+            }
+
+            state.primarySelectedId = id;
+            updatePreview(id);
+            updateStatus();
+
+            // Notify C++
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.selectItem', [id]);
+            }
+        }
+
+        function clearSelection() {
+            state.selectedIds.clear();
+            state.primarySelectedId = null;
+            dom.assetGrid.querySelectorAll('.cb-asset-item.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            clearPreview();
+            updateStatus();
+        }
+
+        function selectAll() {
+            state.filteredAssets.forEach(asset => {
+                state.selectedIds.add(asset.id);
+            });
+            dom.assetGrid.querySelectorAll('.cb-asset-item').forEach(el => {
+                el.classList.add('selected');
+            });
+            updateStatus();
+        }
+
+        function selectRange(fromId, toId) {
+            const ids = state.filteredAssets.map(a => a.id);
+            const fromIdx = ids.indexOf(fromId);
+            const toIdx = ids.indexOf(toId);
+
+            if (fromIdx === -1 || toIdx === -1) return;
+
+            const start = Math.min(fromIdx, toIdx);
+            const end = Math.max(fromIdx, toIdx);
+
+            clearSelection();
+
+            for (let i = start; i <= end; i++) {
+                state.selectedIds.add(ids[i]);
+            }
+
+            dom.assetGrid.querySelectorAll('.cb-asset-item').forEach(el => {
+                if (state.selectedIds.has(el.dataset.id)) {
+                    el.classList.add('selected');
+                }
+            });
+            updateStatus();
+        }
+
+        function selectNext() {
+            const ids = state.filteredAssets.map(a => a.id);
+            const currentIdx = ids.indexOf(state.primarySelectedId);
+            const nextIdx = Math.min(currentIdx + 1, ids.length - 1);
+
+            clearSelection();
+            state.selectedIds.add(ids[nextIdx]);
+            state.primarySelectedId = ids[nextIdx];
+
+            const el = dom.assetGrid.querySelector(`[data-id="${ids[nextIdx]}"]`);
+            if (el) {
+                el.classList.add('selected');
+                el.scrollIntoView({ block: 'nearest' });
+            }
+            updatePreview(ids[nextIdx]);
+            updateStatus();
+        }
+
+        function selectPrevious() {
+            const ids = state.filteredAssets.map(a => a.id);
+            const currentIdx = ids.indexOf(state.primarySelectedId);
+            const prevIdx = Math.max(currentIdx - 1, 0);
+
+            clearSelection();
+            state.selectedIds.add(ids[prevIdx]);
+            state.primarySelectedId = ids[prevIdx];
+
+            const el = dom.assetGrid.querySelector(`[data-id="${ids[prevIdx]}"]`);
+            if (el) {
+                el.classList.add('selected');
+                el.scrollIntoView({ block: 'nearest' });
+            }
+            updatePreview(ids[prevIdx]);
+            updateStatus();
+        }
+
+        // ====================================================================
+        // Preview
+        // ====================================================================
+        function updatePreview(id) {
+            const asset = state.assets.find(a => a.id === id);
+            if (!asset) {
+                clearPreview();
+                return;
+            }
+
+            const icon = typeIcons[asset.type] || typeIcons.default;
+
+            dom.previewContent.innerHTML = `
+                <div class="cb-preview-thumbnail">${icon}</div>
+                <div class="cb-preview-info">
+                    <h4>${asset.name}</h4>
+                    <div class="field">
+                        <span class="label">Type:</span>
+                        <span class="value">${asset.type}</span>
+                    </div>
+                    <div class="field">
+                        <span class="label">ID:</span>
+                        <span class="value">${asset.id}</span>
+                    </div>
+                    <div class="field">
+                        <span class="label">Modified:</span>
+                        <span class="value">${formatDate(asset.lastModified)}</span>
+                    </div>
+                    <div class="field">
+                        <span class="label">Description:</span>
+                        <span class="value">${asset.description || 'No description'}</span>
+                    </div>
+                </div>
+                ${asset.tags && asset.tags.length > 0 ? `
+                    <div class="cb-preview-tags">
+                        ${asset.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                    </div>
+                ` : ''}
+            `;
+
+            dom.previewActions.style.display = 'flex';
+        }
+
+        function clearPreview() {
+            dom.previewContent.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">Select an asset to preview</p>';
+            dom.previewActions.style.display = 'none';
+        }
+
+        function togglePreviewPanel() {
+            state.showPreview = !state.showPreview;
+            dom.previewPanel.classList.toggle('hidden', !state.showPreview);
+        }
+
+        // ====================================================================
+        // Actions
+        // ====================================================================
+        function handleAssetDoubleClick(e) {
+            const item = e.target.closest('.cb-asset-item');
+            if (!item) return;
+
+            editAsset(item.dataset.id);
+        }
+
+        function editSelected() {
+            if (state.primarySelectedId) {
+                editAsset(state.primarySelectedId);
+            }
+        }
+
+        function editAsset(id) {
+            const asset = state.assets.find(a => a.id === id);
+            if (!asset) return;
+
+            if (typeof WebEditor !== 'undefined') {
+                const editors = {
+                    units: 'unit_editor.html',
+                    buildings: 'building_editor.html',
+                    spells: 'spell_editor.html',
+                    effects: 'effect_editor.html',
+                    techtrees: 'techtree_editor.html'
+                };
+                const editor = editors[asset.type] || 'schema_editor.html';
+                WebEditor.navigate(editor, { id: id, type: asset.type });
+            } else {
+                console.log('Opening editor for:', id);
+            }
+        }
+
+        function duplicateSelected() {
+            if (state.selectedIds.size === 0) return;
+
+            state.selectedIds.forEach(id => {
+                if (typeof WebEditor !== 'undefined') {
+                    WebEditor.invoke('contentBrowser.duplicateItem', [id], (err, newId) => {
+                        if (!err) {
+                            loadContent();
+                        }
+                    });
+                } else {
+                    console.log('Duplicating:', id);
+                }
+            });
+        }
+
+        function deleteSelected() {
+            if (state.selectedIds.size === 0) return;
+
+            const count = state.selectedIds.size;
+            if (!confirm(`Delete ${count} item(s)? This cannot be undone.`)) {
+                return;
+            }
+
+            state.selectedIds.forEach(id => {
+                if (typeof WebEditor !== 'undefined') {
+                    WebEditor.invoke('contentBrowser.deleteItem', [id], (err) => {
+                        if (!err) {
+                            loadContent();
+                        }
+                    });
+                } else {
+                    console.log('Deleting:', id);
+                }
+            });
+
+            clearSelection();
+        }
+
+        function renameSelected() {
+            if (!state.primarySelectedId) return;
+
+            const asset = state.assets.find(a => a.id === state.primarySelectedId);
+            if (!asset) return;
+
+            const newName = prompt('Enter new name:', asset.name);
+            if (newName && newName !== asset.name) {
+                if (typeof WebEditor !== 'undefined') {
+                    WebEditor.invoke('contentBrowser.renameItem', [state.primarySelectedId, newName], (err) => {
+                        if (!err) {
+                            loadContent();
+                        }
+                    });
+                } else {
+                    console.log('Renaming:', state.primarySelectedId, 'to', newName);
+                }
+            }
+        }
+
+        function copySelected() {
+            state.clipboard = Array.from(state.selectedIds);
+            state.clipboardIsCut = false;
+            console.log('Copied:', state.clipboard);
+        }
+
+        function cutSelected() {
+            state.clipboard = Array.from(state.selectedIds);
+            state.clipboardIsCut = true;
+            console.log('Cut:', state.clipboard);
+        }
+
+        function paste() {
+            if (state.clipboard.length === 0) return;
+
+            state.clipboard.forEach(id => {
+                if (typeof WebEditor !== 'undefined') {
+                    if (state.clipboardIsCut) {
+                        WebEditor.invoke('contentBrowser.moveItem', [id, state.currentPath]);
+                    } else {
+                        WebEditor.invoke('contentBrowser.duplicateItem', [id]);
+                    }
+                }
+            });
+
+            if (state.clipboardIsCut) {
+                state.clipboard = [];
+            }
+
+            loadContent();
+        }
+
+        function showCreateDialog() {
+            const type = prompt('Enter asset type (units, buildings, spells, effects, etc.):');
+            if (!type) return;
+
+            const name = prompt('Enter asset name:');
+            if (!name) return;
+
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.createItem', [type, name], (err, id) => {
+                    if (!err) {
+                        loadContent();
+                        setTimeout(() => {
+                            state.selectedIds.clear();
+                            state.selectedIds.add(id);
+                            state.primarySelectedId = id;
+                            updatePreview(id);
+                            editAsset(id);
+                        }, 100);
+                    }
+                });
+            } else {
+                console.log('Creating:', type, name);
+            }
+        }
+
+        // ====================================================================
+        // Context Menu
+        // ====================================================================
+        function handleAssetContextMenu(e) {
+            e.preventDefault();
+
+            const item = e.target.closest('.cb-asset-item');
+            if (item && !state.selectedIds.has(item.dataset.id)) {
+                clearSelection();
+                state.selectedIds.add(item.dataset.id);
+                state.primarySelectedId = item.dataset.id;
+                item.classList.add('selected');
+                updatePreview(item.dataset.id);
+            }
+
+            showContextMenu(e.clientX, e.clientY);
+        }
+
+        function showContextMenu(x, y) {
+            dom.contextMenu.style.left = `${x}px`;
+            dom.contextMenu.style.top = `${y}px`;
+            dom.contextMenu.classList.add('visible');
+
+            // Update paste state
+            const pasteItem = dom.contextMenu.querySelector('[data-action="paste"]');
+            if (pasteItem) {
+                pasteItem.classList.toggle('disabled', state.clipboard.length === 0);
+            }
+        }
+
+        function hideContextMenu() {
+            dom.contextMenu.classList.remove('visible');
+        }
+
+        function handleContextMenuClick(e) {
+            const item = e.target.closest('.menu-item');
+            if (!item || item.classList.contains('disabled')) return;
+
+            const action = item.dataset.action;
+
+            switch (action) {
+                case 'open':
+                case 'edit':
+                    editSelected();
+                    break;
+                case 'duplicate':
+                    duplicateSelected();
+                    break;
+                case 'rename':
+                    renameSelected();
+                    break;
+                case 'copy':
+                    copySelected();
+                    break;
+                case 'cut':
+                    cutSelected();
+                    break;
+                case 'paste':
+                    paste();
+                    break;
+                case 'favorite':
+                    toggleFavorite(state.primarySelectedId);
+                    break;
+                case 'show-in-explorer':
+                    showInExplorer(state.primarySelectedId);
+                    break;
+                case 'delete':
+                    deleteSelected();
+                    break;
+            }
+
+            hideContextMenu();
+        }
+
+        function toggleFavorite(id) {
+            if (state.favorites.has(id)) {
+                state.favorites.delete(id);
+            } else {
+                state.favorites.add(id);
+            }
+            renderAssets();
+        }
+
+        function showInExplorer(id) {
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.showInExplorer', [id]);
+            }
+        }
+
+        // ====================================================================
+        // Drag and Drop
+        // ====================================================================
+        function handleDragStart(e) {
+            const item = e.target.closest('.cb-asset-item');
+            if (!item) return;
+
+            const id = item.dataset.id;
+
+            if (!state.selectedIds.has(id)) {
+                clearSelection();
+                state.selectedIds.add(id);
+                item.classList.add('selected');
+            }
+
+            state.isDragging = true;
+            state.draggedIds = Array.from(state.selectedIds);
+
+            e.dataTransfer.effectAllowed = 'copyMove';
+            e.dataTransfer.setData('application/json', JSON.stringify(state.draggedIds));
+            e.dataTransfer.setData('text/plain', state.draggedIds.join(','));
+
+            item.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            state.isDragging = false;
+            dom.assetGrid.querySelectorAll('.cb-asset-item.dragging').forEach(el => {
+                el.classList.remove('dragging');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            // Handle internal drops (reordering, moving to folders)
+        }
+
+        function handleExternalDrop(e) {
+            e.preventDefault();
+
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length === 0) return;
+
+            const paths = files.map(f => f.path || f.name);
+            console.log('External files dropped:', paths);
+
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.importFiles', [paths, state.currentPath]);
+            }
+        }
+
+        // ====================================================================
+        // Hover Preview
+        // ====================================================================
+        function handleAssetHover(e) {
+            const item = e.target.closest('.cb-asset-item');
+            if (!item) return;
+
+            clearTimeout(state.hoverTimeout);
+            state.hoverTimeout = setTimeout(() => {
+                showHoverPreview(item.dataset.id, e.clientX, e.clientY);
+            }, 500);
+        }
+
+        function showHoverPreview(id, x, y) {
+            const asset = state.assets.find(a => a.id === id);
+            if (!asset) return;
+
+            dom.hoverPreview.innerHTML = `
+                <strong>${asset.name}</strong>
+                <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+                    ${asset.type} | ${formatDate(asset.lastModified)}
+                </div>
+                <div style="font-size:12px; margin-top:8px;">
+                    ${asset.description || 'No description'}
+                </div>
+            `;
+
+            dom.hoverPreview.style.left = `${x + 16}px`;
+            dom.hoverPreview.style.top = `${y + 16}px`;
+            dom.hoverPreview.classList.add('visible');
+        }
+
+        function hideHoverPreview() {
+            clearTimeout(state.hoverTimeout);
+            dom.hoverPreview.classList.remove('visible');
+        }
+
+        // ====================================================================
+        // Virtual Scrolling
+        // ====================================================================
+        function handleScroll(e) {
+            // Simple virtual scroll implementation
+            const scrollTop = e.target.scrollTop;
+            const itemHeight = state.viewMode === 'grid' ? 140 : 36;
+            const viewportHeight = e.target.clientHeight;
+
+            const startIdx = Math.floor(scrollTop / itemHeight);
+            const endIdx = startIdx + Math.ceil(viewportHeight / itemHeight) + 10;
+
+            if (startIdx !== state.virtualScrollStart || endIdx !== state.virtualScrollEnd) {
+                state.virtualScrollStart = Math.max(0, startIdx - 10);
+                state.virtualScrollEnd = Math.min(state.filteredAssets.length, endIdx + 10);
+                // In a full implementation, would re-render only visible items
+            }
+        }
+
+        // ====================================================================
+        // Utilities
+        // ====================================================================
+        function debounce(fn, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Unknown';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function toggleFilterDropdown() {
+            // Would show filter dropdown panel
+            console.log('Toggle filter dropdown');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+    })();
+    </script>
+</body>
+</html>

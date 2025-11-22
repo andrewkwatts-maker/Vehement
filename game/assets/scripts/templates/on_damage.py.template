@@ -1,0 +1,101 @@
+"""
+{{entity_type}} Damage Handler Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+
+
+# Damage configuration
+DAMAGE_REDUCTION = {{damage_reduction}}  # Base damage reduction (0.0 - 1.0)
+CRIT_MULTIPLIER = {{crit_multiplier}}  # Critical hit multiplier
+
+
+def on_damage(
+    entity_id: int,
+    damage_amount: float,
+    damage_type: str,
+    source_id: int
+) -> float:
+    """
+    Called when the {{entity_type}} entity receives damage.
+
+    Args:
+        entity_id: The entity receiving damage
+        damage_amount: The raw damage amount
+        damage_type: Type of damage ("physical", "magical", "true")
+        source_id: The entity dealing damage (0 if environmental)
+
+    Returns:
+        The modified damage amount to apply
+    """
+    # Get current stats
+    health = get_health(entity_id)
+    armor = get_armor(entity_id)
+    x, y, z = get_position(entity_id)
+
+    modified_damage = damage_amount
+
+    {{#if armor_reduction}}
+    # Apply armor reduction for physical damage
+    if damage_type == "physical" and armor > 0:
+        armor_factor = 100.0 / (100.0 + armor)
+        modified_damage *= armor_factor
+    {{/if}}
+
+    {{#if magic_resist}}
+    # Apply magic resistance
+    if damage_type == "magical":
+        magic_resist = get_property(entity_id, "magic_resist")
+        resist_factor = 100.0 / (100.0 + magic_resist)
+        modified_damage *= resist_factor
+    {{/if}}
+
+    {{#if damage_cap}}
+    # Cap maximum damage per hit
+    max_damage = {{max_damage_per_hit}}
+    modified_damage = min(modified_damage, max_damage)
+    {{/if}}
+
+    {{#if minimum_damage}}
+    # Ensure minimum damage
+    modified_damage = max(modified_damage, {{minimum_damage}})
+    {{/if}}
+
+    # Apply base damage reduction
+    modified_damage *= (1.0 - DAMAGE_REDUCTION)
+
+    {{#if damage_effect}}
+    # Play damage effect
+    play_effect("{{damage_effect}}", x, y, z)
+    {{/if}}
+
+    {{#if damage_sound}}
+    # Play damage sound
+    play_sound("{{damage_sound}}", x, y, z)
+    {{/if}}
+
+    {{#if show_damage_number}}
+    # Show floating damage number
+    spawn_damage_number(x, y + 2.0, z, int(modified_damage), damage_type)
+    {{/if}}
+
+    {{#if counter_attack}}
+    # Counter attack chance
+    if source_id > 0 and random_chance({{counter_chance}}):
+        counter_damage = modified_damage * {{counter_multiplier}}
+        damage(source_id, counter_damage, "physical", entity_id)
+    {{/if}}
+
+    # Log damage event
+    log_debug(f"{{entity_type}} {entity_id} took {modified_damage:.1f} {damage_type} damage from {source_id}")
+
+    {{#if custom_damage}}
+    # Custom damage handling
+    {{custom_damage}}
+    {{/if}}
+
+    return modified_damage

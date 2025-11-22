@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projectile Viewer</title>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-primary: #7c3aed;
+            --accent-secondary: #a855f7;
+            --border-color: #404060;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .viewer-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 280px;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-separator {
+            width: 1px;
+            height: 24px;
+            background: var(--border-color);
+            margin: 0 8px;
+        }
+
+        .btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-secondary);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            border-color: var(--accent-secondary);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .left-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .center-panel {
+            background: var(--bg-primary);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .tab:hover {
+            background: var(--bg-secondary);
+        }
+
+        .tab.active {
+            border-bottom-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .section {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.2);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .section-header:hover {
+            background: rgba(0,0,0,0.3);
+        }
+
+        .section-content {
+            padding: 14px;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        #preview-canvas {
+            flex: 1;
+            width: 100%;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .preview-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 6px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Slider */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 50px;
+            text-align: right;
+            font-size: 13px;
+        }
+
+        /* Trajectory Type Selector */
+        .trajectory-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .trajectory-type {
+            padding: 12px 8px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trajectory-type:hover {
+            border-color: var(--accent-secondary);
+        }
+
+        .trajectory-type.selected {
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .trajectory-type .icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .trajectory-type .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Preview Card */
+        .projectile-card {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-primary) 100%);
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .projectile-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .projectile-card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .projectile-card-title {
+            flex: 1;
+        }
+
+        .projectile-card-title h3 {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .projectile-card-title .type {
+            font-size: 12px;
+            color: var(--accent-secondary);
+        }
+
+        .projectile-card-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .projectile-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+
+        .projectile-stat-label {
+            color: var(--text-secondary);
+        }
+
+        .projectile-stat-value {
+            font-weight: 600;
+        }
+
+        /* Collision Shape Preview */
+        .collision-preview {
+            width: 100%;
+            height: 120px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .collision-shape {
+            border: 2px solid var(--success-color);
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .collision-shape.box {
+            width: 60px;
+            height: 30px;
+        }
+
+        .collision-shape.sphere {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+
+        .collision-shape.capsule {
+            width: 30px;
+            height: 60px;
+            border-radius: 15px;
+        }
+
+        .collision-shape.cylinder {
+            width: 40px;
+            height: 50px;
+            border-radius: 4px;
+        }
+
+        /* Checkbox */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-primary);
+        }
+
+        /* Impact Effects List */
+        .effect-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .effect-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .effect-item .effect-type {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .effect-item .effect-details {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .btn-remove {
+            background: var(--error-color);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+        }
+
+        /* Timeline */
+        .timeline-container {
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+
+        .timeline-track {
+            height: 30px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-primary);
+            border-radius: 2px;
+            cursor: ew-resize;
+        }
+
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Arc Preview */
+        .arc-preview {
+            width: 100%;
+            height: 100px;
+            position: relative;
+        }
+
+        .arc-preview canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Homing Settings */
+        .homing-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Color picker */
+        .color-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-input input[type="color"] {
+            width: 40px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .color-input input[type="text"] {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="btn" id="btn-new" title="New Projectile">
+                    <span>+</span> New
+                </button>
+                <button class="btn" id="btn-load" title="Load Projectile">
+                    <span>^</span> Load
+                </button>
+                <button class="btn btn-primary" id="btn-save" title="Save Projectile">
+                    <span>v</span> Save
+                </button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn" id="btn-undo" title="Undo (Ctrl+Z)">Undo</button>
+                <button class="btn" id="btn-redo" title="Redo (Ctrl+Y)">Redo</button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn btn-success" id="btn-fire" title="Fire Projectile">Fire!</button>
+                <button class="btn" id="btn-reset" title="Reset Simulation">Reset</button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn" id="btn-export" title="Export JSON">Export</button>
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <div class="toolbar-group">
+                <span id="projectile-name-display" style="font-weight: 600;">New Projectile</span>
+            </div>
+        </div>
+
+        <!-- Left Panel - Properties -->
+        <div class="left-panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="general">General</div>
+                <div class="tab" data-tab="motion">Motion</div>
+                <div class="tab" data-tab="collision">Collision</div>
+                <div class="tab" data-tab="effects">Effects</div>
+            </div>
+
+            <!-- General Tab -->
+            <div class="tab-content active" id="tab-general">
+                <div class="form-group">
+                    <label>Projectile ID</label>
+                    <input type="text" id="projectile-id" placeholder="projectile_fireball">
+                </div>
+
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" id="projectile-name" placeholder="Fireball">
+                </div>
+
+                <div class="form-group">
+                    <label>Trajectory Type</label>
+                    <div class="trajectory-types">
+                        <div class="trajectory-type selected" data-type="linear">
+                            <div class="icon">--></div>
+                            <div class="label">Linear</div>
+                        </div>
+                        <div class="trajectory-type" data-type="arc">
+                            <div class="icon">~^~</div>
+                            <div class="label">Arc</div>
+                        </div>
+                        <div class="trajectory-type" data-type="homing">
+                            <div class="icon">@-></div>
+                            <div class="label">Homing</div>
+                        </div>
+                        <div class="trajectory-type" data-type="boomerang">
+                            <div class="icon"><-></div>
+                            <div class="label">Boomerang</div>
+                        </div>
+                        <div class="trajectory-type" data-type="spiral">
+                            <div class="icon">@@@</div>
+                            <div class="label">Spiral</div>
+                        </div>
+                        <div class="trajectory-type" data-type="wave">
+                            <div class="icon">~~~</div>
+                            <div class="label">Wave</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Basic Stats</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Speed (units/s)</label>
+                            <div class="slider-container">
+                                <input type="range" id="speed-slider" min="1" max="100" value="20">
+                                <span class="slider-value" id="speed-value">20</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Max Range</label>
+                            <div class="slider-container">
+                                <input type="range" id="range-slider" min="1" max="50" value="20">
+                                <span class="slider-value" id="range-value">20</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Lifetime (s)</label>
+                            <div class="slider-container">
+                                <input type="range" id="lifetime-slider" min="0.1" max="10" step="0.1" value="3">
+                                <span class="slider-value" id="lifetime-value">3.0</span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Damage</label>
+                                <input type="number" id="damage" value="50" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Damage Type</label>
+                                <select id="damage-type">
+                                    <option value="physical">Physical</option>
+                                    <option value="magical">Magical</option>
+                                    <option value="fire">Fire</option>
+                                    <option value="ice">Ice</option>
+                                    <option value="lightning">Lightning</option>
+                                    <option value="poison">Poison</option>
+                                    <option value="true">True</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Visual Settings</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Model/Mesh</label>
+                            <input type="text" id="visual-model" placeholder="models/projectiles/fireball.glb">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Scale</label>
+                                <input type="number" id="visual-scale" value="1" min="0.1" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Rotation Speed</label>
+                                <input type="number" id="visual-rotation" value="0" step="0.1">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Color</label>
+                            <div class="color-input">
+                                <input type="color" id="visual-color" value="#ff6b35">
+                                <input type="text" id="visual-color-hex" value="#ff6b35">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Trail Effect</label>
+                            <select id="trail-effect">
+                                <option value="none">None</option>
+                                <option value="particles">Particles</option>
+                                <option value="ribbon">Ribbon Trail</option>
+                                <option value="smoke">Smoke</option>
+                                <option value="fire">Fire Trail</option>
+                                <option value="magic">Magic Sparkles</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Glow Intensity</label>
+                            <div class="slider-container">
+                                <input type="range" id="glow-slider" min="0" max="2" step="0.1" value="0.5">
+                                <span class="slider-value" id="glow-value">0.5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motion Tab -->
+            <div class="tab-content" id="tab-motion">
+                <div class="section">
+                    <div class="section-header">
+                        <span>Arc Settings</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content" id="arc-settings">
+                        <div class="form-group">
+                            <label>Arc Height</label>
+                            <div class="slider-container">
+                                <input type="range" id="arc-height-slider" min="0" max="20" step="0.5" value="5">
+                                <span class="slider-value" id="arc-height-value">5</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Gravity Multiplier</label>
+                            <div class="slider-container">
+                                <input type="range" id="gravity-slider" min="0" max="3" step="0.1" value="1">
+                                <span class="slider-value" id="gravity-value">1.0</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Arc Preview</label>
+                            <div class="arc-preview">
+                                <canvas id="arc-preview-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Homing Settings</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content" id="homing-settings">
+                        <div class="form-group">
+                            <label>Turn Rate (deg/s)</label>
+                            <div class="slider-container">
+                                <input type="range" id="turn-rate-slider" min="0" max="360" value="90">
+                                <span class="slider-value" id="turn-rate-value">90</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Homing Delay (s)</label>
+                            <input type="number" id="homing-delay" value="0" min="0" step="0.1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Lock-on Range</label>
+                            <input type="number" id="lockon-range" value="15" min="0">
+                        </div>
+
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="homing-predictive">
+                                <label for="homing-predictive">Predictive Targeting</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="homing-retarget">
+                                <label for="homing-retarget">Can Retarget</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Wave/Spiral Settings</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content" id="wave-settings">
+                        <div class="form-group">
+                            <label>Amplitude</label>
+                            <div class="slider-container">
+                                <input type="range" id="wave-amplitude-slider" min="0" max="5" step="0.1" value="1">
+                                <span class="slider-value" id="wave-amplitude-value">1.0</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Frequency</label>
+                            <div class="slider-container">
+                                <input type="range" id="wave-frequency-slider" min="0.5" max="10" step="0.5" value="2">
+                                <span class="slider-value" id="wave-frequency-value">2.0</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Spiral Radius</label>
+                            <div class="slider-container">
+                                <input type="range" id="spiral-radius-slider" min="0" max="5" step="0.1" value="1">
+                                <span class="slider-value" id="spiral-radius-value">1.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Boomerang Settings</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content" id="boomerang-settings">
+                        <div class="form-group">
+                            <label>Return Distance</label>
+                            <div class="slider-container">
+                                <input type="range" id="return-distance-slider" min="1" max="30" value="15">
+                                <span class="slider-value" id="return-distance-value">15</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Return Speed Multiplier</label>
+                            <div class="slider-container">
+                                <input type="range" id="return-speed-slider" min="0.5" max="3" step="0.1" value="1.5">
+                                <span class="slider-value" id="return-speed-value">1.5</span>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="boomerang-pierce-return" checked>
+                            <label for="boomerang-pierce-return">Pierce on Return</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Acceleration</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Acceleration (units/s^2)</label>
+                            <input type="number" id="acceleration" value="0" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Speed</label>
+                            <input type="number" id="max-speed" value="50" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Min Speed</label>
+                            <input type="number" id="min-speed" value="5" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collision Tab -->
+            <div class="tab-content" id="tab-collision">
+                <div class="section">
+                    <div class="section-header">
+                        <span>Collision Shape</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Shape Type</label>
+                            <select id="collision-shape">
+                                <option value="sphere">Sphere</option>
+                                <option value="box">Box</option>
+                                <option value="capsule">Capsule</option>
+                                <option value="cylinder">Cylinder</option>
+                                <option value="point">Point (Ray)</option>
+                            </select>
+                        </div>
+
+                        <div class="collision-preview" id="collision-preview">
+                            <div class="collision-shape sphere"></div>
+                        </div>
+
+                        <div id="collision-dimensions">
+                            <div class="form-group" id="collision-radius-group">
+                                <label>Radius</label>
+                                <input type="number" id="collision-radius" value="0.5" min="0.1" step="0.1">
+                            </div>
+                            <div class="form-row" id="collision-size-group" style="display: none;">
+                                <div class="form-group">
+                                    <label>Width</label>
+                                    <input type="number" id="collision-width" value="1" min="0.1" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Height</label>
+                                    <input type="number" id="collision-height" value="1" min="0.1" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Collision Behavior</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>On Hit</label>
+                            <select id="on-hit-behavior">
+                                <option value="destroy">Destroy</option>
+                                <option value="pierce">Pierce Through</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="split">Split</option>
+                                <option value="explode">Explode</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="pierce-count-group">
+                            <label>Pierce Count</label>
+                            <input type="number" id="pierce-count" value="1" min="1" max="99">
+                        </div>
+
+                        <div class="form-group" id="bounce-count-group" style="display: none;">
+                            <label>Bounce Count</label>
+                            <input type="number" id="bounce-count" value="3" min="1" max="10">
+                        </div>
+
+                        <div class="form-group" id="split-count-group" style="display: none;">
+                            <label>Split Into</label>
+                            <input type="number" id="split-count" value="3" min="2" max="10">
+                        </div>
+
+                        <div class="form-group" id="explosion-radius-group" style="display: none;">
+                            <label>Explosion Radius</label>
+                            <input type="number" id="explosion-radius" value="3" min="0.5" step="0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Collision Filters</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Collides With</label>
+                            <div class="checkbox-group" style="flex-direction: column; gap: 8px;">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="collide-enemies" checked>
+                                    <label for="collide-enemies">Enemy Units</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="collide-allies">
+                                    <label for="collide-allies">Friendly Units</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="collide-terrain" checked>
+                                    <label for="collide-terrain">Terrain/Walls</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="collide-projectiles">
+                                    <label for="collide-projectiles">Other Projectiles</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="collide-buildings" checked>
+                                    <label for="collide-buildings">Buildings</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Effects Tab -->
+            <div class="tab-content" id="tab-effects">
+                <div class="panel-header" style="margin: -16px -16px 16px -16px; padding: 12px 16px;">
+                    <span>Impact Effects</span>
+                    <button class="btn btn-small" id="btn-add-effect">+ Add Effect</button>
+                </div>
+
+                <div class="effect-list" id="impact-effects">
+                    <div class="effect-item">
+                        <div>
+                            <div class="effect-type">Damage</div>
+                            <div class="effect-details">50 Fire damage</div>
+                        </div>
+                        <button class="btn-remove">x</button>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top: 16px;">
+                    <div class="section-header">
+                        <span>Add Effect</span>
+                    </div>
+                    <div class="section-content" id="effect-editor">
+                        <div class="form-group">
+                            <label>Effect Type</label>
+                            <select id="new-effect-type">
+                                <option value="damage">Damage</option>
+                                <option value="slow">Slow</option>
+                                <option value="stun">Stun</option>
+                                <option value="knockback">Knockback</option>
+                                <option value="apply_buff">Apply Buff/Debuff</option>
+                                <option value="heal">Heal</option>
+                                <option value="spawn">Spawn Entity</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Value</label>
+                                <input type="number" id="new-effect-value" value="50">
+                            </div>
+                            <div class="form-group">
+                                <label>Duration (s)</label>
+                                <input type="number" id="new-effect-duration" value="0" min="0" step="0.1">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Effect ID (for buffs)</label>
+                            <input type="text" id="new-effect-id" placeholder="effect_burning">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Visual Effects</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Impact Particles</label>
+                            <input type="text" id="impact-particles" placeholder="particles/explosion_fire.json">
+                        </div>
+                        <div class="form-group">
+                            <label>Impact Sound</label>
+                            <input type="text" id="impact-sound" placeholder="sounds/explosion.wav">
+                        </div>
+                        <div class="form-group">
+                            <label>Screen Shake</label>
+                            <div class="slider-container">
+                                <input type="range" id="screen-shake-slider" min="0" max="1" step="0.05" value="0.1">
+                                <span class="slider-value" id="screen-shake-value">0.1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Expire Effects</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="expire-explode">
+                            <label for="expire-explode">Explode on Expire</label>
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Expire Particles</label>
+                            <input type="text" id="expire-particles" placeholder="particles/fizzle.json">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - 3D Preview -->
+        <div class="center-panel">
+            <canvas id="preview-canvas"></canvas>
+
+            <div class="preview-overlay">
+                <div id="preview-info">Speed: 20 | Range: 20</div>
+            </div>
+
+            <div class="preview-controls">
+                <button class="btn btn-small" id="btn-slow-motion">Slow Mo</button>
+                <button class="btn btn-small" id="btn-show-path">Show Path</button>
+                <button class="btn btn-small" id="btn-show-collision">Show Collision</button>
+                <button class="btn btn-small" id="btn-reset-camera">Reset Camera</button>
+            </div>
+        </div>
+
+        <!-- Right Panel - Preview -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <span>Projectile Preview</span>
+            </div>
+
+            <div class="panel-content">
+                <div class="projectile-card" id="projectile-preview-card">
+                    <div class="projectile-card-header">
+                        <div class="projectile-card-icon" id="preview-icon">O</div>
+                        <div class="projectile-card-title">
+                            <h3 id="preview-name">New Projectile</h3>
+                            <div class="type" id="preview-type">Linear</div>
+                        </div>
+                    </div>
+                    <div class="projectile-card-stats">
+                        <div class="projectile-stat">
+                            <span class="projectile-stat-label">Speed</span>
+                            <span class="projectile-stat-value" id="preview-speed">20</span>
+                        </div>
+                        <div class="projectile-stat">
+                            <span class="projectile-stat-label">Range</span>
+                            <span class="projectile-stat-value" id="preview-range">20</span>
+                        </div>
+                        <div class="projectile-stat">
+                            <span class="projectile-stat-label">Damage</span>
+                            <span class="projectile-stat-value" id="preview-damage">50</span>
+                        </div>
+                        <div class="projectile-stat">
+                            <span class="projectile-stat-label">Lifetime</span>
+                            <span class="projectile-stat-value" id="preview-lifetime">3.0s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Simulation Stats</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="projectile-card-stats">
+                            <div class="projectile-stat">
+                                <span class="projectile-stat-label">Distance</span>
+                                <span class="projectile-stat-value" id="sim-distance">0</span>
+                            </div>
+                            <div class="projectile-stat">
+                                <span class="projectile-stat-label">Time</span>
+                                <span class="projectile-stat-value" id="sim-time">0.00s</span>
+                            </div>
+                            <div class="projectile-stat">
+                                <span class="projectile-stat-label">Hits</span>
+                                <span class="projectile-stat-value" id="sim-hits">0</span>
+                            </div>
+                            <div class="projectile-stat">
+                                <span class="projectile-stat-label">Status</span>
+                                <span class="projectile-stat-value" id="sim-status">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Test Target</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Target Distance</label>
+                            <div class="slider-container">
+                                <input type="range" id="target-distance-slider" min="5" max="30" value="15">
+                                <span class="slider-value" id="target-distance-value">15</span>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="target-moving">
+                                <label for="target-moving">Moving Target</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="show-target" checked>
+                                <label for="show-target">Show Target</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Target Speed</label>
+                            <input type="number" id="target-speed" value="5" min="0" max="20">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Tags</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <input type="text" id="tags" placeholder="fire, ranged, magical" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="status-message">Ready</span>
+            <span id="status-file">No file loaded</span>
+        </div>
+    </div>
+
+    <script src="../js/viewer_common.js"></script>
+    <script>
+        // ========================================
+        // Projectile Viewer Application
+        // ========================================
+
+        class ProjectileViewer {
+            constructor() {
+                this.projectileData = this.getDefaultProjectile();
+                this.undoStack = [];
+                this.redoStack = [];
+                this.isDirty = false;
+                this.currentFile = null;
+
+                // Simulation state
+                this.isSimulating = false;
+                this.simulationTime = 0;
+                this.slowMotion = false;
+                this.showPath = true;
+                this.showCollision = true;
+
+                this.initThreeJS();
+                this.initUI();
+                this.initArcPreview();
+                this.updatePreview();
+            }
+
+            getDefaultProjectile() {
+                return {
+                    id: 'projectile_new',
+                    name: 'New Projectile',
+                    trajectoryType: 'linear',
+                    speed: 20,
+                    maxRange: 20,
+                    lifetime: 3,
+                    damage: 50,
+                    damageType: 'physical',
+                    visual: {
+                        model: '',
+                        scale: 1,
+                        rotationSpeed: 0,
+                        color: '#ff6b35',
+                        trailEffect: 'particles',
+                        glowIntensity: 0.5
+                    },
+                    motion: {
+                        arcHeight: 5,
+                        gravity: 1,
+                        turnRate: 90,
+                        homingDelay: 0,
+                        lockOnRange: 15,
+                        predictiveTargeting: false,
+                        canRetarget: false,
+                        waveAmplitude: 1,
+                        waveFrequency: 2,
+                        spiralRadius: 1,
+                        returnDistance: 15,
+                        returnSpeedMultiplier: 1.5,
+                        pierceOnReturn: true,
+                        acceleration: 0,
+                        maxSpeed: 50,
+                        minSpeed: 5
+                    },
+                    collision: {
+                        shape: 'sphere',
+                        radius: 0.5,
+                        width: 1,
+                        height: 1,
+                        onHit: 'destroy',
+                        pierceCount: 1,
+                        bounceCount: 3,
+                        splitCount: 3,
+                        explosionRadius: 3,
+                        filters: {
+                            enemies: true,
+                            allies: false,
+                            terrain: true,
+                            projectiles: false,
+                            buildings: true
+                        }
+                    },
+                    effects: [
+                        { type: 'damage', value: 50, damageType: 'fire', duration: 0 }
+                    ],
+                    visuals: {
+                        impactParticles: '',
+                        impactSound: '',
+                        screenShake: 0.1,
+                        expireParticles: ''
+                    },
+                    expireExplode: false,
+                    tags: []
+                };
+            }
+
+            initThreeJS() {
+                const canvas = document.getElementById('preview-canvas');
+                const container = canvas.parentElement;
+
+                // Scene setup
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x1a1a2e);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(
+                    60,
+                    container.clientWidth / container.clientHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(0, 15, 20);
+                this.camera.lookAt(10, 0, 0);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.shadowMap.enabled = true;
+
+                // Controls
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.target.set(10, 0, 0);
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                directionalLight.castShadow = true;
+                this.scene.add(directionalLight);
+
+                // Grid
+                const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
+                this.scene.add(gridHelper);
+
+                // Ground
+                const groundGeometry = new THREE.PlaneGeometry(50, 50);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x1a1a2e,
+                    roughness: 0.9
+                });
+                this.ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                this.ground.rotation.x = -Math.PI / 2;
+                this.ground.receiveShadow = true;
+                this.scene.add(this.ground);
+
+                // Caster (launch point)
+                const casterGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 16);
+                const casterMaterial = new THREE.MeshStandardMaterial({ color: 0x3b82f6 });
+                this.caster = new THREE.Mesh(casterGeometry, casterMaterial);
+                this.caster.position.set(0, 1, 0);
+                this.caster.castShadow = true;
+                this.scene.add(this.caster);
+
+                // Target
+                const targetGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 16);
+                const targetMaterial = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+                this.target = new THREE.Mesh(targetGeometry, targetMaterial);
+                this.target.position.set(15, 1, 0);
+                this.target.castShadow = true;
+                this.scene.add(this.target);
+
+                // Projectile
+                const projectileGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+                const projectileMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xff6b35,
+                    emissive: 0xff6b35,
+                    emissiveIntensity: 0.5
+                });
+                this.projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
+                this.projectile.position.set(0, 1, 0);
+                this.projectile.castShadow = true;
+                this.projectile.visible = false;
+                this.scene.add(this.projectile);
+
+                // Trajectory path
+                this.trajectoryLine = null;
+                this.trajectoryPoints = [];
+
+                // Collision shape visualization
+                this.collisionMesh = null;
+
+                // Animation loop
+                this.clock = new THREE.Clock();
+                this.animate();
+
+                // Handle resize
+                window.addEventListener('resize', () => this.onResize());
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const delta = this.clock.getDelta() * (this.slowMotion ? 0.2 : 1);
+
+                // Update simulation
+                if (this.isSimulating) {
+                    this.updateSimulation(delta);
+                }
+
+                // Update moving target
+                if (document.getElementById('target-moving')?.checked && !this.isSimulating) {
+                    this.target.position.z = Math.sin(Date.now() * 0.001) * 5;
+                }
+
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            updateSimulation(delta) {
+                this.simulationTime += delta;
+                const d = this.projectileData;
+                const motion = d.motion;
+
+                // Calculate position based on trajectory type
+                let pos = this.calculatePosition(this.simulationTime);
+
+                if (pos) {
+                    this.projectile.position.copy(pos);
+
+                    // Update trajectory visualization
+                    this.trajectoryPoints.push(pos.clone());
+                    this.updateTrajectoryLine();
+
+                    // Check for end conditions
+                    const distance = new THREE.Vector2(pos.x, pos.z).length();
+                    document.getElementById('sim-distance').textContent = distance.toFixed(1);
+                    document.getElementById('sim-time').textContent = this.simulationTime.toFixed(2) + 's';
+
+                    // Check collision with target
+                    const targetDist = pos.distanceTo(this.target.position);
+                    if (targetDist < 1) {
+                        this.onHitTarget();
+                    }
+
+                    // Check range/lifetime
+                    if (distance > d.maxRange || this.simulationTime > d.lifetime) {
+                        this.endSimulation('expired');
+                    }
+
+                    // Boomerang return check
+                    if (d.trajectoryType === 'boomerang' && distance > motion.returnDistance && this.simulationPhase === 'outgoing') {
+                        this.simulationPhase = 'returning';
+                    }
+                }
+            }
+
+            calculatePosition(time) {
+                const d = this.projectileData;
+                const motion = d.motion;
+                const speed = d.speed;
+
+                const pos = new THREE.Vector3();
+
+                switch (d.trajectoryType) {
+                    case 'linear':
+                        pos.set(speed * time, 1, 0);
+                        break;
+
+                    case 'arc': {
+                        const totalTime = d.maxRange / speed;
+                        const t = time / totalTime;
+                        const x = speed * time;
+                        const y = 1 + motion.arcHeight * 4 * t * (1 - t); // Parabola
+                        pos.set(x, Math.max(0.5, y), 0);
+                        break;
+                    }
+
+                    case 'homing': {
+                        // Simple homing towards target
+                        const targetPos = this.target.position.clone();
+                        const startPos = new THREE.Vector3(0, 1, 0);
+                        const dir = targetPos.clone().sub(startPos).normalize();
+                        const dist = speed * time;
+                        pos.copy(startPos).add(dir.multiplyScalar(dist));
+                        pos.y = 1;
+                        break;
+                    }
+
+                    case 'wave': {
+                        const x = speed * time;
+                        const y = 1;
+                        const z = Math.sin(time * motion.waveFrequency * Math.PI * 2) * motion.waveAmplitude;
+                        pos.set(x, y, z);
+                        break;
+                    }
+
+                    case 'spiral': {
+                        const x = speed * time;
+                        const angle = time * motion.waveFrequency * Math.PI * 2;
+                        const y = 1 + Math.sin(angle) * motion.spiralRadius;
+                        const z = Math.cos(angle) * motion.spiralRadius;
+                        pos.set(x, y, z);
+                        break;
+                    }
+
+                    case 'boomerang': {
+                        const returnDist = motion.returnDistance;
+                        const returnSpeed = speed * motion.returnSpeedMultiplier;
+
+                        if (this.simulationPhase === 'outgoing') {
+                            pos.set(speed * time, 1, 0);
+                        } else {
+                            // Calculate return path
+                            const outTime = returnDist / speed;
+                            const returnTime = time - outTime;
+                            const returnDist2 = returnTime * returnSpeed;
+                            pos.set(returnDist - returnDist2, 1, 0);
+                        }
+                        break;
+                    }
+
+                    default:
+                        pos.set(speed * time, 1, 0);
+                }
+
+                return pos;
+            }
+
+            updateTrajectoryLine() {
+                if (!this.showPath) return;
+
+                // Remove old line
+                if (this.trajectoryLine) {
+                    this.scene.remove(this.trajectoryLine);
+                }
+
+                if (this.trajectoryPoints.length < 2) return;
+
+                const geometry = new THREE.BufferGeometry().setFromPoints(this.trajectoryPoints);
+                const material = new THREE.LineBasicMaterial({
+                    color: 0xff6b35,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                this.trajectoryLine = new THREE.Line(geometry, material);
+                this.scene.add(this.trajectoryLine);
+            }
+
+            onHitTarget() {
+                const currentHits = parseInt(document.getElementById('sim-hits').textContent) + 1;
+                document.getElementById('sim-hits').textContent = currentHits;
+
+                const behavior = this.projectileData.collision.onHit;
+
+                if (behavior === 'pierce') {
+                    if (currentHits >= this.projectileData.collision.pierceCount) {
+                        this.endSimulation('max pierce');
+                    }
+                } else if (behavior === 'destroy') {
+                    this.endSimulation('hit target');
+                } else if (behavior === 'explode') {
+                    this.createExplosion();
+                    this.endSimulation('exploded');
+                }
+            }
+
+            createExplosion() {
+                const radius = this.projectileData.collision.explosionRadius;
+                const geometry = new THREE.SphereGeometry(radius, 16, 16);
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0xff6b35,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const explosion = new THREE.Mesh(geometry, material);
+                explosion.position.copy(this.projectile.position);
+                this.scene.add(explosion);
+
+                // Animate explosion
+                let scale = 0.1;
+                const animate = () => {
+                    scale += 0.1;
+                    explosion.scale.set(scale, scale, scale);
+                    material.opacity -= 0.05;
+
+                    if (material.opacity > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        this.scene.remove(explosion);
+                    }
+                };
+                animate();
+            }
+
+            endSimulation(reason) {
+                this.isSimulating = false;
+                this.projectile.visible = false;
+                document.getElementById('sim-status').textContent = reason;
+                this.setStatus(`Simulation ended: ${reason}`);
+            }
+
+            fireProjectile() {
+                // Reset simulation
+                this.isSimulating = true;
+                this.simulationTime = 0;
+                this.simulationPhase = 'outgoing';
+                this.trajectoryPoints = [];
+
+                // Reset projectile position
+                this.projectile.position.set(0, 1, 0);
+                this.projectile.visible = true;
+
+                // Reset stats
+                document.getElementById('sim-distance').textContent = '0';
+                document.getElementById('sim-time').textContent = '0.00s';
+                document.getElementById('sim-hits').textContent = '0';
+                document.getElementById('sim-status').textContent = 'Active';
+
+                // Remove old trajectory
+                if (this.trajectoryLine) {
+                    this.scene.remove(this.trajectoryLine);
+                }
+
+                // Pre-calculate path for visualization
+                if (this.showPath) {
+                    this.preCalculatePath();
+                }
+
+                this.setStatus('Projectile fired!');
+            }
+
+            preCalculatePath() {
+                // Draw predicted path
+                const points = [];
+                const d = this.projectileData;
+                const steps = 50;
+                const maxTime = Math.min(d.lifetime, d.maxRange / d.speed);
+                const dt = maxTime / steps;
+
+                for (let i = 0; i <= steps; i++) {
+                    const t = i * dt;
+                    const pos = this.calculatePosition(t);
+                    if (pos) points.push(pos);
+                }
+
+                if (points.length > 1) {
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineDashedMaterial({
+                        color: 0x7c3aed,
+                        dashSize: 0.5,
+                        gapSize: 0.3
+                    });
+                    const line = new THREE.Line(geometry, material);
+                    line.computeLineDistances();
+                    this.scene.add(line);
+
+                    // Remove after a delay
+                    setTimeout(() => this.scene.remove(line), 5000);
+                }
+            }
+
+            resetSimulation() {
+                this.isSimulating = false;
+                this.simulationTime = 0;
+                this.projectile.visible = false;
+                this.trajectoryPoints = [];
+
+                if (this.trajectoryLine) {
+                    this.scene.remove(this.trajectoryLine);
+                    this.trajectoryLine = null;
+                }
+
+                document.getElementById('sim-distance').textContent = '0';
+                document.getElementById('sim-time').textContent = '0.00s';
+                document.getElementById('sim-hits').textContent = '0';
+                document.getElementById('sim-status').textContent = 'Ready';
+
+                this.setStatus('Simulation reset');
+            }
+
+            onResize() {
+                const container = this.renderer.domElement.parentElement;
+                this.camera.aspect = container.clientWidth / container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+
+            initUI() {
+                // Tab switching
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                    });
+                });
+
+                // Section toggles
+                document.querySelectorAll('.section-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        const icon = header.querySelector('.toggle-icon');
+                        if (content && content.classList.contains('section-content')) {
+                            content.classList.toggle('collapsed');
+                            if (icon) icon.textContent = content.classList.contains('collapsed') ? '+' : '-';
+                        }
+                    });
+                });
+
+                // Toolbar buttons
+                document.getElementById('btn-new').addEventListener('click', () => this.newProjectile());
+                document.getElementById('btn-load').addEventListener('click', () => this.loadProjectile());
+                document.getElementById('btn-save').addEventListener('click', () => this.saveProjectile());
+                document.getElementById('btn-undo').addEventListener('click', () => this.undo());
+                document.getElementById('btn-redo').addEventListener('click', () => this.redo());
+                document.getElementById('btn-fire').addEventListener('click', () => this.fireProjectile());
+                document.getElementById('btn-reset').addEventListener('click', () => this.resetSimulation());
+                document.getElementById('btn-export').addEventListener('click', () => this.exportJSON());
+
+                // Preview controls
+                document.getElementById('btn-slow-motion').addEventListener('click', (e) => {
+                    this.slowMotion = !this.slowMotion;
+                    e.target.classList.toggle('btn-primary', this.slowMotion);
+                });
+                document.getElementById('btn-show-path').addEventListener('click', (e) => {
+                    this.showPath = !this.showPath;
+                    e.target.classList.toggle('btn-primary', this.showPath);
+                });
+                document.getElementById('btn-show-collision').addEventListener('click', (e) => {
+                    this.showCollision = !this.showCollision;
+                    e.target.classList.toggle('btn-primary', this.showCollision);
+                    this.updateCollisionVisualization();
+                });
+                document.getElementById('btn-reset-camera').addEventListener('click', () => {
+                    this.camera.position.set(0, 15, 20);
+                    this.controls.target.set(10, 0, 0);
+                });
+
+                // Trajectory type selector
+                document.querySelectorAll('.trajectory-type').forEach(el => {
+                    el.addEventListener('click', () => {
+                        document.querySelectorAll('.trajectory-type').forEach(t => t.classList.remove('selected'));
+                        el.classList.add('selected');
+                        this.projectileData.trajectoryType = el.dataset.type;
+                        this.updatePreview();
+                        this.updateArcPreview();
+                        this.markDirty();
+                    });
+                });
+
+                // Bind form inputs
+                this.bindFormInputs();
+
+                // Collision shape change
+                document.getElementById('collision-shape').addEventListener('change', (e) => {
+                    this.projectileData.collision.shape = e.target.value;
+                    this.updateCollisionPreview();
+                    this.updateCollisionVisualization();
+                    this.markDirty();
+                });
+
+                // On-hit behavior change
+                document.getElementById('on-hit-behavior').addEventListener('change', (e) => {
+                    const value = e.target.value;
+                    this.projectileData.collision.onHit = value;
+
+                    // Show/hide relevant options
+                    document.getElementById('pierce-count-group').style.display = value === 'pierce' ? 'block' : 'none';
+                    document.getElementById('bounce-count-group').style.display = value === 'bounce' ? 'block' : 'none';
+                    document.getElementById('split-count-group').style.display = value === 'split' ? 'block' : 'none';
+                    document.getElementById('explosion-radius-group').style.display = value === 'explode' ? 'block' : 'none';
+
+                    this.markDirty();
+                });
+
+                // Target distance
+                document.getElementById('target-distance-slider').addEventListener('input', (e) => {
+                    const dist = parseFloat(e.target.value);
+                    document.getElementById('target-distance-value').textContent = dist;
+                    this.target.position.x = dist;
+                });
+
+                // Show target toggle
+                document.getElementById('show-target').addEventListener('change', (e) => {
+                    this.target.visible = e.target.checked;
+                });
+
+                // Color picker sync
+                document.getElementById('visual-color').addEventListener('input', (e) => {
+                    document.getElementById('visual-color-hex').value = e.target.value;
+                    this.projectileData.visual.color = e.target.value;
+                    this.updateProjectileVisual();
+                    this.markDirty();
+                });
+                document.getElementById('visual-color-hex').addEventListener('input', (e) => {
+                    document.getElementById('visual-color').value = e.target.value;
+                    this.projectileData.visual.color = e.target.value;
+                    this.updateProjectileVisual();
+                    this.markDirty();
+                });
+
+                // Add effect button
+                document.getElementById('btn-add-effect').addEventListener('click', () => this.addEffect());
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 's') {
+                            e.preventDefault();
+                            this.saveProjectile();
+                        } else if (e.key === 'z') {
+                            e.preventDefault();
+                            this.undo();
+                        } else if (e.key === 'y') {
+                            e.preventDefault();
+                            this.redo();
+                        }
+                    } else if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.fireProjectile();
+                    }
+                });
+            }
+
+            bindFormInputs() {
+                // Sliders with value display
+                const sliders = {
+                    'speed-slider': { target: 'speed', display: 'speed-value', update: true },
+                    'range-slider': { target: 'maxRange', display: 'range-value', update: true },
+                    'lifetime-slider': { target: 'lifetime', display: 'lifetime-value', update: true, decimal: true },
+                    'glow-slider': { target: 'visual.glowIntensity', display: 'glow-value', decimal: true },
+                    'arc-height-slider': { target: 'motion.arcHeight', display: 'arc-height-value', arc: true },
+                    'gravity-slider': { target: 'motion.gravity', display: 'gravity-value', decimal: true, arc: true },
+                    'turn-rate-slider': { target: 'motion.turnRate', display: 'turn-rate-value' },
+                    'wave-amplitude-slider': { target: 'motion.waveAmplitude', display: 'wave-amplitude-value', decimal: true },
+                    'wave-frequency-slider': { target: 'motion.waveFrequency', display: 'wave-frequency-value', decimal: true },
+                    'spiral-radius-slider': { target: 'motion.spiralRadius', display: 'spiral-radius-value', decimal: true },
+                    'return-distance-slider': { target: 'motion.returnDistance', display: 'return-distance-value' },
+                    'return-speed-slider': { target: 'motion.returnSpeedMultiplier', display: 'return-speed-value', decimal: true },
+                    'screen-shake-slider': { target: 'visuals.screenShake', display: 'screen-shake-value', decimal: true }
+                };
+
+                for (const [id, config] of Object.entries(sliders)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', (e) => {
+                            const value = config.decimal ? parseFloat(e.target.value) : parseInt(e.target.value);
+                            document.getElementById(config.display).textContent = config.decimal ? value.toFixed(1) : value;
+
+                            // Set nested property
+                            const parts = config.target.split('.');
+                            if (parts.length === 2) {
+                                this.projectileData[parts[0]][parts[1]] = value;
+                            } else {
+                                this.projectileData[config.target] = value;
+                            }
+
+                            if (config.update) this.updatePreview();
+                            if (config.arc) this.updateArcPreview();
+                            this.markDirty();
+                        });
+                    }
+                }
+
+                // Text inputs
+                const inputs = {
+                    'projectile-id': (v) => this.projectileData.id = v,
+                    'projectile-name': (v) => { this.projectileData.name = v; this.updatePreview(); },
+                    'damage': (v) => { this.projectileData.damage = parseFloat(v) || 0; this.updatePreview(); },
+                    'damage-type': (v) => this.projectileData.damageType = v,
+                    'visual-model': (v) => this.projectileData.visual.model = v,
+                    'visual-scale': (v) => { this.projectileData.visual.scale = parseFloat(v) || 1; this.updateProjectileVisual(); },
+                    'visual-rotation': (v) => this.projectileData.visual.rotationSpeed = parseFloat(v) || 0,
+                    'trail-effect': (v) => this.projectileData.visual.trailEffect = v,
+                    'homing-delay': (v) => this.projectileData.motion.homingDelay = parseFloat(v) || 0,
+                    'lockon-range': (v) => this.projectileData.motion.lockOnRange = parseFloat(v) || 15,
+                    'acceleration': (v) => this.projectileData.motion.acceleration = parseFloat(v) || 0,
+                    'max-speed': (v) => this.projectileData.motion.maxSpeed = parseFloat(v) || 50,
+                    'min-speed': (v) => this.projectileData.motion.minSpeed = parseFloat(v) || 5,
+                    'collision-radius': (v) => { this.projectileData.collision.radius = parseFloat(v) || 0.5; this.updateCollisionVisualization(); },
+                    'collision-width': (v) => this.projectileData.collision.width = parseFloat(v) || 1,
+                    'collision-height': (v) => this.projectileData.collision.height = parseFloat(v) || 1,
+                    'pierce-count': (v) => this.projectileData.collision.pierceCount = parseInt(v) || 1,
+                    'bounce-count': (v) => this.projectileData.collision.bounceCount = parseInt(v) || 3,
+                    'split-count': (v) => this.projectileData.collision.splitCount = parseInt(v) || 3,
+                    'explosion-radius': (v) => this.projectileData.collision.explosionRadius = parseFloat(v) || 3,
+                    'impact-particles': (v) => this.projectileData.visuals.impactParticles = v,
+                    'impact-sound': (v) => this.projectileData.visuals.impactSound = v,
+                    'expire-particles': (v) => this.projectileData.visuals.expireParticles = v,
+                    'tags': (v) => this.projectileData.tags = v.split(',').map(s => s.trim()).filter(s => s)
+                };
+
+                for (const [id, setter] of Object.entries(inputs)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', (e) => {
+                            this.saveState();
+                            setter(e.target.value);
+                            this.markDirty();
+                        });
+                    }
+                }
+
+                // Checkboxes
+                const checkboxes = {
+                    'homing-predictive': (v) => this.projectileData.motion.predictiveTargeting = v,
+                    'homing-retarget': (v) => this.projectileData.motion.canRetarget = v,
+                    'boomerang-pierce-return': (v) => this.projectileData.motion.pierceOnReturn = v,
+                    'collide-enemies': (v) => this.projectileData.collision.filters.enemies = v,
+                    'collide-allies': (v) => this.projectileData.collision.filters.allies = v,
+                    'collide-terrain': (v) => this.projectileData.collision.filters.terrain = v,
+                    'collide-projectiles': (v) => this.projectileData.collision.filters.projectiles = v,
+                    'collide-buildings': (v) => this.projectileData.collision.filters.buildings = v,
+                    'expire-explode': (v) => this.projectileData.expireExplode = v
+                };
+
+                for (const [id, setter] of Object.entries(checkboxes)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('change', (e) => {
+                            this.saveState();
+                            setter(e.target.checked);
+                            this.markDirty();
+                        });
+                    }
+                }
+            }
+
+            initArcPreview() {
+                this.arcCanvas = document.getElementById('arc-preview-canvas');
+                this.arcCtx = this.arcCanvas.getContext('2d');
+                this.arcCanvas.width = this.arcCanvas.parentElement.clientWidth;
+                this.arcCanvas.height = 100;
+                this.updateArcPreview();
+            }
+
+            updateArcPreview() {
+                const ctx = this.arcCtx;
+                const width = this.arcCanvas.width;
+                const height = this.arcCanvas.height;
+
+                // Clear
+                ctx.fillStyle = '#1e1e2e';
+                ctx.fillRect(0, 0, width, height);
+
+                // Ground line
+                ctx.strokeStyle = '#404060';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(20, height - 20);
+                ctx.lineTo(width - 20, height - 20);
+                ctx.stroke();
+
+                // Draw arc based on trajectory type
+                const type = this.projectileData.trajectoryType;
+                const motion = this.projectileData.motion;
+
+                ctx.strokeStyle = '#7c3aed';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                const startX = 30;
+                const endX = width - 30;
+                const groundY = height - 20;
+                const maxHeight = motion.arcHeight * 6;
+
+                for (let i = 0; i <= 50; i++) {
+                    const t = i / 50;
+                    const x = startX + t * (endX - startX);
+                    let y = groundY;
+
+                    if (type === 'arc') {
+                        y = groundY - maxHeight * 4 * t * (1 - t);
+                    } else if (type === 'wave') {
+                        y = groundY - 20 - Math.sin(t * Math.PI * 2 * motion.waveFrequency) * motion.waveAmplitude * 10;
+                    } else if (type === 'spiral') {
+                        y = groundY - 20 - Math.sin(t * Math.PI * 2 * motion.waveFrequency) * motion.spiralRadius * 10;
+                    } else {
+                        y = groundY - 10;
+                    }
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // Start/end markers
+                ctx.fillStyle = '#3b82f6';
+                ctx.beginPath();
+                ctx.arc(startX, groundY - 10, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(endX, groundY - 10, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            updatePreview() {
+                const d = this.projectileData;
+
+                document.getElementById('projectile-name-display').textContent = d.name || 'New Projectile';
+                document.getElementById('preview-name').textContent = d.name || 'New Projectile';
+                document.getElementById('preview-type').textContent = d.trajectoryType.charAt(0).toUpperCase() + d.trajectoryType.slice(1);
+                document.getElementById('preview-speed').textContent = d.speed;
+                document.getElementById('preview-range').textContent = d.maxRange;
+                document.getElementById('preview-damage').textContent = d.damage;
+                document.getElementById('preview-lifetime').textContent = d.lifetime.toFixed(1) + 's';
+
+                document.getElementById('preview-info').textContent = `Speed: ${d.speed} | Range: ${d.maxRange}`;
+            }
+
+            updateCollisionPreview() {
+                const shape = this.projectileData.collision.shape;
+                const preview = document.getElementById('collision-preview');
+                const shapeEl = preview.querySelector('.collision-shape');
+
+                shapeEl.className = 'collision-shape ' + shape;
+
+                // Show/hide dimension inputs
+                const radiusGroup = document.getElementById('collision-radius-group');
+                const sizeGroup = document.getElementById('collision-size-group');
+
+                if (shape === 'box') {
+                    radiusGroup.style.display = 'none';
+                    sizeGroup.style.display = 'grid';
+                } else {
+                    radiusGroup.style.display = 'block';
+                    sizeGroup.style.display = 'none';
+                }
+            }
+
+            updateCollisionVisualization() {
+                // Remove existing collision mesh
+                if (this.collisionMesh) {
+                    this.scene.remove(this.collisionMesh);
+                    this.collisionMesh = null;
+                }
+
+                if (!this.showCollision) return;
+
+                const collision = this.projectileData.collision;
+                let geometry;
+
+                switch (collision.shape) {
+                    case 'sphere':
+                        geometry = new THREE.SphereGeometry(collision.radius, 16, 16);
+                        break;
+                    case 'box':
+                        geometry = new THREE.BoxGeometry(collision.width, collision.height, collision.width);
+                        break;
+                    case 'capsule':
+                        geometry = new THREE.CapsuleGeometry(collision.radius, collision.height, 8, 16);
+                        break;
+                    case 'cylinder':
+                        geometry = new THREE.CylinderGeometry(collision.radius, collision.radius, collision.height, 16);
+                        break;
+                    default:
+                        return;
+                }
+
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0x10b981,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.5
+                });
+
+                this.collisionMesh = new THREE.Mesh(geometry, material);
+                this.collisionMesh.position.copy(this.projectile.position);
+                this.scene.add(this.collisionMesh);
+            }
+
+            updateProjectileVisual() {
+                const color = new THREE.Color(this.projectileData.visual.color);
+                this.projectile.material.color = color;
+                this.projectile.material.emissive = color;
+                this.projectile.material.emissiveIntensity = this.projectileData.visual.glowIntensity;
+
+                const scale = this.projectileData.visual.scale;
+                this.projectile.scale.set(scale, scale, scale);
+            }
+
+            addEffect() {
+                this.saveState();
+
+                const effectType = document.getElementById('new-effect-type').value;
+                const value = parseFloat(document.getElementById('new-effect-value').value) || 0;
+                const duration = parseFloat(document.getElementById('new-effect-duration').value) || 0;
+                const effectId = document.getElementById('new-effect-id').value;
+
+                const effect = {
+                    type: effectType,
+                    value: value,
+                    duration: duration
+                };
+
+                if (effectId) effect.effectId = effectId;
+                if (this.projectileData.damageType) effect.damageType = this.projectileData.damageType;
+
+                this.projectileData.effects.push(effect);
+                this.renderEffects();
+                this.markDirty();
+            }
+
+            renderEffects() {
+                const container = document.getElementById('impact-effects');
+                container.innerHTML = '';
+
+                this.projectileData.effects.forEach((effect, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'effect-item';
+
+                    let details = `${effect.value}`;
+                    if (effect.damageType) details += ` ${effect.damageType}`;
+                    if (effect.duration > 0) details += ` for ${effect.duration}s`;
+
+                    item.innerHTML = `
+                        <div>
+                            <div class="effect-type">${effect.type.charAt(0).toUpperCase() + effect.type.slice(1)}</div>
+                            <div class="effect-details">${details}</div>
+                        </div>
+                        <button class="btn-remove" data-index="${index}">x</button>
+                    `;
+
+                    item.querySelector('.btn-remove').addEventListener('click', () => {
+                        this.saveState();
+                        this.projectileData.effects.splice(index, 1);
+                        this.renderEffects();
+                        this.markDirty();
+                    });
+
+                    container.appendChild(item);
+                });
+            }
+
+            // State management
+            saveState() {
+                this.undoStack.push(JSON.stringify(this.projectileData));
+                this.redoStack = [];
+                if (this.undoStack.length > 50) this.undoStack.shift();
+            }
+
+            undo() {
+                if (this.undoStack.length > 0) {
+                    this.redoStack.push(JSON.stringify(this.projectileData));
+                    this.projectileData = JSON.parse(this.undoStack.pop());
+                    this.loadProjectileToForm();
+                    this.setStatus('Undo');
+                }
+            }
+
+            redo() {
+                if (this.redoStack.length > 0) {
+                    this.undoStack.push(JSON.stringify(this.projectileData));
+                    this.projectileData = JSON.parse(this.redoStack.pop());
+                    this.loadProjectileToForm();
+                    this.setStatus('Redo');
+                }
+            }
+
+            markDirty() {
+                this.isDirty = true;
+                document.title = '* Projectile Viewer';
+            }
+
+            // File operations
+            newProjectile() {
+                if (this.isDirty && !confirm('Discard unsaved changes?')) return;
+                this.projectileData = this.getDefaultProjectile();
+                this.loadProjectileToForm();
+                this.currentFile = null;
+                this.isDirty = false;
+                document.title = 'Projectile Viewer';
+                this.setStatus('New projectile created');
+            }
+
+            loadProjectile() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            try {
+                                this.projectileData = JSON.parse(event.target.result);
+                                this.loadProjectileToForm();
+                                this.currentFile = file.name;
+                                this.isDirty = false;
+                                document.title = 'Projectile Viewer';
+                                document.getElementById('status-file').textContent = file.name;
+                                this.setStatus(`Loaded: ${file.name}`);
+                            } catch (err) {
+                                this.setStatus(`Error loading file: ${err.message}`, 'error');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            }
+
+            saveProjectile() {
+                const json = JSON.stringify(this.projectileData, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.projectileData.id || 'projectile'}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                this.isDirty = false;
+                document.title = 'Projectile Viewer';
+                this.setStatus('Projectile saved');
+            }
+
+            exportJSON() {
+                const json = JSON.stringify(this.projectileData, null, 2);
+                navigator.clipboard.writeText(json).then(() => {
+                    this.setStatus('JSON copied to clipboard');
+                }).catch(() => {
+                    this.setStatus('Failed to copy to clipboard', 'error');
+                });
+            }
+
+            loadProjectileToForm() {
+                const d = this.projectileData;
+
+                document.getElementById('projectile-id').value = d.id || '';
+                document.getElementById('projectile-name').value = d.name || '';
+
+                // Trajectory type
+                document.querySelectorAll('.trajectory-type').forEach(el => {
+                    el.classList.toggle('selected', el.dataset.type === d.trajectoryType);
+                });
+
+                // Sliders
+                document.getElementById('speed-slider').value = d.speed;
+                document.getElementById('speed-value').textContent = d.speed;
+                document.getElementById('range-slider').value = d.maxRange;
+                document.getElementById('range-value').textContent = d.maxRange;
+                document.getElementById('lifetime-slider').value = d.lifetime;
+                document.getElementById('lifetime-value').textContent = d.lifetime.toFixed(1);
+
+                document.getElementById('damage').value = d.damage;
+                document.getElementById('damage-type').value = d.damageType;
+
+                // Visual
+                document.getElementById('visual-model').value = d.visual?.model || '';
+                document.getElementById('visual-scale').value = d.visual?.scale || 1;
+                document.getElementById('visual-rotation').value = d.visual?.rotationSpeed || 0;
+                document.getElementById('visual-color').value = d.visual?.color || '#ff6b35';
+                document.getElementById('visual-color-hex').value = d.visual?.color || '#ff6b35';
+                document.getElementById('trail-effect').value = d.visual?.trailEffect || 'particles';
+                document.getElementById('glow-slider').value = d.visual?.glowIntensity || 0.5;
+                document.getElementById('glow-value').textContent = (d.visual?.glowIntensity || 0.5).toFixed(1);
+
+                // Motion
+                document.getElementById('arc-height-slider').value = d.motion?.arcHeight || 5;
+                document.getElementById('arc-height-value').textContent = d.motion?.arcHeight || 5;
+                document.getElementById('gravity-slider').value = d.motion?.gravity || 1;
+                document.getElementById('gravity-value').textContent = (d.motion?.gravity || 1).toFixed(1);
+                document.getElementById('turn-rate-slider').value = d.motion?.turnRate || 90;
+                document.getElementById('turn-rate-value').textContent = d.motion?.turnRate || 90;
+
+                // Collision
+                document.getElementById('collision-shape').value = d.collision?.shape || 'sphere';
+                document.getElementById('collision-radius').value = d.collision?.radius || 0.5;
+                document.getElementById('on-hit-behavior').value = d.collision?.onHit || 'destroy';
+
+                // Effects
+                this.renderEffects();
+
+                // Update displays
+                this.updatePreview();
+                this.updateArcPreview();
+                this.updateCollisionPreview();
+                this.updateCollisionVisualization();
+                this.updateProjectileVisual();
+            }
+
+            setStatus(message, type = 'info') {
+                const status = document.getElementById('status-message');
+                status.textContent = message;
+                status.style.color = type === 'error' ? 'var(--error-color)' :
+                                     type === 'success' ? 'var(--success-color)' :
+                                     'var(--text-secondary)';
+            }
+        }
+
+        // Initialize viewer
+        const viewer = new ProjectileViewer();
+
+        // Bridge communication
+        window.ProjectileViewer = {
+            loadProjectile: (data) => {
+                viewer.projectileData = typeof data === 'string' ? JSON.parse(data) : data;
+                viewer.loadProjectileToForm();
+            },
+            getProjectile: () => JSON.stringify(viewer.projectileData),
+            setDirty: (dirty) => { viewer.isDirty = dirty; },
+            fire: () => viewer.fireProjectile()
+        };
+    </script>
+</body>
+</html>

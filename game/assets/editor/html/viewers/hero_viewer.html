@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Viewer - Nova3D Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        :root { --bg-primary: #1e1e1e; --bg-secondary: #252526; --bg-tertiary: #2d2d30; --bg-hover: #3e3e42; --border-color: #3c3c3c; --text-primary: #cccccc; --text-secondary: #9d9d9d; --text-bright: #ffffff; --accent-primary: #007acc; --success: #4ec9b0; --warning: #dcdcaa; --error: #f14c4c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: var(--text-primary); background: var(--bg-primary); height: 100vh; overflow: hidden; }
+        .viewer-container { display: flex; flex-direction: column; height: 100vh; }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
+        .toolbar h1 { font-size: 16px; font-weight: 500; color: var(--text-bright); }
+        .dirty-indicator { color: var(--warning); font-size: 18px; display: none; }
+        .btn { padding: 6px 12px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; }
+        .btn:hover { background: var(--bg-hover); }
+        .btn-primary { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+        .btn-small { padding: 4px 8px; font-size: 12px; }
+        .btn-add { color: var(--success); border-style: dashed; }
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+        .properties-panel { width: 380px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); overflow-y: auto; }
+        .preview-area { flex: 1; display: flex; flex-direction: column; }
+        .preview-canvas { flex: 1; position: relative; }
+        .preview-canvas canvas { width: 100% !important; height: 100% !important; }
+        .preview-controls { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); }
+        .section { border-bottom: 1px solid var(--border-color); }
+        .section-header { display: flex; align-items: center; padding: 10px 12px; cursor: pointer; font-weight: 500; color: var(--text-bright); user-select: none; }
+        .section-header:hover { background: var(--bg-hover); }
+        .section-header .icon { margin-right: 8px; font-size: 10px; }
+        .section.collapsed .section-header .icon { transform: rotate(-90deg); }
+        .section.collapsed .section-content { display: none; }
+        .section-content { padding: 12px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 12px; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 6px 8px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .stat-row label { width: 130px; margin-bottom: 0; font-size: 12px; }
+        .stat-row input { flex: 1; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+        .tab { padding: 8px 12px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 12px; }
+        .tab.active { color: var(--text-bright); border-bottom-color: var(--accent-primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .ability-slot { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 8px; }
+        .ability-key { width: 30px; height: 30px; background: var(--bg-hover); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--text-bright); }
+        .talent-tree { display: flex; flex-direction: column; gap: 12px; }
+        .talent-tier { display: flex; gap: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px; }
+        .talent-tier-label { width: 50px; display: flex; align-items: center; font-weight: 500; }
+        .talent-node { flex: 1; padding: 8px; background: var(--bg-hover); border-radius: 4px; cursor: pointer; text-align: center; font-size: 11px; }
+        .talent-node:hover { background: var(--accent-primary); }
+        .talent-node.selected { border: 2px solid var(--success); }
+        .equipment-slot { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 4px; }
+        .slot-icon { width: 32px; height: 32px; background: var(--bg-hover); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .growth-chart { height: 150px; background: var(--bg-tertiary); border-radius: 4px; padding: 8px; position: relative; }
+        .growth-canvas { width: 100%; height: 100%; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn" onclick="goBack()">Back</button>
+                <h1 id="hero-title">Hero Viewer</h1>
+                <span class="dirty-indicator" id="dirty-indicator">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="loadConfig()">Load</button>
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="saveConfig()">Save</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="properties-panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="general">General</div>
+                    <div class="tab" data-tab="stats">Stats</div>
+                    <div class="tab" data-tab="abilities">Abilities</div>
+                    <div class="tab" data-tab="talents">Talents</div>
+                    <div class="tab" data-tab="equipment">Equipment</div>
+                </div>
+
+                <div class="tab-content active" id="tab-general">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Basic Info</div>
+                        <div class="section-content">
+                            <div class="form-group"><label>ID</label><input type="text" data-path="id" readonly></div>
+                            <div class="form-group"><label>Name</label><input type="text" data-path="name"></div>
+                            <div class="form-group"><label>Title</label><input type="text" data-path="title" placeholder="The Warrior"></div>
+                            <div class="form-group"><label>Description</label><textarea data-path="description" rows="3"></textarea></div>
+                            <div class="form-group"><label>Class</label>
+                                <select data-path="class">
+                                    <option value="warrior">Warrior</option>
+                                    <option value="mage">Mage</option>
+                                    <option value="ranger">Ranger</option>
+                                    <option value="rogue">Rogue</option>
+                                    <option value="healer">Healer</option>
+                                    <option value="tank">Tank</option>
+                                    <option value="support">Support</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Difficulty</label>
+                                <select data-path="difficulty">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="hard">Hard</option>
+                                    <option value="expert">Expert</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Visuals</div>
+                        <div class="section-content">
+                            <div class="form-group"><label>Model</label>
+                                <div style="display:flex;gap:8px">
+                                    <input type="text" data-path="visuals.model">
+                                    <button class="btn btn-small" onclick="browseModel()">Browse</button>
+                                </div>
+                            </div>
+                            <div class="form-group"><label>Portrait</label><input type="text" data-path="visuals.portrait"></div>
+                            <div class="form-group"><label>Icon</label><input type="text" data-path="visuals.icon"></div>
+                            <div class="form-group"><label>Primary Color</label><input type="color" data-path="visuals.colorScheme.primary" value="#007acc"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-stats">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Base Stats</div>
+                        <div class="section-content">
+                            <div class="stat-row"><label>Health</label><input type="number" data-path="baseStats.health" value="500"></div>
+                            <div class="stat-row"><label>Mana</label><input type="number" data-path="baseStats.mana" value="300"></div>
+                            <div class="stat-row"><label>Attack Damage</label><input type="number" data-path="baseStats.attackDamage" value="50"></div>
+                            <div class="stat-row"><label>Ability Power</label><input type="number" data-path="baseStats.abilityPower" value="0"></div>
+                            <div class="stat-row"><label>Armor</label><input type="number" data-path="baseStats.armor" value="20"></div>
+                            <div class="stat-row"><label>Magic Resist</label><input type="number" data-path="baseStats.magicResist" value="20"></div>
+                            <div class="stat-row"><label>Attack Speed</label><input type="number" data-path="baseStats.attackSpeed" value="1" step="0.01"></div>
+                            <div class="stat-row"><label>Move Speed</label><input type="number" data-path="baseStats.moveSpeed" value="5" step="0.1"></div>
+                            <div class="stat-row"><label>Attack Range</label><input type="number" data-path="baseStats.attackRange" value="1.5" step="0.5"></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Stat Growth (Per Level)</div>
+                        <div class="section-content">
+                            <div class="stat-row"><label>Health/Level</label><input type="number" data-path="growth.healthPerLevel" value="80"></div>
+                            <div class="stat-row"><label>Mana/Level</label><input type="number" data-path="growth.manaPerLevel" value="40"></div>
+                            <div class="stat-row"><label>AD/Level</label><input type="number" data-path="growth.attackDamagePerLevel" value="3"></div>
+                            <div class="stat-row"><label>Armor/Level</label><input type="number" data-path="growth.armorPerLevel" value="2"></div>
+                            <div class="stat-row"><label>MR/Level</label><input type="number" data-path="growth.magicResistPerLevel" value="1"></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Growth Curve Preview</div>
+                        <div class="section-content">
+                            <div class="growth-chart">
+                                <canvas id="growth-canvas" class="growth-canvas"></canvas>
+                            </div>
+                            <div style="margin-top:8px">
+                                <label>Stat: </label>
+                                <select id="growth-stat" onchange="drawGrowthCurve()">
+                                    <option value="health">Health</option>
+                                    <option value="mana">Mana</option>
+                                    <option value="attackDamage">Attack Damage</option>
+                                    <option value="armor">Armor</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-abilities">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Ability Slots</div>
+                        <div class="section-content">
+                            <div class="ability-slot">
+                                <div class="ability-key">P</div>
+                                <input type="text" data-path="abilities.passive" placeholder="Passive Ability ID">
+                            </div>
+                            <div class="ability-slot">
+                                <div class="ability-key">Q</div>
+                                <input type="text" data-path="abilities.q" placeholder="Q Ability ID">
+                            </div>
+                            <div class="ability-slot">
+                                <div class="ability-key">W</div>
+                                <input type="text" data-path="abilities.w" placeholder="W Ability ID">
+                            </div>
+                            <div class="ability-slot">
+                                <div class="ability-key">E</div>
+                                <input type="text" data-path="abilities.e" placeholder="E Ability ID">
+                            </div>
+                            <div class="ability-slot">
+                                <div class="ability-key">R</div>
+                                <input type="text" data-path="abilities.r" placeholder="Ultimate Ability ID">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Resource System</div>
+                        <div class="section-content">
+                            <div class="form-group"><label>Primary Resource</label>
+                                <select data-path="resources.primary.type">
+                                    <option value="mana">Mana</option>
+                                    <option value="energy">Energy</option>
+                                    <option value="rage">Rage</option>
+                                    <option value="fury">Fury</option>
+                                    <option value="focus">Focus</option>
+                                    <option value="none">None</option>
+                                </select>
+                            </div>
+                            <div class="stat-row"><label>Max Value</label><input type="number" data-path="resources.primary.maxValue" value="300"></div>
+                            <div class="stat-row"><label>Regen Rate</label><input type="number" data-path="resources.primary.regenRate" value="5" step="0.1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-talents">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Talent Tree Editor</div>
+                        <div class="section-content">
+                            <div class="talent-tree" id="talent-tree">
+                                <!-- Talent tiers generated dynamically -->
+                            </div>
+                            <button class="btn btn-small btn-add" style="margin-top:12px" onclick="addTalentTier()">+ Add Tier</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Selected Talent</div>
+                        <div class="section-content" id="talent-editor">
+                            <p style="color:var(--text-secondary)">Select a talent to edit</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-equipment">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Equipment Slots</div>
+                        <div class="section-content" id="equipment-slots">
+                            <div class="equipment-slot"><div class="slot-icon">W</div><span style="flex:1">Weapon</span><input type="text" style="width:120px" data-path="equipment.startingEquipment.weapon"></div>
+                            <div class="equipment-slot"><div class="slot-icon">O</div><span style="flex:1">Offhand</span><input type="text" style="width:120px" data-path="equipment.startingEquipment.offhand"></div>
+                            <div class="equipment-slot"><div class="slot-icon">H</div><span style="flex:1">Head</span><input type="text" style="width:120px" data-path="equipment.startingEquipment.head"></div>
+                            <div class="equipment-slot"><div class="slot-icon">C</div><span style="flex:1">Chest</span><input type="text" style="width:120px" data-path="equipment.startingEquipment.chest"></div>
+                            <div class="equipment-slot"><div class="slot-icon">L</div><span style="flex:1">Legs</span><input type="text" style="width:120px" data-path="equipment.startingEquipment.legs"></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)"><span class="icon">&#x25BC;</span>Equipment Restrictions</div>
+                        <div class="section-content">
+                            <div class="form-group"><label><input type="checkbox" data-path="equipment.canDualWield"> Can Dual Wield</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="equipment.canUseShield" checked> Can Use Shield</label></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div class="preview-canvas"><canvas id="preview-canvas"></canvas></div>
+                <div class="preview-controls">
+                    <label>Pose:</label>
+                    <select id="pose-select" onchange="playPose()">
+                        <option value="idle">Idle</option>
+                        <option value="combat">Combat Stance</option>
+                        <option value="cast">Casting</option>
+                        <option value="victory">Victory</option>
+                    </select>
+                    <button class="btn btn-small" onclick="resetCamera()">Reset Camera</button>
+                    <label><input type="checkbox" id="show-equipment" checked onchange="toggleEquipment()"> Show Equipment</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script src="../js/viewer_common.js"></script>
+    <script>
+        let viewerScene, configData = {}, originalData = {}, undoStack = [], redoStack = [], currentFile = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initScene();
+            initTabs();
+            initFormBindings();
+            setDefaultConfig();
+            updateTalentTree();
+            drawGrowthCurve();
+        });
+
+        function initScene() {
+            viewerScene = new ViewerScene('preview-canvas', { cameraPosition: { x: 2, y: 2, z: 3 } });
+        }
+
+        function initTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+                });
+            });
+        }
+
+        function initFormBindings() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                input.addEventListener('change', function() {
+                    saveUndoState();
+                    setPath(configData, this.getAttribute('data-path'), getInputValue(this));
+                    setDirty(true);
+                    if (this.getAttribute('data-path').includes('growth') || this.getAttribute('data-path').includes('baseStats')) {
+                        drawGrowthCurve();
+                    }
+                });
+            });
+        }
+
+        function setDefaultConfig() {
+            configData = {
+                id: 'hero_new', name: 'New Hero', title: '', description: '', class: 'warrior', difficulty: 'medium',
+                baseStats: { health: 500, mana: 300, attackDamage: 50, abilityPower: 0, armor: 20, magicResist: 20, attackSpeed: 1, moveSpeed: 5, attackRange: 1.5 },
+                growth: { healthPerLevel: 80, manaPerLevel: 40, attackDamagePerLevel: 3, armorPerLevel: 2, magicResistPerLevel: 1 },
+                abilities: { passive: '', q: '', w: '', e: '', r: '' },
+                resources: { primary: { type: 'mana', maxValue: 300, regenRate: 5 } },
+                talents: [{ level: 1, talents: [{ id: 't1', name: 'Talent 1' }, { id: 't2', name: 'Talent 2' }, { id: 't3', name: 'Talent 3' }] }],
+                equipment: { canDualWield: false, canUseShield: true, startingEquipment: {} },
+                visuals: { colorScheme: { primary: '#007acc' } }
+            };
+            originalData = JSON.parse(JSON.stringify(configData));
+            populateForm();
+        }
+
+        function drawGrowthCurve() {
+            const canvas = document.getElementById('growth-canvas');
+            const ctx = canvas.getContext('2d');
+            const stat = document.getElementById('growth-stat').value;
+
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            const baseValue = getPath(configData, `baseStats.${stat}`) || 100;
+            const growth = getPath(configData, `growth.${stat}PerLevel`) || 10;
+            const maxLevel = 20;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#007acc';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            for (let level = 1; level <= maxLevel; level++) {
+                const value = baseValue + (growth * (level - 1));
+                const x = (level / maxLevel) * canvas.width;
+                const y = canvas.height - (value / (baseValue + growth * maxLevel) * canvas.height * 0.9) - 10;
+                if (level === 1) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            ctx.fillStyle = '#666';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('Lv1', 5, canvas.height - 5);
+            ctx.fillText('Lv20', canvas.width - 25, canvas.height - 5);
+        }
+
+        function updateTalentTree() {
+            const container = document.getElementById('talent-tree');
+            container.innerHTML = (configData.talents || []).map((tier, ti) => `
+                <div class="talent-tier">
+                    <div class="talent-tier-label">Lv ${tier.level}</div>
+                    ${(tier.talents || []).map((t, i) => `<div class="talent-node" onclick="selectTalent(${ti}, ${i})">${t.name || 'Talent'}</div>`).join('')}
+                    <button class="btn btn-small" onclick="addTalentToTier(${ti})">+</button>
+                </div>`).join('');
+        }
+
+        function addTalentTier() {
+            if (!configData.talents) configData.talents = [];
+            saveUndoState();
+            const lastLevel = configData.talents.length > 0 ? configData.talents[configData.talents.length - 1].level : 0;
+            configData.talents.push({ level: lastLevel + 5, talents: [{ id: 'talent_new', name: 'New Talent' }] });
+            updateTalentTree();
+            setDirty(true);
+        }
+
+        function addTalentToTier(ti) {
+            saveUndoState();
+            configData.talents[ti].talents.push({ id: 'talent_' + Date.now(), name: 'New Talent' });
+            updateTalentTree();
+            setDirty(true);
+        }
+
+        function selectTalent(ti, i) {
+            const talent = configData.talents[ti].talents[i];
+            document.getElementById('talent-editor').innerHTML = `
+                <div class="form-group"><label>Talent ID</label><input type="text" value="${talent.id}" onchange="updateTalent(${ti}, ${i}, 'id', this.value)"></div>
+                <div class="form-group"><label>Name</label><input type="text" value="${talent.name}" onchange="updateTalent(${ti}, ${i}, 'name', this.value)"></div>
+                <div class="form-group"><label>Description</label><textarea rows="2" onchange="updateTalent(${ti}, ${i}, 'description', this.value)">${talent.description || ''}</textarea></div>
+                <button class="btn btn-small" style="margin-top:8px;color:var(--error)" onclick="removeTalent(${ti}, ${i})">Remove Talent</button>`;
+        }
+
+        function updateTalent(ti, i, k, v) { saveUndoState(); configData.talents[ti].talents[i][k] = v; updateTalentTree(); setDirty(true); }
+        function removeTalent(ti, i) { saveUndoState(); configData.talents[ti].talents.splice(i, 1); updateTalentTree(); document.getElementById('talent-editor').innerHTML = '<p style="color:var(--text-secondary)">Select a talent to edit</p>'; setDirty(true); }
+
+        function playPose() { const pose = document.getElementById('pose-select').value; viewerScene.playAnimation(pose); }
+        function toggleEquipment() { /* Toggle equipment visibility */ }
+
+        function populateForm() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                setInputValue(input, getPath(configData, input.getAttribute('data-path')));
+            });
+            updateTalentTree();
+        }
+
+        function loadConfig() { viewerBridge.browseFile('*.json').then(p => p && loadConfigFromPath(p)); }
+        function loadConfigFromPath(p) { currentFile = p; viewerBridge.loadConfig(p).then(d => { configData = d; originalData = JSON.parse(JSON.stringify(d)); populateForm(); drawGrowthCurve(); document.getElementById('hero-title').textContent = d.name || 'Hero Viewer'; if (d.visuals?.model) viewerScene.loadModel(d.visuals.model); setDirty(false); }); }
+        function saveConfig() { if (!currentFile) viewerBridge.browseFile('*.json').then(p => { if (p) { currentFile = p; doSave(); } }); else doSave(); }
+        function doSave() { viewerBridge.saveConfig(currentFile, configData).then(() => { originalData = JSON.parse(JSON.stringify(configData)); setDirty(false); }); }
+
+        function saveUndoState() { undoStack.push(JSON.parse(JSON.stringify(configData))); redoStack = []; if (undoStack.length > 50) undoStack.shift(); }
+        function undo() { if (!undoStack.length) return; redoStack.push(JSON.parse(JSON.stringify(configData))); configData = undoStack.pop(); populateForm(); drawGrowthCurve(); setDirty(true); }
+        function redo() { if (!redoStack.length) return; undoStack.push(JSON.parse(JSON.stringify(configData))); configData = redoStack.pop(); populateForm(); drawGrowthCurve(); setDirty(true); }
+
+        function toggleSection(h) { h.parentElement.classList.toggle('collapsed'); }
+        function setDirty(d) { document.getElementById('dirty-indicator').style.display = d ? 'inline' : 'none'; }
+        function goBack() { if (document.getElementById('dirty-indicator').style.display !== 'none' && !confirm('Discard changes?')) return; window.history.back(); }
+        function resetCamera() { viewerScene.resetCamera(); }
+        function browseModel() { viewerBridge.browseFile('*.gltf,*.glb').then(p => { if (p) { setPath(configData, 'visuals.model', p); document.querySelector('[data-path="visuals.model"]').value = p; viewerScene.loadModel(p); setDirty(true); } }); }
+
+        function getPath(o, p) { if (!p) return o; const ps = p.split('.'); let c = o; for (const x of ps) { if (c == null) return undefined; c = c[x]; } return c; }
+        function setPath(o, p, v) { const ps = p.split('.'); let c = o; for (let i = 0; i < ps.length - 1; i++) { if (c[ps[i]] === undefined) c[ps[i]] = {}; c = c[ps[i]]; } c[ps[ps.length - 1]] = v; }
+        function getInputValue(i) { if (i.type === 'checkbox') return i.checked; if (i.type === 'number') return parseFloat(i.value) || 0; return i.value; }
+        function setInputValue(i, v) { if (i.type === 'checkbox') i.checked = !!v; else if (i.type === 'color') i.value = v || '#007acc'; else i.value = v != null ? v : ''; }
+
+        document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveConfig(); } if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); } });
+    </script>
+</body>
+</html>

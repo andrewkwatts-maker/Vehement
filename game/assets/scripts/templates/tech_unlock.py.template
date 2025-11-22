@@ -1,0 +1,304 @@
+"""
+{{tech_name}} Technology Unlock Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+from typing import List, Dict, Any
+
+
+# Technology Configuration
+TECH_ID = "{{tech_id}}"
+TECH_NAME = "{{tech_name}}"
+TECH_TIER = {{tech_tier}}
+
+# Research requirements
+RESEARCH_TIME = {{research_time}}  # seconds
+RESOURCE_COSTS = {{resource_costs}}  # Dict of resource: amount
+
+# Prerequisites
+REQUIRED_TECHS = {{required_techs}}  # List of tech IDs
+REQUIRED_BUILDINGS = {{required_buildings}}  # List of building types
+REQUIRED_AGE = {{required_age}}
+
+
+def get_tech_info() -> Dict[str, Any]:
+    """Get technology information for UI display."""
+    return {
+        "id": TECH_ID,
+        "name": TECH_NAME,
+        "tier": TECH_TIER,
+        "description": "{{tech_description}}",
+        "icon": "{{tech_icon}}",
+        "research_time": RESEARCH_TIME,
+        "costs": RESOURCE_COSTS,
+        "prerequisites": {
+            "techs": REQUIRED_TECHS,
+            "buildings": REQUIRED_BUILDINGS,
+            "age": REQUIRED_AGE,
+        },
+        "effects": get_tech_effects(),
+    }
+
+
+def get_tech_effects() -> List[Dict[str, Any]]:
+    """Get list of effects this technology provides."""
+    effects = []
+
+    {{#if unlocks_units}}
+    effects.append({
+        "type": "unlock_unit",
+        "units": {{unlocked_units}},
+        "description": "Unlocks new units",
+    })
+    {{/if}}
+
+    {{#if unlocks_buildings}}
+    effects.append({
+        "type": "unlock_building",
+        "buildings": {{unlocked_buildings}},
+        "description": "Unlocks new buildings",
+    })
+    {{/if}}
+
+    {{#if unlocks_abilities}}
+    effects.append({
+        "type": "unlock_ability",
+        "abilities": {{unlocked_abilities}},
+        "description": "Unlocks new abilities",
+    })
+    {{/if}}
+
+    {{#if stat_bonuses}}
+    for stat, bonus in {{stat_bonuses}}.items():
+        effects.append({
+            "type": "stat_bonus",
+            "stat": stat,
+            "bonus": bonus,
+            "description": f"+{bonus} {stat}",
+        })
+    {{/if}}
+
+    {{#if resource_bonuses}}
+    for resource, bonus in {{resource_bonuses}}.items():
+        effects.append({
+            "type": "resource_bonus",
+            "resource": resource,
+            "bonus": bonus,
+            "description": f"+{int(bonus * 100)}% {resource} gathering",
+        })
+    {{/if}}
+
+    {{#if custom_effects}}
+    {{custom_effects}}
+    {{/if}}
+
+    return effects
+
+
+def can_research(player_id: int) -> tuple[bool, str]:
+    """
+    Check if a player can research this technology.
+
+    Args:
+        player_id: The player attempting to research
+
+    Returns:
+        Tuple of (can_research, reason_if_not)
+    """
+    # Check if already researched
+    if has_tech(player_id, TECH_ID):
+        return False, "Already researched"
+
+    # Check if currently researching
+    if is_researching(player_id, TECH_ID):
+        return False, "Already in progress"
+
+    # Check age requirement
+    player_age = get_player_age(player_id)
+    if player_age < REQUIRED_AGE:
+        return False, f"Requires Age {REQUIRED_AGE}"
+
+    # Check prerequisite technologies
+    for req_tech in REQUIRED_TECHS:
+        if not has_tech(player_id, req_tech):
+            tech_name = get_tech_name(req_tech)
+            return False, f"Requires {tech_name}"
+
+    # Check required buildings
+    for building_type in REQUIRED_BUILDINGS:
+        if not player_has_building(player_id, building_type):
+            return False, f"Requires {building_type}"
+
+    # Check resources
+    for resource, amount in RESOURCE_COSTS.items():
+        if get_resource(player_id, resource) < amount:
+            return False, f"Not enough {resource}"
+
+    {{#if custom_requirements}}
+    # Custom requirements
+    {{custom_requirements}}
+    {{/if}}
+
+    return True, ""
+
+
+def start_research(player_id: int) -> bool:
+    """
+    Start researching this technology.
+
+    Args:
+        player_id: The player starting research
+
+    Returns:
+        True if research started successfully
+    """
+    can, reason = can_research(player_id)
+    if not can:
+        show_notification(player_id, f"Cannot research {TECH_NAME}: {reason}", "error")
+        return False
+
+    # Deduct resources
+    for resource, amount in RESOURCE_COSTS.items():
+        modify_resource(player_id, resource, -amount)
+
+    # Start research timer
+    begin_research(player_id, TECH_ID, RESEARCH_TIME)
+
+    {{#if research_start_sound}}
+    play_ui_sound("{{research_start_sound}}")
+    {{/if}}
+
+    show_notification(player_id, f"Started researching {TECH_NAME}", "info")
+    log_debug(f"Player {player_id} started researching {TECH_ID}")
+
+    return True
+
+
+def on_research_complete(player_id: int) -> None:
+    """
+    Called when research is completed.
+
+    Args:
+        player_id: The player who completed research
+    """
+    # Grant technology
+    grant_tech(player_id, TECH_ID)
+
+    {{#if completion_sound}}
+    play_ui_sound("{{completion_sound}}")
+    {{/if}}
+
+    {{#if completion_effect}}
+    # Play completion effect at player's main building
+    main_building = get_main_building(player_id)
+    if main_building:
+        x, y, z = get_position(main_building)
+        play_effect("{{completion_effect}}", x, y, z)
+    {{/if}}
+
+    # Show notification
+    show_notification(player_id, f"{TECH_NAME} research complete!", "success")
+
+    # Apply immediate effects
+    apply_tech_effects(player_id)
+
+    {{#if triggers_event}}
+    # Trigger game event
+    trigger_game_event("{{triggered_event}}", {
+        "player": player_id,
+        "tech": TECH_ID,
+    })
+    {{/if}}
+
+    log_debug(f"Player {player_id} completed research: {TECH_ID}")
+
+
+def apply_tech_effects(player_id: int) -> None:
+    """Apply all technology effects to the player."""
+
+    {{#if unlocks_units}}
+    # Unlock new unit types
+    for unit_type in {{unlocked_units}}:
+        unlock_unit_type(player_id, unit_type)
+    {{/if}}
+
+    {{#if unlocks_buildings}}
+    # Unlock new building types
+    for building_type in {{unlocked_buildings}}:
+        unlock_building_type(player_id, building_type)
+    {{/if}}
+
+    {{#if unlocks_abilities}}
+    # Unlock new abilities
+    for ability in {{unlocked_abilities}}:
+        unlock_ability(player_id, ability)
+    {{/if}}
+
+    {{#if stat_bonuses}}
+    # Apply stat bonuses to all entities
+    for stat, bonus in {{stat_bonuses}}.items():
+        apply_global_stat_bonus(player_id, stat, bonus)
+    {{/if}}
+
+    {{#if resource_bonuses}}
+    # Apply resource gathering bonuses
+    for resource, multiplier in {{resource_bonuses}}.items():
+        apply_resource_multiplier(player_id, resource, 1.0 + multiplier)
+    {{/if}}
+
+    {{#if upgrades_units}}
+    # Upgrade existing units
+    player_units = get_player_units(player_id)
+    for unit_id in player_units:
+        unit_type = get_entity_type(unit_id)
+        if unit_type in {{upgrade_unit_types}}:
+            apply_unit_upgrade(unit_id, {{upgrade_data}})
+    {{/if}}
+
+    {{#if custom_apply}}
+    # Custom effect application
+    {{custom_apply}}
+    {{/if}}
+
+
+def on_research_cancelled(player_id: int) -> None:
+    """
+    Called when research is cancelled.
+
+    Args:
+        player_id: The player who cancelled research
+    """
+    {{#if refund_on_cancel}}
+    # Refund resources (partial)
+    refund_rate = {{refund_rate}}
+    for resource, amount in RESOURCE_COSTS.items():
+        refund = int(amount * refund_rate)
+        modify_resource(player_id, resource, refund)
+
+    show_notification(player_id, f"{TECH_NAME} cancelled, {int(refund_rate * 100)}% resources refunded", "info")
+    {{else}}
+    show_notification(player_id, f"{TECH_NAME} research cancelled", "info")
+    {{/if}}
+
+    log_debug(f"Player {player_id} cancelled research: {TECH_ID}")
+
+
+def get_research_progress(player_id: int) -> float:
+    """
+    Get current research progress.
+
+    Args:
+        player_id: The player to check
+
+    Returns:
+        Progress from 0.0 to 1.0, or -1 if not researching
+    """
+    if not is_researching(player_id, TECH_ID):
+        return -1.0
+
+    elapsed = get_research_elapsed(player_id, TECH_ID)
+    return min(1.0, elapsed / RESEARCH_TIME)

@@ -1,0 +1,64 @@
+"""
+{{entity_type}} Tick Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+
+
+# Configuration
+TICK_INTERVAL = {{tick_interval}}  # seconds between logic updates
+UPDATE_RADIUS = {{update_radius}}  # radius to check for nearby entities
+
+
+def on_tick(entity_id: int, delta_time: float) -> None:
+    """
+    Called every frame for the {{entity_type}} entity.
+
+    Args:
+        entity_id: The unique identifier of the entity
+        delta_time: Time in seconds since the last tick
+    """
+    # Get current state
+    x, y, z = get_position(entity_id)
+    health = get_health(entity_id)
+
+    # Check if entity is still alive
+    if health <= 0:
+        return
+
+    {{#if regeneration}}
+    # Health regeneration
+    max_health = get_max_health(entity_id)
+    if health < max_health:
+        regen_amount = {{regen_rate}} * delta_time
+        set_health(entity_id, min(health + regen_amount, max_health))
+    {{/if}}
+
+    {{#if mana_regen}}
+    # Mana regeneration
+    mana = get_mana(entity_id)
+    max_mana = get_max_mana(entity_id)
+    if mana < max_mana:
+        mana_regen = {{mana_regen_rate}} * delta_time
+        set_mana(entity_id, min(mana + mana_regen, max_mana))
+    {{/if}}
+
+    {{#if detect_enemies}}
+    # Detect nearby enemies
+    nearby = find_entities_in_radius(x, y, z, UPDATE_RADIUS)
+    enemies = [e for e in nearby if is_enemy(entity_id, e)]
+
+    if enemies:
+        # Target nearest enemy
+        nearest = min(enemies, key=lambda e: distance_to(entity_id, e))
+        set_target(entity_id, nearest)
+    {{/if}}
+
+    {{#if custom_tick}}
+    # Custom tick logic
+    {{custom_tick}}
+    {{/if}}

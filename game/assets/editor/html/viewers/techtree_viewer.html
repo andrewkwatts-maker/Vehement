@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Tree Viewer</title>
+
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-primary: #7c3aed;
+            --accent-secondary: #a855f7;
+            --border-color: #404060;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --node-width: 180px;
+            --node-height: 80px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .viewer-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-separator {
+            width: 1px;
+            height: 24px;
+            background: var(--border-color);
+            margin: 0 8px;
+        }
+
+        .btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-secondary);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            border-color: var(--accent-secondary);
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .left-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .center-panel {
+            background: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .section {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.2);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .section-header:hover {
+            background: rgba(0,0,0,0.3);
+        }
+
+        .section-content {
+            padding: 14px;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        /* Graph Canvas */
+        .graph-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #graph-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .graph-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 10;
+        }
+
+        .minimap {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 150px;
+            height: 100px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            z-index: 10;
+        }
+
+        /* Tech Nodes */
+        .tech-node {
+            position: absolute;
+            width: var(--node-width);
+            min-height: var(--node-height);
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .tech-node:hover {
+            border-color: var(--accent-secondary);
+        }
+
+        .tech-node.selected {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .tech-node.researched {
+            border-color: var(--success-color);
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(16, 185, 129, 0.1) 100%);
+        }
+
+        .tech-node.locked {
+            opacity: 0.5;
+            border-style: dashed;
+        }
+
+        .tech-node-header {
+            padding: 8px 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tech-node-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .tech-node-title {
+            flex: 1;
+            font-weight: 600;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tech-node-body {
+            padding: 8px 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .tech-node-footer {
+            padding: 6px 10px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .tech-node-cost {
+            color: var(--warning-color);
+        }
+
+        .tech-node-time {
+            color: var(--info-color);
+        }
+
+        /* Connection ports */
+        .node-port {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            cursor: crosshair;
+            z-index: 5;
+        }
+
+        .node-port:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-secondary);
+        }
+
+        .node-port.input {
+            left: 50%;
+            top: -6px;
+            transform: translateX(-50%);
+        }
+
+        .node-port.output {
+            left: 50%;
+            bottom: -6px;
+            transform: translateX(-50%);
+        }
+
+        /* Node List */
+        .node-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .node-list-item {
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+
+        .node-list-item:hover {
+            background: var(--accent-primary);
+        }
+
+        .node-list-item.selected {
+            background: var(--accent-primary);
+            border: 1px solid var(--accent-secondary);
+        }
+
+        .node-list-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node-list-info {
+            flex: 1;
+        }
+
+        .node-list-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .node-list-tier {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Cost Editor */
+        .cost-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .cost-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cost-item-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .cost-item input {
+            width: 60px;
+            padding: 4px 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        /* Modifier List */
+        .modifier-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modifier-item {
+            display: grid;
+            grid-template-columns: 1fr 80px auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .modifier-item select,
+        .modifier-item input {
+            padding: 6px 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .btn-remove {
+            background: var(--error-color);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Unlock Chain */
+        .unlock-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+
+        .chain-node {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            border-left: 3px solid var(--border-color);
+        }
+
+        .chain-node.current {
+            border-left-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .chain-node.unlocked {
+            border-left-color: var(--success-color);
+        }
+
+        .chain-connector {
+            width: 2px;
+            height: 16px;
+            background: var(--border-color);
+            margin-left: 20px;
+        }
+
+        /* Preview Panel */
+        .preview-card {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-primary) 100%);
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .preview-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .preview-title h3 {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .preview-title .tier {
+            font-size: 12px;
+            color: var(--accent-secondary);
+        }
+
+        .preview-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .preview-effects {
+            font-size: 12px;
+        }
+
+        .preview-effect {
+            padding: 4px 0;
+            color: var(--success-color);
+        }
+
+        .preview-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .preview-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .preview-stat-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .preview-stat-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Status bar */
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 6px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Category colors */
+        .category-military { --category-color: #ef4444; }
+        .category-economy { --category-color: #f59e0b; }
+        .category-defense { --category-color: #3b82f6; }
+        .category-magic { --category-color: #a855f7; }
+        .category-utility { --category-color: #10b981; }
+
+        .tech-node.category-military { border-top: 3px solid #ef4444; }
+        .tech-node.category-economy { border-top: 3px solid #f59e0b; }
+        .tech-node.category-defense { border-top: 3px solid #3b82f6; }
+        .tech-node.category-magic { border-top: 3px solid #a855f7; }
+        .tech-node.category-utility { border-top: 3px solid #10b981; }
+
+        /* Checkbox */
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-primary);
+        }
+
+        /* Search */
+        .search-box {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Filter tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .filter-tab:hover {
+            background: var(--accent-secondary);
+        }
+
+        .filter-tab.active {
+            background: var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="btn" id="btn-new" title="New Tech Tree">
+                    <span>+</span> New
+                </button>
+                <button class="btn" id="btn-load" title="Load Tech Tree">
+                    <span>^</span> Load
+                </button>
+                <button class="btn btn-primary" id="btn-save" title="Save Tech Tree">
+                    <span>v</span> Save
+                </button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn" id="btn-undo" title="Undo (Ctrl+Z)">Undo</button>
+                <button class="btn" id="btn-redo" title="Redo (Ctrl+Y)">Redo</button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn" id="btn-add-node" title="Add Technology">+ Add Tech</button>
+                <button class="btn" id="btn-auto-layout" title="Auto Layout">Auto Layout</button>
+                <button class="btn" id="btn-validate" title="Validate Tree">Validate</button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn" id="btn-export" title="Export JSON">Export</button>
+                <button class="btn" id="btn-export-image" title="Export as Image">Export Image</button>
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <div class="toolbar-group">
+                <span id="tree-name-display" style="font-weight: 600;">Tech Tree</span>
+            </div>
+        </div>
+
+        <!-- Left Panel - Node List -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <span>Technologies</span>
+                <span id="node-count">0</span>
+            </div>
+
+            <div class="panel-content">
+                <input type="text" class="search-box" id="search-nodes" placeholder="Search technologies...">
+
+                <div class="filter-tabs" id="filter-tabs">
+                    <div class="filter-tab active" data-filter="all">All</div>
+                    <div class="filter-tab" data-filter="military">Military</div>
+                    <div class="filter-tab" data-filter="economy">Economy</div>
+                    <div class="filter-tab" data-filter="defense">Defense</div>
+                    <div class="filter-tab" data-filter="magic">Magic</div>
+                    <div class="filter-tab" data-filter="utility">Utility</div>
+                </div>
+
+                <div class="node-list" id="node-list">
+                    <!-- Node list items will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - Graph Editor -->
+        <div class="center-panel">
+            <div class="graph-container" id="graph-container">
+                <canvas id="graph-canvas"></canvas>
+                <div id="nodes-container"></div>
+            </div>
+
+            <div class="graph-controls">
+                <button class="btn btn-small" id="btn-fit-view">Fit View</button>
+                <button class="btn btn-small" id="btn-center">Center</button>
+                <select id="grid-snap" style="padding: 4px 8px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; font-size: 12px;">
+                    <option value="0">No Snap</option>
+                    <option value="10">Snap 10</option>
+                    <option value="20" selected>Snap 20</option>
+                    <option value="50">Snap 50</option>
+                </select>
+            </div>
+
+            <div class="zoom-controls">
+                <button class="btn btn-icon" id="btn-zoom-in">+</button>
+                <button class="btn btn-icon" id="btn-zoom-reset">1:1</button>
+                <button class="btn btn-icon" id="btn-zoom-out">-</button>
+            </div>
+
+            <canvas class="minimap" id="minimap"></canvas>
+        </div>
+
+        <!-- Right Panel - Properties -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <span>Properties</span>
+            </div>
+
+            <div class="panel-content">
+                <div class="preview-card" id="preview-card">
+                    <div class="preview-header">
+                        <div class="preview-icon" id="preview-icon">?</div>
+                        <div class="preview-title">
+                            <h3 id="preview-name">No Selection</h3>
+                            <div class="tier" id="preview-tier">Select a technology</div>
+                        </div>
+                    </div>
+                    <div class="preview-description" id="preview-description">
+                        Select a technology node to view and edit its properties.
+                    </div>
+                    <div class="preview-effects" id="preview-effects"></div>
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <div class="preview-stat-label">Cost</div>
+                            <div class="preview-stat-value" id="preview-cost">-</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="preview-stat-label">Time</div>
+                            <div class="preview-stat-value" id="preview-time">-</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="preview-stat-label">Tier</div>
+                            <div class="preview-stat-value" id="preview-tier-num">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="node-editor" style="display: none;">
+                    <div class="section">
+                        <div class="section-header">
+                            <span>Basic Info</span>
+                            <span class="toggle-icon">-</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Tech ID</label>
+                                <input type="text" id="node-id" placeholder="tech_improved_weapons">
+                            </div>
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="node-name" placeholder="Improved Weapons">
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="node-description" rows="3" placeholder="Description..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select id="node-category">
+                                        <option value="military">Military</option>
+                                        <option value="economy">Economy</option>
+                                        <option value="defense">Defense</option>
+                                        <option value="magic">Magic</option>
+                                        <option value="utility">Utility</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tier</label>
+                                    <input type="number" id="node-tier" value="1" min="1" max="10">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Icon</label>
+                                <input type="text" id="node-icon" placeholder="icons/tech/weapons.png">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span>Cost & Time</span>
+                            <span class="toggle-icon">-</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="cost-grid">
+                                <div class="cost-item">
+                                    <div class="cost-item-icon" style="color: #f59e0b;">G</div>
+                                    <input type="number" id="cost-gold" value="100" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <div class="cost-item-icon" style="color: #8b5cf6;">M</div>
+                                    <input type="number" id="cost-mana" value="0" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <div class="cost-item-icon" style="color: #3b82f6;">W</div>
+                                    <input type="number" id="cost-wood" value="50" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <div class="cost-item-icon" style="color: #6b7280;">S</div>
+                                    <input type="number" id="cost-stone" value="0" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <div class="cost-item-icon" style="color: #ef4444;">I</div>
+                                    <input type="number" id="cost-iron" value="0" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <div class="cost-item-icon" style="color: #10b981;">F</div>
+                                    <input type="number" id="cost-food" value="0" min="0">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 12px;">
+                                <label>Research Time (seconds)</label>
+                                <input type="number" id="research-time" value="60" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span>Prerequisites</span>
+                            <span class="toggle-icon">-</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="prerequisites-list" class="unlock-chain">
+                                <div style="color: var(--text-secondary); font-size: 12px;">
+                                    Click on another node while holding Shift to add as prerequisite
+                                </div>
+                            </div>
+                            <button class="btn btn-small" id="btn-clear-prereqs" style="margin-top: 8px;">Clear All</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span>Effects/Modifiers</span>
+                            <span class="toggle-icon">-</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="modifier-list" id="modifier-list">
+                                <!-- Modifiers will be added here -->
+                            </div>
+                            <button class="btn btn-small" id="btn-add-modifier" style="margin-top: 8px;">+ Add Modifier</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <span>Unlocks</span>
+                            <span class="toggle-icon">-</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Unlocks Units</label>
+                                <input type="text" id="unlocks-units" placeholder="unit_knight, unit_archer">
+                            </div>
+                            <div class="form-group">
+                                <label>Unlocks Buildings</label>
+                                <input type="text" id="unlocks-buildings" placeholder="building_barracks_2">
+                            </div>
+                            <div class="form-group">
+                                <label>Unlocks Abilities</label>
+                                <input type="text" id="unlocks-abilities" placeholder="ability_charge">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 16px;">
+                        <button class="btn" id="btn-delete-node" style="background: var(--error-color); width: 100%;">Delete Technology</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="status-message">Ready</span>
+            <span id="status-zoom">Zoom: 100%</span>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // Tech Tree Viewer Application
+        // ========================================
+
+        class TechTreeViewer {
+            constructor() {
+                this.treeData = {
+                    id: 'techtree_default',
+                    name: 'Default Tech Tree',
+                    nodes: [],
+                    connections: []
+                };
+
+                this.selectedNode = null;
+                this.draggingNode = null;
+                this.connectingFrom = null;
+                this.pan = { x: 0, y: 0 };
+                this.zoom = 1;
+                this.gridSnap = 20;
+                this.undoStack = [];
+                this.redoStack = [];
+                this.isDirty = false;
+                this.nodeIdCounter = 0;
+
+                this.initCanvas();
+                this.initUI();
+                this.addSampleNodes();
+                this.render();
+            }
+
+            initCanvas() {
+                this.container = document.getElementById('graph-container');
+                this.canvas = document.getElementById('graph-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.nodesContainer = document.getElementById('nodes-container');
+
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // Pan with middle mouse or ctrl+drag
+                let isPanning = false;
+                let lastPan = { x: 0, y: 0 };
+
+                this.container.addEventListener('mousedown', (e) => {
+                    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+                        isPanning = true;
+                        lastPan = { x: e.clientX, y: e.clientY };
+                        e.preventDefault();
+                    }
+                });
+
+                this.container.addEventListener('mousemove', (e) => {
+                    if (isPanning) {
+                        this.pan.x += e.clientX - lastPan.x;
+                        this.pan.y += e.clientY - lastPan.y;
+                        lastPan = { x: e.clientX, y: e.clientY };
+                        this.render();
+                    }
+                });
+
+                this.container.addEventListener('mouseup', () => {
+                    isPanning = false;
+                });
+
+                this.container.addEventListener('mouseleave', () => {
+                    isPanning = false;
+                });
+
+                // Zoom with scroll
+                this.container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    const newZoom = Math.max(0.25, Math.min(2, this.zoom * delta));
+
+                    // Zoom towards cursor
+                    const rect = this.container.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    this.pan.x = mouseX - (mouseX - this.pan.x) * (newZoom / this.zoom);
+                    this.pan.y = mouseY - (mouseY - this.pan.y) * (newZoom / this.zoom);
+                    this.zoom = newZoom;
+
+                    document.getElementById('status-zoom').textContent = `Zoom: ${Math.round(this.zoom * 100)}%`;
+                    this.render();
+                });
+            }
+
+            resizeCanvas() {
+                const rect = this.container.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+                this.render();
+            }
+
+            initUI() {
+                // Toolbar buttons
+                document.getElementById('btn-new').addEventListener('click', () => this.newTree());
+                document.getElementById('btn-load').addEventListener('click', () => this.loadTree());
+                document.getElementById('btn-save').addEventListener('click', () => this.saveTree());
+                document.getElementById('btn-undo').addEventListener('click', () => this.undo());
+                document.getElementById('btn-redo').addEventListener('click', () => this.redo());
+                document.getElementById('btn-add-node').addEventListener('click', () => this.addNode());
+                document.getElementById('btn-auto-layout').addEventListener('click', () => this.autoLayout());
+                document.getElementById('btn-validate').addEventListener('click', () => this.validateTree());
+                document.getElementById('btn-export').addEventListener('click', () => this.exportJSON());
+                document.getElementById('btn-export-image').addEventListener('click', () => this.exportImage());
+
+                // Zoom controls
+                document.getElementById('btn-zoom-in').addEventListener('click', () => this.setZoom(this.zoom * 1.2));
+                document.getElementById('btn-zoom-out').addEventListener('click', () => this.setZoom(this.zoom / 1.2));
+                document.getElementById('btn-zoom-reset').addEventListener('click', () => this.setZoom(1));
+                document.getElementById('btn-fit-view').addEventListener('click', () => this.fitView());
+                document.getElementById('btn-center').addEventListener('click', () => this.centerView());
+
+                // Grid snap
+                document.getElementById('grid-snap').addEventListener('change', (e) => {
+                    this.gridSnap = parseInt(e.target.value) || 0;
+                });
+
+                // Search
+                document.getElementById('search-nodes').addEventListener('input', (e) => {
+                    this.filterNodes(e.target.value);
+                });
+
+                // Filter tabs
+                document.querySelectorAll('.filter-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        this.filterByCategory(tab.dataset.filter);
+                    });
+                });
+
+                // Section toggles
+                document.querySelectorAll('.section-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        const icon = header.querySelector('.toggle-icon');
+                        if (content) {
+                            content.classList.toggle('collapsed');
+                            if (icon) icon.textContent = content.classList.contains('collapsed') ? '+' : '-';
+                        }
+                    });
+                });
+
+                // Node editor
+                document.getElementById('btn-delete-node').addEventListener('click', () => this.deleteSelectedNode());
+                document.getElementById('btn-add-modifier').addEventListener('click', () => this.addModifier());
+                document.getElementById('btn-clear-prereqs').addEventListener('click', () => this.clearPrerequisites());
+
+                // Form inputs
+                this.bindNodeInputs();
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 's') {
+                            e.preventDefault();
+                            this.saveTree();
+                        } else if (e.key === 'z') {
+                            e.preventDefault();
+                            this.undo();
+                        } else if (e.key === 'y') {
+                            e.preventDefault();
+                            this.redo();
+                        }
+                    } else if (e.key === 'Delete' && this.selectedNode) {
+                        this.deleteSelectedNode();
+                    }
+                });
+            }
+
+            bindNodeInputs() {
+                const inputs = {
+                    'node-id': (v) => { if (this.selectedNode) this.selectedNode.id = v; },
+                    'node-name': (v) => { if (this.selectedNode) { this.selectedNode.name = v; this.updatePreview(); this.renderNodeList(); this.renderNodes(); } },
+                    'node-description': (v) => { if (this.selectedNode) { this.selectedNode.description = v; this.updatePreview(); } },
+                    'node-category': (v) => { if (this.selectedNode) { this.selectedNode.category = v; this.renderNodeList(); this.renderNodes(); } },
+                    'node-tier': (v) => { if (this.selectedNode) { this.selectedNode.tier = parseInt(v) || 1; this.updatePreview(); this.renderNodeList(); } },
+                    'node-icon': (v) => { if (this.selectedNode) this.selectedNode.icon = v; },
+                    'cost-gold': (v) => { if (this.selectedNode) { this.selectedNode.cost.gold = parseInt(v) || 0; this.updatePreview(); } },
+                    'cost-mana': (v) => { if (this.selectedNode) this.selectedNode.cost.mana = parseInt(v) || 0; },
+                    'cost-wood': (v) => { if (this.selectedNode) this.selectedNode.cost.wood = parseInt(v) || 0; },
+                    'cost-stone': (v) => { if (this.selectedNode) this.selectedNode.cost.stone = parseInt(v) || 0; },
+                    'cost-iron': (v) => { if (this.selectedNode) this.selectedNode.cost.iron = parseInt(v) || 0; },
+                    'cost-food': (v) => { if (this.selectedNode) this.selectedNode.cost.food = parseInt(v) || 0; },
+                    'research-time': (v) => { if (this.selectedNode) { this.selectedNode.researchTime = parseInt(v) || 0; this.updatePreview(); } },
+                    'unlocks-units': (v) => { if (this.selectedNode) this.selectedNode.unlocks.units = v.split(',').map(s => s.trim()).filter(s => s); },
+                    'unlocks-buildings': (v) => { if (this.selectedNode) this.selectedNode.unlocks.buildings = v.split(',').map(s => s.trim()).filter(s => s); },
+                    'unlocks-abilities': (v) => { if (this.selectedNode) this.selectedNode.unlocks.abilities = v.split(',').map(s => s.trim()).filter(s => s); }
+                };
+
+                for (const [id, setter] of Object.entries(inputs)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', (e) => {
+                            this.saveState();
+                            setter(e.target.value);
+                            this.markDirty();
+                        });
+                    }
+                }
+            }
+
+            addSampleNodes() {
+                const sampleNodes = [
+                    { id: 'tech_weapons_1', name: 'Basic Weapons', category: 'military', tier: 1, x: 100, y: 100, cost: { gold: 50, wood: 25 }, researchTime: 30 },
+                    { id: 'tech_weapons_2', name: 'Improved Weapons', category: 'military', tier: 2, x: 100, y: 250, cost: { gold: 150, wood: 75, iron: 50 }, researchTime: 60, prerequisites: ['tech_weapons_1'] },
+                    { id: 'tech_armor_1', name: 'Basic Armor', category: 'defense', tier: 1, x: 350, y: 100, cost: { gold: 75, iron: 50 }, researchTime: 45 },
+                    { id: 'tech_mining_1', name: 'Mining', category: 'economy', tier: 1, x: 600, y: 100, cost: { gold: 100, wood: 50 }, researchTime: 40 },
+                    { id: 'tech_mining_2', name: 'Advanced Mining', category: 'economy', tier: 2, x: 600, y: 250, cost: { gold: 200, wood: 100, stone: 75 }, researchTime: 80, prerequisites: ['tech_mining_1'] },
+                    { id: 'tech_magic_1', name: 'Arcane Studies', category: 'magic', tier: 1, x: 850, y: 100, cost: { gold: 150, mana: 100 }, researchTime: 60 }
+                ];
+
+                sampleNodes.forEach(nodeData => {
+                    const node = this.createNodeData(nodeData);
+                    this.treeData.nodes.push(node);
+                });
+
+                // Add connections for prerequisites
+                this.treeData.nodes.forEach(node => {
+                    if (node.prerequisites) {
+                        node.prerequisites.forEach(prereqId => {
+                            this.treeData.connections.push({
+                                from: prereqId,
+                                to: node.id
+                            });
+                        });
+                    }
+                });
+
+                this.renderNodeList();
+            }
+
+            createNodeData(data = {}) {
+                this.nodeIdCounter++;
+                return {
+                    id: data.id || `tech_${this.nodeIdCounter}`,
+                    name: data.name || 'New Technology',
+                    description: data.description || 'Technology description...',
+                    category: data.category || 'military',
+                    tier: data.tier || 1,
+                    icon: data.icon || '',
+                    x: data.x || 100,
+                    y: data.y || 100,
+                    cost: {
+                        gold: data.cost?.gold || 100,
+                        mana: data.cost?.mana || 0,
+                        wood: data.cost?.wood || 0,
+                        stone: data.cost?.stone || 0,
+                        iron: data.cost?.iron || 0,
+                        food: data.cost?.food || 0
+                    },
+                    researchTime: data.researchTime || 60,
+                    prerequisites: data.prerequisites || [],
+                    modifiers: data.modifiers || [],
+                    unlocks: {
+                        units: data.unlocks?.units || [],
+                        buildings: data.unlocks?.buildings || [],
+                        abilities: data.unlocks?.abilities || []
+                    }
+                };
+            }
+
+            render() {
+                this.renderConnections();
+                this.renderNodes();
+                this.renderMinimap();
+            }
+
+            renderConnections() {
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw grid
+                ctx.strokeStyle = '#2a2a3e';
+                ctx.lineWidth = 1;
+                const gridSize = 50 * this.zoom;
+                const offsetX = this.pan.x % gridSize;
+                const offsetY = this.pan.y % gridSize;
+
+                for (let x = offsetX; x < this.canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, this.canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = offsetY; y < this.canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(this.canvas.width, y);
+                    ctx.stroke();
+                }
+
+                // Draw connections
+                this.treeData.connections.forEach(conn => {
+                    const fromNode = this.treeData.nodes.find(n => n.id === conn.from);
+                    const toNode = this.treeData.nodes.find(n => n.id === conn.to);
+
+                    if (fromNode && toNode) {
+                        const nodeWidth = 180;
+                        const nodeHeight = 80;
+
+                        const x1 = fromNode.x * this.zoom + this.pan.x + nodeWidth / 2;
+                        const y1 = fromNode.y * this.zoom + this.pan.y + nodeHeight;
+                        const x2 = toNode.x * this.zoom + this.pan.x + nodeWidth / 2;
+                        const y2 = toNode.y * this.zoom + this.pan.y;
+
+                        // Draw curved line
+                        ctx.strokeStyle = '#7c3aed';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+
+                        const midY = (y1 + y2) / 2;
+                        ctx.bezierCurveTo(x1, midY, x2, midY, x2, y2);
+                        ctx.stroke();
+
+                        // Arrow head
+                        ctx.fillStyle = '#7c3aed';
+                        ctx.beginPath();
+                        ctx.moveTo(x2, y2);
+                        ctx.lineTo(x2 - 8, y2 - 12);
+                        ctx.lineTo(x2 + 8, y2 - 12);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                });
+
+                // Draw connecting line while creating connection
+                if (this.connectingFrom) {
+                    // Would draw temporary line to cursor
+                }
+            }
+
+            renderNodes() {
+                this.nodesContainer.innerHTML = '';
+
+                this.treeData.nodes.forEach(node => {
+                    const el = this.createNodeElement(node);
+                    this.nodesContainer.appendChild(el);
+                });
+            }
+
+            createNodeElement(node) {
+                const el = document.createElement('div');
+                el.className = `tech-node category-${node.category}`;
+                if (this.selectedNode && this.selectedNode.id === node.id) {
+                    el.classList.add('selected');
+                }
+
+                el.style.left = `${node.x * this.zoom + this.pan.x}px`;
+                el.style.top = `${node.y * this.zoom + this.pan.y}px`;
+                el.style.transform = `scale(${this.zoom})`;
+                el.style.transformOrigin = 'top left';
+
+                // Get category icon
+                const categoryIcons = {
+                    military: '!',
+                    economy: '$',
+                    defense: '#',
+                    magic: '*',
+                    utility: '+'
+                };
+
+                el.innerHTML = `
+                    <div class="node-port input"></div>
+                    <div class="tech-node-header">
+                        <div class="tech-node-icon">${categoryIcons[node.category] || '?'}</div>
+                        <div class="tech-node-title">${node.name}</div>
+                    </div>
+                    <div class="tech-node-body">Tier ${node.tier}</div>
+                    <div class="tech-node-footer">
+                        <span class="tech-node-cost">${node.cost.gold}g</span>
+                        <span class="tech-node-time">${node.researchTime}s</span>
+                    </div>
+                    <div class="node-port output"></div>
+                `;
+
+                // Drag handling
+                let isDragging = false;
+                let dragStart = { x: 0, y: 0 };
+                let nodeStart = { x: 0, y: 0 };
+
+                el.addEventListener('mousedown', (e) => {
+                    if (e.target.classList.contains('node-port')) {
+                        // Handle connection creation
+                        if (e.target.classList.contains('output')) {
+                            this.connectingFrom = node;
+                        }
+                        return;
+                    }
+
+                    if (e.shiftKey && this.selectedNode && this.selectedNode !== node) {
+                        // Add prerequisite
+                        this.addPrerequisite(node.id);
+                        return;
+                    }
+
+                    this.selectNode(node);
+                    isDragging = true;
+                    dragStart = { x: e.clientX, y: e.clientY };
+                    nodeStart = { x: node.x, y: node.y };
+                    e.stopPropagation();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const dx = (e.clientX - dragStart.x) / this.zoom;
+                        const dy = (e.clientY - dragStart.y) / this.zoom;
+
+                        let newX = nodeStart.x + dx;
+                        let newY = nodeStart.y + dy;
+
+                        // Snap to grid
+                        if (this.gridSnap > 0) {
+                            newX = Math.round(newX / this.gridSnap) * this.gridSnap;
+                            newY = Math.round(newY / this.gridSnap) * this.gridSnap;
+                        }
+
+                        node.x = newX;
+                        node.y = newY;
+                        this.render();
+                    }
+                });
+
+                document.addEventListener('mouseup', (e) => {
+                    if (isDragging) {
+                        isDragging = false;
+                        this.markDirty();
+                    }
+
+                    if (this.connectingFrom) {
+                        // Check if released over input port
+                        const target = e.target;
+                        if (target.classList.contains('node-port') && target.classList.contains('input')) {
+                            const toNode = this.treeData.nodes.find(n => {
+                                const nodeEl = target.closest('.tech-node');
+                                return nodeEl && n.name === nodeEl.querySelector('.tech-node-title').textContent;
+                            });
+
+                            if (toNode && toNode !== this.connectingFrom) {
+                                this.addConnection(this.connectingFrom.id, toNode.id);
+                            }
+                        }
+                        this.connectingFrom = null;
+                    }
+                });
+
+                // Input port for receiving connections
+                const inputPort = el.querySelector('.node-port.input');
+                inputPort.addEventListener('mouseup', (e) => {
+                    if (this.connectingFrom && this.connectingFrom !== node) {
+                        this.saveState();
+                        this.addConnection(this.connectingFrom.id, node.id);
+                        this.connectingFrom = null;
+                        e.stopPropagation();
+                    }
+                });
+
+                return el;
+            }
+
+            renderNodeList() {
+                const list = document.getElementById('node-list');
+                list.innerHTML = '';
+
+                const categoryIcons = {
+                    military: '!',
+                    economy: '$',
+                    defense: '#',
+                    magic: '*',
+                    utility: '+'
+                };
+
+                // Sort by tier then name
+                const sortedNodes = [...this.treeData.nodes].sort((a, b) => {
+                    if (a.tier !== b.tier) return a.tier - b.tier;
+                    return a.name.localeCompare(b.name);
+                });
+
+                sortedNodes.forEach(node => {
+                    const item = document.createElement('div');
+                    item.className = 'node-list-item';
+                    if (this.selectedNode && this.selectedNode.id === node.id) {
+                        item.classList.add('selected');
+                    }
+
+                    item.innerHTML = `
+                        <div class="node-list-icon" style="color: var(--category-color);">${categoryIcons[node.category] || '?'}</div>
+                        <div class="node-list-info">
+                            <div class="node-list-name">${node.name}</div>
+                            <div class="node-list-tier">Tier ${node.tier} - ${node.category}</div>
+                        </div>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        this.selectNode(node);
+                        this.centerOnNode(node);
+                    });
+
+                    list.appendChild(item);
+                });
+
+                document.getElementById('node-count').textContent = this.treeData.nodes.length;
+            }
+
+            renderMinimap() {
+                const minimap = document.getElementById('minimap');
+                const ctx = minimap.getContext('2d');
+                const width = minimap.width;
+                const height = minimap.height;
+
+                ctx.fillStyle = '#1e1e2e';
+                ctx.fillRect(0, 0, width, height);
+
+                if (this.treeData.nodes.length === 0) return;
+
+                // Calculate bounds
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                this.treeData.nodes.forEach(node => {
+                    minX = Math.min(minX, node.x);
+                    minY = Math.min(minY, node.y);
+                    maxX = Math.max(maxX, node.x + 180);
+                    maxY = Math.max(maxY, node.y + 80);
+                });
+
+                const padding = 20;
+                const scaleX = (width - padding * 2) / (maxX - minX + 200);
+                const scaleY = (height - padding * 2) / (maxY - minY + 100);
+                const scale = Math.min(scaleX, scaleY, 0.5);
+
+                // Draw connections
+                ctx.strokeStyle = '#404060';
+                ctx.lineWidth = 1;
+                this.treeData.connections.forEach(conn => {
+                    const from = this.treeData.nodes.find(n => n.id === conn.from);
+                    const to = this.treeData.nodes.find(n => n.id === conn.to);
+                    if (from && to) {
+                        ctx.beginPath();
+                        ctx.moveTo(
+                            padding + (from.x - minX + 90) * scale,
+                            padding + (from.y - minY + 40) * scale
+                        );
+                        ctx.lineTo(
+                            padding + (to.x - minX + 90) * scale,
+                            padding + (to.y - minY + 40) * scale
+                        );
+                        ctx.stroke();
+                    }
+                });
+
+                // Draw nodes
+                this.treeData.nodes.forEach(node => {
+                    const categoryColors = {
+                        military: '#ef4444',
+                        economy: '#f59e0b',
+                        defense: '#3b82f6',
+                        magic: '#a855f7',
+                        utility: '#10b981'
+                    };
+
+                    ctx.fillStyle = categoryColors[node.category] || '#666';
+                    ctx.fillRect(
+                        padding + (node.x - minX) * scale,
+                        padding + (node.y - minY) * scale,
+                        180 * scale,
+                        80 * scale
+                    );
+                });
+
+                // Draw viewport
+                const viewX = (-this.pan.x / this.zoom - minX) * scale + padding;
+                const viewY = (-this.pan.y / this.zoom - minY) * scale + padding;
+                const viewW = (this.canvas.width / this.zoom) * scale;
+                const viewH = (this.canvas.height / this.zoom) * scale;
+
+                ctx.strokeStyle = '#7c3aed';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(viewX, viewY, viewW, viewH);
+            }
+
+            selectNode(node) {
+                this.selectedNode = node;
+                document.getElementById('node-editor').style.display = 'block';
+                this.loadNodeToEditor(node);
+                this.updatePreview();
+                this.renderNodeList();
+                this.renderNodes();
+            }
+
+            loadNodeToEditor(node) {
+                document.getElementById('node-id').value = node.id;
+                document.getElementById('node-name').value = node.name;
+                document.getElementById('node-description').value = node.description || '';
+                document.getElementById('node-category').value = node.category;
+                document.getElementById('node-tier').value = node.tier;
+                document.getElementById('node-icon').value = node.icon || '';
+
+                document.getElementById('cost-gold').value = node.cost.gold || 0;
+                document.getElementById('cost-mana').value = node.cost.mana || 0;
+                document.getElementById('cost-wood').value = node.cost.wood || 0;
+                document.getElementById('cost-stone').value = node.cost.stone || 0;
+                document.getElementById('cost-iron').value = node.cost.iron || 0;
+                document.getElementById('cost-food').value = node.cost.food || 0;
+
+                document.getElementById('research-time').value = node.researchTime;
+
+                document.getElementById('unlocks-units').value = (node.unlocks?.units || []).join(', ');
+                document.getElementById('unlocks-buildings').value = (node.unlocks?.buildings || []).join(', ');
+                document.getElementById('unlocks-abilities').value = (node.unlocks?.abilities || []).join(', ');
+
+                this.renderPrerequisites();
+                this.renderModifiers();
+            }
+
+            updatePreview() {
+                if (!this.selectedNode) {
+                    document.getElementById('preview-name').textContent = 'No Selection';
+                    document.getElementById('preview-tier').textContent = 'Select a technology';
+                    document.getElementById('preview-description').textContent = 'Select a technology node to view and edit its properties.';
+                    document.getElementById('preview-cost').textContent = '-';
+                    document.getElementById('preview-time').textContent = '-';
+                    document.getElementById('preview-tier-num').textContent = '-';
+                    return;
+                }
+
+                const node = this.selectedNode;
+                const categoryIcons = {
+                    military: '!',
+                    economy: '$',
+                    defense: '#',
+                    magic: '*',
+                    utility: '+'
+                };
+
+                document.getElementById('preview-icon').textContent = categoryIcons[node.category] || '?';
+                document.getElementById('preview-name').textContent = node.name;
+                document.getElementById('preview-tier').textContent = `${node.category.charAt(0).toUpperCase() + node.category.slice(1)} - Tier ${node.tier}`;
+                document.getElementById('preview-description').textContent = node.description || 'No description';
+                document.getElementById('preview-cost').textContent = `${node.cost.gold}g`;
+                document.getElementById('preview-time').textContent = `${node.researchTime}s`;
+                document.getElementById('preview-tier-num').textContent = node.tier;
+
+                // Effects
+                const effectsEl = document.getElementById('preview-effects');
+                effectsEl.innerHTML = '';
+                if (node.modifiers && node.modifiers.length > 0) {
+                    node.modifiers.forEach(mod => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-effect';
+                        div.textContent = `+ ${mod.value}${mod.type === 'percentage' ? '%' : ''} ${mod.stat}`;
+                        effectsEl.appendChild(div);
+                    });
+                }
+            }
+
+            renderPrerequisites() {
+                const container = document.getElementById('prerequisites-list');
+                container.innerHTML = '';
+
+                if (!this.selectedNode || !this.selectedNode.prerequisites || this.selectedNode.prerequisites.length === 0) {
+                    container.innerHTML = '<div style="color: var(--text-secondary); font-size: 12px;">No prerequisites. Hold Shift and click another node to add.</div>';
+                    return;
+                }
+
+                this.selectedNode.prerequisites.forEach(prereqId => {
+                    const prereqNode = this.treeData.nodes.find(n => n.id === prereqId);
+                    if (prereqNode) {
+                        const item = document.createElement('div');
+                        item.className = 'chain-node';
+                        item.innerHTML = `
+                            <span style="flex: 1;">${prereqNode.name}</span>
+                            <button class="btn-remove" data-prereq="${prereqId}">x</button>
+                        `;
+
+                        item.querySelector('.btn-remove').addEventListener('click', () => {
+                            this.saveState();
+                            this.removePrerequisite(prereqId);
+                        });
+
+                        container.appendChild(item);
+                    }
+                });
+            }
+
+            renderModifiers() {
+                const container = document.getElementById('modifier-list');
+                container.innerHTML = '';
+
+                if (!this.selectedNode || !this.selectedNode.modifiers) return;
+
+                this.selectedNode.modifiers.forEach((mod, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'modifier-item';
+                    item.innerHTML = `
+                        <select data-index="${index}" data-field="stat">
+                            <option value="attack" ${mod.stat === 'attack' ? 'selected' : ''}>Attack</option>
+                            <option value="defense" ${mod.stat === 'defense' ? 'selected' : ''}>Defense</option>
+                            <option value="speed" ${mod.stat === 'speed' ? 'selected' : ''}>Speed</option>
+                            <option value="health" ${mod.stat === 'health' ? 'selected' : ''}>Health</option>
+                            <option value="damage" ${mod.stat === 'damage' ? 'selected' : ''}>Damage</option>
+                            <option value="armor" ${mod.stat === 'armor' ? 'selected' : ''}>Armor</option>
+                            <option value="range" ${mod.stat === 'range' ? 'selected' : ''}>Range</option>
+                            <option value="gather_rate" ${mod.stat === 'gather_rate' ? 'selected' : ''}>Gather Rate</option>
+                            <option value="build_speed" ${mod.stat === 'build_speed' ? 'selected' : ''}>Build Speed</option>
+                        </select>
+                        <input type="number" value="${mod.value}" data-index="${index}" data-field="value">
+                        <button class="btn-remove" data-index="${index}">x</button>
+                    `;
+
+                    item.querySelectorAll('select, input').forEach(el => {
+                        el.addEventListener('change', (e) => {
+                            this.saveState();
+                            const idx = parseInt(e.target.dataset.index);
+                            const field = e.target.dataset.field;
+                            if (field === 'value') {
+                                this.selectedNode.modifiers[idx].value = parseFloat(e.target.value) || 0;
+                            } else {
+                                this.selectedNode.modifiers[idx][field] = e.target.value;
+                            }
+                            this.updatePreview();
+                            this.markDirty();
+                        });
+                    });
+
+                    item.querySelector('.btn-remove').addEventListener('click', () => {
+                        this.saveState();
+                        this.selectedNode.modifiers.splice(index, 1);
+                        this.renderModifiers();
+                        this.updatePreview();
+                        this.markDirty();
+                    });
+
+                    container.appendChild(item);
+                });
+            }
+
+            addNode() {
+                this.saveState();
+
+                // Position in center of view
+                const x = (-this.pan.x + this.canvas.width / 2) / this.zoom - 90;
+                const y = (-this.pan.y + this.canvas.height / 2) / this.zoom - 40;
+
+                const node = this.createNodeData({ x, y });
+                this.treeData.nodes.push(node);
+
+                this.selectNode(node);
+                this.renderNodeList();
+                this.render();
+                this.markDirty();
+            }
+
+            deleteSelectedNode() {
+                if (!this.selectedNode) return;
+                if (!confirm(`Delete "${this.selectedNode.name}"?`)) return;
+
+                this.saveState();
+
+                const nodeId = this.selectedNode.id;
+
+                // Remove connections
+                this.treeData.connections = this.treeData.connections.filter(
+                    c => c.from !== nodeId && c.to !== nodeId
+                );
+
+                // Remove from prerequisites
+                this.treeData.nodes.forEach(node => {
+                    if (node.prerequisites) {
+                        node.prerequisites = node.prerequisites.filter(p => p !== nodeId);
+                    }
+                });
+
+                // Remove node
+                this.treeData.nodes = this.treeData.nodes.filter(n => n.id !== nodeId);
+
+                this.selectedNode = null;
+                document.getElementById('node-editor').style.display = 'none';
+                this.updatePreview();
+                this.renderNodeList();
+                this.render();
+                this.markDirty();
+            }
+
+            addConnection(fromId, toId) {
+                // Check if connection already exists
+                const exists = this.treeData.connections.some(
+                    c => c.from === fromId && c.to === toId
+                );
+                if (exists) return;
+
+                // Check for circular dependency
+                if (this.wouldCreateCycle(fromId, toId)) {
+                    this.setStatus('Cannot create circular dependency!', 'error');
+                    return;
+                }
+
+                this.saveState();
+
+                this.treeData.connections.push({ from: fromId, to: toId });
+
+                // Add to prerequisites
+                const toNode = this.treeData.nodes.find(n => n.id === toId);
+                if (toNode) {
+                    if (!toNode.prerequisites) toNode.prerequisites = [];
+                    if (!toNode.prerequisites.includes(fromId)) {
+                        toNode.prerequisites.push(fromId);
+                    }
+                }
+
+                this.render();
+                this.renderPrerequisites();
+                this.markDirty();
+            }
+
+            wouldCreateCycle(fromId, toId) {
+                const visited = new Set();
+                const queue = [fromId];
+
+                while (queue.length > 0) {
+                    const current = queue.shift();
+                    if (current === toId) return true;
+                    if (visited.has(current)) continue;
+                    visited.add(current);
+
+                    // Find all nodes that this node depends on
+                    const node = this.treeData.nodes.find(n => n.id === current);
+                    if (node && node.prerequisites) {
+                        queue.push(...node.prerequisites);
+                    }
+                }
+
+                return false;
+            }
+
+            addPrerequisite(prereqId) {
+                if (!this.selectedNode) return;
+                if (prereqId === this.selectedNode.id) return;
+
+                this.addConnection(prereqId, this.selectedNode.id);
+            }
+
+            removePrerequisite(prereqId) {
+                if (!this.selectedNode) return;
+
+                // Remove connection
+                this.treeData.connections = this.treeData.connections.filter(
+                    c => !(c.from === prereqId && c.to === this.selectedNode.id)
+                );
+
+                // Remove from prerequisites
+                this.selectedNode.prerequisites = this.selectedNode.prerequisites.filter(p => p !== prereqId);
+
+                this.render();
+                this.renderPrerequisites();
+                this.markDirty();
+            }
+
+            clearPrerequisites() {
+                if (!this.selectedNode) return;
+
+                this.saveState();
+
+                // Remove all connections to this node
+                this.treeData.connections = this.treeData.connections.filter(
+                    c => c.to !== this.selectedNode.id
+                );
+
+                this.selectedNode.prerequisites = [];
+
+                this.render();
+                this.renderPrerequisites();
+                this.markDirty();
+            }
+
+            addModifier() {
+                if (!this.selectedNode) return;
+
+                this.saveState();
+
+                if (!this.selectedNode.modifiers) {
+                    this.selectedNode.modifiers = [];
+                }
+
+                this.selectedNode.modifiers.push({
+                    stat: 'attack',
+                    value: 10,
+                    type: 'percentage'
+                });
+
+                this.renderModifiers();
+                this.updatePreview();
+                this.markDirty();
+            }
+
+            filterNodes(search) {
+                const items = document.querySelectorAll('.node-list-item');
+                const searchLower = search.toLowerCase();
+
+                items.forEach((item, index) => {
+                    const name = item.querySelector('.node-list-name').textContent.toLowerCase();
+                    item.style.display = name.includes(searchLower) ? 'flex' : 'none';
+                });
+            }
+
+            filterByCategory(category) {
+                const items = document.querySelectorAll('.node-list-item');
+
+                items.forEach((item, index) => {
+                    const nodeCategory = item.querySelector('.node-list-tier').textContent.toLowerCase();
+                    if (category === 'all' || nodeCategory.includes(category)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            autoLayout() {
+                this.saveState();
+
+                // Group by tier
+                const tiers = {};
+                this.treeData.nodes.forEach(node => {
+                    if (!tiers[node.tier]) tiers[node.tier] = [];
+                    tiers[node.tier].push(node);
+                });
+
+                // Layout
+                const tierKeys = Object.keys(tiers).sort((a, b) => a - b);
+                let y = 50;
+
+                tierKeys.forEach(tier => {
+                    const nodes = tiers[tier];
+                    const totalWidth = nodes.length * 220 - 40;
+                    let x = 50;
+
+                    nodes.forEach(node => {
+                        node.x = x;
+                        node.y = y;
+                        x += 220;
+                    });
+
+                    y += 150;
+                });
+
+                this.render();
+                this.fitView();
+                this.markDirty();
+            }
+
+            validateTree() {
+                const errors = [];
+                const warnings = [];
+
+                // Check for orphan nodes (no prerequisites and not tier 1)
+                this.treeData.nodes.forEach(node => {
+                    if (node.tier > 1 && (!node.prerequisites || node.prerequisites.length === 0)) {
+                        warnings.push(`"${node.name}" has no prerequisites but is Tier ${node.tier}`);
+                    }
+                });
+
+                // Check for missing prerequisites
+                this.treeData.nodes.forEach(node => {
+                    if (node.prerequisites) {
+                        node.prerequisites.forEach(prereqId => {
+                            if (!this.treeData.nodes.find(n => n.id === prereqId)) {
+                                errors.push(`"${node.name}" has missing prerequisite: ${prereqId}`);
+                            }
+                        });
+                    }
+                });
+
+                // Check for duplicate IDs
+                const ids = {};
+                this.treeData.nodes.forEach(node => {
+                    if (ids[node.id]) {
+                        errors.push(`Duplicate ID: ${node.id}`);
+                    }
+                    ids[node.id] = true;
+                });
+
+                if (errors.length === 0 && warnings.length === 0) {
+                    this.setStatus('Validation passed! Tree is valid.', 'success');
+                } else {
+                    const msg = [...errors, ...warnings].join('\n');
+                    alert(`Validation Results:\n\n${errors.length} Errors:\n${errors.join('\n')}\n\n${warnings.length} Warnings:\n${warnings.join('\n')}`);
+                    this.setStatus(`Validation: ${errors.length} errors, ${warnings.length} warnings`, errors.length > 0 ? 'error' : 'warning');
+                }
+            }
+
+            // View controls
+            setZoom(zoom) {
+                this.zoom = Math.max(0.25, Math.min(2, zoom));
+                document.getElementById('status-zoom').textContent = `Zoom: ${Math.round(this.zoom * 100)}%`;
+                this.render();
+            }
+
+            fitView() {
+                if (this.treeData.nodes.length === 0) return;
+
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                this.treeData.nodes.forEach(node => {
+                    minX = Math.min(minX, node.x);
+                    minY = Math.min(minY, node.y);
+                    maxX = Math.max(maxX, node.x + 180);
+                    maxY = Math.max(maxY, node.y + 80);
+                });
+
+                const padding = 50;
+                const contentWidth = maxX - minX + padding * 2;
+                const contentHeight = maxY - minY + padding * 2;
+
+                this.zoom = Math.min(
+                    this.canvas.width / contentWidth,
+                    this.canvas.height / contentHeight,
+                    1
+                );
+
+                this.pan.x = -minX * this.zoom + (this.canvas.width - contentWidth * this.zoom) / 2;
+                this.pan.y = -minY * this.zoom + (this.canvas.height - contentHeight * this.zoom) / 2;
+
+                document.getElementById('status-zoom').textContent = `Zoom: ${Math.round(this.zoom * 100)}%`;
+                this.render();
+            }
+
+            centerView() {
+                this.pan = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+                this.render();
+            }
+
+            centerOnNode(node) {
+                this.pan.x = this.canvas.width / 2 - (node.x + 90) * this.zoom;
+                this.pan.y = this.canvas.height / 2 - (node.y + 40) * this.zoom;
+                this.render();
+            }
+
+            // State management
+            saveState() {
+                this.undoStack.push(JSON.stringify(this.treeData));
+                this.redoStack = [];
+                if (this.undoStack.length > 50) this.undoStack.shift();
+            }
+
+            undo() {
+                if (this.undoStack.length > 0) {
+                    this.redoStack.push(JSON.stringify(this.treeData));
+                    this.treeData = JSON.parse(this.undoStack.pop());
+                    this.selectedNode = null;
+                    document.getElementById('node-editor').style.display = 'none';
+                    this.updatePreview();
+                    this.renderNodeList();
+                    this.render();
+                    this.setStatus('Undo');
+                }
+            }
+
+            redo() {
+                if (this.redoStack.length > 0) {
+                    this.undoStack.push(JSON.stringify(this.treeData));
+                    this.treeData = JSON.parse(this.redoStack.pop());
+                    this.selectedNode = null;
+                    document.getElementById('node-editor').style.display = 'none';
+                    this.updatePreview();
+                    this.renderNodeList();
+                    this.render();
+                    this.setStatus('Redo');
+                }
+            }
+
+            markDirty() {
+                this.isDirty = true;
+                document.title = '* Tech Tree Viewer';
+            }
+
+            // File operations
+            newTree() {
+                if (this.isDirty && !confirm('Discard unsaved changes?')) return;
+
+                this.treeData = {
+                    id: 'techtree_new',
+                    name: 'New Tech Tree',
+                    nodes: [],
+                    connections: []
+                };
+                this.selectedNode = null;
+                this.nodeIdCounter = 0;
+                document.getElementById('node-editor').style.display = 'none';
+                this.updatePreview();
+                this.renderNodeList();
+                this.render();
+                this.isDirty = false;
+                document.title = 'Tech Tree Viewer';
+                this.setStatus('New tech tree created');
+            }
+
+            loadTree() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            try {
+                                this.treeData = JSON.parse(event.target.result);
+                                this.selectedNode = null;
+                                document.getElementById('node-editor').style.display = 'none';
+                                this.updatePreview();
+                                this.renderNodeList();
+                                this.render();
+                                this.fitView();
+                                this.isDirty = false;
+                                document.title = 'Tech Tree Viewer';
+                                this.setStatus(`Loaded: ${file.name}`);
+                            } catch (err) {
+                                this.setStatus(`Error loading file: ${err.message}`, 'error');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            }
+
+            saveTree() {
+                const json = JSON.stringify(this.treeData, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.treeData.id || 'techtree'}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                this.isDirty = false;
+                document.title = 'Tech Tree Viewer';
+                this.setStatus('Tech tree saved');
+            }
+
+            exportJSON() {
+                const json = JSON.stringify(this.treeData, null, 2);
+                navigator.clipboard.writeText(json).then(() => {
+                    this.setStatus('JSON copied to clipboard');
+                }).catch(() => {
+                    this.setStatus('Failed to copy to clipboard', 'error');
+                });
+            }
+
+            exportImage() {
+                // Create a larger canvas for export
+                const exportCanvas = document.createElement('canvas');
+                const ctx = exportCanvas.getContext('2d');
+
+                // Calculate bounds
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                this.treeData.nodes.forEach(node => {
+                    minX = Math.min(minX, node.x);
+                    minY = Math.min(minY, node.y);
+                    maxX = Math.max(maxX, node.x + 180);
+                    maxY = Math.max(maxY, node.y + 80);
+                });
+
+                const padding = 50;
+                exportCanvas.width = maxX - minX + padding * 2;
+                exportCanvas.height = maxY - minY + padding * 2;
+
+                // Background
+                ctx.fillStyle = '#1e1e2e';
+                ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+                // Draw connections
+                ctx.strokeStyle = '#7c3aed';
+                ctx.lineWidth = 3;
+                this.treeData.connections.forEach(conn => {
+                    const from = this.treeData.nodes.find(n => n.id === conn.from);
+                    const to = this.treeData.nodes.find(n => n.id === conn.to);
+                    if (from && to) {
+                        const x1 = from.x - minX + padding + 90;
+                        const y1 = from.y - minY + padding + 80;
+                        const x2 = to.x - minX + padding + 90;
+                        const y2 = to.y - minY + padding;
+
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        const midY = (y1 + y2) / 2;
+                        ctx.bezierCurveTo(x1, midY, x2, midY, x2, y2);
+                        ctx.stroke();
+                    }
+                });
+
+                // Draw nodes
+                this.treeData.nodes.forEach(node => {
+                    const x = node.x - minX + padding;
+                    const y = node.y - minY + padding;
+
+                    // Node background
+                    ctx.fillStyle = '#2a2a3e';
+                    ctx.strokeStyle = '#404060';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, 180, 80, 8);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Category stripe
+                    const categoryColors = {
+                        military: '#ef4444',
+                        economy: '#f59e0b',
+                        defense: '#3b82f6',
+                        magic: '#a855f7',
+                        utility: '#10b981'
+                    };
+                    ctx.fillStyle = categoryColors[node.category] || '#666';
+                    ctx.fillRect(x, y, 180, 3);
+
+                    // Text
+                    ctx.fillStyle = '#e0e0e0';
+                    ctx.font = '12px sans-serif';
+                    ctx.fillText(node.name, x + 10, y + 30);
+                    ctx.fillStyle = '#a0a0a0';
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText(`Tier ${node.tier}`, x + 10, y + 50);
+                });
+
+                // Download
+                const link = document.createElement('a');
+                link.download = `${this.treeData.id || 'techtree'}.png`;
+                link.href = exportCanvas.toDataURL('image/png');
+                link.click();
+
+                this.setStatus('Image exported');
+            }
+
+            setStatus(message, type = 'info') {
+                const status = document.getElementById('status-message');
+                status.textContent = message;
+                status.style.color = type === 'error' ? 'var(--error-color)' :
+                                     type === 'success' ? 'var(--success-color)' :
+                                     type === 'warning' ? 'var(--warning-color)' :
+                                     'var(--text-secondary)';
+            }
+        }
+
+        // Initialize viewer
+        const viewer = new TechTreeViewer();
+
+        // Bridge communication
+        window.TechTreeViewer = {
+            loadTree: (data) => {
+                viewer.treeData = typeof data === 'string' ? JSON.parse(data) : data;
+                viewer.selectedNode = null;
+                viewer.renderNodeList();
+                viewer.render();
+                viewer.fitView();
+            },
+            getTree: () => JSON.stringify(viewer.treeData),
+            setDirty: (dirty) => { viewer.isDirty = dirty; }
+        };
+    </script>
+</body>
+</html>

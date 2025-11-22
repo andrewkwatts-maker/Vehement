@@ -1,0 +1,332 @@
+"""
+{{spell_name}} Spell Effect Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+from typing import List, Tuple
+import math
+
+
+# Spell Configuration
+SPELL_NAME = "{{spell_name}}"
+MANA_COST = {{mana_cost}}
+COOLDOWN = {{cooldown}}
+CAST_TIME = {{cast_time}}
+RANGE = {{range}}
+
+
+{{#if is_aoe}}
+# Area of Effect settings
+AOE_RADIUS = {{aoe_radius}}
+AOE_FALLOFF = {{aoe_falloff}}  # Damage reduction per unit distance
+{{/if}}
+
+{{#if is_dot}}
+# Damage over Time settings
+DOT_DURATION = {{dot_duration}}
+DOT_TICK_INTERVAL = {{dot_tick_interval}}
+DOT_DAMAGE_PER_TICK = {{dot_damage_per_tick}}
+{{/if}}
+
+{{#if is_buff}}
+# Buff settings
+BUFF_DURATION = {{buff_duration}}
+BUFF_STATS = {{buff_stats}}  # Dict of stat: modifier
+{{/if}}
+
+
+def can_cast(caster_id: int, target_id: int = 0) -> Tuple[bool, str]:
+    """
+    Check if the spell can be cast.
+
+    Args:
+        caster_id: The entity casting the spell
+        target_id: The target entity (0 for ground-targeted)
+
+    Returns:
+        Tuple of (can_cast, reason_if_not)
+    """
+    # Check mana
+    mana = get_mana(caster_id)
+    if mana < MANA_COST:
+        return False, "Not enough mana"
+
+    # Check cooldown
+    last_cast = get_property(caster_id, f"cooldown_{SPELL_NAME}")
+    if last_cast and get_time() - last_cast < COOLDOWN:
+        remaining = COOLDOWN - (get_time() - last_cast)
+        return False, f"On cooldown ({remaining:.1f}s)"
+
+    {{#if requires_target}}
+    # Check target
+    if target_id == 0:
+        return False, "Requires target"
+
+    if not is_alive(target_id):
+        return False, "Target is dead"
+
+    # Check range
+    dist = distance_to(caster_id, target_id)
+    if dist > RANGE:
+        return False, "Target out of range"
+    {{/if}}
+
+    {{#if requires_los}}
+    # Check line of sight
+    if target_id > 0 and not has_line_of_sight(caster_id, target_id):
+        return False, "No line of sight"
+    {{/if}}
+
+    {{#if custom_requirements}}
+    # Custom requirements
+    {{custom_requirements}}
+    {{/if}}
+
+    return True, ""
+
+
+def cast(caster_id: int, target_id: int = 0, target_pos: Tuple[float, float, float] = None) -> bool:
+    """
+    Cast the {{spell_name}} spell.
+
+    Args:
+        caster_id: The entity casting the spell
+        target_id: The target entity (0 for ground-targeted)
+        target_pos: Target position for ground-targeted spells
+
+    Returns:
+        True if spell was cast successfully
+    """
+    can, reason = can_cast(caster_id, target_id)
+    if not can:
+        show_error_message(caster_id, reason)
+        return False
+
+    # Consume mana
+    mana = get_mana(caster_id)
+    set_mana(caster_id, mana - MANA_COST)
+
+    # Start cooldown
+    set_property(caster_id, f"cooldown_{SPELL_NAME}", get_time())
+
+    # Get positions
+    cx, cy, cz = get_position(caster_id)
+
+    if target_id > 0:
+        tx, ty, tz = get_position(target_id)
+    elif target_pos:
+        tx, ty, tz = target_pos
+    else:
+        tx, ty, tz = cx, cy, cz
+
+    {{#if cast_animation}}
+    # Play cast animation
+    play_animation(caster_id, "{{cast_animation}}")
+    {{/if}}
+
+    {{#if cast_sound}}
+    # Play cast sound
+    play_sound("{{cast_sound}}", cx, cy, cz)
+    {{/if}}
+
+    {{#if cast_effect}}
+    # Play cast effect on caster
+    play_effect("{{cast_effect}}", cx, cy, cz)
+    {{/if}}
+
+    {{#if is_projectile}}
+    # Spawn projectile
+    proj_id = spawn_projectile(
+        "{{projectile_type}}",
+        cx, cy + 1.5, cz,
+        tx, ty + 1.0, tz,
+        caster_id
+    )
+    set_property(proj_id, "spell_data", {
+        "spell": SPELL_NAME,
+        "caster": caster_id,
+        "damage": calculate_damage(caster_id),
+    })
+    {{/if}}
+
+    {{#if is_instant}}
+    # Apply instant effect
+    apply_effect(caster_id, target_id, tx, ty, tz)
+    {{/if}}
+
+    {{#if is_channeled}}
+    # Start channeling
+    start_channel(caster_id, SPELL_NAME, {{channel_duration}}, {
+        "target_id": target_id,
+        "target_pos": (tx, ty, tz),
+    })
+    {{/if}}
+
+    log_debug(f"{caster_id} cast {SPELL_NAME} on {target_id}")
+    return True
+
+
+def calculate_damage(caster_id: int) -> float:
+    """Calculate spell damage based on caster stats."""
+    base_damage = {{base_damage}}
+
+    {{#if scales_with_spell_power}}
+    spell_power = get_property(caster_id, "spell_power")
+    scaling = {{spell_power_scaling}}
+    bonus_damage = spell_power * scaling
+    {{else}}
+    bonus_damage = 0
+    {{/if}}
+
+    total_damage = base_damage + bonus_damage
+
+    {{#if can_crit}}
+    crit_chance = get_property(caster_id, "spell_crit_chance")
+    if random_chance(crit_chance):
+        total_damage *= {{crit_multiplier}}
+        log_debug(f"{SPELL_NAME} critical hit!")
+    {{/if}}
+
+    return total_damage
+
+
+def apply_effect(caster_id: int, target_id: int, x: float, y: float, z: float) -> None:
+    """Apply the spell's effect."""
+
+    {{#if impact_effect}}
+    # Play impact effect
+    play_effect("{{impact_effect}}", x, y, z)
+    {{/if}}
+
+    {{#if impact_sound}}
+    # Play impact sound
+    play_sound("{{impact_sound}}", x, y, z)
+    {{/if}}
+
+    {{#if is_aoe}}
+    # Area effect
+    targets = find_entities_in_radius(x, y, z, AOE_RADIUS)
+    {{#if friendly_fire}}
+    # Apply to all entities
+    {{else}}
+    targets = [t for t in targets if is_enemy(caster_id, t)]
+    {{/if}}
+
+    damage_value = calculate_damage(caster_id)
+
+    for t in targets:
+        tx, ty, tz = get_position(t)
+        dist = distance_3d(x, y, z, tx, ty, tz)
+
+        # Apply falloff
+        falloff_mult = max(0, 1.0 - (dist * AOE_FALLOFF / AOE_RADIUS))
+        final_damage = damage_value * falloff_mult
+
+        if final_damage > 0:
+            damage(t, final_damage, "{{damage_type}}", caster_id)
+    {{/if}}
+
+    {{#if is_single_target}}
+    # Single target damage
+    if target_id > 0 and is_alive(target_id):
+        damage_value = calculate_damage(caster_id)
+        damage(target_id, damage_value, "{{damage_type}}", caster_id)
+    {{/if}}
+
+    {{#if is_dot}}
+    # Apply damage over time
+    if target_id > 0:
+        apply_debuff(target_id, f"{SPELL_NAME}_dot", {
+            "duration": DOT_DURATION,
+            "tick_interval": DOT_TICK_INTERVAL,
+            "damage_per_tick": DOT_DAMAGE_PER_TICK,
+            "damage_type": "{{damage_type}}",
+            "caster": caster_id,
+        })
+    {{/if}}
+
+    {{#if is_buff}}
+    # Apply buff
+    buff_target = {{buff_target}}  # "self", "ally", "target"
+    if buff_target == "self":
+        buff_entity = caster_id
+    else:
+        buff_entity = target_id
+
+    if buff_entity > 0:
+        apply_buff(buff_entity, f"{SPELL_NAME}_buff", {
+            "duration": BUFF_DURATION,
+            "stats": BUFF_STATS,
+            "effect": "{{buff_effect}}",
+        })
+    {{/if}}
+
+    {{#if is_heal}}
+    # Heal effect
+    heal_target = target_id if target_id > 0 else caster_id
+    heal_amount = {{base_heal}}
+
+    {{#if scales_with_spell_power}}
+    spell_power = get_property(caster_id, "spell_power")
+    heal_amount += spell_power * {{heal_scaling}}
+    {{/if}}
+
+    heal(heal_target, heal_amount, caster_id)
+    {{/if}}
+
+    {{#if custom_effect}}
+    # Custom effect
+    {{custom_effect}}
+    {{/if}}
+
+
+def on_projectile_hit(projectile_id: int, target_id: int) -> None:
+    """Called when spell projectile hits a target."""
+    spell_data = get_property(projectile_id, "spell_data")
+    if not spell_data or spell_data.get("spell") != SPELL_NAME:
+        return
+
+    caster_id = spell_data["caster"]
+    x, y, z = get_position(target_id) if target_id > 0 else get_position(projectile_id)
+
+    apply_effect(caster_id, target_id, x, y, z)
+
+
+def on_channel_tick(caster_id: int, channel_data: dict, tick: int) -> None:
+    """Called each tick while channeling."""
+    target_id = channel_data.get("target_id", 0)
+    target_pos = channel_data.get("target_pos")
+
+    {{#if channel_effect_per_tick}}
+    # Apply effect each tick
+    if target_pos:
+        x, y, z = target_pos
+    elif target_id > 0:
+        x, y, z = get_position(target_id)
+    else:
+        return
+
+    apply_effect(caster_id, target_id, x, y, z)
+    {{/if}}
+
+
+def on_channel_complete(caster_id: int, channel_data: dict) -> None:
+    """Called when channeling completes."""
+    {{#if channel_final_effect}}
+    target_id = channel_data.get("target_id", 0)
+    target_pos = channel_data.get("target_pos")
+
+    if target_pos:
+        x, y, z = target_pos
+    elif target_id > 0:
+        x, y, z = get_position(target_id)
+    else:
+        x, y, z = get_position(caster_id)
+
+    # Final burst effect
+    apply_effect(caster_id, target_id, x, y, z)
+    {{/if}}

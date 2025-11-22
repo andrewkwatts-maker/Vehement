@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Preview</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #252536;
+            --bg-tertiary: #2a2a3a;
+            --border-color: #3a3a4a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --accent-color: #4a9eff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+        }
+
+        .asset-preview {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .preview-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-header .icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 16px;
+        }
+
+        .preview-header .info {
+            flex: 1;
+        }
+
+        .preview-header .info h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .preview-header .info .meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .preview-header .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 3D Preview Container */
+        .preview-3d {
+            height: 250px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .preview-3d canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .preview-3d .placeholder {
+            font-size: 72px;
+            opacity: 0.5;
+        }
+
+        .preview-3d .controls {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .preview-3d .controls button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .preview-3d .controls button:hover {
+            background: rgba(0,0,0,0.7);
+        }
+
+        /* Stats Section */
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .stat-card .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .stat-card .bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .stat-card .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .stat-card .bar-fill.health { background: #4ade80; }
+        .stat-card .bar-fill.damage { background: #f87171; }
+        .stat-card .bar-fill.armor { background: #60a5fa; }
+        .stat-card .bar-fill.speed { background: #fbbf24; }
+
+        /* Section */
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Properties List */
+        .properties-list {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .property-row {
+            display: flex;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .property-row:last-child {
+            border-bottom: none;
+        }
+
+        .property-row .label {
+            width: 120px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .property-row .value {
+            flex: 1;
+        }
+
+        .property-row .value.editable {
+            cursor: pointer;
+            padding: 2px 6px;
+            margin: -2px -6px;
+            border-radius: 3px;
+        }
+
+        .property-row .value.editable:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .property-row input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 4px 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .property-row input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background: var(--bg-tertiary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .tag.add-tag {
+            border: 1px dashed var(--border-color);
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .tag.add-tag:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Abilities/Effects List */
+        .ability-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ability-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .ability-card:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .ability-card .icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .ability-card .info {
+            flex: 1;
+        }
+
+        .ability-card .info .name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .ability-card .info .desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .ability-card .cooldown {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Footer Actions */
+        .preview-footer {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #3a8eef;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        /* Quick Edit Mode */
+        .quick-edit-active .property-row .value.editable {
+            background: var(--bg-tertiary);
+            padding: 6px 8px;
+        }
+
+        /* Dependencies Section */
+        .dependency-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .dependency-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .dependency-item .icon {
+            font-size: 14px;
+        }
+
+        .dependency-item .arrow {
+            color: var(--text-secondary);
+        }
+
+        .dependency-item a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .dependency-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            transition: color 0.15s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-badge.valid {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .status-badge.warning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .status-badge.error {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+
+        .status-badge.modified {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="asset-preview">
+        <!-- Header -->
+        <div class="preview-header">
+            <div class="icon" id="asset-icon">&#x2694;</div>
+            <div class="info">
+                <h1 id="asset-name">Soldier</h1>
+                <div class="meta">
+                    <span id="asset-type">Unit</span>
+                    <span id="asset-id">unit_soldier</span>
+                    <span class="status-badge valid" id="asset-status">Valid</span>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn btn-secondary" id="btn-quick-edit">Quick Edit</button>
+            </div>
+        </div>
+
+        <!-- 3D Preview -->
+        <div class="preview-3d">
+            <div class="placeholder" id="model-placeholder">&#x1F464;</div>
+            <canvas id="preview-canvas" style="display:none;"></canvas>
+            <div class="controls">
+                <button title="Reset View">&#x21bb;</button>
+                <button title="Zoom In">+</button>
+                <button title="Zoom Out">-</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" data-tab="stats">Stats</div>
+            <div class="tab" data-tab="properties">Properties</div>
+            <div class="tab" data-tab="abilities">Abilities</div>
+            <div class="tab" data-tab="dependencies">Dependencies</div>
+        </div>
+
+        <!-- Content -->
+        <div class="preview-content">
+            <!-- Stats Tab -->
+            <div class="tab-content active" id="tab-stats">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Health</div>
+                        <div class="value" id="stat-health">100</div>
+                        <div class="bar"><div class="bar-fill health" style="width: 50%"></div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Damage</div>
+                        <div class="value" id="stat-damage">15</div>
+                        <div class="bar"><div class="bar-fill damage" style="width: 30%"></div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Armor</div>
+                        <div class="value" id="stat-armor">5</div>
+                        <div class="bar"><div class="bar-fill armor" style="width: 20%"></div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Speed</div>
+                        <div class="value" id="stat-speed">5.0</div>
+                        <div class="bar"><div class="bar-fill speed" style="width: 40%"></div></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">Combat Stats</div>
+                    <div class="properties-list">
+                        <div class="property-row">
+                            <span class="label">Attack Range</span>
+                            <span class="value editable" data-prop="combat.attackRange">12.0</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Attack Speed</span>
+                            <span class="value editable" data-prop="combat.attackSpeed">1.5</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Crit Chance</span>
+                            <span class="value editable" data-prop="combat.critChance">10%</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Crit Multiplier</span>
+                            <span class="value editable" data-prop="combat.critMultiplier">2.0x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">Resource Costs</div>
+                    <div class="properties-list">
+                        <div class="property-row">
+                            <span class="label">Gold</span>
+                            <span class="value editable" data-prop="costs.gold">50</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Training Time</span>
+                            <span class="value editable" data-prop="costs.trainingTime">15s</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Population</span>
+                            <span class="value editable" data-prop="costs.population">1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Properties Tab -->
+            <div class="tab-content" id="tab-properties">
+                <div class="section">
+                    <div class="section-header">General</div>
+                    <div class="properties-list">
+                        <div class="property-row">
+                            <span class="label">ID</span>
+                            <span class="value">unit_soldier</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Name</span>
+                            <span class="value editable" data-prop="name">Soldier</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Description</span>
+                            <span class="value editable" data-prop="description">Standard infantry unit armed with a rifle.</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Faction</span>
+                            <span class="value editable" data-prop="faction">human</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Tier</span>
+                            <span class="value editable" data-prop="tier">1</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Class</span>
+                            <span class="value editable" data-prop="class">infantry</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">Tags</div>
+                    <div class="tags" id="tags-container">
+                        <span class="tag">military</span>
+                        <span class="tag">infantry</span>
+                        <span class="tag">ranged</span>
+                        <span class="tag">tier1</span>
+                        <span class="tag add-tag">+ Add Tag</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">Movement</div>
+                    <div class="properties-list">
+                        <div class="property-row">
+                            <span class="label">Move Speed</span>
+                            <span class="value editable" data-prop="movement.speed">5.0</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Turn Rate</span>
+                            <span class="value editable" data-prop="movement.turnRate">360</span>
+                        </div>
+                        <div class="property-row">
+                            <span class="label">Can Swim</span>
+                            <span class="value editable" data-prop="movement.canSwim">No</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abilities Tab -->
+            <div class="tab-content" id="tab-abilities">
+                <div class="section">
+                    <div class="section-header">Active Abilities</div>
+                    <div class="ability-list" id="abilities-list">
+                        <div class="ability-card" data-ability="grenade_throw">
+                            <div class="icon">&#x1F4A3;</div>
+                            <div class="info">
+                                <div class="name">Frag Grenade</div>
+                                <div class="desc">Throws a fragmentation grenade dealing area damage</div>
+                            </div>
+                            <div class="cooldown">20s CD</div>
+                        </div>
+                        <div class="ability-card" data-ability="take_cover">
+                            <div class="icon">&#x1F6E1;</div>
+                            <div class="info">
+                                <div class="name">Take Cover</div>
+                                <div class="desc">Reduces damage taken by 50% for 5 seconds</div>
+                            </div>
+                            <div class="cooldown">15s CD</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">Passive Effects</div>
+                    <div class="ability-list">
+                        <div class="ability-card">
+                            <div class="icon">&#x1F441;</div>
+                            <div class="info">
+                                <div class="name">Combat Training</div>
+                                <div class="desc">+5% accuracy after each kill, stacks up to 3 times</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dependencies Tab -->
+            <div class="tab-content" id="tab-dependencies">
+                <div class="section">
+                    <div class="section-header">This asset depends on</div>
+                    <div class="dependency-list" id="dependencies-list">
+                        <div class="dependency-item">
+                            <span class="icon">&#x27A4;</span>
+                            <a href="#" data-id="bullet_rifle">bullet_rifle</a>
+                            <span class="arrow">&#x2192;</span>
+                            <span>Projectile</span>
+                        </div>
+                        <div class="dependency-item">
+                            <span class="icon">&#x1F4A5;</span>
+                            <a href="#" data-id="grenade_throw">grenade_throw</a>
+                            <span class="arrow">&#x2192;</span>
+                            <span>Ability</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">Used by these assets</div>
+                    <div class="dependency-list" id="dependents-list">
+                        <div class="dependency-item">
+                            <span class="icon">&#x1F3E0;</span>
+                            <a href="#" data-id="barracks">barracks</a>
+                            <span class="arrow">&#x2192;</span>
+                            <span>Building</span>
+                        </div>
+                        <div class="dependency-item">
+                            <span class="icon">&#x1F333;</span>
+                            <a href="#" data-id="military_tree">military_tree</a>
+                            <span class="arrow">&#x2192;</span>
+                            <span>Tech Tree</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="preview-footer">
+            <button class="btn btn-primary" id="btn-open-editor">Open in Full Editor</button>
+            <button class="btn btn-secondary" id="btn-duplicate">Duplicate</button>
+            <button class="btn btn-secondary" id="btn-close">Close</button>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        let assetData = null;
+        let quickEditMode = false;
+
+        // Get asset ID from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const assetId = urlParams.get('id');
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Quick edit toggle
+        document.getElementById('btn-quick-edit').addEventListener('click', () => {
+            quickEditMode = !quickEditMode;
+            document.body.classList.toggle('quick-edit-active', quickEditMode);
+            document.getElementById('btn-quick-edit').textContent = quickEditMode ? 'Done' : 'Quick Edit';
+        });
+
+        // Editable fields
+        document.querySelectorAll('.value.editable').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (!quickEditMode) return;
+
+                const currentValue = el.textContent;
+                const prop = el.dataset.prop;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentValue;
+
+                input.addEventListener('blur', () => {
+                    const newValue = input.value;
+                    el.textContent = newValue;
+
+                    if (newValue !== currentValue) {
+                        saveProperty(prop, newValue);
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        input.blur();
+                    } else if (e.key === 'Escape') {
+                        el.textContent = currentValue;
+                    }
+                });
+
+                el.textContent = '';
+                el.appendChild(input);
+                input.focus();
+                input.select();
+            });
+        });
+
+        function saveProperty(prop, value) {
+            console.log('Saving property:', prop, '=', value);
+
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.updateProperty', [assetId, prop, value], (err) => {
+                    if (err) {
+                        console.error('Failed to save:', err);
+                    }
+                });
+            }
+        }
+
+        // Action buttons
+        document.getElementById('btn-open-editor').addEventListener('click', () => {
+            if (typeof WebEditor !== 'undefined') {
+                const type = assetData?.type || 'units';
+                const editors = {
+                    units: 'unit_editor.html',
+                    buildings: 'building_editor.html',
+                    spells: 'spell_editor.html',
+                    effects: 'effect_editor.html'
+                };
+                WebEditor.navigate(editors[type] || 'schema_editor.html', { id: assetId });
+            }
+        });
+
+        document.getElementById('btn-duplicate').addEventListener('click', () => {
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.duplicateItem', [assetId]);
+            }
+        });
+
+        document.getElementById('btn-close').addEventListener('click', () => {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'closePreview' }, '*');
+            } else {
+                window.close();
+            }
+        });
+
+        // Load asset data
+        function loadAsset() {
+            if (typeof WebEditor !== 'undefined' && assetId) {
+                WebEditor.invoke('contentBrowser.getItemData', [assetId], (err, data) => {
+                    if (!err && data) {
+                        assetData = data;
+                        updateUI(data);
+                    }
+                });
+            }
+        }
+
+        function updateUI(data) {
+            document.getElementById('asset-name').textContent = data.name || 'Unknown';
+            document.getElementById('asset-type').textContent = data.type || 'Unknown';
+            document.getElementById('asset-id').textContent = data.id || '';
+
+            // Update stats
+            if (data.combat) {
+                document.getElementById('stat-health').textContent = data.combat.health || 100;
+                document.getElementById('stat-damage').textContent = data.combat.attackDamage || 0;
+                document.getElementById('stat-armor').textContent = data.combat.armor || 0;
+            }
+            if (data.movement) {
+                document.getElementById('stat-speed').textContent = data.movement.speed || 0;
+            }
+
+            // Update tags
+            if (data.tags && data.tags.length > 0) {
+                const container = document.getElementById('tags-container');
+                container.innerHTML = data.tags.map(t => `<span class="tag">${t}</span>`).join('');
+                container.innerHTML += '<span class="tag add-tag">+ Add Tag</span>';
+            }
+        }
+
+        // Dependency links
+        document.querySelectorAll('.dependency-item a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const id = link.dataset.id;
+
+                if (typeof WebEditor !== 'undefined') {
+                    WebEditor.invoke('contentBrowser.selectItem', [id]);
+                }
+            });
+        });
+
+        // Ability cards
+        document.querySelectorAll('.ability-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const abilityId = card.dataset.ability;
+                if (abilityId && typeof WebEditor !== 'undefined') {
+                    WebEditor.navigate('ability_editor.html', { id: abilityId });
+                }
+            });
+        });
+
+        // Initialize
+        loadAsset();
+    })();
+    </script>
+</body>
+</html>

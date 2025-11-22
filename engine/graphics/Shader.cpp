@@ -6,8 +6,21 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <cassert>
 
 namespace Nova {
+
+// Debug validation for uniform setters - warns if shader not bound
+#ifdef NDEBUG
+    #define VALIDATE_SHADER_BOUND() ((void)0)
+#else
+    #define VALIDATE_SHADER_BOUND() \
+        do { \
+            if (!IsBound()) { \
+                spdlog::warn("Setting uniform on unbound shader (program {})", m_programID); \
+            } \
+        } while(0)
+#endif
 
 Shader::Shader() = default;
 
@@ -130,12 +143,21 @@ bool Shader::Reload() {
     return Load(m_vertexPath, m_fragmentPath, m_geometryPath);
 }
 
+// Track currently bound shader for debug validation
+static uint32_t s_currentlyBoundShader = 0;
+
 void Shader::Bind() const {
     glUseProgram(m_programID);
+    s_currentlyBoundShader = m_programID;
 }
 
 void Shader::Unbind() {
     glUseProgram(0);
+    s_currentlyBoundShader = 0;
+}
+
+bool Shader::IsBound() const {
+    return s_currentlyBoundShader == m_programID && m_programID != 0;
 }
 
 uint32_t Shader::CompileShader(uint32_t type, const std::string& source) {
@@ -243,66 +265,82 @@ int Shader::GetUniformLocation(const std::string& name) const {
 }
 
 void Shader::SetBool(const std::string& name, bool value) {
+    VALIDATE_SHADER_BOUND();
     glUniform1i(GetUniformLocation(name), static_cast<int>(value));
 }
 
 void Shader::SetInt(const std::string& name, int value) {
+    VALIDATE_SHADER_BOUND();
     glUniform1i(GetUniformLocation(name), value);
 }
 
 void Shader::SetUInt(const std::string& name, uint32_t value) {
+    VALIDATE_SHADER_BOUND();
     glUniform1ui(GetUniformLocation(name), value);
 }
 
 void Shader::SetFloat(const std::string& name, float value) {
+    VALIDATE_SHADER_BOUND();
     glUniform1f(GetUniformLocation(name), value);
 }
 
 void Shader::SetVec2(const std::string& name, const glm::vec2& value) {
+    VALIDATE_SHADER_BOUND();
     glUniform2fv(GetUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetVec3(const std::string& name, const glm::vec3& value) {
+    VALIDATE_SHADER_BOUND();
     glUniform3fv(GetUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetVec4(const std::string& name, const glm::vec4& value) {
+    VALIDATE_SHADER_BOUND();
     glUniform4fv(GetUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetIVec2(const std::string& name, const glm::ivec2& value) {
+    VALIDATE_SHADER_BOUND();
     glUniform2iv(GetUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetIVec3(const std::string& name, const glm::ivec3& value) {
+    VALIDATE_SHADER_BOUND();
     glUniform3iv(GetUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetIVec4(const std::string& name, const glm::ivec4& value) {
+    VALIDATE_SHADER_BOUND();
     glUniform4iv(GetUniformLocation(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetMat3(const std::string& name, const glm::mat3& value) {
+    VALIDATE_SHADER_BOUND();
     glUniformMatrix3fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Shader::SetMat4(const std::string& name, const glm::mat4& value) {
+    VALIDATE_SHADER_BOUND();
     glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Shader::SetFloatArray(const std::string& name, const float* values, int count) {
+    VALIDATE_SHADER_BOUND();
     glUniform1fv(GetUniformLocation(name), count, values);
 }
 
 void Shader::SetIntArray(const std::string& name, const int* values, int count) {
+    VALIDATE_SHADER_BOUND();
     glUniform1iv(GetUniformLocation(name), count, values);
 }
 
 void Shader::SetVec3Array(const std::string& name, const glm::vec3* values, int count) {
+    VALIDATE_SHADER_BOUND();
     glUniform3fv(GetUniformLocation(name), count, glm::value_ptr(values[0]));
 }
 
 void Shader::SetMat4Array(const std::string& name, const glm::mat4* values, int count) {
+    VALIDATE_SHADER_BOUND();
     glUniformMatrix4fv(GetUniformLocation(name), count, GL_FALSE, glm::value_ptr(values[0]));
 }
 

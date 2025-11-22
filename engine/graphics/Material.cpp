@@ -59,24 +59,38 @@ void Material::Bind() const {
         m_shader->SetMat4(name, value);
     }
 
-    // Handle two-sided rendering
+    // Handle two-sided rendering - save previous state before modifying
     if (m_twoSided) {
+        GLboolean cullingEnabled;
+        glGetBooleanv(GL_CULL_FACE, &cullingEnabled);
+        m_previousCullingState = (cullingEnabled == GL_TRUE);
         glDisable(GL_CULL_FACE);
     }
 
-    // Handle transparency
+    // Handle transparency - save previous state before modifying
     if (m_transparent) {
+        GLboolean blendEnabled;
+        glGetBooleanv(GL_BLEND, &blendEnabled);
+        m_previousBlendingState = (blendEnabled == GL_TRUE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 }
 
 void Material::Unbind() const {
+    // Restore previous state only if we modified it
     if (m_twoSided) {
-        glEnable(GL_CULL_FACE);
+        if (m_previousCullingState) {
+            glEnable(GL_CULL_FACE);
+        }
+        // If it was already disabled, no action needed
     }
+
     if (m_transparent) {
-        glDisable(GL_BLEND);
+        if (!m_previousBlendingState) {
+            glDisable(GL_BLEND);
+        }
+        // If it was already enabled, no action needed
     }
 }
 

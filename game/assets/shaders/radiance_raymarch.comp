@@ -1,0 +1,284 @@
+#version 460 core
+/*
+ * Radiance Cascades - Ray March Shader
+ *
+ * This compute shader performs the initial ray marching pass for radiance cascades.
+ * It shoots rays in multiple directions from each pixel to determine what light
+ * reaches that point, accounting for occlusion.
+ *
+ * Based on the Radiance Cascades technique by Alexander Sannikov.
+ */
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Output cascade texture (RGBA16F)
+// RGB = accumulated radiance, A = visibility
+layout(rgba16f, binding = 0) uniform image2D u_CascadeOutput;
+
+// Input occlusion texture (R8)
+// 255 = fully blocked, 0 = fully open
+layout(r8, binding = 1) uniform readonly image2D u_Occlusion;
+
+// Light data structure - must match CPU-side layout
+struct Light {
+    vec2 position;      // World/screen position
+    vec2 _pad0;
+    vec3 color;         // RGB color (0-1 range)
+    float intensity;    // Intensity multiplier
+    float radius;       // Maximum light radius
+    vec3 _padding;
+};
+
+// Shader storage buffer for lights
+layout(std430, binding = 0) buffer LightBuffer {
+    int numLights;
+    int _pad1, _pad2, _pad3;
+    Light lights[];
+};
+
+// Cascade parameters
+uniform int u_CascadeLevel;         // Current cascade level (0 = finest)
+uniform int u_NumRays;              // Number of rays to shoot per pixel
+uniform float u_IntervalStart;      // Start distance for ray interval
+uniform float u_IntervalEnd;        // End distance for ray interval
+uniform vec2 u_Resolution;          // Full screen resolution
+uniform vec2 u_OcclusionSize;       // Occlusion texture size
+uniform float u_BiasDistance;       // Bias to prevent self-occlusion
+
+// Player visibility parameters
+uniform vec2 u_PlayerPosition;
+uniform float u_PlayerRadius;
+uniform bool u_HasPlayer;
+
+// Mathematical constants
+const float PI = 3.14159265359;
+const float TAU = 6.28318530718;  // 2 * PI
+
+// ============================================================================
+// Occlusion Sampling
+// ============================================================================
+
+/**
+ * Sample occlusion texture with bounds checking
+ * Returns 1.0 if blocked, 0.0 if open
+ */
+float sampleOcclusion(vec2 pos) {
+    // Transform from screen space to occlusion texture space
+    vec2 texCoord = pos / u_Resolution * u_OcclusionSize;
+    ivec2 ipos = ivec2(texCoord);
+
+    // Bounds check
+    if (ipos.x < 0 || ipos.y < 0 ||
+        ipos.x >= int(u_OcclusionSize.x) || ipos.y >= int(u_OcclusionSize.y)) {
+        return 0.0; // Out of bounds = not blocked
+    }
+
+    return imageLoad(u_Occlusion, ipos).r;
+}
+
+/**
+ * Sample occlusion with bilinear filtering for smoother shadows
+ */
+float sampleOcclusionSmooth(vec2 pos) {
+    vec2 texCoord = pos / u_Resolution * u_OcclusionSize;
+    vec2 f = fract(texCoord);
+    ivec2 base = ivec2(floor(texCoord));
+
+    // Clamp to valid range
+    base = clamp(base, ivec2(0), ivec2(u_OcclusionSize) - 2);
+
+    float tl = imageLoad(u_Occlusion, base).r;
+    float tr = imageLoad(u_Occlusion, base + ivec2(1, 0)).r;
+    float bl = imageLoad(u_Occlusion, base + ivec2(0, 1)).r;
+    float br = imageLoad(u_Occlusion, base + ivec2(1, 1)).r;
+
+    float top = mix(tl, tr, f.x);
+    float bottom = mix(bl, br, f.x);
+    return mix(top, bottom, f.y);
+}
+
+// ============================================================================
+// Ray Marching
+// ============================================================================
+
+/**
+ * Ray march through the occlusion field
+ *
+ * @param origin Starting position in screen space
+ * @param direction Normalized ray direction
+ * @param startDist Starting distance along ray
+ * @param endDist Maximum distance to march
+ * @return vec2(visibility, hitDistance)
+ *         visibility: 0 = fully occluded, 1 = fully visible
+ *         hitDistance: distance traveled (useful for soft shadows)
+ */
+vec2 rayMarch(vec2 origin, vec2 direction, float startDist, float endDist) {
+    // Adaptive step size based on cascade level
+    float stepSize = max(0.5, float(1 << u_CascadeLevel) * 0.5);
+
+    float dist = startDist + u_BiasDistance;
+    float visibility = 1.0;
+    float hitDistance = endDist;
+
+    // Soft shadow accumulation
+    float shadow = 0.0;
+    int numSteps = 0;
+    const int maxSteps = 256;
+
+    while (dist < endDist && numSteps < maxSteps) {
+        vec2 pos = origin + direction * dist;
+
+        // Sample occlusion
+        float occlusion = sampleOcclusion(pos);
+
+        if (occlusion > 0.5) {
+            // Hit occluder - hard shadow
+            visibility = 0.0;
+            hitDistance = dist;
+            break;
+        } else if (occlusion > 0.0) {
+            // Partial occlusion - accumulate for soft shadows
+            shadow += occlusion * (1.0 - dist / endDist);
+        }
+
+        dist += stepSize;
+        numSteps++;
+    }
+
+    // Apply soft shadow factor
+    visibility *= max(0.0, 1.0 - shadow * 0.5);
+
+    return vec2(visibility, hitDistance);
+}
+
+// ============================================================================
+// Light Sampling
+// ============================================================================
+
+/**
+ * Sample light contribution from a specific light
+ */
+vec3 sampleLightContribution(Light light, vec2 screenPos, vec2 rayDir, float visibility) {
+    if (visibility <= 0.0) return vec3(0.0);
+
+    vec2 toLight = light.position - screenPos;
+    float distToLight = length(toLight);
+
+    // Early out if outside light radius
+    if (distToLight >= light.radius) return vec3(0.0);
+
+    vec2 dirToLight = toLight / max(distToLight, 0.001);
+
+    // Check if ray direction points toward light
+    float alignment = dot(rayDir, dirToLight);
+    if (alignment <= 0.0) return vec3(0.0);
+
+    // Distance attenuation (inverse square falloff with radius cutoff)
+    float normalizedDist = distToLight / light.radius;
+    float attenuation = 1.0 - normalizedDist;
+    attenuation = attenuation * attenuation;  // Quadratic falloff
+
+    // Angular contribution - rays pointing directly at light contribute more
+    float angular = pow(alignment, 2.0);
+
+    return light.color * light.intensity * attenuation * angular * visibility;
+}
+
+/**
+ * Sample player visibility contribution (for fog of war)
+ */
+float samplePlayerVisibility(vec2 screenPos, vec2 rayDir, float visibility) {
+    if (!u_HasPlayer || visibility <= 0.0) return 0.0;
+
+    vec2 toPlayer = u_PlayerPosition - screenPos;
+    float distToPlayer = length(toPlayer);
+
+    if (distToPlayer >= u_PlayerRadius) return 0.0;
+
+    vec2 dirToPlayer = toPlayer / max(distToPlayer, 0.001);
+    float alignment = dot(rayDir, dirToPlayer);
+
+    if (alignment <= 0.0) return 0.0;
+
+    float attenuation = 1.0 - (distToPlayer / u_PlayerRadius);
+    attenuation = attenuation * attenuation;
+    float angular = pow(alignment, 2.0);
+
+    return attenuation * angular * visibility;
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 cascadeSize = vec2(imageSize(u_CascadeOutput));
+
+    // Bounds check
+    if (pixelCoord.x >= int(cascadeSize.x) || pixelCoord.y >= int(cascadeSize.y)) {
+        return;
+    }
+
+    // Calculate screen position from cascade pixel
+    // Higher cascade levels have lower resolution, so we scale up
+    float scaleFactor = float(1 << u_CascadeLevel);
+    vec2 screenPos = (vec2(pixelCoord) + 0.5) * scaleFactor;
+
+    // Check if starting position is inside a wall
+    if (sampleOcclusion(screenPos) > 0.5) {
+        imageStore(u_CascadeOutput, pixelCoord, vec4(0.0));
+        return;
+    }
+
+    // Accumulate radiance from all ray directions
+    vec4 totalRadiance = vec4(0.0);
+    float totalWeight = 0.0;
+
+    // Use golden angle for better ray distribution
+    const float goldenAngle = 2.39996322972865332;
+
+    for (int i = 0; i < u_NumRays; i++) {
+        // Calculate ray direction using golden angle spiral for better coverage
+        float angle;
+        if (u_NumRays <= 8) {
+            // For few rays, use uniform distribution
+            angle = (float(i) + 0.5) / float(u_NumRays) * TAU;
+        } else {
+            // For many rays, use golden angle spiral
+            angle = float(i) * goldenAngle;
+        }
+
+        vec2 direction = vec2(cos(angle), sin(angle));
+
+        // Ray march in this direction
+        vec2 marchResult = rayMarch(screenPos, direction, u_IntervalStart, u_IntervalEnd);
+        float visibility = marchResult.x;
+        float hitDist = marchResult.y;
+
+        // Gather light from all sources
+        vec3 radiance = vec3(0.0);
+
+        // Sample each light
+        for (int li = 0; li < numLights && li < 256; li++) {
+            radiance += sampleLightContribution(lights[li], screenPos, direction, visibility);
+        }
+
+        // Sample player visibility (contributes to alpha channel)
+        float playerVis = samplePlayerVisibility(screenPos, direction, visibility);
+
+        totalRadiance.rgb += radiance;
+        totalRadiance.a += max(visibility * 0.5, playerVis);  // Blend visibility types
+        totalWeight += 1.0;
+    }
+
+    // Normalize by number of rays
+    if (totalWeight > 0.0) {
+        totalRadiance /= totalWeight;
+    }
+
+    // Store result
+    // RGB = radiance (light color/intensity reaching this point)
+    // A = visibility factor (for fog of war)
+    imageStore(u_CascadeOutput, pixelCoord, totalRadiance);
+}

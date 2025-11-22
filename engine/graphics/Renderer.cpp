@@ -101,6 +101,9 @@ void Renderer::SetViewport(int x, int y, int width, int height) {
 }
 
 void Renderer::SetDepthTest(bool enabled) {
+    if (m_glState.depthTest == enabled) return;
+    m_glState.depthTest = enabled;
+
     if (enabled) {
         glEnable(GL_DEPTH_TEST);
     } else {
@@ -109,19 +112,34 @@ void Renderer::SetDepthTest(bool enabled) {
 }
 
 void Renderer::SetDepthWrite(bool enabled) {
+    if (m_glState.depthWrite == enabled) return;
+    m_glState.depthWrite = enabled;
+
     glDepthMask(enabled ? GL_TRUE : GL_FALSE);
 }
 
 void Renderer::SetCulling(bool enabled, bool cullBack) {
-    if (enabled) {
-        glEnable(GL_CULL_FACE);
+    if (m_glState.culling == enabled && m_glState.cullBack == cullBack) return;
+
+    if (m_glState.culling != enabled) {
+        m_glState.culling = enabled;
+        if (enabled) {
+            glEnable(GL_CULL_FACE);
+        } else {
+            glDisable(GL_CULL_FACE);
+        }
+    }
+
+    if (enabled && m_glState.cullBack != cullBack) {
+        m_glState.cullBack = cullBack;
         glCullFace(cullBack ? GL_BACK : GL_FRONT);
-    } else {
-        glDisable(GL_CULL_FACE);
     }
 }
 
 void Renderer::SetBlending(bool enabled) {
+    if (m_glState.blending == enabled) return;
+    m_glState.blending = enabled;
+
     if (enabled) {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -131,6 +149,9 @@ void Renderer::SetBlending(bool enabled) {
 }
 
 void Renderer::SetWireframe(bool enabled) {
+    if (m_glState.wireframe == enabled) return;
+    m_glState.wireframe = enabled;
+
     glPolygonMode(GL_FRONT_AND_BACK, enabled ? GL_LINE : GL_FILL);
 }
 
@@ -174,7 +195,6 @@ void Renderer::DrawFullscreenQuad(Shader& shader) {
 
     glBindVertexArray(m_quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
 
     m_stats.drawCalls++;
 }
@@ -182,6 +202,88 @@ void Renderer::DrawFullscreenQuad(Shader& shader) {
 void Renderer::RenderDebug() {
     if (m_activeCamera) {
         m_debugDraw->Render(m_activeCamera->GetProjectionView());
+    }
+}
+
+bool Renderer::CheckGLError(const char* location) {
+    GLenum error = glGetError();
+    if (error == GL_NO_ERROR) {
+        return true;
+    }
+
+    const char* errorStr = "Unknown error";
+    switch (error) {
+        case GL_INVALID_ENUM:      errorStr = "GL_INVALID_ENUM"; break;
+        case GL_INVALID_VALUE:     errorStr = "GL_INVALID_VALUE"; break;
+        case GL_INVALID_OPERATION: errorStr = "GL_INVALID_OPERATION"; break;
+        case GL_OUT_OF_MEMORY:     errorStr = "GL_OUT_OF_MEMORY"; break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION: errorStr = "GL_INVALID_FRAMEBUFFER_OPERATION"; break;
+    }
+
+    if (location) {
+        spdlog::error("OpenGL error at {}: {}", location, errorStr);
+    } else {
+        spdlog::error("OpenGL error: {}", errorStr);
+    }
+
+    return false;
+}
+
+// Debug output callback for OpenGL 4.3+
+static void GLAPIENTRY GLDebugCallback(GLenum source, GLenum type, GLuint id,
+                                        GLenum severity, GLsizei /*length*/,
+                                        const GLchar* message, const void* /*userParam*/) {
+    // Ignore non-significant notifications
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
+
+    const char* sourceStr = "Unknown";
+    switch (source) {
+        case GL_DEBUG_SOURCE_API:             sourceStr = "API"; break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   sourceStr = "Window System"; break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER: sourceStr = "Shader Compiler"; break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:     sourceStr = "Third Party"; break;
+        case GL_DEBUG_SOURCE_APPLICATION:     sourceStr = "Application"; break;
+        case GL_DEBUG_SOURCE_OTHER:           sourceStr = "Other"; break;
+    }
+
+    const char* typeStr = "Unknown";
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:               typeStr = "Error"; break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeStr = "Deprecated"; break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  typeStr = "Undefined Behavior"; break;
+        case GL_DEBUG_TYPE_PORTABILITY:         typeStr = "Portability"; break;
+        case GL_DEBUG_TYPE_PERFORMANCE:         typeStr = "Performance"; break;
+        case GL_DEBUG_TYPE_MARKER:              typeStr = "Marker"; break;
+        case GL_DEBUG_TYPE_OTHER:               typeStr = "Other"; break;
+    }
+
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_HIGH:
+            spdlog::error("GL Debug [{}][{}] ({}): {}", sourceStr, typeStr, id, message);
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            spdlog::warn("GL Debug [{}][{}] ({}): {}", sourceStr, typeStr, id, message);
+            break;
+        case GL_DEBUG_SEVERITY_LOW:
+            spdlog::info("GL Debug [{}][{}] ({}): {}", sourceStr, typeStr, id, message);
+            break;
+        default:
+            spdlog::debug("GL Debug [{}][{}] ({}): {}", sourceStr, typeStr, id, message);
+            break;
+    }
+}
+
+void Renderer::EnableDebugOutput(bool enabled) {
+    if (enabled) {
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(GLDebugCallback, nullptr);
+        // Enable all debug messages
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+        spdlog::info("OpenGL debug output enabled");
+    } else {
+        glDisable(GL_DEBUG_OUTPUT);
+        spdlog::info("OpenGL debug output disabled");
     }
 }
 

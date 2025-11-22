@@ -1,11 +1,16 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <variant>
 #include <optional>
+#include <expected>
 #include <filesystem>
 #include <fstream>
+#include <shared_mutex>
+#include <concepts>
+#include <algorithm>
 #include <nlohmann/json.hpp>
 #include <glm/glm.hpp>
 
@@ -26,9 +31,42 @@ using ConfigValue = std::variant<
 >;
 
 /**
+ * @brief Configuration error types
+ */
+enum class ConfigError {
+    FileNotFound,
+    ParseError,
+    WriteError,
+    KeyNotFound,
+    TypeMismatch,
+    ValidationFailed
+};
+
+/**
+ * @brief Concept for types that can be stored in config
+ */
+template<typename T>
+concept ConfigStorable = std::same_as<T, bool> ||
+                         std::same_as<T, int> ||
+                         std::same_as<T, float> ||
+                         std::same_as<T, double> ||
+                         std::same_as<T, std::string> ||
+                         std::same_as<T, glm::vec2> ||
+                         std::same_as<T, glm::vec3> ||
+                         std::same_as<T, glm::vec4>;
+
+/**
+ * @brief Concept for numeric config types that support range validation
+ */
+template<typename T>
+concept ConfigNumeric = std::same_as<T, int> ||
+                        std::same_as<T, float> ||
+                        std::same_as<T, double>;
+
+/**
  * @brief JSON-based configuration system for engine settings
  *
- * Replaces all hardcoded magic numbers with configurable values.
+ * Thread-safe, cached configuration with validation support.
  * Supports hot-reloading and hierarchical configuration.
  */
 class Config {
@@ -38,55 +76,98 @@ public:
     // Delete copy/move for singleton
     Config(const Config&) = delete;
     Config& operator=(const Config&) = delete;
+    Config(Config&&) = delete;
+    Config& operator=(Config&&) = delete;
 
     /**
      * @brief Load configuration from JSON file
      * @param filepath Path to configuration file
-     * @return true if loaded successfully
+     * @return Expected success or error
      */
-    bool Load(const std::filesystem::path& filepath);
+    [[nodiscard]] std::expected<void, ConfigError> Load(const std::filesystem::path& filepath);
 
     /**
      * @brief Save current configuration to JSON file
      * @param filepath Path to save to (uses loaded path if empty)
-     * @return true if saved successfully
+     * @return Expected success or error
      */
-    bool Save(const std::filesystem::path& filepath = "");
+    [[nodiscard]] std::expected<void, ConfigError> Save(const std::filesystem::path& filepath = "");
 
     /**
      * @brief Reload configuration from disk
-     * @return true if reloaded successfully
+     * @return Expected success or error
      */
-    bool Reload();
+    [[nodiscard]] std::expected<void, ConfigError> Reload();
 
     /**
      * @brief Get a configuration value with type safety
-     * @tparam T The expected type
+     * @tparam T The expected type (must satisfy ConfigStorable)
      * @param key Dot-separated key path (e.g., "window.width")
      * @param defaultValue Value to return if key not found
      * @return The configuration value or default
      */
-    template<typename T>
-    T Get(const std::string& key, const T& defaultValue = T{}) const;
+    template<ConfigStorable T>
+    [[nodiscard]] T Get(std::string_view key, const T& defaultValue = T{}) const;
+
+    /**
+     * @brief Get a configuration value with error reporting
+     * @tparam T The expected type (must satisfy ConfigStorable)
+     * @param key Dot-separated key path
+     * @return Expected value or error
+     */
+    template<ConfigStorable T>
+    [[nodiscard]] std::expected<T, ConfigError> GetExpected(std::string_view key) const;
+
+    /**
+     * @brief Get a numeric value with range validation
+     * @tparam T The numeric type
+     * @param key Dot-separated key path
+     * @param minVal Minimum allowed value
+     * @param maxVal Maximum allowed value
+     * @param defaultValue Value to return if key not found or out of range
+     * @return The clamped configuration value or default
+     */
+    template<ConfigNumeric T>
+    [[nodiscard]] T GetClamped(std::string_view key, T minVal, T maxVal, const T& defaultValue = T{}) const;
 
     /**
      * @brief Set a configuration value
-     * @tparam T The value type
+     * @tparam T The value type (must satisfy ConfigStorable)
      * @param key Dot-separated key path
      * @param value The value to set
      */
-    template<typename T>
-    void Set(const std::string& key, const T& value);
+    template<ConfigStorable T>
+    void Set(std::string_view key, const T& value);
+
+    /**
+     * @brief Set a numeric value with range validation
+     * @tparam T The numeric type
+     * @param key Dot-separated key path
+     * @param value The value to set
+     * @param minVal Minimum allowed value
+     * @param maxVal Maximum allowed value
+     * @return true if value was within range, false if clamped
+     */
+    template<ConfigNumeric T>
+    bool SetValidated(std::string_view key, T value, T minVal, T maxVal);
 
     /**
      * @brief Check if a key exists
      */
-    bool Has(const std::string& key) const;
+    [[nodiscard]] bool Has(std::string_view key) const;
 
     /**
      * @brief Get the underlying JSON object for direct access
      */
-    const nlohmann::json& GetJson() const { return m_data; }
+    [[nodiscard]] const nlohmann::json& GetJson() const {
+        std::shared_lock lock(m_mutex);
+        return m_data;
+    }
+
+    /**
+     * @brief Clear the value cache (useful after external modifications)
+     */
+    void ClearCache();
 
     /**
      * @brief Create default configuration file
@@ -100,17 +181,81 @@ private:
     nlohmann::json m_data;
     std::filesystem::path m_filepath;
     mutable std::unordered_map<std::string, ConfigValue> m_cache;
+    mutable std::shared_mutex m_mutex;
 
-    nlohmann::json* NavigateToKey(const std::string& key, bool create = false);
-    const nlohmann::json* NavigateToKey(const std::string& key) const;
+    nlohmann::json* NavigateToKey(std::string_view key, bool create = false);
+    const nlohmann::json* NavigateToKey(std::string_view key) const;
+
+    // Cache key helper
+    static std::string MakeCacheKey(std::string_view key) { return std::string(key); }
 };
 
 // Template implementations
-template<typename T>
-T Config::Get(const std::string& key, const T& defaultValue) const {
+template<ConfigStorable T>
+T Config::Get(std::string_view key, const T& defaultValue) const {
+    std::shared_lock lock(m_mutex);
+
+    // Check cache first
+    auto cacheKey = MakeCacheKey(key);
+    if (auto it = m_cache.find(cacheKey); it != m_cache.end()) {
+        if (auto* val = std::get_if<T>(&it->second)) {
+            return *val;
+        }
+    }
+
     const auto* node = NavigateToKey(key);
     if (!node || node->is_null()) {
         return defaultValue;
+    }
+
+    try {
+        T result;
+        if constexpr (std::is_same_v<T, glm::vec2>) {
+            if (node->is_array() && node->size() >= 2) {
+                result = glm::vec2((*node)[0].get<float>(), (*node)[1].get<float>());
+            } else {
+                return defaultValue;
+            }
+        } else if constexpr (std::is_same_v<T, glm::vec3>) {
+            if (node->is_array() && node->size() >= 3) {
+                result = glm::vec3(
+                    (*node)[0].get<float>(),
+                    (*node)[1].get<float>(),
+                    (*node)[2].get<float>()
+                );
+            } else {
+                return defaultValue;
+            }
+        } else if constexpr (std::is_same_v<T, glm::vec4>) {
+            if (node->is_array() && node->size() >= 4) {
+                result = glm::vec4(
+                    (*node)[0].get<float>(),
+                    (*node)[1].get<float>(),
+                    (*node)[2].get<float>(),
+                    (*node)[3].get<float>()
+                );
+            } else {
+                return defaultValue;
+            }
+        } else {
+            result = node->get<T>();
+        }
+
+        // Cache the result
+        m_cache[cacheKey] = result;
+        return result;
+    } catch (...) {
+        return defaultValue;
+    }
+}
+
+template<ConfigStorable T>
+std::expected<T, ConfigError> Config::GetExpected(std::string_view key) const {
+    std::shared_lock lock(m_mutex);
+
+    const auto* node = NavigateToKey(key);
+    if (!node || node->is_null()) {
+        return std::unexpected(ConfigError::KeyNotFound);
     }
 
     try {
@@ -118,6 +263,7 @@ T Config::Get(const std::string& key, const T& defaultValue) const {
             if (node->is_array() && node->size() >= 2) {
                 return glm::vec2((*node)[0].get<float>(), (*node)[1].get<float>());
             }
+            return std::unexpected(ConfigError::TypeMismatch);
         } else if constexpr (std::is_same_v<T, glm::vec3>) {
             if (node->is_array() && node->size() >= 3) {
                 return glm::vec3(
@@ -126,6 +272,7 @@ T Config::Get(const std::string& key, const T& defaultValue) const {
                     (*node)[2].get<float>()
                 );
             }
+            return std::unexpected(ConfigError::TypeMismatch);
         } else if constexpr (std::is_same_v<T, glm::vec4>) {
             if (node->is_array() && node->size() >= 4) {
                 return glm::vec4(
@@ -135,17 +282,25 @@ T Config::Get(const std::string& key, const T& defaultValue) const {
                     (*node)[3].get<float>()
                 );
             }
+            return std::unexpected(ConfigError::TypeMismatch);
         } else {
             return node->get<T>();
         }
     } catch (...) {
-        return defaultValue;
+        return std::unexpected(ConfigError::TypeMismatch);
     }
-    return defaultValue;
 }
 
-template<typename T>
-void Config::Set(const std::string& key, const T& value) {
+template<ConfigNumeric T>
+T Config::GetClamped(std::string_view key, T minVal, T maxVal, const T& defaultValue) const {
+    T value = Get<T>(key, defaultValue);
+    return std::clamp(value, minVal, maxVal);
+}
+
+template<ConfigStorable T>
+void Config::Set(std::string_view key, const T& value) {
+    std::unique_lock lock(m_mutex);
+
     auto* node = NavigateToKey(key, true);
     if (node) {
         if constexpr (std::is_same_v<T, glm::vec2>) {
@@ -157,7 +312,18 @@ void Config::Set(const std::string& key, const T& value) {
         } else {
             *node = value;
         }
+
+        // Update cache
+        m_cache[MakeCacheKey(key)] = value;
     }
+}
+
+template<ConfigNumeric T>
+bool Config::SetValidated(std::string_view key, T value, T minVal, T maxVal) {
+    bool inRange = (value >= minVal && value <= maxVal);
+    T clampedValue = std::clamp(value, minVal, maxVal);
+    Set<T>(key, clampedValue);
+    return inRange;
 }
 
 /**

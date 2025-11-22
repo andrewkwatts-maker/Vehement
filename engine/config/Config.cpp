@@ -8,7 +8,8 @@ Config& Config::Instance() {
     return instance;
 }
 
-bool Config::Load(const std::filesystem::path& filepath) {
+std::expected<void, ConfigError> Config::Load(const std::filesystem::path& filepath) {
+    std::unique_lock lock(m_mutex);
     m_filepath = filepath;
 
     if (!std::filesystem::exists(filepath)) {
@@ -20,20 +21,21 @@ bool Config::Load(const std::filesystem::path& filepath) {
         std::ifstream file(filepath);
         if (!file.is_open()) {
             spdlog::error("Failed to open config file: {}", filepath.string());
-            return false;
+            return std::unexpected(ConfigError::FileNotFound);
         }
 
         m_data = nlohmann::json::parse(file);
         m_cache.clear();
         spdlog::info("Loaded configuration from: {}", filepath.string());
-        return true;
+        return {};
     } catch (const nlohmann::json::exception& e) {
         spdlog::error("Failed to parse config file: {}", e.what());
-        return false;
+        return std::unexpected(ConfigError::ParseError);
     }
 }
 
-bool Config::Save(const std::filesystem::path& filepath) {
+std::expected<void, ConfigError> Config::Save(const std::filesystem::path& filepath) {
+    std::shared_lock lock(m_mutex);
     const auto& path = filepath.empty() ? m_filepath : filepath;
 
     try {
@@ -45,37 +47,47 @@ bool Config::Save(const std::filesystem::path& filepath) {
         std::ofstream file(path);
         if (!file.is_open()) {
             spdlog::error("Failed to open config file for writing: {}", path.string());
-            return false;
+            return std::unexpected(ConfigError::WriteError);
         }
 
         file << std::setw(4) << m_data << std::endl;
         spdlog::info("Saved configuration to: {}", path.string());
-        return true;
+        return {};
     } catch (const std::exception& e) {
         spdlog::error("Failed to save config file: {}", e.what());
-        return false;
+        return std::unexpected(ConfigError::WriteError);
     }
 }
 
-bool Config::Reload() {
+std::expected<void, ConfigError> Config::Reload() {
+    // Note: Load acquires its own lock
     if (m_filepath.empty()) {
         spdlog::warn("No config file path set, cannot reload");
-        return false;
+        return std::unexpected(ConfigError::FileNotFound);
     }
     return Load(m_filepath);
 }
 
-bool Config::Has(const std::string& key) const {
+bool Config::Has(std::string_view key) const {
+    std::shared_lock lock(m_mutex);
     return NavigateToKey(key) != nullptr;
 }
 
-nlohmann::json* Config::NavigateToKey(const std::string& key, bool create) {
+void Config::ClearCache() {
+    std::unique_lock lock(m_mutex);
+    m_cache.clear();
+}
+
+nlohmann::json* Config::NavigateToKey(std::string_view key, bool create) {
+    // Parse key path into parts
     std::vector<std::string> parts;
-    std::stringstream ss(key);
-    std::string part;
-    while (std::getline(ss, part, '.')) {
-        parts.push_back(part);
+    size_t start = 0;
+    size_t end = 0;
+    while ((end = key.find('.', start)) != std::string_view::npos) {
+        parts.emplace_back(key.substr(start, end - start));
+        start = end + 1;
     }
+    parts.emplace_back(key.substr(start));
 
     nlohmann::json* current = &m_data;
     for (const auto& p : parts) {
@@ -94,13 +106,16 @@ nlohmann::json* Config::NavigateToKey(const std::string& key, bool create) {
     return current;
 }
 
-const nlohmann::json* Config::NavigateToKey(const std::string& key) const {
+const nlohmann::json* Config::NavigateToKey(std::string_view key) const {
+    // Parse key path into parts without stringstream for better performance
     std::vector<std::string> parts;
-    std::stringstream ss(key);
-    std::string part;
-    while (std::getline(ss, part, '.')) {
-        parts.push_back(part);
+    size_t start = 0;
+    size_t end = 0;
+    while ((end = key.find('.', start)) != std::string_view::npos) {
+        parts.emplace_back(key.substr(start, end - start));
+        start = end + 1;
     }
+    parts.emplace_back(key.substr(start));
 
     const nlohmann::json* current = &m_data;
     for (const auto& p : parts) {

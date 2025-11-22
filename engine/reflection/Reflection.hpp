@@ -9,7 +9,10 @@
 #include <typeindex>
 #include <any>
 #include <optional>
+#include <expected>
 #include <concepts>
+#include <span>
+#include <shared_mutex>
 
 namespace Nova {
 namespace Reflect {
@@ -20,12 +23,30 @@ class Property;
 class Method;
 
 /**
+ * @brief Reflection error types
+ */
+enum class ReflectionError {
+    TypeNotFound,
+    PropertyNotFound,
+    MethodNotFound,
+    TypeMismatch,
+    AccessDenied,
+    InvocationFailed
+};
+
+/**
  * @brief Type trait for reflectable types
  */
 template<typename T>
 concept Reflectable = requires {
     { T::GetStaticTypeInfo() } -> std::same_as<const TypeInfo&>;
 };
+
+/**
+ * @brief Concept for types that can be used as property types
+ */
+template<typename T>
+concept PropertyType = std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>;
 
 /**
  * @brief Property accessor types
@@ -37,7 +58,7 @@ enum class PropertyAccess {
 };
 
 /**
- * @brief Property metadata
+ * @brief Property metadata with constexpr defaults
  */
 struct PropertyMeta {
     std::string displayName;
@@ -50,10 +71,20 @@ struct PropertyMeta {
     bool isAngle = false;    // For radians/degrees conversion
     bool isHidden = false;
     bool isReadOnly = false;
+
+    // Builder-style setters for fluent configuration
+    constexpr PropertyMeta& WithDisplayName(std::string name) { displayName = std::move(name); return *this; }
+    constexpr PropertyMeta& WithDescription(std::string desc) { description = std::move(desc); return *this; }
+    constexpr PropertyMeta& WithCategory(std::string cat) { category = std::move(cat); return *this; }
+    constexpr PropertyMeta& WithRange(float min, float max) { minValue = min; maxValue = max; hasRange = true; return *this; }
+    constexpr PropertyMeta& AsColor() { isColor = true; return *this; }
+    constexpr PropertyMeta& AsAngle() { isAngle = true; return *this; }
+    constexpr PropertyMeta& AsHidden() { isHidden = true; return *this; }
+    constexpr PropertyMeta& AsReadOnly() { isReadOnly = true; return *this; }
 };
 
 /**
- * @brief Type-erased property accessor
+ * @brief Type-erased property accessor with improved error handling
  */
 class Property {
 public:
@@ -71,13 +102,34 @@ public:
         , m_access(setter ? PropertyAccess::ReadWrite : PropertyAccess::ReadOnly)
     {}
 
-    const std::string& GetName() const { return m_name; }
-    std::type_index GetType() const { return m_type; }
-    PropertyAccess GetAccess() const { return m_access; }
-    const PropertyMeta& GetMeta() const { return m_meta; }
+    [[nodiscard]] const std::string& GetName() const noexcept { return m_name; }
+    [[nodiscard]] std::type_index GetType() const noexcept { return m_type; }
+    [[nodiscard]] PropertyAccess GetAccess() const noexcept { return m_access; }
+    [[nodiscard]] const PropertyMeta& GetMeta() const noexcept { return m_meta; }
+    [[nodiscard]] bool IsReadOnly() const noexcept { return m_access == PropertyAccess::ReadOnly || m_meta.isReadOnly; }
+    [[nodiscard]] bool IsWritable() const noexcept { return m_setter != nullptr && !m_meta.isReadOnly; }
 
-    template<typename T>
-    std::optional<T> Get(const void* instance) const {
+    /**
+     * @brief Get property value with type checking
+     * @return Expected value or error
+     */
+    template<PropertyType T>
+    [[nodiscard]] std::expected<T, ReflectionError> Get(const void* instance) const {
+        if (std::type_index(typeid(T)) != m_type) {
+            return std::unexpected(ReflectionError::TypeMismatch);
+        }
+        try {
+            return std::any_cast<T>(m_getter(instance));
+        } catch (...) {
+            return std::unexpected(ReflectionError::TypeMismatch);
+        }
+    }
+
+    /**
+     * @brief Get property value, returning optional (legacy compatibility)
+     */
+    template<PropertyType T>
+    [[nodiscard]] std::optional<T> GetOptional(const void* instance) const {
         if (std::type_index(typeid(T)) != m_type) {
             return std::nullopt;
         }
@@ -88,30 +140,47 @@ public:
         }
     }
 
-    template<typename T>
-    bool Set(void* instance, const T& value) {
-        if (!m_setter || std::type_index(typeid(T)) != m_type) {
-            return false;
+    /**
+     * @brief Set property value with type checking
+     * @return Expected success or error
+     */
+    template<PropertyType T>
+    std::expected<void, ReflectionError> Set(void* instance, const T& value) {
+        if (!m_setter) {
+            return std::unexpected(ReflectionError::AccessDenied);
+        }
+        if (std::type_index(typeid(T)) != m_type) {
+            return std::unexpected(ReflectionError::TypeMismatch);
         }
         try {
             m_setter(instance, std::any(value));
-            return true;
+            return {};
         } catch (...) {
-            return false;
+            return std::unexpected(ReflectionError::InvocationFailed);
         }
     }
 
-    std::any GetAny(const void* instance) const {
+    /**
+     * @brief Set property value, returning bool (legacy compatibility)
+     */
+    template<PropertyType T>
+    bool TrySet(void* instance, const T& value) {
+        return Set(instance, value).has_value();
+    }
+
+    [[nodiscard]] std::any GetAny(const void* instance) const {
         return m_getter(instance);
     }
 
-    bool SetAny(void* instance, const std::any& value) {
-        if (!m_setter) return false;
+    std::expected<void, ReflectionError> SetAny(void* instance, const std::any& value) {
+        if (!m_setter) {
+            return std::unexpected(ReflectionError::AccessDenied);
+        }
         try {
             m_setter(instance, value);
-            return true;
+            return {};
         } catch (...) {
-            return false;
+            return std::unexpected(ReflectionError::InvocationFailed);
         }
     }
 
@@ -125,7 +194,7 @@ private:
 };
 
 /**
- * @brief Type-erased method wrapper
+ * @brief Type-erased method wrapper with improved error handling
  */
 class Method {
 public:
@@ -140,11 +209,29 @@ public:
         , m_returnType(returnType)
     {}
 
-    const std::string& GetName() const { return m_name; }
-    const std::vector<std::type_index>& GetParamTypes() const { return m_paramTypes; }
-    std::type_index GetReturnType() const { return m_returnType; }
+    [[nodiscard]] const std::string& GetName() const noexcept { return m_name; }
+    [[nodiscard]] std::span<const std::type_index> GetParamTypes() const noexcept { return m_paramTypes; }
+    [[nodiscard]] std::type_index GetReturnType() const noexcept { return m_returnType; }
+    [[nodiscard]] size_t GetParamCount() const noexcept { return m_paramTypes.size(); }
 
-    std::any Invoke(void* instance, const std::vector<std::any>& args = {}) const {
+    /**
+     * @brief Invoke method with argument validation
+     */
+    [[nodiscard]] std::expected<std::any, ReflectionError> Invoke(void* instance, const std::vector<std::any>& args = {}) const {
+        if (args.size() != m_paramTypes.size()) {
+            return std::unexpected(ReflectionError::InvocationFailed);
+        }
+        try {
+            return m_invoker(instance, args);
+        } catch (...) {
+            return std::unexpected(ReflectionError::InvocationFailed);
+        }
+    }
+
+    /**
+     * @brief Invoke method without validation (legacy compatibility)
+     */
+    std::any InvokeUnchecked(void* instance, const std::vector<std::any>& args = {}) const {
         return m_invoker(instance, args);
     }
 
@@ -156,7 +243,7 @@ private:
 };
 
 /**
- * @brief Runtime type information for a class
+ * @brief Runtime type information for a class with improved API
  */
 class TypeInfo {
 public:
@@ -166,22 +253,53 @@ public:
         , m_size(size)
     {}
 
-    const std::string& GetName() const { return m_name; }
-    std::type_index GetType() const { return m_type; }
-    size_t GetSize() const { return m_size; }
+    [[nodiscard]] const std::string& GetName() const noexcept { return m_name; }
+    [[nodiscard]] std::type_index GetType() const noexcept { return m_type; }
+    [[nodiscard]] size_t GetSize() const noexcept { return m_size; }
+    [[nodiscard]] size_t GetPropertyCount() const noexcept { return m_properties.size(); }
+    [[nodiscard]] size_t GetMethodCount() const noexcept { return m_methods.size(); }
+    [[nodiscard]] bool HasBase() const noexcept { return m_baseType != nullptr; }
 
     // Property access
     void AddProperty(Property prop) {
-        m_properties[prop.GetName()] = std::move(prop);
+        m_properties.try_emplace(prop.GetName(), std::move(prop));
     }
 
-    const Property* GetProperty(const std::string& name) const {
-        auto it = m_properties.find(name);
-        return it != m_properties.end() ? &it->second : nullptr;
+    [[nodiscard]] std::expected<const Property*, ReflectionError> GetProperty(std::string_view name) const {
+        auto it = m_properties.find(std::string(name));
+        if (it != m_properties.end()) {
+            return &it->second;
+        }
+        // Check base class
+        if (m_baseType) {
+            return m_baseType->GetProperty(name);
+        }
+        return std::unexpected(ReflectionError::PropertyNotFound);
     }
 
-    std::vector<const Property*> GetProperties() const {
+    [[nodiscard]] const Property* FindProperty(std::string_view name) const noexcept {
+        auto it = m_properties.find(std::string(name));
+        if (it != m_properties.end()) {
+            return &it->second;
+        }
+        return m_baseType ? m_baseType->FindProperty(name) : nullptr;
+    }
+
+    [[nodiscard]] std::vector<const Property*> GetProperties() const {
         std::vector<const Property*> props;
+        props.reserve(m_properties.size());
+        for (const auto& [name, prop] : m_properties) {
+            props.push_back(&prop);
+        }
+        return props;
+    }
+
+    [[nodiscard]] std::vector<const Property*> GetAllProperties() const {
+        std::vector<const Property*> props;
+        if (m_baseType) {
+            props = m_baseType->GetAllProperties();
+        }
+        props.reserve(props.size() + m_properties.size());
         for (const auto& [name, prop] : m_properties) {
             props.push_back(&prop);
         }
@@ -190,16 +308,31 @@ public:
 
     // Method access
     void AddMethod(Method method) {
-        m_methods[method.GetName()] = std::move(method);
+        m_methods.try_emplace(method.GetName(), std::move(method));
     }
 
-    const Method* GetMethod(const std::string& name) const {
-        auto it = m_methods.find(name);
-        return it != m_methods.end() ? &it->second : nullptr;
+    [[nodiscard]] std::expected<const Method*, ReflectionError> GetMethod(std::string_view name) const {
+        auto it = m_methods.find(std::string(name));
+        if (it != m_methods.end()) {
+            return &it->second;
+        }
+        if (m_baseType) {
+            return m_baseType->GetMethod(name);
+        }
+        return std::unexpected(ReflectionError::MethodNotFound);
     }
 
-    std::vector<const Method*> GetMethods() const {
+    [[nodiscard]] const Method* FindMethod(std::string_view name) const noexcept {
+        auto it = m_methods.find(std::string(name));
+        if (it != m_methods.end()) {
+            return &it->second;
+        }
+        return m_baseType ? m_baseType->FindMethod(name) : nullptr;
+    }
+
+    [[nodiscard]] std::vector<const Method*> GetMethods() const {
         std::vector<const Method*> methods;
+        methods.reserve(m_methods.size());
         for (const auto& [name, method] : m_methods) {
             methods.push_back(&method);
         }
@@ -207,19 +340,29 @@ public:
     }
 
     // Base class
-    void SetBaseType(const TypeInfo* base) { m_baseType = base; }
-    const TypeInfo* GetBaseType() const { return m_baseType; }
+    void SetBaseType(const TypeInfo* base) noexcept { m_baseType = base; }
+    [[nodiscard]] const TypeInfo* GetBaseType() const noexcept { return m_baseType; }
+
+    /**
+     * @brief Check if this type derives from another type
+     */
+    [[nodiscard]] bool DerivedFrom(const TypeInfo* other) const noexcept {
+        if (!other) return false;
+        if (m_type == other->m_type) return true;
+        return m_baseType ? m_baseType->DerivedFrom(other) : false;
+    }
 
     // Factory function
     using Factory = std::function<void*()>;
     void SetFactory(Factory factory) { m_factory = std::move(factory); }
+    [[nodiscard]] bool HasFactory() const noexcept { return m_factory != nullptr; }
 
-    void* CreateInstance() const {
+    [[nodiscard]] void* CreateInstance() const {
         return m_factory ? m_factory() : nullptr;
     }
 
     template<typename T>
-    std::unique_ptr<T> Create() const {
+    [[nodiscard]] std::unique_ptr<T> Create() const {
         return std::unique_ptr<T>(static_cast<T*>(CreateInstance()));
     }
 
@@ -234,7 +377,7 @@ private:
 };
 
 /**
- * @brief Global type registry
+ * @brief Global type registry with thread-safe operations
  */
 class TypeRegistry {
 public:
@@ -243,9 +386,17 @@ public:
         return instance;
     }
 
+    // Delete copy/move
+    TypeRegistry(const TypeRegistry&) = delete;
+    TypeRegistry& operator=(const TypeRegistry&) = delete;
+    TypeRegistry(TypeRegistry&&) = delete;
+    TypeRegistry& operator=(TypeRegistry&&) = delete;
+
     template<typename T>
     TypeInfo& RegisterType(std::string_view name) {
         auto type = std::type_index(typeid(T));
+        std::unique_lock lock(m_mutex);
+
         auto [it, inserted] = m_types.try_emplace(
             type,
             std::make_unique<TypeInfo>(name, type, sizeof(T))
@@ -261,33 +412,63 @@ public:
     }
 
     template<typename T>
-    const TypeInfo* GetType() const {
+    [[nodiscard]] const TypeInfo* GetType() const {
+        std::shared_lock lock(m_mutex);
         auto it = m_types.find(std::type_index(typeid(T)));
         return it != m_types.end() ? it->second.get() : nullptr;
     }
 
-    const TypeInfo* GetType(const std::string& name) const {
-        auto it = m_typesByName.find(name);
+    [[nodiscard]] std::expected<const TypeInfo*, ReflectionError> GetType(std::string_view name) const {
+        std::shared_lock lock(m_mutex);
+        auto it = m_typesByName.find(std::string(name));
+        if (it != m_typesByName.end()) {
+            return it->second;
+        }
+        return std::unexpected(ReflectionError::TypeNotFound);
+    }
+
+    [[nodiscard]] const TypeInfo* FindType(std::string_view name) const noexcept {
+        std::shared_lock lock(m_mutex);
+        auto it = m_typesByName.find(std::string(name));
         return it != m_typesByName.end() ? it->second : nullptr;
     }
 
-    const TypeInfo* GetType(std::type_index type) const {
+    [[nodiscard]] const TypeInfo* FindType(std::type_index type) const noexcept {
+        std::shared_lock lock(m_mutex);
         auto it = m_types.find(type);
         return it != m_types.end() ? it->second.get() : nullptr;
     }
 
-    std::vector<const TypeInfo*> GetAllTypes() const {
+    [[nodiscard]] std::vector<const TypeInfo*> GetAllTypes() const {
+        std::shared_lock lock(m_mutex);
         std::vector<const TypeInfo*> types;
+        types.reserve(m_types.size());
         for (const auto& [_, info] : m_types) {
             types.push_back(info.get());
         }
         return types;
     }
 
+    [[nodiscard]] size_t GetTypeCount() const noexcept {
+        std::shared_lock lock(m_mutex);
+        return m_types.size();
+    }
+
+    [[nodiscard]] bool IsRegistered(std::type_index type) const noexcept {
+        std::shared_lock lock(m_mutex);
+        return m_types.contains(type);
+    }
+
+    template<typename T>
+    [[nodiscard]] bool IsRegistered() const noexcept {
+        return IsRegistered(std::type_index(typeid(T)));
+    }
+
 private:
     TypeRegistry() = default;
     std::unordered_map<std::type_index, std::unique_ptr<TypeInfo>> m_types;
     std::unordered_map<std::string, TypeInfo*> m_typesByName;
+    mutable std::shared_mutex m_mutex;
 };
 
 /**

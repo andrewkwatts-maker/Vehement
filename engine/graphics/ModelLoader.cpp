@@ -15,22 +15,12 @@ namespace Nova {
 std::unordered_map<std::string, std::shared_ptr<Texture>> ModelLoader::s_textureCache;
 
 namespace {
-    glm::mat4 ConvertMatrix(const aiMatrix4x4& m) {
-        return glm::mat4(
-            m.a1, m.b1, m.c1, m.d1,
-            m.a2, m.b2, m.c2, m.d2,
-            m.a3, m.b3, m.c3, m.d3,
-            m.a4, m.b4, m.c4, m.d4
-        );
-    }
-
     glm::vec3 ConvertVec3(const aiVector3D& v) {
         return glm::vec3(v.x, v.y, v.z);
     }
 
-    glm::vec2 ConvertVec2(const aiVector2D& v) {
-        return glm::vec2(v.x, v.y);
-    }
+    // Note: ConvertMatrix helper for aiMatrix4x4 -> glm::mat4 can be added here
+    // when skeleton/animation loading is implemented.
 
     std::shared_ptr<Texture> LoadMaterialTexture(const aiMaterial* mat, aiTextureType type,
                                                   const std::string& directory) {

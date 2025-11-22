@@ -101,6 +101,10 @@ private:
 
     bool m_twoSided = false;
     bool m_transparent = false;
+
+    // Track state changes made during Bind() for proper restoration
+    mutable bool m_previousCullingState = true;
+    mutable bool m_previousBlendingState = false;
 };
 
 } // namespace Nova

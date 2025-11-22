@@ -135,6 +135,18 @@ public:
 
     const Stats& GetStats() const { return m_stats; }
 
+    /**
+     * @brief Check for OpenGL errors (debug utility)
+     * @param location Optional string to identify where the check was called
+     * @return true if no errors were found
+     */
+    static bool CheckGLError(const char* location = nullptr);
+
+    /**
+     * @brief Enable or disable OpenGL debug output (requires OpenGL 4.3+)
+     */
+    static void EnableDebugOutput(bool enabled);
+
 private:
     void CreateFullscreenQuad();
 
@@ -149,6 +161,19 @@ private:
 
     Stats m_stats;
     bool m_initialized = false;
+
+    // Cached OpenGL state to avoid redundant state changes
+    struct GLState {
+        bool depthTest = true;
+        bool depthWrite = true;
+        bool culling = true;
+        bool cullBack = true;
+        bool blending = false;
+        bool wireframe = false;
+        uint32_t boundVAO = 0;
+        uint32_t boundShader = 0;
+    };
+    mutable GLState m_glState;
 };
 
 } // namespace Nova

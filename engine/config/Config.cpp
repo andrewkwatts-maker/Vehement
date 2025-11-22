@@ -207,4 +207,73 @@ void Config::CreateDefault(const std::filesystem::path& filepath) {
     }
 }
 
+void Config::RegisterFastLookup(std::string_view key) {
+    std::unique_lock lock(m_mutex);
+
+    uint64_t hash = HashKey(key);
+
+    // Already registered?
+    if (m_hashCache.find(hash) != m_hashCache.end()) {
+        return;
+    }
+
+    // Look up and cache the value
+    const auto* node = NavigateToKey(key);
+    if (!node || node->is_null()) {
+        return;
+    }
+
+    // Try to determine and cache the value type
+    try {
+        if (node->is_boolean()) {
+            m_hashCache[hash] = node->get<bool>();
+        } else if (node->is_number_integer()) {
+            m_hashCache[hash] = node->get<int>();
+        } else if (node->is_number_float()) {
+            m_hashCache[hash] = node->get<float>();
+        } else if (node->is_string()) {
+            m_hashCache[hash] = node->get<std::string>();
+        } else if (node->is_array()) {
+            if (node->size() == 2) {
+                m_hashCache[hash] = glm::vec2((*node)[0].get<float>(), (*node)[1].get<float>());
+            } else if (node->size() == 3) {
+                m_hashCache[hash] = glm::vec3((*node)[0].get<float>(), (*node)[1].get<float>(), (*node)[2].get<float>());
+            } else if (node->size() >= 4) {
+                m_hashCache[hash] = glm::vec4((*node)[0].get<float>(), (*node)[1].get<float>(),
+                                              (*node)[2].get<float>(), (*node)[3].get<float>());
+            }
+        }
+    } catch (const std::exception& e) {
+        spdlog::warn("Failed to cache config key '{}': {}", key, e.what());
+    }
+}
+
+void Config::BuildFastLookupTable() {
+    // Pre-register commonly accessed config values
+    const char* commonKeys[] = {
+        "window.width",
+        "window.height",
+        "window.vsync",
+        "window.fullscreen",
+        "camera.fov",
+        "camera.near_plane",
+        "camera.far_plane",
+        "camera.move_speed",
+        "render.enable_shadows",
+        "render.shadow_map_size",
+        "render.gamma",
+        "debug.show_grid",
+        "debug.show_fps",
+        "particles.max_particles",
+        "terrain.chunk_size",
+        "terrain.view_distance"
+    };
+
+    for (const char* key : commonKeys) {
+        RegisterFastLookup(key);
+    }
+
+    spdlog::info("Built config fast lookup table with {} entries", m_hashCache.size());
+}
+
 } // namespace Nova

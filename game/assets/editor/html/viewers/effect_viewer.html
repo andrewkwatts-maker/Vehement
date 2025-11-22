@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Effect/Buff Viewer - Nova3D Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root { --bg-primary: #1e1e1e; --bg-secondary: #252526; --bg-tertiary: #2d2d30; --bg-hover: #3e3e42; --border-color: #3c3c3c; --text-primary: #cccccc; --text-secondary: #9d9d9d; --text-bright: #ffffff; --accent-primary: #007acc; --success: #4ec9b0; --warning: #dcdcaa; --error: #f14c4c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: var(--text-primary); background: var(--bg-primary); height: 100vh; overflow: hidden; }
+        .viewer-container { display: flex; flex-direction: column; height: 100vh; }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
+        .toolbar h1 { font-size: 16px; font-weight: 500; color: var(--text-bright); }
+        .dirty-indicator { color: var(--warning); font-size: 18px; display: none; }
+        .btn { padding: 6px 12px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; }
+        .btn:hover { background: var(--bg-hover); }
+        .btn-primary { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+        .btn-small { padding: 4px 8px; font-size: 12px; }
+        .btn-add { color: var(--success); border-style: dashed; }
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+        .properties-panel { width: 350px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); overflow-y: auto; }
+        .preview-area { flex: 1; display: flex; flex-direction: column; }
+        .preview-canvas { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+        .section { border-bottom: 1px solid var(--border-color); }
+        .section-header { display: flex; align-items: center; padding: 10px 12px; cursor: pointer; font-weight: 500; color: var(--text-bright); user-select: none; }
+        .section-header:hover { background: var(--bg-hover); }
+        .section-header .icon { margin-right: 8px; font-size: 10px; transition: transform 0.2s; }
+        .section.collapsed .section-header .icon { transform: rotate(-90deg); }
+        .section.collapsed .section-content { display: none; }
+        .section-content { padding: 12px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 12px; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 6px 8px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; }
+        input:focus, select:focus { outline: none; border-color: var(--accent-primary); }
+        .stat-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .stat-row label { width: 120px; margin-bottom: 0; }
+        .stat-row input, .stat-row select { flex: 1; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); }
+        .tab { padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); }
+        .tab.active { color: var(--text-bright); border-bottom-color: var(--accent-primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .modifier-item { display: flex; gap: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 8px; align-items: center; }
+        .modifier-item select, .modifier-item input { flex: 1; }
+        .effect-card { max-width: 300px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; }
+        .effect-card-header { display: flex; gap: 12px; margin-bottom: 12px; }
+        .effect-icon { width: 48px; height: 48px; background: var(--bg-tertiary); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .effect-icon.buff { background: linear-gradient(135deg, #2d5016, #4a8c28); }
+        .effect-icon.debuff { background: linear-gradient(135deg, #5c1a1a, #8c2828); }
+        .effect-title { flex: 1; }
+        .effect-name { font-weight: 600; color: var(--text-bright); font-size: 15px; }
+        .effect-type { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+        .effect-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4; }
+        .effect-stats { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border-color); font-size: 12px; }
+        .effect-modifiers { padding-top: 12px; border-top: 1px solid var(--border-color); }
+        .mod-line { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+        .mod-positive { color: var(--success); }
+        .mod-negative { color: var(--error); }
+        .trigger-item { padding: 10px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 8px; }
+        .trigger-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .aura-preview { position: absolute; bottom: 20px; right: 20px; width: 200px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 12px; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn" onclick="goBack()">Back</button>
+                <h1 id="effect-title">Effect/Buff Viewer</h1>
+                <span class="dirty-indicator" id="dirty-indicator">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="loadConfig()">Load</button>
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="saveConfig()">Save</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="properties-panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="general">General</div>
+                    <div class="tab" data-tab="modifiers">Modifiers</div>
+                    <div class="tab" data-tab="triggers">Triggers</div>
+                    <div class="tab" data-tab="visuals">Visuals</div>
+                </div>
+
+                <div class="tab-content active" id="tab-general">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Basic Info</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group"><label>ID</label><input type="text" data-path="id" readonly></div>
+                            <div class="form-group"><label>Name</label><input type="text" data-path="name" onchange="updatePreview()"></div>
+                            <div class="form-group"><label>Description</label><textarea data-path="description" rows="3" onchange="updatePreview()"></textarea></div>
+                            <div class="form-group"><label>Type</label>
+                                <select data-path="type" onchange="updatePreview()">
+                                    <option value="buff">Buff (Positive)</option>
+                                    <option value="debuff">Debuff (Negative)</option>
+                                    <option value="neutral">Neutral</option>
+                                    <option value="aura">Aura</option>
+                                    <option value="dot">Damage Over Time</option>
+                                    <option value="hot">Heal Over Time</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Icon</label>
+                                <div style="display:flex;gap:8px">
+                                    <input type="text" data-path="icon">
+                                    <button class="btn btn-small" onclick="browseIcon()">Browse</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Duration & Stacking</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="stat-row"><label>Duration (s)</label><input type="number" data-path="duration" value="10" min="0" step="0.1" onchange="updatePreview()"></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="isPermanent"> Permanent (no duration)</label></div>
+                            <div class="stat-row"><label>Max Stacks</label><input type="number" data-path="maxStacks" value="1" min="1"></div>
+                            <div class="form-group"><label>Stacking Behavior</label>
+                                <select data-path="stackBehavior">
+                                    <option value="refresh">Refresh Duration</option>
+                                    <option value="add">Add Stack</option>
+                                    <option value="extend">Extend Duration</option>
+                                    <option value="replace">Replace</option>
+                                    <option value="ignore">Ignore (Don't Stack)</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label><input type="checkbox" data-path="isDispellable" checked> Can Be Dispelled</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="persistsThroughDeath"> Persists Through Death</label></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Aura Settings</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group"><label><input type="checkbox" data-path="isAura" onchange="updatePreview()"> Is Aura Effect</label></div>
+                            <div class="stat-row"><label>Aura Radius</label><input type="number" data-path="auraRadius" value="5" min="0" step="0.5" onchange="updatePreview()"></div>
+                            <div class="form-group"><label>Affects</label>
+                                <select data-path="auraTargets">
+                                    <option value="allies">Allies</option>
+                                    <option value="enemies">Enemies</option>
+                                    <option value="all">All Units</option>
+                                    <option value="self">Self Only</option>
+                                </select>
+                            </div>
+                            <div class="stat-row"><label>Tick Rate (s)</label><input type="number" data-path="tickRate" value="1" min="0.1" step="0.1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-modifiers">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Stat Modifiers</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="stat-modifiers"></div>
+                            <button class="btn btn-small btn-add" onclick="addModifier()">+ Add Modifier</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Per-Tick Effects</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="stat-row"><label>Damage/Tick</label><input type="number" data-path="tickDamage" value="0" min="0"></div>
+                            <div class="form-group"><label>Damage Type</label>
+                                <select data-path="tickDamageType">
+                                    <option value="physical">Physical</option>
+                                    <option value="magic">Magic</option>
+                                    <option value="fire">Fire</option>
+                                    <option value="poison">Poison</option>
+                                    <option value="true">True</option>
+                                </select>
+                            </div>
+                            <div class="stat-row"><label>Heal/Tick</label><input type="number" data-path="tickHeal" value="0" min="0"></div>
+                            <div class="stat-row"><label>Mana/Tick</label><input type="number" data-path="tickMana" value="0"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-triggers">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Trigger Conditions</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="trigger-conditions"></div>
+                            <button class="btn btn-small btn-add" onclick="addTrigger()">+ Add Trigger</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Removal Conditions</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group"><label>Remove When</label>
+                                <select data-path="removeCondition">
+                                    <option value="duration">Duration Expires</option>
+                                    <option value="damage">Takes Damage</option>
+                                    <option value="move">Moves</option>
+                                    <option value="cast">Casts Spell</option>
+                                    <option value="attack">Attacks</option>
+                                    <option value="manual">Manual Only</option>
+                                </select>
+                            </div>
+                            <div class="stat-row"><label>Damage Threshold</label><input type="number" data-path="removeDamageThreshold" value="0" min="0"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-visuals">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Visual Effects</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group"><label>Particle Effect</label><input type="text" data-path="visuals.particle"></div>
+                            <div class="form-group"><label>Apply Effect</label><input type="text" data-path="visuals.applyEffect"></div>
+                            <div class="form-group"><label>Remove Effect</label><input type="text" data-path="visuals.removeEffect"></div>
+                            <div class="form-group"><label>Tick Effect</label><input type="text" data-path="visuals.tickEffect"></div>
+                            <div class="form-group"><label>Tint Color</label><input type="color" data-path="visuals.tint" value="#ffffff"></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Status Bar</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group"><label><input type="checkbox" data-path="showInUI" checked> Show in Status Bar</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="showDuration" checked> Show Duration</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="showStacks"> Show Stack Count</label></div>
+                            <div class="form-group"><label>Priority (Sort Order)</label><input type="number" data-path="uiPriority" value="0"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div class="preview-canvas" id="preview-container">
+                    <div class="effect-card" id="effect-preview">
+                        <div class="effect-card-header">
+                            <div class="effect-icon buff" id="preview-icon">+</div>
+                            <div class="effect-title">
+                                <div class="effect-name" id="preview-name">New Effect</div>
+                                <div class="effect-type" id="preview-type">BUFF</div>
+                            </div>
+                        </div>
+                        <div class="effect-desc" id="preview-desc">Effect description goes here.</div>
+                        <div class="effect-stats">
+                            <span>Duration: <strong id="preview-duration">10s</strong></span>
+                            <span>Stacks: <strong id="preview-stacks">1</strong></span>
+                        </div>
+                        <div class="effect-modifiers" id="preview-modifiers">
+                            <!-- Modifiers preview -->
+                        </div>
+                    </div>
+
+                    <div class="aura-preview" id="aura-preview" style="display:none;">
+                        <strong>Aura Range</strong>
+                        <div id="aura-range-display">5 units</div>
+                        <canvas id="aura-canvas" width="180" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script src="../js/viewer_common.js"></script>
+    <script>
+        let configData = {}, originalData = {}, undoStack = [], redoStack = [], currentFile = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initTabs();
+            initFormBindings();
+            setDefaultConfig();
+        });
+
+        function initTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+                });
+            });
+        }
+
+        function initFormBindings() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                input.addEventListener('change', function() {
+                    saveUndoState();
+                    setPath(configData, this.getAttribute('data-path'), getInputValue(this));
+                    setDirty(true);
+                    updatePreview();
+                });
+            });
+        }
+
+        function setDefaultConfig() {
+            configData = {
+                id: 'effect_new', name: 'New Effect', description: 'Effect description', type: 'buff',
+                duration: 10, maxStacks: 1, stackBehavior: 'refresh', isDispellable: true,
+                modifiers: [], triggers: [], visuals: { showInUI: true, showDuration: true }
+            };
+            originalData = JSON.parse(JSON.stringify(configData));
+            populateForm();
+            updatePreview();
+        }
+
+        function updatePreview() {
+            document.getElementById('preview-name').textContent = configData.name || 'Unnamed';
+            document.getElementById('preview-type').textContent = (configData.type || 'buff').toUpperCase();
+            document.getElementById('preview-desc').textContent = configData.description || '';
+            document.getElementById('preview-duration').textContent = configData.isPermanent ? 'Permanent' : (configData.duration || 0) + 's';
+            document.getElementById('preview-stacks').textContent = configData.maxStacks || 1;
+
+            const icon = document.getElementById('preview-icon');
+            icon.className = 'effect-icon ' + (configData.type === 'debuff' || configData.type === 'dot' ? 'debuff' : 'buff');
+            icon.textContent = configData.type === 'debuff' || configData.type === 'dot' ? '-' : '+';
+
+            // Update modifiers preview
+            const modPreview = document.getElementById('preview-modifiers');
+            modPreview.innerHTML = (configData.modifiers || []).map(m => {
+                const isPositive = m.value > 0;
+                const sign = isPositive ? '+' : '';
+                const percent = m.type === 'percent' ? '%' : '';
+                return `<div class="mod-line"><span>${m.stat}</span><span class="${isPositive ? 'mod-positive' : 'mod-negative'}">${sign}${m.value}${percent}</span></div>`;
+            }).join('');
+
+            // Aura preview
+            const auraPreview = document.getElementById('aura-preview');
+            if (configData.isAura) {
+                auraPreview.style.display = 'block';
+                document.getElementById('aura-range-display').textContent = (configData.auraRadius || 5) + ' units';
+                drawAuraPreview();
+            } else {
+                auraPreview.style.display = 'none';
+            }
+        }
+
+        function drawAuraPreview() {
+            const canvas = document.getElementById('aura-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) / 2 - 10;
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 122, 204, 0.2)';
+            ctx.fill();
+            ctx.strokeStyle = '#007acc';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+        }
+
+        function addModifier() {
+            if (!configData.modifiers) configData.modifiers = [];
+            saveUndoState();
+            configData.modifiers.push({ stat: 'health', type: 'flat', value: 10 });
+            updateModifiersList();
+            updatePreview();
+            setDirty(true);
+        }
+
+        function updateModifiersList() {
+            document.getElementById('stat-modifiers').innerHTML = (configData.modifiers || []).map((m, i) => `
+                <div class="modifier-item">
+                    <select onchange="updateMod(${i}, 'stat', this.value)">
+                        <option value="health" ${m.stat === 'health' ? 'selected' : ''}>Health</option>
+                        <option value="mana" ${m.stat === 'mana' ? 'selected' : ''}>Mana</option>
+                        <option value="damage" ${m.stat === 'damage' ? 'selected' : ''}>Damage</option>
+                        <option value="armor" ${m.stat === 'armor' ? 'selected' : ''}>Armor</option>
+                        <option value="magicResist" ${m.stat === 'magicResist' ? 'selected' : ''}>Magic Resist</option>
+                        <option value="attackSpeed" ${m.stat === 'attackSpeed' ? 'selected' : ''}>Attack Speed</option>
+                        <option value="moveSpeed" ${m.stat === 'moveSpeed' ? 'selected' : ''}>Move Speed</option>
+                        <option value="critChance" ${m.stat === 'critChance' ? 'selected' : ''}>Crit Chance</option>
+                    </select>
+                    <select style="width:80px" onchange="updateMod(${i}, 'type', this.value)">
+                        <option value="flat" ${m.type === 'flat' ? 'selected' : ''}>Flat</option>
+                        <option value="percent" ${m.type === 'percent' ? 'selected' : ''}>%</option>
+                    </select>
+                    <input type="number" value="${m.value}" style="width:70px" onchange="updateMod(${i}, 'value', parseFloat(this.value))">
+                    <button class="btn btn-small" onclick="removeMod(${i})">X</button>
+                </div>`).join('');
+        }
+
+        function updateMod(i, k, v) { saveUndoState(); configData.modifiers[i][k] = v; updatePreview(); setDirty(true); }
+        function removeMod(i) { saveUndoState(); configData.modifiers.splice(i, 1); updateModifiersList(); updatePreview(); setDirty(true); }
+
+        function addTrigger() {
+            if (!configData.triggers) configData.triggers = [];
+            saveUndoState();
+            configData.triggers.push({ event: 'onHit', action: 'applyEffect', params: {} });
+            updateTriggersList();
+            setDirty(true);
+        }
+
+        function updateTriggersList() {
+            document.getElementById('trigger-conditions').innerHTML = (configData.triggers || []).map((t, i) => `
+                <div class="trigger-item">
+                    <div class="trigger-header"><span>Trigger ${i + 1}</span><button class="btn btn-small" onclick="removeTrigger(${i})">X</button></div>
+                    <div class="form-group"><label>Event</label>
+                        <select onchange="updateTrigger(${i}, 'event', this.value)">
+                            <option value="onHit" ${t.event === 'onHit' ? 'selected' : ''}>On Hit</option>
+                            <option value="onDamage" ${t.event === 'onDamage' ? 'selected' : ''}>On Take Damage</option>
+                            <option value="onKill" ${t.event === 'onKill' ? 'selected' : ''}>On Kill</option>
+                            <option value="onCast" ${t.event === 'onCast' ? 'selected' : ''}>On Cast</option>
+                            <option value="onTick" ${t.event === 'onTick' ? 'selected' : ''}>On Tick</option>
+                            <option value="onExpire" ${t.event === 'onExpire' ? 'selected' : ''}>On Expire</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Action</label>
+                        <select onchange="updateTrigger(${i}, 'action', this.value)">
+                            <option value="applyEffect" ${t.action === 'applyEffect' ? 'selected' : ''}>Apply Effect</option>
+                            <option value="dealDamage" ${t.action === 'dealDamage' ? 'selected' : ''}>Deal Damage</option>
+                            <option value="heal" ${t.action === 'heal' ? 'selected' : ''}>Heal</option>
+                            <option value="removeStacks" ${t.action === 'removeStacks' ? 'selected' : ''}>Remove Stacks</option>
+                            <option value="callScript" ${t.action === 'callScript' ? 'selected' : ''}>Call Script</option>
+                        </select>
+                    </div>
+                </div>`).join('');
+        }
+
+        function updateTrigger(i, k, v) { saveUndoState(); configData.triggers[i][k] = v; setDirty(true); }
+        function removeTrigger(i) { saveUndoState(); configData.triggers.splice(i, 1); updateTriggersList(); setDirty(true); }
+
+        function populateForm() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                setInputValue(input, getPath(configData, input.getAttribute('data-path')));
+            });
+            updateModifiersList();
+            updateTriggersList();
+        }
+
+        function loadConfig() { viewerBridge.browseFile('*.json').then(p => p && loadConfigFromPath(p)); }
+        function loadConfigFromPath(p) { currentFile = p; viewerBridge.loadConfig(p).then(d => { configData = d; originalData = JSON.parse(JSON.stringify(d)); populateForm(); updatePreview(); document.getElementById('effect-title').textContent = d.name || 'Effect Viewer'; setDirty(false); }); }
+        function saveConfig() { if (!currentFile) viewerBridge.browseFile('*.json').then(p => { if (p) { currentFile = p; doSave(); } }); else doSave(); }
+        function doSave() { viewerBridge.saveConfig(currentFile, configData).then(() => { originalData = JSON.parse(JSON.stringify(configData)); setDirty(false); }); }
+
+        function saveUndoState() { undoStack.push(JSON.parse(JSON.stringify(configData))); redoStack = []; if (undoStack.length > 50) undoStack.shift(); }
+        function undo() { if (!undoStack.length) return; redoStack.push(JSON.parse(JSON.stringify(configData))); configData = undoStack.pop(); populateForm(); updatePreview(); setDirty(true); }
+        function redo() { if (!redoStack.length) return; undoStack.push(JSON.parse(JSON.stringify(configData))); configData = redoStack.pop(); populateForm(); updatePreview(); setDirty(true); }
+
+        function toggleSection(h) { h.parentElement.classList.toggle('collapsed'); }
+        function setDirty(d) { document.getElementById('dirty-indicator').style.display = d ? 'inline' : 'none'; }
+        function goBack() { if (document.getElementById('dirty-indicator').style.display !== 'none' && !confirm('Discard changes?')) return; window.history.back(); }
+        function browseIcon() { viewerBridge.browseFile('*.png').then(p => { if (p) { setPath(configData, 'icon', p); document.querySelector('[data-path="icon"]').value = p; setDirty(true); } }); }
+
+        function getPath(o, p) { if (!p) return o; const ps = p.split('.'); let c = o; for (const x of ps) { if (c == null) return undefined; c = c[x]; } return c; }
+        function setPath(o, p, v) { const ps = p.split('.'); let c = o; for (let i = 0; i < ps.length - 1; i++) { if (c[ps[i]] === undefined) c[ps[i]] = {}; c = c[ps[i]]; } c[ps[ps.length - 1]] = v; }
+        function getInputValue(i) { if (i.type === 'checkbox') return i.checked; if (i.type === 'number') return parseFloat(i.value) || 0; return i.value; }
+        function setInputValue(i, v) { if (i.type === 'checkbox') i.checked = !!v; else if (i.type === 'color') i.value = v || '#ffffff'; else i.value = v != null ? v : ''; }
+
+        document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveConfig(); } if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); } });
+    </script>
+</body>
+</html>

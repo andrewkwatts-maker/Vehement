@@ -1,0 +1,329 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dialogue.schema.json",
+  "title": "Dialogue Definition",
+  "description": "Defines a dialogue tree or conversation",
+  "type": "object",
+  "required": ["id", "name", "nodes"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^dialogue_[a-z_]+$",
+      "description": "Unique dialogue identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Internal description"
+    },
+    "speaker": {
+      "type": "string",
+      "description": "Default speaker NPC ID"
+    },
+    "startNode": {
+      "type": "string",
+      "description": "Starting node ID"
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/dialogueNode" },
+      "minItems": 1
+    },
+    "variables": {
+      "type": "object",
+      "additionalProperties": {},
+      "description": "Local dialogue variables"
+    },
+    "conditions": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/definitions/condition" },
+      "description": "Conditions to trigger this dialogue"
+    },
+    "priority": {
+      "type": "integer",
+      "default": 0,
+      "description": "Priority when multiple dialogues match"
+    },
+    "oneTime": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only play once"
+    },
+    "cooldown": {
+      "$ref": "common.schema.json#/definitions/duration"
+    },
+    "interruptible": {
+      "type": "boolean",
+      "default": true
+    },
+    "pauseGame": {
+      "type": "boolean",
+      "default": false
+    },
+    "music": {
+      "$ref": "common.schema.json#/definitions/assetPath"
+    },
+    "ambience": {
+      "$ref": "common.schema.json#/definitions/assetPath"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    }
+  },
+
+  "definitions": {
+    "dialogueNode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "enum": ["text", "choice", "branch", "action", "random", "end"],
+          "default": "text"
+        },
+        "speaker": {
+          "type": "string",
+          "description": "Speaker NPC ID (overrides default)"
+        },
+        "speakerName": {
+          "$ref": "common.schema.json#/definitions/localizedString",
+          "description": "Display name override"
+        },
+        "text": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "textVariants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": { "$ref": "common.schema.json#/definitions/condition" },
+              "text": { "$ref": "common.schema.json#/definitions/localizedString" }
+            },
+            "required": ["condition", "text"]
+          }
+        },
+        "portrait": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "emotion": {
+          "enum": ["neutral", "happy", "sad", "angry", "surprised", "afraid", "disgusted", "custom"]
+        },
+        "animation": {
+          "type": "string"
+        },
+        "voiceover": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Auto-advance after duration"
+        },
+        "typingSpeed": {
+          "type": "number",
+          "description": "Characters per second"
+        },
+        "skippable": {
+          "type": "boolean",
+          "default": true
+        },
+        "choices": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/dialogueChoice" }
+        },
+        "next": {
+          "type": "string",
+          "description": "Next node ID"
+        },
+        "branches": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/dialogueBranch" }
+        },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "events": {
+          "$ref": "#/definitions/nodeEvents"
+        },
+        "camera": {
+          "$ref": "#/definitions/cameraConfig"
+        },
+        "position": {
+          "$ref": "common.schema.json#/definitions/vector2",
+          "description": "Editor position"
+        }
+      },
+      "required": ["id"]
+    },
+
+    "dialogueChoice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "text": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "shortText": {
+          "$ref": "common.schema.json#/definitions/localizedString",
+          "description": "Abbreviated choice text"
+        },
+        "next": {
+          "type": "string",
+          "description": "Target node ID"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "showWhenDisabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "disabledReason": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "consequences": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        },
+        "skillCheck": {
+          "$ref": "#/definitions/skillCheck"
+        },
+        "reputation": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "personality": {
+          "enum": ["kind", "cruel", "sarcastic", "honest", "deceptive", "neutral"]
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "tooltip": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "oneTime": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["text", "next"]
+    },
+
+    "dialogueBranch": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "$ref": "common.schema.json#/definitions/condition"
+        },
+        "next": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer"
+        }
+      },
+      "required": ["condition", "next"]
+    },
+
+    "skillCheck": {
+      "type": "object",
+      "properties": {
+        "skill": {
+          "type": "string"
+        },
+        "difficulty": {
+          "type": "integer"
+        },
+        "showDifficulty": {
+          "type": "boolean",
+          "default": true
+        },
+        "successNode": {
+          "type": "string"
+        },
+        "failureNode": {
+          "type": "string"
+        },
+        "criticalSuccessNode": {
+          "type": "string"
+        },
+        "criticalFailureNode": {
+          "type": "string"
+        },
+        "autoSuccess": {
+          "type": "boolean",
+          "default": false,
+          "description": "Always succeeds if requirements met"
+        }
+      },
+      "required": ["skill", "difficulty"]
+    },
+
+    "nodeEvents": {
+      "type": "object",
+      "properties": {
+        "onEnter": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        },
+        "onExit": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        },
+        "onTextComplete": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        }
+      }
+    },
+
+    "cameraConfig": {
+      "type": "object",
+      "properties": {
+        "shot": {
+          "enum": ["closeup", "medium", "wide", "over_shoulder", "custom"]
+        },
+        "target": {
+          "type": "string",
+          "description": "Entity to focus on"
+        },
+        "position": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "rotation": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "fov": {
+          "type": "number"
+        },
+        "transitionTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "shake": {
+          "type": "object",
+          "properties": {
+            "intensity": { "type": "number" },
+            "duration": { "$ref": "common.schema.json#/definitions/duration" }
+          }
+        }
+      }
+    }
+  }
+}

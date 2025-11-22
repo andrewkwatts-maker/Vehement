@@ -1,0 +1,204 @@
+{
+  "version": "1.0",
+  "description": "Combat-related event bindings",
+  "bindings": [
+    {
+      "id": "combat_unit_damaged_check_death",
+      "name": "Check Unit Death on Damage",
+      "description": "When a unit takes damage, check if it should die",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnDamage",
+        "propertyPath": "health.current",
+        "comparator": "<=",
+        "compareValue": 0,
+        "description": "Health dropped to zero or below"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.combat.handlers",
+      "pythonFunction": "handle_unit_death",
+      "parameters": {
+        "playDeathAnimation": true,
+        "dropLoot": true,
+        "notifyKiller": true
+      },
+      "enabled": true,
+      "priority": 100,
+      "tags": ["combat", "death", "critical"]
+    },
+    {
+      "id": "combat_health_low_flee",
+      "name": "Flee on Low Health",
+      "description": "Trigger flee behavior when health drops below threshold",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnHealthChanged",
+        "propertyPath": "health.percentage",
+        "comparator": "<",
+        "compareValue": 25,
+        "and": [
+          {
+            "eventName": "OnHealthChanged",
+            "propertyPath": "ai.canFlee",
+            "comparator": "==",
+            "compareValue": true
+          }
+        ],
+        "description": "Health below 25% and unit can flee"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.ai.behaviors",
+      "pythonFunction": "trigger_flee_behavior",
+      "parameters": {
+        "fleeDistance": 10.0,
+        "fleeSpeed": 1.5,
+        "duration": 5.0
+      },
+      "enabled": true,
+      "priority": 50,
+      "cooldown": 10.0,
+      "tags": ["combat", "ai", "flee"]
+    },
+    {
+      "id": "combat_kill_grant_experience",
+      "name": "Grant Experience on Kill",
+      "description": "Award experience points when a unit kills an enemy",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnKill",
+        "description": "Unit killed another unit"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.progression.experience",
+      "pythonFunction": "grant_kill_experience",
+      "parameters": {
+        "baseExperience": 50,
+        "levelMultiplier": 1.2,
+        "bonusForElites": 2.0
+      },
+      "enabled": true,
+      "priority": 75,
+      "tags": ["combat", "progression", "experience"]
+    },
+    {
+      "id": "combat_critical_hit_effect",
+      "name": "Critical Hit Visual Effect",
+      "description": "Play visual effect when a critical hit lands",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnDamage",
+        "propertyPath": "damage.isCritical",
+        "comparator": "==",
+        "compareValue": true
+      },
+      "callbackType": "python",
+      "pythonModule": "game.effects.combat",
+      "pythonFunction": "play_critical_hit_effect",
+      "parameters": {
+        "effectName": "critical_hit_flash",
+        "screenShake": true,
+        "shakeIntensity": 0.3
+      },
+      "enabled": true,
+      "priority": 25,
+      "tags": ["combat", "effects", "visual"]
+    },
+    {
+      "id": "combat_aggro_on_attack",
+      "name": "Generate Aggro on Attack",
+      "description": "Update threat table when attacking",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnAttack"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.ai.threat",
+      "pythonFunction": "update_threat_on_attack",
+      "parameters": {
+        "threatMultiplier": 1.0
+      },
+      "enabled": true,
+      "priority": 60,
+      "tags": ["combat", "ai", "threat"]
+    },
+    {
+      "id": "combat_heal_clear_bleed",
+      "name": "Clear Bleed on Heal",
+      "description": "Remove bleeding status when healed above threshold",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnHeal",
+        "propertyPath": "health.percentage",
+        "comparator": ">",
+        "compareValue": 50,
+        "and": [
+          {
+            "eventName": "OnHeal",
+            "propertyPath": "status.hasBleeding",
+            "comparator": "==",
+            "compareValue": true
+          }
+        ]
+      },
+      "callbackType": "python",
+      "pythonScript": "entity.remove_status('bleeding')\nlog_info(f'Cleared bleeding from {entity.name}')",
+      "enabled": true,
+      "priority": 40,
+      "tags": ["combat", "status", "healing"]
+    },
+    {
+      "id": "combat_revenge_damage_boost",
+      "name": "Revenge Damage Boost",
+      "description": "Increase damage when an ally dies nearby",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnAllyDeath",
+        "propertyPath": "distance.toAlly",
+        "comparator": "<",
+        "compareValue": 15.0
+      },
+      "callbackType": "python",
+      "pythonModule": "game.combat.buffs",
+      "pythonFunction": "apply_revenge_buff",
+      "parameters": {
+        "damageBoost": 0.25,
+        "duration": 10.0,
+        "stackable": false
+      },
+      "enabled": true,
+      "priority": 30,
+      "cooldown": 30.0,
+      "tags": ["combat", "buff", "morale"]
+    },
+    {
+      "id": "combat_overkill_splash",
+      "name": "Overkill Splash Damage",
+      "description": "Deal splash damage to nearby enemies on overkill",
+      "category": "Combat",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnKill",
+        "propertyPath": "damage.overkillAmount",
+        "comparator": ">",
+        "compareValue": 20
+      },
+      "callbackType": "python",
+      "pythonModule": "game.combat.special",
+      "pythonFunction": "apply_overkill_splash",
+      "parameters": {
+        "splashRadius": 3.0,
+        "damagePercent": 0.5
+      },
+      "enabled": true,
+      "priority": 45,
+      "tags": ["combat", "special", "aoe"]
+    }
+  ]
+}

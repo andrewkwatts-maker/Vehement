@@ -1,0 +1,310 @@
+{
+    "id": "tech_tree_fortress",
+    "name": "Fortress Technologies",
+    "description": "Specialized technologies for the Fortress culture, focusing on defensive warfare, fortifications, and resilient construction.",
+    "icon": "icons/techtrees/fortress.png",
+    "culture": "fortress",
+    "universal": false,
+
+    "nodes": [
+        {
+            "id": "tech_fortress_stone_masonry",
+            "name": "Stone Masonry",
+            "description": "Master the art of cutting and placing stone for impregnable fortifications.",
+            "icon": "icons/tech/fortress/stone_masonry.png",
+            "tier": 1,
+            "category": "defense",
+            "age_requirement": "bronze",
+            "cost": {
+                "stone": 200,
+                "time": 90
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["fortress_wall_tier1", "stone_gatehouse"],
+                "upgrades": ["reinforced_foundations"]
+            },
+            "modifiers": [
+                {"stat": "max_health", "type": "percent", "value": 25, "scope": {"building_type": "wall"}},
+                {"stat": "armor", "type": "flat", "value": 5, "scope": {"building_type": "defensive"}}
+            ],
+            "events": {
+                "on_research_complete": "scripts/tech/fortress/stone_masonry.py"
+            },
+            "position": {"x": 0, "y": 0, "row": 0, "column": 0},
+            "key_tech": true
+        },
+        {
+            "id": "tech_fortress_thick_walls",
+            "name": "Thick Walls",
+            "description": "Build exceptionally thick walls that can withstand the heaviest siege weapons.",
+            "icon": "icons/tech/fortress/thick_walls.png",
+            "tier": 2,
+            "category": "defense",
+            "age_requirement": "iron",
+            "cost": {
+                "stone": 350,
+                "metal": 100,
+                "time": 150
+            },
+            "prerequisites": ["tech_fortress_stone_masonry"],
+            "unlocks": {
+                "buildings": ["fortress_wall_tier2", "bastion"],
+                "upgrades": ["double_wall_construction"]
+            },
+            "modifiers": [
+                {"stat": "max_health", "type": "percent", "value": 50, "scope": {"building_type": "wall"}},
+                {"stat": "armor", "type": "flat", "value": 15, "scope": {"building_type": "wall"}},
+                {"stat": "damage", "type": "percent", "value": -25, "scope": {"category": "siege"}, "condition": {"type": "when_near_building", "target": "fortress_wall", "radius": 5}}
+            ],
+            "position": {"x": 0, "y": 120, "row": 1, "column": 0}
+        },
+        {
+            "id": "tech_fortress_castle_keep",
+            "name": "Castle Keep",
+            "description": "Construct a central keep that serves as the ultimate defensive structure.",
+            "icon": "icons/tech/fortress/castle_keep.png",
+            "tier": 3,
+            "category": "defense",
+            "age_requirement": "medieval",
+            "cost": {
+                "stone": 500,
+                "metal": 200,
+                "gold": 150,
+                "time": 240
+            },
+            "prerequisites": ["tech_fortress_thick_walls"],
+            "unlocks": {
+                "buildings": ["castle_keep", "inner_bailey"],
+                "abilities": ["last_stand"]
+            },
+            "modifiers": [
+                {"stat": "max_health", "type": "percent", "value": 100, "scope": {"building_type": "keep"}},
+                {"stat": "garrison_capacity", "type": "flat", "value": 20, "scope": {"building_type": "keep"}},
+                {"stat": "damage", "type": "percent", "value": 25, "scope": "global", "condition": {"type": "when_health_below", "threshold": 0.25}}
+            ],
+            "position": {"x": 0, "y": 240, "row": 2, "column": 0},
+            "key_tech": true
+        },
+        {
+            "id": "tech_fortress_defensive_towers",
+            "name": "Defensive Towers",
+            "description": "Build tall towers with overlapping fields of fire to defend your walls.",
+            "icon": "icons/tech/fortress/defensive_towers.png",
+            "tier": 1,
+            "category": "defense",
+            "age_requirement": "bronze",
+            "cost": {
+                "stone": 180,
+                "wood": 80,
+                "time": 90
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["guard_tower", "arrow_tower"],
+                "upgrades": ["elevated_platforms"]
+            },
+            "modifiers": [
+                {"stat": "attack_range", "type": "flat", "value": 3, "scope": {"building_type": "tower"}},
+                {"stat": "vision_range", "type": "flat", "value": 5, "scope": {"building_type": "tower"}}
+            ],
+            "position": {"x": 200, "y": 0, "row": 0, "column": 1}
+        },
+        {
+            "id": "tech_fortress_murder_holes",
+            "name": "Murder Holes",
+            "description": "Add openings in gatehouses to pour boiling oil or drop stones on attackers.",
+            "icon": "icons/tech/fortress/murder_holes.png",
+            "tier": 2,
+            "category": "defense",
+            "age_requirement": "iron",
+            "cost": {
+                "stone": 200,
+                "metal": 80,
+                "time": 120
+            },
+            "prerequisites": ["tech_fortress_defensive_towers"],
+            "unlocks": {
+                "abilities": ["boiling_oil", "stone_drop"],
+                "upgrades": ["gatehouse_defenses"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "flat", "value": 50, "scope": {"building_type": "gatehouse"}, "condition": {"type": "when_in_combat"}}
+            ],
+            "position": {"x": 200, "y": 120, "row": 1, "column": 1}
+        },
+        {
+            "id": "tech_fortress_garrison_training",
+            "name": "Garrison Training",
+            "description": "Train specialized garrison troops skilled in defensive warfare.",
+            "icon": "icons/tech/fortress/garrison_training.png",
+            "tier": 2,
+            "category": "military",
+            "age_requirement": "iron",
+            "cost": {
+                "gold": 200,
+                "food": 150,
+                "time": 120
+            },
+            "prerequisites": ["tech_fortress_stone_masonry"],
+            "unlocks": {
+                "units": ["garrison_guard", "wall_defender"],
+                "abilities": ["fortify_position"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 30, "scope": "global", "condition": {"type": "when_garrisoned"}},
+                {"stat": "armor", "type": "percent", "value": 50, "scope": "global", "condition": {"type": "when_garrisoned"}}
+            ],
+            "position": {"x": 400, "y": 120, "row": 1, "column": 2}
+        },
+        {
+            "id": "tech_fortress_siege_resistance",
+            "name": "Siege Resistance",
+            "description": "Develop techniques to resist prolonged sieges.",
+            "icon": "icons/tech/fortress/siege_resistance.png",
+            "tier": 3,
+            "category": "defense",
+            "age_requirement": "medieval",
+            "cost": {
+                "stone": 300,
+                "food": 200,
+                "gold": 150,
+                "time": 180
+            },
+            "prerequisites": ["tech_fortress_thick_walls", "tech_fortress_garrison_training"],
+            "unlocks": {
+                "buildings": ["deep_well", "underground_granary"],
+                "abilities": ["ration_supplies", "repair_walls"]
+            },
+            "modifiers": [
+                {"stat": "upkeep", "type": "percent", "value": -30, "scope": "global", "condition": {"type": "when_in_combat"}},
+                {"stat": "health_regen", "type": "flat", "value": 5, "scope": {"building_type": "defensive"}}
+            ],
+            "position": {"x": 200, "y": 240, "row": 2, "column": 1}
+        },
+        {
+            "id": "tech_fortress_moat_engineering",
+            "name": "Moat Engineering",
+            "description": "Construct moats and water defenses around your fortifications.",
+            "icon": "icons/tech/fortress/moat.png",
+            "tier": 2,
+            "category": "defense",
+            "age_requirement": "iron",
+            "cost": {
+                "stone": 200,
+                "gold": 100,
+                "time": 120
+            },
+            "prerequisites": ["tech_fortress_stone_masonry"],
+            "unlocks": {
+                "buildings": ["moat", "drawbridge", "water_gate"]
+            },
+            "modifiers": [
+                {"stat": "movement_speed", "type": "percent", "value": -50, "scope": {"category": "enemy"}, "condition": {"type": "when_near_building", "target": "moat", "radius": 5}}
+            ],
+            "position": {"x": 400, "y": 0, "row": 0, "column": 2}
+        },
+        {
+            "id": "tech_fortress_impenetrable",
+            "name": "Impenetrable Fortress",
+            "description": "The ultimate in defensive technology - your fortress becomes nearly invincible.",
+            "icon": "icons/tech/fortress/impenetrable.png",
+            "tier": 4,
+            "category": "defense",
+            "age_requirement": "medieval",
+            "cost": {
+                "stone": 800,
+                "metal": 400,
+                "gold": 300,
+                "time": 360
+            },
+            "prerequisites": ["tech_fortress_castle_keep", "tech_fortress_siege_resistance"],
+            "unlocks": {
+                "abilities": ["invincible_walls", "counter_siege"]
+            },
+            "modifiers": [
+                {"stat": "max_health", "type": "percent", "value": 100, "scope": {"building_type": "defensive"}},
+                {"stat": "armor", "type": "flat", "value": 25, "scope": {"building_type": "defensive"}},
+                {"stat": "damage", "type": "percent", "value": -50, "scope": {"category": "siege"}}
+            ],
+            "position": {"x": 100, "y": 360, "row": 3, "column": 0},
+            "key_tech": true,
+            "can_be_lost": false
+        },
+        {
+            "id": "tech_fortress_ballista_towers",
+            "name": "Ballista Towers",
+            "description": "Equip towers with powerful ballistae to strike down enemies at range.",
+            "icon": "icons/tech/fortress/ballista_tower.png",
+            "tier": 3,
+            "category": "military",
+            "age_requirement": "medieval",
+            "cost": {
+                "wood": 250,
+                "metal": 200,
+                "gold": 100,
+                "time": 150
+            },
+            "prerequisites": ["tech_fortress_defensive_towers", "tech_fortress_murder_holes"],
+            "unlocks": {
+                "buildings": ["ballista_tower"],
+                "upgrades": ["explosive_bolts"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "flat", "value": 30, "scope": {"building_type": "tower"}},
+                {"stat": "attack_range", "type": "flat", "value": 5, "scope": {"building_type": "tower"}}
+            ],
+            "position": {"x": 200, "y": 360, "row": 3, "column": 1}
+        }
+    ],
+
+    "connections": [
+        {"from": "tech_fortress_stone_masonry", "to": "tech_fortress_thick_walls"},
+        {"from": "tech_fortress_thick_walls", "to": "tech_fortress_castle_keep"},
+        {"from": "tech_fortress_defensive_towers", "to": "tech_fortress_murder_holes"},
+        {"from": "tech_fortress_stone_masonry", "to": "tech_fortress_garrison_training"},
+        {"from": "tech_fortress_thick_walls", "to": "tech_fortress_siege_resistance"},
+        {"from": "tech_fortress_garrison_training", "to": "tech_fortress_siege_resistance"},
+        {"from": "tech_fortress_stone_masonry", "to": "tech_fortress_moat_engineering"},
+        {"from": "tech_fortress_castle_keep", "to": "tech_fortress_impenetrable"},
+        {"from": "tech_fortress_siege_resistance", "to": "tech_fortress_impenetrable"},
+        {"from": "tech_fortress_murder_holes", "to": "tech_fortress_ballista_towers"},
+        {"from": "tech_fortress_defensive_towers", "to": "tech_fortress_ballista_towers"}
+    ],
+
+    "branches": [
+        {
+            "id": "branch_fortress_walls",
+            "name": "Walls & Fortifications",
+            "description": "Core defensive structures and wall technologies.",
+            "category": "defense",
+            "techs": ["tech_fortress_stone_masonry", "tech_fortress_thick_walls", "tech_fortress_castle_keep", "tech_fortress_impenetrable"],
+            "display_order": 0
+        },
+        {
+            "id": "branch_fortress_towers",
+            "name": "Tower Defense",
+            "description": "Tower and ranged defensive technologies.",
+            "category": "defense",
+            "techs": ["tech_fortress_defensive_towers", "tech_fortress_murder_holes", "tech_fortress_ballista_towers"],
+            "display_order": 1
+        },
+        {
+            "id": "branch_fortress_garrison",
+            "name": "Garrison & Siege",
+            "description": "Troop and siege defense technologies.",
+            "category": "military",
+            "techs": ["tech_fortress_garrison_training", "tech_fortress_siege_resistance", "tech_fortress_moat_engineering"],
+            "display_order": 2
+        }
+    ],
+
+    "exclusive_groups": [
+        {
+            "id": "fortress_defense_path",
+            "name": "Defense Specialization",
+            "description": "Choose between ultimate wall defense or tower superiority",
+            "techs": ["tech_fortress_impenetrable", "tech_fortress_ultimate_towers"]
+        }
+    ]
+}

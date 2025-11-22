@@ -1,0 +1,336 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "spell.schema.json",
+  "title": "Spell Definition",
+  "description": "Defines a spell that can be cast by heroes or units",
+  "type": "object",
+  "required": ["id", "name", "targeting", "effects"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^spell_[a-z_]+$",
+      "description": "Unique spell identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Spell description"
+    },
+    "icon": {
+      "$ref": "common.schema.json#/definitions/assetPath",
+      "description": "Icon texture path"
+    },
+    "targeting": {
+      "$ref": "#/definitions/targeting",
+      "description": "Targeting configuration"
+    },
+    "timing": {
+      "$ref": "#/definitions/timing",
+      "description": "Timing configuration"
+    },
+    "cost": {
+      "$ref": "common.schema.json#/definitions/resourceCost",
+      "description": "Resource cost to cast"
+    },
+    "cooldown": {
+      "$ref": "common.schema.json#/definitions/duration",
+      "description": "Cooldown between casts"
+    },
+    "charges": {
+      "$ref": "#/definitions/charges",
+      "description": "Charge system configuration"
+    },
+    "effects": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/spellEffect" },
+      "minItems": 1,
+      "description": "Effects applied on cast"
+    },
+    "projectile": {
+      "$ref": "projectile.schema.json#/definitions/projectileConfig",
+      "description": "Projectile configuration for projectile spells"
+    },
+    "requirements": {
+      "$ref": "#/definitions/requirements",
+      "description": "Requirements to learn/cast"
+    },
+    "scaling": {
+      "$ref": "#/definitions/scaling",
+      "description": "How spell scales with stats"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    },
+    "events": {
+      "$ref": "common.schema.json#/definitions/events"
+    },
+    "audio": {
+      "$ref": "#/definitions/spellAudio"
+    },
+    "visuals": {
+      "$ref": "#/definitions/spellVisuals"
+    }
+  },
+
+  "definitions": {
+    "targeting": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": ["self", "single", "aoe", "cone", "line", "projectile", "chain", "ground", "direction"],
+          "description": "Targeting mode"
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Max cast range"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "AoE radius"
+        },
+        "angle": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360,
+          "description": "Cone angle in degrees"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Line width"
+        },
+        "length": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Line/cone length"
+        },
+        "chainCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of chain bounces"
+        },
+        "chainRange": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Max distance for chain bounces"
+        },
+        "filter": {
+          "$ref": "common.schema.json#/definitions/targetFilter"
+        },
+        "requiresTarget": {
+          "type": "boolean",
+          "default": true
+        },
+        "canTargetSelf": {
+          "type": "boolean",
+          "default": false
+        },
+        "canTargetDead": {
+          "type": "boolean",
+          "default": false
+        },
+        "indicator": {
+          "enum": ["circle", "cone", "line", "arrow", "custom", "none"],
+          "default": "circle"
+        }
+      },
+      "required": ["mode"]
+    },
+
+    "timing": {
+      "type": "object",
+      "properties": {
+        "castTime": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Time to cast (0 = instant)"
+        },
+        "channelDuration": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Channel duration (0 = not channeled)"
+        },
+        "channelInterval": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Interval between channel ticks"
+        },
+        "delay": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Delay before effects apply"
+        },
+        "interruptible": {
+          "type": "boolean",
+          "default": true
+        },
+        "canMoveWhileCasting": {
+          "type": "boolean",
+          "default": false
+        },
+        "animation": {
+          "type": "string",
+          "description": "Cast animation name"
+        }
+      }
+    },
+
+    "charges": {
+      "type": "object",
+      "properties": {
+        "maxCharges": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rechargeTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "startingCharges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sharedCooldown": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["maxCharges", "rechargeTime"]
+    },
+
+    "spellEffect": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "damage", "heal", "apply_effect", "remove_effect",
+            "spawn_projectile", "spawn_entity", "teleport",
+            "knockback", "pull", "stun", "silence", "disarm",
+            "modify_stat", "shield", "summon", "transform"
+          ]
+        },
+        "target": {
+          "enum": ["primary", "secondary", "self", "area", "all"]
+        },
+        "amount": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "damageType": {
+          "$ref": "common.schema.json#/definitions/damageType"
+        },
+        "effectId": {
+          "type": "string",
+          "description": "Reference to effect definition"
+        },
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "delay": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "scaling": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/scalingFactor" }
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        }
+      },
+      "required": ["type"]
+    },
+
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "heroClass": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "prerequisiteSpells": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    },
+
+    "scaling": {
+      "type": "object",
+      "properties": {
+        "damageScaling": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/scalingFactor" }
+        },
+        "healScaling": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/scalingFactor" }
+        },
+        "durationScaling": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/scalingFactor" }
+        },
+        "cooldownReduction": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/scalingFactor" }
+        }
+      }
+    },
+
+    "scalingFactor": {
+      "type": "object",
+      "properties": {
+        "stat": {
+          "type": "string",
+          "description": "Stat that provides scaling"
+        },
+        "ratio": {
+          "type": "number",
+          "description": "Scaling ratio"
+        },
+        "flatBonus": {
+          "type": "number",
+          "description": "Flat bonus per point"
+        }
+      },
+      "required": ["stat", "ratio"]
+    },
+
+    "spellAudio": {
+      "type": "object",
+      "properties": {
+        "castStart": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "castComplete": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "channelLoop": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "impact": { "$ref": "common.schema.json#/definitions/assetPath" }
+      }
+    },
+
+    "spellVisuals": {
+      "type": "object",
+      "properties": {
+        "castParticles": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "projectileParticles": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "impactParticles": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "aoeIndicator": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "casterAnimation": { "type": "string" },
+        "targetAnimation": { "type": "string" },
+        "screenShake": {
+          "type": "object",
+          "properties": {
+            "intensity": { "type": "number" },
+            "duration": { "$ref": "common.schema.json#/definitions/duration" }
+          }
+        }
+      }
+    }
+  }
+}

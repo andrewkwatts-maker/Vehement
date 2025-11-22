@@ -1,0 +1,86 @@
+{
+    // Cursed - Dark Magic Debuff
+    // Reduces all stats and increases damage taken
+
+    "id": "effect_cursed",
+    "name": "Cursed",
+    "description": "A dark curse afflicts you, weakening all aspects of your being.",
+    "type": "debuff",
+    "tags": ["curse", "dark", "magic", "debuff"],
+    "categories": ["curse_effect", "magic_debuff"],
+
+    "duration": 10.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "separate",
+        "max_stacks": 3,
+        "separate_per_source": true
+    },
+
+    "modifiers": [
+        {
+            "stat": "damage",
+            "op": "percent",
+            "value": -10
+        },
+        {
+            "stat": "armor",
+            "op": "percent",
+            "value": -10
+        },
+        {
+            "stat": "move_speed",
+            "op": "percent",
+            "value": -10
+        },
+        {
+            "stat": "attack_speed",
+            "op": "percent",
+            "value": -10
+        },
+        {
+            "stat": "health_regen",
+            "op": "percent",
+            "value": -25
+        },
+        {
+            "stat": "mana_regen",
+            "op": "percent",
+            "value": -25
+        }
+    ],
+
+    "periodic": {
+        "interval": 3.0,
+        "type": "damage",
+        "amount": 5,
+        "damage_type": "dark"
+    },
+
+    "triggers": [
+        {
+            "condition": "on_heal",
+            "action": "reduce_duration",
+            "amount": 0.5,
+            "target": "self"
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/cursed.png",
+        "particle": "particles/dark_curse.json",
+        "tint": [0.3, 0.1, 0.4, 1.0],
+        "shader": "shaders/curse_overlay.glsl",
+        "glow": 0.25
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/curse_apply.py",
+        "on_dispel": "scripts/effects/curse_dispel.py"
+    },
+
+    "dispellable": true,
+    "purgeable": true,
+    "priority": 2
+}

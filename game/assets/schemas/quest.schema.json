@@ -1,0 +1,531 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "quest.schema.json",
+  "title": "Quest Definition",
+  "description": "Defines a quest or mission",
+  "type": "object",
+  "required": ["id", "name", "type", "objectives"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^quest_[a-z_]+$",
+      "description": "Unique quest identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Quest description"
+    },
+    "briefDescription": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Short summary for quest log"
+    },
+    "type": {
+      "enum": ["main", "side", "daily", "weekly", "event", "tutorial", "achievement", "bounty"],
+      "description": "Quest category"
+    },
+    "category": {
+      "type": "string",
+      "description": "UI category for grouping"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Recommended level"
+    },
+    "difficulty": {
+      "enum": ["trivial", "easy", "normal", "hard", "heroic", "legendary"],
+      "default": "normal"
+    },
+    "objectives": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/objective" },
+      "minItems": 1
+    },
+    "prerequisites": {
+      "$ref": "#/definitions/prerequisites"
+    },
+    "rewards": {
+      "$ref": "#/definitions/rewards"
+    },
+    "progression": {
+      "$ref": "#/definitions/questProgression"
+    },
+    "dialogue": {
+      "$ref": "#/definitions/questDialogue"
+    },
+    "tracking": {
+      "$ref": "#/definitions/trackingConfig"
+    },
+    "timing": {
+      "$ref": "#/definitions/timingConfig"
+    },
+    "failure": {
+      "$ref": "#/definitions/failureConfig"
+    },
+    "branches": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/questBranch" }
+    },
+    "visibility": {
+      "$ref": "#/definitions/visibilityConfig"
+    },
+    "markers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/questMarker" }
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    },
+    "events": {
+      "$ref": "common.schema.json#/definitions/events"
+    }
+  },
+
+  "definitions": {
+    "objective": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "kill", "collect", "deliver", "escort", "defend",
+            "reach", "interact", "talk", "explore", "survive",
+            "craft", "upgrade", "complete_quest", "win_battle",
+            "score", "time_trial", "custom"
+          ]
+        },
+        "description": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target entity/item ID"
+        },
+        "targetTags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "location": {
+          "$ref": "#/definitions/locationTarget"
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "hidden": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hidden until discovered"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Completion order (null = any order)"
+        },
+        "parallel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Can progress with other objectives"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "onComplete": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        },
+        "bonusRewards": {
+          "$ref": "#/definitions/rewards"
+        },
+        "timer": {
+          "$ref": "common.schema.json#/definitions/duration"
+        }
+      },
+      "required": ["id", "type"]
+    },
+
+    "locationTarget": {
+      "type": "object",
+      "properties": {
+        "zone": {
+          "type": "string"
+        },
+        "position": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "radius": {
+          "type": "number"
+        },
+        "waypoints": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/vector3" }
+        }
+      }
+    },
+
+    "prerequisites": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "integer"
+        },
+        "quests": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required completed quests"
+        },
+        "notQuests": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Quests that must NOT be completed"
+        },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reputation": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "achievements": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "heroClass": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        }
+      }
+    },
+
+    "rewards": {
+      "type": "object",
+      "properties": {
+        "experience": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "count": { "type": "integer", "default": 1 },
+              "chance": { "$ref": "common.schema.json#/definitions/probability" }
+            },
+            "required": ["id"]
+          }
+        },
+        "choiceItems": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "description": "Player picks one from each group"
+        },
+        "reputation": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "unlocks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Features/content to unlock"
+        },
+        "abilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "title": {
+          "type": "string",
+          "description": "Title to award"
+        },
+        "achievement": {
+          "type": "string"
+        },
+        "followUpQuest": {
+          "type": "string"
+        },
+        "customReward": {
+          "$ref": "common.schema.json#/definitions/action"
+        }
+      }
+    },
+
+    "questProgression": {
+      "type": "object",
+      "properties": {
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "objectives": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "description": { "$ref": "common.schema.json#/definitions/localizedString" },
+              "onEnter": {
+                "type": "array",
+                "items": { "$ref": "common.schema.json#/definitions/action" }
+              }
+            },
+            "required": ["id", "objectives"]
+          }
+        },
+        "completionOrder": {
+          "enum": ["sequential", "parallel", "any"],
+          "default": "parallel"
+        }
+      }
+    },
+
+    "questDialogue": {
+      "type": "object",
+      "properties": {
+        "giver": {
+          "type": "string",
+          "description": "NPC ID that gives quest"
+        },
+        "turnIn": {
+          "type": "string",
+          "description": "NPC ID for quest turn-in"
+        },
+        "onAccept": {
+          "type": "string",
+          "description": "Dialogue ID on accept"
+        },
+        "onProgress": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Stage ID to dialogue ID"
+        },
+        "onComplete": {
+          "type": "string",
+          "description": "Dialogue ID on completion"
+        },
+        "onFail": {
+          "type": "string"
+        },
+        "reminders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": { "$ref": "common.schema.json#/definitions/condition" },
+              "dialogue": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "trackingConfig": {
+      "type": "object",
+      "properties": {
+        "autoTrack": {
+          "type": "boolean",
+          "default": true
+        },
+        "showOnMap": {
+          "type": "boolean",
+          "default": true
+        },
+        "showDistance": {
+          "type": "boolean",
+          "default": true
+        },
+        "showProgress": {
+          "type": "boolean",
+          "default": true
+        },
+        "hudDisplay": {
+          "enum": ["minimal", "normal", "detailed", "none"],
+          "default": "normal"
+        },
+        "compassPriority": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "timingConfig": {
+      "type": "object",
+      "properties": {
+        "timeLimit": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "In-game time to start availability"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "repeatCooldown": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resetDaily": {
+          "type": "boolean",
+          "default": false
+        },
+        "resetWeekly": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "failureConfig": {
+      "type": "object",
+      "properties": {
+        "canFail": {
+          "type": "boolean",
+          "default": false
+        },
+        "failConditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "failOnDeath": {
+          "type": "boolean",
+          "default": false
+        },
+        "failOnTimeout": {
+          "type": "boolean",
+          "default": true
+        },
+        "failOnAbandon": {
+          "type": "boolean",
+          "default": true
+        },
+        "canRetry": {
+          "type": "boolean",
+          "default": true
+        },
+        "maxRetries": {
+          "type": "integer"
+        },
+        "penaltyOnFail": {
+          "type": "object",
+          "properties": {
+            "reputation": { "type": "object", "additionalProperties": { "type": "integer" } },
+            "currency": { "type": "object", "additionalProperties": { "type": "integer" } },
+            "lockout": { "$ref": "common.schema.json#/definitions/duration" }
+          }
+        },
+        "onFail": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        }
+      }
+    },
+
+    "questBranch": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "condition": {
+          "$ref": "common.schema.json#/definitions/condition"
+        },
+        "objectives": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/objective" }
+        },
+        "rewards": {
+          "$ref": "#/definitions/rewards"
+        },
+        "nextQuest": {
+          "type": "string"
+        },
+        "exclusive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Locks out other branches"
+        }
+      },
+      "required": ["id", "objectives"]
+    },
+
+    "visibilityConfig": {
+      "type": "object",
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "showConditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "hideOnComplete": {
+          "type": "boolean",
+          "default": true
+        },
+        "alwaysShowInLog": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "questMarker": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["quest_giver", "objective", "turn_in", "interest", "custom"]
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "position": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "entityId": {
+          "type": "string"
+        },
+        "objectiveId": {
+          "type": "string"
+        },
+        "showCondition": {
+          "$ref": "common.schema.json#/definitions/condition"
+        },
+        "tooltip": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        }
+      },
+      "required": ["type"]
+    }
+  }
+}

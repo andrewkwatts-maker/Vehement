@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Function Picker</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        :root {
+            --bg-dark: #1e1e2e;
+            --bg-darker: #181825;
+            --bg-lighter: #313244;
+            --text: #cdd6f4;
+            --text-dim: #6c7086;
+            --accent: #89b4fa;
+            --success: #a6e3a1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .header {
+            margin-bottom: 16px;
+        }
+
+        .header h2 {
+            margin-bottom: 8px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            background: var(--bg-lighter);
+            border: 1px solid transparent;
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-bar select {
+            background: var(--bg-lighter);
+            border: none;
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            overflow: hidden;
+        }
+
+        .category-tree {
+            width: 200px;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .category-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+
+        .category-item:hover {
+            background: var(--bg-lighter);
+        }
+
+        .category-item.active {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .category-item .count {
+            float: right;
+            opacity: 0.7;
+            font-size: 12px;
+        }
+
+        .function-list {
+            flex: 1;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            overflow-y: auto;
+        }
+
+        .function-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--bg-lighter);
+            cursor: pointer;
+        }
+
+        .function-item:hover {
+            background: var(--bg-lighter);
+        }
+
+        .function-item.selected {
+            background: rgba(137, 180, 250, 0.2);
+            border-left: 3px solid var(--accent);
+        }
+
+        .function-item .name {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .function-item .signature {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .function-item .description {
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .function-item .tags {
+            margin-top: 6px;
+        }
+
+        .function-item .tag {
+            display: inline-block;
+            background: var(--bg-lighter);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-right: 4px;
+        }
+
+        .function-item .tag.api {
+            background: rgba(137, 180, 250, 0.3);
+            color: var(--accent);
+        }
+
+        .preview-panel {
+            width: 300px;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .preview-panel h3 {
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .preview-panel .signature {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            background: var(--bg-lighter);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+
+        .preview-panel .section {
+            margin-bottom: 16px;
+        }
+
+        .preview-panel .section h4 {
+            color: var(--text-dim);
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .preview-panel .param {
+            margin-bottom: 8px;
+        }
+
+        .preview-panel .param-name {
+            color: var(--accent);
+            font-family: monospace;
+        }
+
+        .preview-panel .param-type {
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+
+        .preview-panel .example {
+            background: var(--bg-lighter);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+
+        .footer {
+            margin-top: 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .footer button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .footer button.primary {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .footer button.secondary {
+            background: var(--bg-lighter);
+            color: var(--text);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Select Function</h2>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search functions..." oninput="filterFunctions()">
+        <select id="typeFilter" onchange="filterFunctions()">
+            <option value="all">All Types</option>
+            <option value="api">Game API</option>
+            <option value="builtin">Builtins</option>
+            <option value="custom">Custom</option>
+        </select>
+    </div>
+
+    <div class="main-content">
+        <div class="category-tree" id="categoryTree">
+            <!-- Categories populated by JS -->
+        </div>
+
+        <div class="function-list" id="functionList">
+            <!-- Functions populated by JS -->
+        </div>
+
+        <div class="preview-panel" id="previewPanel">
+            <div class="empty-state">Select a function to preview</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button class="secondary" onclick="cancel()">Cancel</button>
+        <button class="primary" onclick="selectFunction()" id="selectBtn" disabled>Select</button>
+    </div>
+
+    <script>
+        // Sample function data
+        const functions = [
+            {
+                name: 'spawn_entity',
+                signature: 'spawn_entity(type: str, x: float, y: float, z: float) -> int',
+                description: 'Spawn a new entity at the specified position',
+                category: 'Entity',
+                type: 'api',
+                parameters: [
+                    {name: 'type', type: 'str', description: 'Entity type identifier'},
+                    {name: 'x', type: 'float', description: 'X coordinate'},
+                    {name: 'y', type: 'float', description: 'Y coordinate'},
+                    {name: 'z', type: 'float', description: 'Z coordinate'}
+                ],
+                returnType: 'int',
+                returnDesc: 'The ID of the spawned entity',
+                example: "enemy_id = spawn_entity('zombie', 10.0, 0.0, 15.0)"
+            },
+            {
+                name: 'damage',
+                signature: 'damage(target_id: int, amount: float, source_id: int = 0) -> None',
+                description: 'Apply damage to an entity',
+                category: 'Combat',
+                type: 'api',
+                parameters: [
+                    {name: 'target_id', type: 'int', description: 'ID of the entity to damage'},
+                    {name: 'amount', type: 'float', description: 'Damage amount'},
+                    {name: 'source_id', type: 'int', description: 'ID of the damage source (optional)'}
+                ],
+                returnType: 'None',
+                example: "damage(enemy_id, 50.0, player_id)"
+            },
+            {
+                name: 'get_health',
+                signature: 'get_health(entity_id: int) -> float',
+                description: 'Get the current health of an entity',
+                category: 'Combat',
+                type: 'api',
+                parameters: [
+                    {name: 'entity_id', type: 'int', description: 'ID of the entity'}
+                ],
+                returnType: 'float',
+                returnDesc: 'Current health value',
+                example: "hp = get_health(player_id)"
+            },
+            {
+                name: 'find_entities_in_radius',
+                signature: 'find_entities_in_radius(x: float, y: float, z: float, radius: float) -> List[int]',
+                description: 'Find all entities within a radius of a point',
+                category: 'Query',
+                type: 'api',
+                parameters: [
+                    {name: 'x', type: 'float', description: 'Center X coordinate'},
+                    {name: 'y', type: 'float', description: 'Center Y coordinate'},
+                    {name: 'z', type: 'float', description: 'Center Z coordinate'},
+                    {name: 'radius', type: 'float', description: 'Search radius'}
+                ],
+                returnType: 'List[int]',
+                returnDesc: 'List of entity IDs',
+                example: "nearby = find_entities_in_radius(0, 0, 0, 10.0)"
+            },
+            {
+                name: 'play_sound',
+                signature: 'play_sound(name: str, x: float = 0, y: float = 0, z: float = 0) -> None',
+                description: 'Play a sound effect at a position',
+                category: 'Audio',
+                type: 'api',
+                parameters: [
+                    {name: 'name', type: 'str', description: 'Sound effect name'},
+                    {name: 'x', type: 'float', description: 'X coordinate (optional)'},
+                    {name: 'y', type: 'float', description: 'Y coordinate (optional)'},
+                    {name: 'z', type: 'float', description: 'Z coordinate (optional)'}
+                ],
+                returnType: 'None',
+                example: "play_sound('explosion', 10.0, 0.0, 15.0)"
+            },
+            {
+                name: 'random_range',
+                signature: 'random_range(min: float, max: float) -> float',
+                description: 'Get a random float in the specified range',
+                category: 'Utility',
+                type: 'api',
+                parameters: [
+                    {name: 'min', type: 'float', description: 'Minimum value'},
+                    {name: 'max', type: 'float', description: 'Maximum value'}
+                ],
+                returnType: 'float',
+                returnDesc: 'Random value between min and max',
+                example: "dmg = random_range(10.0, 20.0)"
+            }
+        ];
+
+        let selectedFunction = null;
+        let selectedCategory = 'All';
+
+        // Get unique categories
+        function getCategories() {
+            const cats = ['All'];
+            functions.forEach(f => {
+                if (!cats.includes(f.category)) {
+                    cats.push(f.category);
+                }
+            });
+            return cats;
+        }
+
+        // Render category tree
+        function renderCategories() {
+            const tree = document.getElementById('categoryTree');
+            const categories = getCategories();
+
+            tree.innerHTML = categories.map(cat => {
+                const count = cat === 'All' ? functions.length :
+                    functions.filter(f => f.category === cat).length;
+                return `
+                    <div class="category-item ${cat === selectedCategory ? 'active' : ''}"
+                         onclick="selectCategory('${cat}')">
+                        ${cat}
+                        <span class="count">${count}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Select category
+        function selectCategory(cat) {
+            selectedCategory = cat;
+            renderCategories();
+            filterFunctions();
+        }
+
+        // Filter and render functions
+        function filterFunctions() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+
+            const filtered = functions.filter(f => {
+                // Category filter
+                if (selectedCategory !== 'All' && f.category !== selectedCategory) {
+                    return false;
+                }
+
+                // Type filter
+                if (typeFilter !== 'all' && f.type !== typeFilter) {
+                    return false;
+                }
+
+                // Search filter
+                if (search && !f.name.toLowerCase().includes(search) &&
+                    !f.description.toLowerCase().includes(search)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            renderFunctions(filtered);
+        }
+
+        // Render function list
+        function renderFunctions(funcs) {
+            const list = document.getElementById('functionList');
+
+            if (funcs.length === 0) {
+                list.innerHTML = '<div class="empty-state">No functions found</div>';
+                return;
+            }
+
+            list.innerHTML = funcs.map(f => `
+                <div class="function-item ${selectedFunction === f ? 'selected' : ''}"
+                     onclick="selectFunctionItem('${f.name}')"
+                     ondblclick="selectFunction()">
+                    <div class="name">${f.name}</div>
+                    <div class="signature">${f.signature}</div>
+                    <div class="description">${f.description}</div>
+                    <div class="tags">
+                        <span class="tag ${f.type === 'api' ? 'api' : ''}">${f.type}</span>
+                        <span class="tag">${f.category}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Select function
+        function selectFunctionItem(name) {
+            selectedFunction = functions.find(f => f.name === name);
+            renderPreview();
+            document.getElementById('selectBtn').disabled = false;
+            filterFunctions();
+        }
+
+        // Render preview
+        function renderPreview() {
+            const panel = document.getElementById('previewPanel');
+
+            if (!selectedFunction) {
+                panel.innerHTML = '<div class="empty-state">Select a function to preview</div>';
+                return;
+            }
+
+            const f = selectedFunction;
+
+            let paramsHtml = '';
+            if (f.parameters && f.parameters.length > 0) {
+                paramsHtml = `
+                    <div class="section">
+                        <h4>Parameters</h4>
+                        ${f.parameters.map(p => `
+                            <div class="param">
+                                <span class="param-name">${p.name}</span>
+                                <span class="param-type">: ${p.type}</span>
+                                <div>${p.description}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            let returnHtml = '';
+            if (f.returnType && f.returnType !== 'None') {
+                returnHtml = `
+                    <div class="section">
+                        <h4>Returns</h4>
+                        <div><span class="param-type">${f.returnType}</span></div>
+                        ${f.returnDesc ? `<div>${f.returnDesc}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            panel.innerHTML = `
+                <h3>${f.name}</h3>
+                <div class="signature">${f.signature}</div>
+                <div class="section">
+                    <h4>Description</h4>
+                    <p>${f.description}</p>
+                </div>
+                ${paramsHtml}
+                ${returnHtml}
+                ${f.example ? `
+                    <div class="section">
+                        <h4>Example</h4>
+                        <div class="example">${f.example}</div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        // Dialog actions
+        function selectFunction() {
+            if (selectedFunction) {
+                // Return selected function to C++
+                WebEditor.invoke('functionPicker.select', [selectedFunction.name], function() {
+                    window.close();
+                });
+            }
+        }
+
+        function cancel() {
+            WebEditor.invoke('functionPicker.cancel', [], function() {
+                window.close();
+            });
+        }
+
+        // WebEditor bridge placeholder
+        const WebEditor = {
+            invoke: function(method, args, callback) {
+                console.log('WebEditor.invoke:', method, args);
+                if (callback) callback();
+            }
+        };
+
+        // Initialize
+        renderCategories();
+        filterFunctions();
+    </script>
+</body>
+</html>

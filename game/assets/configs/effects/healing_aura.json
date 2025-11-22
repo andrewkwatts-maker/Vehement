@@ -1,0 +1,57 @@
+{
+    // Healing Aura - Area Healing Effect
+    // Periodically heals allies within radius
+
+    "id": "effect_healing_aura",
+    "name": "Healing Aura",
+    "description": "A soothing aura that heals nearby allies.",
+    "type": "aura",
+    "tags": ["aura", "heal", "support", "ally"],
+    "categories": ["healing_aura", "support_aura"],
+
+    "duration": 20.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "none",
+        "max_stacks": 1
+    },
+
+    "aura": {
+        "shape": "circle",
+        "radius": 10.0,
+        "affects": "allies",
+        "pulse_interval": 2.0,
+        "pulse_on_enter": true,
+        "remove_on_exit": false,
+        "apply_effect": "effect_healing_pulse",
+        "max_targets": 5,
+        "follows_source": true,
+        "show_range": true,
+        "visual_effect": "particles/healing_circle.json"
+    },
+
+    "modifiers": [
+        {
+            "stat": "health_regen",
+            "op": "add",
+            "value": 3
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/healing_aura.png",
+        "particle": "particles/healing_aura.json",
+        "tint": [0.3, 1.0, 0.5, 0.6],
+        "glow": 0.3,
+        "scale": 1.5
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/healing_aura_apply.py"
+    },
+
+    "dispellable": true,
+    "purgeable": false,
+    "priority": 5
+}

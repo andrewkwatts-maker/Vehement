@@ -1,0 +1,167 @@
+{
+    // Fear - Cone debuff causing flee
+    // Makes enemies in a cone flee in terror
+
+    "id": "spell_fear",
+    "name": "Terrifying Howl",
+    "description": "Unleashes a terrifying howl that causes enemies in front to flee in fear.",
+    "icon": "icons/spells/fear.png",
+    "school": "shadow",
+    "tags": ["crowd_control", "shadow", "cone", "debuff", "fear"],
+
+    "targeting": {
+        "mode": "cone",
+        "range": 12.0,
+        "angle": 90.0,
+        "max_targets": 8,
+        "priority": "nearest",
+
+        "filter": {
+            "faction": "enemy",
+            "can_target_self": false,
+            "must_be_alive": true,
+            "can_target_invulnerable": false
+        },
+
+        "preview": {
+            "shape": "cone",
+            "show_range": true,
+            "show_aoe": true,
+            "pulse": true
+        }
+    },
+
+    "timing": {
+        "cast_time": 0.5,
+        "cooldown": 30.0,
+        "charges": 1,
+        "triggers_gcd": true
+    },
+
+    "cost": {
+        "mana": 45,
+        "rage": 0
+    },
+
+    "effects": [
+        {
+            "id": "fear_effect",
+            "type": "fear",
+            "timing": "instant",
+            "duration": 6.0,
+            "stacking": "refresh",
+            "description": "Fleeing in terror, unable to control movement."
+        },
+        {
+            "id": "vulnerability_debuff",
+            "type": "debuff",
+            "timing": "instant",
+            "duration": 6.0,
+            "stacking": "refresh",
+            "description": "Taking 15% increased damage while feared."
+        },
+        {
+            "id": "minor_damage",
+            "type": "damage",
+            "timing": "instant",
+            "amount": 15,
+            "damage_type": "shadow",
+            "scaling": {
+                "stat": "spell_power",
+                "coefficient": 0.2
+            }
+        }
+    ],
+
+    "flags": {
+        "can_crit": false,
+        "can_miss": false,
+        "can_be_interrupted": true,
+        "can_be_silenced": true,
+        "requires_los": true,
+        "requires_facing": true,
+        "cast_while_moving": false,
+        "breaks_on_damage": true
+    },
+
+    "requirements": {
+        "min_level": 15
+    },
+
+    "events": {
+        "on_cast_start": "scripts/spells/fear_cast.py",
+        "on_cast_complete": "scripts/spells/fear_execute.py",
+        "on_hit": "scripts/spells/fear_apply.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/fear.png",
+        "effects": [
+            {
+                "id": "howl_wave",
+                "type": "particle",
+                "trigger": "on_cast_complete",
+                "attach": "caster",
+                "path": "effects/shadow_wave_cone.fx",
+                "scale": 1.2
+            },
+            {
+                "id": "shadow_aura",
+                "type": "particle",
+                "trigger": "on_cast_start",
+                "attach": "caster",
+                "path": "effects/shadow_buildup.fx",
+                "scale": 1.0,
+                "duration": 0.5
+            },
+            {
+                "id": "fear_icon",
+                "type": "sprite",
+                "trigger": "on_hit",
+                "attach": "target_head",
+                "path": "textures/effects/fear_icon.png",
+                "duration": 6.0
+            },
+            {
+                "id": "dark_tendrils",
+                "type": "particle",
+                "trigger": "on_hit",
+                "attach": "target",
+                "path": "effects/shadow_tendrils.fx",
+                "duration": 1.0
+            },
+            {
+                "id": "screen_distort",
+                "type": "screen_effect",
+                "trigger": "on_cast_complete",
+                "duration": 0.3,
+                "intensity": 0.5,
+                "self_only": false,
+                "affect_range": 12.0
+            }
+        ],
+        "sounds": [
+            {
+                "id": "howl_sound",
+                "path": "sounds/spells/terrifying_howl.wav",
+                "trigger": "on_cast_complete",
+                "volume": 1.0
+            },
+            {
+                "id": "fear_whispers",
+                "path": "sounds/spells/shadow_whispers.wav",
+                "trigger": "on_hit",
+                "volume": 0.6,
+                "positional": true
+            }
+        ],
+        "animations": [
+            {
+                "id": "howl_anim",
+                "name": "howl",
+                "trigger": "on_cast_complete",
+                "speed": 1.0
+            }
+        ]
+    }
+}

@@ -1,0 +1,186 @@
+{
+    // Summon Skeleton - Summoning spell at target location
+    // Raises skeletal warriors to fight for the caster
+
+    "id": "spell_summon_skeleton",
+    "name": "Raise Skeleton",
+    "description": "Raises skeletal warriors from the ground at the target location to fight for you.",
+    "icon": "icons/spells/summon_skeleton.png",
+    "school": "shadow",
+    "tags": ["summon", "shadow", "necromancy", "minion"],
+
+    "targeting": {
+        "mode": "aoe",
+        "range": 25.0,
+        "radius": 4.0,
+        "max_targets": 1,
+
+        "filter": {
+            "faction": "all"
+        },
+
+        "ground_target": {
+            "enabled": true,
+            "snap_to_terrain": true,
+            "requires_walkable": true,
+            "show_indicator": true,
+            "indicator_radius": 4.0,
+            "max_height_diff": 5.0
+        },
+
+        "preview": {
+            "shape": "circle",
+            "show_range": true,
+            "show_aoe": true,
+            "pulse": true
+        }
+    },
+
+    "timing": {
+        "cast_time": 2.5,
+        "cooldown": 45.0,
+        "charges": 2,
+        "charge_recharge_time": 60.0,
+        "triggers_gcd": true
+    },
+
+    "cost": {
+        "mana": 75,
+        "health": 10
+    },
+
+    "effects": [
+        {
+            "id": "summon_skeletons",
+            "type": "summon",
+            "timing": "instant",
+            "summon": {
+                "unit_id": "unit_skeleton_warrior",
+                "count": 3,
+                "duration": 60.0,
+                "inherit_faction": true,
+                "spawn_radius": 3.0
+            }
+        },
+        {
+            "id": "dark_pact_buff",
+            "type": "buff",
+            "timing": "instant",
+            "duration": 60.0,
+            "stacking": "stack",
+            "max_stacks": 6,
+            "description": "Bound to summoned skeletons. Gains 2% damage per skeleton."
+        }
+    ],
+
+    "conditionals": [
+        {
+            "condition": "on_kill",
+            "threshold": 0,
+            "effect_id": "summon_skeletons",
+            "bonus": {
+                "type": "buff",
+                "duration": 10.0,
+                "description": "Skeleton kill grants 10% attack speed for 10s."
+            }
+        }
+    ],
+
+    "flags": {
+        "can_crit": false,
+        "can_miss": false,
+        "can_be_interrupted": true,
+        "can_be_silenced": true,
+        "requires_los": true,
+        "cast_while_moving": false
+    },
+
+    "requirements": {
+        "min_level": 20
+    },
+
+    "events": {
+        "on_cast_start": "scripts/spells/summon_skeleton_cast.py",
+        "on_cast_complete": "scripts/spells/summon_skeleton_spawn.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/summon_skeleton.png",
+        "effects": [
+            {
+                "id": "ritual_circle",
+                "type": "decal",
+                "trigger": "on_cast_start",
+                "attach": "target_point",
+                "texture": "textures/decals/necro_circle.png",
+                "size": 4.0,
+                "duration": 3.0,
+                "rotate": true,
+                "rotation_speed": 30.0
+            },
+            {
+                "id": "dark_energy",
+                "type": "particle",
+                "trigger": "on_cast_start",
+                "attach": "caster",
+                "path": "effects/necro_channel.fx",
+                "scale": 1.0
+            },
+            {
+                "id": "ground_crack",
+                "type": "particle",
+                "trigger": "on_cast_complete",
+                "attach": "target_point",
+                "path": "effects/ground_eruption.fx",
+                "scale": 1.5
+            },
+            {
+                "id": "skeleton_emerge",
+                "type": "particle",
+                "trigger": "on_cast_complete",
+                "attach": "target_point",
+                "path": "effects/skeleton_rise.fx",
+                "scale": 1.0
+            },
+            {
+                "id": "soul_beam",
+                "type": "beam",
+                "trigger": "on_cast_start",
+                "texture": "textures/effects/soul_tether.png",
+                "width": 0.2,
+                "duration": 2.5
+            }
+        ],
+        "sounds": [
+            {
+                "id": "chant_sound",
+                "path": "sounds/spells/necro_chant.wav",
+                "trigger": "on_cast_start",
+                "volume": 0.8,
+                "loop": false
+            },
+            {
+                "id": "ground_rumble",
+                "path": "sounds/spells/ground_rumble.wav",
+                "trigger": "on_cast_complete",
+                "volume": 1.0
+            },
+            {
+                "id": "skeleton_rise",
+                "path": "sounds/spells/bones_rattle.wav",
+                "trigger": "on_cast_complete",
+                "volume": 0.9,
+                "delay": 0.3
+            }
+        ],
+        "animations": [
+            {
+                "id": "summon_anim",
+                "name": "channel_summon",
+                "trigger": "on_cast_start",
+                "speed": 1.0,
+                "loop": true
+            }
+        ]
+    }
+}

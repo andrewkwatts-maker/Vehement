@@ -1,0 +1,252 @@
+"""
+{{entity_type}} AI Behavior Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+from enum import Enum
+
+
+class AIState(Enum):
+    """AI behavior states"""
+    IDLE = "idle"
+    PATROL = "patrol"
+    CHASE = "chase"
+    ATTACK = "attack"
+    FLEE = "flee"
+    RETURN = "return"
+
+
+# AI Configuration
+DETECTION_RADIUS = {{detection_radius}}
+ATTACK_RADIUS = {{attack_radius}}
+CHASE_RADIUS = {{chase_radius}}
+PATROL_RADIUS = {{patrol_radius}}
+FLEE_HEALTH_PERCENT = {{flee_health_percent}}
+ATTACK_COOLDOWN = {{attack_cooldown}}
+
+
+class {{entity_type}}AI:
+    """
+    AI controller for {{entity_type}} entities.
+    """
+
+    def __init__(self, entity_id: int):
+        self.entity_id = entity_id
+        self.state = AIState.IDLE
+        self.target_id = 0
+        self.home_position = get_position(entity_id)
+        self.last_attack_time = 0.0
+        self.patrol_points = []
+        self.current_patrol_index = 0
+
+    def update(self, delta_time: float) -> None:
+        """Main AI update loop."""
+        x, y, z = get_position(self.entity_id)
+        health = get_health(self.entity_id)
+        max_health = get_max_health(self.entity_id)
+        current_time = get_time()
+
+        # Check flee condition
+        {{#if can_flee}}
+        if health / max_health < FLEE_HEALTH_PERCENT:
+            self.state = AIState.FLEE
+        {{/if}}
+
+        # State machine
+        if self.state == AIState.IDLE:
+            self._update_idle(x, y, z)
+        elif self.state == AIState.PATROL:
+            self._update_patrol(x, y, z)
+        elif self.state == AIState.CHASE:
+            self._update_chase(x, y, z)
+        elif self.state == AIState.ATTACK:
+            self._update_attack(x, y, z, current_time)
+        elif self.state == AIState.FLEE:
+            self._update_flee(x, y, z)
+        elif self.state == AIState.RETURN:
+            self._update_return(x, y, z)
+
+    def _update_idle(self, x: float, y: float, z: float) -> None:
+        """Handle idle state."""
+        # Look for enemies
+        enemy = self._find_nearest_enemy(x, y, z, DETECTION_RADIUS)
+        if enemy:
+            self.target_id = enemy
+            self.state = AIState.CHASE
+            {{#if alert_sound}}
+            play_sound("{{alert_sound}}", x, y, z)
+            {{/if}}
+            return
+
+        {{#if can_patrol}}
+        # Start patrolling
+        if len(self.patrol_points) > 0:
+            self.state = AIState.PATROL
+        {{/if}}
+
+    def _update_patrol(self, x: float, y: float, z: float) -> None:
+        """Handle patrol state."""
+        # Check for enemies
+        enemy = self._find_nearest_enemy(x, y, z, DETECTION_RADIUS)
+        if enemy:
+            self.target_id = enemy
+            self.state = AIState.CHASE
+            return
+
+        # Move to patrol point
+        if len(self.patrol_points) > 0:
+            target = self.patrol_points[self.current_patrol_index]
+            dist = distance_3d(x, y, z, target[0], target[1], target[2])
+
+            if dist < 1.0:
+                # Reached patrol point, move to next
+                self.current_patrol_index = (self.current_patrol_index + 1) % len(self.patrol_points)
+            else:
+                move_towards(self.entity_id, target[0], target[1], target[2], {{patrol_speed}})
+
+    def _update_chase(self, x: float, y: float, z: float) -> None:
+        """Handle chase state."""
+        if self.target_id == 0 or not is_alive(self.target_id):
+            self.target_id = 0
+            self.state = AIState.RETURN
+            return
+
+        tx, ty, tz = get_position(self.target_id)
+        dist = distance_3d(x, y, z, tx, ty, tz)
+
+        # Check if too far from home
+        home_dist = distance_3d(x, y, z, *self.home_position)
+        if home_dist > CHASE_RADIUS:
+            self.target_id = 0
+            self.state = AIState.RETURN
+            return
+
+        # Attack if in range
+        if dist <= ATTACK_RADIUS:
+            self.state = AIState.ATTACK
+        else:
+            # Chase target
+            move_towards(self.entity_id, tx, ty, tz, {{chase_speed}})
+
+    def _update_attack(self, x: float, y: float, z: float, current_time: float) -> None:
+        """Handle attack state."""
+        if self.target_id == 0 or not is_alive(self.target_id):
+            self.target_id = 0
+            self.state = AIState.IDLE
+            return
+
+        tx, ty, tz = get_position(self.target_id)
+        dist = distance_3d(x, y, z, tx, ty, tz)
+
+        # Check range
+        if dist > ATTACK_RADIUS:
+            self.state = AIState.CHASE
+            return
+
+        # Face target
+        look_at(self.entity_id, tx, ty, tz)
+
+        # Attack if cooldown ready
+        if current_time - self.last_attack_time >= ATTACK_COOLDOWN:
+            self._perform_attack()
+            self.last_attack_time = current_time
+
+    def _update_flee(self, x: float, y: float, z: float) -> None:
+        """Handle flee state."""
+        {{#if flee_behavior}}
+        if self.target_id > 0 and is_alive(self.target_id):
+            tx, ty, tz = get_position(self.target_id)
+            # Move away from threat
+            dx = x - tx
+            dz = z - tz
+            flee_x = x + dx
+            flee_z = z + dz
+            move_towards(self.entity_id, flee_x, y, flee_z, {{flee_speed}})
+        else:
+            self.state = AIState.RETURN
+        {{/if}}
+
+    def _update_return(self, x: float, y: float, z: float) -> None:
+        """Handle return to home state."""
+        hx, hy, hz = self.home_position
+        dist = distance_3d(x, y, z, hx, hy, hz)
+
+        if dist < 2.0:
+            self.state = AIState.IDLE
+        else:
+            move_towards(self.entity_id, hx, hy, hz, {{patrol_speed}})
+
+    def _find_nearest_enemy(self, x: float, y: float, z: float, radius: float) -> int:
+        """Find the nearest enemy within radius."""
+        nearby = find_entities_in_radius(x, y, z, radius)
+        enemies = [e for e in nearby if is_enemy(self.entity_id, e) and is_alive(e)]
+
+        if not enemies:
+            return 0
+
+        return min(enemies, key=lambda e: distance_to(self.entity_id, e))
+
+    def _perform_attack(self) -> None:
+        """Execute an attack on the current target."""
+        x, y, z = get_position(self.entity_id)
+
+        {{#if attack_type_melee}}
+        # Melee attack
+        attack_damage = get_property(self.entity_id, "attack_damage")
+        damage(self.target_id, attack_damage, "physical", self.entity_id)
+        {{#if attack_effect}}
+        play_effect("{{attack_effect}}", x, y, z)
+        {{/if}}
+        {{#if attack_sound}}
+        play_sound("{{attack_sound}}", x, y, z)
+        {{/if}}
+        {{/if}}
+
+        {{#if attack_type_ranged}}
+        # Ranged attack - spawn projectile
+        tx, ty, tz = get_position(self.target_id)
+        spawn_projectile("{{projectile_type}}", x, y + 1.0, z, tx, ty + 1.0, tz, self.entity_id)
+        {{#if attack_sound}}
+        play_sound("{{attack_sound}}", x, y, z)
+        {{/if}}
+        {{/if}}
+
+        # Play attack animation
+        play_animation(self.entity_id, "attack")
+
+
+# Global AI instances
+_ai_instances = {}
+
+
+def on_create(entity_id: int) -> None:
+    """Initialize AI for entity."""
+    _ai_instances[entity_id] = {{entity_type}}AI(entity_id)
+
+    {{#if setup_patrol}}
+    # Set up patrol points
+    ai = _ai_instances[entity_id]
+    base_x, base_y, base_z = ai.home_position
+    ai.patrol_points = [
+        (base_x + PATROL_RADIUS, base_y, base_z),
+        (base_x, base_y, base_z + PATROL_RADIUS),
+        (base_x - PATROL_RADIUS, base_y, base_z),
+        (base_x, base_y, base_z - PATROL_RADIUS),
+    ]
+    {{/if}}
+
+
+def on_tick(entity_id: int, delta_time: float) -> None:
+    """Update AI."""
+    if entity_id in _ai_instances:
+        _ai_instances[entity_id].update(delta_time)
+
+
+def on_death(entity_id: int, killer_id: int) -> None:
+    """Clean up AI instance."""
+    if entity_id in _ai_instances:
+        del _ai_instances[entity_id]

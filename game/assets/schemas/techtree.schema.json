@@ -1,0 +1,295 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "techtree.schema.json",
+  "title": "Tech Tree Definition",
+  "description": "Defines technology/upgrade tree structure",
+  "type": "object",
+  "required": ["id", "name", "nodes"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^techtree_[a-z_]+$",
+      "description": "Unique tech tree identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Tech tree description"
+    },
+    "icon": {
+      "$ref": "common.schema.json#/definitions/assetPath"
+    },
+    "faction": {
+      "type": "string",
+      "description": "Faction this tree belongs to"
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/techNode" },
+      "minItems": 1
+    },
+    "tiers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/techTier" }
+    },
+    "branches": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/techBranch" }
+    },
+    "globalBonuses": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/definitions/modifier" },
+      "description": "Bonuses for unlocking multiple techs"
+    },
+    "layout": {
+      "$ref": "#/definitions/treeLayout"
+    }
+  },
+
+  "definitions": {
+    "techNode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^tech_[a-z_]+$"
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "description": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "tier": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "branch": {
+          "type": "string"
+        },
+        "cost": {
+          "$ref": "#/definitions/techCost"
+        },
+        "researchTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required tech node IDs"
+        },
+        "exclusiveWith": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Mutually exclusive techs"
+        },
+        "maxLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "effects": {
+          "$ref": "#/definitions/techEffects"
+        },
+        "unlocks": {
+          "$ref": "#/definitions/techUnlocks"
+        },
+        "repeatable": {
+          "type": "boolean",
+          "default": false
+        },
+        "hidden": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hidden until prerequisites met"
+        },
+        "position": {
+          "$ref": "common.schema.json#/definitions/vector2",
+          "description": "Position in tech tree UI"
+        }
+      },
+      "required": ["id", "name", "tier"]
+    },
+
+    "techCost": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "$ref": "common.schema.json#/definitions/resourceCost"
+        },
+        "perLevel": {
+          "$ref": "common.schema.json#/definitions/resourceCost",
+          "description": "Additional cost per level"
+        },
+        "levelMultiplier": {
+          "type": "number",
+          "description": "Cost multiplier per level"
+        },
+        "researchPoints": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "techEffects": {
+      "type": "object",
+      "properties": {
+        "statModifiers": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/modifier" }
+        },
+        "globalModifiers": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/modifier" },
+          "description": "Modifiers affecting all units"
+        },
+        "unitModifiers": {
+          "type": "object",
+          "description": "Unit ID to modifiers",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/definitions/modifier" }
+          }
+        },
+        "buildingModifiers": {
+          "type": "object",
+          "description": "Building ID to modifiers",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/definitions/modifier" }
+          }
+        },
+        "costReductions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "description": "Percentage reduction"
+          }
+        },
+        "timeReductions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "description": "Percentage reduction"
+          }
+        }
+      }
+    },
+
+    "techUnlocks": {
+      "type": "object",
+      "properties": {
+        "units": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Unit IDs to unlock"
+        },
+        "buildings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Building IDs to unlock"
+        },
+        "abilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ability IDs to unlock"
+        },
+        "upgrades": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Upgrade IDs to unlock"
+        },
+        "spells": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Spell IDs to unlock"
+        },
+        "features": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Game feature IDs to unlock"
+        }
+      }
+    },
+
+    "techTier": {
+      "type": "object",
+      "properties": {
+        "tier": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "requirement": {
+          "type": "object",
+          "properties": {
+            "previousTierCount": {
+              "type": "integer",
+              "description": "Techs needed from previous tier"
+            },
+            "totalResearched": {
+              "type": "integer"
+            }
+          }
+        },
+        "color": {
+          "$ref": "common.schema.json#/definitions/color"
+        }
+      },
+      "required": ["tier", "name"]
+    },
+
+    "techBranch": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "color": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "description": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        }
+      },
+      "required": ["id", "name"]
+    },
+
+    "treeLayout": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["horizontal", "vertical", "radial", "custom"],
+          "default": "horizontal"
+        },
+        "nodeSpacing": {
+          "$ref": "common.schema.json#/definitions/vector2"
+        },
+        "tierSpacing": {
+          "type": "number"
+        },
+        "branchSpacing": {
+          "type": "number"
+        },
+        "connectionStyle": {
+          "enum": ["straight", "curved", "orthogonal"]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Python Script Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/lint.min.css">
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        :root {
+            --bg-dark: #1e1e2e;
+            --bg-darker: #181825;
+            --bg-lighter: #313244;
+            --text: #cdd6f4;
+            --text-dim: #6c7086;
+            --accent: #89b4fa;
+            --success: #a6e3a1;
+            --warning: #f9e2af;
+            --error: #f38ba8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            background: var(--bg-darker);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .toolbar button {
+            background: var(--bg-lighter);
+            border: none;
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .toolbar button:hover {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .toolbar button.primary {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .toolbar button.danger {
+            background: var(--error);
+            color: var(--bg-dark);
+        }
+
+        .toolbar .separator {
+            width: 1px;
+            height: 24px;
+            background: var(--bg-lighter);
+            margin: 0 8px;
+        }
+
+        .toolbar .status {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .tab-bar {
+            background: var(--bg-darker);
+            display: flex;
+            padding: 4px 8px 0;
+            border-bottom: 1px solid var(--bg-lighter);
+            overflow-x: auto;
+        }
+
+        .tab {
+            background: var(--bg-lighter);
+            padding: 8px 16px;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 2px;
+        }
+
+        .tab.active {
+            background: var(--bg-dark);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .tab .close {
+            opacity: 0;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .tab:hover .close {
+            opacity: 1;
+        }
+
+        .tab.modified::after {
+            content: '*';
+            color: var(--warning);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .CodeMirror {
+            flex: 1;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .CodeMirror-gutters {
+            background: var(--bg-darker);
+            border-right: 1px solid var(--bg-lighter);
+        }
+
+        .console-panel {
+            background: var(--bg-darker);
+            border-top: 1px solid var(--bg-lighter);
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .console-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .console-line {
+            padding: 2px 0;
+        }
+
+        .console-line.error {
+            color: var(--error);
+        }
+
+        .console-line.warning {
+            color: var(--warning);
+        }
+
+        .console-line.success {
+            color: var(--success);
+        }
+
+        .console-line.info {
+            color: var(--text-dim);
+        }
+
+        .find-bar {
+            background: var(--bg-darker);
+            padding: 8px 12px;
+            display: none;
+            gap: 8px;
+            align-items: center;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .find-bar.visible {
+            display: flex;
+        }
+
+        .find-bar input {
+            background: var(--bg-lighter);
+            border: 1px solid transparent;
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .find-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .find-bar label {
+            font-size: 12px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Custom autocomplete styling */
+        .CodeMirror-hints {
+            background: var(--bg-darker);
+            border: 1px solid var(--bg-lighter);
+            border-radius: 4px;
+            padding: 4px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .CodeMirror-hint {
+            padding: 4px 12px;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .CodeMirror-hint-active {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        /* Error markers */
+        .cm-error-line {
+            background: rgba(243, 139, 168, 0.1);
+        }
+
+        .cm-error-marker {
+            color: var(--error);
+        }
+
+        /* Breakpoint gutter */
+        .breakpoint-marker {
+            color: var(--error);
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Folding */
+        .CodeMirror-foldgutter {
+            width: 16px;
+        }
+
+        .CodeMirror-foldgutter-open,
+        .CodeMirror-foldgutter-folded {
+            cursor: pointer;
+            color: var(--text-dim);
+        }
+
+        /* Minimap placeholder */
+        .minimap {
+            width: 100px;
+            background: var(--bg-darker);
+            border-left: 1px solid var(--bg-lighter);
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="newFile()">New</button>
+        <button onclick="openFile()">Open</button>
+        <button onclick="saveFile()">Save</button>
+        <div class="separator"></div>
+        <button class="primary" onclick="runScript()">Run</button>
+        <button onclick="testScript()">Test</button>
+        <button class="danger" onclick="stopScript()" id="stopBtn" disabled>Stop</button>
+        <div class="separator"></div>
+        <button onclick="validateScript()">Validate</button>
+        <button onclick="toggleFind()">Find</button>
+        <div class="status" id="status">
+            <span id="position">Ln 1, Col 1</span> |
+            <span id="errors">No errors</span>
+        </div>
+    </div>
+
+    <div class="find-bar" id="findBar">
+        <input type="text" id="findInput" placeholder="Find..." onkeyup="onFindKeyUp(event)">
+        <input type="text" id="replaceInput" placeholder="Replace...">
+        <button onclick="findNext()">Next</button>
+        <button onclick="findPrev()">Prev</button>
+        <button onclick="replaceOne()">Replace</button>
+        <button onclick="replaceAll()">Replace All</button>
+        <label><input type="checkbox" id="regexCheck"> Regex</label>
+        <label><input type="checkbox" id="caseCheck"> Case</label>
+        <button onclick="toggleFind()">Close</button>
+    </div>
+
+    <div class="tab-bar" id="tabBar">
+        <!-- Tabs will be added dynamically -->
+    </div>
+
+    <div class="main-content">
+        <div class="editor-container">
+            <textarea id="editor"></textarea>
+        </div>
+        <div class="minimap" id="minimap"></div>
+    </div>
+
+    <div class="console-panel">
+        <div class="console-header">
+            <span>Output Console</span>
+            <button onclick="clearConsole()">Clear</button>
+        </div>
+        <div class="console-output" id="consoleOutput"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/indent-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/searchcursor.min.js"></script>
+    <script>
+        // Game API completions
+        const gameAPICompletions = [
+            {text: 'spawn_entity', displayText: 'spawn_entity(type, x, y, z)', hint: 'Spawn entity at position'},
+            {text: 'despawn_entity', displayText: 'despawn_entity(id)', hint: 'Remove entity'},
+            {text: 'get_position', displayText: 'get_position(id)', hint: 'Get entity position'},
+            {text: 'set_position', displayText: 'set_position(id, x, y, z)', hint: 'Set entity position'},
+            {text: 'damage', displayText: 'damage(target, amount, source)', hint: 'Apply damage'},
+            {text: 'heal', displayText: 'heal(target, amount)', hint: 'Heal entity'},
+            {text: 'get_health', displayText: 'get_health(id)', hint: 'Get entity health'},
+            {text: 'is_alive', displayText: 'is_alive(id)', hint: 'Check if entity alive'},
+            {text: 'find_entities_in_radius', displayText: 'find_entities_in_radius(x, y, z, r)', hint: 'Find nearby entities'},
+            {text: 'get_distance', displayText: 'get_distance(e1, e2)', hint: 'Get distance between entities'},
+            {text: 'play_sound', displayText: 'play_sound(name, x, y, z)', hint: 'Play sound effect'},
+            {text: 'spawn_effect', displayText: 'spawn_effect(name, x, y, z)', hint: 'Spawn visual effect'},
+            {text: 'show_notification', displayText: 'show_notification(msg, duration)', hint: 'Show UI notification'},
+            {text: 'get_delta_time', displayText: 'get_delta_time()', hint: 'Get frame delta time'},
+            {text: 'get_game_time', displayText: 'get_game_time()', hint: 'Get total game time'},
+            {text: 'random', displayText: 'random()', hint: 'Random float 0-1'},
+            {text: 'random_range', displayText: 'random_range(min, max)', hint: 'Random in range'},
+            {text: 'log', displayText: 'log(message)', hint: 'Log to console'},
+            {text: 'log_warning', displayText: 'log_warning(message)', hint: 'Log warning'},
+            {text: 'log_error', displayText: 'log_error(message)', hint: 'Log error'},
+        ];
+
+        // Tab management
+        let tabs = [];
+        let activeTabIndex = -1;
+
+        // Initialize CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+            mode: 'python',
+            theme: 'dracula',
+            lineNumbers: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            indentUnit: 4,
+            tabSize: 4,
+            indentWithTabs: false,
+            foldGutter: true,
+            gutters: ['CodeMirror-linenumbers', 'breakpoints', 'CodeMirror-foldgutter'],
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete',
+                'Ctrl-S': saveFile,
+                'Ctrl-F': toggleFind,
+                'F5': runScript,
+                'F6': testScript,
+                'Ctrl-/': toggleComment
+            }
+        });
+
+        // Custom autocomplete
+        CodeMirror.registerHelper('hint', 'python', function(cm) {
+            const cursor = cm.getCursor();
+            const token = cm.getTokenAt(cursor);
+            const start = token.start;
+            const end = cursor.ch;
+            const word = token.string.slice(0, end - start);
+
+            const list = gameAPICompletions.filter(item =>
+                item.text.toLowerCase().startsWith(word.toLowerCase())
+            ).map(item => ({
+                text: item.text,
+                displayText: item.displayText,
+                className: 'game-api-hint',
+                render: function(elt, data, cur) {
+                    elt.innerHTML = `<span style="color: #89b4fa">${cur.displayText}</span>
+                                    <span style="color: #6c7086; margin-left: 10px">${item.hint}</span>`;
+                }
+            }));
+
+            return {
+                list: list,
+                from: CodeMirror.Pos(cursor.line, start),
+                to: CodeMirror.Pos(cursor.line, end)
+            };
+        });
+
+        // Breakpoint handling
+        editor.on('gutterClick', function(cm, line, gutter) {
+            if (gutter === 'breakpoints') {
+                const info = cm.lineInfo(line);
+                if (info.gutterMarkers && info.gutterMarkers.breakpoints) {
+                    cm.setGutterMarker(line, 'breakpoints', null);
+                } else {
+                    const marker = document.createElement('span');
+                    marker.className = 'breakpoint-marker';
+                    marker.innerHTML = '●';
+                    cm.setGutterMarker(line, 'breakpoints', marker);
+                }
+            }
+        });
+
+        // Update position status
+        editor.on('cursorActivity', function() {
+            const pos = editor.getCursor();
+            document.getElementById('position').textContent = `Ln ${pos.line + 1}, Col ${pos.ch + 1}`;
+        });
+
+        // Mark modified
+        editor.on('change', function() {
+            if (activeTabIndex >= 0) {
+                tabs[activeTabIndex].modified = true;
+                updateTabs();
+            }
+        });
+
+        // Tab functions
+        function newFile() {
+            const newTab = {
+                name: 'untitled.py',
+                content: '# New Python Script\n\ndef main():\n    pass\n',
+                modified: false,
+                path: null
+            };
+            tabs.push(newTab);
+            activeTabIndex = tabs.length - 1;
+            updateTabs();
+            loadTab(activeTabIndex);
+        }
+
+        function openFile() {
+            // Would use file dialog via JSBridge
+            WebEditor.invoke('scriptEditor.openFile', [], function(err, data) {
+                if (!err && data) {
+                    const newTab = {
+                        name: data.name,
+                        content: data.content,
+                        modified: false,
+                        path: data.path
+                    };
+                    tabs.push(newTab);
+                    activeTabIndex = tabs.length - 1;
+                    updateTabs();
+                    loadTab(activeTabIndex);
+                }
+            });
+        }
+
+        function saveFile() {
+            if (activeTabIndex < 0) return;
+
+            const tab = tabs[activeTabIndex];
+            tab.content = editor.getValue();
+            tab.modified = false;
+
+            WebEditor.invoke('scriptEditor.saveFile', [tab.path, tab.content], function(err) {
+                if (!err) {
+                    logConsole('Saved: ' + tab.name, 'success');
+                    updateTabs();
+                } else {
+                    logConsole('Save failed: ' + err, 'error');
+                }
+            });
+        }
+
+        function loadTab(index) {
+            activeTabIndex = index;
+            const tab = tabs[index];
+            editor.setValue(tab.content);
+            updateTabs();
+        }
+
+        function closeTab(index) {
+            if (tabs[index].modified) {
+                if (!confirm('Save changes before closing?')) {
+                    return;
+                }
+            }
+            tabs.splice(index, 1);
+            if (activeTabIndex >= tabs.length) {
+                activeTabIndex = tabs.length - 1;
+            }
+            if (activeTabIndex >= 0) {
+                loadTab(activeTabIndex);
+            } else {
+                editor.setValue('');
+            }
+            updateTabs();
+        }
+
+        function updateTabs() {
+            const tabBar = document.getElementById('tabBar');
+            tabBar.innerHTML = '';
+
+            tabs.forEach((tab, index) => {
+                const tabEl = document.createElement('div');
+                tabEl.className = 'tab' + (index === activeTabIndex ? ' active' : '') +
+                                 (tab.modified ? ' modified' : '');
+                tabEl.innerHTML = `
+                    <span>${tab.name}</span>
+                    <span class="close" onclick="event.stopPropagation(); closeTab(${index})">×</span>
+                `;
+                tabEl.onclick = () => loadTab(index);
+                tabBar.appendChild(tabEl);
+            });
+        }
+
+        // Script execution
+        function runScript() {
+            const code = editor.getValue();
+            document.getElementById('stopBtn').disabled = false;
+            logConsole('Running script...', 'info');
+
+            WebEditor.invoke('scriptEditor.runScript', [code], function(err, result) {
+                document.getElementById('stopBtn').disabled = true;
+                if (err) {
+                    logConsole('Error: ' + err, 'error');
+                } else if (result.success) {
+                    logConsole('Script completed successfully', 'success');
+                    if (result.output) {
+                        logConsole(result.output, 'info');
+                    }
+                } else {
+                    logConsole('Script failed: ' + result.error, 'error');
+                }
+            });
+        }
+
+        function testScript() {
+            const code = editor.getValue();
+            logConsole('Testing script...', 'info');
+
+            const result = validateScript();
+            if (result.valid) {
+                logConsole('Test passed - script is valid', 'success');
+            } else {
+                logConsole('Test failed - see errors above', 'error');
+            }
+        }
+
+        function stopScript() {
+            WebEditor.invoke('scriptEditor.stopScript', [], function() {
+                document.getElementById('stopBtn').disabled = true;
+                logConsole('Script stopped', 'warning');
+            });
+        }
+
+        function validateScript() {
+            const code = editor.getValue();
+
+            // Clear existing error markers
+            editor.getAllMarks().forEach(mark => mark.clear());
+
+            // Basic validation
+            const errors = [];
+            const lines = code.split('\n');
+
+            let parenCount = 0, bracketCount = 0, braceCount = 0;
+            let inString = false;
+            let stringChar = '';
+
+            lines.forEach((line, lineNum) => {
+                for (let i = 0; i < line.length; i++) {
+                    const c = line[i];
+
+                    if (!inString) {
+                        if (c === '"' || c === "'") {
+                            inString = true;
+                            stringChar = c;
+                        } else if (c === '#') {
+                            break;
+                        } else if (c === '(') parenCount++;
+                        else if (c === ')') parenCount--;
+                        else if (c === '[') bracketCount++;
+                        else if (c === ']') bracketCount--;
+                        else if (c === '{') braceCount++;
+                        else if (c === '}') braceCount--;
+                    } else {
+                        if (c === stringChar && (i === 0 || line[i-1] !== '\\')) {
+                            inString = false;
+                        }
+                    }
+                }
+            });
+
+            if (parenCount !== 0) {
+                errors.push({line: lines.length - 1, message: 'Unmatched parentheses'});
+            }
+            if (bracketCount !== 0) {
+                errors.push({line: lines.length - 1, message: 'Unmatched brackets'});
+            }
+            if (braceCount !== 0) {
+                errors.push({line: lines.length - 1, message: 'Unmatched braces'});
+            }
+
+            // Show errors
+            errors.forEach(err => {
+                editor.addLineClass(err.line, 'background', 'cm-error-line');
+                logConsole(`Line ${err.line + 1}: ${err.message}`, 'error');
+            });
+
+            const errorCount = errors.length;
+            document.getElementById('errors').textContent = errorCount === 0 ?
+                'No errors' : `${errorCount} error${errorCount > 1 ? 's' : ''}`;
+            document.getElementById('errors').style.color = errorCount === 0 ?
+                'var(--success)' : 'var(--error)';
+
+            return {valid: errors.length === 0, errors: errors};
+        }
+
+        // Find/Replace
+        function toggleFind() {
+            const findBar = document.getElementById('findBar');
+            findBar.classList.toggle('visible');
+            if (findBar.classList.contains('visible')) {
+                document.getElementById('findInput').focus();
+            }
+        }
+
+        function onFindKeyUp(event) {
+            if (event.key === 'Enter') {
+                findNext();
+            } else if (event.key === 'Escape') {
+                toggleFind();
+            }
+        }
+
+        let searchCursor = null;
+
+        function findNext() {
+            const query = document.getElementById('findInput').value;
+            if (!query) return;
+
+            const useRegex = document.getElementById('regexCheck').checked;
+            const caseSensitive = document.getElementById('caseCheck').checked;
+
+            const cursor = editor.getCursor();
+            searchCursor = editor.getSearchCursor(
+                useRegex ? new RegExp(query, caseSensitive ? '' : 'i') : query,
+                cursor,
+                {caseFold: !caseSensitive}
+            );
+
+            if (searchCursor.findNext()) {
+                editor.setSelection(searchCursor.from(), searchCursor.to());
+                editor.scrollIntoView({from: searchCursor.from(), to: searchCursor.to()});
+            } else {
+                // Wrap around
+                searchCursor = editor.getSearchCursor(
+                    useRegex ? new RegExp(query, caseSensitive ? '' : 'i') : query,
+                    CodeMirror.Pos(0, 0),
+                    {caseFold: !caseSensitive}
+                );
+                if (searchCursor.findNext()) {
+                    editor.setSelection(searchCursor.from(), searchCursor.to());
+                    editor.scrollIntoView({from: searchCursor.from(), to: searchCursor.to()});
+                }
+            }
+        }
+
+        function findPrev() {
+            const query = document.getElementById('findInput').value;
+            if (!query) return;
+
+            const cursor = editor.getCursor();
+            searchCursor = editor.getSearchCursor(query, cursor);
+
+            if (searchCursor.findPrevious()) {
+                editor.setSelection(searchCursor.from(), searchCursor.to());
+                editor.scrollIntoView({from: searchCursor.from(), to: searchCursor.to()});
+            }
+        }
+
+        function replaceOne() {
+            const replace = document.getElementById('replaceInput').value;
+            if (searchCursor && editor.somethingSelected()) {
+                editor.replaceSelection(replace);
+                findNext();
+            }
+        }
+
+        function replaceAll() {
+            const query = document.getElementById('findInput').value;
+            const replace = document.getElementById('replaceInput').value;
+            if (!query) return;
+
+            const cursor = editor.getSearchCursor(query);
+            let count = 0;
+            while (cursor.findNext()) {
+                cursor.replace(replace);
+                count++;
+            }
+            logConsole(`Replaced ${count} occurrences`, 'info');
+        }
+
+        function toggleComment() {
+            const cursor = editor.getCursor();
+            const line = editor.getLine(cursor.line);
+            const trimmed = line.trimStart();
+
+            if (trimmed.startsWith('#')) {
+                const pos = line.indexOf('#');
+                editor.replaceRange('', {line: cursor.line, ch: pos}, {line: cursor.line, ch: pos + 2});
+            } else {
+                editor.replaceRange('# ', {line: cursor.line, ch: 0});
+            }
+        }
+
+        // Console
+        function logConsole(message, type = 'info') {
+            const output = document.getElementById('consoleOutput');
+            const line = document.createElement('div');
+            line.className = 'console-line ' + type;
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('consoleOutput').innerHTML = '';
+        }
+
+        // WebEditor bridge placeholder
+        const WebEditor = {
+            invoke: function(method, args, callback) {
+                // Would communicate with C++ via WebView bridge
+                console.log('WebEditor.invoke:', method, args);
+                if (callback) {
+                    setTimeout(() => callback(null, {success: true}), 100);
+                }
+            }
+        };
+
+        // Initialize with empty tab
+        newFile();
+        logConsole('Python Script Editor ready', 'success');
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Spell Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body class="spell-editor">
+    <div class="editor-container">
+        <!-- Header toolbar -->
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-icon" onclick="goBack()" title="Back">
+                    <span class="icon">&#x2190;</span>
+                </button>
+                <h2 id="spell-name">New Spell</h2>
+                <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="undo()" title="Undo (Ctrl+Z)">Undo</button>
+                <button class="btn" onclick="redo()" title="Redo (Ctrl+Y)">Redo</button>
+                <button class="btn btn-primary" onclick="save()" title="Save (Ctrl+S)">Save</button>
+            </div>
+        </div>
+
+        <div class="editor-content">
+            <!-- Properties panel -->
+            <div class="properties-panel">
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Basic Info</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="id">ID</label>
+                            <input type="text" id="id" data-path="id" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" data-path="name" placeholder="Spell name">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" data-path="description" rows="3" placeholder="Spell description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="icon">Icon</label>
+                            <div class="icon-picker">
+                                <div class="icon-preview" id="icon-preview"></div>
+                                <input type="text" id="icon" data-path="icon" placeholder="Icon path">
+                                <button class="btn btn-small" onclick="browseIcon()">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Spell Type</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="spellType">Type</label>
+                            <select id="spellType" data-path="type">
+                                <option value="instant">Instant</option>
+                                <option value="projectile">Projectile</option>
+                                <option value="aoe">Area of Effect</option>
+                                <option value="beam">Beam</option>
+                                <option value="channel">Channel</option>
+                                <option value="summon">Summon</option>
+                                <option value="buff">Buff</option>
+                                <option value="debuff">Debuff</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="targetType">Target</label>
+                            <select id="targetType" data-path="targetType">
+                                <option value="self">Self</option>
+                                <option value="ally">Ally</option>
+                                <option value="enemy">Enemy</option>
+                                <option value="any">Any Unit</option>
+                                <option value="point">Point on Ground</option>
+                                <option value="direction">Direction</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Stats</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="manaCost">Mana Cost</label>
+                            <input type="number" id="manaCost" data-path="stats.manaCost" min="0" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="cooldown">Cooldown (s)</label>
+                            <input type="number" id="cooldown" data-path="stats.cooldown" min="0" step="0.1" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="castTime">Cast Time (s)</label>
+                            <input type="number" id="castTime" data-path="stats.castTime" min="0" step="0.1" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="range">Range</label>
+                            <input type="number" id="range" data-path="stats.range" min="0" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="radius">AoE Radius</label>
+                            <input type="number" id="radius" data-path="stats.radius" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Damage</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="damageType">Damage Type</label>
+                            <select id="damageType" data-path="damage.type">
+                                <option value="none">None</option>
+                                <option value="physical">Physical</option>
+                                <option value="magical">Magical</option>
+                                <option value="fire">Fire</option>
+                                <option value="ice">Ice</option>
+                                <option value="lightning">Lightning</option>
+                                <option value="holy">Holy</option>
+                                <option value="dark">Dark</option>
+                                <option value="true">True Damage</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="damageMin">Min Damage</label>
+                            <input type="number" id="damageMin" data-path="damage.min" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="damageMax">Max Damage</label>
+                            <input type="number" id="damageMax" data-path="damage.max" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="damageScaling">Scaling Stat</label>
+                            <select id="damageScaling" data-path="damage.scaling">
+                                <option value="none">None</option>
+                                <option value="attack">Attack Power</option>
+                                <option value="magic">Magic Power</option>
+                                <option value="health">Max Health</option>
+                                <option value="mana">Max Mana</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="scalingRatio">Scaling Ratio (%)</label>
+                            <input type="number" id="scalingRatio" data-path="damage.scalingRatio" min="0" max="1000" value="100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Effects</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="array-editor" id="effects-array" data-path="effects">
+                            <div class="array-items" id="effects-items">
+                                <!-- Effect items added dynamically -->
+                            </div>
+                            <button class="btn btn-small btn-add" onclick="addEffect()">+ Add Effect</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Visual Effects</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="castVfx">Cast VFX</label>
+                            <input type="text" id="castVfx" data-path="vfx.cast" placeholder="effects/spell_cast.vfx">
+                        </div>
+                        <div class="form-group">
+                            <label for="projectileVfx">Projectile VFX</label>
+                            <input type="text" id="projectileVfx" data-path="vfx.projectile" placeholder="effects/spell_projectile.vfx">
+                        </div>
+                        <div class="form-group">
+                            <label for="impactVfx">Impact VFX</label>
+                            <input type="text" id="impactVfx" data-path="vfx.impact" placeholder="effects/spell_impact.vfx">
+                        </div>
+                        <div class="form-group">
+                            <label for="castSound">Cast Sound</label>
+                            <input type="text" id="castSound" data-path="sfx.cast" placeholder="sounds/spell_cast.wav">
+                        </div>
+                        <div class="form-group">
+                            <label for="impactSound">Impact Sound</label>
+                            <input type="text" id="impactSound" data-path="sfx.impact" placeholder="sounds/spell_impact.wav">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Requirements</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="requiredLevel">Required Level</label>
+                            <input type="number" id="requiredLevel" data-path="requirements.level" min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="requiredTech">Required Technology</label>
+                            <input type="text" id="requiredTech" data-path="requirements.tech" placeholder="tech_id">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview panel -->
+            <div class="preview-viewport">
+                <div class="preview-header">
+                    <span>Preview</span>
+                    <div class="preview-controls">
+                        <button class="btn btn-icon" onclick="playPreview()" title="Play">&#x25B6;</button>
+                        <button class="btn btn-icon" onclick="stopPreview()" title="Stop">&#x25A0;</button>
+                    </div>
+                </div>
+                <div class="preview-canvas" id="preview-canvas">
+                    <canvas id="spell-preview"></canvas>
+                </div>
+                <div class="preview-info">
+                    <div class="stat-row">
+                        <span class="stat-label">DPS:</span>
+                        <span class="stat-value" id="dps-calc">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Efficiency:</span>
+                        <span class="stat-value" id="efficiency-calc">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Validation errors -->
+        <div class="validation-panel" id="validation-panel" style="display: none;">
+            <div class="validation-header">
+                <span>Validation Errors</span>
+                <button class="btn btn-icon" onclick="closeValidation()">x</button>
+            </div>
+            <div class="validation-list" id="validation-list">
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script src="schema_form.js"></script>
+    <script>
+        var spellEditor = new SchemaEditor('spell', {
+            containerSelector: '.properties-panel',
+            onDataChange: function(path, value) {
+                updatePreview();
+                calculateStats();
+            }
+        });
+
+        // Initialize with spell ID from URL or new spell
+        var spellId = WebEditor.getQueryParam('id');
+        if (spellId) {
+            loadSpell(spellId);
+        }
+
+        function loadSpell(id) {
+            WebEditor.invoke('contentBrowser.getItemData', [id], function(err, data) {
+                if (err) {
+                    console.error('Failed to load spell:', err);
+                    return;
+                }
+                spellEditor.setData(data);
+                document.getElementById('spell-name').textContent = data.name || 'Unnamed Spell';
+            });
+        }
+
+        function save() {
+            var data = spellEditor.getData();
+            WebEditor.invoke('contentBrowser.saveItem', [spellId, data], function(err) {
+                if (err) {
+                    console.error('Failed to save:', err);
+                } else {
+                    setDirty(false);
+                }
+            });
+        }
+
+        function calculateStats() {
+            var data = spellEditor.getData();
+            var dps = 0;
+            if (data.damage && data.stats && data.stats.cooldown > 0) {
+                var avgDamage = ((data.damage.min || 0) + (data.damage.max || 0)) / 2;
+                dps = avgDamage / data.stats.cooldown;
+            }
+            document.getElementById('dps-calc').textContent = dps.toFixed(1);
+
+            var efficiency = data.stats && data.stats.manaCost > 0 ? dps / data.stats.manaCost : 0;
+            document.getElementById('efficiency-calc').textContent = efficiency.toFixed(2);
+        }
+
+        function updatePreview() {
+            // Update spell preview visualization
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+"""
+{{entity_type}} Death Handler Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+
+
+# Death configuration
+CORPSE_DURATION = {{corpse_duration}}  # seconds before corpse despawns
+DROP_CHANCE = {{drop_chance}}  # chance to drop loot (0.0 - 1.0)
+
+
+def on_death(entity_id: int, killer_id: int) -> None:
+    """
+    Called when the {{entity_type}} entity dies.
+
+    Args:
+        entity_id: The entity that died
+        killer_id: The entity that killed this one (0 if environmental)
+    """
+    # Get death position
+    x, y, z = get_position(entity_id)
+
+    {{#if death_effect}}
+    # Play death effect
+    play_effect("{{death_effect}}", x, y, z)
+    {{/if}}
+
+    {{#if death_sound}}
+    # Play death sound
+    play_sound("{{death_sound}}", x, y, z)
+    {{/if}}
+
+    {{#if grant_xp}}
+    # Grant experience to killer
+    if killer_id > 0:
+        xp_value = get_property(entity_id, "xp_value")
+        if xp_value > 0:
+            grant_experience(killer_id, xp_value)
+            log_debug(f"Granted {xp_value} XP to {killer_id}")
+    {{/if}}
+
+    {{#if drop_loot}}
+    # Drop loot
+    if random_chance(DROP_CHANCE):
+        loot_table = get_property(entity_id, "loot_table")
+        if loot_table:
+            items = generate_loot(loot_table)
+            for item in items:
+                drop_item(item, x, y, z)
+    {{/if}}
+
+    {{#if spawn_corpse}}
+    # Spawn corpse entity
+    corpse_id = spawn_entity("corpse", x, y, z)
+    set_property(corpse_id, "original_type", "{{entity_type}}")
+    set_property(corpse_id, "despawn_time", get_time() + CORPSE_DURATION)
+
+    # Copy visual properties
+    copy_visual(entity_id, corpse_id)
+    {{/if}}
+
+    {{#if death_spawn}}
+    # Spawn entities on death
+    {{#each death_spawns}}
+    for i in range({{count}}):
+        offset_x = random_range(-2.0, 2.0)
+        offset_z = random_range(-2.0, 2.0)
+        spawn_entity("{{type}}", x + offset_x, y, z + offset_z)
+    {{/each}}
+    {{/if}}
+
+    {{#if notify_allies}}
+    # Notify nearby allies
+    allies = find_allies_in_radius(entity_id, x, y, z, {{notify_radius}})
+    for ally_id in allies:
+        trigger_event(ally_id, "ally_died", {
+            "dead_entity": entity_id,
+            "killer": killer_id,
+            "position": (x, y, z)
+        })
+    {{/if}}
+
+    {{#if achievement_check}}
+    # Check for achievements
+    if killer_id > 0 and is_player(killer_id):
+        increment_stat(killer_id, "{{entity_type}}_kills")
+        check_achievements(killer_id, "kill_{{entity_type}}")
+    {{/if}}
+
+    # Log death
+    log_debug(f"{{entity_type}} {entity_id} killed by {killer_id} at ({x}, {y}, {z})")
+
+    {{#if custom_death}}
+    # Custom death handling
+    {{custom_death}}
+    {{/if}}
+
+    # Queue entity for destruction
+    destroy_entity(entity_id)

@@ -1,0 +1,126 @@
+{
+    "id": "building_tower",
+    "type": "building",
+    "name": "Guard Tower",
+    "description": "Defensive structure that attacks nearby enemies. Can be garrisoned with archers for increased firepower.",
+
+    "tags": ["military", "defense", "ranged", "tier1"],
+
+    "model": {
+        "path": "models/buildings/tower.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/buildings/tower_diffuse.png",
+        "normal": "textures/buildings/tower_normal.png"
+    },
+
+    "footprint": {
+        "width": 2,
+        "height": 2,
+        "blocksMovement": true,
+        "blocksConstruction": true
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [1.5, 4.0, 1.5],
+                "offset": [0.0, 4.0, 0.0]
+            }
+        ],
+        "body_type": "static",
+        "layer": "building"
+    },
+
+    "stats": {
+        "health": 800,
+        "maxHealth": 800,
+        "armor": 15,
+        "fireResistance": 0.3
+    },
+
+    "combat": {
+        "canAttack": true,
+        "attackDamage": 10,
+        "attackSpeed": 1.0,
+        "attackRange": 20.0,
+        "projectile": "projectile_arrow_basic",
+        "targetPriority": ["unit", "hero"],
+        "targetFilter": {
+            "enemies": true,
+            "allies": false,
+            "neutral": false
+        }
+    },
+
+    "garrison": {
+        "enabled": true,
+        "capacity": 4,
+        "allowedTypes": ["archer", "crossbowman"],
+        "damageBonus": 0.25,
+        "rangeBonus": 2.0,
+        "protection": 0.5
+    },
+
+    "construction": {
+        "buildTime": 45.0,
+        "builderSlots": 2,
+        "stages": [
+            { "percent": 0.33, "model": "models/buildings/tower_construction_1.obj" },
+            { "percent": 0.66, "model": "models/buildings/tower_construction_2.obj" },
+            { "percent": 1.0, "model": "models/buildings/tower.obj" }
+        ]
+    },
+
+    "costs": {
+        "gold": 150,
+        "wood": 100,
+        "stone": 50
+    },
+
+    "requirements": {
+        "buildings": ["building_town_center"],
+        "techs": [],
+        "age": 1
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_tower_range",
+            "name": "Extended Range",
+            "description": "+3 attack range",
+            "cost": { "gold": 75 },
+            "researchTime": 20.0,
+            "effects": { "attackRange": 3 }
+        },
+        {
+            "id": "upgrade_tower_damage",
+            "name": "Reinforced Arrows",
+            "description": "+5 attack damage",
+            "cost": { "gold": 100, "iron": 25 },
+            "researchTime": 25.0,
+            "effects": { "attackDamage": 5 }
+        }
+    ],
+
+    "visual": {
+        "selectionRadius": 2.5,
+        "minimapIcon": "icons/minimap/tower.png",
+        "minimapColor": [0.8, 0.2, 0.2, 1.0]
+    },
+
+    "sounds": {
+        "construction": "sounds/buildings/construction_wood.wav",
+        "complete": "sounds/buildings/complete_military.wav",
+        "attack": "sounds/weapons/tower_shot.wav",
+        "destroyed": "sounds/buildings/collapse_stone.wav"
+    },
+
+    "faction": "human",
+    "category": "defense",
+    "tier": 1,
+    "isUnique": false
+}

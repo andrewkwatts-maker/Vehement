@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tile Viewer - Nova3D Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root { --bg-primary: #1e1e1e; --bg-secondary: #252526; --bg-tertiary: #2d2d30; --bg-hover: #3e3e42; --border-color: #3c3c3c; --text-primary: #cccccc; --text-secondary: #9d9d9d; --text-bright: #ffffff; --accent-primary: #007acc; --success: #4ec9b0; --warning: #dcdcaa; --error: #f14c4c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: var(--text-primary); background: var(--bg-primary); height: 100vh; overflow: hidden; }
+        .viewer-container { display: flex; flex-direction: column; height: 100vh; }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
+        .toolbar h1 { font-size: 16px; font-weight: 500; color: var(--text-bright); }
+        .dirty-indicator { color: var(--warning); font-size: 18px; display: none; }
+        .btn { padding: 6px 12px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; }
+        .btn:hover { background: var(--bg-hover); }
+        .btn-primary { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+        .btn-small { padding: 4px 8px; font-size: 12px; }
+        .btn-add { color: var(--success); border-style: dashed; }
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+        .properties-panel { width: 350px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); overflow-y: auto; }
+        .preview-area { flex: 1; display: flex; flex-direction: column; }
+        .preview-canvas { flex: 1; position: relative; }
+        .preview-canvas canvas { width: 100% !important; height: 100% !important; }
+        .preview-controls { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); }
+        .section { border-bottom: 1px solid var(--border-color); }
+        .section-header { display: flex; align-items: center; padding: 10px 12px; cursor: pointer; font-weight: 500; color: var(--text-bright); user-select: none; }
+        .section-header:hover { background: var(--bg-hover); }
+        .section-header .icon { margin-right: 8px; font-size: 10px; }
+        .section.collapsed .section-header .icon { transform: rotate(-90deg); }
+        .section.collapsed .section-content { display: none; }
+        .section-content { padding: 12px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 12px; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 6px 8px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .stat-row label { width: 120px; margin-bottom: 0; }
+        .stat-row input, .stat-row select { flex: 1; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); }
+        .tab { padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); }
+        .tab.active { color: var(--text-bright); border-bottom-color: var(--accent-primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .walkability-grid { display: grid; gap: 2px; background: var(--bg-tertiary); padding: 8px; border-radius: 4px; justify-content: center; }
+        .walk-cell { width: 30px; height: 30px; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+        .walk-cell.walkable { background: var(--success); }
+        .walk-cell.blocked { background: var(--error); }
+        .walk-cell.slow { background: var(--warning); }
+        .walk-cell.water { background: #1e90ff; }
+        .transition-item { padding: 10px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 8px; }
+        .spawn-point { padding: 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+        .layer-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg-tertiary); border-radius: 3px; margin-bottom: 4px; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn" onclick="goBack()">Back</button>
+                <h1 id="tile-title">Tile Viewer</h1>
+                <span class="dirty-indicator" id="dirty-indicator">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="loadConfig()">Load</button>
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="saveConfig()">Save</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="properties-panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="general">General</div>
+                    <div class="tab" data-tab="walkability">Walkability</div>
+                    <div class="tab" data-tab="resources">Resources</div>
+                    <div class="tab" data-tab="transitions">Transitions</div>
+                </div>
+
+                <div class="tab-content active" id="tab-general">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Basic Info</div>
+                        <div class="section-content">
+                            <div class="form-group"><label>ID</label><input type="text" data-path="id" readonly></div>
+                            <div class="form-group"><label>Name</label><input type="text" data-path="name"></div>
+                            <div class="form-group"><label>Category</label>
+                                <select data-path="category">
+                                    <option value="terrain">Terrain</option>
+                                    <option value="water">Water</option>
+                                    <option value="road">Road</option>
+                                    <option value="decoration">Decoration</option>
+                                    <option value="obstacle">Obstacle</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Terrain Mesh</div>
+                        <div class="section-content">
+                            <div class="form-group"><label>Mesh/Model</label>
+                                <div style="display:flex;gap:8px">
+                                    <input type="text" data-path="mesh">
+                                    <button class="btn btn-small" onclick="browseMesh()">Browse</button>
+                                </div>
+                            </div>
+                            <div class="form-group"><label>Texture</label>
+                                <div style="display:flex;gap:8px">
+                                    <input type="text" data-path="texture">
+                                    <button class="btn btn-small" onclick="browseTexture()">Browse</button>
+                                </div>
+                            </div>
+                            <div class="form-group"><label>Normal Map</label><input type="text" data-path="normalMap"></div>
+                            <div class="stat-row"><label>Texture Scale</label><input type="number" data-path="textureScale" value="1" min="0.1" step="0.1"></div>
+                            <div class="form-group"><label>Tint</label><input type="color" data-path="tint" value="#ffffff"></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Properties</div>
+                        <div class="section-content">
+                            <div class="stat-row"><label>Move Cost</label><input type="number" data-path="moveCost" value="1" min="0" step="0.1"></div>
+                            <div class="stat-row"><label>Height</label><input type="number" data-path="height" value="0" step="0.1"></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="isWalkable" checked> Walkable</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="isSwimmable"> Swimmable</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="isFlyable" checked> Flyable</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="blocksSight"> Blocks Line of Sight</label></div>
+                            <div class="form-group"><label><input type="checkbox" data-path="isBuildable" checked> Buildable</label></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-walkability">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Walkability Mask</div>
+                        <div class="section-content">
+                            <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center">
+                                <label>Grid Size:</label>
+                                <input type="number" id="walk-size" value="3" min="1" max="5" style="width:50px" onchange="updateWalkGrid()">
+                            </div>
+                            <div class="walkability-grid" id="walk-grid"></div>
+                            <div style="margin-top:8px;display:flex;gap:8px">
+                                <button class="btn btn-small" onclick="setAllWalkable(true)">All Walkable</button>
+                                <button class="btn btn-small" onclick="setAllWalkable(false)">All Blocked</button>
+                            </div>
+                            <div style="margin-top:12px;font-size:11px;color:var(--text-secondary)">
+                                <div><span style="display:inline-block;width:12px;height:12px;background:var(--success);margin-right:4px"></span>Walkable</div>
+                                <div><span style="display:inline-block;width:12px;height:12px;background:var(--error);margin-right:4px"></span>Blocked</div>
+                                <div><span style="display:inline-block;width:12px;height:12px;background:var(--warning);margin-right:4px"></span>Slow</div>
+                                <div><span style="display:inline-block;width:12px;height:12px;background:#1e90ff;margin-right:4px"></span>Water</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Collision Layers</div>
+                        <div class="section-content">
+                            <div id="collision-layers">
+                                <div class="layer-item"><input type="checkbox" data-layer="ground" checked> Ground</div>
+                                <div class="layer-item"><input type="checkbox" data-layer="water"> Water</div>
+                                <div class="layer-item"><input type="checkbox" data-layer="air" checked> Air</div>
+                                <div class="layer-item"><input type="checkbox" data-layer="obstacle"> Obstacle</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-resources">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Resource Spawn Points</div>
+                        <div class="section-content">
+                            <div id="spawn-points"></div>
+                            <button class="btn btn-small btn-add" onclick="addSpawnPoint()">+ Add Spawn Point</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Harvestable Resources</div>
+                        <div class="section-content">
+                            <div class="form-group"><label>Resource Type</label>
+                                <select data-path="resource.type">
+                                    <option value="none">None</option>
+                                    <option value="wood">Wood</option>
+                                    <option value="stone">Stone</option>
+                                    <option value="gold">Gold</option>
+                                    <option value="food">Food</option>
+                                    <option value="water">Water</option>
+                                </select>
+                            </div>
+                            <div class="stat-row"><label>Amount</label><input type="number" data-path="resource.amount" value="0" min="0"></div>
+                            <div class="stat-row"><label>Regen Rate</label><input type="number" data-path="resource.regenRate" value="0" min="0" step="0.1"></div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Decorations</div>
+                        <div class="section-content">
+                            <div id="decorations"></div>
+                            <button class="btn btn-small btn-add" onclick="addDecoration()">+ Add Decoration</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-transitions">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Transition Rules</div>
+                        <div class="section-content">
+                            <div id="transition-rules"></div>
+                            <button class="btn btn-small btn-add" onclick="addTransition()">+ Add Transition</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>Edge Blending</div>
+                        <div class="section-content">
+                            <div class="form-group"><label><input type="checkbox" data-path="blending.enabled"> Enable Edge Blending</label></div>
+                            <div class="stat-row"><label>Blend Distance</label><input type="number" data-path="blending.distance" value="0.5" min="0" max="1" step="0.1"></div>
+                            <div class="form-group"><label>Blend Mode</label>
+                                <select data-path="blending.mode">
+                                    <option value="linear">Linear</option>
+                                    <option value="smooth">Smooth</option>
+                                    <option value="hard">Hard Edge</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div class="preview-canvas"><canvas id="preview-canvas"></canvas></div>
+                <div class="preview-controls">
+                    <button class="btn btn-small" onclick="resetCamera()">Reset Camera</button>
+                    <label><input type="checkbox" id="show-walkability" onchange="toggleWalkView()"> Show Walkability</label>
+                    <label><input type="checkbox" id="show-spawns" onchange="toggleSpawnView()"> Show Spawns</label>
+                    <label><input type="checkbox" id="show-grid" checked onchange="toggleGridView()"> Show Grid</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script src="../js/viewer_common.js"></script>
+    <script>
+        let viewerScene, configData = {}, originalData = {}, undoStack = [], redoStack = [], currentFile = null;
+        let tileMesh = null, walkOverlay = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initScene();
+            initTabs();
+            initFormBindings();
+            updateWalkGrid();
+            setDefaultConfig();
+        });
+
+        function initScene() {
+            viewerScene = new ViewerScene('preview-canvas', { cameraPosition: { x: 3, y: 5, z: 3 }, gridSize: 5 });
+            createTilePreview();
+        }
+
+        function createTilePreview() {
+            const geometry = new THREE.PlaneGeometry(2, 2);
+            const material = new THREE.MeshStandardMaterial({ color: 0x4a7c59, side: THREE.DoubleSide });
+            tileMesh = new THREE.Mesh(geometry, material);
+            tileMesh.rotation.x = -Math.PI / 2;
+            tileMesh.receiveShadow = true;
+            viewerScene.scene.add(tileMesh);
+        }
+
+        function initTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+                });
+            });
+        }
+
+        function initFormBindings() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                input.addEventListener('change', function() {
+                    saveUndoState();
+                    setPath(configData, this.getAttribute('data-path'), getInputValue(this));
+                    setDirty(true);
+                    updatePreview();
+                });
+            });
+        }
+
+        function setDefaultConfig() {
+            configData = {
+                id: 'tile_new', name: 'New Tile', category: 'terrain',
+                moveCost: 1, height: 0, isWalkable: true, isFlyable: true, isBuildable: true,
+                walkabilityMask: [], spawnPoints: [], transitions: [], resource: { type: 'none' }
+            };
+            originalData = JSON.parse(JSON.stringify(configData));
+            populateForm();
+        }
+
+        function updateWalkGrid() {
+            const size = parseInt(document.getElementById('walk-size').value) || 3;
+            const grid = document.getElementById('walk-grid');
+            grid.style.gridTemplateColumns = `repeat(${size}, 30px)`;
+            grid.innerHTML = '';
+
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'walk-cell walkable';
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    cell.addEventListener('click', cycleWalkState);
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function cycleWalkState() {
+            const states = ['walkable', 'blocked', 'slow', 'water'];
+            const current = states.findIndex(s => this.classList.contains(s));
+            states.forEach(s => this.classList.remove(s));
+            this.classList.add(states[(current + 1) % states.length]);
+            updateWalkData();
+        }
+
+        function setAllWalkable(walkable) {
+            document.querySelectorAll('.walk-cell').forEach(c => {
+                c.className = 'walk-cell ' + (walkable ? 'walkable' : 'blocked');
+            });
+            updateWalkData();
+        }
+
+        function updateWalkData() {
+            configData.walkabilityMask = [];
+            document.querySelectorAll('.walk-cell').forEach(c => {
+                const state = ['walkable', 'blocked', 'slow', 'water'].find(s => c.classList.contains(s));
+                configData.walkabilityMask.push({ x: parseInt(c.dataset.x), y: parseInt(c.dataset.y), state });
+            });
+            setDirty(true);
+        }
+
+        function addSpawnPoint() {
+            if (!configData.spawnPoints) configData.spawnPoints = [];
+            saveUndoState();
+            configData.spawnPoints.push({ x: 0, y: 0, resourceType: 'wood', chance: 0.5 });
+            updateSpawnPoints();
+            setDirty(true);
+        }
+
+        function updateSpawnPoints() {
+            document.getElementById('spawn-points').innerHTML = (configData.spawnPoints || []).map((s, i) => `
+                <div class="spawn-point">
+                    <input type="number" value="${s.x}" style="width:50px" placeholder="X" onchange="updateSpawn(${i}, 'x', this.value)">
+                    <input type="number" value="${s.y}" style="width:50px" placeholder="Y" onchange="updateSpawn(${i}, 'y', this.value)">
+                    <select onchange="updateSpawn(${i}, 'resourceType', this.value)">
+                        <option value="wood" ${s.resourceType === 'wood' ? 'selected' : ''}>Wood</option>
+                        <option value="stone" ${s.resourceType === 'stone' ? 'selected' : ''}>Stone</option>
+                        <option value="gold" ${s.resourceType === 'gold' ? 'selected' : ''}>Gold</option>
+                    </select>
+                    <button class="btn btn-small" onclick="removeSpawn(${i})">X</button>
+                </div>`).join('');
+        }
+
+        function updateSpawn(i, k, v) { saveUndoState(); configData.spawnPoints[i][k] = k === 'resourceType' ? v : parseFloat(v); setDirty(true); }
+        function removeSpawn(i) { saveUndoState(); configData.spawnPoints.splice(i, 1); updateSpawnPoints(); setDirty(true); }
+
+        function addTransition() {
+            if (!configData.transitions) configData.transitions = [];
+            saveUndoState();
+            configData.transitions.push({ neighborTile: '', direction: 'all', transitionMesh: '' });
+            updateTransitions();
+            setDirty(true);
+        }
+
+        function updateTransitions() {
+            document.getElementById('transition-rules').innerHTML = (configData.transitions || []).map((t, i) => `
+                <div class="transition-item">
+                    <div class="form-group"><label>Neighbor Tile</label><input type="text" value="${t.neighborTile}" onchange="updateTrans(${i}, 'neighborTile', this.value)"></div>
+                    <div class="form-group"><label>Direction</label>
+                        <select onchange="updateTrans(${i}, 'direction', this.value)">
+                            <option value="all" ${t.direction === 'all' ? 'selected' : ''}>All</option>
+                            <option value="north" ${t.direction === 'north' ? 'selected' : ''}>North</option>
+                            <option value="south" ${t.direction === 'south' ? 'selected' : ''}>South</option>
+                            <option value="east" ${t.direction === 'east' ? 'selected' : ''}>East</option>
+                            <option value="west" ${t.direction === 'west' ? 'selected' : ''}>West</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end"><button class="btn btn-small" onclick="removeTrans(${i})">Remove</button></div>
+                </div>`).join('');
+        }
+
+        function updateTrans(i, k, v) { saveUndoState(); configData.transitions[i][k] = v; setDirty(true); }
+        function removeTrans(i) { saveUndoState(); configData.transitions.splice(i, 1); updateTransitions(); setDirty(true); }
+
+        function addDecoration() { /* Implementation */ }
+
+        function updatePreview() {
+            if (tileMesh && configData.tint) {
+                tileMesh.material.color.set(configData.tint);
+            }
+        }
+
+        function populateForm() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                setInputValue(input, getPath(configData, input.getAttribute('data-path')));
+            });
+            updateSpawnPoints();
+            updateTransitions();
+        }
+
+        function loadConfig() { viewerBridge.browseFile('*.json').then(p => p && loadConfigFromPath(p)); }
+        function loadConfigFromPath(p) { currentFile = p; viewerBridge.loadConfig(p).then(d => { configData = d; originalData = JSON.parse(JSON.stringify(d)); populateForm(); document.getElementById('tile-title').textContent = d.name || 'Tile Viewer'; setDirty(false); }); }
+        function saveConfig() { if (!currentFile) viewerBridge.browseFile('*.json').then(p => { if (p) { currentFile = p; doSave(); } }); else doSave(); }
+        function doSave() { viewerBridge.saveConfig(currentFile, configData).then(() => { originalData = JSON.parse(JSON.stringify(configData)); setDirty(false); }); }
+
+        function saveUndoState() { undoStack.push(JSON.parse(JSON.stringify(configData))); redoStack = []; if (undoStack.length > 50) undoStack.shift(); }
+        function undo() { if (!undoStack.length) return; redoStack.push(JSON.parse(JSON.stringify(configData))); configData = undoStack.pop(); populateForm(); setDirty(true); }
+        function redo() { if (!redoStack.length) return; undoStack.push(JSON.parse(JSON.stringify(configData))); configData = redoStack.pop(); populateForm(); setDirty(true); }
+
+        function toggleSection(h) { h.parentElement.classList.toggle('collapsed'); }
+        function setDirty(d) { document.getElementById('dirty-indicator').style.display = d ? 'inline' : 'none'; }
+        function goBack() { if (document.getElementById('dirty-indicator').style.display !== 'none' && !confirm('Discard changes?')) return; window.history.back(); }
+        function resetCamera() { viewerScene.resetCamera(); }
+        function toggleWalkView() { /* Show walk overlay */ }
+        function toggleSpawnView() { /* Show spawn points */ }
+        function toggleGridView() { viewerScene.helpers.forEach(h => h.visible = document.getElementById('show-grid').checked); }
+        function browseMesh() { viewerBridge.browseFile('*.gltf').then(p => { if (p) { setPath(configData, 'mesh', p); document.querySelector('[data-path="mesh"]').value = p; setDirty(true); } }); }
+        function browseTexture() { viewerBridge.browseFile('*.png,*.jpg').then(p => { if (p) { setPath(configData, 'texture', p); document.querySelector('[data-path="texture"]').value = p; setDirty(true); } }); }
+
+        function getPath(o, p) { if (!p) return o; const ps = p.split('.'); let c = o; for (const x of ps) { if (c == null) return undefined; c = c[x]; } return c; }
+        function setPath(o, p, v) { const ps = p.split('.'); let c = o; for (let i = 0; i < ps.length - 1; i++) { if (c[ps[i]] === undefined) c[ps[i]] = {}; c = c[ps[i]]; } c[ps[ps.length - 1]] = v; }
+        function getInputValue(i) { if (i.type === 'checkbox') return i.checked; if (i.type === 'number') return parseFloat(i.value) || 0; return i.value; }
+        function setInputValue(i, v) { if (i.type === 'checkbox') i.checked = !!v; else if (i.type === 'color') i.value = v || '#ffffff'; else i.value = v != null ? v : ''; }
+
+        document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveConfig(); } if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); } });
+    </script>
+</body>
+</html>

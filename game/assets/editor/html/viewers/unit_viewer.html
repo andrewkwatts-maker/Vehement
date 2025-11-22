@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Viewer - Nova3D Editor</title>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #2d2d30;
+            --bg-hover: #3e3e42;
+            --border-color: #3c3c3c;
+            --text-primary: #cccccc;
+            --text-secondary: #9d9d9d;
+            --text-bright: #ffffff;
+            --accent-primary: #007acc;
+            --success: #4ec9b0;
+            --warning: #dcdcaa;
+            --error: #f14c4c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .viewer-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar h1 {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-bright);
+        }
+
+        .dirty-indicator {
+            color: var(--warning);
+            font-size: 18px;
+            display: none;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .btn:hover { background: var(--bg-hover); }
+        .btn-primary { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+        .btn-small { padding: 4px 8px; font-size: 12px; }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .properties-panel {
+            width: 320px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .preview-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-canvas {
+            flex: 1;
+            position: relative;
+        }
+
+        .preview-canvas canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .preview-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .section {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-bright);
+            user-select: none;
+        }
+
+        .section-header:hover { background: var(--bg-hover); }
+
+        .section-header .icon {
+            margin-right: 8px;
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+
+        .section.collapsed .section-header .icon { transform: rotate(-90deg); }
+        .section.collapsed .section-content { display: none; }
+
+        .section-content {
+            padding: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 13px;
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .vector3-input {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .vector3-input input { text-align: center; }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .checkbox-group input { margin-right: 6px; }
+
+        .array-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .array-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        .array-item input, .array-item select { flex: 1; }
+
+        .btn-add {
+            color: var(--success);
+            border-style: dashed;
+        }
+
+        .file-picker {
+            display: flex;
+            gap: 8px;
+        }
+
+        .file-picker input { flex: 1; }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .stat-row label {
+            width: 100px;
+            margin-bottom: 0;
+        }
+
+        .stat-row input { flex: 1; }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+        }
+
+        .tab:hover { color: var(--text-primary); }
+        .tab.active {
+            color: var(--text-bright);
+            border-bottom-color: var(--accent-primary);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .event-item {
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        .event-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .event-name {
+            font-weight: 500;
+            color: var(--text-bright);
+        }
+
+        .python-editor-container {
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .CodeMirror {
+            height: 150px;
+            font-size: 12px;
+        }
+
+        .collision-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 250px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .collision-panel-header {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+        }
+
+        .collision-panel-content {
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .collision-tools {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .collision-shape-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .collision-shape-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .collision-shape-item:hover { background: var(--bg-hover); }
+        .collision-shape-item.selected { border: 1px solid var(--accent-primary); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn" onclick="goBack()">Back</button>
+                <h1 id="unit-title">Unit Viewer</h1>
+                <span class="dirty-indicator" id="dirty-indicator">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="loadConfig()">Load</button>
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="saveConfig()">Save</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="properties-panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="general">General</div>
+                    <div class="tab" data-tab="combat">Combat</div>
+                    <div class="tab" data-tab="visuals">Visuals</div>
+                    <div class="tab" data-tab="events">Events</div>
+                </div>
+
+                <!-- General Tab -->
+                <div class="tab-content active" id="tab-general">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Basic Info</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>ID</label>
+                                <input type="text" id="unit-id" data-path="id" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="unit-name" data-path="name">
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="unit-desc" data-path="description" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select id="unit-type" data-path="type">
+                                    <option value="zombie">Zombie</option>
+                                    <option value="npc">NPC</option>
+                                    <option value="creature">Creature</option>
+                                    <option value="boss">Boss</option>
+                                    <option value="minion">Minion</option>
+                                    <option value="vehicle">Vehicle</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Subtype</label>
+                                <input type="text" data-path="subtype" placeholder="e.g., runner, tank">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Base Stats</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="stat-row">
+                                <label>Health</label>
+                                <input type="number" data-path="stats.health" value="100" min="1">
+                            </div>
+                            <div class="stat-row">
+                                <label>Max Health</label>
+                                <input type="number" data-path="stats.maxHealth" value="100" min="1">
+                            </div>
+                            <div class="stat-row">
+                                <label>Armor</label>
+                                <input type="number" data-path="stats.armor" value="0" min="0">
+                            </div>
+                            <div class="stat-row">
+                                <label>Magic Resist</label>
+                                <input type="number" data-path="stats.magicResist" value="0" min="0">
+                            </div>
+                            <div class="stat-row">
+                                <label>Damage</label>
+                                <input type="number" data-path="stats.damage" value="10" min="0">
+                            </div>
+                            <div class="stat-row">
+                                <label>Attack Speed</label>
+                                <input type="number" data-path="stats.attackSpeed" value="1" min="0.1" step="0.1">
+                            </div>
+                            <div class="stat-row">
+                                <label>Move Speed</label>
+                                <input type="number" data-path="stats.moveSpeed" value="5" min="0" step="0.1">
+                            </div>
+                            <div class="stat-row">
+                                <label>XP Value</label>
+                                <input type="number" data-path="stats.experience" value="10" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Movement</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Movement Type</label>
+                                <select data-path="movement.type">
+                                    <option value="walk">Walk</option>
+                                    <option value="fly">Fly</option>
+                                    <option value="swim">Swim</option>
+                                    <option value="hover">Hover</option>
+                                    <option value="burrow">Burrow</option>
+                                </select>
+                            </div>
+                            <div class="stat-row">
+                                <label>Speed</label>
+                                <input type="number" data-path="movement.speed" value="5" min="0" step="0.1">
+                            </div>
+                            <div class="stat-row">
+                                <label>Acceleration</label>
+                                <input type="number" data-path="movement.acceleration" value="10" min="0" step="0.1">
+                            </div>
+                            <div class="stat-row">
+                                <label>Turn Speed</label>
+                                <input type="number" data-path="movement.turnSpeed" value="180" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" data-path="movement.canJump"> Can Jump
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Combat Tab -->
+                <div class="tab-content" id="tab-combat">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Attack Config</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Attack Type</label>
+                                <select data-path="combat.attackType">
+                                    <option value="melee">Melee</option>
+                                    <option value="ranged">Ranged</option>
+                                    <option value="magic">Magic</option>
+                                    <option value="none">None</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Damage Type</label>
+                                <select data-path="combat.damageType">
+                                    <option value="physical">Physical</option>
+                                    <option value="magic">Magic</option>
+                                    <option value="fire">Fire</option>
+                                    <option value="ice">Ice</option>
+                                    <option value="lightning">Lightning</option>
+                                    <option value="poison">Poison</option>
+                                    <option value="true">True</option>
+                                </select>
+                            </div>
+                            <div class="stat-row">
+                                <label>Attack Range</label>
+                                <input type="number" data-path="combat.attackRange" value="1" min="0" step="0.5">
+                            </div>
+                            <div class="stat-row">
+                                <label>Cooldown (s)</label>
+                                <input type="number" data-path="combat.attackCooldown" value="1" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Projectile ID</label>
+                                <input type="text" data-path="combat.projectile" placeholder="projectile_arrow">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Critical Hits</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" data-path="combat.canCritical"> Can Critical
+                                </label>
+                            </div>
+                            <div class="stat-row">
+                                <label>Crit Chance</label>
+                                <input type="number" data-path="combat.criticalChance" value="0" min="0" max="1" step="0.01">
+                            </div>
+                            <div class="stat-row">
+                                <label>Crit Multiplier</label>
+                                <input type="number" data-path="combat.criticalMultiplier" value="2" min="1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>AI Behavior</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Behavior</label>
+                                <select data-path="ai.behavior">
+                                    <option value="aggressive">Aggressive</option>
+                                    <option value="passive">Passive</option>
+                                    <option value="defensive">Defensive</option>
+                                    <option value="patrol">Patrol</option>
+                                    <option value="stationary">Stationary</option>
+                                    <option value="flee">Flee</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="stat-row">
+                                <label>Aggro Range</label>
+                                <input type="number" data-path="ai.aggroRange" value="10" min="0">
+                            </div>
+                            <div class="stat-row">
+                                <label>Leash Range</label>
+                                <input type="number" data-path="ai.leashRange" value="30" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Target Priority</label>
+                                <select data-path="ai.targetPriority">
+                                    <option value="nearest">Nearest</option>
+                                    <option value="lowest_health">Lowest Health</option>
+                                    <option value="highest_threat">Highest Threat</option>
+                                    <option value="random">Random</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Abilities</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="array-editor" id="abilities-list"></div>
+                            <button class="btn btn-small btn-add" onclick="addAbility()">+ Add Ability</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visuals Tab -->
+                <div class="tab-content" id="tab-visuals">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Model</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>3D Model</label>
+                                <div class="file-picker">
+                                    <input type="text" data-path="visuals.model" placeholder="models/unit.gltf">
+                                    <button class="btn btn-small" onclick="browseModel()">Browse</button>
+                                </div>
+                            </div>
+                            <div class="stat-row">
+                                <label>Scale</label>
+                                <input type="number" data-path="visuals.scale" value="1" min="0.1" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Tint Color</label>
+                                <input type="color" data-path="visuals.tint" value="#ffffff">
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" data-path="visuals.shadow" checked> Cast Shadow
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Animations</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Idle</label>
+                                <input type="text" data-path="visuals.animations.idle" placeholder="idle">
+                            </div>
+                            <div class="form-group">
+                                <label>Walk</label>
+                                <input type="text" data-path="visuals.animations.walk" placeholder="walk">
+                            </div>
+                            <div class="form-group">
+                                <label>Run</label>
+                                <input type="text" data-path="visuals.animations.run" placeholder="run">
+                            </div>
+                            <div class="form-group">
+                                <label>Attack</label>
+                                <input type="text" data-path="visuals.animations.attack" placeholder="attack">
+                            </div>
+                            <div class="form-group">
+                                <label>Death</label>
+                                <input type="text" data-path="visuals.animations.death" placeholder="death">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Audio</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Spawn Sound</label>
+                                <input type="text" data-path="audio.spawn" placeholder="sounds/spawn.wav">
+                            </div>
+                            <div class="form-group">
+                                <label>Attack Sound</label>
+                                <input type="text" data-path="audio.attack" placeholder="sounds/attack.wav">
+                            </div>
+                            <div class="form-group">
+                                <label>Death Sound</label>
+                                <input type="text" data-path="audio.death" placeholder="sounds/death.wav">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Collision Shape</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Shape Type</label>
+                                <select id="collision-type" data-path="collision.type" onchange="updateCollisionShape()">
+                                    <option value="box">Box</option>
+                                    <option value="sphere">Sphere</option>
+                                    <option value="capsule">Capsule</option>
+                                    <option value="cylinder">Cylinder</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="collision-size-box">
+                                <label>Size</label>
+                                <div class="vector3-input">
+                                    <input type="number" data-path="collision.size.x" placeholder="W" step="0.1" value="1">
+                                    <input type="number" data-path="collision.size.y" placeholder="H" step="0.1" value="2">
+                                    <input type="number" data-path="collision.size.z" placeholder="D" step="0.1" value="1">
+                                </div>
+                            </div>
+                            <div class="form-group" id="collision-radius" style="display:none;">
+                                <label>Radius</label>
+                                <input type="number" data-path="collision.radius" value="0.5" step="0.1">
+                            </div>
+                            <div class="form-group" id="collision-height" style="display:none;">
+                                <label>Height</label>
+                                <input type="number" data-path="collision.height" value="2" step="0.1">
+                            </div>
+                            <button class="btn btn-small" onclick="toggleCollisionEditor()">Edit in 3D</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events Tab -->
+                <div class="tab-content" id="tab-events">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Python Script</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Script Path</label>
+                                <div class="file-picker">
+                                    <input type="text" id="script-path" data-path="events.script" placeholder="scripts/unit_behavior.py">
+                                    <button class="btn btn-small" onclick="browsePythonScript()">Browse</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Event Bindings</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="events-list">
+                                <div class="event-item">
+                                    <div class="event-item-header">
+                                        <span class="event-name">OnCreate</span>
+                                        <button class="btn btn-small" onclick="toggleEventEditor('OnCreate')">Edit</button>
+                                    </div>
+                                    <input type="text" data-path="events.OnCreate" placeholder="on_unit_create">
+                                </div>
+
+                                <div class="event-item">
+                                    <div class="event-item-header">
+                                        <span class="event-name">OnTick</span>
+                                        <button class="btn btn-small" onclick="toggleEventEditor('OnTick')">Edit</button>
+                                    </div>
+                                    <input type="text" data-path="events.OnTick" placeholder="on_unit_tick">
+                                </div>
+
+                                <div class="event-item">
+                                    <div class="event-item-header">
+                                        <span class="event-name">OnDamage</span>
+                                        <button class="btn btn-small" onclick="toggleEventEditor('OnDamage')">Edit</button>
+                                    </div>
+                                    <input type="text" data-path="events.OnDamage" placeholder="on_unit_damage">
+                                </div>
+
+                                <div class="event-item">
+                                    <div class="event-item-header">
+                                        <span class="event-name">OnDeath</span>
+                                        <button class="btn btn-small" onclick="toggleEventEditor('OnDeath')">Edit</button>
+                                    </div>
+                                    <input type="text" data-path="events.OnDeath" placeholder="on_unit_death">
+                                </div>
+
+                                <div class="event-item">
+                                    <div class="event-item-header">
+                                        <span class="event-name">OnAttack</span>
+                                        <button class="btn btn-small" onclick="toggleEventEditor('OnAttack')">Edit</button>
+                                    </div>
+                                    <input type="text" data-path="events.OnAttack" placeholder="on_unit_attack">
+                                </div>
+
+                                <div class="event-item">
+                                    <div class="event-item-header">
+                                        <span class="event-name">OnKill</span>
+                                        <button class="btn btn-small" onclick="toggleEventEditor('OnKill')">Edit</button>
+                                    </div>
+                                    <input type="text" data-path="events.OnKill" placeholder="on_unit_kill">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Inline Script Editor</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="python-editor-container">
+                                <div id="python-editor"></div>
+                            </div>
+                            <div style="margin-top: 8px;">
+                                <button class="btn btn-small" onclick="runScript()">Run Script</button>
+                                <button class="btn btn-small" onclick="saveScriptToFile()">Save to File</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div class="preview-canvas" id="preview-container">
+                    <canvas id="preview-canvas"></canvas>
+
+                    <!-- Collision Editor Panel (hidden by default) -->
+                    <div class="collision-panel" id="collision-panel" style="display: none;">
+                        <div class="collision-panel-header">Collision Editor</div>
+                        <div class="collision-panel-content">
+                            <div class="collision-tools">
+                                <button class="btn btn-small" onclick="addCollisionBox()">Box</button>
+                                <button class="btn btn-small" onclick="addCollisionSphere()">Sphere</button>
+                                <button class="btn btn-small" onclick="addCollisionCapsule()">Capsule</button>
+                            </div>
+                            <div class="collision-shape-list" id="collision-shapes"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-controls">
+                    <label>Animation:</label>
+                    <select id="animation-select" onchange="playAnimation()">
+                        <option value="idle">Idle</option>
+                        <option value="walk">Walk</option>
+                        <option value="run">Run</option>
+                        <option value="attack">Attack</option>
+                        <option value="death">Death</option>
+                    </select>
+                    <button class="btn btn-small" onclick="resetCamera()">Reset Camera</button>
+                    <label>
+                        <input type="checkbox" id="show-collision" onchange="toggleCollisionView()"> Show Collision
+                    </label>
+                    <label>
+                        <input type="checkbox" id="show-grid" checked onchange="toggleGrid()"> Show Grid
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script src="../js/viewer_common.js"></script>
+    <script src="../js/collision_editor.js"></script>
+    <script>
+        // ====================================================================
+        // Global Variables
+        // ====================================================================
+        let viewerScene;
+        let collisionEditor;
+        let pythonEditor;
+        let configData = {};
+        let originalData = {};
+        let undoStack = [];
+        let redoStack = [];
+        let currentFile = null;
+
+        // ====================================================================
+        // Initialization
+        // ====================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initScene();
+            initTabs();
+            initFormBindings();
+            initPythonEditor();
+
+            // Load from URL parameter if present
+            const params = new URLSearchParams(window.location.search);
+            const filePath = params.get('file');
+            if (filePath) {
+                loadConfigFromPath(filePath);
+            } else {
+                setDefaultConfig();
+            }
+        });
+
+        function initScene() {
+            viewerScene = new ViewerScene('preview-canvas', {
+                cameraPosition: { x: 3, y: 3, z: 3 },
+                enableTransformControls: true
+            });
+
+            collisionEditor = new CollisionEditor(viewerScene);
+            collisionEditor.onShapeChange = function() {
+                setDirty(true);
+                updateCollisionData();
+            };
+        }
+
+        function initTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                    this.classList.add('active');
+                    document.getElementById('tab-' + tabId).classList.add('active');
+                });
+            });
+        }
+
+        function initFormBindings() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                input.addEventListener('change', function() {
+                    saveUndoState();
+                    const path = this.getAttribute('data-path');
+                    const value = getInputValue(this);
+                    setPath(configData, path, value);
+                    setDirty(true);
+                    onConfigChange(path);
+                });
+
+                if (input.type === 'text' || input.tagName === 'TEXTAREA') {
+                    input.addEventListener('input', debounce(function() {
+                        const path = this.getAttribute('data-path');
+                        const value = getInputValue(this);
+                        setPath(configData, path, value);
+                        setDirty(true);
+                    }, 300));
+                }
+            });
+        }
+
+        function initPythonEditor() {
+            if (typeof CodeMirror !== 'undefined') {
+                pythonEditor = CodeMirror(document.getElementById('python-editor'), {
+                    mode: 'python',
+                    theme: 'material-darker',
+                    lineNumbers: true,
+                    indentUnit: 4,
+                    tabSize: 4,
+                    value: '# Unit event handler script\n\ndef on_unit_create(unit):\n    pass\n\ndef on_unit_tick(unit, delta_time):\n    pass\n\ndef on_unit_damage(unit, damage, source):\n    pass\n\ndef on_unit_death(unit, killer):\n    pass\n'
+                });
+            }
+        }
+
+        // ====================================================================
+        // Config Management
+        // ====================================================================
+        function setDefaultConfig() {
+            configData = {
+                id: 'unit_new',
+                name: 'New Unit',
+                description: '',
+                type: 'creature',
+                stats: {
+                    health: 100,
+                    maxHealth: 100,
+                    armor: 0,
+                    magicResist: 0,
+                    damage: 10,
+                    attackSpeed: 1,
+                    moveSpeed: 5,
+                    experience: 10
+                },
+                combat: {
+                    attackType: 'melee',
+                    damageType: 'physical',
+                    attackRange: 1,
+                    attackCooldown: 1
+                },
+                movement: {
+                    type: 'walk',
+                    speed: 5,
+                    acceleration: 10,
+                    turnSpeed: 180
+                },
+                visuals: {
+                    scale: 1
+                },
+                collision: {
+                    type: 'capsule',
+                    radius: 0.5,
+                    height: 2
+                },
+                events: {}
+            };
+            originalData = JSON.parse(JSON.stringify(configData));
+            populateForm();
+        }
+
+        function loadConfig() {
+            viewerBridge.browseFile('*.json').then(path => {
+                if (path) {
+                    loadConfigFromPath(path);
+                }
+            }).catch(err => {
+                console.error('Browse failed:', err);
+            });
+        }
+
+        function loadConfigFromPath(path) {
+            currentFile = path;
+            viewerBridge.loadConfig(path).then(data => {
+                configData = data;
+                originalData = JSON.parse(JSON.stringify(data));
+                populateForm();
+                document.getElementById('unit-title').textContent = data.name || 'Unit Viewer';
+
+                if (data.visuals && data.visuals.model) {
+                    viewerScene.loadModel(data.visuals.model);
+                }
+
+                if (data.collision) {
+                    loadCollisionShapes(data.collision);
+                }
+
+                setDirty(false);
+            }).catch(err => {
+                console.error('Load failed:', err);
+            });
+        }
+
+        function saveConfig() {
+            if (!currentFile) {
+                viewerBridge.browseFile('*.json').then(path => {
+                    if (path) {
+                        currentFile = path;
+                        doSave();
+                    }
+                });
+            } else {
+                doSave();
+            }
+        }
+
+        function doSave() {
+            viewerBridge.saveConfig(currentFile, configData).then(() => {
+                originalData = JSON.parse(JSON.stringify(configData));
+                setDirty(false);
+            }).catch(err => {
+                console.error('Save failed:', err);
+            });
+        }
+
+        function populateForm() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                const path = input.getAttribute('data-path');
+                const value = getPath(configData, path);
+                setInputValue(input, value);
+            });
+
+            updateAbilitiesList();
+            updateCollisionUI();
+        }
+
+        function onConfigChange(path) {
+            if (path === 'name') {
+                document.getElementById('unit-title').textContent = configData.name || 'Unit Viewer';
+            }
+
+            if (path.startsWith('visuals.model')) {
+                viewerScene.loadModel(configData.visuals.model);
+            }
+
+            if (path.startsWith('visuals.scale')) {
+                viewerScene.setModelScale(configData.visuals.scale || 1);
+            }
+
+            if (path.startsWith('collision')) {
+                updateCollisionShape();
+            }
+        }
+
+        // ====================================================================
+        // Undo/Redo
+        // ====================================================================
+        function saveUndoState() {
+            undoStack.push(JSON.parse(JSON.stringify(configData)));
+            redoStack = [];
+            if (undoStack.length > 50) undoStack.shift();
+        }
+
+        function undo() {
+            if (undoStack.length === 0) return;
+            redoStack.push(JSON.parse(JSON.stringify(configData)));
+            configData = undoStack.pop();
+            populateForm();
+            setDirty(true);
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            undoStack.push(JSON.parse(JSON.stringify(configData)));
+            configData = redoStack.pop();
+            populateForm();
+            setDirty(true);
+        }
+
+        // ====================================================================
+        // Collision Editor
+        // ====================================================================
+        function updateCollisionShape() {
+            const type = document.getElementById('collision-type').value;
+
+            document.getElementById('collision-size-box').style.display = type === 'box' ? 'block' : 'none';
+            document.getElementById('collision-radius').style.display = (type === 'sphere' || type === 'capsule' || type === 'cylinder') ? 'block' : 'none';
+            document.getElementById('collision-height').style.display = (type === 'capsule' || type === 'cylinder') ? 'block' : 'none';
+
+            // Update 3D collision visualization
+            collisionEditor.clearAll();
+            const collision = configData.collision || {};
+
+            switch (type) {
+                case 'box':
+                    collisionEditor.createBox({
+                        width: collision.size?.x || 1,
+                        height: collision.size?.y || 2,
+                        depth: collision.size?.z || 1,
+                        position: { x: 0, y: (collision.size?.y || 2) / 2, z: 0 }
+                    });
+                    break;
+                case 'sphere':
+                    collisionEditor.createSphere({
+                        radius: collision.radius || 0.5,
+                        position: { x: 0, y: collision.radius || 0.5, z: 0 }
+                    });
+                    break;
+                case 'capsule':
+                    collisionEditor.createCapsule({
+                        radius: collision.radius || 0.5,
+                        height: collision.height || 2,
+                        position: { x: 0, y: (collision.height || 2) / 2, z: 0 }
+                    });
+                    break;
+                case 'cylinder':
+                    collisionEditor.createCylinder({
+                        radius: collision.radius || 0.5,
+                        height: collision.height || 2,
+                        position: { x: 0, y: (collision.height || 2) / 2, z: 0 }
+                    });
+                    break;
+            }
+        }
+
+        function updateCollisionUI() {
+            const type = configData.collision?.type || 'capsule';
+            document.getElementById('collision-type').value = type;
+            updateCollisionShape();
+        }
+
+        function updateCollisionData() {
+            const shapes = collisionEditor.exportToJSON();
+            if (shapes.shapes && shapes.shapes.length > 0) {
+                configData.collision = shapes.shapes[0];
+            }
+        }
+
+        function toggleCollisionEditor() {
+            const panel = document.getElementById('collision-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleCollisionView() {
+            const show = document.getElementById('show-collision').checked;
+            collisionEditor.setAllShapesVisible(show);
+        }
+
+        function loadCollisionShapes(collision) {
+            collisionEditor.clearAll();
+            collisionEditor.importFromJSON({ shapes: [collision] });
+        }
+
+        function addCollisionBox() {
+            collisionEditor.createBox();
+        }
+
+        function addCollisionSphere() {
+            collisionEditor.createSphere();
+        }
+
+        function addCollisionCapsule() {
+            collisionEditor.createCapsule();
+        }
+
+        // ====================================================================
+        // Abilities
+        // ====================================================================
+        function updateAbilitiesList() {
+            const container = document.getElementById('abilities-list');
+            const abilities = configData.abilities || [];
+
+            container.innerHTML = abilities.map((ability, index) => `
+                <div class="array-item">
+                    <input type="text" value="${ability.abilityId || ''}"
+                           onchange="updateAbility(${index}, 'abilityId', this.value)">
+                    <input type="number" value="${ability.cooldown || 0}" min="0" step="0.1"
+                           style="width: 60px;" title="Cooldown"
+                           onchange="updateAbility(${index}, 'cooldown', parseFloat(this.value))">
+                    <button class="btn btn-small" onclick="removeAbility(${index})">X</button>
+                </div>
+            `).join('');
+        }
+
+        function addAbility() {
+            if (!configData.abilities) configData.abilities = [];
+            saveUndoState();
+            configData.abilities.push({ abilityId: '', cooldown: 0 });
+            updateAbilitiesList();
+            setDirty(true);
+        }
+
+        function updateAbility(index, key, value) {
+            saveUndoState();
+            configData.abilities[index][key] = value;
+            setDirty(true);
+        }
+
+        function removeAbility(index) {
+            saveUndoState();
+            configData.abilities.splice(index, 1);
+            updateAbilitiesList();
+            setDirty(true);
+        }
+
+        // ====================================================================
+        // Python Script
+        // ====================================================================
+        function toggleEventEditor(eventName) {
+            // Focus the inline editor and load template for the event
+            const templates = {
+                OnCreate: 'def on_unit_create(unit):\n    """Called when the unit is created."""\n    pass',
+                OnTick: 'def on_unit_tick(unit, delta_time):\n    """Called every frame."""\n    pass',
+                OnDamage: 'def on_unit_damage(unit, damage, source):\n    """Called when the unit takes damage."""\n    return damage  # Return modified damage',
+                OnDeath: 'def on_unit_death(unit, killer):\n    """Called when the unit dies."""\n    pass',
+                OnAttack: 'def on_unit_attack(unit, target):\n    """Called when the unit attacks."""\n    pass',
+                OnKill: 'def on_unit_kill(unit, victim):\n    """Called when the unit kills another."""\n    pass'
+            };
+
+            if (pythonEditor && templates[eventName]) {
+                pythonEditor.setValue(templates[eventName]);
+            }
+        }
+
+        function runScript() {
+            if (pythonEditor) {
+                const script = pythonEditor.getValue();
+                viewerBridge.executePython(script).then(result => {
+                    console.log('Script result:', result);
+                }).catch(err => {
+                    console.error('Script error:', err);
+                });
+            }
+        }
+
+        function saveScriptToFile() {
+            // Implementation for saving script to external file
+        }
+
+        function browsePythonScript() {
+            viewerBridge.browseFile('*.py').then(path => {
+                if (path) {
+                    document.getElementById('script-path').value = path;
+                    setPath(configData, 'events.script', path);
+                    setDirty(true);
+                }
+            });
+        }
+
+        // ====================================================================
+        // Preview Controls
+        // ====================================================================
+        function playAnimation() {
+            const anim = document.getElementById('animation-select').value;
+            viewerScene.playAnimation(anim);
+        }
+
+        function resetCamera() {
+            viewerScene.resetCamera();
+        }
+
+        function toggleGrid() {
+            const show = document.getElementById('show-grid').checked;
+            viewerScene.helpers.forEach(h => h.visible = show);
+        }
+
+        function browseModel() {
+            viewerBridge.browseFile('*.gltf,*.glb').then(path => {
+                if (path) {
+                    setPath(configData, 'visuals.model', path);
+                    document.querySelector('[data-path="visuals.model"]').value = path;
+                    viewerScene.loadModel(path);
+                    setDirty(true);
+                }
+            });
+        }
+
+        // ====================================================================
+        // Utility Functions
+        // ====================================================================
+        function toggleSection(header) {
+            header.parentElement.classList.toggle('collapsed');
+        }
+
+        function setDirty(dirty) {
+            document.getElementById('dirty-indicator').style.display = dirty ? 'inline' : 'none';
+        }
+
+        function goBack() {
+            if (document.getElementById('dirty-indicator').style.display !== 'none') {
+                if (!confirm('You have unsaved changes. Discard them?')) return;
+            }
+            window.history.back();
+        }
+
+        function getPath(obj, path) {
+            if (!path) return obj;
+            const parts = path.split('.');
+            let current = obj;
+            for (const part of parts) {
+                if (current === null || current === undefined) return undefined;
+                current = current[part];
+            }
+            return current;
+        }
+
+        function setPath(obj, path, value) {
+            const parts = path.split('.');
+            let current = obj;
+            for (let i = 0; i < parts.length - 1; i++) {
+                if (current[parts[i]] === undefined) {
+                    current[parts[i]] = {};
+                }
+                current = current[parts[i]];
+            }
+            current[parts[parts.length - 1]] = value;
+        }
+
+        function getInputValue(input) {
+            if (input.type === 'checkbox') return input.checked;
+            if (input.type === 'number') return parseFloat(input.value) || 0;
+            return input.value;
+        }
+
+        function setInputValue(input, value) {
+            if (input.type === 'checkbox') {
+                input.checked = !!value;
+            } else if (input.type === 'color') {
+                input.value = value || '#ffffff';
+            } else {
+                input.value = value !== undefined && value !== null ? value : '';
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveConfig();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+        });
+    </script>
+</body>
+</html>

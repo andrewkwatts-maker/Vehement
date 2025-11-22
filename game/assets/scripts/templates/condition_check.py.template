@@ -1,0 +1,389 @@
+"""
+{{condition_name}} Condition Check Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+from typing import Any, Dict, List, Optional, Tuple
+from enum import Enum
+
+
+class ConditionResult(Enum):
+    """Result of condition evaluation."""
+    FALSE = 0
+    TRUE = 1
+    UNKNOWN = 2  # Cannot be evaluated (missing data)
+
+
+# Condition Configuration
+CONDITION_ID = "{{condition_id}}"
+CONDITION_NAME = "{{condition_name}}"
+CONDITION_TYPE = "{{condition_type}}"  # "entity", "player", "global", "compound"
+
+
+def evaluate(context: Dict[str, Any]) -> Tuple[ConditionResult, str]:
+    """
+    Evaluate the condition.
+
+    Args:
+        context: Dictionary containing evaluation context:
+            - entity_id: The entity being checked (if applicable)
+            - player_id: The player being checked (if applicable)
+            - target_id: A target entity (if applicable)
+            - event_data: Event-specific data (if applicable)
+
+    Returns:
+        Tuple of (result, explanation)
+    """
+    entity_id = context.get("entity_id", 0)
+    player_id = context.get("player_id", 0)
+    target_id = context.get("target_id", 0)
+    event_data = context.get("event_data", {})
+
+    {{#if condition_type_entity}}
+    # Entity-based condition
+    if entity_id == 0:
+        return ConditionResult.UNKNOWN, "No entity specified"
+
+    return evaluate_entity_condition(entity_id, target_id, event_data)
+    {{/if}}
+
+    {{#if condition_type_player}}
+    # Player-based condition
+    if player_id == 0:
+        return ConditionResult.UNKNOWN, "No player specified"
+
+    return evaluate_player_condition(player_id, event_data)
+    {{/if}}
+
+    {{#if condition_type_global}}
+    # Global condition
+    return evaluate_global_condition(event_data)
+    {{/if}}
+
+    {{#if condition_type_compound}}
+    # Compound condition (combines multiple conditions)
+    return evaluate_compound_condition(context)
+    {{/if}}
+
+
+{{#if condition_type_entity}}
+def evaluate_entity_condition(
+    entity_id: int,
+    target_id: int,
+    event_data: Dict[str, Any]
+) -> Tuple[ConditionResult, str]:
+    """Evaluate entity-specific condition."""
+
+    {{#if check_health}}
+    # Health check
+    health = get_health(entity_id)
+    max_health = get_max_health(entity_id)
+    health_percent = health / max_health if max_health > 0 else 0
+
+    {{#if health_above}}
+    if health_percent < {{health_threshold}}:
+        return ConditionResult.FALSE, f"Health {health_percent:.0%} below {{health_threshold:.0%}}"
+    {{/if}}
+
+    {{#if health_below}}
+    if health_percent > {{health_threshold}}:
+        return ConditionResult.FALSE, f"Health {health_percent:.0%} above {{health_threshold:.0%}}"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_mana}}
+    # Mana check
+    mana = get_mana(entity_id)
+    max_mana = get_max_mana(entity_id)
+    mana_percent = mana / max_mana if max_mana > 0 else 0
+
+    {{#if mana_above}}
+    if mana_percent < {{mana_threshold}}:
+        return ConditionResult.FALSE, f"Mana {mana_percent:.0%} below {{mana_threshold:.0%}}"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_has_buff}}
+    # Buff check
+    if not has_buff(entity_id, "{{required_buff}}"):
+        return ConditionResult.FALSE, "Missing required buff: {{required_buff}}"
+    {{/if}}
+
+    {{#if check_has_debuff}}
+    # Debuff check
+    if not has_debuff(entity_id, "{{required_debuff}}"):
+        return ConditionResult.FALSE, "Missing required debuff: {{required_debuff}}"
+    {{/if}}
+
+    {{#if check_no_debuff}}
+    # No debuff check
+    if has_debuff(entity_id, "{{forbidden_debuff}}"):
+        return ConditionResult.FALSE, "Has forbidden debuff: {{forbidden_debuff}}"
+    {{/if}}
+
+    {{#if check_entity_type}}
+    # Entity type check
+    entity_type = get_entity_type(entity_id)
+    allowed_types = {{allowed_entity_types}}
+    if entity_type not in allowed_types:
+        return ConditionResult.FALSE, f"Entity type {entity_type} not in allowed types"
+    {{/if}}
+
+    {{#if check_distance_to_target}}
+    # Distance check
+    if target_id == 0:
+        return ConditionResult.UNKNOWN, "No target for distance check"
+
+    distance = distance_to(entity_id, target_id)
+    {{#if distance_within}}
+    if distance > {{max_distance}}:
+        return ConditionResult.FALSE, f"Distance {distance:.1f} exceeds {{{max_distance}}}"
+    {{/if}}
+    {{#if distance_beyond}}
+    if distance < {{min_distance}}:
+        return ConditionResult.FALSE, f"Distance {distance:.1f} below {{{min_distance}}}"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_line_of_sight}}
+    # Line of sight check
+    if target_id == 0:
+        return ConditionResult.UNKNOWN, "No target for LOS check"
+
+    if not has_line_of_sight(entity_id, target_id):
+        return ConditionResult.FALSE, "No line of sight to target"
+    {{/if}}
+
+    {{#if check_is_moving}}
+    # Movement check
+    velocity = get_velocity(entity_id)
+    speed = (velocity[0]**2 + velocity[1]**2 + velocity[2]**2) ** 0.5
+
+    {{#if require_moving}}
+    if speed < 0.1:
+        return ConditionResult.FALSE, "Entity is not moving"
+    {{/if}}
+    {{#if require_stationary}}
+    if speed > 0.1:
+        return ConditionResult.FALSE, "Entity is moving"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_property}}
+    # Custom property check
+    prop_value = get_property(entity_id, "{{property_name}}")
+    {{#if property_equals}}
+    if prop_value != {{property_value}}:
+        return ConditionResult.FALSE, f"{{property_name}} is {prop_value}, expected {{property_value}}"
+    {{/if}}
+    {{#if property_greater}}
+    if prop_value <= {{property_value}}:
+        return ConditionResult.FALSE, f"{{property_name}} is {prop_value}, expected > {{property_value}}"
+    {{/if}}
+    {{#if property_less}}
+    if prop_value >= {{property_value}}:
+        return ConditionResult.FALSE, f"{{property_name}} is {prop_value}, expected < {{property_value}}"
+    {{/if}}
+    {{/if}}
+
+    {{#if custom_entity_check}}
+    # Custom entity check
+    {{custom_entity_check}}
+    {{/if}}
+
+    return ConditionResult.TRUE, "All entity conditions met"
+{{/if}}
+
+
+{{#if condition_type_player}}
+def evaluate_player_condition(
+    player_id: int,
+    event_data: Dict[str, Any]
+) -> Tuple[ConditionResult, str]:
+    """Evaluate player-specific condition."""
+
+    {{#if check_has_tech}}
+    # Technology check
+    if not has_tech(player_id, "{{required_tech}}"):
+        tech_name = get_tech_name("{{required_tech}}")
+        return ConditionResult.FALSE, f"Missing technology: {tech_name}"
+    {{/if}}
+
+    {{#if check_has_resource}}
+    # Resource check
+    resource_amount = get_resource(player_id, "{{resource_type}}")
+    if resource_amount < {{required_amount}}:
+        return ConditionResult.FALSE, f"Not enough {{resource_type}}: {resource_amount}/{{required_amount}}"
+    {{/if}}
+
+    {{#if check_population}}
+    # Population check
+    current_pop = get_population(player_id)
+    max_pop = get_max_population(player_id)
+
+    {{#if population_below_max}}
+    if current_pop >= max_pop:
+        return ConditionResult.FALSE, f"Population cap reached: {current_pop}/{max_pop}"
+    {{/if}}
+    {{#if population_above}}
+    if current_pop < {{min_population}}:
+        return ConditionResult.FALSE, f"Population too low: {current_pop}/{{min_population}}"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_has_building}}
+    # Building check
+    if not player_has_building(player_id, "{{required_building}}"):
+        return ConditionResult.FALSE, f"Missing building: {{required_building}}"
+    {{/if}}
+
+    {{#if check_unit_count}}
+    # Unit count check
+    unit_count = count_player_units(player_id, "{{unit_type}}")
+    {{#if unit_count_min}}
+    if unit_count < {{min_units}}:
+        return ConditionResult.FALSE, f"Need at least {{min_units}} {{unit_type}}, have {unit_count}"
+    {{/if}}
+    {{#if unit_count_max}}
+    if unit_count > {{max_units}}:
+        return ConditionResult.FALSE, f"Exceeded {{max_units}} {{unit_type}}, have {unit_count}"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_age}}
+    # Age check
+    player_age = get_player_age(player_id)
+    if player_age < {{required_age}}:
+        return ConditionResult.FALSE, f"Requires Age {{required_age}}, currently Age {player_age}"
+    {{/if}}
+
+    {{#if custom_player_check}}
+    # Custom player check
+    {{custom_player_check}}
+    {{/if}}
+
+    return ConditionResult.TRUE, "All player conditions met"
+{{/if}}
+
+
+{{#if condition_type_global}}
+def evaluate_global_condition(
+    event_data: Dict[str, Any]
+) -> Tuple[ConditionResult, str]:
+    """Evaluate global game condition."""
+
+    {{#if check_game_time}}
+    # Game time check
+    game_time = get_game_time()
+    {{#if time_after}}
+    if game_time < {{min_time}}:
+        return ConditionResult.FALSE, f"Game time {game_time:.0f}s < {{min_time}}s"
+    {{/if}}
+    {{#if time_before}}
+    if game_time > {{max_time}}:
+        return ConditionResult.FALSE, f"Game time {game_time:.0f}s > {{max_time}}s"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_day_night}}
+    # Day/night check
+    is_day = is_daytime()
+    {{#if require_day}}
+    if not is_day:
+        return ConditionResult.FALSE, "Requires daytime"
+    {{/if}}
+    {{#if require_night}}
+    if is_day:
+        return ConditionResult.FALSE, "Requires nighttime"
+    {{/if}}
+    {{/if}}
+
+    {{#if check_weather}}
+    # Weather check
+    current_weather = get_weather()
+    required_weather = {{required_weather}}
+    if current_weather not in required_weather:
+        return ConditionResult.FALSE, f"Weather is {current_weather}, requires {required_weather}"
+    {{/if}}
+
+    {{#if check_global_variable}}
+    # Global variable check
+    var_value = get_global_variable("{{variable_name}}")
+    {{#if variable_equals}}
+    if var_value != {{variable_value}}:
+        return ConditionResult.FALSE, f"{{variable_name}} is {var_value}, expected {{variable_value}}"
+    {{/if}}
+    {{/if}}
+
+    {{#if custom_global_check}}
+    # Custom global check
+    {{custom_global_check}}
+    {{/if}}
+
+    return ConditionResult.TRUE, "All global conditions met"
+{{/if}}
+
+
+{{#if condition_type_compound}}
+def evaluate_compound_condition(
+    context: Dict[str, Any]
+) -> Tuple[ConditionResult, str]:
+    """Evaluate compound condition (AND/OR of multiple conditions)."""
+
+    sub_conditions = {{sub_conditions}}  # List of condition IDs
+    operator = "{{compound_operator}}"  # "and" or "or"
+
+    results = []
+    explanations = []
+
+    for cond_id in sub_conditions:
+        result, explanation = evaluate_condition(cond_id, context)
+        results.append(result)
+        explanations.append(f"{cond_id}: {explanation}")
+
+    if operator == "and":
+        # All must be true
+        if ConditionResult.UNKNOWN in results:
+            return ConditionResult.UNKNOWN, " | ".join(explanations)
+        if all(r == ConditionResult.TRUE for r in results):
+            return ConditionResult.TRUE, "All conditions met"
+        return ConditionResult.FALSE, " | ".join(explanations)
+
+    elif operator == "or":
+        # At least one must be true
+        if any(r == ConditionResult.TRUE for r in results):
+            return ConditionResult.TRUE, "At least one condition met"
+        if all(r == ConditionResult.UNKNOWN for r in results):
+            return ConditionResult.UNKNOWN, " | ".join(explanations)
+        return ConditionResult.FALSE, " | ".join(explanations)
+
+    {{#if compound_not}}
+    elif operator == "not":
+        # Negate first condition
+        if results[0] == ConditionResult.TRUE:
+            return ConditionResult.FALSE, f"NOT: {explanations[0]}"
+        elif results[0] == ConditionResult.FALSE:
+            return ConditionResult.TRUE, f"NOT: {explanations[0]}"
+        return ConditionResult.UNKNOWN, f"NOT: {explanations[0]}"
+    {{/if}}
+
+    return ConditionResult.UNKNOWN, f"Unknown operator: {operator}"
+{{/if}}
+
+
+def get_condition_info() -> Dict[str, Any]:
+    """Get condition information for UI display."""
+    return {
+        "id": CONDITION_ID,
+        "name": CONDITION_NAME,
+        "type": CONDITION_TYPE,
+        "description": "{{condition_description}}",
+        {{#if condition_type_compound}}
+        "sub_conditions": {{sub_conditions}},
+        "operator": "{{compound_operator}}",
+        {{/if}}
+    }

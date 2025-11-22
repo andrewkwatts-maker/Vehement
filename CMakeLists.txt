@@ -291,6 +291,7 @@ add_library(nova3d STATIC
     engine/core/Window.cpp
     engine/core/Time.cpp
     engine/core/Logger.cpp
+    engine/core/JobSystem.cpp
 
     # Configuration
     engine/config/Config.cpp

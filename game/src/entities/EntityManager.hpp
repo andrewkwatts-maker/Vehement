@@ -6,10 +6,12 @@
 #include <memory>
 #include <functional>
 #include <algorithm>
+#include <array>
 
 namespace Nova {
     class Renderer;
     class Graph;
+    class JobSystem;
 }
 
 namespace Vehement {
@@ -321,6 +323,72 @@ public:
     /** @brief Set spatial cell size */
     void SetSpatialCellSize(float size);
 
+    // =========================================================================
+    // ECS-Style Performance Optimizations
+    // =========================================================================
+
+    /**
+     * @brief Update all entities with parallel execution
+     * @param deltaTime Time since last frame
+     * @param useParallel Use job system for parallel updates
+     */
+    void UpdateParallel(float deltaTime, bool useParallel = true);
+
+    /**
+     * @brief Iterate over entities of a type with cache-efficient access
+     * Builds a contiguous array for iteration
+     * @param type Entity type filter
+     * @param callback Function to call for each matching entity
+     */
+    void ForEachEntityOptimized(EntityType type, EntityCallback callback);
+
+    /**
+     * @brief Batch process entities by type
+     * @param type Entity type
+     * @param batchSize Number of entities per batch
+     * @param batchCallback Function called with (entities, count)
+     */
+    void BatchProcess(EntityType type, size_t batchSize,
+                      std::function<void(Entity**, size_t)> batchCallback);
+
+    /**
+     * @brief Get cached entity arrays by type (avoid repeated filtering)
+     */
+    [[nodiscard]] const std::vector<Entity*>& GetCachedEntitiesByType(EntityType type);
+
+    /**
+     * @brief Invalidate entity caches (call after add/remove)
+     */
+    void InvalidateEntityCaches();
+
+    /**
+     * @brief Pre-build type caches for faster iteration
+     */
+    void BuildEntityCaches();
+
+    /**
+     * @brief Parallel collision detection
+     * @param callback Function called for each collision pair
+     */
+    void ProcessCollisionsParallel(CollisionCallback callback);
+
+    /**
+     * @brief Get entity positions as contiguous array (SoA style)
+     * @param type Entity type filter
+     * @param positions Output vector of positions
+     * @param entityIds Output vector of corresponding entity IDs
+     */
+    void GetPositionsSoA(EntityType type, std::vector<glm::vec3>& positions,
+                         std::vector<Entity::EntityId>& entityIds);
+
+    /**
+     * @brief Apply position updates from contiguous array
+     * @param entityIds Entity IDs
+     * @param positions New positions
+     */
+    void SetPositionsSoA(const std::vector<Entity::EntityId>& entityIds,
+                         const std::vector<glm::vec3>& positions);
+
 private:
     // Internal entity ID counter
     Entity::EntityId m_nextId = 1;
@@ -339,6 +407,12 @@ private:
     // Render sorting cache
     mutable std::vector<Entity*> m_renderOrder;
     mutable bool m_renderOrderDirty = true;
+
+    // Type-based entity caches for ECS-style iteration
+    static constexpr size_t NUM_ENTITY_TYPES = 8;  // Adjust based on EntityType enum
+    mutable std::array<std::vector<Entity*>, NUM_ENTITY_TYPES> m_typeCaches;
+    mutable std::array<bool, NUM_ENTITY_TYPES> m_typeCachesDirty;
+    mutable bool m_allCachesDirty = true;
 
     // Spatial hash helpers
     [[nodiscard]] int64_t GetSpatialKey(const glm::vec3& position) const;

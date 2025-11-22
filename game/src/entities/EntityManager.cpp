@@ -3,6 +3,8 @@
 #include "Zombie.hpp"
 #include "NPC.hpp"
 #include <engine/graphics/Renderer.hpp>
+#include <engine/core/JobSystem.hpp>
+#include <engine/core/Profiler.hpp>
 #include <algorithm>
 #include <cmath>
 
@@ -629,6 +631,233 @@ std::vector<int64_t> EntityManager::GetNearbyCells(const glm::vec3& position, fl
     }
 
     return cells;
+}
+
+// ============================================================================
+// ECS-Style Performance Optimizations
+// ============================================================================
+
+void EntityManager::UpdateParallel(float deltaTime, bool useParallel) {
+    NOVA_PROFILE_SCOPE("EntityManager::UpdateParallel");
+
+    // Store old positions for spatial hash update
+    std::vector<std::pair<Entity::EntityId, glm::vec3>> oldPositions;
+    if (m_spatialConfig.enabled) {
+        oldPositions.reserve(m_entities.size());
+        for (const auto& [id, entity] : m_entities) {
+            if (entity->IsActive()) {
+                oldPositions.emplace_back(id, entity->GetPosition());
+            }
+        }
+    }
+
+    // Build flat array for cache-efficient iteration
+    std::vector<Entity*> activeEntities;
+    activeEntities.reserve(m_entities.size());
+    for (auto& [id, entity] : m_entities) {
+        if (entity->IsActive()) {
+            activeEntities.push_back(entity.get());
+        }
+    }
+
+    // Update entities
+    if (!useParallel || activeEntities.size() < 50 || !Nova::JobSystem::Instance().IsInitialized()) {
+        // Sequential update
+        for (Entity* entity : activeEntities) {
+            entity->Update(deltaTime);
+        }
+    } else {
+        // Parallel update
+        Nova::JobSystem::Instance().ParallelFor(0, activeEntities.size(), [&](size_t i) {
+            activeEntities[i]->Update(deltaTime);
+        });
+    }
+
+    // Update spatial hash for moved entities
+    if (m_spatialConfig.enabled) {
+        NOVA_PROFILE_SCOPE("EntityManager::UpdateSpatialHash");
+        for (const auto& [id, oldPos] : oldPositions) {
+            Entity* entity = GetEntity(id);
+            if (entity) {
+                const glm::vec3& newPos = entity->GetPosition();
+                if (GetSpatialKey(oldPos) != GetSpatialKey(newPos)) {
+                    UpdateSpatialHash(id, oldPos, newPos);
+                }
+            }
+        }
+    }
+
+    // Remove dead entities
+    RemoveMarkedEntities();
+
+    m_renderOrderDirty = true;
+    m_allCachesDirty = true;
+}
+
+void EntityManager::ForEachEntityOptimized(EntityType type, EntityCallback callback) {
+    NOVA_PROFILE_SCOPE("EntityManager::ForEachEntityOptimized");
+
+    const auto& cached = GetCachedEntitiesByType(type);
+    for (Entity* entity : cached) {
+        callback(*entity);
+    }
+}
+
+void EntityManager::BatchProcess(EntityType type, size_t batchSize,
+                                  std::function<void(Entity**, size_t)> batchCallback) {
+    NOVA_PROFILE_SCOPE("EntityManager::BatchProcess");
+
+    auto& cached = const_cast<std::vector<Entity*>&>(GetCachedEntitiesByType(type));
+
+    for (size_t i = 0; i < cached.size(); i += batchSize) {
+        size_t count = std::min(batchSize, cached.size() - i);
+        batchCallback(cached.data() + i, count);
+    }
+}
+
+const std::vector<Entity*>& EntityManager::GetCachedEntitiesByType(EntityType type) {
+    size_t typeIndex = static_cast<size_t>(type);
+    if (typeIndex >= NUM_ENTITY_TYPES) {
+        static std::vector<Entity*> empty;
+        return empty;
+    }
+
+    // Rebuild cache if dirty
+    if (m_allCachesDirty || m_typeCachesDirty[typeIndex]) {
+        m_typeCaches[typeIndex].clear();
+
+        for (auto& [id, entity] : m_entities) {
+            if (entity->GetType() == type && entity->IsActive()) {
+                m_typeCaches[typeIndex].push_back(entity.get());
+            }
+        }
+
+        m_typeCachesDirty[typeIndex] = false;
+    }
+
+    return m_typeCaches[typeIndex];
+}
+
+void EntityManager::InvalidateEntityCaches() {
+    m_allCachesDirty = true;
+    m_renderOrderDirty = true;
+}
+
+void EntityManager::BuildEntityCaches() {
+    NOVA_PROFILE_SCOPE("EntityManager::BuildEntityCaches");
+
+    // Clear all caches
+    for (auto& cache : m_typeCaches) {
+        cache.clear();
+    }
+
+    // Build all caches in single pass
+    for (auto& [id, entity] : m_entities) {
+        if (entity->IsActive()) {
+            size_t typeIndex = static_cast<size_t>(entity->GetType());
+            if (typeIndex < NUM_ENTITY_TYPES) {
+                m_typeCaches[typeIndex].push_back(entity.get());
+            }
+        }
+    }
+
+    m_allCachesDirty = false;
+    for (auto& dirty : m_typeCachesDirty) {
+        dirty = false;
+    }
+}
+
+void EntityManager::ProcessCollisionsParallel(CollisionCallback callback) {
+    NOVA_PROFILE_SCOPE("EntityManager::ProcessCollisionsParallel");
+
+    if (!callback) {
+        return;
+    }
+
+    // Build list of collidable entities
+    std::vector<Entity*> collidables;
+    collidables.reserve(m_entities.size());
+    for (auto& [id, entity] : m_entities) {
+        if (entity->IsActive() && entity->IsCollidable()) {
+            collidables.push_back(entity.get());
+        }
+    }
+
+    // For smaller sets, use sequential processing
+    if (collidables.size() < 100 || !Nova::JobSystem::Instance().IsInitialized()) {
+        ProcessCollisions();
+        return;
+    }
+
+    // Thread-local collision pairs
+    struct CollisionPair {
+        Entity* a;
+        Entity* b;
+    };
+
+    // Use spatial partitioning for broad phase
+    std::vector<CollisionPair> collisionPairs;
+    std::mutex pairsMutex;
+
+    Nova::JobSystem::Instance().ParallelFor(0, collidables.size(), [&](size_t i) {
+        Entity* entity = collidables[i];
+        auto collisions = GetCollidingEntities(entity->GetId());
+
+        for (Entity::EntityId otherId : collisions) {
+            // Only add pair once (smaller id first)
+            if (entity->GetId() < otherId) {
+                Entity* other = GetEntity(otherId);
+                if (other) {
+                    std::lock_guard lock(pairsMutex);
+                    collisionPairs.push_back({entity, other});
+                }
+            }
+        }
+    });
+
+    // Process collision callbacks sequentially to avoid races
+    for (auto& pair : collisionPairs) {
+        callback(*pair.a, *pair.b);
+    }
+}
+
+void EntityManager::GetPositionsSoA(EntityType type, std::vector<glm::vec3>& positions,
+                                     std::vector<Entity::EntityId>& entityIds) {
+    NOVA_PROFILE_SCOPE("EntityManager::GetPositionsSoA");
+
+    positions.clear();
+    entityIds.clear();
+
+    const auto& cached = GetCachedEntitiesByType(type);
+    positions.reserve(cached.size());
+    entityIds.reserve(cached.size());
+
+    for (Entity* entity : cached) {
+        positions.push_back(entity->GetPosition());
+        entityIds.push_back(entity->GetId());
+    }
+}
+
+void EntityManager::SetPositionsSoA(const std::vector<Entity::EntityId>& entityIds,
+                                     const std::vector<glm::vec3>& positions) {
+    NOVA_PROFILE_SCOPE("EntityManager::SetPositionsSoA");
+
+    if (entityIds.size() != positions.size()) {
+        return;
+    }
+
+    for (size_t i = 0; i < entityIds.size(); ++i) {
+        Entity* entity = GetEntity(entityIds[i]);
+        if (entity) {
+            glm::vec3 oldPos = entity->GetPosition();
+            entity->SetPosition(positions[i]);
+
+            // Update spatial hash
+            if (m_spatialConfig.enabled && GetSpatialKey(oldPos) != GetSpatialKey(positions[i])) {
+                UpdateSpatialHash(entityIds[i], oldPos, positions[i]);
+            }
+        }
+    }
 }
 
 } // namespace Vehement

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Viewer - Nova3D Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <style>
+        :root { --bg-primary: #1e1e1e; --bg-secondary: #252526; --bg-tertiary: #2d2d30; --bg-hover: #3e3e42; --border-color: #3c3c3c; --text-primary: #cccccc; --text-secondary: #9d9d9d; --text-bright: #ffffff; --accent-primary: #007acc; --success: #4ec9b0; --warning: #dcdcaa; --error: #f14c4c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: var(--text-primary); background: var(--bg-primary); height: 100vh; overflow: hidden; }
+        .viewer-container { display: flex; flex-direction: column; height: 100vh; }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
+        .toolbar h1 { font-size: 16px; font-weight: 500; color: var(--text-bright); }
+        .dirty-indicator { color: var(--warning); font-size: 18px; display: none; }
+        .btn { padding: 6px 12px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; }
+        .btn:hover { background: var(--bg-hover); }
+        .btn-primary { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+        .btn-small { padding: 4px 8px; font-size: 12px; }
+        .btn-add { color: var(--success); border-style: dashed; }
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+        .properties-panel { width: 350px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); overflow-y: auto; }
+        .preview-area { flex: 1; display: flex; flex-direction: column; }
+        .preview-canvas { flex: 1; position: relative; }
+        .preview-canvas canvas { width: 100% !important; height: 100% !important; }
+        .preview-controls { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--bg-secondary); border-top: 1px solid var(--border-color); }
+        .section { border-bottom: 1px solid var(--border-color); }
+        .section-header { display: flex; align-items: center; padding: 10px 12px; cursor: pointer; font-weight: 500; color: var(--text-bright); user-select: none; }
+        .section-header:hover { background: var(--bg-hover); }
+        .section-header .icon { margin-right: 8px; font-size: 10px; transition: transform 0.2s; }
+        .section.collapsed .section-header .icon { transform: rotate(-90deg); }
+        .section.collapsed .section-content { display: none; }
+        .section-content { padding: 12px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 12px; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 6px 8px; font-size: 13px; color: var(--text-primary); background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 3px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-primary); }
+        .vector3-input { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .vector3-input input { text-align: center; }
+        .stat-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .stat-row label { width: 120px; margin-bottom: 0; }
+        .stat-row input { flex: 1; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); }
+        .tab { padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); }
+        .tab:hover { color: var(--text-primary); }
+        .tab.active { color: var(--text-bright); border-bottom-color: var(--accent-primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .footprint-editor { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .footprint-grid { display: grid; gap: 2px; background: var(--bg-tertiary); padding: 8px; border-radius: 4px; }
+        .footprint-cell { width: 24px; height: 24px; background: var(--bg-hover); border: 1px solid var(--border-color); cursor: pointer; }
+        .footprint-cell.occupied { background: var(--accent-primary); }
+        .footprint-cell.blocked { background: var(--error); }
+        .footprint-controls { display: flex; gap: 8px; }
+        .stage-item { padding: 10px; margin-bottom: 8px; background: var(--bg-tertiary); border-radius: 4px; }
+        .stage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .production-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 3px; margin-bottom: 4px; }
+        .upgrade-path { padding: 10px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 8px; }
+        .file-picker { display: flex; gap: 8px; }
+        .file-picker input { flex: 1; }
+        .cost-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .cost-item { display: flex; align-items: center; gap: 4px; }
+        .cost-item label { width: 50px; margin: 0; font-size: 11px; }
+        .cost-item input { flex: 1; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn" onclick="goBack()">Back</button>
+                <h1 id="building-title">Building Viewer</h1>
+                <span class="dirty-indicator" id="dirty-indicator">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="loadConfig()">Load</button>
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="saveConfig()">Save</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="properties-panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="general">General</div>
+                    <div class="tab" data-tab="construction">Construction</div>
+                    <div class="tab" data-tab="production">Production</div>
+                    <div class="tab" data-tab="upgrades">Upgrades</div>
+                </div>
+
+                <div class="tab-content active" id="tab-general">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Basic Info</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>ID</label>
+                                <input type="text" data-path="id" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" data-path="name">
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea data-path="description" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select data-path="category">
+                                    <option value="military">Military</option>
+                                    <option value="economic">Economic</option>
+                                    <option value="defensive">Defensive</option>
+                                    <option value="research">Research</option>
+                                    <option value="housing">Housing</option>
+                                    <option value="special">Special</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Stats</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="stat-row">
+                                <label>Health</label>
+                                <input type="number" data-path="stats.health" value="1000" min="1">
+                            </div>
+                            <div class="stat-row">
+                                <label>Armor</label>
+                                <input type="number" data-path="stats.armor" value="5" min="0">
+                            </div>
+                            <div class="stat-row">
+                                <label>Sight Range</label>
+                                <input type="number" data-path="stats.sightRange" value="10" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Footprint</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="footprint-editor">
+                                <div class="footprint-controls">
+                                    <label>Size:</label>
+                                    <input type="number" id="footprint-width" value="3" min="1" max="10" style="width:50px" onchange="updateFootprint()">
+                                    <span>x</span>
+                                    <input type="number" id="footprint-height" value="3" min="1" max="10" style="width:50px" onchange="updateFootprint()">
+                                </div>
+                                <div class="footprint-grid" id="footprint-grid"></div>
+                                <small>Click cells to toggle occupancy. Right-click for blocked.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Model & Visual</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>3D Model</label>
+                                <div class="file-picker">
+                                    <input type="text" data-path="visuals.model">
+                                    <button class="btn btn-small" onclick="browseModel()">Browse</button>
+                                </div>
+                            </div>
+                            <div class="stat-row">
+                                <label>Scale</label>
+                                <input type="number" data-path="visuals.scale" value="1" min="0.1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Collision/Physics</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Collision Type</label>
+                                <select data-path="collision.type" onchange="updateCollision()">
+                                    <option value="box">Box</option>
+                                    <option value="mesh">Mesh</option>
+                                    <option value="compound">Compound</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Collision Size</label>
+                                <div class="vector3-input">
+                                    <input type="number" data-path="collision.size.x" step="0.1" placeholder="W">
+                                    <input type="number" data-path="collision.size.y" step="0.1" placeholder="H">
+                                    <input type="number" data-path="collision.size.z" step="0.1" placeholder="D">
+                                </div>
+                            </div>
+                            <button class="btn btn-small" onclick="editCollisionIn3D()">Edit in 3D</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-construction">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Build Cost</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="cost-editor">
+                                <div class="cost-item">
+                                    <label>Gold</label>
+                                    <input type="number" data-path="cost.gold" value="100" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <label>Wood</label>
+                                    <input type="number" data-path="cost.wood" value="50" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <label>Stone</label>
+                                    <input type="number" data-path="cost.stone" value="0" min="0">
+                                </div>
+                                <div class="cost-item">
+                                    <label>Food</label>
+                                    <input type="number" data-path="cost.food" value="0" min="0">
+                                </div>
+                            </div>
+                            <div class="stat-row" style="margin-top:12px">
+                                <label>Build Time (s)</label>
+                                <input type="number" data-path="buildTime" value="30" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Construction Stages</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="construction-stages"></div>
+                            <button class="btn btn-small btn-add" onclick="addConstructionStage()">+ Add Stage</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Requirements</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Required Buildings</label>
+                                <div id="required-buildings"></div>
+                                <button class="btn btn-small btn-add" onclick="addRequiredBuilding()">+ Add</button>
+                            </div>
+                            <div class="form-group">
+                                <label>Required Tech</label>
+                                <div id="required-tech"></div>
+                                <button class="btn btn-small btn-add" onclick="addRequiredTech()">+ Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-production">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Production Queue</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="form-group">
+                                <label>Queue Size</label>
+                                <input type="number" data-path="production.queueSize" value="5" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" data-path="production.parallelProduction"> Parallel Production
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Producible Units</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="producible-units"></div>
+                            <button class="btn btn-small btn-add" onclick="addProducibleUnit()">+ Add Unit</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Research Options</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="research-options"></div>
+                            <button class="btn btn-small btn-add" onclick="addResearchOption()">+ Add Research</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Resource Generation</span>
+                        </div>
+                        <div class="section-content">
+                            <div class="cost-editor">
+                                <div class="cost-item">
+                                    <label>Gold/s</label>
+                                    <input type="number" data-path="generation.gold" value="0" step="0.1">
+                                </div>
+                                <div class="cost-item">
+                                    <label>Wood/s</label>
+                                    <input type="number" data-path="generation.wood" value="0" step="0.1">
+                                </div>
+                                <div class="cost-item">
+                                    <label>Food/s</label>
+                                    <input type="number" data-path="generation.food" value="0" step="0.1">
+                                </div>
+                                <div class="cost-item">
+                                    <label>Pop Cap</label>
+                                    <input type="number" data-path="generation.populationCap" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-upgrades">
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Upgrade Paths</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="upgrade-paths"></div>
+                            <button class="btn btn-small btn-add" onclick="addUpgradePath()">+ Add Upgrade Path</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <span class="icon">&#x25BC;</span>
+                            <span>Stat Upgrades</span>
+                        </div>
+                        <div class="section-content">
+                            <div id="stat-upgrades"></div>
+                            <button class="btn btn-small btn-add" onclick="addStatUpgrade()">+ Add Stat Upgrade</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div class="preview-canvas" id="preview-container">
+                    <canvas id="preview-canvas"></canvas>
+                </div>
+                <div class="preview-controls">
+                    <label>Stage:</label>
+                    <select id="stage-select" onchange="showConstructionStage()">
+                        <option value="complete">Complete</option>
+                    </select>
+                    <button class="btn btn-small" onclick="resetCamera()">Reset Camera</button>
+                    <label><input type="checkbox" id="show-footprint" checked onchange="toggleFootprintView()"> Show Footprint</label>
+                    <label><input type="checkbox" id="show-collision" onchange="toggleCollisionView()"> Show Collision</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script src="../js/viewer_common.js"></script>
+    <script src="../js/collision_editor.js"></script>
+    <script>
+        let viewerScene, collisionEditor, configData = {}, originalData = {}, undoStack = [], redoStack = [], currentFile = null;
+        let footprintMesh = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initScene();
+            initTabs();
+            initFormBindings();
+            initFootprint();
+            setDefaultConfig();
+        });
+
+        function initScene() {
+            viewerScene = new ViewerScene('preview-canvas', { cameraPosition: { x: 8, y: 8, z: 8 }, enableTransformControls: true });
+            collisionEditor = new CollisionEditor(viewerScene);
+        }
+
+        function initTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+                });
+            });
+        }
+
+        function initFormBindings() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                input.addEventListener('change', function() {
+                    saveUndoState();
+                    setPath(configData, this.getAttribute('data-path'), getInputValue(this));
+                    setDirty(true);
+                });
+            });
+        }
+
+        function initFootprint() {
+            updateFootprint();
+        }
+
+        function setDefaultConfig() {
+            configData = {
+                id: 'building_new', name: 'New Building', description: '', category: 'military',
+                stats: { health: 1000, armor: 5, sightRange: 10 },
+                cost: { gold: 100, wood: 50, stone: 0, food: 0 }, buildTime: 30,
+                footprint: { width: 3, height: 3, cells: [] },
+                visuals: { scale: 1 }, collision: { type: 'box', size: { x: 3, y: 4, z: 3 } },
+                production: { queueSize: 5 }, constructionStages: [], upgrades: []
+            };
+            for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) configData.footprint.cells.push({ x, y, occupied: true });
+            originalData = JSON.parse(JSON.stringify(configData));
+            populateForm();
+        }
+
+        function updateFootprint() {
+            const w = parseInt(document.getElementById('footprint-width').value) || 3;
+            const h = parseInt(document.getElementById('footprint-height').value) || 3;
+            const grid = document.getElementById('footprint-grid');
+            grid.style.gridTemplateColumns = `repeat(${w}, 24px)`;
+            grid.innerHTML = '';
+
+            if (!configData.footprint) configData.footprint = { width: w, height: h, cells: [] };
+            configData.footprint.width = w;
+            configData.footprint.height = h;
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'footprint-cell';
+                    const existing = configData.footprint.cells.find(c => c.x === x && c.y === y);
+                    if (existing?.occupied) cell.classList.add('occupied');
+                    if (existing?.blocked) cell.classList.add('blocked');
+
+                    cell.addEventListener('click', () => {
+                        cell.classList.toggle('occupied');
+                        cell.classList.remove('blocked');
+                        updateFootprintData();
+                    });
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        cell.classList.toggle('blocked');
+                        cell.classList.remove('occupied');
+                        updateFootprintData();
+                    });
+                    grid.appendChild(cell);
+                }
+            }
+            updateFootprint3D();
+        }
+
+        function updateFootprintData() {
+            const cells = document.querySelectorAll('.footprint-cell');
+            const w = configData.footprint.width;
+            configData.footprint.cells = [];
+            cells.forEach((cell, i) => {
+                const x = i % w, y = Math.floor(i / w);
+                if (cell.classList.contains('occupied') || cell.classList.contains('blocked')) {
+                    configData.footprint.cells.push({ x, y, occupied: cell.classList.contains('occupied'), blocked: cell.classList.contains('blocked') });
+                }
+            });
+            setDirty(true);
+            updateFootprint3D();
+        }
+
+        function updateFootprint3D() {
+            if (footprintMesh) viewerScene.scene.remove(footprintMesh);
+            const w = configData.footprint?.width || 3, h = configData.footprint?.height || 3;
+            const geometry = new THREE.PlaneGeometry(w, h);
+            const material = new THREE.MeshBasicMaterial({ color: 0x007acc, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+            footprintMesh = new THREE.Mesh(geometry, material);
+            footprintMesh.rotation.x = -Math.PI / 2;
+            footprintMesh.position.y = 0.01;
+            viewerScene.scene.add(footprintMesh);
+        }
+
+        function toggleFootprintView() { if (footprintMesh) footprintMesh.visible = document.getElementById('show-footprint').checked; }
+
+        function addConstructionStage() {
+            if (!configData.constructionStages) configData.constructionStages = [];
+            saveUndoState();
+            configData.constructionStages.push({ progress: configData.constructionStages.length * 25, model: '' });
+            updateConstructionStages();
+            setDirty(true);
+        }
+
+        function updateConstructionStages() {
+            const container = document.getElementById('construction-stages');
+            const select = document.getElementById('stage-select');
+            container.innerHTML = (configData.constructionStages || []).map((s, i) => `
+                <div class="stage-item">
+                    <div class="stage-header"><span>Stage ${i + 1}</span><button class="btn btn-small" onclick="removeStage(${i})">X</button></div>
+                    <div class="stat-row"><label>Progress %</label><input type="number" value="${s.progress}" min="0" max="100" onchange="updateStage(${i}, 'progress', this.value)"></div>
+                    <div class="form-group"><label>Model</label><input type="text" value="${s.model || ''}" onchange="updateStage(${i}, 'model', this.value)"></div>
+                </div>`).join('');
+            select.innerHTML = '<option value="complete">Complete</option>' + (configData.constructionStages || []).map((s, i) => `<option value="${i}">Stage ${i + 1} (${s.progress}%)</option>`).join('');
+        }
+
+        function updateStage(i, k, v) { saveUndoState(); configData.constructionStages[i][k] = k === 'progress' ? parseInt(v) : v; setDirty(true); }
+        function removeStage(i) { saveUndoState(); configData.constructionStages.splice(i, 1); updateConstructionStages(); setDirty(true); }
+
+        function addProducibleUnit() {
+            if (!configData.production.units) configData.production.units = [];
+            saveUndoState();
+            configData.production.units.push({ unitId: '', enabled: true });
+            updateProducibleUnits();
+            setDirty(true);
+        }
+
+        function updateProducibleUnits() {
+            document.getElementById('producible-units').innerHTML = (configData.production?.units || []).map((u, i) => `
+                <div class="production-item">
+                    <input type="text" value="${u.unitId}" placeholder="unit_id" onchange="updateProducible(${i}, 'unitId', this.value)">
+                    <label><input type="checkbox" ${u.enabled ? 'checked' : ''} onchange="updateProducible(${i}, 'enabled', this.checked)"> Enabled</label>
+                    <button class="btn btn-small" onclick="removeProducible(${i})">X</button>
+                </div>`).join('');
+        }
+
+        function updateProducible(i, k, v) { saveUndoState(); configData.production.units[i][k] = v; setDirty(true); }
+        function removeProducible(i) { saveUndoState(); configData.production.units.splice(i, 1); updateProducibleUnits(); setDirty(true); }
+
+        function addUpgradePath() {
+            if (!configData.upgrades) configData.upgrades = [];
+            saveUndoState();
+            configData.upgrades.push({ targetBuildingId: '', cost: { gold: 200 }, time: 60 });
+            updateUpgradePaths();
+            setDirty(true);
+        }
+
+        function updateUpgradePaths() {
+            document.getElementById('upgrade-paths').innerHTML = (configData.upgrades || []).map((u, i) => `
+                <div class="upgrade-path">
+                    <div class="stage-header"><span>Upgrade ${i + 1}</span><button class="btn btn-small" onclick="removeUpgrade(${i})">X</button></div>
+                    <div class="form-group"><label>Target Building ID</label><input type="text" value="${u.targetBuildingId}" onchange="updateUpgrade(${i}, 'targetBuildingId', this.value)"></div>
+                    <div class="stat-row"><label>Gold Cost</label><input type="number" value="${u.cost?.gold || 0}" onchange="updateUpgradeCost(${i}, 'gold', this.value)"></div>
+                    <div class="stat-row"><label>Time (s)</label><input type="number" value="${u.time}" onchange="updateUpgrade(${i}, 'time', parseInt(this.value))"></div>
+                </div>`).join('');
+        }
+
+        function updateUpgrade(i, k, v) { saveUndoState(); configData.upgrades[i][k] = v; setDirty(true); }
+        function updateUpgradeCost(i, r, v) { saveUndoState(); if (!configData.upgrades[i].cost) configData.upgrades[i].cost = {}; configData.upgrades[i].cost[r] = parseInt(v); setDirty(true); }
+        function removeUpgrade(i) { saveUndoState(); configData.upgrades.splice(i, 1); updateUpgradePaths(); setDirty(true); }
+
+        function addRequiredBuilding() { /* Implementation */ }
+        function addRequiredTech() { /* Implementation */ }
+        function addResearchOption() { /* Implementation */ }
+        function addStatUpgrade() { /* Implementation */ }
+
+        function populateForm() {
+            document.querySelectorAll('[data-path]').forEach(input => {
+                const v = getPath(configData, input.getAttribute('data-path'));
+                setInputValue(input, v);
+            });
+            document.getElementById('footprint-width').value = configData.footprint?.width || 3;
+            document.getElementById('footprint-height').value = configData.footprint?.height || 3;
+            updateFootprint();
+            updateConstructionStages();
+            updateProducibleUnits();
+            updateUpgradePaths();
+        }
+
+        function loadConfig() { viewerBridge.browseFile('*.json').then(p => p && loadConfigFromPath(p)); }
+        function loadConfigFromPath(p) { currentFile = p; viewerBridge.loadConfig(p).then(d => { configData = d; originalData = JSON.parse(JSON.stringify(d)); populateForm(); document.getElementById('building-title').textContent = d.name || 'Building Viewer'; if (d.visuals?.model) viewerScene.loadModel(d.visuals.model); setDirty(false); }); }
+        function saveConfig() { if (!currentFile) viewerBridge.browseFile('*.json').then(p => { if (p) { currentFile = p; doSave(); } }); else doSave(); }
+        function doSave() { viewerBridge.saveConfig(currentFile, configData).then(() => { originalData = JSON.parse(JSON.stringify(configData)); setDirty(false); }); }
+
+        function saveUndoState() { undoStack.push(JSON.parse(JSON.stringify(configData))); redoStack = []; if (undoStack.length > 50) undoStack.shift(); }
+        function undo() { if (undoStack.length === 0) return; redoStack.push(JSON.parse(JSON.stringify(configData))); configData = undoStack.pop(); populateForm(); setDirty(true); }
+        function redo() { if (redoStack.length === 0) return; undoStack.push(JSON.parse(JSON.stringify(configData))); configData = redoStack.pop(); populateForm(); setDirty(true); }
+
+        function toggleSection(h) { h.parentElement.classList.toggle('collapsed'); }
+        function setDirty(d) { document.getElementById('dirty-indicator').style.display = d ? 'inline' : 'none'; }
+        function goBack() { if (document.getElementById('dirty-indicator').style.display !== 'none' && !confirm('Discard changes?')) return; window.history.back(); }
+        function resetCamera() { viewerScene.resetCamera(); }
+        function browseModel() { viewerBridge.browseFile('*.gltf,*.glb').then(p => { if (p) { setPath(configData, 'visuals.model', p); document.querySelector('[data-path="visuals.model"]').value = p; viewerScene.loadModel(p); setDirty(true); } }); }
+        function toggleCollisionView() { collisionEditor.setAllShapesVisible(document.getElementById('show-collision').checked); }
+        function showConstructionStage() { /* Load stage model */ }
+        function editCollisionIn3D() { /* Open collision editor */ }
+        function updateCollision() { /* Update collision visualization */ }
+
+        function getPath(o, p) { if (!p) return o; const ps = p.split('.'); let c = o; for (const x of ps) { if (c == null) return undefined; c = c[x]; } return c; }
+        function setPath(o, p, v) { const ps = p.split('.'); let c = o; for (let i = 0; i < ps.length - 1; i++) { if (c[ps[i]] === undefined) c[ps[i]] = {}; c = c[ps[i]]; } c[ps[ps.length - 1]] = v; }
+        function getInputValue(i) { if (i.type === 'checkbox') return i.checked; if (i.type === 'number') return parseFloat(i.value) || 0; return i.value; }
+        function setInputValue(i, v) { if (i.type === 'checkbox') i.checked = !!v; else if (i.type === 'color') i.value = v || '#ffffff'; else i.value = v != null ? v : ''; }
+
+        document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveConfig(); } if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); } if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); } });
+    </script>
+</body>
+</html>

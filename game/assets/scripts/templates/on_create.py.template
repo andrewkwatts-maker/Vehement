@@ -1,0 +1,50 @@
+"""
+{{entity_type}} Creation Script
+{{description}}
+
+Author: {{author}}
+Created: {{date}}
+"""
+
+from game_api import *
+
+
+def on_create(entity_id: int) -> None:
+    """
+    Called when a {{entity_type}} entity is created.
+
+    Args:
+        entity_id: The unique identifier of the newly created entity
+    """
+    # Get entity position
+    x, y, z = get_position(entity_id)
+
+    # Initialize entity properties
+    {{#if has_health}}
+    set_health(entity_id, {{max_health}})
+    set_max_health(entity_id, {{max_health}})
+    {{/if}}
+
+    {{#if has_armor}}
+    set_armor(entity_id, {{armor_value}})
+    {{/if}}
+
+    {{#if has_mana}}
+    set_mana(entity_id, {{max_mana}})
+    set_max_mana(entity_id, {{max_mana}})
+    {{/if}}
+
+    # Play spawn effect
+    {{#if spawn_effect}}
+    play_effect("{{spawn_effect}}", x, y, z)
+    {{/if}}
+
+    {{#if spawn_sound}}
+    play_sound("{{spawn_sound}}", x, y, z)
+    {{/if}}
+
+    # Log creation
+    log_debug(f"{{entity_type}} created: {entity_id} at ({x}, {y}, {z})")
+
+    # Custom initialization
+    {{custom_init}}

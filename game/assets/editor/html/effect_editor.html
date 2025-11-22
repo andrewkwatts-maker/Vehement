@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Effect/Buff Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body class="effect-editor">
+    <div class="editor-container">
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+                <h2 id="effect-name">New Effect</h2>
+                <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="save()">Save</button>
+            </div>
+        </div>
+
+        <div class="editor-content">
+            <div class="properties-panel">
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Basic Info</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="id">ID</label>
+                            <input type="text" id="id" data-path="id" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" data-path="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" data-path="description" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="effectType">Type</label>
+                            <select id="effectType" data-path="type">
+                                <option value="buff">Buff (Positive)</option>
+                                <option value="debuff">Debuff (Negative)</option>
+                                <option value="aura">Aura</option>
+                                <option value="dot">Damage Over Time</option>
+                                <option value="hot">Heal Over Time</option>
+                                <option value="stun">Stun/CC</option>
+                                <option value="shield">Shield</option>
+                                <option value="stealth">Stealth</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="icon">Icon</label>
+                            <div class="icon-picker">
+                                <div class="icon-preview" id="icon-preview"></div>
+                                <input type="text" id="icon" data-path="icon">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Duration</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="duration">Duration (s)</label>
+                            <input type="number" id="duration" data-path="duration" min="0" step="0.1" value="10">
+                            <small>0 = permanent until removed</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxStacks">Max Stacks</label>
+                            <input type="number" id="maxStacks" data-path="maxStacks" min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="stackBehavior">Stack Behavior</label>
+                            <select id="stackBehavior" data-path="stackBehavior">
+                                <option value="refresh">Refresh Duration</option>
+                                <option value="extend">Extend Duration</option>
+                                <option value="separate">Separate Stacks</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="removable" checked> Can Be Removed
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="dispellable" checked> Can Be Dispelled
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Stat Modifiers</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="modifier-list" id="stat-modifiers">
+                            <div class="modifier-row">
+                                <select data-path="modifiers.0.stat">
+                                    <option value="">-- Select Stat --</option>
+                                    <option value="health">Max Health</option>
+                                    <option value="mana">Max Mana</option>
+                                    <option value="attack">Attack</option>
+                                    <option value="defense">Defense</option>
+                                    <option value="attackSpeed">Attack Speed</option>
+                                    <option value="moveSpeed">Move Speed</option>
+                                    <option value="critChance">Crit Chance</option>
+                                    <option value="critDamage">Crit Damage</option>
+                                </select>
+                                <select data-path="modifiers.0.type">
+                                    <option value="flat">Flat (+/-)</option>
+                                    <option value="percent">Percent (%)</option>
+                                    <option value="multiply">Multiply (x)</option>
+                                </select>
+                                <input type="number" data-path="modifiers.0.value" step="0.1" value="0">
+                                <button class="btn btn-icon btn-danger" onclick="removeModifier(0)">x</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-small btn-add" onclick="addModifier()">+ Add Modifier</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Periodic Effect</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="tickInterval">Tick Interval (s)</label>
+                            <input type="number" id="tickInterval" data-path="periodic.interval" min="0.1" step="0.1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="tickType">Tick Effect</label>
+                            <select id="tickType" data-path="periodic.type">
+                                <option value="none">None</option>
+                                <option value="damage">Damage</option>
+                                <option value="heal">Heal</option>
+                                <option value="manaRegen">Mana Regen</option>
+                                <option value="manaDrain">Mana Drain</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tickValue">Value per Tick</label>
+                            <input type="number" id="tickValue" data-path="periodic.value" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="tickDamageType">Damage Type</label>
+                            <select id="tickDamageType" data-path="periodic.damageType">
+                                <option value="physical">Physical</option>
+                                <option value="magical">Magical</option>
+                                <option value="fire">Fire</option>
+                                <option value="ice">Ice</option>
+                                <option value="poison">Poison</option>
+                                <option value="true">True Damage</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Special Effects</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="special.invulnerable"> Invulnerable
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="special.untargetable"> Untargetable
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="special.rooted"> Rooted (Can't Move)
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="special.silenced"> Silenced (Can't Cast)
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="special.disarmed"> Disarmed (Can't Attack)
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" data-path="special.stunned"> Stunned (Can't Act)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Visual Effects</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="particleEffect">Particle Effect</label>
+                            <input type="text" id="particleEffect" data-path="vfx.particle">
+                        </div>
+                        <div class="form-group">
+                            <label for="colorTint">Color Tint</label>
+                            <input type="color" id="colorTint" data-path="vfx.color" value="#ffffff">
+                        </div>
+                        <div class="form-group">
+                            <label for="animation">Animation Override</label>
+                            <input type="text" id="animation" data-path="vfx.animation">
+                        </div>
+                        <div class="form-group">
+                            <label for="soundLoop">Looping Sound</label>
+                            <input type="text" id="soundLoop" data-path="sfx.loop">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Triggers</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>On Apply</label>
+                            <input type="text" id="onApply" data-path="triggers.onApply" placeholder="spell_id or script">
+                        </div>
+                        <div class="form-group">
+                            <label>On Expire</label>
+                            <input type="text" id="onExpire" data-path="triggers.onExpire" placeholder="spell_id or script">
+                        </div>
+                        <div class="form-group">
+                            <label>On Damage Taken</label>
+                            <input type="text" id="onDamageTaken" data-path="triggers.onDamageTaken" placeholder="spell_id or script">
+                        </div>
+                        <div class="form-group">
+                            <label>On Attack</label>
+                            <input type="text" id="onAttack" data-path="triggers.onAttack" placeholder="spell_id or script">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-viewport">
+                <div class="preview-header">
+                    <span>Preview</span>
+                </div>
+                <div class="preview-canvas">
+                    <div class="effect-preview-card" id="effect-card">
+                        <div class="effect-header">
+                            <div class="effect-icon" id="preview-icon"></div>
+                            <div class="effect-title">
+                                <span class="effect-name" id="preview-name">Effect Name</span>
+                                <span class="effect-type" id="preview-type">Buff</span>
+                            </div>
+                        </div>
+                        <div class="effect-description" id="preview-description">
+                            Effect description goes here.
+                        </div>
+                        <div class="effect-stats" id="preview-stats">
+                            <div class="stat-line"><span class="stat-label">Duration:</span><span class="stat-value">10s</span></div>
+                            <div class="stat-line"><span class="stat-label">Stacks:</span><span class="stat-value">1</span></div>
+                        </div>
+                        <div class="effect-modifiers" id="preview-modifiers">
+                            <!-- Modifier previews -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script src="schema_form.js"></script>
+    <script>
+        var effectEditor = new SchemaEditor('effect', {
+            containerSelector: '.properties-panel',
+            onDataChange: function(path, value) {
+                updatePreview();
+            }
+        });
+
+        var effectId = WebEditor.getQueryParam('id');
+        if (effectId) {
+            loadEffect(effectId);
+        }
+
+        function loadEffect(id) {
+            WebEditor.invoke('contentBrowser.getItemData', [id], function(err, data) {
+                if (err) return;
+                effectEditor.setData(data);
+                document.getElementById('effect-name').textContent = data.name || 'Unnamed Effect';
+                updatePreview();
+            });
+        }
+
+        function save() {
+            var data = effectEditor.getData();
+            WebEditor.invoke('contentBrowser.saveItem', [effectId, data], function(err) {
+                if (!err) setDirty(false);
+            });
+        }
+
+        function updatePreview() {
+            var data = effectEditor.getData();
+            document.getElementById('preview-name').textContent = data.name || 'Effect Name';
+            document.getElementById('preview-type').textContent = data.type || 'Buff';
+            document.getElementById('preview-description').textContent = data.description || '';
+
+            var stats = document.getElementById('preview-stats');
+            stats.innerHTML = '<div class="stat-line"><span class="stat-label">Duration:</span><span class="stat-value">' +
+                (data.duration || 0) + 's</span></div>' +
+                '<div class="stat-line"><span class="stat-label">Max Stacks:</span><span class="stat-value">' +
+                (data.maxStacks || 1) + '</span></div>';
+
+            // Update modifiers preview
+            var modsDiv = document.getElementById('preview-modifiers');
+            modsDiv.innerHTML = '';
+            if (data.modifiers) {
+                data.modifiers.forEach(function(mod) {
+                    if (mod.stat && mod.value) {
+                        var sign = mod.value >= 0 ? '+' : '';
+                        var suffix = mod.type === 'percent' ? '%' : '';
+                        modsDiv.innerHTML += '<div class="modifier-preview">' + sign + mod.value + suffix + ' ' + mod.stat + '</div>';
+                    }
+                });
+            }
+        }
+
+        var modifierCount = 1;
+        function addModifier() {
+            var container = document.getElementById('stat-modifiers');
+            var row = document.createElement('div');
+            row.className = 'modifier-row';
+            row.innerHTML = '<select data-path="modifiers.' + modifierCount + '.stat">' +
+                '<option value="">-- Select Stat --</option>' +
+                '<option value="health">Max Health</option><option value="attack">Attack</option>' +
+                '</select>' +
+                '<select data-path="modifiers.' + modifierCount + '.type">' +
+                '<option value="flat">Flat</option><option value="percent">Percent</option>' +
+                '</select>' +
+                '<input type="number" data-path="modifiers.' + modifierCount + '.value" value="0">' +
+                '<button class="btn btn-icon btn-danger" onclick="this.parentElement.remove()">x</button>';
+            container.appendChild(row);
+            modifierCount++;
+        }
+    </script>
+</body>
+</html>

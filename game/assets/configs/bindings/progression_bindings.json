@@ -1,0 +1,229 @@
+{
+  "version": "1.0",
+  "description": "Progression and leveling event bindings",
+  "bindings": [
+    {
+      "id": "progression_experience_check_levelup",
+      "name": "Check Level Up on Experience Gained",
+      "description": "Check if the unit should level up when experience is gained",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnExperienceGained",
+        "pythonCondition": "entity.experience >= entity.experience_to_next_level"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.progression.leveling",
+      "pythonFunction": "process_level_up",
+      "parameters": {
+        "playLevelUpEffect": true,
+        "healOnLevelUp": true,
+        "healPercent": 0.5
+      },
+      "enabled": true,
+      "priority": 100,
+      "tags": ["progression", "levelup", "experience"]
+    },
+    {
+      "id": "progression_levelup_apply_stats",
+      "name": "Apply Stat Increases on Level Up",
+      "description": "Automatically apply stat increases when leveling up",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnLevelUp"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.progression.stats",
+      "pythonFunction": "apply_level_up_stats",
+      "parameters": {
+        "healthPerLevel": 10,
+        "damagePerLevel": 2,
+        "armorPerLevel": 1,
+        "statPointsPerLevel": 3
+      },
+      "enabled": true,
+      "priority": 90,
+      "tags": ["progression", "levelup", "stats"]
+    },
+    {
+      "id": "progression_levelup_unlock_abilities",
+      "name": "Unlock Abilities on Level Up",
+      "description": "Check and unlock new abilities when leveling up",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnLevelUp"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.progression.abilities",
+      "pythonFunction": "check_ability_unlocks",
+      "parameters": {
+        "showUnlockNotification": true,
+        "autoEquip": false
+      },
+      "enabled": true,
+      "priority": 80,
+      "tags": ["progression", "levelup", "abilities"]
+    },
+    {
+      "id": "progression_tech_researched_unlock",
+      "name": "Unlock Features on Tech Research",
+      "description": "Unlock buildings, units, or abilities when a technology is researched",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Player",
+        "eventName": "OnTechResearched"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.tech.unlocks",
+      "pythonFunction": "process_tech_unlocks",
+      "parameters": {
+        "showNotification": true,
+        "playSound": "tech_complete"
+      },
+      "enabled": true,
+      "priority": 100,
+      "tags": ["progression", "tech", "unlocks"]
+    },
+    {
+      "id": "progression_tech_apply_bonuses",
+      "name": "Apply Tech Bonuses",
+      "description": "Apply passive bonuses from researched technologies",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Player",
+        "eventName": "OnTechResearched"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.tech.bonuses",
+      "pythonFunction": "apply_tech_bonuses",
+      "parameters": {
+        "applyToExisting": true,
+        "applyToFuture": true
+      },
+      "enabled": true,
+      "priority": 85,
+      "tags": ["progression", "tech", "bonuses"]
+    },
+    {
+      "id": "progression_quest_completed_rewards",
+      "name": "Grant Quest Rewards",
+      "description": "Give rewards when a quest is completed",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Player",
+        "eventName": "OnQuestCompleted"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.quests.rewards",
+      "pythonFunction": "grant_quest_rewards",
+      "parameters": {
+        "experienceMultiplier": 1.0,
+        "goldMultiplier": 1.0,
+        "showRewardScreen": true
+      },
+      "enabled": true,
+      "priority": 100,
+      "tags": ["progression", "quest", "rewards"]
+    },
+    {
+      "id": "progression_achievement_check",
+      "name": "Check Achievement Progress",
+      "description": "Update achievement progress on various events",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "*",
+        "eventName": "OnAchievementTrigger"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.achievements.tracker",
+      "pythonFunction": "update_achievement_progress",
+      "enabled": true,
+      "priority": 50,
+      "async": true,
+      "tags": ["progression", "achievements"]
+    },
+    {
+      "id": "progression_milestone_reached",
+      "name": "Milestone Reached Handler",
+      "description": "Handle when player reaches significant milestones",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Player",
+        "eventName": "OnMilestoneReached"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.progression.milestones",
+      "pythonFunction": "handle_milestone",
+      "parameters": {
+        "grantBonus": true,
+        "celebrationEffect": true
+      },
+      "enabled": true,
+      "priority": 75,
+      "tags": ["progression", "milestones"]
+    },
+    {
+      "id": "progression_prestige_bonus",
+      "name": "Apply Prestige Bonus",
+      "description": "Calculate and apply prestige bonuses after resetting",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Player",
+        "eventName": "OnPrestige"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.progression.prestige",
+      "pythonFunction": "apply_prestige_bonuses",
+      "parameters": {
+        "baseBonus": 0.1,
+        "maxBonus": 2.0,
+        "retainedItems": ["legendary", "unique"]
+      },
+      "enabled": true,
+      "priority": 100,
+      "tags": ["progression", "prestige", "endgame"]
+    },
+    {
+      "id": "progression_skill_point_gained",
+      "name": "Skill Point Gained Notification",
+      "description": "Notify player when they gain skill points",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnSkillPointGained"
+      },
+      "callbackType": "event",
+      "emitEventType": "UI.ShowSkillPointNotification",
+      "enabled": true,
+      "priority": 25,
+      "tags": ["progression", "skills", "ui"]
+    },
+    {
+      "id": "progression_max_level_bonus",
+      "name": "Max Level Bonus",
+      "description": "Apply special bonuses when reaching max level",
+      "category": "Progression",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnLevelUp",
+        "propertyPath": "level",
+        "comparator": "==",
+        "compareValue": 100
+      },
+      "callbackType": "python",
+      "pythonModule": "game.progression.max_level",
+      "pythonFunction": "apply_max_level_rewards",
+      "parameters": {
+        "unlockPrestige": true,
+        "bonusSkillPoints": 5,
+        "specialTitle": "Legendary Champion"
+      },
+      "enabled": true,
+      "priority": 100,
+      "oneShot": true,
+      "tags": ["progression", "maxlevel", "endgame"]
+    }
+  ]
+}

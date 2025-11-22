@@ -1,0 +1,408 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Spell Definition Schema",
+    "description": "JSON schema for defining spells in the Nova3D/Vehement2 spell system",
+    "type": "object",
+    "required": ["id", "name", "targeting", "timing", "cost", "effects"],
+
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique spell identifier (e.g., 'spell_fireball')",
+            "pattern": "^[a-z][a-z0-9_]*$"
+        },
+
+        "name": {
+            "type": "string",
+            "description": "Display name shown to players"
+        },
+
+        "description": {
+            "type": "string",
+            "description": "Detailed spell description for tooltips"
+        },
+
+        "icon": {
+            "type": "string",
+            "description": "Path to spell icon image"
+        },
+
+        "school": {
+            "type": "string",
+            "enum": ["fire", "frost", "nature", "arcane", "shadow", "holy", "lightning", "physical"],
+            "description": "Magic school (used for interrupts and resistances)"
+        },
+
+        "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Tags for filtering and categorization"
+        },
+
+        "targeting": {
+            "type": "object",
+            "required": ["mode"],
+            "properties": {
+                "mode": {
+                    "type": "string",
+                    "enum": ["self", "single", "passive_radius", "aoe", "line", "cone", "projectile", "chain"],
+                    "description": "Primary targeting mode"
+                },
+                "range": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Maximum targeting range in units"
+                },
+                "min_range": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Minimum targeting range in units"
+                },
+                "radius": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "AOE radius or passive aura radius"
+                },
+                "angle": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 360,
+                    "description": "Cone angle in degrees"
+                },
+                "width": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Line width for line spells"
+                },
+                "max_targets": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum number of targets"
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": ["nearest", "farthest", "lowest_health", "highest_health", "highest_threat", "random"],
+                    "description": "Target selection priority"
+                },
+                "filter": {
+                    "type": "object",
+                    "properties": {
+                        "faction": {
+                            "type": "string",
+                            "enum": ["all", "friendly", "enemy", "neutral", "self"]
+                        },
+                        "can_target_self": {"type": "boolean"},
+                        "must_be_alive": {"type": "boolean"},
+                        "can_target_dead": {"type": "boolean"},
+                        "can_target_invisible": {"type": "boolean"},
+                        "can_target_invulnerable": {"type": "boolean"},
+                        "in_combat": {"type": "boolean"},
+                        "out_of_combat": {"type": "boolean"},
+                        "has_buff": {"type": "array", "items": {"type": "string"}},
+                        "missing_buff": {"type": "array", "items": {"type": "string"}},
+                        "unit_type": {"type": "array", "items": {"type": "string"}},
+                        "min_health_percent": {"type": "number"},
+                        "max_health_percent": {"type": "number"}
+                    }
+                },
+                "projectile": {
+                    "type": "object",
+                    "properties": {
+                        "speed": {"type": "number", "minimum": 0},
+                        "acceleration": {"type": "number"},
+                        "radius": {"type": "number", "minimum": 0},
+                        "model": {"type": "string"},
+                        "trail": {"type": "string"},
+                        "explode": {"type": "boolean"},
+                        "explosion_radius": {"type": "number"},
+                        "lifetime": {"type": "number"},
+                        "homing": {"type": "boolean"},
+                        "piercing": {"type": "boolean"},
+                        "max_pierce": {"type": "integer"}
+                    }
+                },
+                "chain": {
+                    "type": "object",
+                    "properties": {
+                        "max_bounces": {"type": "integer", "minimum": 1},
+                        "bounce_range": {"type": "number", "minimum": 0},
+                        "damage_multiplier": {"type": "number"},
+                        "bounce_delay": {"type": "number"},
+                        "can_hit_same": {"type": "boolean"},
+                        "requires_los": {"type": "boolean"}
+                    }
+                },
+                "ground_target": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {"type": "boolean"},
+                        "snap_to_terrain": {"type": "boolean"},
+                        "requires_walkable": {"type": "boolean"},
+                        "show_indicator": {"type": "boolean"},
+                        "indicator_radius": {"type": "number"}
+                    }
+                }
+            }
+        },
+
+        "timing": {
+            "type": "object",
+            "properties": {
+                "cast_time": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Time to cast in seconds (0 = instant)"
+                },
+                "channel_duration": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Channel duration in seconds"
+                },
+                "cooldown": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Cooldown in seconds"
+                },
+                "charges": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum charges"
+                },
+                "charge_recharge_time": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Time to regain one charge"
+                },
+                "triggers_gcd": {"type": "boolean"},
+                "affected_by_gcd": {"type": "boolean"},
+                "gcd_duration": {"type": "number"},
+                "cast_scales_haste": {"type": "boolean"},
+                "cooldown_scales_haste": {"type": "boolean"}
+            }
+        },
+
+        "cost": {
+            "type": "object",
+            "properties": {
+                "mana": {"type": "number", "minimum": 0},
+                "health": {"type": "number", "minimum": 0},
+                "stamina": {"type": "number", "minimum": 0},
+                "energy": {"type": "number", "minimum": 0},
+                "rage": {"type": "number", "minimum": 0}
+            }
+        },
+
+        "effects": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "damage", "heal", "dot", "hot", "absorb",
+                            "stun", "root", "silence", "disarm", "slow", "fear", "charm", "sleep",
+                            "knockback", "pull", "grip",
+                            "buff", "debuff", "stat_modifier", "aura",
+                            "teleport", "dash", "leap",
+                            "summon", "transform",
+                            "dispel", "interrupt", "resurrect",
+                            "resource_restore", "resource_drain",
+                            "script", "trigger", "chain"
+                        ]
+                    },
+                    "timing": {
+                        "type": "string",
+                        "enum": ["instant", "over_time", "delayed", "on_interval", "on_expire", "on_remove", "channeled"]
+                    },
+                    "amount": {"type": "number"},
+                    "duration": {"type": "number", "minimum": 0},
+                    "tick_interval": {"type": "number", "minimum": 0},
+                    "delay": {"type": "number", "minimum": 0},
+                    "damage_type": {
+                        "type": "string",
+                        "enum": ["physical", "fire", "frost", "nature", "arcane", "shadow", "holy", "lightning", "poison", "bleed", "pure"]
+                    },
+                    "stacking": {
+                        "type": "string",
+                        "enum": ["refresh", "stack", "replace", "ignore", "pandemic", "highest", "lowest", "separate"]
+                    },
+                    "max_stacks": {"type": "integer", "minimum": 1},
+                    "stack_value": {"type": "number"},
+                    "scaling": {
+                        "type": "object",
+                        "properties": {
+                            "stat": {"type": "string"},
+                            "coefficient": {"type": "number"},
+                            "level_bonus": {"type": "number"},
+                            "min": {"type": "number"},
+                            "max": {"type": "number"}
+                        }
+                    },
+                    "crit_chance": {"type": "number", "minimum": 0, "maximum": 1},
+                    "crit_multiplier": {"type": "number", "minimum": 1},
+                    "description": {"type": "string"},
+                    "icon": {"type": "string"},
+                    "summon": {
+                        "type": "object",
+                        "properties": {
+                            "unit_id": {"type": "string"},
+                            "count": {"type": "integer", "minimum": 1},
+                            "duration": {"type": "number"},
+                            "inherit_faction": {"type": "boolean"},
+                            "spawn_radius": {"type": "number"}
+                        }
+                    },
+                    "displacement": {
+                        "type": "object",
+                        "properties": {
+                            "distance": {"type": "number"},
+                            "speed": {"type": "number"},
+                            "knocks_up": {"type": "boolean"},
+                            "knock_up_height": {"type": "number"}
+                        }
+                    },
+                    "stat_modifier": {
+                        "type": "object",
+                        "properties": {
+                            "stat": {"type": "string"},
+                            "mod_type": {"type": "string", "enum": ["flat", "percent", "multiplicative"]},
+                            "value": {"type": "number"}
+                        }
+                    },
+                    "resource": {
+                        "type": "object",
+                        "properties": {
+                            "type": {"type": "string"},
+                            "amount": {"type": "number"},
+                            "percentage": {"type": "boolean"}
+                        }
+                    }
+                }
+            }
+        },
+
+        "flags": {
+            "type": "object",
+            "properties": {
+                "can_crit": {"type": "boolean"},
+                "can_miss": {"type": "boolean"},
+                "can_be_reflected": {"type": "boolean"},
+                "can_be_interrupted": {"type": "boolean"},
+                "can_be_silenced": {"type": "boolean"},
+                "requires_los": {"type": "boolean"},
+                "requires_facing": {"type": "boolean"},
+                "cast_while_moving": {"type": "boolean"},
+                "cast_while_casting": {"type": "boolean"},
+                "passive": {"type": "boolean"},
+                "toggle": {"type": "boolean"},
+                "aura": {"type": "boolean"},
+                "breaks_on_damage": {"type": "boolean"},
+                "breaks_on_movement": {"type": "boolean"},
+                "ignores_armor": {"type": "boolean"},
+                "ignores_resistance": {"type": "boolean"}
+            }
+        },
+
+        "requirements": {
+            "type": "object",
+            "properties": {
+                "min_level": {"type": "integer", "minimum": 1},
+                "required_weapon": {"type": "string"},
+                "required_buffs": {"type": "array", "items": {"type": "string"}},
+                "forbidden_buffs": {"type": "array", "items": {"type": "string"}},
+                "required_stance": {"type": "string"},
+                "requires_combat": {"type": "boolean"},
+                "requires_not_combat": {"type": "boolean"},
+                "requires_stealth": {"type": "boolean"},
+                "min_health": {"type": "number"},
+                "max_health": {"type": "number"}
+            }
+        },
+
+        "events": {
+            "type": "object",
+            "description": "Python script paths for spell events",
+            "properties": {
+                "on_cast_start": {"type": "string"},
+                "on_cast_complete": {"type": "string"},
+                "on_cast_interrupt": {"type": "string"},
+                "on_channel_tick": {"type": "string"},
+                "on_hit": {"type": "string"},
+                "on_crit": {"type": "string"},
+                "on_kill": {"type": "string"},
+                "on_miss": {"type": "string"},
+                "on_reflect": {"type": "string"},
+                "on_absorb": {"type": "string"}
+            }
+        },
+
+        "visuals": {
+            "type": "object",
+            "properties": {
+                "icon": {"type": "string"},
+                "cooldown_icon": {"type": "string"},
+                "projectile": {
+                    "type": "object",
+                    "properties": {
+                        "model": {"type": "string"},
+                        "trail": {"type": "string"},
+                        "scale": {"type": "number"}
+                    }
+                },
+                "effects": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "type": {"type": "string", "enum": ["particle", "model", "decal", "light", "screen_effect", "trail", "beam", "sprite"]},
+                            "trigger": {"type": "string", "enum": ["on_cast_start", "on_cast_complete", "on_channel_tick", "on_projectile_launch", "on_hit", "on_crit", "on_kill", "on_miss", "on_expire", "continuous"]},
+                            "attach": {"type": "string"},
+                            "path": {"type": "string"},
+                            "texture": {"type": "string"},
+                            "scale": {"type": "number"},
+                            "duration": {"type": "number"},
+                            "loop": {"type": "boolean"},
+                            "intensity": {"type": "number"},
+                            "range": {"type": "number"},
+                            "width": {"type": "number"},
+                            "size": {"type": "number"}
+                        }
+                    }
+                },
+                "sounds": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "path": {"type": "string"},
+                            "trigger": {"type": "string"},
+                            "volume": {"type": "number", "minimum": 0, "maximum": 1},
+                            "pitch": {"type": "number"},
+                            "pitch_variation": {"type": "number"},
+                            "positional": {"type": "boolean"},
+                            "loop": {"type": "boolean"}
+                        }
+                    }
+                },
+                "animations": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "name": {"type": "string"},
+                            "trigger": {"type": "string"},
+                            "speed": {"type": "number"},
+                            "loop": {"type": "boolean"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

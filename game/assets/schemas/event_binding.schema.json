@@ -1,0 +1,246 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nova3d.engine/schemas/event_binding.schema.json",
+  "title": "Event Binding",
+  "description": "Schema for event binding definitions that connect events to Python callbacks",
+  "type": "object",
+  "definitions": {
+    "comparator": {
+      "type": "string",
+      "enum": ["==", "!=", "<", "<=", ">", ">=", "changed", "contains", "startsWith", "endsWith", "matches", "inRange", "isNull", "isNotNull", "bitSet", "bitClear"],
+      "description": "Comparison operator for property conditions"
+    },
+    "conditionValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "integer" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "type": "integer" } },
+        { "type": "array", "items": { "type": "number" } },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Value for condition comparison"
+    },
+    "eventCondition": {
+      "type": "object",
+      "description": "Condition that determines when a binding triggers",
+      "properties": {
+        "sourceType": {
+          "type": "string",
+          "default": "*",
+          "description": "Type of object that emits the event (e.g., 'Unit', 'Building', '*' for all)"
+        },
+        "sourceId": {
+          "type": "string",
+          "description": "Specific source ID to filter (optional)"
+        },
+        "eventName": {
+          "type": "string",
+          "description": "Name of the event to listen for (e.g., 'OnDamage', 'OnCreate')"
+        },
+        "eventTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Additional event tags to match"
+        },
+        "propertyPath": {
+          "type": "string",
+          "description": "Dot-notation path to property (e.g., 'health.current', 'position.x')"
+        },
+        "comparator": {
+          "$ref": "#/definitions/comparator"
+        },
+        "compareValue": {
+          "$ref": "#/definitions/conditionValue"
+        },
+        "rangeMin": {
+          "$ref": "#/definitions/conditionValue"
+        },
+        "rangeMax": {
+          "$ref": "#/definitions/conditionValue"
+        },
+        "pythonCondition": {
+          "type": "string",
+          "description": "Python expression that returns bool for additional filtering"
+        },
+        "pythonModule": {
+          "type": "string",
+          "description": "Python module containing condition function"
+        },
+        "pythonFunction": {
+          "type": "string",
+          "description": "Python function name for condition evaluation"
+        },
+        "negate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Negate the entire condition result"
+        },
+        "and": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/eventCondition" },
+          "description": "Additional conditions that must all be true"
+        },
+        "or": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/eventCondition" },
+          "description": "Alternative conditions where any can be true"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this condition"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this condition"
+        }
+      },
+      "required": ["eventName"]
+    },
+    "callbackType": {
+      "type": "string",
+      "enum": ["python", "native", "event", "command", "script"],
+      "description": "Type of callback to execute"
+    },
+    "eventBinding": {
+      "type": "object",
+      "description": "A complete event binding definition",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this binding"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of what this binding does"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category for organization (e.g., 'Combat', 'Progression', 'World')"
+        },
+        "condition": {
+          "$ref": "#/definitions/eventCondition"
+        },
+        "callbackType": {
+          "$ref": "#/definitions/callbackType",
+          "default": "python"
+        },
+        "pythonScript": {
+          "type": "string",
+          "description": "Inline Python code to execute"
+        },
+        "pythonFile": {
+          "type": "string",
+          "description": "Path to Python script file"
+        },
+        "pythonModule": {
+          "type": "string",
+          "description": "Python module name"
+        },
+        "pythonFunction": {
+          "type": "string",
+          "description": "Function name to call in the module"
+        },
+        "emitEventType": {
+          "type": "string",
+          "description": "Event type to emit (for callbackType 'event')"
+        },
+        "command": {
+          "type": "string",
+          "description": "Command to execute (for callbackType 'command')"
+        },
+        "commandArgs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Arguments for the command"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Additional parameters passed to the callback"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this binding is active"
+        },
+        "priority": {
+          "type": "integer",
+          "default": 0,
+          "minimum": -100,
+          "maximum": 100,
+          "description": "Execution priority (higher executes first)"
+        },
+        "async": {
+          "type": "boolean",
+          "default": false,
+          "description": "Execute callback asynchronously"
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0,
+          "description": "Delay in seconds before executing callback"
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0,
+          "description": "Minimum time between executions in seconds"
+        },
+        "maxExecutions": {
+          "type": "integer",
+          "default": -1,
+          "description": "Maximum number of times to execute (-1 for unlimited)"
+        },
+        "oneShot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable binding after first execution"
+        },
+        "logExecution": {
+          "type": "boolean",
+          "default": false,
+          "description": "Log when this binding executes (debug)"
+        },
+        "breakOnExecute": {
+          "type": "boolean",
+          "default": false,
+          "description": "Break into debugger on execution (editor only)"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author of this binding"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of this binding definition"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags for categorization and search"
+        }
+      },
+      "required": ["id", "condition"]
+    }
+  },
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version",
+      "default": "1.0"
+    },
+    "bindings": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/eventBinding" },
+      "description": "Array of event binding definitions"
+    }
+  },
+  "required": ["bindings"]
+}

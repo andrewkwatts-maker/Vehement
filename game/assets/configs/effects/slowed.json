@@ -1,0 +1,53 @@
+{
+    // Slowed - Movement Impairment Debuff
+    // Reduces movement speed significantly
+
+    "id": "effect_slowed",
+    "name": "Slowed",
+    "description": "Movement is significantly impaired.",
+    "type": "debuff",
+    "tags": ["slow", "movement", "crowd_control"],
+    "categories": ["movement_impairment"],
+
+    "duration": 5.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "refresh",
+        "max_stacks": 1
+    },
+
+    "modifiers": [
+        {
+            "stat": "move_speed",
+            "op": "percent",
+            "value": -50
+        },
+        {
+            "stat": "dodge",
+            "op": "percent",
+            "value": -25
+        }
+    ],
+
+    "triggers": [
+        {
+            "condition": "on_damage_taken",
+            "chance": 0.2,
+            "action": "extend_duration",
+            "amount": 1.0,
+            "cooldown": 2.0
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/slowed.png",
+        "particle": "particles/slow_chains.json",
+        "tint": [0.7, 0.7, 0.9, 1.0],
+        "attach_point": "feet"
+    },
+
+    "dispellable": true,
+    "purgeable": true,
+    "priority": 3
+}

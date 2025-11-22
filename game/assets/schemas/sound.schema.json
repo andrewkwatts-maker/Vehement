@@ -1,0 +1,344 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sound.schema.json",
+  "title": "Sound Definition",
+  "description": "Defines a sound effect or music track",
+  "type": "object",
+  "required": ["id", "name", "type"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^sound_[a-z_]+$",
+      "description": "Unique sound identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "type": {
+      "enum": ["sfx", "music", "ambient", "voice", "ui"],
+      "description": "Sound category"
+    },
+    "files": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/definitions/assetPath" },
+      "minItems": 1,
+      "description": "Audio file(s) - multiple for random variation"
+    },
+    "playback": {
+      "$ref": "#/definitions/playbackConfig"
+    },
+    "spatial": {
+      "$ref": "#/definitions/spatialConfig"
+    },
+    "mixing": {
+      "$ref": "#/definitions/mixingConfig"
+    },
+    "variations": {
+      "$ref": "#/definitions/variationConfig"
+    },
+    "ducking": {
+      "$ref": "#/definitions/duckingConfig"
+    },
+    "subtitles": {
+      "$ref": "#/definitions/subtitleConfig"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    }
+  },
+
+  "definitions": {
+    "playbackConfig": {
+      "type": "object",
+      "properties": {
+        "loop": {
+          "type": "boolean",
+          "default": false
+        },
+        "loopCount": {
+          "type": "integer",
+          "description": "Number of loops (0 = infinite)"
+        },
+        "volume": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        },
+        "pitch": {
+          "type": "number",
+          "default": 1
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256,
+          "default": 128,
+          "description": "Higher = more important"
+        },
+        "delay": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "fadeIn": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "fadeOut": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "startTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "endTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "maxInstances": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Max simultaneous plays"
+        },
+        "stealMode": {
+          "enum": ["none", "oldest", "quietest", "newest"],
+          "default": "oldest"
+        },
+        "cooldown": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Min time between plays"
+        },
+        "ignoreTimeScale": {
+          "type": "boolean",
+          "default": false
+        },
+        "ignoreListenerPause": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "spatialConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "spatialBlend": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1,
+          "description": "0 = 2D, 1 = 3D"
+        },
+        "minDistance": {
+          "type": "number",
+          "default": 1,
+          "description": "Distance for full volume"
+        },
+        "maxDistance": {
+          "type": "number",
+          "default": 500,
+          "description": "Distance for zero volume"
+        },
+        "rolloff": {
+          "enum": ["linear", "logarithmic", "custom"],
+          "default": "logarithmic"
+        },
+        "rolloffCurve": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "distance": { "type": "number" },
+              "volume": { "type": "number" }
+            }
+          }
+        },
+        "dopplerLevel": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5,
+          "default": 1
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360,
+          "default": 0,
+          "description": "Stereo spread angle"
+        },
+        "panLevel": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        },
+        "reverbZoneMix": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.1,
+          "default": 1
+        }
+      }
+    },
+
+    "mixingConfig": {
+      "type": "object",
+      "properties": {
+        "bus": {
+          "type": "string",
+          "description": "Audio bus/group name"
+        },
+        "sendLevel": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "Send levels to effect buses"
+        },
+        "lowPassFilter": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "cutoffFrequency": { "type": "number" },
+            "resonance": { "type": "number" }
+          }
+        },
+        "highPassFilter": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "cutoffFrequency": { "type": "number" },
+            "resonance": { "type": "number" }
+          }
+        },
+        "reverb": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "preset": { "type": "string" },
+            "dryLevel": { "type": "number" },
+            "wetLevel": { "type": "number" }
+          }
+        },
+        "chorus": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "dryMix": { "type": "number" },
+            "wetMix1": { "type": "number" },
+            "wetMix2": { "type": "number" },
+            "wetMix3": { "type": "number" },
+            "delay": { "type": "number" },
+            "rate": { "type": "number" },
+            "depth": { "type": "number" }
+          }
+        },
+        "distortion": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "level": { "type": "number" }
+          }
+        },
+        "echo": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "delay": { "type": "number" },
+            "decayRatio": { "type": "number" },
+            "wetMix": { "type": "number" },
+            "dryMix": { "type": "number" }
+          }
+        }
+      }
+    },
+
+    "variationConfig": {
+      "type": "object",
+      "properties": {
+        "volumeRange": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "pitchRange": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "selectionMode": {
+          "enum": ["random", "sequential", "shuffle", "weighted"],
+          "default": "random"
+        },
+        "weights": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "avoidRepeats": {
+          "type": "integer",
+          "description": "Don't repeat last N variations"
+        }
+      }
+    },
+
+    "duckingConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "targetBus": {
+          "type": "string",
+          "description": "Bus to duck"
+        },
+        "duckVolume": {
+          "type": "number",
+          "description": "Volume reduction (dB)"
+        },
+        "attackTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "releaseTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "ratio": {
+          "type": "number"
+        }
+      }
+    },
+
+    "subtitleConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "text": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "speaker": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "segments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startTime": { "$ref": "common.schema.json#/definitions/duration" },
+              "endTime": { "$ref": "common.schema.json#/definitions/duration" },
+              "text": { "$ref": "common.schema.json#/definitions/localizedString" }
+            },
+            "required": ["startTime", "text"]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,356 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "loot.schema.json",
+  "title": "Loot Table Definition",
+  "description": "Defines loot drop tables and reward pools",
+  "type": "object",
+  "required": ["id", "name", "entries"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^loot_[a-z_]+$",
+      "description": "Unique loot table identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Internal description"
+    },
+    "type": {
+      "enum": ["drop", "chest", "reward", "shop", "crafting", "fishing", "mining"],
+      "description": "Loot table type"
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/lootEntry" },
+      "minItems": 1
+    },
+    "rolls": {
+      "$ref": "#/definitions/rollConfig"
+    },
+    "bonusRolls": {
+      "$ref": "#/definitions/bonusRollConfig"
+    },
+    "modifiers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/lootModifier" }
+    },
+    "conditions": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/definitions/condition" }
+    },
+    "functions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/lootFunction" }
+    },
+    "pools": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/lootPool" }
+    },
+    "fallback": {
+      "type": "string",
+      "description": "Fallback loot table ID if empty"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    }
+  },
+
+  "definitions": {
+    "lootEntry": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["item", "currency", "experience", "table", "empty", "group"],
+          "default": "item"
+        },
+        "id": {
+          "type": "string",
+          "description": "Item/table ID"
+        },
+        "weight": {
+          "$ref": "common.schema.json#/definitions/weight",
+          "default": 1
+        },
+        "quality": {
+          "type": "integer",
+          "description": "Minimum quality level"
+        },
+        "count": {
+          "$ref": "#/definitions/countConfig"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "functions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/lootFunction" }
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/lootEntry" },
+          "description": "For group type"
+        },
+        "expand": {
+          "type": "boolean",
+          "default": true,
+          "description": "Expand referenced table"
+        }
+      },
+      "required": ["type"]
+    },
+
+    "countConfig": {
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        {
+          "type": "object",
+          "properties": {
+            "min": { "type": "integer", "minimum": 0 },
+            "max": { "type": "integer", "minimum": 1 }
+          },
+          "required": ["min", "max"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["uniform", "binomial", "poisson"] },
+            "n": { "type": "integer" },
+            "p": { "type": "number" },
+            "lambda": { "type": "number" },
+            "min": { "type": "integer" },
+            "max": { "type": "integer" }
+          },
+          "required": ["type"]
+        }
+      ]
+    },
+
+    "rollConfig": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 1
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "bonus": {
+          "type": "number",
+          "description": "Bonus rolls based on luck stat"
+        }
+      }
+    },
+
+    "bonusRollConfig": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "integer",
+          "default": 0
+        },
+        "max": {
+          "type": "integer",
+          "default": 0
+        },
+        "chance": {
+          "$ref": "common.schema.json#/definitions/probability"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        }
+      }
+    },
+
+    "lootModifier": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "luck_bonus", "level_scaling", "difficulty_scaling",
+            "party_bonus", "first_kill", "rare_boost", "nothing_penalty"
+          ]
+        },
+        "value": {
+          "type": "number"
+        },
+        "stat": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        }
+      },
+      "required": ["type"]
+    },
+
+    "lootFunction": {
+      "type": "object",
+      "properties": {
+        "function": {
+          "enum": [
+            "set_count", "set_damage", "set_durability",
+            "enchant_randomly", "enchant_with_levels",
+            "set_nbt", "set_attributes", "set_name", "set_lore",
+            "apply_bonus", "explosion_decay", "looting_enchant",
+            "furnace_smelt", "copy_name", "copy_nbt",
+            "limit_count", "set_contents", "reference"
+          ]
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "count": {
+          "$ref": "#/definitions/countConfig"
+        },
+        "damage": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "durability": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "levels": {
+          "$ref": "common.schema.json#/definitions/rangeInt"
+        },
+        "enchantments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "level": { "$ref": "common.schema.json#/definitions/rangeInt" }
+            },
+            "required": ["id"]
+          }
+        },
+        "treasure": {
+          "type": "boolean"
+        },
+        "formula": {
+          "enum": ["binomial_with_bonus_count", "uniform_bonus_count", "ore_drops"]
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "extra": { "type": "integer" },
+            "probability": { "type": "number" },
+            "bonusMultiplier": { "type": "number" }
+          }
+        },
+        "limit": {
+          "$ref": "common.schema.json#/definitions/rangeInt"
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "lore": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/localizedString" }
+        },
+        "modifiers": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/modifier" }
+        }
+      },
+      "required": ["function"]
+    },
+
+    "lootPool": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "rolls": {
+          "$ref": "#/definitions/rollConfig"
+        },
+        "bonusRolls": {
+          "$ref": "#/definitions/bonusRollConfig"
+        },
+        "entries": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/lootEntry" }
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "functions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/lootFunction" }
+        }
+      },
+      "required": ["entries"]
+    },
+
+    "rarityTier": {
+      "type": "object",
+      "properties": {
+        "rarity": {
+          "enum": ["common", "uncommon", "rare", "epic", "legendary", "mythic"]
+        },
+        "weight": {
+          "$ref": "common.schema.json#/definitions/weight"
+        },
+        "color": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "multiplier": {
+          "type": "number"
+        },
+        "minLevel": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "dropCondition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "random_chance", "random_chance_with_looting",
+            "killed_by_player", "entity_properties",
+            "damage_source_properties", "location_check",
+            "match_tool", "survives_explosion", "block_state_property",
+            "table_bonus", "time_check", "weather_check", "reference"
+          ]
+        },
+        "chance": {
+          "$ref": "common.schema.json#/definitions/probability"
+        },
+        "lootingMultiplier": {
+          "type": "number"
+        },
+        "entity": {
+          "enum": ["this", "killer", "killer_player"]
+        },
+        "properties": {
+          "type": "object"
+        },
+        "predicate": {
+          "type": "object"
+        },
+        "value": {
+          "type": "object"
+        },
+        "period": {
+          "type": "integer"
+        }
+      },
+      "required": ["type"]
+    }
+  }
+}

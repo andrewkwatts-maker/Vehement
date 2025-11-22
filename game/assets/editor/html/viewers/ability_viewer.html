@@ -1,0 +1,2626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ability Viewer</title>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+
+    <!-- CodeMirror -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-primary: #7c3aed;
+            --accent-secondary: #a855f7;
+            --border-color: #404060;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .viewer-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 300px;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-separator {
+            width: 1px;
+            height: 24px;
+            background: var(--border-color);
+            margin: 0 8px;
+        }
+
+        .btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-secondary);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            border-color: var(--accent-secondary);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .left-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .center-panel {
+            background: var(--bg-primary);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .tab:hover {
+            background: var(--bg-secondary);
+        }
+
+        .tab.active {
+            border-bottom-color: var(--accent-primary);
+            background: var(--bg-secondary);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .section {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.2);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .section-header:hover {
+            background: rgba(0,0,0,0.3);
+        }
+
+        .section-content {
+            padding: 14px;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        #preview-canvas {
+            flex: 1;
+            width: 100%;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .preview-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 6px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Icon Selector */
+        .icon-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-preview {
+            width: 64px;
+            height: 64px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+
+        .icon-preview:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .icon-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .icon-preview .placeholder {
+            font-size: 24px;
+            color: var(--text-secondary);
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        .icon-option {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-tertiary);
+            border: 2px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .icon-option:hover {
+            border-color: var(--accent-secondary);
+        }
+
+        .icon-option.selected {
+            border-color: var(--accent-primary);
+        }
+
+        .icon-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Effect Chain Visualizer */
+        .effect-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            min-height: 150px;
+        }
+
+        .effect-node {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .effect-node:hover {
+            background: var(--bg-secondary);
+        }
+
+        .effect-node.selected {
+            border-left-color: var(--success-color);
+            background: var(--bg-secondary);
+        }
+
+        .effect-node .effect-type {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .effect-node .effect-details {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .effect-connector {
+            width: 2px;
+            height: 20px;
+            background: var(--border-color);
+            margin-left: 20px;
+        }
+
+        .effect-conditional {
+            border-left-color: var(--warning-color);
+        }
+
+        .effect-delayed {
+            border-left-color: var(--info-color);
+        }
+
+        /* Rank Editor */
+        .rank-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rank-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+
+        .rank-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .rank-values {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .rank-value {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .rank-value label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .rank-value input {
+            width: 70px;
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        /* Cost Editor */
+        .cost-editor {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .cost-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .cost-item label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .cost-item input {
+            padding: 6px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        /* Ability Preview Card */
+        .ability-card {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-primary) 100%);
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .ability-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .ability-card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ability-card-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .ability-card-title {
+            flex: 1;
+        }
+
+        .ability-card-title h3 {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .ability-card-title .type {
+            font-size: 12px;
+            color: var(--accent-secondary);
+        }
+
+        .ability-card-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .ability-card-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .ability-card-stat .value {
+            color: var(--accent-secondary);
+            font-weight: 600;
+        }
+
+        .ability-card-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Combo Editor */
+        .combo-stages {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .combo-stage {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+
+        .combo-stage-number {
+            width: 28px;
+            height: 28px;
+            background: var(--info-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .combo-arrow {
+            color: var(--text-secondary);
+            font-size: 20px;
+        }
+
+        /* Targeting Preview */
+        .targeting-preview {
+            width: 100%;
+            height: 200px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Checkbox style */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-primary);
+        }
+
+        /* Python Editor */
+        .python-editor-container {
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .python-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+        }
+
+        .CodeMirror {
+            height: 200px;
+            font-size: 13px;
+        }
+
+        /* Scaling Editor */
+        .scaling-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .scaling-item {
+            display: grid;
+            grid-template-columns: 1fr 80px auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .scaling-item select,
+        .scaling-item input {
+            padding: 6px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .btn-remove {
+            background: var(--error-color);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            border: 1px solid var(--border-color);
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="btn" id="btn-new" title="New Ability">
+                    <span>+</span> New
+                </button>
+                <button class="btn" id="btn-load" title="Load Ability">
+                    <span>^</span> Load
+                </button>
+                <button class="btn btn-primary" id="btn-save" title="Save Ability">
+                    <span>v</span> Save
+                </button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn" id="btn-undo" title="Undo (Ctrl+Z)">Undo</button>
+                <button class="btn" id="btn-redo" title="Redo (Ctrl+Y)">Redo</button>
+            </div>
+
+            <div class="toolbar-separator"></div>
+
+            <div class="toolbar-group">
+                <button class="btn" id="btn-test" title="Test Ability">Test</button>
+                <button class="btn" id="btn-export" title="Export JSON">Export</button>
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <div class="toolbar-group">
+                <span id="ability-name-display" style="font-weight: 600;">New Ability</span>
+            </div>
+        </div>
+
+        <!-- Left Panel - Properties -->
+        <div class="left-panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="general">General</div>
+                <div class="tab" data-tab="targeting">Targeting</div>
+                <div class="tab" data-tab="effects">Effects</div>
+                <div class="tab" data-tab="ranks">Ranks</div>
+            </div>
+
+            <!-- General Tab -->
+            <div class="tab-content active" id="tab-general">
+                <div class="form-group">
+                    <label>Ability ID</label>
+                    <input type="text" id="ability-id" placeholder="ability_fireball">
+                </div>
+
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" id="ability-name" placeholder="Fireball">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="ability-description" rows="3" placeholder="Describe the ability..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="ability-type">
+                            <option value="active">Active</option>
+                            <option value="passive">Passive</option>
+                            <option value="toggle">Toggle</option>
+                            <option value="channeled">Channeled</option>
+                            <option value="charged">Charged</option>
+                            <option value="ultimate">Ultimate</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Slot</label>
+                        <select id="ability-slot">
+                            <option value="basic">Basic</option>
+                            <option value="q">Q</option>
+                            <option value="w">W</option>
+                            <option value="e">E</option>
+                            <option value="r">R (Ultimate)</option>
+                            <option value="d">D</option>
+                            <option value="f">F</option>
+                            <option value="extra">Extra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Icon</label>
+                    <div class="icon-selector">
+                        <div class="icon-preview" id="icon-preview">
+                            <span class="placeholder">?</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <input type="text" id="ability-icon" placeholder="icons/abilities/fireball.png">
+                            <button class="btn btn-small" id="btn-browse-icon" style="margin-top: 6px;">Browse Icons</button>
+                        </div>
+                    </div>
+                    <div class="icon-grid" id="icon-grid" style="display: none;"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Cost</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="cost-editor">
+                            <div class="cost-item">
+                                <label>Mana</label>
+                                <input type="number" id="cost-mana" value="0" min="0">
+                            </div>
+                            <div class="cost-item">
+                                <label>Energy</label>
+                                <input type="number" id="cost-energy" value="0" min="0">
+                            </div>
+                            <div class="cost-item">
+                                <label>Health</label>
+                                <input type="number" id="cost-health" value="0" min="0">
+                            </div>
+                            <div class="cost-item">
+                                <label>Rage</label>
+                                <input type="number" id="cost-rage" value="0" min="0">
+                            </div>
+                            <div class="cost-item">
+                                <label>Charges</label>
+                                <input type="number" id="cost-charges" value="0" min="0">
+                            </div>
+                            <div class="cost-item">
+                                <label>Combo Points</label>
+                                <input type="number" id="cost-combo" value="0" min="0">
+                            </div>
+                        </div>
+                        <div class="checkbox-item" style="margin-top: 12px;">
+                            <input type="checkbox" id="cost-per-second">
+                            <label for="cost-per-second">Cost per second (channeling)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Cooldown</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Base Cooldown (s)</label>
+                                <input type="number" id="cooldown-base" value="10" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Per Rank Reduction (s)</label>
+                                <input type="number" id="cooldown-per-rank" value="0" step="0.1">
+                            </div>
+                        </div>
+                        <div class="checkbox-group" style="margin-top: 8px;">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cooldown-affected-cdr" checked>
+                                <label for="cooldown-affected-cdr">Affected by CDR</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cooldown-starts-on-cast" checked>
+                                <label for="cooldown-starts-on-cast">Starts on cast</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Cast Settings</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Cast Time (s)</label>
+                                <input type="number" id="cast-time" value="0" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Channel Duration (s)</label>
+                                <input type="number" id="channel-duration" value="0" min="0" step="0.1">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Charge Time (s)</label>
+                                <input type="number" id="charge-time" value="0" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Max Charge (s)</label>
+                                <input type="number" id="max-charge-time" value="0" min="0" step="0.1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Animation</label>
+                            <input type="text" id="cast-animation" placeholder="cast_spell">
+                        </div>
+                        <div class="checkbox-group" style="margin-top: 8px;">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cast-interruptible" checked>
+                                <label for="cast-interruptible">Interruptible</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cast-can-move">
+                                <label for="cast-can-move">Can move while casting</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cast-face-target" checked>
+                                <label for="cast-face-target">Face target</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Targeting Tab -->
+            <div class="tab-content" id="tab-targeting">
+                <div class="form-group">
+                    <label>Targeting Mode</label>
+                    <select id="targeting-mode">
+                        <option value="none">None (Instant)</option>
+                        <option value="unit">Unit Target</option>
+                        <option value="point">Point Target</option>
+                        <option value="direction">Direction</option>
+                        <option value="vector">Vector (Start/End)</option>
+                        <option value="aoe">Area of Effect</option>
+                        <option value="cone">Cone</option>
+                        <option value="line">Line</option>
+                        <option value="self">Self Only</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Preview</label>
+                    <div class="targeting-preview" id="targeting-preview-2d"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Range & Area</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Min Range</label>
+                                <input type="number" id="targeting-min-range" value="0" min="0" step="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Max Range</label>
+                                <input type="number" id="targeting-max-range" value="10" min="0" step="0.5">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Radius</label>
+                                <input type="number" id="targeting-radius" value="3" min="0" step="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label>Angle (Cone)</label>
+                                <input type="number" id="targeting-angle" value="60" min="0" max="360">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Line Width</label>
+                            <input type="number" id="targeting-width" value="1" min="0" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Target Filters</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Team Filter</label>
+                            <select id="target-team">
+                                <option value="enemy">Enemy Only</option>
+                                <option value="ally">Ally Only</option>
+                                <option value="self">Self Only</option>
+                                <option value="any">Any</option>
+                                <option value="enemy_and_self">Enemy + Self</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Type Filter</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="filter-heroes" checked>
+                                    <label for="filter-heroes">Heroes</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="filter-units" checked>
+                                    <label for="filter-units">Units</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="filter-buildings">
+                                    <label for="filter-buildings">Buildings</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="filter-wards">
+                                    <label for="filter-wards">Wards</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Max Targets</label>
+                            <input type="number" id="max-targets" value="1" min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Smart Targeting</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="smart-cast">
+                                <label for="smart-cast">Enable Smart Cast</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="auto-self-cast">
+                                <label for="auto-self-cast">Auto Self-Cast</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="requires-target">
+                                <label for="requires-target">Requires Target</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Effects Tab -->
+            <div class="tab-content" id="tab-effects">
+                <div class="panel-header" style="margin: -16px -16px 16px -16px; padding: 12px 16px;">
+                    <span>Effect Chain</span>
+                    <button class="btn btn-small" id="btn-add-effect">+ Add Effect</button>
+                </div>
+
+                <div class="effect-chain" id="effect-chain">
+                    <div class="effect-node selected" data-index="0">
+                        <div>
+                            <div class="effect-type">Damage</div>
+                            <div class="effect-details">100 + 50% AP - Fire</div>
+                        </div>
+                    </div>
+                    <div class="effect-connector"></div>
+                    <div class="effect-node effect-conditional" data-index="1">
+                        <div>
+                            <div class="effect-type">Apply Effect: Burning</div>
+                            <div class="effect-details">If target HP < 50%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top: 16px;">
+                    <div class="section-header">
+                        <span>Selected Effect</span>
+                    </div>
+                    <div class="section-content" id="effect-editor">
+                        <div class="form-group">
+                            <label>Effect Type</label>
+                            <select id="effect-type">
+                                <option value="damage">Damage</option>
+                                <option value="heal">Heal</option>
+                                <option value="shield">Shield</option>
+                                <option value="apply_effect">Apply Effect/Buff</option>
+                                <option value="remove_effect">Remove Effect</option>
+                                <option value="spawn_projectile">Spawn Projectile</option>
+                                <option value="spawn_entity">Spawn Entity</option>
+                                <option value="spawn_area">Spawn Area</option>
+                                <option value="dash">Dash</option>
+                                <option value="blink">Blink</option>
+                                <option value="teleport">Teleport</option>
+                                <option value="pull">Pull</option>
+                                <option value="push">Push/Knockback</option>
+                                <option value="knockup">Knockup</option>
+                                <option value="stun">Stun</option>
+                                <option value="slow">Slow</option>
+                                <option value="silence">Silence</option>
+                                <option value="root">Root</option>
+                                <option value="fear">Fear</option>
+                                <option value="taunt">Taunt</option>
+                                <option value="modify_stat">Modify Stat</option>
+                                <option value="grant_resource">Grant Resource</option>
+                                <option value="reset_cooldown">Reset Cooldown</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Target</label>
+                            <select id="effect-target">
+                                <option value="target">Target</option>
+                                <option value="self">Self</option>
+                                <option value="area">Area</option>
+                                <option value="projectile_target">Projectile Target</option>
+                                <option value="all_in_range">All in Range</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Base Value</label>
+                                <input type="number" id="effect-value" value="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Damage Type</label>
+                                <select id="effect-damage-type">
+                                    <option value="physical">Physical</option>
+                                    <option value="magical">Magical</option>
+                                    <option value="fire">Fire</option>
+                                    <option value="ice">Ice</option>
+                                    <option value="lightning">Lightning</option>
+                                    <option value="poison">Poison</option>
+                                    <option value="true">True</option>
+                                    <option value="pure">Pure</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Duration (s)</label>
+                                <input type="number" id="effect-duration" value="0" min="0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Delay (s)</label>
+                                <input type="number" id="effect-delay" value="0" min="0" step="0.1">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Scaling</label>
+                            <div class="scaling-list" id="scaling-list">
+                                <div class="scaling-item">
+                                    <select>
+                                        <option value="ap">Ability Power</option>
+                                        <option value="ad">Attack Damage</option>
+                                        <option value="armor">Armor</option>
+                                        <option value="mr">Magic Resist</option>
+                                        <option value="hp">Max Health</option>
+                                        <option value="mp">Max Mana</option>
+                                        <option value="bonus_ad">Bonus AD</option>
+                                        <option value="bonus_hp">Bonus HP</option>
+                                    </select>
+                                    <input type="number" value="50" min="0" max="500" step="5">%
+                                    <button class="btn-remove">x</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-small" id="btn-add-scaling" style="margin-top: 8px;">+ Add Scaling</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Effect ID (for apply/remove)</label>
+                            <input type="text" id="effect-effect-id" placeholder="effect_burning">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Projectile ID (for spawn)</label>
+                            <input type="text" id="effect-projectile-id" placeholder="projectile_fireball">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ranks Tab -->
+            <div class="tab-content" id="tab-ranks">
+                <div class="panel-header" style="margin: -16px -16px 16px -16px; padding: 12px 16px;">
+                    <span>Ability Ranks</span>
+                    <button class="btn btn-small" id="btn-add-rank">+ Add Rank</button>
+                </div>
+
+                <div class="rank-editor" id="rank-editor">
+                    <!-- Ranks will be populated here -->
+                </div>
+
+                <div class="section" style="margin-top: 16px;">
+                    <div class="section-header">
+                        <span>Rank Scaling Chart</span>
+                    </div>
+                    <div class="section-content">
+                        <canvas id="rank-chart" width="280" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - 3D Preview -->
+        <div class="center-panel">
+            <canvas id="preview-canvas"></canvas>
+
+            <div class="preview-overlay">
+                <div id="preview-info">Targeting Preview</div>
+            </div>
+
+            <div class="preview-controls">
+                <button class="btn btn-small" id="btn-preview-target">Show Target</button>
+                <button class="btn btn-small" id="btn-preview-cast">Simulate Cast</button>
+                <button class="btn btn-small" id="btn-reset-camera">Reset Camera</button>
+            </div>
+        </div>
+
+        <!-- Right Panel - Events & Preview -->
+        <div class="right-panel">
+            <div class="panel-header">
+                <span>Ability Preview</span>
+            </div>
+
+            <div class="panel-content">
+                <div class="ability-card" id="ability-preview-card">
+                    <div class="ability-card-header">
+                        <div class="ability-card-icon" id="preview-icon">
+                            <span>?</span>
+                        </div>
+                        <div class="ability-card-title">
+                            <h3 id="preview-name">New Ability</h3>
+                            <div class="type" id="preview-type">Active - Q Slot</div>
+                        </div>
+                    </div>
+                    <div class="ability-card-stats">
+                        <div class="ability-card-stat">
+                            <span>Cost:</span>
+                            <span class="value" id="preview-cost">50 Mana</span>
+                        </div>
+                        <div class="ability-card-stat">
+                            <span>CD:</span>
+                            <span class="value" id="preview-cooldown">10s</span>
+                        </div>
+                        <div class="ability-card-stat">
+                            <span>Range:</span>
+                            <span class="value" id="preview-range">10</span>
+                        </div>
+                    </div>
+                    <div class="ability-card-description" id="preview-description">
+                        Describe the ability here...
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Flags</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="checkbox-group" style="flex-direction: column; gap: 8px;">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-can-crit" checked>
+                                <label for="flag-can-crit">Can Crit</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-can-miss">
+                                <label for="flag-can-miss">Can Miss</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-can-block" checked>
+                                <label for="flag-can-block">Can Be Blocked</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-can-dodge" checked>
+                                <label for="flag-can-dodge">Can Be Dodged</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-applies-on-hit">
+                                <label for="flag-applies-on-hit">Applies On-Hit</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-triggers-on-hit" checked>
+                                <label for="flag-triggers-on-hit">Triggers On-Hit</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-is-ultimate">
+                                <label for="flag-is-ultimate">Is Ultimate</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="flag-breaks-invis" checked>
+                                <label for="flag-breaks-invis">Breaks Invisibility</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Python Events</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Event Type</label>
+                            <select id="event-type">
+                                <option value="on_cast">On Cast</option>
+                                <option value="on_hit">On Hit</option>
+                                <option value="on_channel_tick">On Channel Tick</option>
+                                <option value="on_channel_end">On Channel End</option>
+                                <option value="on_charge_complete">On Charge Complete</option>
+                                <option value="on_combo_finish">On Combo Finish</option>
+                            </select>
+                        </div>
+                        <div class="python-editor-container">
+                            <div class="python-editor-header">
+                                <span>Script</span>
+                                <button class="btn btn-small" id="btn-validate-script">Validate</button>
+                            </div>
+                            <textarea id="python-editor"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <span>Combo System</span>
+                        <span class="toggle-icon">-</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="combo-enabled">
+                            <label for="combo-enabled">Enable Combo</label>
+                        </div>
+                        <div id="combo-settings" style="display: none; margin-top: 12px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Max Hits</label>
+                                    <input type="number" id="combo-max-hits" value="3" min="2" max="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Window (s)</label>
+                                    <input type="number" id="combo-window" value="1.5" min="0.1" step="0.1">
+                                </div>
+                            </div>
+                            <div class="combo-stages" id="combo-stages">
+                                <div class="combo-stage">
+                                    <div class="combo-stage-number">1</div>
+                                    <input type="text" placeholder="Animation" style="flex: 1;">
+                                    <input type="number" placeholder="Damage" style="width: 60px;">
+                                </div>
+                                <div class="combo-arrow">-></div>
+                                <div class="combo-stage">
+                                    <div class="combo-stage-number">2</div>
+                                    <input type="text" placeholder="Animation" style="flex: 1;">
+                                    <input type="number" placeholder="Damage" style="width: 60px;">
+                                </div>
+                                <div class="combo-arrow">-></div>
+                                <div class="combo-stage">
+                                    <div class="combo-stage-number">3</div>
+                                    <input type="text" placeholder="Finisher" style="flex: 1;">
+                                    <input type="number" placeholder="Damage" style="width: 60px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="status-message">Ready</span>
+            <span id="status-file">No file loaded</span>
+        </div>
+    </div>
+
+    <script src="../js/viewer_common.js"></script>
+    <script>
+        // ========================================
+        // Ability Viewer Application
+        // ========================================
+
+        class AbilityViewer {
+            constructor() {
+                this.abilityData = this.getDefaultAbility();
+                this.selectedEffectIndex = 0;
+                this.undoStack = [];
+                this.redoStack = [];
+                this.isDirty = false;
+                this.currentFile = null;
+
+                this.initThreeJS();
+                this.initUI();
+                this.initPythonEditor();
+                this.initRankEditor();
+                this.updatePreview();
+                this.update2DTargeting();
+            }
+
+            getDefaultAbility() {
+                return {
+                    id: 'ability_new',
+                    name: 'New Ability',
+                    description: 'Describe the ability here...',
+                    icon: '',
+                    type: 'active',
+                    slot: 'q',
+                    targeting: {
+                        mode: 'unit',
+                        minRange: 0,
+                        maxRange: 10,
+                        radius: 3,
+                        angle: 60,
+                        width: 1,
+                        teamFilter: 'enemy',
+                        unitFilter: {
+                            heroes: true,
+                            units: true,
+                            buildings: false,
+                            wards: false
+                        },
+                        maxTargets: 1
+                    },
+                    cost: {
+                        mana: 50,
+                        energy: 0,
+                        health: 0,
+                        rage: 0,
+                        charges: 0,
+                        combo: 0,
+                        perSecond: false
+                    },
+                    cooldown: {
+                        base: 10,
+                        perRank: 0,
+                        affectedByCDR: true,
+                        startsOnCast: true
+                    },
+                    cast: {
+                        castTime: 0,
+                        channelDuration: 0,
+                        chargeTime: 0,
+                        maxChargeTime: 0,
+                        animation: '',
+                        interruptible: true,
+                        canMoveWhileCasting: false,
+                        faceTarget: true
+                    },
+                    effects: [
+                        {
+                            type: 'damage',
+                            target: 'target',
+                            value: 100,
+                            damageType: 'magical',
+                            scaling: [{ stat: 'ap', ratio: 50 }],
+                            duration: 0,
+                            delay: 0
+                        }
+                    ],
+                    ranks: [
+                        { rank: 1, requiredLevel: 1, damage: 100, cooldown: 10, cost: 50 },
+                        { rank: 2, requiredLevel: 3, damage: 150, cooldown: 9, cost: 60 },
+                        { rank: 3, requiredLevel: 5, damage: 200, cooldown: 8, cost: 70 },
+                        { rank: 4, requiredLevel: 7, damage: 250, cooldown: 7, cost: 80 },
+                        { rank: 5, requiredLevel: 9, damage: 300, cooldown: 6, cost: 90 }
+                    ],
+                    flags: {
+                        canCrit: true,
+                        canMiss: false,
+                        canBeBlocked: true,
+                        canBeDodged: true,
+                        appliesOnHit: false,
+                        triggersOnHit: true,
+                        isUltimate: false,
+                        breaksInvisibility: true
+                    },
+                    combo: {
+                        enabled: false,
+                        maxHits: 3,
+                        comboWindow: 1.5,
+                        stages: []
+                    },
+                    events: {}
+                };
+            }
+
+            initThreeJS() {
+                const canvas = document.getElementById('preview-canvas');
+                const container = canvas.parentElement;
+
+                // Scene setup
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x1a1a2e);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(
+                    60,
+                    container.clientWidth / container.clientHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(0, 15, 15);
+                this.camera.lookAt(0, 0, 0);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.shadowMap.enabled = true;
+
+                // Controls
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                directionalLight.castShadow = true;
+                this.scene.add(directionalLight);
+
+                // Grid
+                const gridHelper = new THREE.GridHelper(30, 30, 0x444444, 0x222222);
+                this.scene.add(gridHelper);
+
+                // Ground
+                const groundGeometry = new THREE.PlaneGeometry(30, 30);
+                const groundMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x1a1a2e,
+                    roughness: 0.9
+                });
+                this.ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                this.ground.rotation.x = -Math.PI / 2;
+                this.ground.receiveShadow = true;
+                this.scene.add(this.ground);
+
+                // Caster indicator
+                const casterGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 16);
+                const casterMaterial = new THREE.MeshStandardMaterial({ color: 0x3b82f6 });
+                this.caster = new THREE.Mesh(casterGeometry, casterMaterial);
+                this.caster.position.set(0, 1, 0);
+                this.caster.castShadow = true;
+                this.scene.add(this.caster);
+
+                // Target indicator
+                const targetGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 16);
+                const targetMaterial = new THREE.MeshStandardMaterial({ color: 0xef4444 });
+                this.target = new THREE.Mesh(targetGeometry, targetMaterial);
+                this.target.position.set(8, 1, 0);
+                this.target.castShadow = true;
+                this.target.visible = false;
+                this.scene.add(this.target);
+
+                // Targeting visualization group
+                this.targetingGroup = new THREE.Group();
+                this.scene.add(this.targetingGroup);
+
+                // Animation loop
+                this.animate();
+
+                // Handle resize
+                window.addEventListener('resize', () => this.onResize());
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            onResize() {
+                const container = this.renderer.domElement.parentElement;
+                this.camera.aspect = container.clientWidth / container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+
+            initUI() {
+                // Tab switching
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                    });
+                });
+
+                // Section toggles
+                document.querySelectorAll('.section-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        const icon = header.querySelector('.toggle-icon');
+                        if (content) {
+                            content.classList.toggle('collapsed');
+                            if (icon) icon.textContent = content.classList.contains('collapsed') ? '+' : '-';
+                        }
+                    });
+                });
+
+                // Toolbar buttons
+                document.getElementById('btn-new').addEventListener('click', () => this.newAbility());
+                document.getElementById('btn-load').addEventListener('click', () => this.loadAbility());
+                document.getElementById('btn-save').addEventListener('click', () => this.saveAbility());
+                document.getElementById('btn-undo').addEventListener('click', () => this.undo());
+                document.getElementById('btn-redo').addEventListener('click', () => this.redo());
+                document.getElementById('btn-test').addEventListener('click', () => this.testAbility());
+                document.getElementById('btn-export').addEventListener('click', () => this.exportJSON());
+
+                // Preview controls
+                document.getElementById('btn-preview-target').addEventListener('click', () => {
+                    this.target.visible = !this.target.visible;
+                });
+                document.getElementById('btn-preview-cast').addEventListener('click', () => this.simulateCast());
+                document.getElementById('btn-reset-camera').addEventListener('click', () => {
+                    this.camera.position.set(0, 15, 15);
+                    this.camera.lookAt(0, 0, 0);
+                    this.controls.reset();
+                });
+
+                // Form inputs
+                this.bindFormInputs();
+
+                // Icon browser
+                document.getElementById('btn-browse-icon').addEventListener('click', () => {
+                    const grid = document.getElementById('icon-grid');
+                    grid.style.display = grid.style.display === 'none' ? 'grid' : 'none';
+                    this.populateIconGrid();
+                });
+
+                // Targeting mode change
+                document.getElementById('targeting-mode').addEventListener('change', () => {
+                    this.update3DTargeting();
+                    this.update2DTargeting();
+                });
+
+                // Effect chain
+                document.getElementById('btn-add-effect').addEventListener('click', () => this.addEffect());
+
+                // Scaling
+                document.getElementById('btn-add-scaling').addEventListener('click', () => this.addScaling());
+
+                // Combo toggle
+                document.getElementById('combo-enabled').addEventListener('change', (e) => {
+                    document.getElementById('combo-settings').style.display = e.target.checked ? 'block' : 'none';
+                    this.abilityData.combo.enabled = e.target.checked;
+                    this.markDirty();
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 's') {
+                            e.preventDefault();
+                            this.saveAbility();
+                        } else if (e.key === 'z') {
+                            e.preventDefault();
+                            this.undo();
+                        } else if (e.key === 'y') {
+                            e.preventDefault();
+                            this.redo();
+                        }
+                    }
+                });
+            }
+
+            bindFormInputs() {
+                // General
+                const inputs = {
+                    'ability-id': (v) => this.abilityData.id = v,
+                    'ability-name': (v) => { this.abilityData.name = v; this.updatePreview(); },
+                    'ability-description': (v) => { this.abilityData.description = v; this.updatePreview(); },
+                    'ability-type': (v) => { this.abilityData.type = v; this.updatePreview(); },
+                    'ability-slot': (v) => { this.abilityData.slot = v; this.updatePreview(); },
+                    'ability-icon': (v) => { this.abilityData.icon = v; this.updateIconPreview(); },
+
+                    // Cost
+                    'cost-mana': (v) => { this.abilityData.cost.mana = parseFloat(v) || 0; this.updatePreview(); },
+                    'cost-energy': (v) => this.abilityData.cost.energy = parseFloat(v) || 0,
+                    'cost-health': (v) => this.abilityData.cost.health = parseFloat(v) || 0,
+                    'cost-rage': (v) => this.abilityData.cost.rage = parseFloat(v) || 0,
+                    'cost-charges': (v) => this.abilityData.cost.charges = parseInt(v) || 0,
+                    'cost-combo': (v) => this.abilityData.cost.combo = parseInt(v) || 0,
+
+                    // Cooldown
+                    'cooldown-base': (v) => { this.abilityData.cooldown.base = parseFloat(v) || 0; this.updatePreview(); },
+                    'cooldown-per-rank': (v) => this.abilityData.cooldown.perRank = parseFloat(v) || 0,
+
+                    // Cast
+                    'cast-time': (v) => this.abilityData.cast.castTime = parseFloat(v) || 0,
+                    'channel-duration': (v) => this.abilityData.cast.channelDuration = parseFloat(v) || 0,
+                    'charge-time': (v) => this.abilityData.cast.chargeTime = parseFloat(v) || 0,
+                    'max-charge-time': (v) => this.abilityData.cast.maxChargeTime = parseFloat(v) || 0,
+                    'cast-animation': (v) => this.abilityData.cast.animation = v,
+
+                    // Targeting
+                    'targeting-mode': (v) => { this.abilityData.targeting.mode = v; this.update3DTargeting(); this.update2DTargeting(); },
+                    'targeting-min-range': (v) => { this.abilityData.targeting.minRange = parseFloat(v) || 0; this.update3DTargeting(); this.update2DTargeting(); },
+                    'targeting-max-range': (v) => { this.abilityData.targeting.maxRange = parseFloat(v) || 0; this.update3DTargeting(); this.update2DTargeting(); this.updatePreview(); },
+                    'targeting-radius': (v) => { this.abilityData.targeting.radius = parseFloat(v) || 0; this.update3DTargeting(); this.update2DTargeting(); },
+                    'targeting-angle': (v) => { this.abilityData.targeting.angle = parseFloat(v) || 0; this.update3DTargeting(); this.update2DTargeting(); },
+                    'targeting-width': (v) => { this.abilityData.targeting.width = parseFloat(v) || 0; this.update3DTargeting(); this.update2DTargeting(); },
+                    'target-team': (v) => this.abilityData.targeting.teamFilter = v,
+                    'max-targets': (v) => this.abilityData.targeting.maxTargets = parseInt(v) || 1
+                };
+
+                for (const [id, setter] of Object.entries(inputs)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', (e) => {
+                            this.saveState();
+                            setter(e.target.value);
+                            this.markDirty();
+                        });
+                        el.addEventListener('change', (e) => {
+                            this.saveState();
+                            setter(e.target.value);
+                            this.markDirty();
+                        });
+                    }
+                }
+
+                // Checkboxes
+                const checkboxes = {
+                    'cost-per-second': (v) => this.abilityData.cost.perSecond = v,
+                    'cooldown-affected-cdr': (v) => this.abilityData.cooldown.affectedByCDR = v,
+                    'cooldown-starts-on-cast': (v) => this.abilityData.cooldown.startsOnCast = v,
+                    'cast-interruptible': (v) => this.abilityData.cast.interruptible = v,
+                    'cast-can-move': (v) => this.abilityData.cast.canMoveWhileCasting = v,
+                    'cast-face-target': (v) => this.abilityData.cast.faceTarget = v,
+                    'filter-heroes': (v) => this.abilityData.targeting.unitFilter.heroes = v,
+                    'filter-units': (v) => this.abilityData.targeting.unitFilter.units = v,
+                    'filter-buildings': (v) => this.abilityData.targeting.unitFilter.buildings = v,
+                    'filter-wards': (v) => this.abilityData.targeting.unitFilter.wards = v,
+                    'flag-can-crit': (v) => this.abilityData.flags.canCrit = v,
+                    'flag-can-miss': (v) => this.abilityData.flags.canMiss = v,
+                    'flag-can-block': (v) => this.abilityData.flags.canBeBlocked = v,
+                    'flag-can-dodge': (v) => this.abilityData.flags.canBeDodged = v,
+                    'flag-applies-on-hit': (v) => this.abilityData.flags.appliesOnHit = v,
+                    'flag-triggers-on-hit': (v) => this.abilityData.flags.triggersOnHit = v,
+                    'flag-is-ultimate': (v) => this.abilityData.flags.isUltimate = v,
+                    'flag-breaks-invis': (v) => this.abilityData.flags.breaksInvisibility = v
+                };
+
+                for (const [id, setter] of Object.entries(checkboxes)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('change', (e) => {
+                            this.saveState();
+                            setter(e.target.checked);
+                            this.markDirty();
+                        });
+                    }
+                }
+            }
+
+            initPythonEditor() {
+                this.pythonEditor = CodeMirror.fromTextArea(
+                    document.getElementById('python-editor'),
+                    {
+                        mode: 'python',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        indentUnit: 4,
+                        tabSize: 4,
+                        indentWithTabs: false,
+                        lineWrapping: true
+                    }
+                );
+
+                this.pythonEditor.setValue(`# Event handler for ability
+def on_cast(caster, target, ability):
+    """Called when the ability is cast."""
+    pass
+`);
+
+                document.getElementById('event-type').addEventListener('change', (e) => {
+                    const templates = {
+                        'on_cast': `# Event handler for ability
+def on_cast(caster, target, ability):
+    """Called when the ability is cast."""
+    pass`,
+                        'on_hit': `# Event handler for ability
+def on_hit(caster, target, ability, damage):
+    """Called when the ability hits a target."""
+    pass`,
+                        'on_channel_tick': `# Event handler for ability
+def on_channel_tick(caster, ability, elapsed):
+    """Called each tick during channeling."""
+    pass`,
+                        'on_channel_end': `# Event handler for ability
+def on_channel_end(caster, ability, completed):
+    """Called when channeling ends."""
+    pass`,
+                        'on_charge_complete': `# Event handler for ability
+def on_charge_complete(caster, ability, charge_time):
+    """Called when charging completes."""
+    pass`,
+                        'on_combo_finish': `# Event handler for ability
+def on_combo_finish(caster, ability, hits):
+    """Called when combo is completed."""
+    pass`
+                    };
+
+                    const eventType = e.target.value;
+                    const currentScript = this.abilityData.events[eventType] || templates[eventType];
+                    this.pythonEditor.setValue(currentScript);
+                });
+
+                this.pythonEditor.on('change', () => {
+                    const eventType = document.getElementById('event-type').value;
+                    this.abilityData.events[eventType] = this.pythonEditor.getValue();
+                    this.markDirty();
+                });
+
+                document.getElementById('btn-validate-script').addEventListener('click', () => {
+                    this.validateScript();
+                });
+            }
+
+            initRankEditor() {
+                this.renderRanks();
+
+                document.getElementById('btn-add-rank').addEventListener('click', () => {
+                    this.saveState();
+                    const nextRank = this.abilityData.ranks.length + 1;
+                    const lastRank = this.abilityData.ranks[this.abilityData.ranks.length - 1] || {};
+                    this.abilityData.ranks.push({
+                        rank: nextRank,
+                        requiredLevel: (lastRank.requiredLevel || 0) + 2,
+                        damage: (lastRank.damage || 100) + 50,
+                        cooldown: Math.max(1, (lastRank.cooldown || 10) - 1),
+                        cost: (lastRank.cost || 50) + 10
+                    });
+                    this.renderRanks();
+                    this.renderRankChart();
+                    this.markDirty();
+                });
+
+                this.renderRankChart();
+            }
+
+            renderRanks() {
+                const container = document.getElementById('rank-editor');
+                container.innerHTML = '';
+
+                this.abilityData.ranks.forEach((rank, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'rank-item';
+                    item.innerHTML = `
+                        <div class="rank-number">${rank.rank}</div>
+                        <div class="rank-values">
+                            <div class="rank-value">
+                                <label>Level</label>
+                                <input type="number" value="${rank.requiredLevel || 1}" min="1" data-field="requiredLevel">
+                            </div>
+                            <div class="rank-value">
+                                <label>Damage</label>
+                                <input type="number" value="${rank.damage || 0}" data-field="damage">
+                            </div>
+                            <div class="rank-value">
+                                <label>CD</label>
+                                <input type="number" value="${rank.cooldown || 0}" step="0.5" data-field="cooldown">
+                            </div>
+                            <div class="rank-value">
+                                <label>Cost</label>
+                                <input type="number" value="${rank.cost || 0}" data-field="cost">
+                            </div>
+                        </div>
+                        <button class="btn-remove" data-index="${index}">x</button>
+                    `;
+
+                    item.querySelectorAll('input').forEach(input => {
+                        input.addEventListener('input', (e) => {
+                            this.saveState();
+                            const field = e.target.dataset.field;
+                            this.abilityData.ranks[index][field] = parseFloat(e.target.value) || 0;
+                            this.renderRankChart();
+                            this.markDirty();
+                        });
+                    });
+
+                    item.querySelector('.btn-remove').addEventListener('click', () => {
+                        this.saveState();
+                        this.abilityData.ranks.splice(index, 1);
+                        this.abilityData.ranks.forEach((r, i) => r.rank = i + 1);
+                        this.renderRanks();
+                        this.renderRankChart();
+                        this.markDirty();
+                    });
+
+                    container.appendChild(item);
+                });
+            }
+
+            renderRankChart() {
+                const canvas = document.getElementById('rank-chart');
+                const ctx = canvas.getContext('2d');
+                const ranks = this.abilityData.ranks;
+
+                // Clear
+                ctx.fillStyle = '#1e1e2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (ranks.length === 0) return;
+
+                const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+                const chartWidth = canvas.width - padding.left - padding.right;
+                const chartHeight = canvas.height - padding.top - padding.bottom;
+
+                // Find max damage
+                const maxDamage = Math.max(...ranks.map(r => r.damage || 0));
+
+                // Draw axes
+                ctx.strokeStyle = '#404060';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, padding.top);
+                ctx.lineTo(padding.left, canvas.height - padding.bottom);
+                ctx.lineTo(canvas.width - padding.right, canvas.height - padding.bottom);
+                ctx.stroke();
+
+                // Draw damage line
+                ctx.strokeStyle = '#7c3aed';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                ranks.forEach((rank, i) => {
+                    const x = padding.left + (i / (ranks.length - 1 || 1)) * chartWidth;
+                    const y = canvas.height - padding.bottom - ((rank.damage || 0) / maxDamage) * chartHeight;
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.stroke();
+
+                // Draw points
+                ctx.fillStyle = '#a855f7';
+                ranks.forEach((rank, i) => {
+                    const x = padding.left + (i / (ranks.length - 1 || 1)) * chartWidth;
+                    const y = canvas.height - padding.bottom - ((rank.damage || 0) / maxDamage) * chartHeight;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Labels
+                ctx.fillStyle = '#a0a0a0';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+
+                ranks.forEach((rank, i) => {
+                    const x = padding.left + (i / (ranks.length - 1 || 1)) * chartWidth;
+                    ctx.fillText(`R${rank.rank}`, x, canvas.height - 10);
+                });
+
+                ctx.textAlign = 'right';
+                ctx.fillText(maxDamage.toString(), padding.left - 5, padding.top + 5);
+                ctx.fillText('0', padding.left - 5, canvas.height - padding.bottom);
+            }
+
+            update3DTargeting() {
+                // Clear existing
+                while (this.targetingGroup.children.length > 0) {
+                    this.targetingGroup.remove(this.targetingGroup.children[0]);
+                }
+
+                const mode = this.abilityData.targeting.mode;
+                const range = this.abilityData.targeting.maxRange;
+                const radius = this.abilityData.targeting.radius;
+                const angle = this.abilityData.targeting.angle;
+                const width = this.abilityData.targeting.width;
+
+                // Range indicator
+                const rangeGeometry = new THREE.RingGeometry(0, range, 64);
+                const rangeMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x3b82f6,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.DoubleSide
+                });
+                const rangeIndicator = new THREE.Mesh(rangeGeometry, rangeMaterial);
+                rangeIndicator.rotation.x = -Math.PI / 2;
+                rangeIndicator.position.y = 0.01;
+                this.targetingGroup.add(rangeIndicator);
+
+                // Mode-specific visualization
+                if (mode === 'aoe' || mode === 'point') {
+                    // AOE circle at target position
+                    const aoeGeometry = new THREE.RingGeometry(0, radius, 32);
+                    const aoeMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xef4444,
+                        transparent: true,
+                        opacity: 0.4,
+                        side: THREE.DoubleSide
+                    });
+                    const aoeIndicator = new THREE.Mesh(aoeGeometry, aoeMaterial);
+                    aoeIndicator.rotation.x = -Math.PI / 2;
+                    aoeIndicator.position.set(8, 0.02, 0);
+                    this.targetingGroup.add(aoeIndicator);
+                } else if (mode === 'cone') {
+                    // Cone shape
+                    const coneShape = new THREE.Shape();
+                    const angleRad = (angle / 2) * Math.PI / 180;
+                    coneShape.moveTo(0, 0);
+                    coneShape.lineTo(Math.cos(-angleRad) * range, Math.sin(-angleRad) * range);
+                    coneShape.absarc(0, 0, range, -angleRad, angleRad, false);
+                    coneShape.lineTo(0, 0);
+
+                    const coneGeometry = new THREE.ShapeGeometry(coneShape);
+                    const coneMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xf59e0b,
+                        transparent: true,
+                        opacity: 0.4,
+                        side: THREE.DoubleSide
+                    });
+                    const coneIndicator = new THREE.Mesh(coneGeometry, coneMaterial);
+                    coneIndicator.rotation.x = -Math.PI / 2;
+                    coneIndicator.rotation.z = -Math.PI / 2;
+                    coneIndicator.position.y = 0.02;
+                    this.targetingGroup.add(coneIndicator);
+                } else if (mode === 'line') {
+                    // Line shape
+                    const lineGeometry = new THREE.PlaneGeometry(range, width);
+                    const lineMaterial = new THREE.MeshBasicMaterial({
+                        color: 0x10b981,
+                        transparent: true,
+                        opacity: 0.4,
+                        side: THREE.DoubleSide
+                    });
+                    const lineIndicator = new THREE.Mesh(lineGeometry, lineMaterial);
+                    lineIndicator.rotation.x = -Math.PI / 2;
+                    lineIndicator.position.set(range / 2, 0.02, 0);
+                    this.targetingGroup.add(lineIndicator);
+                }
+            }
+
+            update2DTargeting() {
+                const canvas = document.getElementById('targeting-preview-2d');
+                if (!canvas) return;
+
+                // Create or get canvas
+                let ctx;
+                let cvs = canvas.querySelector('canvas');
+                if (!cvs) {
+                    cvs = document.createElement('canvas');
+                    cvs.width = canvas.clientWidth;
+                    cvs.height = canvas.clientHeight;
+                    canvas.appendChild(cvs);
+                }
+                ctx = cvs.getContext('2d');
+
+                const width = cvs.width;
+                const height = cvs.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const scale = Math.min(width, height) / 30;
+
+                // Clear
+                ctx.fillStyle = '#1e1e2e';
+                ctx.fillRect(0, 0, width, height);
+
+                // Grid
+                ctx.strokeStyle = '#2a2a3e';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < width; x += scale) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < height; y += scale) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                }
+
+                const mode = this.abilityData.targeting.mode;
+                const range = this.abilityData.targeting.maxRange * scale;
+                const radius = this.abilityData.targeting.radius * scale;
+                const angle = this.abilityData.targeting.angle;
+                const lineWidth = this.abilityData.targeting.width * scale;
+
+                // Range circle
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, range, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Caster
+                ctx.fillStyle = '#3b82f6';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Mode visualization
+                if (mode === 'aoe' || mode === 'point') {
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.4)';
+                    ctx.beginPath();
+                    ctx.arc(centerX + range * 0.7, centerY, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (mode === 'cone') {
+                    const angleRad = (angle / 2) * Math.PI / 180;
+                    ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, range, -angleRad, angleRad);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (mode === 'line') {
+                    ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
+                    ctx.fillRect(centerX, centerY - lineWidth / 2, range, lineWidth);
+                    ctx.strokeStyle = '#10b981';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(centerX, centerY - lineWidth / 2, range, lineWidth);
+                } else if (mode === 'unit' || mode === 'direction') {
+                    // Direction arrow
+                    ctx.strokeStyle = '#a855f7';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(centerX + range * 0.8, centerY);
+                    ctx.stroke();
+
+                    // Arrow head
+                    ctx.fillStyle = '#a855f7';
+                    ctx.beginPath();
+                    ctx.moveTo(centerX + range * 0.8, centerY);
+                    ctx.lineTo(centerX + range * 0.7, centerY - 8);
+                    ctx.lineTo(centerX + range * 0.7, centerY + 8);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // Legend
+                ctx.fillStyle = '#a0a0a0';
+                ctx.font = '11px sans-serif';
+                ctx.fillText(`Mode: ${mode}`, 10, 15);
+                ctx.fillText(`Range: ${this.abilityData.targeting.maxRange}`, 10, 30);
+            }
+
+            updatePreview() {
+                document.getElementById('ability-name-display').textContent = this.abilityData.name || 'New Ability';
+                document.getElementById('preview-name').textContent = this.abilityData.name || 'New Ability';
+                document.getElementById('preview-type').textContent =
+                    `${this.abilityData.type.charAt(0).toUpperCase() + this.abilityData.type.slice(1)} - ${this.abilityData.slot.toUpperCase()} Slot`;
+                document.getElementById('preview-description').textContent = this.abilityData.description || 'No description';
+
+                // Cost
+                const costs = [];
+                if (this.abilityData.cost.mana > 0) costs.push(`${this.abilityData.cost.mana} Mana`);
+                if (this.abilityData.cost.energy > 0) costs.push(`${this.abilityData.cost.energy} Energy`);
+                if (this.abilityData.cost.health > 0) costs.push(`${this.abilityData.cost.health} HP`);
+                if (this.abilityData.cost.rage > 0) costs.push(`${this.abilityData.cost.rage} Rage`);
+                document.getElementById('preview-cost').textContent = costs.length > 0 ? costs.join(', ') : 'None';
+
+                document.getElementById('preview-cooldown').textContent = `${this.abilityData.cooldown.base}s`;
+                document.getElementById('preview-range').textContent = this.abilityData.targeting.maxRange;
+            }
+
+            updateIconPreview() {
+                const preview = document.getElementById('icon-preview');
+                const iconPath = this.abilityData.icon;
+
+                if (iconPath) {
+                    preview.innerHTML = `<img src="${iconPath}" onerror="this.parentElement.innerHTML='<span class=\\'placeholder\\'>?</span>'">`;
+                } else {
+                    preview.innerHTML = '<span class="placeholder">?</span>';
+                }
+            }
+
+            populateIconGrid() {
+                const grid = document.getElementById('icon-grid');
+                grid.innerHTML = '';
+
+                // Sample icons (would be loaded from assets)
+                const sampleIcons = [
+                    'fireball', 'frostbolt', 'lightning', 'heal', 'shield',
+                    'sword', 'arrow', 'poison', 'buff', 'debuff',
+                    'aura', 'ultimate', 'passive', 'toggle', 'channel'
+                ];
+
+                sampleIcons.forEach(icon => {
+                    const option = document.createElement('div');
+                    option.className = 'icon-option';
+                    option.style.backgroundColor = `hsl(${Math.random() * 360}, 50%, 30%)`;
+                    option.innerHTML = `<span style="font-size: 16px; display: flex; align-items: center; justify-content: center; height: 100%;">${icon.charAt(0).toUpperCase()}</span>`;
+                    option.title = icon;
+                    option.addEventListener('click', () => {
+                        document.getElementById('ability-icon').value = `icons/abilities/${icon}.png`;
+                        this.abilityData.icon = `icons/abilities/${icon}.png`;
+                        this.updateIconPreview();
+                        grid.style.display = 'none';
+                        this.markDirty();
+                    });
+                    grid.appendChild(option);
+                });
+            }
+
+            renderEffectChain() {
+                const container = document.getElementById('effect-chain');
+                container.innerHTML = '';
+
+                this.abilityData.effects.forEach((effect, index) => {
+                    if (index > 0) {
+                        const connector = document.createElement('div');
+                        connector.className = 'effect-connector';
+                        container.appendChild(connector);
+                    }
+
+                    const node = document.createElement('div');
+                    node.className = 'effect-node';
+                    if (index === this.selectedEffectIndex) node.classList.add('selected');
+                    if (effect.conditions && effect.conditions.length > 0) node.classList.add('effect-conditional');
+                    if (effect.delay > 0) node.classList.add('effect-delayed');
+
+                    const details = [];
+                    if (effect.value) details.push(effect.value);
+                    if (effect.scaling && effect.scaling.length > 0) {
+                        details.push(`+ ${effect.scaling[0].ratio}% ${effect.scaling[0].stat.toUpperCase()}`);
+                    }
+                    if (effect.damageType) details.push(`- ${effect.damageType}`);
+                    if (effect.effectId) details.push(effect.effectId);
+
+                    node.innerHTML = `
+                        <div>
+                            <div class="effect-type">${effect.type.charAt(0).toUpperCase() + effect.type.slice(1).replace(/_/g, ' ')}</div>
+                            <div class="effect-details">${details.join(' ')}</div>
+                        </div>
+                    `;
+
+                    node.addEventListener('click', () => {
+                        this.selectedEffectIndex = index;
+                        this.renderEffectChain();
+                        this.loadEffectToEditor(effect);
+                    });
+
+                    container.appendChild(node);
+                });
+            }
+
+            loadEffectToEditor(effect) {
+                document.getElementById('effect-type').value = effect.type || 'damage';
+                document.getElementById('effect-target').value = effect.target || 'target';
+                document.getElementById('effect-value').value = effect.value || 0;
+                document.getElementById('effect-damage-type').value = effect.damageType || 'physical';
+                document.getElementById('effect-duration').value = effect.duration || 0;
+                document.getElementById('effect-delay').value = effect.delay || 0;
+                document.getElementById('effect-effect-id').value = effect.effectId || '';
+                document.getElementById('effect-projectile-id').value = effect.projectileId || '';
+
+                // Scaling
+                const scalingList = document.getElementById('scaling-list');
+                scalingList.innerHTML = '';
+
+                if (effect.scaling) {
+                    effect.scaling.forEach(s => this.addScalingItem(s.stat, s.ratio));
+                }
+            }
+
+            addEffect() {
+                this.saveState();
+                this.abilityData.effects.push({
+                    type: 'damage',
+                    target: 'target',
+                    value: 50,
+                    damageType: 'physical',
+                    scaling: [],
+                    duration: 0,
+                    delay: 0
+                });
+                this.selectedEffectIndex = this.abilityData.effects.length - 1;
+                this.renderEffectChain();
+                this.loadEffectToEditor(this.abilityData.effects[this.selectedEffectIndex]);
+                this.markDirty();
+            }
+
+            addScaling() {
+                this.addScalingItem('ap', 50);
+            }
+
+            addScalingItem(stat = 'ap', ratio = 50) {
+                const scalingList = document.getElementById('scaling-list');
+                const item = document.createElement('div');
+                item.className = 'scaling-item';
+                item.innerHTML = `
+                    <select>
+                        <option value="ap" ${stat === 'ap' ? 'selected' : ''}>Ability Power</option>
+                        <option value="ad" ${stat === 'ad' ? 'selected' : ''}>Attack Damage</option>
+                        <option value="armor" ${stat === 'armor' ? 'selected' : ''}>Armor</option>
+                        <option value="mr" ${stat === 'mr' ? 'selected' : ''}>Magic Resist</option>
+                        <option value="hp" ${stat === 'hp' ? 'selected' : ''}>Max Health</option>
+                        <option value="mp" ${stat === 'mp' ? 'selected' : ''}>Max Mana</option>
+                        <option value="bonus_ad" ${stat === 'bonus_ad' ? 'selected' : ''}>Bonus AD</option>
+                        <option value="bonus_hp" ${stat === 'bonus_hp' ? 'selected' : ''}>Bonus HP</option>
+                    </select>
+                    <input type="number" value="${ratio}" min="0" max="500" step="5">%
+                    <button class="btn-remove">x</button>
+                `;
+
+                item.querySelector('.btn-remove').addEventListener('click', () => {
+                    item.remove();
+                    this.updateEffectScaling();
+                });
+
+                item.querySelectorAll('select, input').forEach(el => {
+                    el.addEventListener('change', () => this.updateEffectScaling());
+                });
+
+                scalingList.appendChild(item);
+            }
+
+            updateEffectScaling() {
+                const scalingList = document.getElementById('scaling-list');
+                const items = scalingList.querySelectorAll('.scaling-item');
+                const scaling = [];
+
+                items.forEach(item => {
+                    scaling.push({
+                        stat: item.querySelector('select').value,
+                        ratio: parseFloat(item.querySelector('input').value) || 0
+                    });
+                });
+
+                if (this.abilityData.effects[this.selectedEffectIndex]) {
+                    this.abilityData.effects[this.selectedEffectIndex].scaling = scaling;
+                    this.renderEffectChain();
+                    this.markDirty();
+                }
+            }
+
+            simulateCast() {
+                // Visual effect animation
+                const flashGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+                const flashMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x7c3aed,
+                    transparent: true,
+                    opacity: 1
+                });
+                const flash = new THREE.Mesh(flashGeometry, flashMaterial);
+                flash.position.copy(this.caster.position);
+                this.scene.add(flash);
+
+                // Animate
+                let scale = 0.5;
+                const animate = () => {
+                    scale += 0.1;
+                    flash.scale.set(scale, scale, scale);
+                    flashMaterial.opacity -= 0.05;
+
+                    if (flashMaterial.opacity > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        this.scene.remove(flash);
+                    }
+                };
+                animate();
+
+                this.setStatus('Simulating ability cast...');
+            }
+
+            validateScript() {
+                const script = this.pythonEditor.getValue();
+                // In real implementation, this would call the C++ backend
+                if (script.includes('def ')) {
+                    this.setStatus('Script validation: OK', 'success');
+                } else {
+                    this.setStatus('Script validation: Missing function definition', 'error');
+                }
+            }
+
+            // State management
+            saveState() {
+                this.undoStack.push(JSON.stringify(this.abilityData));
+                this.redoStack = [];
+                if (this.undoStack.length > 50) this.undoStack.shift();
+            }
+
+            undo() {
+                if (this.undoStack.length > 0) {
+                    this.redoStack.push(JSON.stringify(this.abilityData));
+                    this.abilityData = JSON.parse(this.undoStack.pop());
+                    this.loadAbilityToForm();
+                    this.setStatus('Undo');
+                }
+            }
+
+            redo() {
+                if (this.redoStack.length > 0) {
+                    this.undoStack.push(JSON.stringify(this.abilityData));
+                    this.abilityData = JSON.parse(this.redoStack.pop());
+                    this.loadAbilityToForm();
+                    this.setStatus('Redo');
+                }
+            }
+
+            markDirty() {
+                this.isDirty = true;
+                document.title = '* Ability Viewer';
+            }
+
+            // File operations
+            newAbility() {
+                if (this.isDirty && !confirm('Discard unsaved changes?')) return;
+                this.abilityData = this.getDefaultAbility();
+                this.loadAbilityToForm();
+                this.currentFile = null;
+                this.isDirty = false;
+                document.title = 'Ability Viewer';
+                this.setStatus('New ability created');
+            }
+
+            loadAbility() {
+                // In real implementation, this would call the C++ file dialog
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            try {
+                                this.abilityData = JSON.parse(event.target.result);
+                                this.loadAbilityToForm();
+                                this.currentFile = file.name;
+                                this.isDirty = false;
+                                document.title = 'Ability Viewer';
+                                document.getElementById('status-file').textContent = file.name;
+                                this.setStatus(`Loaded: ${file.name}`);
+                            } catch (err) {
+                                this.setStatus(`Error loading file: ${err.message}`, 'error');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            }
+
+            saveAbility() {
+                const json = JSON.stringify(this.abilityData, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.abilityData.id || 'ability'}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                this.isDirty = false;
+                document.title = 'Ability Viewer';
+                this.setStatus('Ability saved');
+            }
+
+            exportJSON() {
+                const json = JSON.stringify(this.abilityData, null, 2);
+                console.log(json);
+
+                // Copy to clipboard
+                navigator.clipboard.writeText(json).then(() => {
+                    this.setStatus('JSON copied to clipboard');
+                }).catch(() => {
+                    this.setStatus('Failed to copy to clipboard', 'error');
+                });
+            }
+
+            testAbility() {
+                // In real implementation, this would call the C++ test system
+                this.setStatus('Testing ability in sandbox...');
+                this.simulateCast();
+            }
+
+            loadAbilityToForm() {
+                const d = this.abilityData;
+
+                // General
+                document.getElementById('ability-id').value = d.id || '';
+                document.getElementById('ability-name').value = d.name || '';
+                document.getElementById('ability-description').value = d.description || '';
+                document.getElementById('ability-type').value = d.type || 'active';
+                document.getElementById('ability-slot').value = d.slot || 'q';
+                document.getElementById('ability-icon').value = d.icon || '';
+
+                // Cost
+                document.getElementById('cost-mana').value = d.cost?.mana || 0;
+                document.getElementById('cost-energy').value = d.cost?.energy || 0;
+                document.getElementById('cost-health').value = d.cost?.health || 0;
+                document.getElementById('cost-rage').value = d.cost?.rage || 0;
+                document.getElementById('cost-charges').value = d.cost?.charges || 0;
+                document.getElementById('cost-combo').value = d.cost?.combo || 0;
+                document.getElementById('cost-per-second').checked = d.cost?.perSecond || false;
+
+                // Cooldown
+                document.getElementById('cooldown-base').value = d.cooldown?.base || 0;
+                document.getElementById('cooldown-per-rank').value = d.cooldown?.perRank || 0;
+                document.getElementById('cooldown-affected-cdr').checked = d.cooldown?.affectedByCDR !== false;
+                document.getElementById('cooldown-starts-on-cast').checked = d.cooldown?.startsOnCast !== false;
+
+                // Cast
+                document.getElementById('cast-time').value = d.cast?.castTime || 0;
+                document.getElementById('channel-duration').value = d.cast?.channelDuration || 0;
+                document.getElementById('charge-time').value = d.cast?.chargeTime || 0;
+                document.getElementById('max-charge-time').value = d.cast?.maxChargeTime || 0;
+                document.getElementById('cast-animation').value = d.cast?.animation || '';
+                document.getElementById('cast-interruptible').checked = d.cast?.interruptible !== false;
+                document.getElementById('cast-can-move').checked = d.cast?.canMoveWhileCasting || false;
+                document.getElementById('cast-face-target').checked = d.cast?.faceTarget !== false;
+
+                // Targeting
+                document.getElementById('targeting-mode').value = d.targeting?.mode || 'unit';
+                document.getElementById('targeting-min-range').value = d.targeting?.minRange || 0;
+                document.getElementById('targeting-max-range').value = d.targeting?.maxRange || 10;
+                document.getElementById('targeting-radius').value = d.targeting?.radius || 3;
+                document.getElementById('targeting-angle').value = d.targeting?.angle || 60;
+                document.getElementById('targeting-width').value = d.targeting?.width || 1;
+                document.getElementById('target-team').value = d.targeting?.teamFilter || 'enemy';
+                document.getElementById('max-targets').value = d.targeting?.maxTargets || 1;
+
+                document.getElementById('filter-heroes').checked = d.targeting?.unitFilter?.heroes !== false;
+                document.getElementById('filter-units').checked = d.targeting?.unitFilter?.units !== false;
+                document.getElementById('filter-buildings').checked = d.targeting?.unitFilter?.buildings || false;
+                document.getElementById('filter-wards').checked = d.targeting?.unitFilter?.wards || false;
+
+                // Flags
+                document.getElementById('flag-can-crit').checked = d.flags?.canCrit !== false;
+                document.getElementById('flag-can-miss').checked = d.flags?.canMiss || false;
+                document.getElementById('flag-can-block').checked = d.flags?.canBeBlocked !== false;
+                document.getElementById('flag-can-dodge').checked = d.flags?.canBeDodged !== false;
+                document.getElementById('flag-applies-on-hit').checked = d.flags?.appliesOnHit || false;
+                document.getElementById('flag-triggers-on-hit').checked = d.flags?.triggersOnHit !== false;
+                document.getElementById('flag-is-ultimate').checked = d.flags?.isUltimate || false;
+                document.getElementById('flag-breaks-invis').checked = d.flags?.breaksInvisibility !== false;
+
+                // Combo
+                document.getElementById('combo-enabled').checked = d.combo?.enabled || false;
+                document.getElementById('combo-settings').style.display = d.combo?.enabled ? 'block' : 'none';
+                document.getElementById('combo-max-hits').value = d.combo?.maxHits || 3;
+                document.getElementById('combo-window').value = d.combo?.comboWindow || 1.5;
+
+                // Effects
+                this.selectedEffectIndex = 0;
+                this.renderEffectChain();
+                if (d.effects && d.effects.length > 0) {
+                    this.loadEffectToEditor(d.effects[0]);
+                }
+
+                // Ranks
+                this.renderRanks();
+                this.renderRankChart();
+
+                // Update displays
+                this.updatePreview();
+                this.updateIconPreview();
+                this.update3DTargeting();
+                this.update2DTargeting();
+            }
+
+            setStatus(message, type = 'info') {
+                const status = document.getElementById('status-message');
+                status.textContent = message;
+                status.style.color = type === 'error' ? 'var(--error-color)' :
+                                     type === 'success' ? 'var(--success-color)' :
+                                     'var(--text-secondary)';
+            }
+        }
+
+        // Initialize viewer
+        const viewer = new AbilityViewer();
+
+        // Bridge communication (for C++ integration)
+        window.AbilityViewer = {
+            loadAbility: (data) => {
+                viewer.abilityData = typeof data === 'string' ? JSON.parse(data) : data;
+                viewer.loadAbilityToForm();
+            },
+            getAbility: () => JSON.stringify(viewer.abilityData),
+            setDirty: (dirty) => { viewer.isDirty = dirty; }
+        };
+    </script>
+</body>
+</html>

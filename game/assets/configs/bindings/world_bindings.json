@@ -1,0 +1,286 @@
+{
+  "version": "1.0",
+  "description": "World event bindings for environment and map interactions",
+  "bindings": [
+    {
+      "id": "world_tile_changed_pathfinding",
+      "name": "Update Pathfinding on Tile Change",
+      "description": "Recalculate pathfinding when tiles are modified",
+      "category": "World",
+      "condition": {
+        "sourceType": "Tile",
+        "eventName": "OnTileChanged"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.pathfinding",
+      "pythonFunction": "update_pathfinding_region",
+      "parameters": {
+        "updateRadius": 5,
+        "immediate": false,
+        "batchDelay": 0.1
+      },
+      "enabled": true,
+      "priority": 100,
+      "async": true,
+      "tags": ["world", "pathfinding", "tiles"]
+    },
+    {
+      "id": "world_building_placed_fog",
+      "name": "Update Fog of War on Building Placed",
+      "description": "Reveal fog of war when a building is constructed",
+      "category": "World",
+      "condition": {
+        "sourceType": "Building",
+        "eventName": "OnBuildingPlaced"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.fog",
+      "pythonFunction": "reveal_building_area",
+      "parameters": {
+        "revealRadius": 10,
+        "permanent": true,
+        "fadeEdges": true
+      },
+      "enabled": true,
+      "priority": 75,
+      "tags": ["world", "fog", "buildings"]
+    },
+    {
+      "id": "world_building_destroyed_fog",
+      "name": "Update Fog on Building Destroyed",
+      "description": "Recalculate fog of war when a building is destroyed",
+      "category": "World",
+      "condition": {
+        "sourceType": "Building",
+        "eventName": "OnBuildingDestroyed"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.fog",
+      "pythonFunction": "recalculate_building_fog",
+      "parameters": {
+        "fadeDelay": 2.0
+      },
+      "enabled": true,
+      "priority": 75,
+      "delay": 0.5,
+      "tags": ["world", "fog", "buildings"]
+    },
+    {
+      "id": "world_resource_depleted_spawn",
+      "name": "Spawn New Resource on Depletion",
+      "description": "Spawn a new resource node elsewhere when one is depleted",
+      "category": "World",
+      "condition": {
+        "sourceType": "Resource",
+        "eventName": "OnResourceDepleted"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.resources",
+      "pythonFunction": "spawn_replacement_resource",
+      "parameters": {
+        "minDistance": 20,
+        "maxDistance": 50,
+        "spawnDelay": 30.0,
+        "resourceTypes": ["gold", "iron", "crystal"]
+      },
+      "enabled": true,
+      "priority": 50,
+      "delay": 5.0,
+      "tags": ["world", "resources", "spawning"]
+    },
+    {
+      "id": "world_day_night_ambient",
+      "name": "Update Ambient on Day/Night Cycle",
+      "description": "Adjust ambient lighting and sounds based on time of day",
+      "category": "World",
+      "condition": {
+        "sourceType": "World",
+        "eventName": "OnTimeOfDayChanged"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.ambient",
+      "pythonFunction": "update_ambient_settings",
+      "parameters": {
+        "transitionDuration": 5.0,
+        "adjustFog": true,
+        "adjustSounds": true
+      },
+      "enabled": true,
+      "priority": 60,
+      "tags": ["world", "ambient", "daynight"]
+    },
+    {
+      "id": "world_night_spawn_creatures",
+      "name": "Spawn Night Creatures",
+      "description": "Spawn hostile creatures when night falls",
+      "category": "World",
+      "condition": {
+        "sourceType": "World",
+        "eventName": "OnNightStarted"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.spawning",
+      "pythonFunction": "spawn_night_creatures",
+      "parameters": {
+        "spawnCount": 10,
+        "spawnRadius": 50,
+        "difficultyScale": 1.0,
+        "creatureTypes": ["wolf", "skeleton", "ghost"]
+      },
+      "enabled": true,
+      "priority": 80,
+      "tags": ["world", "spawning", "night"]
+    },
+    {
+      "id": "world_weather_change_effects",
+      "name": "Apply Weather Effects",
+      "description": "Apply gameplay effects when weather changes",
+      "category": "World",
+      "condition": {
+        "sourceType": "World",
+        "eventName": "OnWeatherChanged"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.weather",
+      "pythonFunction": "apply_weather_effects",
+      "parameters": {
+        "affectMovement": true,
+        "affectVisibility": true,
+        "affectCombat": true
+      },
+      "enabled": true,
+      "priority": 70,
+      "tags": ["world", "weather", "gameplay"]
+    },
+    {
+      "id": "world_territory_claimed",
+      "name": "Territory Claimed Handler",
+      "description": "Process territory claiming and border updates",
+      "category": "World",
+      "condition": {
+        "sourceType": "Player",
+        "eventName": "OnTerritoryClaimed"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.territory",
+      "pythonFunction": "process_territory_claim",
+      "parameters": {
+        "updateBorders": true,
+        "applyBonuses": true,
+        "notifyPlayers": true
+      },
+      "enabled": true,
+      "priority": 90,
+      "tags": ["world", "territory", "conquest"]
+    },
+    {
+      "id": "world_zone_enter_trigger",
+      "name": "Zone Enter Trigger",
+      "description": "Trigger zone-specific events when entities enter",
+      "category": "World",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnZoneEnter"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.zones",
+      "pythonFunction": "handle_zone_enter",
+      "parameters": {
+        "triggerQuests": true,
+        "applyZoneEffects": true,
+        "updateMinimap": true
+      },
+      "enabled": true,
+      "priority": 65,
+      "tags": ["world", "zones", "triggers"]
+    },
+    {
+      "id": "world_structure_integrity",
+      "name": "Check Structure Integrity",
+      "description": "Check if connected structures should collapse",
+      "category": "World",
+      "condition": {
+        "sourceType": "Building",
+        "eventName": "OnBuildingDestroyed"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.structures",
+      "pythonFunction": "check_structural_integrity",
+      "parameters": {
+        "cascadeDestruction": true,
+        "collapseDelay": 0.5
+      },
+      "enabled": true,
+      "priority": 85,
+      "tags": ["world", "buildings", "physics"]
+    },
+    {
+      "id": "world_minimap_reveal",
+      "name": "Reveal Minimap Area",
+      "description": "Reveal minimap when units explore new areas",
+      "category": "World",
+      "condition": {
+        "sourceType": "Unit",
+        "eventName": "OnTileEnter",
+        "propertyPath": "tile.isExplored",
+        "comparator": "==",
+        "compareValue": false
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.minimap",
+      "pythonFunction": "reveal_minimap_area",
+      "parameters": {
+        "revealRadius": 3,
+        "permanent": true
+      },
+      "enabled": true,
+      "priority": 40,
+      "tags": ["world", "exploration", "minimap"]
+    },
+    {
+      "id": "world_random_event_check",
+      "name": "Random World Event Check",
+      "description": "Periodically check for random world events",
+      "category": "World",
+      "condition": {
+        "sourceType": "World",
+        "eventName": "OnHourPassed"
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.events",
+      "pythonFunction": "check_random_events",
+      "parameters": {
+        "eventChance": 0.15,
+        "eventTypes": ["meteor", "wandering_merchant", "monster_invasion", "treasure_spawn"]
+      },
+      "enabled": true,
+      "priority": 30,
+      "tags": ["world", "events", "random"]
+    },
+    {
+      "id": "world_pollution_spread",
+      "name": "Pollution Spread",
+      "description": "Spread pollution from industrial buildings to nearby tiles",
+      "category": "World",
+      "condition": {
+        "sourceType": "Building",
+        "eventName": "OnProductionComplete",
+        "propertyPath": "building.producesPollution",
+        "comparator": "==",
+        "compareValue": true
+      },
+      "callbackType": "python",
+      "pythonModule": "game.world.environment",
+      "pythonFunction": "spread_pollution",
+      "parameters": {
+        "spreadRadius": 3,
+        "pollutionAmount": 5,
+        "decayRate": 0.1
+      },
+      "enabled": true,
+      "priority": 20,
+      "async": true,
+      "tags": ["world", "environment", "pollution"]
+    }
+  ]
+}

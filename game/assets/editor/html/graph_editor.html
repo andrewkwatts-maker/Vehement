@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Graph Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body class="graph-editor">
+    <div class="editor-container graph-editor-container">
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+                <h2 id="graph-name">Graph Editor</h2>
+                <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            </div>
+            <div class="toolbar-center">
+                <button class="btn btn-icon" onclick="zoomIn()" title="Zoom In">+</button>
+                <span id="zoom-level">100%</span>
+                <button class="btn btn-icon" onclick="zoomOut()" title="Zoom Out">-</button>
+                <button class="btn btn-icon" onclick="zoomToFit()" title="Fit All">&#x26F6;</button>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn" onclick="autoLayout()">Auto Layout</button>
+                <button class="btn btn-primary" onclick="save()">Save</button>
+            </div>
+        </div>
+
+        <div class="graph-workspace">
+            <div class="node-palette">
+                <h3>Nodes</h3>
+                <div id="palette-categories"></div>
+            </div>
+
+            <div class="graph-canvas-container"
+                 id="graph-container"
+                 ondrop="onCanvasDrop(event)"
+                 ondragover="event.preventDefault()">
+                <canvas id="graph-canvas"></canvas>
+                <div class="graph-nodes" id="graph-nodes"></div>
+                <svg class="graph-connections" id="graph-connections"></svg>
+            </div>
+
+            <div class="minimap" id="minimap">
+                <canvas id="minimap-canvas"></canvas>
+                <div class="minimap-viewport" id="minimap-viewport"></div>
+            </div>
+
+            <div class="graph-properties" id="node-properties" style="display: none;">
+                <div class="properties-header">
+                    <h3>Properties</h3>
+                    <button class="btn btn-icon" onclick="closeProperties()">x</button>
+                </div>
+                <div class="properties-content" id="properties-content">
+                </div>
+                <div class="properties-footer">
+                    <button class="btn btn-danger" onclick="deleteSelectedNode()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script src="graph_editor.js"></script>
+    <script>
+        // Initialize with default node types
+        var editor = new GraphEditor('graph-canvas', {
+            nodesContainer: 'graph-nodes',
+            connectionsContainer: 'graph-connections',
+            nodeTypes: {
+                start: { color: '#2e7d32', title: 'Start' },
+                action: { color: '#1565c0', title: 'Action' },
+                condition: { color: '#f57c00', title: 'Condition' },
+                end: { color: '#c62828', title: 'End' }
+            },
+            onNodeSelect: showNodeProperties,
+            onChange: function() { setDirty(true); }
+        });
+
+        // Build palette from node types
+        function buildPalette() {
+            var container = document.getElementById('palette-categories');
+            container.innerHTML = '';
+
+            Object.keys(editor.nodeTypes).forEach(function(type) {
+                var def = editor.nodeTypes[type];
+                var item = createElement('div', {
+                    className: 'palette-item',
+                    draggable: true,
+                    onDragstart: function(e) {
+                        e.dataTransfer.setData('nodeType', type);
+                    }
+                }, [
+                    createElement('div', {
+                        className: 'palette-icon',
+                        style: { background: def.color }
+                    }, type.charAt(0).toUpperCase()),
+                    createElement('span', {}, def.title)
+                ]);
+                container.appendChild(item);
+            });
+        }
+        buildPalette();
+
+        function onCanvasDrop(e) {
+            e.preventDefault();
+            var type = e.dataTransfer.getData('nodeType');
+            if (type) {
+                editor.createNodeAt(type, e.clientX - e.target.getBoundingClientRect().left,
+                                         e.clientY - e.target.getBoundingClientRect().top);
+            }
+        }
+
+        function showNodeProperties(node) {
+            var panel = document.getElementById('node-properties');
+            var content = document.getElementById('properties-content');
+            panel.style.display = 'block';
+
+            content.innerHTML = '';
+            content.innerHTML += '<div class="form-group"><label>ID</label><input type="text" value="' + node.id + '" readonly></div>';
+            content.innerHTML += '<div class="form-group"><label>Type</label><input type="text" value="' + node.type + '" readonly></div>';
+            content.innerHTML += '<div class="form-group"><label>Title</label><input type="text" id="prop-title" value="' + (node.title || '') + '" onchange="updateNodeTitle(this.value)"></div>';
+
+            if (node.data) {
+                Object.keys(node.data).forEach(function(key) {
+                    content.innerHTML += '<div class="form-group"><label>' + key + '</label><input type="text" value="' + node.data[key] + '" onchange="updateNodeData(\'' + key + '\', this.value)"></div>';
+                });
+            }
+        }
+
+        function closeProperties() {
+            document.getElementById('node-properties').style.display = 'none';
+            editor.clearSelection();
+        }
+
+        function updateNodeTitle(value) {
+            editor.selectedNodes.forEach(function(nodeId) {
+                var node = editor._getNodeById(nodeId);
+                if (node) {
+                    node.title = value;
+                    var el = document.querySelector('[data-id="' + nodeId + '"] .graph-node-header');
+                    if (el) el.textContent = value;
+                }
+            });
+            setDirty(true);
+        }
+
+        function updateNodeData(key, value) {
+            editor.updateSelectedNodeData(key, value);
+        }
+
+        function deleteSelectedNode() {
+            editor.deleteSelectedNodes();
+            closeProperties();
+        }
+
+        function zoomIn() {
+            editor.zoom(1.2);
+            updateZoomDisplay();
+        }
+
+        function zoomOut() {
+            editor.zoom(0.8);
+            updateZoomDisplay();
+        }
+
+        function zoomToFit() {
+            editor.zoomToFit();
+            updateZoomDisplay();
+        }
+
+        function updateZoomDisplay() {
+            document.getElementById('zoom-level').textContent = Math.round(editor.getZoom() * 100) + '%';
+        }
+
+        function autoLayout() {
+            editor.autoArrange('hierarchical');
+        }
+
+        function save() {
+            var data = editor.exportGraph();
+            console.log('Graph data:', JSON.stringify(data, null, 2));
+            setDirty(false);
+        }
+
+        function undo() {
+            // TODO: Implement undo
+        }
+
+        function redo() {
+            // TODO: Implement redo
+        }
+    </script>
+</body>
+</html>

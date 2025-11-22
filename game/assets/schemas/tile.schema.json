@@ -1,0 +1,366 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "tile.schema.json",
+  "title": "Tile Definition",
+  "description": "Defines a terrain tile type",
+  "type": "object",
+  "required": ["id", "name", "category"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^tile_[a-z_]+$",
+      "description": "Unique tile identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Tile description"
+    },
+    "category": {
+      "enum": ["ground", "concrete", "bricks", "wood", "water", "metal", "stone", "special"],
+      "description": "Tile category"
+    },
+    "terrain": {
+      "$ref": "#/definitions/terrainProperties"
+    },
+    "wall": {
+      "$ref": "#/definitions/wallProperties"
+    },
+    "visuals": {
+      "$ref": "#/definitions/tileVisuals"
+    },
+    "gameplay": {
+      "$ref": "#/definitions/gameplayProperties"
+    },
+    "animation": {
+      "$ref": "#/definitions/tileAnimation"
+    },
+    "variants": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/tileVariant" },
+      "description": "Visual variants"
+    },
+    "transitions": {
+      "$ref": "#/definitions/tileTransitions"
+    },
+    "audio": {
+      "$ref": "#/definitions/tileAudio"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    }
+  },
+
+  "definitions": {
+    "terrainProperties": {
+      "type": "object",
+      "properties": {
+        "isGround": {
+          "type": "boolean",
+          "default": true
+        },
+        "elevation": {
+          "type": "number",
+          "default": 0,
+          "description": "Height offset"
+        },
+        "slopeAngle": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90
+        },
+        "slopeDirection": {
+          "enum": ["north", "south", "east", "west", "none"]
+        }
+      }
+    },
+
+    "wallProperties": {
+      "type": "object",
+      "properties": {
+        "isWall": {
+          "type": "boolean",
+          "default": false
+        },
+        "height": {
+          "type": "number",
+          "default": 2,
+          "description": "Wall height in units"
+        },
+        "faces": {
+          "type": "array",
+          "items": {
+            "enum": ["north", "south", "east", "west", "all"]
+          },
+          "description": "Which faces to render"
+        },
+        "sideTexture": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "topTexture": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "bottomTexture": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "thickness": {
+          "type": "number",
+          "default": 1
+        },
+        "destroyable": {
+          "type": "boolean",
+          "default": false
+        },
+        "health": {
+          "type": "number"
+        }
+      }
+    },
+
+    "tileVisuals": {
+      "type": "object",
+      "properties": {
+        "texture": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "normalMap": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "specularMap": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "emissionMap": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "tiling": {
+          "$ref": "common.schema.json#/definitions/vector2"
+        },
+        "offset": {
+          "$ref": "common.schema.json#/definitions/vector2"
+        },
+        "rotation": {
+          "type": "integer",
+          "enum": [0, 90, 180, 270],
+          "default": 0
+        },
+        "flipX": {
+          "type": "boolean",
+          "default": false
+        },
+        "flipY": {
+          "type": "boolean",
+          "default": false
+        },
+        "tint": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "roughness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "metallic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "emission": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        },
+        "transparency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0
+        }
+      },
+      "required": ["texture"]
+    },
+
+    "gameplayProperties": {
+      "type": "object",
+      "properties": {
+        "walkable": {
+          "type": "boolean",
+          "default": true
+        },
+        "blocksSight": {
+          "type": "boolean",
+          "default": false
+        },
+        "blocksProjectiles": {
+          "type": "boolean",
+          "default": false
+        },
+        "movementCost": {
+          "type": "number",
+          "minimum": 0,
+          "default": 1,
+          "description": "Pathfinding cost multiplier"
+        },
+        "speedModifier": {
+          "type": "number",
+          "default": 1,
+          "description": "Movement speed multiplier"
+        },
+        "damaging": {
+          "type": "boolean",
+          "default": false
+        },
+        "damagePerSecond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "damageType": {
+          "$ref": "common.schema.json#/definitions/damageType"
+        },
+        "applyEffect": {
+          "type": "string",
+          "description": "Effect ID to apply when standing on tile"
+        },
+        "slippery": {
+          "type": "boolean",
+          "default": false
+        },
+        "friction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        },
+        "bouncy": {
+          "type": "boolean",
+          "default": false
+        },
+        "bounciness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "triggersEvent": {
+          "type": "string",
+          "description": "Event ID triggered when stepped on"
+        }
+      }
+    },
+
+    "tileAnimation": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["none", "water", "flicker", "scroll", "frames"],
+          "default": "none"
+        },
+        "speed": {
+          "type": "number",
+          "default": 1
+        },
+        "frames": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/assetPath" },
+          "description": "Frame textures for frame animation"
+        },
+        "scrollDirection": {
+          "$ref": "common.schema.json#/definitions/vector2"
+        },
+        "waveAmplitude": {
+          "type": "number",
+          "description": "For water animation"
+        },
+        "waveFrequency": {
+          "type": "number"
+        },
+        "flickerIntensity": {
+          "$ref": "common.schema.json#/definitions/range"
+        }
+      }
+    },
+
+    "tileVariant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "texture": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "weight": {
+          "$ref": "common.schema.json#/definitions/weight"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        }
+      },
+      "required": ["id", "texture"]
+    },
+
+    "tileTransitions": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "transitionTextures": {
+          "type": "object",
+          "description": "Map of neighbor tile ID to transition texture",
+          "additionalProperties": { "$ref": "common.schema.json#/definitions/assetPath" }
+        },
+        "corners": {
+          "type": "object",
+          "properties": {
+            "topLeft": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "topRight": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "bottomLeft": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "bottomRight": { "$ref": "common.schema.json#/definitions/assetPath" }
+          }
+        },
+        "edges": {
+          "type": "object",
+          "properties": {
+            "top": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "bottom": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "left": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "right": { "$ref": "common.schema.json#/definitions/assetPath" }
+          }
+        },
+        "innerCorners": {
+          "type": "object",
+          "properties": {
+            "topLeftInner": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "topRightInner": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "bottomLeftInner": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "bottomRightInner": { "$ref": "common.schema.json#/definitions/assetPath" }
+          }
+        }
+      }
+    },
+
+    "tileAudio": {
+      "type": "object",
+      "properties": {
+        "footstep": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "footstepVariants": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/assetPath" }
+        },
+        "ambient": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "impact": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        }
+      }
+    }
+  }
+}

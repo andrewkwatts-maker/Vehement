@@ -1,0 +1,189 @@
+{
+    // Fireball - Classic projectile spell with DoT effect
+    // A blazing sphere of fire that explodes on impact
+
+    "id": "spell_fireball",
+    "name": "Fireball",
+    "description": "Hurls a ball of fire at the target, dealing fire damage on impact and leaving them burning.",
+    "icon": "icons/spells/fireball.png",
+    "school": "fire",
+    "tags": ["damage", "fire", "projectile", "offensive"],
+
+    "targeting": {
+        "mode": "projectile",
+        "range": 30.0,
+        "min_range": 0.0,
+        "max_targets": 1,
+        "priority": "nearest",
+
+        "filter": {
+            "faction": "enemy",
+            "can_target_self": false,
+            "must_be_alive": true
+        },
+
+        "projectile": {
+            "speed": 25.0,
+            "acceleration": 5.0,
+            "radius": 0.5,
+            "model": "models/projectiles/fireball.glb",
+            "trail": "effects/fire_trail.fx",
+            "explode": true,
+            "explosion_radius": 3.0,
+            "lifetime": 5.0,
+            "homing": false
+        },
+
+        "preview": {
+            "shape": "arrow",
+            "show_range": true,
+            "pulse": true
+        }
+    },
+
+    "timing": {
+        "cast_time": 1.5,
+        "channel_duration": 0.0,
+        "cooldown": 8.0,
+        "charges": 1,
+        "triggers_gcd": true,
+        "affected_by_gcd": true,
+        "gcd_duration": 1.5,
+        "cast_scales_haste": true
+    },
+
+    "cost": {
+        "mana": 25,
+        "health": 0,
+        "stamina": 0
+    },
+
+    "effects": [
+        {
+            "id": "fireball_impact",
+            "type": "damage",
+            "timing": "instant",
+            "amount": 50,
+            "damage_type": "fire",
+            "scaling": {
+                "stat": "spell_power",
+                "coefficient": 0.8,
+                "level_bonus": 2.5
+            },
+            "crit_chance": 0.0,
+            "crit_multiplier": 2.0
+        },
+        {
+            "id": "fireball_dot",
+            "type": "dot",
+            "timing": "over_time",
+            "amount": 10,
+            "duration": 5.0,
+            "tick_interval": 1.0,
+            "damage_type": "fire",
+            "stacking": "refresh",
+            "max_stacks": 1,
+            "scaling": {
+                "stat": "spell_power",
+                "coefficient": 0.15
+            },
+            "description": "Burning for fire damage over time."
+        }
+    ],
+
+    "flags": {
+        "can_crit": true,
+        "can_miss": false,
+        "can_be_reflected": true,
+        "can_be_interrupted": true,
+        "can_be_silenced": true,
+        "requires_los": true,
+        "requires_facing": true,
+        "cast_while_moving": false,
+        "ignores_armor": false
+    },
+
+    "requirements": {
+        "min_level": 1
+    },
+
+    "events": {
+        "on_cast_start": "scripts/spells/fireball_cast.py",
+        "on_hit": "scripts/spells/fireball_hit.py",
+        "on_crit": "scripts/spells/fireball_crit.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/fireball.png",
+        "projectile": {
+            "model": "models/projectiles/fireball.glb",
+            "trail": "effects/fire_trail.fx",
+            "scale": 1.0
+        },
+        "effects": [
+            {
+                "id": "cast_glow",
+                "type": "particle",
+                "trigger": "on_cast_start",
+                "attach": "caster_hand",
+                "path": "effects/fire_charge.fx",
+                "scale": 0.5
+            },
+            {
+                "id": "launch_flash",
+                "type": "light",
+                "trigger": "on_cast_complete",
+                "attach": "caster_hand",
+                "intensity": 2.0,
+                "range": 5.0,
+                "duration": 0.3
+            },
+            {
+                "id": "impact_explosion",
+                "type": "particle",
+                "trigger": "on_hit",
+                "attach": "impact",
+                "path": "effects/fire_explosion.fx",
+                "scale": 1.5
+            },
+            {
+                "id": "impact_decal",
+                "type": "decal",
+                "trigger": "on_hit",
+                "attach": "target_ground",
+                "texture": "textures/decals/scorch_mark.png",
+                "size": 2.0,
+                "duration": 10.0
+            }
+        ],
+        "sounds": [
+            {
+                "id": "cast_sound",
+                "path": "sounds/spells/fire_charge.wav",
+                "trigger": "on_cast_start",
+                "volume": 0.8
+            },
+            {
+                "id": "launch_sound",
+                "path": "sounds/spells/fireball_launch.wav",
+                "trigger": "on_cast_complete",
+                "volume": 1.0
+            },
+            {
+                "id": "impact_sound",
+                "path": "sounds/spells/fire_explosion.wav",
+                "trigger": "on_hit",
+                "volume": 1.0,
+                "positional": true
+            }
+        ],
+        "animations": [
+            {
+                "id": "cast_anim",
+                "name": "cast_projectile",
+                "trigger": "on_cast_start",
+                "speed": 1.0
+            }
+        ]
+    }
+}

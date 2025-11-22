@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Asset</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #252536;
+            --bg-tertiary: #2a2a3a;
+            --border-color: #3a3a4a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --accent-color: #4a9eff;
+            --error-color: #f87171;
+            --success-color: #4ade80;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        .dialog {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .dialog-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dialog-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .dialog-header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .dialog-content {
+            padding: 24px;
+        }
+
+        /* Step Indicator */
+        .steps {
+            display: flex;
+            margin-bottom: 24px;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--border-color);
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step .number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+            transition: all 0.2s;
+        }
+
+        .step.active .number {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .step.completed .number {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .step .label {
+            display: block;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .step.active .label {
+            color: var(--accent-color);
+        }
+
+        /* Step Content */
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        /* Type Selection */
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .type-card {
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .type-card:hover {
+            border-color: var(--accent-color);
+        }
+
+        .type-card.selected {
+            border-color: var(--accent-color);
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .type-card .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .type-card .name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .type-card .desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Template Selection */
+        .template-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .template-card {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .template-card:hover {
+            border-color: var(--accent-color);
+        }
+
+        .template-card.selected {
+            border-color: var(--accent-color);
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .template-card .icon {
+            font-size: 24px;
+            margin-right: 16px;
+        }
+
+        .template-card .info {
+            flex: 1;
+        }
+
+        .template-card .info .name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .template-card .info .desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .template-card .badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 10px;
+        }
+
+        /* Form Fields */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-group label .required {
+            color: var(--error-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-group .hint {
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .form-group .error {
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--error-color);
+        }
+
+        .form-group input.invalid {
+            border-color: var(--error-color);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Path Browser */
+        .path-browser {
+            display: flex;
+            gap: 8px;
+        }
+
+        .path-browser input {
+            flex: 1;
+        }
+
+        .path-browser button {
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .path-browser button:hover {
+            background: var(--border-color);
+        }
+
+        /* Tags Input */
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            min-height: 42px;
+        }
+
+        .tags-input .tag {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .tags-input .tag .remove {
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .tags-input .tag .remove:hover {
+            opacity: 1;
+        }
+
+        .tags-input input {
+            flex: 1;
+            min-width: 100px;
+            padding: 4px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+        }
+
+        .tags-input input:focus {
+            outline: none;
+        }
+
+        /* Properties Table */
+        .properties-table {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .properties-table .row {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .properties-table .row:last-child {
+            border-bottom: none;
+        }
+
+        .properties-table .row .key,
+        .properties-table .row .value {
+            padding: 10px 12px;
+        }
+
+        .properties-table .row .key {
+            width: 150px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .properties-table .row .value {
+            flex: 1;
+        }
+
+        .properties-table .row .value input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 0;
+        }
+
+        .properties-table .row .value input:focus {
+            outline: none;
+        }
+
+        /* Preview */
+        .preview-box {
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .preview-box h4 {
+            margin-bottom: 12px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .preview-box .preview-content {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        /* Footer */
+        .dialog-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3a8eef;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dialog">
+        <div class="dialog-header">
+            <h1>Create New Asset</h1>
+            <p>Create a new game asset from a template</p>
+        </div>
+
+        <div class="dialog-content">
+            <!-- Step Indicator -->
+            <div class="steps">
+                <div class="step active" data-step="1">
+                    <span class="number">1</span>
+                    <span class="label">Type</span>
+                </div>
+                <div class="step" data-step="2">
+                    <span class="number">2</span>
+                    <span class="label">Template</span>
+                </div>
+                <div class="step" data-step="3">
+                    <span class="number">3</span>
+                    <span class="label">Details</span>
+                </div>
+            </div>
+
+            <!-- Step 1: Type Selection -->
+            <div class="step-content active" id="step-1">
+                <div class="type-grid">
+                    <div class="type-card" data-type="units">
+                        <div class="icon">&#x2694;</div>
+                        <div class="name">Unit</div>
+                        <div class="desc">Combat units and NPCs</div>
+                    </div>
+                    <div class="type-card" data-type="buildings">
+                        <div class="icon">&#x1F3E0;</div>
+                        <div class="name">Building</div>
+                        <div class="desc">Structures and facilities</div>
+                    </div>
+                    <div class="type-card" data-type="spells">
+                        <div class="icon">&#x2728;</div>
+                        <div class="name">Spell</div>
+                        <div class="desc">Abilities and magic</div>
+                    </div>
+                    <div class="type-card" data-type="effects">
+                        <div class="icon">&#x2747;</div>
+                        <div class="name">Effect</div>
+                        <div class="desc">Buffs and debuffs</div>
+                    </div>
+                    <div class="type-card" data-type="tiles">
+                        <div class="icon">&#x25A6;</div>
+                        <div class="name">Tile</div>
+                        <div class="desc">Terrain types</div>
+                    </div>
+                    <div class="type-card" data-type="heroes">
+                        <div class="icon">&#x1F451;</div>
+                        <div class="name">Hero</div>
+                        <div class="desc">Hero characters</div>
+                    </div>
+                    <div class="type-card" data-type="abilities">
+                        <div class="icon">&#x26A1;</div>
+                        <div class="name">Ability</div>
+                        <div class="desc">Hero abilities</div>
+                    </div>
+                    <div class="type-card" data-type="techtrees">
+                        <div class="icon">&#x1F333;</div>
+                        <div class="name">Tech Tree</div>
+                        <div class="desc">Research trees</div>
+                    </div>
+                    <div class="type-card" data-type="projectiles">
+                        <div class="icon">&#x27A4;</div>
+                        <div class="name">Projectile</div>
+                        <div class="desc">Missiles and bullets</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Template Selection -->
+            <div class="step-content" id="step-2">
+                <div class="template-list" id="template-list">
+                    <!-- Templates loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Step 3: Details -->
+            <div class="step-content" id="step-3">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Name <span class="required">*</span></label>
+                        <input type="text" id="asset-name" placeholder="Enter asset name" autocomplete="off">
+                        <div class="hint">Use descriptive names like "Fire Mage" or "Stone Wall"</div>
+                    </div>
+                    <div class="form-group">
+                        <label>ID <span class="required">*</span></label>
+                        <input type="text" id="asset-id" placeholder="auto_generated_id" readonly>
+                        <div class="hint">Auto-generated from name</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="asset-description" placeholder="Enter a description for this asset..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Location</label>
+                    <div class="path-browser">
+                        <input type="text" id="asset-path" placeholder="game/assets/configs/" readonly>
+                        <button type="button" id="btn-browse">Browse</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tags</label>
+                    <div class="tags-input" id="tags-input">
+                        <input type="text" placeholder="Type and press Enter to add tags">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Initial Properties</label>
+                    <div class="properties-table" id="initial-properties">
+                        <!-- Properties based on type -->
+                    </div>
+                </div>
+
+                <div class="preview-box">
+                    <h4>JSON Preview</h4>
+                    <div class="preview-content" id="json-preview">
+{
+    "id": "",
+    "type": "",
+    "name": "",
+    "description": ""
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dialog-footer">
+            <button class="btn btn-secondary" id="btn-cancel">Cancel</button>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="btn-back" style="display:none;">Back</button>
+                <button class="btn btn-primary" id="btn-next">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        let currentStep = 1;
+        let selectedType = null;
+        let selectedTemplate = null;
+        let tags = [];
+
+        const templates = {
+            units: [
+                { id: 'blank_unit', name: 'Blank Unit', desc: 'Empty unit template', badge: null },
+                { id: 'infantry_unit', name: 'Infantry', desc: 'Basic infantry soldier', badge: 'Popular' },
+                { id: 'ranged_unit', name: 'Ranged Unit', desc: 'Archer or gunner', badge: null },
+                { id: 'cavalry_unit', name: 'Cavalry', desc: 'Mounted warrior', badge: null },
+                { id: 'hero_unit', name: 'Hero Unit', desc: 'Powerful unique unit', badge: null }
+            ],
+            buildings: [
+                { id: 'blank_building', name: 'Blank Building', desc: 'Empty building template', badge: null },
+                { id: 'production_building', name: 'Production', desc: 'Trains units', badge: 'Popular' },
+                { id: 'resource_building', name: 'Resource', desc: 'Generates resources', badge: null },
+                { id: 'defense_building', name: 'Defense', desc: 'Tower or wall', badge: null },
+                { id: 'research_building', name: 'Research', desc: 'Unlocks tech', badge: null }
+            ],
+            spells: [
+                { id: 'blank_spell', name: 'Blank Spell', desc: 'Empty spell template', badge: null },
+                { id: 'damage_spell', name: 'Damage Spell', desc: 'Deals damage to targets', badge: 'Popular' },
+                { id: 'heal_spell', name: 'Healing Spell', desc: 'Restores health', badge: null },
+                { id: 'buff_spell', name: 'Buff Spell', desc: 'Applies positive effect', badge: null },
+                { id: 'summon_spell', name: 'Summon Spell', desc: 'Creates units', badge: null }
+            ],
+            effects: [
+                { id: 'blank_effect', name: 'Blank Effect', desc: 'Empty effect template', badge: null },
+                { id: 'dot_effect', name: 'Damage Over Time', desc: 'Periodic damage', badge: null },
+                { id: 'hot_effect', name: 'Heal Over Time', desc: 'Periodic healing', badge: null },
+                { id: 'stat_effect', name: 'Stat Modifier', desc: 'Changes stats', badge: 'Popular' }
+            ],
+            tiles: [
+                { id: 'blank_tile', name: 'Blank Tile', desc: 'Empty tile template', badge: null },
+                { id: 'terrain_tile', name: 'Terrain', desc: 'Ground terrain', badge: 'Popular' },
+                { id: 'water_tile', name: 'Water', desc: 'Water terrain', badge: null },
+                { id: 'resource_tile', name: 'Resource', desc: 'Contains resources', badge: null }
+            ],
+            heroes: [
+                { id: 'blank_hero', name: 'Blank Hero', desc: 'Empty hero template', badge: null },
+                { id: 'warrior_hero', name: 'Warrior', desc: 'Melee combat hero', badge: 'Popular' },
+                { id: 'mage_hero', name: 'Mage', desc: 'Magic caster hero', badge: null },
+                { id: 'support_hero', name: 'Support', desc: 'Healing/buff hero', badge: null }
+            ],
+            abilities: [
+                { id: 'blank_ability', name: 'Blank Ability', desc: 'Empty ability template', badge: null },
+                { id: 'active_ability', name: 'Active Ability', desc: 'Activated skill', badge: 'Popular' },
+                { id: 'passive_ability', name: 'Passive Ability', desc: 'Always active', badge: null },
+                { id: 'aura_ability', name: 'Aura Ability', desc: 'Area effect', badge: null }
+            ],
+            techtrees: [
+                { id: 'blank_techtree', name: 'Blank Tech Tree', desc: 'Empty tree template', badge: null },
+                { id: 'military_tree', name: 'Military Tree', desc: 'Combat upgrades', badge: null },
+                { id: 'economy_tree', name: 'Economy Tree', desc: 'Resource upgrades', badge: null }
+            ],
+            projectiles: [
+                { id: 'blank_projectile', name: 'Blank Projectile', desc: 'Empty projectile template', badge: null },
+                { id: 'bullet_projectile', name: 'Bullet', desc: 'Fast, straight path', badge: 'Popular' },
+                { id: 'arrow_projectile', name: 'Arrow', desc: 'Arced trajectory', badge: null },
+                { id: 'spell_projectile', name: 'Spell', desc: 'Magic projectile', badge: null }
+            ]
+        };
+
+        const typeProperties = {
+            units: ['health', 'damage', 'armor', 'speed', 'faction', 'tier'],
+            buildings: ['health', 'armor', 'buildTime', 'goldCost', 'woodCost'],
+            spells: ['damage', 'manaCost', 'cooldown', 'range', 'school'],
+            effects: ['duration', 'interval', 'value', 'stackable'],
+            tiles: ['movementCost', 'defenseBonus', 'terrainType'],
+            heroes: ['health', 'damage', 'armor', 'speed', 'abilities'],
+            abilities: ['cooldown', 'manaCost', 'range', 'targetType'],
+            techtrees: ['age', 'tier'],
+            projectiles: ['speed', 'damage', 'gravity', 'lifetime']
+        };
+
+        // Type selection
+        document.querySelectorAll('.type-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedType = card.dataset.type;
+            });
+        });
+
+        // Navigation
+        document.getElementById('btn-next').addEventListener('click', nextStep);
+        document.getElementById('btn-back').addEventListener('click', prevStep);
+        document.getElementById('btn-cancel').addEventListener('click', cancel);
+
+        function nextStep() {
+            if (currentStep === 1 && !selectedType) {
+                alert('Please select an asset type');
+                return;
+            }
+
+            if (currentStep === 2 && !selectedTemplate) {
+                alert('Please select a template');
+                return;
+            }
+
+            if (currentStep === 3) {
+                createAsset();
+                return;
+            }
+
+            currentStep++;
+            updateUI();
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            // Update steps
+            document.querySelectorAll('.step').forEach((step, i) => {
+                step.classList.remove('active', 'completed');
+                if (i + 1 < currentStep) {
+                    step.classList.add('completed');
+                } else if (i + 1 === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+
+            // Update content
+            document.querySelectorAll('.step-content').forEach((content, i) => {
+                content.classList.toggle('active', i + 1 === currentStep);
+            });
+
+            // Update buttons
+            document.getElementById('btn-back').style.display = currentStep > 1 ? 'block' : 'none';
+            document.getElementById('btn-next').textContent = currentStep === 3 ? 'Create' : 'Next';
+
+            // Load templates for step 2
+            if (currentStep === 2) {
+                loadTemplates();
+            }
+
+            // Setup step 3
+            if (currentStep === 3) {
+                setupDetailsStep();
+            }
+        }
+
+        function loadTemplates() {
+            const list = document.getElementById('template-list');
+            const typeTemplates = templates[selectedType] || [];
+
+            list.innerHTML = typeTemplates.map(t => `
+                <div class="template-card" data-template="${t.id}">
+                    <div class="icon">&#x1F4C4;</div>
+                    <div class="info">
+                        <div class="name">${t.name}</div>
+                        <div class="desc">${t.desc}</div>
+                    </div>
+                    ${t.badge ? `<span class="badge">${t.badge}</span>` : ''}
+                </div>
+            `).join('');
+
+            // Template selection
+            list.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    list.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedTemplate = card.dataset.template;
+                });
+            });
+        }
+
+        function setupDetailsStep() {
+            // Set default path
+            document.getElementById('asset-path').value = `game/assets/configs/${selectedType}/`;
+
+            // Setup properties table
+            const props = typeProperties[selectedType] || [];
+            const table = document.getElementById('initial-properties');
+
+            table.innerHTML = props.map(p => `
+                <div class="row">
+                    <div class="key">${p}</div>
+                    <div class="value"><input type="text" data-prop="${p}" placeholder="Default value"></div>
+                </div>
+            `).join('');
+
+            // Name input -> ID generation
+            document.getElementById('asset-name').addEventListener('input', (e) => {
+                const name = e.target.value;
+                const id = selectedType.slice(0, -1) + '_' + name.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '_')
+                    .replace(/^_|_$/g, '');
+                document.getElementById('asset-id').value = id;
+                updatePreview();
+            });
+
+            document.getElementById('asset-description').addEventListener('input', updatePreview);
+
+            // Tags input
+            const tagsContainer = document.getElementById('tags-input');
+            const tagsInput = tagsContainer.querySelector('input');
+
+            tagsInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && tagsInput.value.trim()) {
+                    e.preventDefault();
+                    const tag = tagsInput.value.trim();
+                    if (!tags.includes(tag)) {
+                        tags.push(tag);
+                        updateTagsUI();
+                    }
+                    tagsInput.value = '';
+                }
+            });
+
+            function updateTagsUI() {
+                const existingTags = tagsContainer.querySelectorAll('.tag');
+                existingTags.forEach(t => t.remove());
+
+                tags.forEach(tag => {
+                    const el = document.createElement('span');
+                    el.className = 'tag';
+                    el.innerHTML = `${tag} <span class="remove" data-tag="${tag}">&times;</span>`;
+                    tagsContainer.insertBefore(el, tagsInput);
+                });
+
+                // Remove tag handlers
+                tagsContainer.querySelectorAll('.remove').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        tags = tags.filter(t => t !== btn.dataset.tag);
+                        updateTagsUI();
+                    });
+                });
+
+                updatePreview();
+            }
+        }
+
+        function updatePreview() {
+            const name = document.getElementById('asset-name').value || '';
+            const id = document.getElementById('asset-id').value || '';
+            const description = document.getElementById('asset-description').value || '';
+
+            const preview = {
+                id: id,
+                type: selectedType ? selectedType.slice(0, -1) : '',
+                name: name,
+                description: description,
+                tags: tags
+            };
+
+            // Add initial properties
+            document.querySelectorAll('#initial-properties input').forEach(input => {
+                const prop = input.dataset.prop;
+                const value = input.value;
+                if (value) {
+                    preview[prop] = isNaN(value) ? value : Number(value);
+                }
+            });
+
+            document.getElementById('json-preview').textContent = JSON.stringify(preview, null, 2);
+        }
+
+        function createAsset() {
+            const name = document.getElementById('asset-name').value.trim();
+            const id = document.getElementById('asset-id').value.trim();
+            const description = document.getElementById('asset-description').value.trim();
+
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+
+            const assetData = {
+                id: id,
+                type: selectedType.slice(0, -1),
+                name: name,
+                description: description,
+                tags: tags
+            };
+
+            // Add initial properties
+            document.querySelectorAll('#initial-properties input').forEach(input => {
+                const prop = input.dataset.prop;
+                const value = input.value;
+                if (value) {
+                    assetData[prop] = isNaN(value) ? value : Number(value);
+                }
+            });
+
+            if (typeof WebEditor !== 'undefined') {
+                WebEditor.invoke('contentBrowser.createItemFromData', [selectedType, assetData], (err, newId) => {
+                    if (err) {
+                        alert('Failed to create asset: ' + err);
+                        return;
+                    }
+
+                    // Close dialog and navigate to new asset
+                    window.parent.postMessage({
+                        type: 'assetCreated',
+                        id: newId
+                    }, '*');
+                });
+            } else {
+                console.log('Creating asset:', assetData);
+                alert('Asset created (demo mode)');
+            }
+        }
+
+        function cancel() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'closeDialog' }, '*');
+            } else {
+                window.close();
+            }
+        }
+    })();
+    </script>
+</body>
+</html>

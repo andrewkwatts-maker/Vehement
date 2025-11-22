@@ -15,6 +15,12 @@ class Camera;
 class DebugDraw;
 class ShaderManager;
 class TextureManager;
+class OptimizedRenderer;
+class Batching;
+class Culler;
+class LODManager;
+class TextureAtlas;
+class RenderQueue;
 
 /**
  * @brief Main rendering class
@@ -147,6 +153,67 @@ public:
      */
     static void EnableDebugOutput(bool enabled);
 
+    // ========================================================================
+    // Performance Optimization Systems
+    // ========================================================================
+
+    /**
+     * @brief Initialize optimized rendering subsystems
+     * @param configPath Path to graphics configuration JSON (optional)
+     */
+    bool InitializeOptimizations(const std::string& configPath = "");
+
+    /**
+     * @brief Get the optimized renderer
+     */
+    OptimizedRenderer* GetOptimizedRenderer() { return m_optimizedRenderer.get(); }
+    const OptimizedRenderer* GetOptimizedRenderer() const { return m_optimizedRenderer.get(); }
+
+    /**
+     * @brief Check if optimizations are enabled
+     */
+    bool IsOptimizationEnabled() const { return m_optimizationsEnabled; }
+
+    /**
+     * @brief Enable/disable optimization systems
+     */
+    void SetOptimizationsEnabled(bool enabled) { m_optimizationsEnabled = enabled; }
+
+    /**
+     * @brief Submit mesh for optimized rendering (batching, culling, etc.)
+     */
+    void SubmitOptimized(const std::shared_ptr<Mesh>& mesh,
+                         const std::shared_ptr<Material>& material,
+                         const glm::mat4& transform,
+                         uint32_t objectID = 0);
+
+    /**
+     * @brief Flush optimized render queue
+     */
+    void FlushOptimized();
+
+    /**
+     * @brief Apply quality preset for optimizations
+     */
+    void ApplyQualityPreset(const std::string& preset);
+
+    /**
+     * @brief Get extended statistics including optimization metrics
+     */
+    struct ExtendedStats {
+        Stats baseStats;
+        uint32_t batchedDrawCalls = 0;
+        uint32_t instancedDrawCalls = 0;
+        uint32_t drawCallsSaved = 0;
+        uint32_t objectsCulled = 0;
+        float cullingEfficiency = 0.0f;
+        float batchingEfficiency = 0.0f;
+        float lodSavings = 0.0f;
+        uint32_t stateChanges = 0;
+    };
+
+    ExtendedStats GetExtendedStats() const;
+
 private:
     void CreateFullscreenQuad();
 
@@ -174,6 +241,10 @@ private:
         uint32_t boundShader = 0;
     };
     mutable GLState m_glState;
+
+    // Performance optimization systems
+    std::unique_ptr<OptimizedRenderer> m_optimizedRenderer;
+    bool m_optimizationsEnabled = false;
 };
 
 } // namespace Nova

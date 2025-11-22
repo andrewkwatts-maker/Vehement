@@ -1,0 +1,435 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "projectile.schema.json",
+  "title": "Projectile Definition",
+  "description": "Defines a projectile type",
+  "type": "object",
+  "required": ["id", "name", "movement"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^projectile_[a-z_]+$",
+      "description": "Unique projectile identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "type": {
+      "enum": ["bullet", "missile", "beam", "arc", "thrown", "homing", "bouncing", "piercing"],
+      "description": "Projectile behavior type"
+    },
+    "movement": {
+      "$ref": "#/definitions/projectileMovement"
+    },
+    "collision": {
+      "$ref": "#/definitions/projectileCollision"
+    },
+    "damage": {
+      "$ref": "#/definitions/projectileDamage"
+    },
+    "effects": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/projectileEffect" }
+    },
+    "visuals": {
+      "$ref": "#/definitions/projectileVisuals"
+    },
+    "audio": {
+      "$ref": "#/definitions/projectileAudio"
+    },
+    "lifetime": {
+      "$ref": "#/definitions/projectileLifetime"
+    },
+    "spawning": {
+      "$ref": "#/definitions/spawningConfig"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    }
+  },
+
+  "definitions": {
+    "projectileConfig": {
+      "type": "object",
+      "properties": {
+        "projectileId": { "type": "string" },
+        "count": { "type": "integer", "minimum": 1 },
+        "spread": { "type": "number" },
+        "burstCount": { "type": "integer" },
+        "burstDelay": { "$ref": "common.schema.json#/definitions/duration" }
+      }
+    },
+
+    "projectileMovement": {
+      "type": "object",
+      "properties": {
+        "speed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Units per second"
+        },
+        "acceleration": {
+          "type": "number",
+          "description": "Speed change per second"
+        },
+        "maxSpeed": {
+          "type": "number"
+        },
+        "gravity": {
+          "type": "number",
+          "description": "Gravity effect (for arcing projectiles)"
+        },
+        "drag": {
+          "type": "number",
+          "description": "Air resistance"
+        },
+        "homing": {
+          "$ref": "#/definitions/homingConfig"
+        },
+        "arc": {
+          "$ref": "#/definitions/arcConfig"
+        },
+        "boomerang": {
+          "type": "boolean",
+          "default": false
+        },
+        "returnSpeed": {
+          "type": "number"
+        },
+        "rotationSpeed": {
+          "type": "number",
+          "description": "Degrees per second"
+        },
+        "inheritVelocity": {
+          "type": "boolean",
+          "default": false,
+          "description": "Add shooter velocity"
+        },
+        "inheritVelocityRatio": {
+          "type": "number",
+          "default": 1
+        }
+      },
+      "required": ["speed"]
+    },
+
+    "homingConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "turnRate": {
+          "type": "number",
+          "description": "Degrees per second"
+        },
+        "acquisitionRange": {
+          "type": "number"
+        },
+        "acquisitionAngle": {
+          "type": "number",
+          "description": "Cone angle for target acquisition"
+        },
+        "delay": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Delay before homing activates"
+        },
+        "losesTargetDistance": {
+          "type": "number"
+        },
+        "retarget": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "arcConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "height": {
+          "type": "number",
+          "description": "Peak height of arc"
+        },
+        "type": {
+          "enum": ["parabolic", "sine", "linear"],
+          "default": "parabolic"
+        },
+        "fixedFlightTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        }
+      }
+    },
+
+    "projectileCollision": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "description": "Collision radius"
+        },
+        "hitbox": {
+          "enum": ["sphere", "cylinder", "box", "capsule"],
+          "default": "sphere"
+        },
+        "hitboxSize": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "penetration": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Number of targets to pierce"
+        },
+        "penetrationDamageReduction": {
+          "$ref": "common.schema.json#/definitions/percentage",
+          "description": "Damage reduction per penetration"
+        },
+        "bounces": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "bounceTargets": {
+          "type": "boolean",
+          "default": false,
+          "description": "Bounce between targets"
+        },
+        "bounceRange": {
+          "type": "number"
+        },
+        "bounceSpeedChange": {
+          "type": "number",
+          "default": 1
+        },
+        "hitsGround": {
+          "type": "boolean",
+          "default": true
+        },
+        "hitsWalls": {
+          "type": "boolean",
+          "default": true
+        },
+        "hitsAllies": {
+          "type": "boolean",
+          "default": false
+        },
+        "hitsEnemies": {
+          "type": "boolean",
+          "default": true
+        },
+        "hitsCaster": {
+          "type": "boolean",
+          "default": false
+        },
+        "hitSameTargetDelay": {
+          "$ref": "common.schema.json#/definitions/duration"
+        }
+      }
+    },
+
+    "projectileDamage": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "type": {
+          "$ref": "common.schema.json#/definitions/damageType"
+        },
+        "scaling": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stat": { "type": "string" },
+              "ratio": { "type": "number" }
+            }
+          }
+        },
+        "criticalEnabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "armorPenetration": {
+          "type": "number"
+        },
+        "lifestealEnabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "splash": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "radius": { "type": "number" },
+            "falloff": { "enum": ["none", "linear", "quadratic"] },
+            "damagePercent": { "$ref": "common.schema.json#/definitions/percentage" }
+          }
+        },
+        "falloff": {
+          "type": "object",
+          "properties": {
+            "startDistance": { "type": "number" },
+            "endDistance": { "type": "number" },
+            "minDamagePercent": { "$ref": "common.schema.json#/definitions/percentage" }
+          }
+        }
+      }
+    },
+
+    "projectileEffect": {
+      "type": "object",
+      "properties": {
+        "trigger": {
+          "enum": ["on_hit", "on_expire", "on_bounce", "on_penetrate", "on_travel", "periodic"]
+        },
+        "effectId": {
+          "type": "string",
+          "description": "Effect to apply"
+        },
+        "action": {
+          "$ref": "common.schema.json#/definitions/action"
+        },
+        "chance": {
+          "$ref": "common.schema.json#/definitions/probability"
+        },
+        "interval": {
+          "$ref": "common.schema.json#/definitions/duration"
+        }
+      },
+      "required": ["trigger"]
+    },
+
+    "projectileVisuals": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "sprite": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "trail": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "particle": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "color": { "$ref": "common.schema.json#/definitions/color" },
+            "width": { "type": "number" },
+            "length": { "type": "number" },
+            "fadeTime": { "$ref": "common.schema.json#/definitions/duration" }
+          }
+        },
+        "glow": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "color": { "$ref": "common.schema.json#/definitions/color" },
+            "intensity": { "type": "number" },
+            "radius": { "type": "number" }
+          }
+        },
+        "hitEffect": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "expireEffect": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "groundDecal": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "scale": {
+          "type": "number",
+          "default": 1
+        },
+        "rotation": {
+          "enum": ["velocity", "fixed", "spinning"],
+          "default": "velocity"
+        },
+        "spinSpeed": {
+          "type": "number"
+        }
+      }
+    },
+
+    "projectileAudio": {
+      "type": "object",
+      "properties": {
+        "launch": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "flight": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "hit": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "hitWall": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "bounce": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "expire": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "flyby": { "$ref": "common.schema.json#/definitions/assetPath" }
+      }
+    },
+
+    "projectileLifetime": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "maxRange": {
+          "type": "number"
+        },
+        "destroyOnHit": {
+          "type": "boolean",
+          "default": true
+        },
+        "destroyOnWall": {
+          "type": "boolean",
+          "default": true
+        },
+        "destroyOnGround": {
+          "type": "boolean",
+          "default": true
+        },
+        "expireAction": {
+          "$ref": "common.schema.json#/definitions/action"
+        }
+      }
+    },
+
+    "spawningConfig": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "attachPoint": {
+          "enum": ["weapon", "hand", "center", "custom"],
+          "default": "weapon"
+        },
+        "inheritRotation": {
+          "type": "boolean",
+          "default": true
+        },
+        "spread": {
+          "type": "number",
+          "description": "Random spread angle"
+        },
+        "spreadPattern": {
+          "enum": ["random", "fixed", "cone", "line"]
+        },
+        "multishot": {
+          "type": "object",
+          "properties": {
+            "count": { "type": "integer" },
+            "angle": { "type": "number" },
+            "pattern": { "enum": ["fan", "line", "random"] }
+          }
+        }
+      }
+    }
+  }
+}

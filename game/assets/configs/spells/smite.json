@@ -1,0 +1,182 @@
+{
+    // Smite - Line attack with knockback
+    // Damages enemies in a line and pushes them back
+
+    "id": "spell_smite",
+    "name": "Divine Smite",
+    "description": "Calls down a beam of holy light that damages enemies in a line and knocks them back.",
+    "icon": "icons/spells/smite.png",
+    "school": "holy",
+    "tags": ["damage", "holy", "line", "knockback", "offensive"],
+
+    "targeting": {
+        "mode": "line",
+        "range": 20.0,
+        "width": 3.0,
+        "max_targets": 10,
+        "priority": "nearest",
+
+        "filter": {
+            "faction": "enemy",
+            "can_target_self": false,
+            "must_be_alive": true
+        },
+
+        "ground_target": {
+            "enabled": true,
+            "snap_to_terrain": true,
+            "show_indicator": true,
+            "indicator_radius": 1.5
+        },
+
+        "preview": {
+            "shape": "rectangle",
+            "show_range": true,
+            "show_aoe": true,
+            "pulse": true
+        }
+    },
+
+    "timing": {
+        "cast_time": 1.0,
+        "cooldown": 15.0,
+        "charges": 1,
+        "triggers_gcd": true
+    },
+
+    "cost": {
+        "mana": 40
+    },
+
+    "effects": [
+        {
+            "id": "smite_damage",
+            "type": "damage",
+            "timing": "instant",
+            "amount": 75,
+            "damage_type": "holy",
+            "scaling": {
+                "stat": "spell_power",
+                "coefficient": 0.9
+            }
+        },
+        {
+            "id": "smite_knockback",
+            "type": "knockback",
+            "timing": "instant",
+            "displacement": {
+                "distance": 6.0,
+                "speed": 20.0,
+                "knocks_up": true,
+                "knock_up_height": 1.5
+            }
+        },
+        {
+            "id": "dazed_debuff",
+            "type": "debuff",
+            "timing": "instant",
+            "duration": 2.0,
+            "stacking": "refresh",
+            "description": "Dazed from the holy impact."
+        }
+    ],
+
+    "flags": {
+        "can_crit": true,
+        "can_miss": false,
+        "can_be_interrupted": true,
+        "can_be_silenced": true,
+        "requires_los": true,
+        "requires_facing": true,
+        "cast_while_moving": false,
+        "ignores_armor": false
+    },
+
+    "requirements": {
+        "min_level": 12
+    },
+
+    "events": {
+        "on_cast_start": "scripts/spells/smite_cast.py",
+        "on_cast_complete": "scripts/spells/smite_execute.py",
+        "on_hit": "scripts/spells/smite_hit.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/smite.png",
+        "effects": [
+            {
+                "id": "charge_glow",
+                "type": "particle",
+                "trigger": "on_cast_start",
+                "attach": "caster",
+                "path": "effects/holy_charge.fx",
+                "scale": 1.0
+            },
+            {
+                "id": "beam_effect",
+                "type": "beam",
+                "trigger": "on_cast_complete",
+                "texture": "textures/effects/holy_beam.png",
+                "width": 3.0,
+                "duration": 0.5,
+                "branching": false
+            },
+            {
+                "id": "ground_scorch",
+                "type": "decal",
+                "trigger": "on_cast_complete",
+                "texture": "textures/decals/holy_scorched.png",
+                "size": 3.0,
+                "duration": 8.0
+            },
+            {
+                "id": "impact_flash",
+                "type": "light",
+                "trigger": "on_cast_complete",
+                "attach": "target_point",
+                "intensity": 5.0,
+                "range": 15.0,
+                "duration": 0.3
+            },
+            {
+                "id": "knockback_trail",
+                "type": "trail",
+                "trigger": "on_hit",
+                "attach": "target",
+                "texture": "textures/effects/holy_trail.png",
+                "width": 0.5,
+                "duration": 0.5
+            }
+        ],
+        "sounds": [
+            {
+                "id": "charge_sound",
+                "path": "sounds/spells/holy_charge.wav",
+                "trigger": "on_cast_start",
+                "volume": 0.7
+            },
+            {
+                "id": "smite_sound",
+                "path": "sounds/spells/holy_smite.wav",
+                "trigger": "on_cast_complete",
+                "volume": 1.0
+            },
+            {
+                "id": "impact_sound",
+                "path": "sounds/spells/holy_impact.wav",
+                "trigger": "on_hit",
+                "volume": 0.9,
+                "positional": true
+            }
+        ],
+        "animations": [
+            {
+                "id": "cast_anim",
+                "name": "cast_line_forward",
+                "trigger": "on_cast_start",
+                "speed": 1.0
+            }
+        ]
+    }
+}

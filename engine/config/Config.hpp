@@ -174,6 +174,41 @@ public:
      */
     static void CreateDefault(const std::filesystem::path& filepath);
 
+    // =========================================================================
+    // Performance Optimizations
+    // =========================================================================
+
+    /**
+     * @brief FNV-1a hash for compile-time string hashing
+     */
+    static constexpr uint64_t FNV_OFFSET = 14695981039346656037ull;
+    static constexpr uint64_t FNV_PRIME = 1099511628211ull;
+
+    static constexpr uint64_t HashKey(std::string_view key) {
+        uint64_t hash = FNV_OFFSET;
+        for (char c : key) {
+            hash ^= static_cast<uint64_t>(c);
+            hash *= FNV_PRIME;
+        }
+        return hash;
+    }
+
+    /**
+     * @brief Get value with pre-computed hash (faster lookup)
+     */
+    template<ConfigStorable T>
+    [[nodiscard]] T GetHashed(std::string_view key, uint64_t hash, const T& defaultValue = T{}) const;
+
+    /**
+     * @brief Register a key for fast lookup (pre-cache during initialization)
+     */
+    void RegisterFastLookup(std::string_view key);
+
+    /**
+     * @brief Pre-cache commonly accessed values for faster access
+     */
+    void BuildFastLookupTable();
+
 private:
     Config() = default;
     ~Config() = default;
@@ -183,12 +218,20 @@ private:
     mutable std::unordered_map<std::string, ConfigValue> m_cache;
     mutable std::shared_mutex m_mutex;
 
+    // Hash-based cache for O(1) lookups
+    mutable std::unordered_map<uint64_t, ConfigValue> m_hashCache;
+
     nlohmann::json* NavigateToKey(std::string_view key, bool create = false);
     const nlohmann::json* NavigateToKey(std::string_view key) const;
 
     // Cache key helper
     static std::string MakeCacheKey(std::string_view key) { return std::string(key); }
 };
+
+/**
+ * @brief Compile-time config key hashing macro
+ */
+#define NOVA_CONFIG_KEY(key) ::Nova::Config::HashKey(key)
 
 // Template implementations
 template<ConfigStorable T>
@@ -324,6 +367,58 @@ bool Config::SetValidated(std::string_view key, T value, T minVal, T maxVal) {
     T clampedValue = std::clamp(value, minVal, maxVal);
     Set<T>(key, clampedValue);
     return inRange;
+}
+
+// GetHashed implementation for optimized config access
+template<ConfigStorable T>
+T Config::GetHashed(std::string_view key, uint64_t hash, const T& defaultValue) const {
+    std::shared_lock lock(m_mutex);
+
+    // Check hash cache first (O(1) lookup)
+    auto it = m_hashCache.find(hash);
+    if (it != m_hashCache.end()) {
+        if (auto* val = std::get_if<T>(&it->second)) {
+            return *val;
+        }
+    }
+
+    // Fall back to normal lookup and cache with hash
+    const auto* node = NavigateToKey(key);
+    if (!node || node->is_null()) {
+        return defaultValue;
+    }
+
+    try {
+        T result;
+        if constexpr (std::is_same_v<T, glm::vec2>) {
+            if (node->is_array() && node->size() >= 2) {
+                result = glm::vec2((*node)[0].get<float>(), (*node)[1].get<float>());
+            } else {
+                return defaultValue;
+            }
+        } else if constexpr (std::is_same_v<T, glm::vec3>) {
+            if (node->is_array() && node->size() >= 3) {
+                result = glm::vec3((*node)[0].get<float>(), (*node)[1].get<float>(), (*node)[2].get<float>());
+            } else {
+                return defaultValue;
+            }
+        } else if constexpr (std::is_same_v<T, glm::vec4>) {
+            if (node->is_array() && node->size() >= 4) {
+                result = glm::vec4((*node)[0].get<float>(), (*node)[1].get<float>(),
+                                   (*node)[2].get<float>(), (*node)[3].get<float>());
+            } else {
+                return defaultValue;
+            }
+        } else {
+            result = node->get<T>();
+        }
+
+        // Cache with hash for future lookups
+        m_hashCache[hash] = result;
+        return result;
+    } catch (...) {
+        return defaultValue;
+    }
 }
 
 /**

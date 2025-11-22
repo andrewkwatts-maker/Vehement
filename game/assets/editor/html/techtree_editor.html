@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tech Tree Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body class="techtree-editor">
+    <div class="editor-container graph-editor-container">
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+                <h2 id="techtree-name">Tech Tree</h2>
+                <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            </div>
+            <div class="toolbar-center">
+                <button class="btn btn-icon" onclick="zoomIn()" title="Zoom In">+</button>
+                <span id="zoom-level">100%</span>
+                <button class="btn btn-icon" onclick="zoomOut()" title="Zoom Out">-</button>
+                <button class="btn btn-icon" onclick="zoomToFit()" title="Fit">&#x26F6;</button>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn" onclick="autoLayout()">Auto Layout</button>
+                <button class="btn btn-primary" onclick="save()">Save</button>
+            </div>
+        </div>
+
+        <div class="graph-workspace">
+            <!-- Node palette -->
+            <div class="node-palette">
+                <h3>Add Node</h3>
+                <div class="palette-item" draggable="true" data-type="tech" ondragstart="onPaletteDrag(event, 'tech')">
+                    <div class="palette-icon" style="background: #2e7d32;">T</div>
+                    <span>Technology</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="age" ondragstart="onPaletteDrag(event, 'age')">
+                    <div class="palette-icon" style="background: #6a1b9a;">A</div>
+                    <span>Age Upgrade</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="building_unlock" ondragstart="onPaletteDrag(event, 'building_unlock')">
+                    <div class="palette-icon" style="background: #1565c0;">B</div>
+                    <span>Building Unlock</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="unit_unlock" ondragstart="onPaletteDrag(event, 'unit_unlock')">
+                    <div class="palette-icon" style="background: #c62828;">U</div>
+                    <span>Unit Unlock</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="upgrade" ondragstart="onPaletteDrag(event, 'upgrade')">
+                    <div class="palette-icon" style="background: #f57c00;">+</div>
+                    <span>Upgrade</span>
+                </div>
+            </div>
+
+            <!-- Graph canvas -->
+            <div class="graph-canvas-container"
+                 ondrop="onCanvasDrop(event)"
+                 ondragover="onCanvasDragOver(event)">
+                <canvas id="graph-canvas"></canvas>
+                <div class="graph-nodes" id="graph-nodes">
+                    <!-- Nodes rendered here -->
+                </div>
+                <svg class="graph-connections" id="graph-connections">
+                    <!-- Connections rendered here -->
+                </svg>
+            </div>
+
+            <!-- Minimap -->
+            <div class="minimap" id="minimap">
+                <canvas id="minimap-canvas"></canvas>
+                <div class="minimap-viewport" id="minimap-viewport"></div>
+            </div>
+
+            <!-- Properties panel -->
+            <div class="graph-properties" id="node-properties" style="display: none;">
+                <div class="properties-header">
+                    <h3>Node Properties</h3>
+                    <button class="btn btn-icon" onclick="closeProperties()">x</button>
+                </div>
+                <div class="properties-content">
+                    <div class="form-group">
+                        <label for="node-id">ID</label>
+                        <input type="text" id="node-id" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-name">Name</label>
+                        <input type="text" id="node-name" onchange="updateNodeProperty('name', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label for="node-description">Description</label>
+                        <textarea id="node-description" rows="3" onchange="updateNodeProperty('description', this.value)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-cost">Research Cost</label>
+                        <input type="number" id="node-cost" min="0" onchange="updateNodeProperty('cost', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label for="node-time">Research Time (s)</label>
+                        <input type="number" id="node-time" min="0" onchange="updateNodeProperty('time', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label for="node-age">Required Age</label>
+                        <select id="node-age" onchange="updateNodeProperty('age', this.value)">
+                            <option value="1">Age I (Stone)</option>
+                            <option value="2">Age II (Bronze)</option>
+                            <option value="3">Age III (Iron)</option>
+                            <option value="4">Age IV (Imperial)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="node-icon">Icon</label>
+                        <input type="text" id="node-icon" onchange="updateNodeProperty('icon', this.value)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Unlocks</label>
+                        <div class="array-editor">
+                            <div class="array-items" id="node-unlocks"></div>
+                            <button class="btn btn-small" onclick="addUnlock()">+ Add Unlock</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bonuses</label>
+                        <div class="array-editor">
+                            <div class="array-items" id="node-bonuses"></div>
+                            <button class="btn btn-small" onclick="addBonus()">+ Add Bonus</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="properties-footer">
+                    <button class="btn btn-danger" onclick="deleteSelectedNode()">Delete Node</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script src="graph_editor.js"></script>
+    <script>
+        var techtreeEditor = new GraphEditor('graph-canvas', {
+            minimap: 'minimap-canvas',
+            nodesContainer: 'graph-nodes',
+            connectionsContainer: 'graph-connections',
+            nodeTypes: {
+                tech: { color: '#2e7d32', title: 'Technology' },
+                age: { color: '#6a1b9a', title: 'Age Upgrade' },
+                building_unlock: { color: '#1565c0', title: 'Building Unlock' },
+                unit_unlock: { color: '#c62828', title: 'Unit Unlock' },
+                upgrade: { color: '#f57c00', title: 'Upgrade' }
+            },
+            onNodeSelect: function(node) {
+                showNodeProperties(node);
+            },
+            onConnectionCreate: function(conn) {
+                setDirty(true);
+            },
+            onChange: function() {
+                setDirty(true);
+            }
+        });
+
+        var techtreeId = WebEditor.getQueryParam('id');
+        if (techtreeId) {
+            loadTechtree(techtreeId);
+        }
+
+        function loadTechtree(id) {
+            WebEditor.invoke('contentBrowser.getItemData', [id], function(err, data) {
+                if (err) return;
+                techtreeEditor.loadGraph(data);
+                document.getElementById('techtree-name').textContent = data.name || 'Tech Tree';
+            });
+        }
+
+        function save() {
+            var data = techtreeEditor.exportGraph();
+            WebEditor.invoke('contentBrowser.saveItem', [techtreeId, data], function(err) {
+                if (!err) setDirty(false);
+            });
+        }
+
+        function showNodeProperties(node) {
+            var panel = document.getElementById('node-properties');
+            panel.style.display = 'block';
+
+            document.getElementById('node-id').value = node.id;
+            document.getElementById('node-name').value = node.data.name || '';
+            document.getElementById('node-description').value = node.data.description || '';
+            document.getElementById('node-cost').value = node.data.cost || 0;
+            document.getElementById('node-time').value = node.data.time || 0;
+            document.getElementById('node-age').value = node.data.age || 1;
+            document.getElementById('node-icon').value = node.data.icon || '';
+        }
+
+        function closeProperties() {
+            document.getElementById('node-properties').style.display = 'none';
+            techtreeEditor.clearSelection();
+        }
+
+        function updateNodeProperty(prop, value) {
+            techtreeEditor.updateSelectedNodeData(prop, value);
+            setDirty(true);
+        }
+
+        function deleteSelectedNode() {
+            techtreeEditor.deleteSelectedNodes();
+            closeProperties();
+        }
+
+        function zoomIn() {
+            techtreeEditor.zoom(1.2);
+            updateZoomDisplay();
+        }
+
+        function zoomOut() {
+            techtreeEditor.zoom(0.8);
+            updateZoomDisplay();
+        }
+
+        function zoomToFit() {
+            techtreeEditor.zoomToFit();
+            updateZoomDisplay();
+        }
+
+        function updateZoomDisplay() {
+            document.getElementById('zoom-level').textContent = Math.round(techtreeEditor.getZoom() * 100) + '%';
+        }
+
+        function autoLayout() {
+            techtreeEditor.autoArrange('hierarchical');
+            setDirty(true);
+        }
+
+        function onPaletteDrag(event, type) {
+            event.dataTransfer.setData('nodeType', type);
+        }
+
+        function onCanvasDragOver(event) {
+            event.preventDefault();
+        }
+
+        function onCanvasDrop(event) {
+            event.preventDefault();
+            var type = event.dataTransfer.getData('nodeType');
+            if (type) {
+                var rect = event.target.getBoundingClientRect();
+                var x = event.clientX - rect.left;
+                var y = event.clientY - rect.top;
+                techtreeEditor.createNodeAt(type, x, y);
+            }
+        }
+    </script>
+</body>
+</html>

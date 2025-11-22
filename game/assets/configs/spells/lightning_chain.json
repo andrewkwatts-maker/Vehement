@@ -1,0 +1,175 @@
+{
+    // Lightning Chain - Bouncing chain lightning spell
+    // Hits multiple targets with diminishing damage
+
+    "id": "spell_lightning_chain",
+    "name": "Chain Lightning",
+    "description": "Unleashes a bolt of lightning that jumps between enemies, dealing reduced damage with each bounce.",
+    "icon": "icons/spells/chain_lightning.png",
+    "school": "lightning",
+    "tags": ["damage", "lightning", "chain", "aoe", "offensive"],
+
+    "targeting": {
+        "mode": "chain",
+        "range": 25.0,
+        "max_targets": 5,
+        "priority": "nearest",
+
+        "filter": {
+            "faction": "enemy",
+            "can_target_self": false,
+            "must_be_alive": true
+        },
+
+        "chain": {
+            "max_bounces": 4,
+            "bounce_range": 10.0,
+            "damage_per_bounce": 0.0,
+            "damage_multiplier": 0.75,
+            "bounce_delay": 0.15,
+            "can_hit_same": false,
+            "requires_los": true,
+            "priority": "nearest"
+        },
+
+        "preview": {
+            "shape": "arrow",
+            "show_range": true,
+            "show_targets": true
+        }
+    },
+
+    "timing": {
+        "cast_time": 0.8,
+        "cooldown": 12.0,
+        "charges": 1,
+        "triggers_gcd": true
+    },
+
+    "cost": {
+        "mana": 35,
+        "energy": 0
+    },
+
+    "effects": [
+        {
+            "id": "lightning_damage",
+            "type": "damage",
+            "timing": "instant",
+            "amount": 65,
+            "damage_type": "lightning",
+            "scaling": {
+                "stat": "spell_power",
+                "coefficient": 0.65,
+                "level_bonus": 3.0
+            },
+            "crit_chance": 0.05,
+            "crit_multiplier": 2.0
+        },
+        {
+            "id": "energized_debuff",
+            "type": "debuff",
+            "timing": "instant",
+            "duration": 6.0,
+            "stacking": "stack",
+            "max_stacks": 5,
+            "stack_value": 0.05,
+            "description": "Takes 5% increased lightning damage per stack."
+        }
+    ],
+
+    "conditionals": [
+        {
+            "condition": "on_crit",
+            "effect_id": "lightning_damage",
+            "bonus": {
+                "type": "resource_restore",
+                "resource": {
+                    "type": "mana",
+                    "amount": 10
+                }
+            }
+        }
+    ],
+
+    "flags": {
+        "can_crit": true,
+        "can_miss": false,
+        "can_be_reflected": false,
+        "can_be_interrupted": true,
+        "requires_los": true,
+        "requires_facing": true,
+        "cast_while_moving": false
+    },
+
+    "requirements": {
+        "min_level": 10
+    },
+
+    "events": {
+        "on_cast_complete": "scripts/spells/chain_lightning_cast.py",
+        "on_hit": "scripts/spells/chain_lightning_hit.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/chain_lightning.png",
+        "effects": [
+            {
+                "id": "cast_sparks",
+                "type": "particle",
+                "trigger": "on_cast_start",
+                "attach": "caster_hand",
+                "path": "effects/lightning_charge.fx",
+                "scale": 1.0
+            },
+            {
+                "id": "chain_beam",
+                "type": "beam",
+                "trigger": "on_hit",
+                "texture": "textures/effects/lightning_beam.png",
+                "width": 0.3,
+                "duration": 0.2,
+                "branching": true,
+                "branch_count": 2,
+                "branch_chance": 0.3
+            },
+            {
+                "id": "impact_spark",
+                "type": "particle",
+                "trigger": "on_hit",
+                "attach": "target",
+                "path": "effects/lightning_impact.fx",
+                "scale": 0.8
+            },
+            {
+                "id": "screen_flash",
+                "type": "screen_effect",
+                "trigger": "on_cast_complete",
+                "duration": 0.1,
+                "intensity": 0.3,
+                "self_only": true
+            }
+        ],
+        "sounds": [
+            {
+                "id": "charge_sound",
+                "path": "sounds/spells/lightning_charge.wav",
+                "trigger": "on_cast_start",
+                "volume": 0.7
+            },
+            {
+                "id": "bolt_sound",
+                "path": "sounds/spells/lightning_bolt.wav",
+                "trigger": "on_cast_complete",
+                "volume": 1.0
+            },
+            {
+                "id": "bounce_sound",
+                "path": "sounds/spells/lightning_crackle.wav",
+                "trigger": "on_hit",
+                "volume": 0.8,
+                "pitch_variation": 0.2
+            }
+        ]
+    }
+}

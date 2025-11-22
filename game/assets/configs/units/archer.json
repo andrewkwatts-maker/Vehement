@@ -1,0 +1,114 @@
+{
+    "id": "unit_archer",
+    "type": "unit",
+    "name": "Archer",
+    "description": "Light ranged unit with excellent range but low health. Effective against unarmored targets.",
+
+    "tags": ["military", "ranged", "tier1", "infantry"],
+
+    "model": {
+        "path": "models/units/archer.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/units/archer_diffuse.png",
+        "normal": "textures/units/archer_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.25,
+                "height": 1.7,
+                "offset": [0.0, 0.85, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 65.0,
+        "layer": "unit"
+    },
+
+    "movement": {
+        "speed": 4.5,
+        "turnRate": 400.0,
+        "acceleration": 12.0,
+        "deceleration": 18.0,
+        "canSwim": false,
+        "terrainModifiers": {
+            "road": 1.3,
+            "forest": 1.0,
+            "water": 0.0,
+            "hill": 0.8
+        }
+    },
+
+    "combat": {
+        "health": 60,
+        "maxHealth": 60,
+        "armor": 1,
+        "attackDamage": 12,
+        "attackSpeed": 1.2,
+        "attackRange": 18.0,
+        "critChance": 0.15,
+        "critMultiplier": 1.8,
+        "physicalDamage": true
+    },
+
+    "projectile": {
+        "id": "projectile_arrow_basic",
+        "spawnOffset": [0.0, 1.5, 0.3]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/ranged_combat.bt",
+        "profile": "defensive",
+        "aggroRange": 20.0,
+        "leashRange": 25.0,
+        "fleeHealthPercent": 0.2,
+        "preferredRange": 15.0
+    },
+
+    "abilities": [
+        {
+            "id": "focus_shot",
+            "name": "Focus Shot",
+            "description": "Take careful aim for guaranteed critical hit",
+            "cooldown": 15.0,
+            "castTime": 1.5,
+            "targetType": "single"
+        }
+    ],
+
+    "animations": {
+        "idle": { "path": "animations/archer/idle.anim", "loop": true },
+        "walk": { "path": "animations/archer/walk.anim", "loop": true },
+        "run": { "path": "animations/archer/run.anim", "loop": true },
+        "attack": {
+            "path": "animations/archer/shoot.anim",
+            "loop": false,
+            "events": [[0.4, "fire_projectile"], [0.6, "string_release"]]
+        },
+        "death": { "path": "animations/archer/death.anim", "loop": false }
+    },
+
+    "sounds": {
+        "attack": "sounds/weapons/bow_release.wav",
+        "death": ["sounds/death/male_death_1.wav", "sounds/death/male_death_2.wav"],
+        "acknowledge": ["sounds/voice/archer_ack_1.wav", "sounds/voice/archer_ack_2.wav"]
+    },
+
+    "faction": "human",
+    "tier": 1,
+    "class": "archer",
+    "isHero": false,
+
+    "properties": {
+        "trainingTime": 12.0,
+        "populationCost": 1,
+        "goldCost": 35,
+        "woodCost": 25
+    }
+}

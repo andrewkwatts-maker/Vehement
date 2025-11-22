@@ -10,22 +10,99 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(NOVA_BUILD_EXAMPLES "Build example applications" ON)
 option(NOVA_BUILD_TESTS "Build unit tests" OFF)
 option(NOVA_USE_ASAN "Enable Address Sanitizer" OFF)
+option(NOVA_ENABLE_SCRIPTING "Enable Python scripting support" ON)
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Platform-specific settings
+# =============================================================================
+# Platform Detection and Configuration
+# =============================================================================
+set(NOVA_PLATFORM_SOURCES "")
+set(NOVA_PLATFORM_LIBS "")
+
 if(WIN32)
+    set(NOVA_PLATFORM "Windows")
     add_definitions(-DNOVA_PLATFORM_WINDOWS)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-DNOMINMAX)
-elseif(UNIX AND NOT APPLE)
-    add_definitions(-DNOVA_PLATFORM_LINUX)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+    set(NOVA_PLATFORM_SOURCES
+        engine/platform/windows/WindowsPlatform.cpp
+    )
+elseif(ANDROID)
+    set(NOVA_PLATFORM "Android")
+    add_definitions(-DNOVA_PLATFORM_ANDROID)
+    set(NOVA_PLATFORM_SOURCES
+        engine/platform/android/AndroidPlatform.cpp
+        engine/platform/android/AndroidGLES.cpp
+        engine/platform/android/AndroidJNI.cpp
+        engine/platform/android/AndroidTouchInput.cpp
+        engine/platform/android/VulkanRenderer.cpp
+        engine/platform/mobile/MobileInput.cpp
+    )
+    set(NOVA_PLATFORM_LIBS
+        android
+        log
+        EGL
+        GLESv3
+    )
 elseif(APPLE)
-    add_definitions(-DNOVA_PLATFORM_MACOS)
+    if(IOS)
+        set(NOVA_PLATFORM "iOS")
+        add_definitions(-DNOVA_PLATFORM_IOS)
+        set(NOVA_PLATFORM_SOURCES
+            engine/platform/ios/iOSPlatform.mm
+            engine/platform/mobile/MobileInput.cpp
+        )
+        set(NOVA_PLATFORM_LIBS
+            "-framework UIKit"
+            "-framework Foundation"
+            "-framework Metal"
+            "-framework MetalKit"
+            "-framework QuartzCore"
+            "-framework CoreLocation"
+            "-framework CoreMotion"
+        )
+    else()
+        set(NOVA_PLATFORM "macOS")
+        add_definitions(-DNOVA_PLATFORM_MACOS)
+        set(NOVA_PLATFORM_SOURCES
+            engine/platform/macos/MacOSPlatform.mm
+            engine/platform/desktop/DesktopInput.cpp
+        )
+        set(NOVA_PLATFORM_LIBS
+            "-framework Cocoa"
+            "-framework OpenGL"
+            "-framework CoreLocation"
+            "-framework IOKit"
+        )
+    endif()
+elseif(EMSCRIPTEN)
+    set(NOVA_PLATFORM "Web")
+    add_definitions(-DNOVA_PLATFORM_WEB)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    set(NOVA_PLATFORM_SOURCES
+        engine/platform/web/WebPlatform.cpp
+    )
+elseif(UNIX)
+    set(NOVA_PLATFORM "Linux")
+    add_definitions(-DNOVA_PLATFORM_LINUX)
+    set(NOVA_PLATFORM_SOURCES
+        engine/platform/linux/LinuxPlatform.cpp
+        engine/platform/desktop/DesktopInput.cpp
+    )
+    # Find X11 for native window access
+    find_package(X11)
+    if(X11_FOUND)
+        add_definitions(-DGLFW_EXPOSE_NATIVE_X11)
+        list(APPEND NOVA_PLATFORM_LIBS ${X11_LIBRARIES})
+    endif()
 endif()
+
+message(STATUS "Target Platform: ${NOVA_PLATFORM}")
 
 # Include FetchContent for dependency management
 include(FetchContent)
@@ -120,6 +197,16 @@ FetchContent_Declare(
 set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "" FORCE)
 set(FASTNOISE2_TESTS OFF CACHE BOOL "" FORCE)
 
+# pybind11 - Python bindings for C++ (for scripting support)
+if(NOVA_ENABLE_SCRIPTING)
+    FetchContent_Declare(
+        pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11.git
+        GIT_TAG        v2.12.0
+        GIT_SHALLOW    TRUE
+    )
+endif()
+
 # Make dependencies available
 message(STATUS "Fetching dependencies...")
 FetchContent_MakeAvailable(glfw glm json spdlog)
@@ -150,6 +237,19 @@ FetchContent_GetProperties(fastnoise2)
 if(NOT fastnoise2_POPULATED)
     FetchContent_Populate(fastnoise2)
     add_subdirectory(${fastnoise2_SOURCE_DIR} ${fastnoise2_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# Handle pybind11 and Python (for scripting)
+if(NOVA_ENABLE_SCRIPTING)
+    # Find Python first
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+    message(STATUS "Found Python ${Python3_VERSION}: ${Python3_EXECUTABLE}")
+    message(STATUS "Python include dirs: ${Python3_INCLUDE_DIRS}")
+    message(STATUS "Python libraries: ${Python3_LIBRARIES}")
+
+    # Make pybind11 available
+    FetchContent_MakeAvailable(pybind11)
+    add_definitions(-DNOVA_SCRIPTING_ENABLED)
 endif()
 
 # =============================================================================
@@ -255,24 +355,70 @@ add_library(nova3d STATIC
     # Utils
     engine/utils/FileSystem.cpp
     engine/utils/StringUtils.cpp
+
+    # Platform-specific sources (populated by platform detection above)
+    ${NOVA_PLATFORM_SOURCES}
 )
+
+# =============================================================================
+# Python Scripting Support (conditionally compiled)
+# =============================================================================
+if(NOVA_ENABLE_SCRIPTING)
+    target_sources(nova3d PRIVATE
+        engine/scripting/PythonEngine.cpp
+        engine/scripting/ScriptContext.cpp
+        engine/scripting/EventDispatcher.cpp
+        engine/scripting/AIBehavior.cpp
+        engine/scripting/ScriptBindings.cpp
+        engine/scripting/ScriptableComponent.cpp
+    )
+
+    target_include_directories(nova3d PUBLIC
+        ${Python3_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(nova3d PUBLIC
+        pybind11::embed
+        ${Python3_LIBRARIES}
+    )
+
+    message(STATUS "Python scripting support: ENABLED")
+else()
+    message(STATUS "Python scripting support: DISABLED")
+endif()
 
 target_include_directories(nova3d PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/platform
 )
 
-target_link_libraries(nova3d PUBLIC
-    glad_gl_core_46
-    glfw
-    glm::glm
-    assimp
-    stb
-    nlohmann_json::nlohmann_json
-    spdlog::spdlog
-    imgui
-    FastNoise
-)
+# Base libraries (not for Android which has its own graphics stack)
+if(NOT ANDROID)
+    target_link_libraries(nova3d PUBLIC
+        glad_gl_core_46
+        glfw
+        glm::glm
+        assimp
+        stb
+        nlohmann_json::nlohmann_json
+        spdlog::spdlog
+        imgui
+        FastNoise
+    )
+else()
+    # Android uses its own graphics setup
+    target_link_libraries(nova3d PUBLIC
+        glm::glm
+        nlohmann_json::nlohmann_json
+        spdlog::spdlog
+    )
+endif()
+
+# Platform-specific libraries
+if(NOVA_PLATFORM_LIBS)
+    target_link_libraries(nova3d PUBLIC ${NOVA_PLATFORM_LIBS})
+endif()
 
 # Compiler warnings
 if(MSVC)
@@ -325,4 +471,8 @@ message(STATUS "  C++ Standard:   ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type:     ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Build Examples: ${NOVA_BUILD_EXAMPLES}")
 message(STATUS "  Build Tests:    ${NOVA_BUILD_TESTS}")
+message(STATUS "  Scripting:      ${NOVA_ENABLE_SCRIPTING}")
+if(NOVA_ENABLE_SCRIPTING)
+    message(STATUS "  Python Version: ${Python3_VERSION}")
+endif()
 message(STATUS "")

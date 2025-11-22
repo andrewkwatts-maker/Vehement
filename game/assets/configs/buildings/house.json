@@ -1,0 +1,182 @@
+{
+    // House Building Configuration
+    // Basic residential building providing housing for workers
+
+    "id": "building_house",
+    "type": "building",
+    "name": "House",
+    "description": "A comfortable dwelling that houses up to 4 workers. Provides shelter and increases population cap.",
+
+    "tags": ["residential", "housing", "tier1", "basic"],
+
+    // Visual Configuration
+    "model": {
+        "path": "models/buildings/house.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/buildings/house_diffuse.png",
+    "textures": {
+        "diffuse": "textures/buildings/house_diffuse.png",
+        "normal": "textures/buildings/house_normal.png",
+        "roof": "textures/buildings/roof_tiles.png",
+        "walls": "textures/buildings/wood_planks.png"
+    },
+
+    "material": {
+        "diffuse": "textures/buildings/house_diffuse.png",
+        "roughness": 0.7
+    },
+
+    // Physics - Nova3D Collision System (Static building)
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "half_extents": [2.0, 2.5, 2.0],
+                "offset": [0.0, 2.5, 0.0],
+                "material": {
+                    "friction": 0.8,
+                    "restitution": 0.0,
+                    "density": 2000.0
+                }
+            },
+            {
+                "type": "box",
+                "half_extents": [0.8, 1.2, 0.1],
+                "offset": [0.0, 1.2, 2.1],
+                "is_trigger": true,
+                "trigger_event": "door_entrance"
+            }
+        ],
+        "body_type": "static",
+        "layer": "building",
+        "mask": ["unit", "projectile", "vehicle"]
+    },
+
+    // Footprint Configuration
+    "footprint": {
+        "gridType": "rect",
+        "size": [3, 3],
+        "entrances": [[1, 0]],
+        "visualSize": [4.0, 5.0, 4.0]
+    },
+
+    // Construction
+    "construction": {
+        "cost": {
+            "wood": 100,
+            "stone": 25
+        },
+        "time": 30.0,
+        "stages": [
+            {
+                "name": "foundation",
+                "model": "models/buildings/house_stage1.obj",
+                "progressStart": 0,
+                "progressEnd": 25,
+                "effect": "effects/construction_dust.fx"
+            },
+            {
+                "name": "framing",
+                "model": "models/buildings/house_stage2.obj",
+                "progressStart": 25,
+                "progressEnd": 60
+            },
+            {
+                "name": "roofing",
+                "model": "models/buildings/house_stage3.obj",
+                "progressStart": 60,
+                "progressEnd": 90
+            },
+            {
+                "name": "finishing",
+                "model": "models/buildings/house.obj",
+                "progressStart": 90,
+                "progressEnd": 100
+            }
+        ]
+    },
+
+    // Building Stats
+    "stats": {
+        "maxHealth": 500,
+        "armor": 5,
+        "maxLevel": 3
+    },
+
+    // No production for houses
+    "production": [],
+
+    // Garrison Configuration - Workers can live here
+    "garrison": {
+        "capacity": 4,
+        "allowedTypes": ["unit_worker", "unit_civilian"]
+    },
+
+    // Resource Consumption
+    "upkeep": {
+        "gold": 1
+    },
+
+    // Vision
+    "visionRange": 5.0,
+
+    // Upgrades
+    "upgrades": [
+        {
+            "id": "upgrade_house_lv2",
+            "name": "Stone Foundation",
+            "description": "Reinforces the house with a stone foundation, increasing durability.",
+            "targetLevel": 2,
+            "cost": {
+                "wood": 50,
+                "stone": 100
+            },
+            "time": 45.0,
+            "healthMultiplier": 1.5,
+            "capacityMultiplier": 1.0
+        },
+        {
+            "id": "upgrade_house_lv3",
+            "name": "Manor House",
+            "description": "Expands the house into a small manor, housing more workers.",
+            "targetLevel": 3,
+            "cost": {
+                "wood": 100,
+                "stone": 150,
+                "gold": 50
+            },
+            "time": 60.0,
+            "healthMultiplier": 2.0,
+            "capacityMultiplier": 1.5
+        }
+    ],
+
+    // Requirements
+    "requirements": {
+        "techs": [],
+        "buildings": ["building_command_center"]
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_construct_start": "scripts/buildings/house/on_construct_start.py",
+        "on_construct_complete": "scripts/buildings/house/on_construct_complete.py",
+        "on_destroyed": "scripts/buildings/house/on_destroyed.py"
+    },
+
+    // Classification
+    "category": "residential",
+    "faction": "human",
+    "unique": false,
+    "maxCount": -1,
+
+    // Custom Properties
+    "properties": {
+        "housingCapacity": 4,
+        "comfortLevel": 1,
+        "fireRisk": 0.1,
+        "repairCostMultiplier": 0.5
+    }
+}

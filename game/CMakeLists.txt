@@ -59,6 +59,21 @@ if(NOT TARGET nlohmann_json::nlohmann_json)
 endif()
 
 # =============================================================================
+# CURL for HTTP requests (geodata system)
+# =============================================================================
+find_package(CURL QUIET)
+if(NOT CURL_FOUND)
+    # Try to fetch CURL via FetchContent if not found
+    message(STATUS "CURL not found, attempting to use system libcurl...")
+    # On most systems, libcurl should be available
+    # If not, install via: apt-get install libcurl4-openssl-dev (Linux)
+    #                      brew install curl (macOS)
+    #                      vcpkg install curl (Windows)
+    find_package(CURL REQUIRED)
+endif()
+message(STATUS "Found CURL: ${CURL_LIBRARIES}")
+
+# =============================================================================
 # Game Source Files
 # =============================================================================
 set(VEHEMENT_CORE_SOURCES
@@ -71,12 +86,43 @@ set(VEHEMENT_CORE_HEADERS
     src/core/GameConfig.hpp
 )
 
+set(VEHEMENT_ASSET_SOURCES
+    src/assets/PlaceholderGenerator.cpp
+)
+
+set(VEHEMENT_ASSET_HEADERS
+    src/assets/PlaceholderGenerator.hpp
+)
+
 set(VEHEMENT_ENTITY_SOURCES
     # Placeholder for entity sources
 )
 
 set(VEHEMENT_WORLD_SOURCES
     # Placeholder for world sources
+)
+
+set(VEHEMENT_GEODATA_SOURCES
+    src/geodata/GeoDataProvider.cpp
+    src/geodata/OSMDataProvider.cpp
+    src/geodata/ElevationProvider.cpp
+    src/geodata/BiomeClassifier.cpp
+    src/geodata/RoadNetwork.cpp
+    src/geodata/BuildingFootprints.cpp
+    src/geodata/GeoTileCache.cpp
+    src/geodata/WorldDataQuery.cpp
+)
+
+set(VEHEMENT_GEODATA_HEADERS
+    src/geodata/GeoTypes.hpp
+    src/geodata/GeoDataProvider.hpp
+    src/geodata/OSMDataProvider.hpp
+    src/geodata/ElevationProvider.hpp
+    src/geodata/BiomeClassifier.hpp
+    src/geodata/RoadNetwork.hpp
+    src/geodata/BuildingFootprints.hpp
+    src/geodata/GeoTileCache.hpp
+    src/geodata/WorldDataQuery.hpp
 )
 
 set(VEHEMENT_COMBAT_SOURCES
@@ -102,8 +148,12 @@ add_executable(vehement2
     src/main.cpp
     ${VEHEMENT_CORE_SOURCES}
     ${VEHEMENT_CORE_HEADERS}
+    ${VEHEMENT_ASSET_SOURCES}
+    ${VEHEMENT_ASSET_HEADERS}
     ${VEHEMENT_ENTITY_SOURCES}
     ${VEHEMENT_WORLD_SOURCES}
+    ${VEHEMENT_GEODATA_SOURCES}
+    ${VEHEMENT_GEODATA_HEADERS}
     ${VEHEMENT_COMBAT_SOURCES}
     ${VEHEMENT_NETWORK_SOURCES}
     ${VEHEMENT_UI_SOURCES}
@@ -113,11 +163,13 @@ add_executable(vehement2
 target_include_directories(vehement2 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../engine
+    ${CURL_INCLUDE_DIRS}
 )
 
 target_link_libraries(vehement2 PRIVATE
     nova3d
     nlohmann_json::nlohmann_json
+    ${CURL_LIBRARIES}
 )
 
 # Platform-specific settings
@@ -159,6 +211,7 @@ endif()
 # =============================================================================
 # Create symlink to Vehement2 assets or copy them
 set(VEHEMENT_ASSETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../Vehement2")
+set(VEHEMENT_GAME_ASSETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(VEHEMENT_ASSETS_DEST "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets")
 
 add_custom_command(TARGET vehement2 POST_BUILD
@@ -166,6 +219,8 @@ add_custom_command(TARGET vehement2 POST_BUILD
         "${VEHEMENT_ASSETS_SOURCE}" "${VEHEMENT_ASSETS_DEST}/vehement2"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/../assets" "${VEHEMENT_ASSETS_DEST}/engine"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${VEHEMENT_GAME_ASSETS_SOURCE}" "${VEHEMENT_ASSETS_DEST}/game"
     COMMENT "Copying game assets..."
 )
 
@@ -179,4 +234,6 @@ message(STATUS "  C++ Standard:  ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type:    ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Editor:        ${VEHEMENT_ENABLE_EDITOR}")
 message(STATUS "  Debug:         ${VEHEMENT_ENABLE_DEBUG}")
+message(STATUS "  GeoData:       Enabled (OSM, Elevation, Biome)")
+message(STATUS "  CURL:          ${CURL_LIBRARIES}")
 message(STATUS "")

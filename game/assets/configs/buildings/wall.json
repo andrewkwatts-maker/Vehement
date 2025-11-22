@@ -1,0 +1,135 @@
+{
+    // Wall Building Configuration
+    // Defensive fortification that blocks movement
+
+    "id": "building_wall",
+    "type": "building",
+    "name": "Wall",
+    "description": "A sturdy defensive wall that blocks enemy movement and provides cover for defenders.",
+
+    "tags": ["defense", "fortification", "tier1"],
+
+    // Visual Configuration
+    "model": {
+        "path": "models/buildings/wall_straight.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/buildings/wall_stone.png",
+    "textures": {
+        "diffuse": "textures/buildings/wall_stone.png",
+        "normal": "textures/buildings/wall_stone_normal.png",
+        "damaged": "textures/buildings/wall_damaged.png"
+    },
+
+    // Physics - Solid wall
+    "collision": {
+        "type": "box",
+        "params": {
+            "halfExtents": [0.5, 1.5, 0.25]
+        },
+        "static": true,
+        "collisionGroup": 4
+    },
+
+    // Footprint - Small 1x1 segment
+    "footprint": {
+        "gridType": "rect",
+        "size": [1, 1],
+        "visualSize": [1.0, 3.0, 0.5]
+    },
+
+    // Construction - Quick to build
+    "construction": {
+        "cost": {
+            "stone": 30
+        },
+        "time": 5.0,
+        "stages": [
+            {
+                "name": "building",
+                "model": "models/buildings/wall_construction.obj",
+                "progressStart": 0,
+                "progressEnd": 100
+            }
+        ]
+    },
+
+    // Stats - Tough but can be destroyed
+    "stats": {
+        "maxHealth": 300,
+        "armor": 20,
+        "maxLevel": 3
+    },
+
+    // No production
+    "production": [],
+
+    // No garrison (but see wall_tower for garrisonable walls)
+    "garrison": {
+        "capacity": 0
+    },
+
+    // No upkeep
+    "upkeep": {},
+
+    // No vision
+    "visionRange": 0.0,
+
+    // Upgrades
+    "upgrades": [
+        {
+            "id": "upgrade_wall_lv2",
+            "name": "Reinforced Wall",
+            "description": "Reinforces the wall with metal bands.",
+            "targetLevel": 2,
+            "cost": {
+                "stone": 20,
+                "metal": 15
+            },
+            "time": 10.0,
+            "healthMultiplier": 1.5
+        },
+        {
+            "id": "upgrade_wall_lv3",
+            "name": "Fortified Wall",
+            "description": "Creates a massive fortified wall segment.",
+            "targetLevel": 3,
+            "cost": {
+                "stone": 40,
+                "metal": 30
+            },
+            "time": 20.0,
+            "healthMultiplier": 2.0
+        }
+    ],
+
+    // Requirements
+    "requirements": {
+        "techs": [],
+        "buildings": []
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/wall/on_construct_complete.py",
+        "on_destroyed": "scripts/buildings/wall/on_destroyed.py"
+    },
+
+    // Classification
+    "category": "defense",
+    "faction": "human",
+    "unique": false,
+    "maxCount": -1,
+
+    // Custom Properties
+    "properties": {
+        "blocksPath": true,
+        "blocksSight": false,
+        "providesCovers": true,
+        "coverBonus": 0.5,
+        "connectsToAdjacent": true,
+        "cornerModel": "models/buildings/wall_corner.obj",
+        "endCapModel": "models/buildings/wall_endcap.obj"
+    }
+}

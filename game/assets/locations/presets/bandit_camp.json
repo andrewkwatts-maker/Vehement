@@ -1,0 +1,173 @@
+{
+  "id": 2,
+  "name": "Bandit Camp",
+  "description": "A hostile encampment of bandits. Players can raid this location for resources and experience. Contains multiple enemy spawns and loot crates.",
+  "worldBounds": {
+    "minX": 0,
+    "minY": 0,
+    "minZ": 0,
+    "maxX": 30,
+    "maxY": 10,
+    "maxZ": 30
+  },
+  "geoBounds": {
+    "minLatitude": 0.0,
+    "maxLatitude": 0.0,
+    "minLongitude": 0.0,
+    "maxLongitude": 0.0
+  },
+  "tags": ["enemy", "combat", "loot", "raid", "bandit", "preset"],
+  "pcgPriority": 1,
+  "blendRadius": 5.0,
+  "version": {
+    "major": 1,
+    "minor": 2,
+    "timestamp": 1700100000,
+    "author": "Content Designer",
+    "changeDescription": "Added more spawn points and loot locations"
+  },
+  "presetName": "Bandit Camp Template",
+  "category": "preset",
+  "enabled": true,
+  "presetConfig": {
+    "baseSize": {"x": 30, "y": 30},
+    "minSize": {"x": 20, "y": 20},
+    "maxSize": {"x": 50, "y": 50},
+    "parameters": [
+      {
+        "name": "difficulty",
+        "displayName": "Difficulty Level",
+        "type": "int",
+        "default": 5,
+        "min": 1,
+        "max": 10,
+        "description": "Controls enemy count and strength"
+      },
+      {
+        "name": "lootQuality",
+        "displayName": "Loot Quality",
+        "type": "float",
+        "default": 1.0,
+        "min": 0.5,
+        "max": 2.0,
+        "description": "Multiplier for loot quality"
+      }
+    ]
+  },
+  "features": {
+    "tiles": [
+      {
+        "pattern": "fill",
+        "type": "GroundDirt",
+        "bounds": {"minX": 0, "minZ": 0, "maxX": 30, "maxZ": 30}
+      },
+      {
+        "pattern": "fill",
+        "type": "WoodFlooring1",
+        "bounds": {"minX": 10, "minZ": 10, "maxX": 20, "maxZ": 20}
+      }
+    ],
+    "buildings": [
+      {
+        "type": "Shelter",
+        "position": {"x": 5, "y": 5},
+        "rotation": 0,
+        "name": "Bandit Tent 1"
+      },
+      {
+        "type": "Shelter",
+        "position": {"x": 22, "y": 5},
+        "rotation": 45,
+        "name": "Bandit Tent 2"
+      },
+      {
+        "type": "Shelter",
+        "position": {"x": 5, "y": 22},
+        "rotation": -45,
+        "name": "Bandit Tent 3"
+      },
+      {
+        "type": "WatchTower",
+        "position": {"x": 15, "y": 15},
+        "rotation": 0,
+        "name": "Lookout Post"
+      }
+    ],
+    "spawnZones": [
+      {
+        "name": "Main Camp Spawner",
+        "entityType": "Zombie",
+        "template": "Walker",
+        "center": {"x": 15, "y": 15},
+        "size": {"x": 20, "y": 20},
+        "maxEntities": 8,
+        "spawnInterval": 60,
+        "params": {
+          "faction": "bandit",
+          "level": 3,
+          "isHostile": true
+        }
+      },
+      {
+        "name": "Elite Spawner",
+        "entityType": "Zombie",
+        "template": "Brute",
+        "center": {"x": 15, "y": 15},
+        "size": {"x": 10, "y": 10},
+        "maxEntities": 2,
+        "spawnInterval": 180,
+        "params": {
+          "faction": "bandit",
+          "level": 7,
+          "isHostile": true
+        }
+      }
+    ],
+    "lootLocations": [
+      {
+        "position": {"x": 15, "y": 15},
+        "type": "Weapon Drop",
+        "respawnTime": 300
+      },
+      {
+        "position": {"x": 5, "y": 5},
+        "type": "Ammo Crate",
+        "respawnTime": 120
+      },
+      {
+        "position": {"x": 25, "y": 25},
+        "type": "Health Pack",
+        "respawnTime": 60
+      }
+    ],
+    "walls": [
+      {
+        "type": "WoodCrate1",
+        "height": 1.5,
+        "segments": [
+          {"start": {"x": 0, "y": 0}, "end": {"x": 30, "y": 0}},
+          {"start": {"x": 0, "y": 0}, "end": {"x": 0, "y": 30}},
+          {"start": {"x": 30, "y": 0}, "end": {"x": 30, "y": 30}},
+          {"start": {"x": 0, "y": 30}, "end": {"x": 12, "y": 30}},
+          {"start": {"x": 18, "y": 30}, "end": {"x": 30, "y": 30}}
+        ]
+      }
+    ]
+  },
+  "zones": [
+    {
+      "name": "Combat Zone",
+      "type": "PvPZone",
+      "bounds": {
+        "minX": 0,
+        "minZ": 0,
+        "maxX": 30,
+        "maxZ": 30
+      },
+      "effects": {
+        "experienceGain": 1.5,
+        "damageTaken": 1.0
+      }
+    }
+  ]
+}

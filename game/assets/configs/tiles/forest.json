@@ -1,0 +1,154 @@
+{
+    // Forest Tile Configuration
+    // Tree-covered terrain with wood resources
+
+    "id": "tile_forest",
+    "type": "tile",
+    "name": "Forest",
+    "description": "Dense forest providing wood resources and cover. Slows movement but provides concealment.",
+
+    "tags": ["terrain", "natural", "forest", "harvestable", "cover"],
+
+    "tileTypeId": 5,
+    "displayName": "Dense Forest",
+    "category": "terrain",
+
+    // Visual Configuration
+    "model": {
+        "path": "models/tiles/hex_forest.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/terrain/forest_ground.png",
+    "textures": {
+        "diffuse": "textures/terrain/forest_ground.png",
+        "normal": "textures/terrain/forest_ground_normal.png",
+        "canopy": "textures/terrain/forest_canopy.png"
+    },
+
+    "material": {
+        "diffuse": "textures/terrain/forest_ground.png",
+        "roughness": 0.95,
+        "uvScale": [2.0, 2.0]
+    },
+
+    // Height for trees
+    "height": 0.0,
+
+    // Movement - Slower but traversable
+    "walkable": true,
+    "buildable": false,
+    "blocksSight": true,
+    "blocksProjectiles": false,
+    "movementCost": 2.0,
+
+    // Unit-class specific
+    "movementCosts": {
+        "infantry": 1.5,
+        "cavalry": 2.5,
+        "vehicle": 3.0,
+        "flying": 1.0
+    },
+
+    // Environment
+    "speedModifier": 0.7,
+    "concealment": 0.5,
+
+    // Resource - Wood
+    "resource": {
+        "type": "wood",
+        "amount": 50,
+        "regenRate": 0.02,
+        "maxAmount": 500,
+        "depletes": true,
+        "depletedModel": "models/tiles/hex_stumps.obj"
+    },
+
+    // Visual Variants
+    "variants": [
+        {
+            "id": "forest_pine",
+            "model": "models/tiles/forest_pine.obj",
+            "weight": 1.0
+        },
+        {
+            "id": "forest_oak",
+            "model": "models/tiles/forest_oak.obj",
+            "weight": 0.7
+        },
+        {
+            "id": "forest_mixed",
+            "model": "models/tiles/forest_mixed.obj",
+            "weight": 0.5
+        },
+        {
+            "id": "forest_dense",
+            "model": "models/tiles/forest_dense.obj",
+            "tint": [0.8, 0.9, 0.8, 1.0],
+            "weight": 0.3
+        }
+    ],
+
+    // Transitions
+    "transitions": [
+        {
+            "adjacentType": "tile_grass",
+            "texture": "textures/terrain/forest_grass_edge.png",
+            "priority": 3
+        },
+        {
+            "adjacentType": "tile_water",
+            "model": "models/tiles/forest_water_edge.obj",
+            "priority": 8
+        },
+        {
+            "adjacentType": "tile_road",
+            "texture": "textures/terrain/forest_road_edge.png",
+            "priority": 5
+        }
+    ],
+
+    // Animation - Tree sway
+    "animation": {
+        "type": "vertex_wave",
+        "speed": 0.2,
+        "waveAmplitude": 0.05,
+        "waveFrequency": 0.5
+    },
+
+    // Lighting - Dappled light
+    "light": {
+        "emission": 0.0
+    },
+
+    // Audio
+    "sounds": {
+        "footstep": "sounds/footsteps/leaves.wav",
+        "ambient": "sounds/ambient/forest_birds.wav",
+        "ambientVolume": 0.6
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_enter": "scripts/tiles/forest/on_enter.py",
+        "on_exit": "scripts/tiles/forest/on_exit.py",
+        "on_interact": "scripts/tiles/forest/on_interact.py"
+    },
+
+    // Custom Properties
+    "properties": {
+        "canCatchFire": true,
+        "fireSpreadChance": 0.6,
+        "burnDuration": 30.0,
+        "regrowTime": 300.0,
+        "wildlifeSpawnChance": 0.1,
+        "ambushBonus": 0.3,
+        "lumberingEfficiency": 1.0,
+        "seasonalTextures": {
+            "spring": "textures/terrain/forest_spring.png",
+            "summer": "textures/terrain/forest_ground.png",
+            "autumn": "textures/terrain/forest_autumn.png",
+            "winter": "textures/terrain/forest_winter.png"
+        }
+    }
+}

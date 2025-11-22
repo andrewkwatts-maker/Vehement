@@ -1,0 +1,137 @@
+{
+    // Water Tile Configuration
+    // Impassable water terrain
+
+    "id": "tile_water",
+    "type": "tile",
+    "name": "Water",
+    "description": "Deep water that blocks movement for most units. Provides fish resources.",
+
+    "tags": ["terrain", "natural", "water", "impassable"],
+
+    "tileTypeId": 20,
+    "displayName": "Deep Water",
+    "category": "water",
+
+    // Visual Configuration
+    "model": {
+        "path": "models/tiles/hex_water.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/terrain/water_diffuse.png",
+    "textures": {
+        "diffuse": "textures/terrain/water_diffuse.png",
+        "normal": "textures/terrain/water_normal.png",
+        "reflection": "textures/terrain/water_reflection.png"
+    },
+
+    "material": {
+        "diffuse": "textures/terrain/water_diffuse.png",
+        "metallic": 0.1,
+        "roughness": 0.1,
+        "transparent": true,
+        "uvScale": [2.0, 2.0]
+    },
+
+    // Movement - Impassable for most
+    "walkable": false,
+    "buildable": false,
+    "blocksSight": false,
+    "blocksProjectiles": false,
+    "movementCost": 999.0,
+
+    // Unit-class specific
+    "movementCosts": {
+        "infantry": 999.0,
+        "cavalry": 999.0,
+        "vehicle": 999.0,
+        "flying": 1.0,
+        "swimming": 1.5,
+        "boat": 0.8
+    },
+
+    // Environment - Drowning hazard
+    "damage": {
+        "perSecond": 10.0,
+        "type": "drowning"
+    },
+    "damageType": "drowning",
+
+    // Resource - Fish
+    "resource": {
+        "type": "food",
+        "amount": 10,
+        "regenRate": 0.05,
+        "maxAmount": 200,
+        "depletes": false
+    },
+
+    // Visual Variants
+    "variants": [
+        {
+            "id": "water_deep",
+            "tint": [0.6, 0.7, 0.9, 0.85],
+            "weight": 1.0
+        },
+        {
+            "id": "water_dark",
+            "tint": [0.4, 0.5, 0.7, 0.9],
+            "weight": 0.3
+        }
+    ],
+
+    // Transitions
+    "transitions": [
+        {
+            "adjacentType": "tile_grass",
+            "model": "models/tiles/water_shore.obj",
+            "texture": "textures/terrain/water_shore.png",
+            "priority": 10
+        },
+        {
+            "adjacentType": "tile_forest",
+            "model": "models/tiles/water_shore.obj",
+            "texture": "textures/terrain/water_forest_shore.png",
+            "priority": 10
+        }
+    ],
+
+    // Water Animation
+    "animation": {
+        "type": "uv_scroll",
+        "speed": 0.3,
+        "scrollDirection": [1.0, 0.5]
+    },
+
+    // Lighting - Slight reflection
+    "light": {
+        "emission": 0.02,
+        "color": [0.5, 0.6, 0.8]
+    },
+
+    // Audio
+    "sounds": {
+        "ambient": "sounds/ambient/water_lapping.wav",
+        "ambientVolume": 0.5,
+        "footstep": "sounds/footsteps/splash.wav"
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_enter": "scripts/tiles/water/on_enter.py",
+        "on_exit": "scripts/tiles/water/on_exit.py",
+        "on_interact": "scripts/tiles/water/on_interact.py"
+    },
+
+    // Custom Properties
+    "properties": {
+        "depth": "deep",
+        "canFreeze": true,
+        "freezeThreshold": -10,
+        "fishable": true,
+        "fishYield": 5,
+        "bridgeable": true,
+        "boatNavigation": true
+    }
+}

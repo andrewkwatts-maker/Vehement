@@ -1,0 +1,112 @@
+{
+    // Road Tile Configuration
+    // Fast travel terrain - improved movement speed
+
+    "id": "tile_road",
+    "type": "tile",
+    "name": "Road",
+    "description": "A paved road that allows faster movement for units and vehicles.",
+
+    "tags": ["terrain", "constructed", "road"],
+
+    "tileTypeId": 10,
+    "displayName": "Paved Road",
+    "category": "road",
+
+    // Visual Configuration
+    "model": {
+        "path": "models/tiles/hex_road.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/terrain/road_cobble.png",
+    "textures": {
+        "diffuse": "textures/terrain/road_cobble.png",
+        "normal": "textures/terrain/road_cobble_normal.png"
+    },
+
+    "material": {
+        "diffuse": "textures/terrain/road_cobble.png",
+        "roughness": 0.6,
+        "uvScale": [2.0, 2.0]
+    },
+
+    // Movement - Fast but not buildable
+    "walkable": true,
+    "buildable": false,
+    "blocksSight": false,
+    "movementCost": 0.5,
+
+    // Unit-class specific - Vehicles love roads
+    "movementCosts": {
+        "infantry": 0.6,
+        "cavalry": 0.5,
+        "vehicle": 0.3,
+        "flying": 1.0
+    },
+
+    // Speed bonus on roads
+    "speedModifier": 1.5,
+
+    // No concealment on open road
+    "concealment": false,
+
+    // Visual Variants
+    "variants": [
+        {
+            "id": "road_straight",
+            "model": "models/tiles/road_straight.obj",
+            "weight": 1.0
+        },
+        {
+            "id": "road_worn",
+            "texture": "textures/terrain/road_worn.png",
+            "weight": 0.3
+        },
+        {
+            "id": "road_cracked",
+            "texture": "textures/terrain/road_cracked.png",
+            "weight": 0.2
+        }
+    ],
+
+    // Transitions
+    "transitions": [
+        {
+            "adjacentType": "tile_grass",
+            "texture": "textures/terrain/road_grass_edge.png",
+            "priority": 5
+        },
+        {
+            "adjacentType": "tile_forest",
+            "texture": "textures/terrain/road_forest_edge.png",
+            "priority": 5
+        }
+    ],
+
+    // No animation for roads
+    "animation": {
+        "type": "none"
+    },
+
+    // Audio
+    "sounds": {
+        "footstep": "sounds/footsteps/stone.wav"
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_enter": "scripts/tiles/road/on_enter.py"
+    },
+
+    // Custom Properties
+    "properties": {
+        "tradeRouteBonus": 1.25,
+        "supplyLineBonus": true,
+        "requiresMaintenance": true,
+        "degradeRate": 0.001,
+        "repairCost": {
+            "stone": 5
+        }
+    }
+}

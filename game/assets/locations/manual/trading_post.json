@@ -1,0 +1,183 @@
+{
+  "id": 3,
+  "name": "Riverside Trading Post",
+  "description": "A merchant outpost located near a river crossing. Players can buy and sell goods, rest, and resupply before venturing into the wilderness.",
+  "worldBounds": {
+    "minX": 100,
+    "minY": 0,
+    "minZ": 50,
+    "maxX": 140,
+    "maxY": 15,
+    "maxZ": 90
+  },
+  "geoBounds": {
+    "minLatitude": 37.8049,
+    "maxLatitude": 37.8149,
+    "minLongitude": -122.4094,
+    "maxLongitude": -122.3994
+  },
+  "tags": ["trade", "merchant", "rest", "supplies", "safe", "river"],
+  "pcgPriority": 0,
+  "blendRadius": 8.0,
+  "version": {
+    "major": 1,
+    "minor": 1,
+    "timestamp": 1700200000,
+    "author": "Level Designer",
+    "changeDescription": "Added river water feature and dock"
+  },
+  "presetName": "",
+  "category": "commercial",
+  "enabled": true,
+  "features": {
+    "tiles": [
+      {
+        "pattern": "fill",
+        "type": "GroundGrass1",
+        "bounds": {"minX": 100, "minZ": 50, "maxX": 140, "maxZ": 90}
+      },
+      {
+        "pattern": "fill",
+        "type": "WoodFlooring2",
+        "bounds": {"minX": 110, "minZ": 60, "maxX": 130, "maxZ": 80}
+      },
+      {
+        "pattern": "path",
+        "type": "ConcreteAsphalt1",
+        "width": 2,
+        "points": [
+          {"x": 100, "y": 70},
+          {"x": 110, "y": 70}
+        ]
+      }
+    ],
+    "buildings": [
+      {
+        "type": "TradingPost",
+        "position": {"x": 115, "y": 65},
+        "rotation": 0,
+        "name": "Main Trading Hall"
+      },
+      {
+        "type": "Warehouse",
+        "position": {"x": 125, "y": 65},
+        "rotation": 0,
+        "name": "Goods Storage"
+      },
+      {
+        "type": "Shelter",
+        "position": {"x": 115, "y": 75},
+        "rotation": 0,
+        "name": "Traveler's Rest"
+      },
+      {
+        "type": "WatchTower",
+        "position": {"x": 135, "y": 55},
+        "rotation": 0,
+        "name": "River Lookout"
+      }
+    ],
+    "entities": [
+      {
+        "type": "NPC",
+        "template": "Merchant",
+        "position": {"x": 117, "y": 67},
+        "name": "Trader Elena",
+        "inventory": ["weapons", "armor", "supplies"]
+      },
+      {
+        "type": "NPC",
+        "template": "Merchant",
+        "position": {"x": 127, "y": 67},
+        "name": "Warehouse Keeper Bob",
+        "inventory": ["resources", "materials"]
+      },
+      {
+        "type": "NPC",
+        "template": "Guard",
+        "position": {"x": 105, "y": 70},
+        "name": "Gate Guard"
+      },
+      {
+        "type": "NPC",
+        "template": "Guard",
+        "position": {"x": 135, "y": 57},
+        "name": "Tower Guard"
+      }
+    ],
+    "water": [
+      {
+        "name": "River Section",
+        "type": "River",
+        "vertices": [
+          {"x": 140, "y": 50, "depth": 2.0},
+          {"x": 140, "y": 90, "depth": 2.0},
+          {"x": 145, "y": 90, "depth": 3.0},
+          {"x": 145, "y": 50, "depth": 3.0}
+        ],
+        "waterLevel": -0.5,
+        "flowDirection": {"x": 0, "y": 1},
+        "flowSpeed": 1.5
+      }
+    ],
+    "roads": [
+      {
+        "name": "Main Road",
+        "type": "Dirt",
+        "width": 3,
+        "points": [
+          {"x": 100, "y": 70},
+          {"x": 115, "y": 70}
+        ]
+      },
+      {
+        "name": "Dock Path",
+        "type": "Wood",
+        "width": 2,
+        "points": [
+          {"x": 130, "y": 70},
+          {"x": 140, "y": 70}
+        ]
+      }
+    ],
+    "structures": [
+      {
+        "name": "Wooden Dock",
+        "type": "custom",
+        "position": {"x": 138, "y": 68},
+        "size": {"x": 4, "y": 4},
+        "material": "WoodFlooring1"
+      }
+    ]
+  },
+  "zones": [
+    {
+      "name": "Trading Post Safe Zone",
+      "type": "SafeZone",
+      "bounds": {
+        "minX": 105,
+        "minZ": 55,
+        "maxX": 135,
+        "maxZ": 85
+      },
+      "effects": {
+        "preventCombat": true,
+        "healthRegen": 1.5
+      }
+    },
+    {
+      "name": "River Zone",
+      "type": "ResourceZone",
+      "bounds": {
+        "minX": 140,
+        "minZ": 50,
+        "maxX": 145,
+        "maxZ": 90
+      },
+      "effects": {
+        "resourceGatherRate": 1.5
+      },
+      "resources": ["fish", "water"]
+    }
+  ]
+}

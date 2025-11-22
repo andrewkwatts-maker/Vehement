@@ -1,0 +1,204 @@
+{
+    // Barracks Building Configuration
+    // Military building for training soldiers
+
+    "id": "building_barracks",
+    "type": "building",
+    "name": "Barracks",
+    "description": "Military training facility. Produces infantry units and provides housing for soldiers.",
+
+    "tags": ["military", "production", "housing", "tier2"],
+
+    // Visual Configuration
+    "model": {
+        "path": "models/buildings/barracks.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "texture": "textures/buildings/barracks_diffuse.png",
+    "textures": {
+        "diffuse": "textures/buildings/barracks_diffuse.png",
+        "normal": "textures/buildings/barracks_normal.png"
+    },
+
+    // Physics
+    "collision": {
+        "type": "box",
+        "params": {
+            "halfExtents": [4.0, 3.0, 3.0]
+        },
+        "static": true
+    },
+
+    // Footprint - Larger building
+    "footprint": {
+        "gridType": "rect",
+        "size": [4, 4],
+        "entrances": [[2, 0], [2, 3]],
+        "visualSize": [8.0, 6.0, 6.0]
+    },
+
+    // Construction
+    "construction": {
+        "cost": {
+            "wood": 200,
+            "stone": 150,
+            "metal": 50
+        },
+        "time": 60.0,
+        "stages": [
+            {
+                "name": "foundation",
+                "model": "models/buildings/barracks_stage1.obj",
+                "progressStart": 0,
+                "progressEnd": 30
+            },
+            {
+                "name": "structure",
+                "model": "models/buildings/barracks_stage2.obj",
+                "progressStart": 30,
+                "progressEnd": 70
+            },
+            {
+                "name": "complete",
+                "model": "models/buildings/barracks.obj",
+                "progressStart": 70,
+                "progressEnd": 100
+            }
+        ]
+    },
+
+    // Stats
+    "stats": {
+        "maxHealth": 1000,
+        "armor": 15,
+        "maxLevel": 3
+    },
+
+    // Production - Can train soldiers
+    "production": [
+        {
+            "type": "unit",
+            "output": "unit_soldier",
+            "amount": 1,
+            "time": 15.0,
+            "cost": {
+                "gold": 50,
+                "food": 20
+            },
+            "maxQueue": 5,
+            "requiredLevel": 1
+        },
+        {
+            "type": "unit",
+            "output": "unit_heavy_infantry",
+            "amount": 1,
+            "time": 25.0,
+            "cost": {
+                "gold": 100,
+                "food": 30,
+                "metal": 25
+            },
+            "maxQueue": 3,
+            "requiredLevel": 2,
+            "requiredTechs": ["tech_heavy_armor"]
+        },
+        {
+            "type": "unit",
+            "output": "unit_sergeant",
+            "amount": 1,
+            "time": 40.0,
+            "cost": {
+                "gold": 200,
+                "food": 50
+            },
+            "maxQueue": 2,
+            "requiredLevel": 3
+        }
+    ],
+
+    // Garrison
+    "garrison": {
+        "capacity": 8,
+        "allowedTypes": ["unit_soldier", "unit_heavy_infantry", "unit_sergeant"]
+    },
+
+    // Upkeep
+    "upkeep": {
+        "gold": 5
+    },
+
+    // Power
+    "power": {
+        "consumption": 2.0
+    },
+
+    // Vision
+    "visionRange": 8.0,
+
+    // Defense capability - Can attack nearby enemies
+    "defense": {
+        "damage": 10,
+        "range": 10.0,
+        "attackSpeed": 1.0
+    },
+
+    // Upgrades
+    "upgrades": [
+        {
+            "id": "upgrade_barracks_lv2",
+            "name": "Reinforced Walls",
+            "description": "Adds reinforced walls and unlocks heavy infantry training.",
+            "targetLevel": 2,
+            "cost": {
+                "stone": 200,
+                "metal": 100
+            },
+            "time": 45.0,
+            "healthMultiplier": 1.5,
+            "productionMultiplier": 1.1
+        },
+        {
+            "id": "upgrade_barracks_lv3",
+            "name": "Military Academy",
+            "description": "Transforms into a full military academy with advanced training.",
+            "targetLevel": 3,
+            "cost": {
+                "stone": 300,
+                "metal": 200,
+                "gold": 100
+            },
+            "time": 90.0,
+            "healthMultiplier": 2.0,
+            "productionMultiplier": 1.25
+        }
+    ],
+
+    // Requirements
+    "requirements": {
+        "techs": ["tech_basic_military"],
+        "buildings": ["building_command_center"]
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_construct_start": "scripts/buildings/barracks/on_construct_start.py",
+        "on_construct_complete": "scripts/buildings/barracks/on_construct_complete.py",
+        "on_destroyed": "scripts/buildings/barracks/on_destroyed.py",
+        "on_produce": "scripts/buildings/barracks/on_produce.py"
+    },
+
+    // Classification
+    "category": "military",
+    "faction": "human",
+    "unique": false,
+    "maxCount": 3,
+
+    // Custom Properties
+    "properties": {
+        "trainingSpeedBonus": 0.0,
+        "veteranChance": 0.1,
+        "rallyPointEnabled": true,
+        "autoReinforce": true
+    }
+}

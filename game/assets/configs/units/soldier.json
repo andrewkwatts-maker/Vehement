@@ -1,0 +1,232 @@
+{
+    // Soldier Unit Configuration
+    // A basic infantry unit with ranged attack capability
+
+    "id": "unit_soldier",
+    "type": "unit",
+    "name": "Soldier",
+    "description": "Standard infantry unit armed with a rifle. Versatile combat unit effective against most enemies.",
+
+    "tags": ["military", "infantry", "ranged", "tier1"],
+
+    // Visual Configuration
+    "model": {
+        "path": "models/units/soldier.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "texture": "textures/units/soldier_diffuse.png",
+    "textures": {
+        "diffuse": "textures/units/soldier_diffuse.png",
+        "normal": "textures/units/soldier_normal.png"
+    },
+
+    "material": {
+        "diffuse": "textures/units/soldier_diffuse.png",
+        "metallic": 0.1,
+        "roughness": 0.7
+    },
+
+    // Physics - Nova3D Collision System
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.3,
+                "height": 1.8,
+                "offset": [0.0, 0.9, 0.0],
+                "material": {
+                    "friction": 0.6,
+                    "restitution": 0.1,
+                    "density": 1000.0
+                }
+            },
+            {
+                "type": "sphere",
+                "radius": 0.25,
+                "offset": [0.0, 1.85, 0.0],
+                "is_trigger": true,
+                "trigger_event": "head_hitbox"
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 80.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"],
+        "linear_damping": 0.05,
+        "angular_damping": 0.1,
+        "gravity_scale": 1.0
+    },
+
+    // Movement Configuration
+    "movement": {
+        "speed": 5.0,
+        "turnRate": 360.0,
+        "acceleration": 15.0,
+        "deceleration": 20.0,
+        "canSwim": false,
+        "terrainModifiers": {
+            "road": 1.2,
+            "forest": 0.7,
+            "water": 0.0
+        }
+    },
+
+    // Combat Statistics
+    "combat": {
+        "health": 100,
+        "maxHealth": 100,
+        "armor": 5,
+        "attackDamage": 15,
+        "attackSpeed": 1.5,
+        "attackRange": 12.0,
+        "critChance": 0.1,
+        "critMultiplier": 2.0,
+        "physicalDamage": true
+    },
+
+    // Projectile for ranged attack
+    "projectile": {
+        "id": "bullet_rifle",
+        "model": "models/projectiles/bullet.obj",
+        "speed": 50.0,
+        "lifetime": 2.0,
+        "gravity": 0.0,
+        "trailEffect": "effects/bullet_trail.fx",
+        "impactEffect": "effects/bullet_impact.fx",
+        "soundOnFire": "sounds/rifle_shot.wav",
+        "soundOnImpact": "sounds/bullet_hit.wav"
+    },
+
+    // AI Configuration
+    "ai": {
+        "behaviorTree": "ai/behaviors/soldier_combat.bt",
+        "profile": "aggressive",
+        "aggroRange": 15.0,
+        "leashRange": 30.0
+    },
+
+    // Abilities
+    "abilities": [
+        {
+            "id": "grenade_throw",
+            "name": "Frag Grenade",
+            "description": "Throws a fragmentation grenade that deals area damage.",
+            "icon": "icons/abilities/grenade.png",
+            "cooldown": 20.0,
+            "manaCost": 0,
+            "range": 10.0,
+            "radius": 3.0,
+            "targetType": "ground",
+            "script": "scripts/abilities/grenade_throw.py",
+            "function": "execute",
+            "castAnimation": "throw",
+            "castSound": "sounds/grenade_throw.wav"
+        },
+        {
+            "id": "take_cover",
+            "name": "Take Cover",
+            "description": "Duck into cover, reducing damage taken by 50% for 5 seconds.",
+            "icon": "icons/abilities/cover.png",
+            "cooldown": 15.0,
+            "targetType": "self",
+            "script": "scripts/abilities/take_cover.py"
+        }
+    ],
+
+    // Animation Mappings
+    "animations": {
+        "idle": {
+            "path": "animations/soldier/idle.anim",
+            "loop": true
+        },
+        "walk": {
+            "path": "animations/soldier/walk.anim",
+            "speed": 1.0,
+            "loop": true
+        },
+        "run": {
+            "path": "animations/soldier/run.anim",
+            "speed": 1.2,
+            "loop": true
+        },
+        "attack": {
+            "path": "animations/soldier/shoot.anim",
+            "loop": false,
+            "events": [
+                [0.2, "fire_projectile"],
+                [0.5, "eject_casing"]
+            ]
+        },
+        "death": {
+            "path": "animations/soldier/death.anim",
+            "loop": false
+        },
+        "cover": {
+            "path": "animations/soldier/crouch.anim",
+            "loop": true
+        }
+    },
+
+    // Sound Effect Mappings
+    "sounds": {
+        "footstep": {
+            "paths": [
+                "sounds/footsteps/boot_1.wav",
+                "sounds/footsteps/boot_2.wav",
+                "sounds/footsteps/boot_3.wav"
+            ],
+            "volume": 0.6,
+            "pitchVariation": 0.15
+        },
+        "attack": "sounds/rifle_shot.wav",
+        "death": {
+            "paths": [
+                "sounds/death/male_death_1.wav",
+                "sounds/death/male_death_2.wav"
+            ],
+            "volume": 1.0
+        },
+        "hurt": {
+            "paths": [
+                "sounds/hurt/male_hurt_1.wav",
+                "sounds/hurt/male_hurt_2.wav"
+            ],
+            "volume": 0.8
+        },
+        "select": "sounds/ui/unit_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/soldier_ack_1.wav",
+                "sounds/voice/soldier_ack_2.wav",
+                "sounds/voice/soldier_ack_3.wav"
+            ]
+        }
+    },
+
+    // Python Script Hooks
+    "scripts": {
+        "on_spawn": "scripts/units/soldier/on_spawn.py",
+        "on_death": "scripts/units/soldier/on_death.py",
+        "on_attack": "scripts/units/soldier/on_attack.py",
+        "on_damaged": "scripts/units/soldier/on_damaged.py",
+        "on_idle": "scripts/units/soldier/on_idle.py",
+        "on_target_acquired": "scripts/units/soldier/on_target_acquired.py"
+    },
+
+    // Classification
+    "class": "infantry",
+    "faction": "human",
+    "tier": 1,
+    "isHero": false,
+
+    // Custom Properties
+    "properties": {
+        "voiceSet": "male_soldier",
+        "squadSize": 4,
+        "trainingTime": 15.0,
+        "populationCost": 1,
+        "supplyUpkeep": 1
+    }
+}

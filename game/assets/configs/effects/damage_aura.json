@@ -1,0 +1,67 @@
+{
+    // Damage Aura - Area Damage Effect
+    // Deals periodic damage to enemies within radius
+
+    "id": "effect_damage_aura",
+    "name": "Damage Aura",
+    "description": "A deadly aura that damages nearby enemies.",
+    "type": "aura",
+    "tags": ["aura", "damage", "offensive", "enemy"],
+    "categories": ["damage_aura", "offensive_aura"],
+
+    "duration": 15.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "none",
+        "max_stacks": 1
+    },
+
+    "aura": {
+        "shape": "circle",
+        "radius": 8.0,
+        "affects": "enemies",
+        "pulse_interval": 1.0,
+        "pulse_on_enter": false,
+        "remove_on_exit": true,
+        "apply_effect": "effect_aura_damage_tick",
+        "max_targets": -1,
+        "follows_source": true,
+        "show_range": false,
+        "visual_effect": "particles/damage_circle.json"
+    },
+
+    "modifiers": [
+        {
+            "stat": "threat_modifier",
+            "op": "percent",
+            "value": 20
+        }
+    ],
+
+    "triggers": [
+        {
+            "condition": "on_kill",
+            "chance": 0.3,
+            "action": "extend_duration",
+            "amount": 2.0,
+            "target": "self"
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/damage_aura.png",
+        "particle": "particles/fire_aura.json",
+        "tint": [1.0, 0.4, 0.1, 0.7],
+        "glow": 0.5,
+        "scale": 1.2
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/damage_aura_apply.py"
+    },
+
+    "dispellable": true,
+    "purgeable": true,
+    "priority": 3
+}

@@ -5,6 +5,7 @@
 #include "graphics/ShaderManager.hpp"
 #include "graphics/TextureManager.hpp"
 #include "graphics/debug/DebugDraw.hpp"
+#include "graphics/OptimizedRenderer.hpp"
 #include "scene/Camera.hpp"
 #include "config/Config.hpp"
 
@@ -310,6 +311,92 @@ void Renderer::CreateFullscreenQuad() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     glBindVertexArray(0);
+}
+
+// ============================================================================
+// Performance Optimization Systems
+// ============================================================================
+
+bool Renderer::InitializeOptimizations(const std::string& configPath) {
+    if (m_optimizedRenderer) {
+        return true;  // Already initialized
+    }
+
+    m_optimizedRenderer = std::make_unique<OptimizedRenderer>();
+
+    std::string config = configPath;
+    if (config.empty()) {
+        // Try default config path
+        config = "config/graphics_config.json";
+    }
+
+    if (!m_optimizedRenderer->Initialize(this, config)) {
+        spdlog::error("Failed to initialize optimization systems");
+        m_optimizedRenderer.reset();
+        return false;
+    }
+
+    m_optimizationsEnabled = true;
+    spdlog::info("Renderer optimization systems initialized");
+
+    return true;
+}
+
+void Renderer::SubmitOptimized(const std::shared_ptr<Mesh>& mesh,
+                                const std::shared_ptr<Material>& material,
+                                const glm::mat4& transform,
+                                uint32_t objectID) {
+    if (!m_optimizedRenderer || !m_optimizationsEnabled) {
+        // Fall back to direct rendering
+        DrawMesh(*mesh, *material, transform);
+        return;
+    }
+
+    m_optimizedRenderer->Submit(mesh, material, transform, objectID);
+}
+
+void Renderer::FlushOptimized() {
+    if (!m_optimizedRenderer || !m_optimizationsEnabled) {
+        return;
+    }
+
+    m_optimizedRenderer->Render();
+}
+
+void Renderer::ApplyQualityPreset(const std::string& preset) {
+    if (m_optimizedRenderer) {
+        m_optimizedRenderer->ApplyQualityPreset(preset);
+    }
+}
+
+Renderer::ExtendedStats Renderer::GetExtendedStats() const {
+    ExtendedStats stats;
+    stats.baseStats = m_stats;
+
+    if (m_optimizedRenderer) {
+        const auto& perfStats = m_optimizedRenderer->GetStats();
+
+        stats.batchedDrawCalls = perfStats.batchedDrawCalls;
+        stats.instancedDrawCalls = perfStats.instancedDrawCalls;
+        stats.drawCallsSaved = perfStats.drawCallsSaved;
+        stats.objectsCulled = perfStats.frustumCulled + perfStats.occlusionCulled + perfStats.distanceCulled;
+        stats.cullingEfficiency = perfStats.cullingEfficiency;
+        stats.stateChanges = perfStats.stateChanges;
+
+        // Calculate batching efficiency
+        if (perfStats.totalDrawCalls > 0) {
+            stats.batchingEfficiency = static_cast<float>(stats.drawCallsSaved) /
+                                       (perfStats.totalDrawCalls + stats.drawCallsSaved) * 100.0f;
+        }
+
+        // Calculate LOD savings
+        if (perfStats.totalTriangles > 0) {
+            stats.lodSavings = static_cast<float>(perfStats.totalTriangles - perfStats.trianglesAfterLOD) /
+                               perfStats.totalTriangles * 100.0f;
+        }
+    }
+
+    return stats;
 }
 
 } // namespace Nova

@@ -1,0 +1,84 @@
+{
+    // Battle Rage - Triggered Combat Buff
+    // Increases damage and attack speed, extends on kills
+
+    "id": "effect_battle_rage",
+    "name": "Battle Rage",
+    "description": "Combat fury increases your offensive capabilities. Kills extend the duration.",
+    "type": "buff",
+    "tags": ["buff", "offensive", "rage", "melee", "triggered"],
+    "categories": ["offensive_buff", "triggered_buff"],
+
+    "duration": 10.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "refresh",
+        "max_stacks": 1
+    },
+
+    "modifiers": [
+        {
+            "stat": "damage",
+            "op": "percent",
+            "value": 25
+        },
+        {
+            "stat": "attack_speed",
+            "op": "percent",
+            "value": 15
+        },
+        {
+            "stat": "armor",
+            "op": "percent",
+            "value": -10
+        },
+        {
+            "stat": "crit_chance",
+            "op": "add",
+            "value": 10
+        }
+    ],
+
+    "triggers": [
+        {
+            "condition": "on_kill",
+            "action": "extend_duration",
+            "amount": 2.0,
+            "target": "self"
+        },
+        {
+            "condition": "on_crit",
+            "chance": 0.25,
+            "action": "heal_target",
+            "amount": 10,
+            "target": "self",
+            "cooldown": 1.0
+        },
+        {
+            "condition": "on_kill",
+            "chance": 0.5,
+            "action": "apply_effect",
+            "effect_id": "effect_bloodlust",
+            "target": "self",
+            "max_per_combat": 3
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/battle_rage.png",
+        "particle": "particles/rage_flames.json",
+        "tint": [1.0, 0.3, 0.2, 1.0],
+        "glow": 0.5,
+        "attach_point": "body"
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/battle_rage_apply.py",
+        "on_expire": "scripts/effects/battle_rage_expire.py"
+    },
+
+    "dispellable": false,
+    "purgeable": false,
+    "priority": 5
+}

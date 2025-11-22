@@ -1,0 +1,160 @@
+{
+    // Frost Nova - AOE centered on caster
+    // Damages and slows enemies around the caster
+
+    "id": "spell_frost_nova",
+    "name": "Frost Nova",
+    "description": "Blasts enemies near the caster for frost damage and freezes them in place.",
+    "icon": "icons/spells/frost_nova.png",
+    "school": "frost",
+    "tags": ["damage", "frost", "aoe", "crowd_control", "defensive"],
+
+    "targeting": {
+        "mode": "aoe",
+        "range": 0.0,
+        "radius": 8.0,
+        "max_targets": 20,
+        "priority": "nearest",
+
+        "filter": {
+            "faction": "enemy",
+            "can_target_self": false,
+            "must_be_alive": true
+        },
+
+        "ground_target": {
+            "enabled": false
+        },
+
+        "preview": {
+            "shape": "circle",
+            "show_aoe": true,
+            "pulse": true
+        }
+    },
+
+    "timing": {
+        "cast_time": 0.0,
+        "cooldown": 25.0,
+        "charges": 1,
+        "triggers_gcd": true
+    },
+
+    "cost": {
+        "mana": 30
+    },
+
+    "effects": [
+        {
+            "id": "frost_damage",
+            "type": "damage",
+            "timing": "instant",
+            "amount": 35,
+            "damage_type": "frost",
+            "scaling": {
+                "stat": "spell_power",
+                "coefficient": 0.45
+            }
+        },
+        {
+            "id": "root_effect",
+            "type": "root",
+            "timing": "instant",
+            "duration": 4.0,
+            "stacking": "refresh",
+            "description": "Frozen in place, unable to move."
+        },
+        {
+            "id": "slow_effect",
+            "type": "slow",
+            "timing": "instant",
+            "amount": 50,
+            "duration": 8.0,
+            "stacking": "highest",
+            "description": "Movement speed reduced by 50%."
+        }
+    ],
+
+    "flags": {
+        "can_crit": true,
+        "can_miss": false,
+        "can_be_interrupted": false,
+        "can_be_silenced": true,
+        "requires_los": false,
+        "cast_while_moving": true
+    },
+
+    "requirements": {
+        "min_level": 8
+    },
+
+    "events": {
+        "on_cast_complete": "scripts/spells/frost_nova_cast.py",
+        "on_hit": "scripts/spells/frost_nova_hit.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/frost_nova.png",
+        "effects": [
+            {
+                "id": "nova_burst",
+                "type": "particle",
+                "trigger": "on_cast_complete",
+                "attach": "caster_feet",
+                "path": "effects/frost_nova_burst.fx",
+                "scale": 1.5
+            },
+            {
+                "id": "frost_ring",
+                "type": "decal",
+                "trigger": "on_cast_complete",
+                "attach": "caster_feet",
+                "texture": "textures/decals/frost_ring.png",
+                "size": 8.0,
+                "duration": 5.0,
+                "rotate": true,
+                "rotation_speed": 15.0
+            },
+            {
+                "id": "freeze_effect",
+                "type": "particle",
+                "trigger": "on_hit",
+                "attach": "target",
+                "path": "effects/freeze_encase.fx",
+                "duration": 4.0
+            },
+            {
+                "id": "frost_light",
+                "type": "light",
+                "trigger": "on_cast_complete",
+                "attach": "caster",
+                "intensity": 3.0,
+                "range": 10.0,
+                "duration": 0.5
+            }
+        ],
+        "sounds": [
+            {
+                "id": "nova_sound",
+                "path": "sounds/spells/frost_nova.wav",
+                "trigger": "on_cast_complete",
+                "volume": 1.0
+            },
+            {
+                "id": "ice_crack",
+                "path": "sounds/spells/ice_crack.wav",
+                "trigger": "on_hit",
+                "volume": 0.7,
+                "pitch_variation": 0.15
+            }
+        ],
+        "animations": [
+            {
+                "id": "nova_anim",
+                "name": "cast_aoe_ground",
+                "trigger": "on_cast_complete",
+                "speed": 1.5
+            }
+        ]
+    }
+}

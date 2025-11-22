@@ -1,0 +1,59 @@
+{
+    // Shield - Damage Absorption Buff
+    // Absorbs incoming damage before it affects health
+
+    "id": "effect_shield",
+    "name": "Shield",
+    "description": "A protective barrier absorbs incoming damage.",
+    "type": "buff",
+    "tags": ["defensive", "shield", "protection", "absorb"],
+    "categories": ["protective_buff"],
+
+    "duration": 10.0,
+    "duration_type": "hybrid",
+    "charges": 1,
+
+    "stacking": {
+        "mode": "refresh",
+        "max_stacks": 1
+    },
+
+    "modifiers": [
+        {
+            "stat": "armor",
+            "op": "add",
+            "value": 50
+        },
+        {
+            "stat": "physical_resist",
+            "op": "percent",
+            "value": 20
+        }
+    ],
+
+    "triggers": [
+        {
+            "condition": "on_damage_taken",
+            "action": "execute_script",
+            "script": "scripts/effects/shield_absorb.py",
+            "function": "absorb_damage"
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/shield.png",
+        "particle": "particles/shield_bubble.json",
+        "tint": [0.8, 0.8, 1.0, 0.5],
+        "glow": 0.4,
+        "scale": 1.2
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/shield_apply.py",
+        "on_remove": "scripts/effects/shield_break.py"
+    },
+
+    "dispellable": false,
+    "purgeable": true,
+    "priority": 10
+}

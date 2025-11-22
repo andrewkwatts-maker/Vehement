@@ -1,0 +1,60 @@
+{
+    // Frozen - Ice Debuff
+    // Slows movement and attack speed, with periodic ice damage
+
+    "id": "effect_frozen",
+    "name": "Frozen",
+    "description": "Encased in ice, movement and attacks are slowed.",
+    "type": "debuff",
+    "tags": ["dot", "ice", "slow", "elemental", "crowd_control"],
+    "categories": ["damage_over_time", "ice_effect", "movement_impairment"],
+
+    "duration": 4.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "refresh",
+        "max_stacks": 1
+    },
+
+    "periodic": {
+        "interval": 1.0,
+        "type": "damage",
+        "amount": 5,
+        "damage_type": "ice"
+    },
+
+    "modifiers": [
+        {
+            "stat": "move_speed",
+            "op": "percent",
+            "value": -40
+        },
+        {
+            "stat": "attack_speed",
+            "op": "percent",
+            "value": -25
+        },
+        {
+            "stat": "ice_resist",
+            "op": "percent",
+            "value": -15
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/frozen.png",
+        "particle": "particles/ice_crystals.json",
+        "tint": [0.5, 0.8, 1.0, 1.0],
+        "shader": "shaders/ice_overlay.glsl",
+        "glow": 0.2
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/frozen_apply.py"
+    },
+
+    "dispellable": true,
+    "purgeable": true,
+    "priority": 5
+}

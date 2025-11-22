@@ -1,0 +1,53 @@
+{
+    // Regeneration - Healing over Time Buff
+    // Gradually restores health over duration
+
+    "id": "effect_regeneration",
+    "name": "Regeneration",
+    "description": "Rapidly regenerating health over time.",
+    "type": "buff",
+    "tags": ["hot", "heal", "regeneration", "sustain"],
+    "categories": ["healing_over_time"],
+
+    "duration": 12.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "duration",
+        "max_stacks": 1,
+        "duration_bonus": 6.0
+    },
+
+    "periodic": {
+        "interval": 1.0,
+        "type": "heal",
+        "amount": 15,
+        "scaling": 0.05,
+        "scaling_stat": "max_health"
+    },
+
+    "modifiers": [
+        {
+            "stat": "health_regen",
+            "op": "add",
+            "value": 5
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/regeneration.png",
+        "particle": "particles/healing_mist.json",
+        "tint": [0.2, 1.0, 0.4, 0.8],
+        "glow": 0.2,
+        "attach_point": "body"
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/regeneration_apply.py",
+        "on_tick": "scripts/effects/regeneration_tick.py"
+    },
+
+    "dispellable": true,
+    "purgeable": false,
+    "priority": 0
+}

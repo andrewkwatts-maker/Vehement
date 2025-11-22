@@ -1,0 +1,477 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "building.schema.json",
+  "title": "Building Definition",
+  "description": "Defines a placeable structure or building",
+  "type": "object",
+  "required": ["id", "name", "category", "size"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^building_[a-z_]+$",
+      "description": "Unique building identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Building description"
+    },
+    "category": {
+      "enum": ["defense", "production", "storage", "decoration", "infrastructure", "military", "special"],
+      "description": "Building category"
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "Specific subcategory"
+    },
+    "size": {
+      "$ref": "#/definitions/buildingSize"
+    },
+    "stats": {
+      "$ref": "#/definitions/buildingStats"
+    },
+    "construction": {
+      "$ref": "#/definitions/constructionConfig"
+    },
+    "production": {
+      "$ref": "#/definitions/productionConfig"
+    },
+    "defense": {
+      "$ref": "#/definitions/defenseConfig"
+    },
+    "storage": {
+      "$ref": "#/definitions/storageConfig"
+    },
+    "upgrades": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/upgradeLevel" }
+    },
+    "requirements": {
+      "$ref": "#/definitions/buildingRequirements"
+    },
+    "placement": {
+      "$ref": "#/definitions/placementRules"
+    },
+    "visuals": {
+      "$ref": "#/definitions/buildingVisuals"
+    },
+    "audio": {
+      "$ref": "#/definitions/buildingAudio"
+    },
+    "interaction": {
+      "$ref": "#/definitions/interactionConfig"
+    },
+    "auras": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/buildingAura" }
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    },
+    "events": {
+      "$ref": "common.schema.json#/definitions/events"
+    }
+  },
+
+  "definitions": {
+    "buildingSize": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Width in tiles"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Height in tiles (footprint)"
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Vertical height in units"
+        },
+        "footprint": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/vector2" },
+          "description": "Custom footprint shape"
+        }
+      },
+      "required": ["width", "height"]
+    },
+
+    "buildingStats": {
+      "type": "object",
+      "properties": {
+        "health": {
+          "type": "number",
+          "minimum": 1
+        },
+        "maxHealth": {
+          "type": "number",
+          "minimum": 1
+        },
+        "armor": {
+          "type": "number",
+          "default": 0
+        },
+        "repairCostPerHP": {
+          "type": "number"
+        },
+        "autoRepairRate": {
+          "type": "number",
+          "description": "HP per second when idle"
+        }
+      },
+      "required": ["health"]
+    },
+
+    "constructionConfig": {
+      "type": "object",
+      "properties": {
+        "buildTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "cost": {
+          "$ref": "common.schema.json#/definitions/resourceCost"
+        },
+        "builderRequired": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxPerPlayer": {
+          "type": "integer",
+          "description": "Max instances per player"
+        },
+        "maxGlobal": {
+          "type": "integer",
+          "description": "Max instances globally"
+        },
+        "foundationRequired": {
+          "type": "boolean",
+          "default": false
+        },
+        "scaffolding": {
+          "type": "boolean",
+          "default": false,
+          "description": "Shows construction scaffolding"
+        }
+      }
+    },
+
+    "productionConfig": {
+      "type": "object",
+      "properties": {
+        "produces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "resource": { "type": "string" },
+              "amount": { "type": "number" },
+              "interval": { "$ref": "common.schema.json#/definitions/duration" }
+            },
+            "required": ["resource", "amount", "interval"]
+          }
+        },
+        "requiresWorker": {
+          "type": "boolean",
+          "default": false
+        },
+        "workerCapacity": {
+          "type": "integer"
+        },
+        "recipes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "$ref": "common.schema.json#/definitions/localizedString" },
+              "inputs": {
+                "type": "object",
+                "additionalProperties": { "type": "number" }
+              },
+              "outputs": {
+                "type": "object",
+                "additionalProperties": { "type": "number" }
+              },
+              "craftTime": { "$ref": "common.schema.json#/definitions/duration" }
+            },
+            "required": ["id", "inputs", "outputs", "craftTime"]
+          }
+        }
+      }
+    },
+
+    "defenseConfig": {
+      "type": "object",
+      "properties": {
+        "attackRange": {
+          "type": "number"
+        },
+        "damage": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "damageType": {
+          "$ref": "common.schema.json#/definitions/damageType"
+        },
+        "attackSpeed": {
+          "type": "number",
+          "description": "Attacks per second"
+        },
+        "projectile": {
+          "type": "string",
+          "description": "Projectile ID"
+        },
+        "targetFilter": {
+          "$ref": "common.schema.json#/definitions/targetFilter"
+        },
+        "targetPriority": {
+          "enum": ["nearest", "strongest", "weakest", "fastest", "oldest"]
+        },
+        "multiTarget": {
+          "type": "integer",
+          "description": "Number of simultaneous targets"
+        },
+        "splashRadius": {
+          "type": "number"
+        },
+        "slowEffect": {
+          "type": "string",
+          "description": "Effect ID to apply on hit"
+        }
+      }
+    },
+
+    "storageConfig": {
+      "type": "object",
+      "properties": {
+        "capacity": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Resource type to capacity"
+        },
+        "totalCapacity": {
+          "type": "integer",
+          "description": "Combined capacity for all resources"
+        },
+        "acceptedResources": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "upgradeLevel": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cost": {
+          "$ref": "common.schema.json#/definitions/resourceCost"
+        },
+        "upgradeTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "requirements": {
+          "$ref": "#/definitions/buildingRequirements"
+        },
+        "statBonuses": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "newAbilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "visualVariant": {
+          "type": "string"
+        }
+      },
+      "required": ["level", "cost"]
+    },
+
+    "buildingRequirements": {
+      "type": "object",
+      "properties": {
+        "techLevel": {
+          "type": "integer"
+        },
+        "requiredBuildings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requiredTech": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "playerLevel": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "placementRules": {
+      "type": "object",
+      "properties": {
+        "terrain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed terrain types"
+        },
+        "forbiddenTerrain": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requiresWater": {
+          "type": "boolean",
+          "default": false
+        },
+        "requiresRoad": {
+          "type": "boolean",
+          "default": false
+        },
+        "minDistanceToSame": {
+          "type": "number"
+        },
+        "minDistanceToEnemy": {
+          "type": "number"
+        },
+        "mustConnectToBase": {
+          "type": "boolean",
+          "default": false
+        },
+        "canRotate": {
+          "type": "boolean",
+          "default": true
+        },
+        "rotationAngles": {
+          "type": "array",
+          "items": { "type": "number" }
+        }
+      }
+    },
+
+    "buildingVisuals": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "sprite": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "constructionModel": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "destroyedModel": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "animations": {
+          "type": "object",
+          "properties": {
+            "idle": { "type": "string" },
+            "working": { "type": "string" },
+            "damaged": { "type": "string" },
+            "destroyed": { "type": "string" }
+          }
+        },
+        "lights": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "position": { "$ref": "common.schema.json#/definitions/vector3" },
+              "color": { "$ref": "common.schema.json#/definitions/color" },
+              "intensity": { "type": "number" },
+              "range": { "type": "number" }
+            }
+          }
+        },
+        "smoke": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "position": { "$ref": "common.schema.json#/definitions/vector3" },
+            "particle": { "$ref": "common.schema.json#/definitions/assetPath" }
+          }
+        }
+      }
+    },
+
+    "buildingAudio": {
+      "type": "object",
+      "properties": {
+        "constructStart": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "constructComplete": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "working": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "damaged": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "destroyed": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "attack": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "ambient": { "$ref": "common.schema.json#/definitions/assetPath" }
+      }
+    },
+
+    "interactionConfig": {
+      "type": "object",
+      "properties": {
+        "interactable": {
+          "type": "boolean",
+          "default": false
+        },
+        "interactionRadius": {
+          "type": "number"
+        },
+        "interactionPrompt": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "opensUI": {
+          "type": "string",
+          "description": "UI panel ID to open"
+        },
+        "triggerDialogue": {
+          "type": "string",
+          "description": "Dialogue ID to trigger"
+        },
+        "shop": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "inventory": { "type": "string", "description": "Shop inventory ID" }
+          }
+        }
+      }
+    },
+
+    "buildingAura": {
+      "type": "object",
+      "properties": {
+        "effectId": {
+          "type": "string",
+          "description": "Effect to apply in range"
+        },
+        "radius": {
+          "type": "number"
+        },
+        "filter": {
+          "$ref": "common.schema.json#/definitions/targetFilter"
+        },
+        "tickInterval": {
+          "$ref": "common.schema.json#/definitions/duration"
+        }
+      },
+      "required": ["effectId", "radius"]
+    }
+  }
+}

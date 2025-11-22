@@ -1,0 +1,397 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "ability.schema.json",
+  "title": "Ability Definition",
+  "description": "Defines a hero or unit ability",
+  "type": "object",
+  "required": ["id", "name", "type"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^ability_[a-z_]+$",
+      "description": "Unique ability identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Ability description"
+    },
+    "icon": {
+      "$ref": "common.schema.json#/definitions/assetPath",
+      "description": "Icon texture path"
+    },
+    "type": {
+      "enum": ["active", "passive", "toggle", "channeled", "charged", "ultimate"],
+      "description": "Ability type"
+    },
+    "slot": {
+      "enum": ["basic", "q", "w", "e", "r", "d", "f", "extra"],
+      "description": "Default ability slot"
+    },
+    "targeting": {
+      "$ref": "spell.schema.json#/definitions/targeting",
+      "description": "Targeting configuration"
+    },
+    "cost": {
+      "$ref": "#/definitions/abilityCost"
+    },
+    "cooldown": {
+      "$ref": "#/definitions/abilityCooldown"
+    },
+    "cast": {
+      "$ref": "#/definitions/castConfig"
+    },
+    "effects": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/abilityEffect" }
+    },
+    "ranks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/abilityRank" },
+      "description": "Ability upgrades per level"
+    },
+    "modifiers": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/definitions/modifier" },
+      "description": "Passive stat modifiers"
+    },
+    "charges": {
+      "$ref": "spell.schema.json#/definitions/charges"
+    },
+    "combo": {
+      "$ref": "#/definitions/comboConfig"
+    },
+    "autocast": {
+      "$ref": "#/definitions/autocastConfig"
+    },
+    "visuals": {
+      "$ref": "#/definitions/abilityVisuals"
+    },
+    "audio": {
+      "$ref": "#/definitions/abilityAudio"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    },
+    "flags": {
+      "$ref": "#/definitions/abilityFlags"
+    }
+  },
+
+  "definitions": {
+    "abilityCost": {
+      "type": "object",
+      "properties": {
+        "mana": { "type": "number", "minimum": 0 },
+        "energy": { "type": "number", "minimum": 0 },
+        "health": { "type": "number", "minimum": 0 },
+        "healthPercent": { "$ref": "common.schema.json#/definitions/percentage" },
+        "rage": { "type": "number", "minimum": 0 },
+        "combo": { "type": "integer", "minimum": 0 },
+        "ammo": { "type": "integer", "minimum": 0 },
+        "charges": { "type": "integer", "minimum": 0 },
+        "custom": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "perSecond": {
+          "type": "boolean",
+          "default": false,
+          "description": "Cost is per second while active"
+        }
+      }
+    },
+
+    "abilityCooldown": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "perRank": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "affectedByCDR": {
+          "type": "boolean",
+          "default": true
+        },
+        "startsOnCast": {
+          "type": "boolean",
+          "default": true
+        },
+        "sharedWith": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ability IDs sharing this cooldown"
+        },
+        "resetConditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "reductionPerHit": {
+          "$ref": "common.schema.json#/definitions/duration"
+        }
+      }
+    },
+
+    "castConfig": {
+      "type": "object",
+      "properties": {
+        "castTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "channelDuration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "chargeTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "maxChargeTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "chargeEffect": {
+          "type": "string",
+          "description": "How charging affects the ability"
+        },
+        "interruptible": {
+          "type": "boolean",
+          "default": true
+        },
+        "canMoveWhileCasting": {
+          "type": "boolean",
+          "default": false
+        },
+        "canCancelEarly": {
+          "type": "boolean",
+          "default": false
+        },
+        "animation": {
+          "type": "string"
+        },
+        "faceTarget": {
+          "type": "boolean",
+          "default": true
+        },
+        "rootDuration": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Self-root during cast"
+        }
+      }
+    },
+
+    "abilityEffect": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "damage", "heal", "shield", "apply_effect", "remove_effect",
+            "spawn_projectile", "spawn_entity", "spawn_area",
+            "dash", "blink", "teleport", "pull", "push", "knockup",
+            "stun", "slow", "silence", "root", "fear", "taunt",
+            "modify_stat", "grant_resource", "reset_cooldown",
+            "transform", "clone", "swap_position"
+          ]
+        },
+        "target": {
+          "enum": ["self", "target", "area", "projectile_target", "all_in_range"]
+        },
+        "value": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "damageType": {
+          "$ref": "common.schema.json#/definitions/damageType"
+        },
+        "scaling": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stat": { "type": "string" },
+              "ratio": { "type": "number" }
+            },
+            "required": ["stat", "ratio"]
+          }
+        },
+        "effectId": {
+          "type": "string"
+        },
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "delay": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "projectileId": {
+          "type": "string"
+        },
+        "distance": {
+          "type": "number"
+        },
+        "speed": {
+          "type": "number"
+        },
+        "areaRadius": {
+          "type": "number"
+        },
+        "areaDuration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "bonusEffects": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/abilityEffect" },
+          "description": "Additional effects on condition"
+        }
+      },
+      "required": ["type"]
+    },
+
+    "abilityRank": {
+      "type": "object",
+      "properties": {
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requiredLevel": {
+          "type": "integer"
+        },
+        "damage": { "type": "number" },
+        "healing": { "type": "number" },
+        "shieldAmount": { "type": "number" },
+        "duration": { "$ref": "common.schema.json#/definitions/duration" },
+        "cooldown": { "$ref": "common.schema.json#/definitions/duration" },
+        "cost": { "type": "number" },
+        "range": { "type": "number" },
+        "radius": { "type": "number" },
+        "bonusEffect": { "type": "string" },
+        "description": { "$ref": "common.schema.json#/definitions/localizedString" }
+      },
+      "required": ["rank"]
+    },
+
+    "comboConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxHits": {
+          "type": "integer"
+        },
+        "comboWindow": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hit": { "type": "integer" },
+              "animation": { "type": "string" },
+              "damage": { "type": "number" },
+              "effects": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/abilityEffect" }
+              }
+            }
+          }
+        },
+        "finisher": {
+          "type": "object",
+          "properties": {
+            "requiredHits": { "type": "integer" },
+            "effects": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/abilityEffect" }
+            }
+          }
+        }
+      }
+    },
+
+    "autocastConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "defaultOn": {
+          "type": "boolean",
+          "default": false
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "priority": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "abilityVisuals": {
+      "type": "object",
+      "properties": {
+        "castParticles": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "hitParticles": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "channelParticles": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "areaIndicator": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "chargeIndicator": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "casterAnimation": { "type": "string" },
+        "targetAnimation": { "type": "string" },
+        "screenShake": {
+          "type": "object",
+          "properties": {
+            "intensity": { "type": "number" },
+            "duration": { "$ref": "common.schema.json#/definitions/duration" }
+          }
+        },
+        "cameraEffect": {
+          "enum": ["none", "zoom", "shake", "slow_motion", "focus"]
+        }
+      }
+    },
+
+    "abilityAudio": {
+      "type": "object",
+      "properties": {
+        "cast": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "hit": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "channel": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "charge": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "ready": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "voiceline": { "$ref": "common.schema.json#/definitions/assetPath" }
+      }
+    },
+
+    "abilityFlags": {
+      "type": "object",
+      "properties": {
+        "canCrit": { "type": "boolean", "default": true },
+        "canMiss": { "type": "boolean", "default": false },
+        "canBeBlocked": { "type": "boolean", "default": true },
+        "canBeDodged": { "type": "boolean", "default": true },
+        "canBeReflected": { "type": "boolean", "default": false },
+        "ignoresArmor": { "type": "boolean", "default": false },
+        "ignoresMagicResist": { "type": "boolean", "default": false },
+        "appliesOnHit": { "type": "boolean", "default": false },
+        "triggersOnHit": { "type": "boolean", "default": true },
+        "isUltimate": { "type": "boolean", "default": false },
+        "requiresTarget": { "type": "boolean", "default": false },
+        "usableWhileDisabled": { "type": "boolean", "default": false },
+        "usableWhileDead": { "type": "boolean", "default": false },
+        "breaksInvisibility": { "type": "boolean", "default": true }
+      }
+    }
+  }
+}

@@ -1,0 +1,471 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "hero.schema.json",
+  "title": "Hero Definition",
+  "description": "Defines a hero class/character",
+  "type": "object",
+  "required": ["id", "name", "class", "baseStats"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^hero_[a-z_]+$",
+      "description": "Unique hero identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "title": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Hero title/epithet"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Hero backstory/description"
+    },
+    "class": {
+      "enum": ["warrior", "mage", "ranger", "rogue", "healer", "tank", "support", "custom"],
+      "description": "Hero archetype"
+    },
+    "role": {
+      "type": "array",
+      "items": {
+        "enum": ["damage", "tank", "healer", "support", "crowd_control", "assassin"]
+      },
+      "description": "Combat roles"
+    },
+    "difficulty": {
+      "enum": ["easy", "medium", "hard", "expert"],
+      "description": "Difficulty to play"
+    },
+    "baseStats": {
+      "$ref": "#/definitions/heroStats"
+    },
+    "growth": {
+      "$ref": "#/definitions/statGrowth"
+    },
+    "abilities": {
+      "$ref": "#/definitions/heroAbilities"
+    },
+    "talents": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/talentTree" }
+    },
+    "passives": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/passiveAbility" }
+    },
+    "resources": {
+      "$ref": "#/definitions/resourceSystem"
+    },
+    "equipment": {
+      "$ref": "#/definitions/equipmentConfig"
+    },
+    "progression": {
+      "$ref": "#/definitions/progressionConfig"
+    },
+    "visuals": {
+      "$ref": "#/definitions/heroVisuals"
+    },
+    "audio": {
+      "$ref": "#/definitions/heroAudio"
+    },
+    "lore": {
+      "$ref": "#/definitions/heroLore"
+    },
+    "unlockRequirements": {
+      "$ref": "#/definitions/unlockRequirements"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    },
+    "events": {
+      "$ref": "common.schema.json#/definitions/events"
+    }
+  },
+
+  "definitions": {
+    "heroStats": {
+      "type": "object",
+      "properties": {
+        "health": { "type": "number", "minimum": 1 },
+        "mana": { "type": "number", "minimum": 0 },
+        "stamina": { "type": "number", "minimum": 0 },
+        "attackDamage": { "type": "number", "minimum": 0 },
+        "abilityPower": { "type": "number", "minimum": 0 },
+        "armor": { "type": "number", "minimum": 0 },
+        "magicResist": { "type": "number", "minimum": 0 },
+        "attackSpeed": { "type": "number", "minimum": 0.1 },
+        "moveSpeed": { "type": "number", "minimum": 0 },
+        "criticalChance": { "$ref": "common.schema.json#/definitions/probability" },
+        "criticalDamage": { "type": "number", "default": 2 },
+        "lifeSteal": { "$ref": "common.schema.json#/definitions/probability" },
+        "cooldownReduction": { "$ref": "common.schema.json#/definitions/percentage" },
+        "healthRegen": { "type": "number" },
+        "manaRegen": { "type": "number" },
+        "attackRange": { "type": "number" }
+      },
+      "required": ["health", "attackDamage", "moveSpeed"]
+    },
+
+    "statGrowth": {
+      "type": "object",
+      "properties": {
+        "healthPerLevel": { "type": "number" },
+        "manaPerLevel": { "type": "number" },
+        "attackDamagePerLevel": { "type": "number" },
+        "abilityPowerPerLevel": { "type": "number" },
+        "armorPerLevel": { "type": "number" },
+        "magicResistPerLevel": { "type": "number" },
+        "attackSpeedPerLevel": { "type": "number" },
+        "healthRegenPerLevel": { "type": "number" },
+        "manaRegenPerLevel": { "type": "number" }
+      }
+    },
+
+    "heroAbilities": {
+      "type": "object",
+      "properties": {
+        "basic": {
+          "type": "string",
+          "description": "Basic attack ability ID"
+        },
+        "q": {
+          "type": "string",
+          "description": "First ability ID"
+        },
+        "w": {
+          "type": "string",
+          "description": "Second ability ID"
+        },
+        "e": {
+          "type": "string",
+          "description": "Third ability ID"
+        },
+        "r": {
+          "type": "string",
+          "description": "Ultimate ability ID"
+        },
+        "passive": {
+          "type": "string",
+          "description": "Passive ability ID"
+        },
+        "extra": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Additional ability IDs"
+        }
+      },
+      "required": ["basic", "q", "w", "e", "r"]
+    },
+
+    "talentTree": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "level": { "type": "integer" },
+              "talents": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/talent" }
+              }
+            },
+            "required": ["level", "talents"]
+          }
+        }
+      },
+      "required": ["id", "name", "tiers"]
+    },
+
+    "talent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "description": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "modifiers": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/modifier" }
+        },
+        "abilityModification": {
+          "type": "object",
+          "properties": {
+            "abilityId": { "type": "string" },
+            "changes": { "type": "object" }
+          }
+        },
+        "unlocksAbility": {
+          "type": "string"
+        },
+        "prerequisite": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name"]
+    },
+
+    "passiveAbility": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "description": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/modifier" }
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "trigger": { "$ref": "common.schema.json#/definitions/trigger" },
+              "action": { "$ref": "common.schema.json#/definitions/action" }
+            },
+            "required": ["trigger", "action"]
+          }
+        },
+        "unlockLevel": {
+          "type": "integer"
+        }
+      },
+      "required": ["id", "name"]
+    },
+
+    "resourceSystem": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": ["mana", "energy", "rage", "fury", "focus", "heat", "combo", "none"]
+            },
+            "maxValue": { "type": "number" },
+            "regenRate": { "type": "number" },
+            "regenDelay": { "$ref": "common.schema.json#/definitions/duration" },
+            "startsAt": { "type": "number" },
+            "decay": { "type": "boolean" },
+            "decayRate": { "type": "number" }
+          },
+          "required": ["type"]
+        },
+        "secondary": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "maxValue": { "type": "number" },
+            "buildup": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "equipmentConfig": {
+      "type": "object",
+      "properties": {
+        "slots": {
+          "type": "array",
+          "items": {
+            "enum": ["weapon", "offhand", "head", "chest", "legs", "feet", "hands", "ring1", "ring2", "amulet", "trinket"]
+          }
+        },
+        "preferredWeaponTypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "startingEquipment": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "canDualWield": {
+          "type": "boolean",
+          "default": false
+        },
+        "canUseShield": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+
+    "progressionConfig": {
+      "type": "object",
+      "properties": {
+        "maxLevel": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "experiencePerLevel": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "experienceFormula": {
+          "type": "string",
+          "description": "Formula for XP per level"
+        },
+        "skillPointsPerLevel": {
+          "type": "integer"
+        },
+        "talentPointsPerLevel": {
+          "type": "integer"
+        },
+        "prestigeEnabled": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "heroVisuals": {
+      "type": "object",
+      "properties": {
+        "portrait": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "icon": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "sprite": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "model": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "animations": {
+          "type": "object",
+          "properties": {
+            "idle": { "type": "string" },
+            "walk": { "type": "string" },
+            "run": { "type": "string" },
+            "attack": { "type": "string" },
+            "cast": { "type": "string" },
+            "death": { "type": "string" },
+            "victory": { "type": "string" }
+          }
+        },
+        "skins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "$ref": "common.schema.json#/definitions/localizedString" },
+              "model": { "$ref": "common.schema.json#/definitions/assetPath" },
+              "portrait": { "$ref": "common.schema.json#/definitions/assetPath" },
+              "rarity": { "enum": ["common", "rare", "epic", "legendary"] }
+            },
+            "required": ["id", "name"]
+          }
+        },
+        "colorScheme": {
+          "type": "object",
+          "properties": {
+            "primary": { "$ref": "common.schema.json#/definitions/color" },
+            "secondary": { "$ref": "common.schema.json#/definitions/color" },
+            "accent": { "$ref": "common.schema.json#/definitions/color" }
+          }
+        }
+      }
+    },
+
+    "heroAudio": {
+      "type": "object",
+      "properties": {
+        "spawn": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "death": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "attack": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "hurt": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "victory": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "taunt": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "select": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "move": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "abilityVoicelines": {
+          "type": "object",
+          "additionalProperties": { "$ref": "common.schema.json#/definitions/assetPath" }
+        }
+      }
+    },
+
+    "heroLore": {
+      "type": "object",
+      "properties": {
+        "backstory": {
+          "$ref": "common.schema.json#/definitions/localizedString"
+        },
+        "faction": {
+          "type": "string"
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "heroId": { "type": "string" },
+              "type": { "enum": ["ally", "rival", "mentor", "student", "family", "enemy"] },
+              "description": { "$ref": "common.schema.json#/definitions/localizedString" }
+            }
+          }
+        },
+        "quotes": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/localizedString" }
+        }
+      }
+    },
+
+    "unlockRequirements": {
+      "type": "object",
+      "properties": {
+        "defaultUnlocked": {
+          "type": "boolean",
+          "default": false
+        },
+        "currency": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "amount": { "type": "integer" }
+          }
+        },
+        "achievementId": {
+          "type": "string"
+        },
+        "questId": {
+          "type": "string"
+        },
+        "playerLevel": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

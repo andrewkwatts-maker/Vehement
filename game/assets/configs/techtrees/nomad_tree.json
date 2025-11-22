@@ -1,0 +1,367 @@
+{
+    "id": "tech_tree_nomad",
+    "name": "Nomad Technologies",
+    "description": "Specialized technologies for the Nomad culture, focusing on mobility, hit-and-run tactics, and adaptable warfare.",
+    "icon": "icons/techtrees/nomad.png",
+    "culture": "nomad",
+    "universal": false,
+
+    "nodes": [
+        {
+            "id": "tech_nomad_mobile_camps",
+            "name": "Mobile Camps",
+            "description": "Develop techniques for rapidly setting up and breaking down camps, allowing your people to move quickly.",
+            "icon": "icons/tech/nomad/mobile_camps.png",
+            "tier": 1,
+            "category": "infrastructure",
+            "age_requirement": "stone",
+            "cost": {
+                "wood": 100,
+                "food": 50,
+                "time": 60
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["mobile_tent", "pack_wagon", "portable_forge"],
+                "abilities": ["quick_pack"]
+            },
+            "modifiers": [
+                {"stat": "build_time", "type": "percent", "value": -30, "scope": {"category": "camp"}},
+                {"stat": "movement_speed", "type": "percent", "value": 10, "scope": "global"}
+            ],
+            "events": {
+                "on_research_complete": "scripts/tech/nomad/mobile_camps.py"
+            },
+            "position": {"x": 0, "y": 0, "row": 0, "column": 0},
+            "key_tech": true
+        },
+        {
+            "id": "tech_nomad_swift_steeds",
+            "name": "Swift Steeds",
+            "description": "Breed faster horses for superior cavalry and scouts.",
+            "icon": "icons/tech/nomad/swift_steeds.png",
+            "tier": 1,
+            "category": "military",
+            "age_requirement": "bronze",
+            "cost": {
+                "food": 150,
+                "gold": 50,
+                "time": 75
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["horse_breeder"],
+                "units": ["light_cavalry", "horse_archer"],
+                "upgrades": ["swift_horses"]
+            },
+            "modifiers": [
+                {"stat": "movement_speed", "type": "percent", "value": 25, "scope": {"unit_type": "cavalry"}},
+                {"stat": "vision_range", "type": "flat", "value": 3, "scope": {"unit_type": "cavalry"}}
+            ],
+            "position": {"x": 200, "y": 0, "row": 0, "column": 1},
+            "key_tech": true
+        },
+        {
+            "id": "tech_nomad_hit_and_run",
+            "name": "Hit and Run Tactics",
+            "description": "Master the art of striking quickly and retreating before the enemy can respond.",
+            "icon": "icons/tech/nomad/hit_and_run.png",
+            "tier": 2,
+            "category": "military",
+            "age_requirement": "bronze",
+            "cost": {
+                "gold": 150,
+                "time": 90
+            },
+            "prerequisites": ["tech_nomad_swift_steeds"],
+            "unlocks": {
+                "abilities": ["rapid_retreat", "feigned_retreat", "ambush"],
+                "upgrades": ["mobility_training"]
+            },
+            "modifiers": [
+                {"stat": "movement_speed", "type": "percent", "value": 50, "scope": "global", "condition": {"type": "when_not_in_combat"}},
+                {"stat": "evasion", "type": "flat", "value": 15, "scope": {"unit_type": "cavalry"}}
+            ],
+            "position": {"x": 200, "y": 120, "row": 1, "column": 1}
+        },
+        {
+            "id": "tech_nomad_horse_archery",
+            "name": "Horse Archery",
+            "description": "Train warriors to shoot accurately while riding at full speed.",
+            "icon": "icons/tech/nomad/horse_archery.png",
+            "tier": 2,
+            "category": "military",
+            "age_requirement": "bronze",
+            "cost": {
+                "wood": 100,
+                "gold": 150,
+                "time": 120
+            },
+            "prerequisites": ["tech_nomad_swift_steeds"],
+            "unlocks": {
+                "units": ["elite_horse_archer"],
+                "abilities": ["parthian_shot"],
+                "upgrades": ["mounted_bow_mastery"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 20, "scope": {"unit_type": "horse_archer"}},
+                {"stat": "accuracy", "type": "percent", "value": 30, "scope": {"unit_type": "horse_archer"}, "condition": {"type": "when_moving"}}
+            ],
+            "position": {"x": 400, "y": 120, "row": 1, "column": 2}
+        },
+        {
+            "id": "tech_nomad_caravan_masters",
+            "name": "Caravan Masters",
+            "description": "Develop expertise in managing trade caravans across vast distances.",
+            "icon": "icons/tech/nomad/caravan_masters.png",
+            "tier": 2,
+            "category": "economy",
+            "age_requirement": "bronze",
+            "cost": {
+                "gold": 200,
+                "food": 100,
+                "time": 90
+            },
+            "prerequisites": ["tech_nomad_mobile_camps"],
+            "unlocks": {
+                "buildings": ["caravan_post", "trading_camp"],
+                "units": ["trade_caravan"],
+                "abilities": ["establish_trade_route"]
+            },
+            "modifiers": [
+                {"stat": "gold_production", "type": "percent", "value": 20, "scope": "global"},
+                {"stat": "carry_capacity", "type": "percent", "value": 50, "scope": {"unit_type": "caravan"}}
+            ],
+            "position": {"x": 0, "y": 120, "row": 1, "column": 0}
+        },
+        {
+            "id": "tech_nomad_raiding_tactics",
+            "name": "Raiding Tactics",
+            "description": "Perfect the art of raiding enemy settlements for resources.",
+            "icon": "icons/tech/nomad/raiding.png",
+            "tier": 2,
+            "category": "military",
+            "age_requirement": "iron",
+            "cost": {
+                "gold": 180,
+                "metal": 100,
+                "time": 120
+            },
+            "prerequisites": ["tech_nomad_hit_and_run"],
+            "unlocks": {
+                "abilities": ["pillage", "raid_supplies", "burn_fields"],
+                "units": ["raider"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 30, "scope": "global", "condition": {"type": "when_in_enemy_territory"}},
+                {"stat": "gather_speed", "type": "percent", "value": 100, "scope": "global", "condition": {"type": "when_in_enemy_territory"}}
+            ],
+            "position": {"x": 200, "y": 240, "row": 2, "column": 1}
+        },
+        {
+            "id": "tech_nomad_guerrilla_warfare",
+            "name": "Guerrilla Warfare",
+            "description": "Master unconventional warfare tactics to harass and wear down enemies.",
+            "icon": "icons/tech/nomad/guerrilla.png",
+            "tier": 3,
+            "category": "military",
+            "age_requirement": "iron",
+            "cost": {
+                "gold": 250,
+                "time": 150
+            },
+            "prerequisites": ["tech_nomad_raiding_tactics", "tech_nomad_hit_and_run"],
+            "unlocks": {
+                "abilities": ["ambush_setup", "sabotage", "scatter_and_regroup"],
+                "units": ["guerrilla_fighter"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 50, "scope": "global", "condition": {"type": "when_health_below", "threshold": 0.5}},
+                {"stat": "evasion", "type": "flat", "value": 25, "scope": "global"},
+                {"stat": "detection_range", "type": "percent", "value": -50, "scope": {"category": "enemy"}}
+            ],
+            "position": {"x": 100, "y": 360, "row": 3, "column": 0}
+        },
+        {
+            "id": "tech_nomad_wind_riders",
+            "name": "Wind Riders",
+            "description": "Elite mounted warriors who strike like the wind itself.",
+            "icon": "icons/tech/nomad/wind_riders.png",
+            "tier": 3,
+            "category": "military",
+            "age_requirement": "medieval",
+            "cost": {
+                "gold": 300,
+                "food": 200,
+                "time": 180
+            },
+            "prerequisites": ["tech_nomad_horse_archery", "tech_nomad_hit_and_run"],
+            "unlocks": {
+                "units": ["wind_rider"],
+                "abilities": ["whirlwind_attack", "dust_storm"]
+            },
+            "modifiers": [
+                {"stat": "movement_speed", "type": "percent", "value": 40, "scope": {"unit_type": "cavalry"}},
+                {"stat": "damage", "type": "percent", "value": 30, "scope": {"unit_type": "cavalry"}},
+                {"stat": "attack_speed", "type": "percent", "value": 25, "scope": {"unit_type": "cavalry"}}
+            ],
+            "position": {"x": 400, "y": 240, "row": 2, "column": 2},
+            "key_tech": true
+        },
+        {
+            "id": "tech_nomad_pack_tactics",
+            "name": "Pack Tactics",
+            "description": "Coordinate multiple units to attack together for devastating effect.",
+            "icon": "icons/tech/nomad/pack_tactics.png",
+            "tier": 2,
+            "category": "military",
+            "age_requirement": "iron",
+            "cost": {
+                "gold": 200,
+                "time": 120
+            },
+            "prerequisites": ["tech_nomad_swift_steeds"],
+            "unlocks": {
+                "abilities": ["coordinated_attack", "flanking_bonus", "pack_hunt"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 15, "scope": "global", "condition": {"type": "when_near_unit", "target": "ally", "radius": 5}},
+                {"stat": "crit_chance", "type": "flat", "value": 10, "scope": "global", "condition": {"type": "when_near_unit", "target": "ally", "radius": 5}}
+            ],
+            "position": {"x": 400, "y": 0, "row": 0, "column": 2}
+        },
+        {
+            "id": "tech_nomad_nomadic_resilience",
+            "name": "Nomadic Resilience",
+            "description": "Your people become hardened by the harsh nomadic lifestyle.",
+            "icon": "icons/tech/nomad/resilience.png",
+            "tier": 3,
+            "category": "economy",
+            "age_requirement": "iron",
+            "cost": {
+                "food": 250,
+                "gold": 150,
+                "time": 150
+            },
+            "prerequisites": ["tech_nomad_caravan_masters", "tech_nomad_mobile_camps"],
+            "unlocks": {
+                "abilities": ["endure_hardship", "forage"],
+                "features": ["reduced_upkeep"]
+            },
+            "modifiers": [
+                {"stat": "upkeep", "type": "percent", "value": -25, "scope": "global"},
+                {"stat": "max_health", "type": "percent", "value": 15, "scope": "global"},
+                {"stat": "health_regen", "type": "percent", "value": 50, "scope": "global", "condition": {"type": "when_not_in_combat"}}
+            ],
+            "position": {"x": 0, "y": 240, "row": 2, "column": 0}
+        },
+        {
+            "id": "tech_nomad_eternal_migration",
+            "name": "Eternal Migration",
+            "description": "Your entire civilization becomes truly mobile, able to relocate at will.",
+            "icon": "icons/tech/nomad/eternal_migration.png",
+            "tier": 4,
+            "category": "infrastructure",
+            "age_requirement": "medieval",
+            "cost": {
+                "gold": 400,
+                "food": 300,
+                "time": 240
+            },
+            "prerequisites": ["tech_nomad_nomadic_resilience", "tech_nomad_guerrilla_warfare"],
+            "unlocks": {
+                "buildings": ["mobile_fortress", "great_yurt"],
+                "abilities": ["mass_relocation", "disappear"],
+                "features": ["mobile_capital"]
+            },
+            "modifiers": [
+                {"stat": "build_time", "type": "percent", "value": -50, "scope": "global"},
+                {"stat": "movement_speed", "type": "percent", "value": 20, "scope": "global"}
+            ],
+            "position": {"x": 0, "y": 360, "row": 3, "column": 0},
+            "key_tech": true,
+            "can_be_lost": false
+        },
+        {
+            "id": "tech_nomad_steppe_dominance",
+            "name": "Steppe Dominance",
+            "description": "Your cavalry becomes the undisputed masters of open terrain warfare.",
+            "icon": "icons/tech/nomad/steppe_dominance.png",
+            "tier": 4,
+            "category": "military",
+            "age_requirement": "medieval",
+            "cost": {
+                "gold": 500,
+                "food": 300,
+                "metal": 200,
+                "time": 300
+            },
+            "prerequisites": ["tech_nomad_wind_riders", "tech_nomad_pack_tactics"],
+            "unlocks": {
+                "units": ["khan_guard"],
+                "abilities": ["cavalry_charge", "trampling_assault"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 50, "scope": {"unit_type": "cavalry"}},
+                {"stat": "armor_penetration", "type": "flat", "value": 20, "scope": {"unit_type": "cavalry"}},
+                {"stat": "crit_damage", "type": "percent", "value": 50, "scope": {"unit_type": "cavalry"}}
+            ],
+            "position": {"x": 400, "y": 360, "row": 3, "column": 2},
+            "key_tech": true,
+            "can_be_lost": false
+        }
+    ],
+
+    "connections": [
+        {"from": "tech_nomad_mobile_camps", "to": "tech_nomad_caravan_masters"},
+        {"from": "tech_nomad_swift_steeds", "to": "tech_nomad_hit_and_run"},
+        {"from": "tech_nomad_swift_steeds", "to": "tech_nomad_horse_archery"},
+        {"from": "tech_nomad_swift_steeds", "to": "tech_nomad_pack_tactics"},
+        {"from": "tech_nomad_hit_and_run", "to": "tech_nomad_raiding_tactics"},
+        {"from": "tech_nomad_hit_and_run", "to": "tech_nomad_guerrilla_warfare"},
+        {"from": "tech_nomad_raiding_tactics", "to": "tech_nomad_guerrilla_warfare"},
+        {"from": "tech_nomad_horse_archery", "to": "tech_nomad_wind_riders"},
+        {"from": "tech_nomad_hit_and_run", "to": "tech_nomad_wind_riders"},
+        {"from": "tech_nomad_caravan_masters", "to": "tech_nomad_nomadic_resilience"},
+        {"from": "tech_nomad_mobile_camps", "to": "tech_nomad_nomadic_resilience"},
+        {"from": "tech_nomad_nomadic_resilience", "to": "tech_nomad_eternal_migration"},
+        {"from": "tech_nomad_guerrilla_warfare", "to": "tech_nomad_eternal_migration"},
+        {"from": "tech_nomad_wind_riders", "to": "tech_nomad_steppe_dominance"},
+        {"from": "tech_nomad_pack_tactics", "to": "tech_nomad_steppe_dominance"}
+    ],
+
+    "branches": [
+        {
+            "id": "branch_nomad_mobility",
+            "name": "Mobility & Camps",
+            "description": "Technologies for mobile living and rapid movement.",
+            "category": "infrastructure",
+            "techs": ["tech_nomad_mobile_camps", "tech_nomad_nomadic_resilience", "tech_nomad_eternal_migration"],
+            "display_order": 0
+        },
+        {
+            "id": "branch_nomad_cavalry",
+            "name": "Cavalry Warfare",
+            "description": "Technologies for mounted combat superiority.",
+            "category": "military",
+            "techs": ["tech_nomad_swift_steeds", "tech_nomad_horse_archery", "tech_nomad_pack_tactics", "tech_nomad_wind_riders", "tech_nomad_steppe_dominance"],
+            "display_order": 1
+        },
+        {
+            "id": "branch_nomad_tactics",
+            "name": "Raiding & Tactics",
+            "description": "Technologies for unconventional warfare.",
+            "category": "military",
+            "techs": ["tech_nomad_hit_and_run", "tech_nomad_raiding_tactics", "tech_nomad_guerrilla_warfare"],
+            "display_order": 2
+        },
+        {
+            "id": "branch_nomad_trade",
+            "name": "Trade & Economy",
+            "description": "Technologies for trade and resource gathering.",
+            "category": "economy",
+            "techs": ["tech_nomad_caravan_masters"],
+            "display_order": 3
+        }
+    ]
+}

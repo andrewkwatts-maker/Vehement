@@ -1,0 +1,659 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "particle.schema.json",
+  "title": "Particle System Definition",
+  "description": "Defines a particle system/effect",
+  "type": "object",
+  "required": ["id", "name", "emitters"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^particle_[a-z_]+$",
+      "description": "Unique particle system identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "duration": {
+      "$ref": "common.schema.json#/definitions/duration",
+      "description": "Total effect duration (0 = infinite)"
+    },
+    "looping": {
+      "type": "boolean",
+      "default": false
+    },
+    "prewarm": {
+      "type": "boolean",
+      "default": false,
+      "description": "Simulate particles before first frame"
+    },
+    "emitters": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/emitter" },
+      "minItems": 1
+    },
+    "scaling": {
+      "$ref": "#/definitions/systemScaling"
+    },
+    "culling": {
+      "$ref": "#/definitions/cullingConfig"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    }
+  },
+
+  "definitions": {
+    "emitter": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "delay": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "looping": {
+          "type": "boolean",
+          "default": true
+        },
+        "emission": {
+          "$ref": "#/definitions/emissionConfig"
+        },
+        "shape": {
+          "$ref": "#/definitions/emitterShape"
+        },
+        "particle": {
+          "$ref": "#/definitions/particleConfig"
+        },
+        "physics": {
+          "$ref": "#/definitions/particlePhysics"
+        },
+        "rendering": {
+          "$ref": "#/definitions/renderingConfig"
+        },
+        "subEmitters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/subEmitter" }
+        }
+      },
+      "required": ["emission", "particle"]
+    },
+
+    "emissionConfig": {
+      "type": "object",
+      "properties": {
+        "rate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Particles per second"
+        },
+        "rateOverTime": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "rateOverDistance": {
+          "type": "number"
+        },
+        "bursts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": { "$ref": "common.schema.json#/definitions/duration" },
+              "count": { "$ref": "common.schema.json#/definitions/rangeInt" },
+              "cycles": { "type": "integer", "default": 1 },
+              "interval": { "$ref": "common.schema.json#/definitions/duration" },
+              "probability": { "$ref": "common.schema.json#/definitions/probability" }
+            },
+            "required": ["time", "count"]
+          }
+        },
+        "maxParticles": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1000
+        }
+      }
+    },
+
+    "emitterShape": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["point", "sphere", "hemisphere", "cone", "box", "circle", "edge", "mesh", "skinned_mesh"],
+          "default": "point"
+        },
+        "radius": {
+          "type": "number"
+        },
+        "radiusThickness": {
+          "type": "number",
+          "default": 1,
+          "description": "0 = surface only, 1 = entire volume"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Cone angle in degrees"
+        },
+        "arc": {
+          "type": "number",
+          "default": 360,
+          "description": "Arc degrees"
+        },
+        "length": {
+          "type": "number"
+        },
+        "boxSize": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "position": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "rotation": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "scale": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "emitFrom": {
+          "enum": ["volume", "surface", "edge", "vertices"],
+          "default": "volume"
+        },
+        "alignToDirection": {
+          "type": "boolean",
+          "default": false
+        },
+        "randomizeDirection": {
+          "type": "number",
+          "default": 0,
+          "description": "Direction randomization factor"
+        },
+        "sphericalDirection": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "particleConfig": {
+      "type": "object",
+      "properties": {
+        "lifetime": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "startSpeed": {
+          "$ref": "#/definitions/minMaxValue"
+        },
+        "startSize": {
+          "$ref": "#/definitions/minMaxValue"
+        },
+        "startSizeXYZ": {
+          "type": "object",
+          "properties": {
+            "x": { "$ref": "#/definitions/minMaxValue" },
+            "y": { "$ref": "#/definitions/minMaxValue" },
+            "z": { "$ref": "#/definitions/minMaxValue" }
+          }
+        },
+        "startRotation": {
+          "$ref": "#/definitions/minMaxValue"
+        },
+        "startRotation3D": {
+          "type": "object",
+          "properties": {
+            "x": { "$ref": "#/definitions/minMaxValue" },
+            "y": { "$ref": "#/definitions/minMaxValue" },
+            "z": { "$ref": "#/definitions/minMaxValue" }
+          }
+        },
+        "startColor": {
+          "$ref": "#/definitions/colorValue"
+        },
+        "sizeOverLifetime": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "colorOverLifetime": {
+          "$ref": "#/definitions/gradientValue"
+        },
+        "rotationOverLifetime": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "speedOverLifetime": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "velocityOverLifetime": {
+          "type": "object",
+          "properties": {
+            "x": { "$ref": "#/definitions/curveValue" },
+            "y": { "$ref": "#/definitions/curveValue" },
+            "z": { "$ref": "#/definitions/curveValue" },
+            "space": { "enum": ["local", "world"], "default": "local" }
+          }
+        },
+        "noise": {
+          "$ref": "#/definitions/noiseConfig"
+        }
+      },
+      "required": ["lifetime", "startSpeed", "startSize"]
+    },
+
+    "particlePhysics": {
+      "type": "object",
+      "properties": {
+        "gravity": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "gravityModifier": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "drag": {
+          "type": "number",
+          "default": 0
+        },
+        "dragOverLifetime": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "collision": {
+          "$ref": "#/definitions/collisionConfig"
+        },
+        "forceFields": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/forceField" }
+        }
+      }
+    },
+
+    "collisionConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "type": {
+          "enum": ["world", "planes"],
+          "default": "world"
+        },
+        "bounce": {
+          "type": "number",
+          "default": 0.5
+        },
+        "lifetimeLoss": {
+          "type": "number",
+          "default": 0
+        },
+        "dampen": {
+          "type": "number",
+          "default": 0
+        },
+        "radiusScale": {
+          "type": "number",
+          "default": 1
+        },
+        "sendMessage": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxKillSpeed": {
+          "type": "number"
+        }
+      }
+    },
+
+    "forceField": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["gravity", "attraction", "repulsion", "vortex", "drag", "turbulence"]
+        },
+        "position": {
+          "$ref": "common.schema.json#/definitions/vector3"
+        },
+        "radius": {
+          "type": "number"
+        },
+        "strength": {
+          "type": "number"
+        },
+        "falloff": {
+          "enum": ["none", "linear", "quadratic"]
+        }
+      }
+    },
+
+    "renderingConfig": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "texture": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "renderMode": {
+          "enum": ["billboard", "stretched", "horizontal", "vertical", "mesh", "trail"],
+          "default": "billboard"
+        },
+        "blendMode": {
+          "enum": ["alpha", "additive", "multiply", "premultiplied"],
+          "default": "alpha"
+        },
+        "sortMode": {
+          "enum": ["none", "distance", "age", "depth"],
+          "default": "distance"
+        },
+        "textureSheet": {
+          "$ref": "#/definitions/textureSheetConfig"
+        },
+        "trail": {
+          "$ref": "#/definitions/trailConfig"
+        },
+        "light": {
+          "$ref": "#/definitions/lightConfig"
+        },
+        "meshData": {
+          "type": "object",
+          "properties": {
+            "mesh": { "$ref": "common.schema.json#/definitions/assetPath" },
+            "meshCount": { "type": "integer", "default": 1 }
+          }
+        },
+        "stretchedBillboard": {
+          "type": "object",
+          "properties": {
+            "cameraScale": { "type": "number", "default": 0 },
+            "speedScale": { "type": "number", "default": 0 },
+            "lengthScale": { "type": "number", "default": 1 }
+          }
+        },
+        "castShadows": {
+          "type": "boolean",
+          "default": false
+        },
+        "receiveShadows": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "textureSheetConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "tilesX": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tilesY": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "animation": {
+          "enum": ["whole_sheet", "single_row", "random_row"],
+          "default": "whole_sheet"
+        },
+        "frameOverTime": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "startFrame": {
+          "$ref": "#/definitions/minMaxValue"
+        },
+        "cycleCount": {
+          "type": "integer",
+          "default": 1
+        },
+        "rowIndex": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "trailConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "ratio": {
+          "type": "number",
+          "default": 1,
+          "description": "Percentage of particles with trails"
+        },
+        "lifetime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "minVertexDistance": {
+          "type": "number"
+        },
+        "widthOverTrail": {
+          "$ref": "#/definitions/curveValue"
+        },
+        "colorOverTrail": {
+          "$ref": "#/definitions/gradientValue"
+        },
+        "colorOverLifetime": {
+          "$ref": "#/definitions/gradientValue"
+        },
+        "inheritColor": {
+          "type": "boolean",
+          "default": true
+        },
+        "dieWithParticle": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+
+    "lightConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "ratio": {
+          "type": "number",
+          "default": 1
+        },
+        "useParticleColor": {
+          "type": "boolean",
+          "default": true
+        },
+        "color": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "rangeMultiplier": {
+          "type": "number",
+          "default": 1
+        },
+        "intensityMultiplier": {
+          "type": "number",
+          "default": 1
+        },
+        "maxLights": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "subEmitter": {
+      "type": "object",
+      "properties": {
+        "trigger": {
+          "enum": ["birth", "collision", "death", "trigger", "manual"],
+          "default": "death"
+        },
+        "emitter": {
+          "type": "string",
+          "description": "Emitter name or particle system ID"
+        },
+        "probability": {
+          "$ref": "common.schema.json#/definitions/probability"
+        },
+        "inheritProperties": {
+          "type": "array",
+          "items": {
+            "enum": ["color", "size", "rotation", "lifetime", "duration"]
+          }
+        }
+      },
+      "required": ["trigger", "emitter"]
+    },
+
+    "noiseConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "strength": {
+          "type": "number"
+        },
+        "frequency": {
+          "type": "number"
+        },
+        "scrollSpeed": {
+          "type": "number"
+        },
+        "octaves": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "damping": {
+          "type": "boolean",
+          "default": true
+        },
+        "quality": {
+          "enum": ["low", "medium", "high"],
+          "default": "medium"
+        }
+      }
+    },
+
+    "systemScaling": {
+      "type": "object",
+      "properties": {
+        "scalingMode": {
+          "enum": ["hierarchy", "local", "shape"],
+          "default": "local"
+        },
+        "playbackSpeed": {
+          "type": "number",
+          "default": 1
+        }
+      }
+    },
+
+    "cullingConfig": {
+      "type": "object",
+      "properties": {
+        "maxRenderDistance": {
+          "type": "number"
+        },
+        "pauseWhenOffscreen": {
+          "type": "boolean",
+          "default": true
+        },
+        "simulateWhenPaused": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "minMaxValue": {
+      "oneOf": [
+        { "type": "number" },
+        {
+          "type": "object",
+          "properties": {
+            "min": { "type": "number" },
+            "max": { "type": "number" }
+          },
+          "required": ["min", "max"]
+        }
+      ]
+    },
+
+    "curveValue": {
+      "oneOf": [
+        { "type": "number" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["constant", "curve", "random_between_curves"] },
+            "value": { "type": "number" },
+            "curve": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "time": { "type": "number" },
+                  "value": { "type": "number" },
+                  "inTangent": { "type": "number" },
+                  "outTangent": { "type": "number" }
+                },
+                "required": ["time", "value"]
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "colorValue": {
+      "oneOf": [
+        { "$ref": "common.schema.json#/definitions/color" },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["constant", "gradient", "random_between"] },
+            "color": { "$ref": "common.schema.json#/definitions/color" },
+            "colorMin": { "$ref": "common.schema.json#/definitions/color" },
+            "colorMax": { "$ref": "common.schema.json#/definitions/color" }
+          }
+        }
+      ]
+    },
+
+    "gradientValue": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["constant", "gradient", "random_between_gradients"]
+        },
+        "color": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "gradient": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": { "type": "number", "minimum": 0, "maximum": 1 },
+              "color": { "$ref": "common.schema.json#/definitions/color" }
+            },
+            "required": ["time", "color"]
+          }
+        }
+      }
+    }
+  }
+}

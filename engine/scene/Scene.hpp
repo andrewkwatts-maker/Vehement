@@ -5,12 +5,35 @@
 #include <string>
 #include <string_view>
 #include <functional>
+#include <glm/glm.hpp>
 
 namespace Nova {
 
 class SceneNode;
 class Renderer;
 class Camera;
+class JobSystem;
+
+/**
+ * @brief Batch render data for cache-efficient rendering
+ */
+struct RenderBatch {
+    std::vector<SceneNode*> nodes;
+    std::vector<glm::mat4> transforms;
+    std::vector<uint32_t> materialIds;
+
+    void Clear() {
+        nodes.clear();
+        transforms.clear();
+        materialIds.clear();
+    }
+
+    void Reserve(size_t count) {
+        nodes.reserve(count);
+        transforms.reserve(count);
+        materialIds.reserve(count);
+    }
+};
 
 /**
  * @brief Scene container and manager
@@ -113,10 +136,67 @@ public:
      */
     [[nodiscard]] size_t GetNodeCount() const;
 
+    // =========================================================================
+    // Performance Optimizations
+    // =========================================================================
+
+    /**
+     * @brief Update scene with parallel transform computation
+     * @param deltaTime Time since last update in seconds
+     * @param useParallel Use job system for parallel updates
+     */
+    void UpdateParallel(float deltaTime, bool useParallel = true);
+
+    /**
+     * @brief Render with batching optimization
+     * Collects renderable nodes and batches by material for cache efficiency
+     * @param renderer The renderer to use
+     */
+    void RenderBatched(Renderer& renderer);
+
+    /**
+     * @brief Build a flat list of all visible nodes for cache-efficient iteration
+     * @return Vector of pointers to visible nodes
+     */
+    [[nodiscard]] std::vector<SceneNode*> BuildFlatNodeList() const;
+
+    /**
+     * @brief Collect render batches grouped by material
+     * @param batch Output batch to fill
+     */
+    void CollectRenderBatch(RenderBatch& batch) const;
+
+    /**
+     * @brief Pre-compute all world transforms (call before rendering)
+     * Forces transform update on all dirty nodes
+     */
+    void PrecomputeTransforms();
+
+    /**
+     * @brief Enable/disable dirty flag propagation optimization
+     * When enabled, only dirty subtrees are updated
+     */
+    void SetDirtyOptimizationEnabled(bool enabled) { m_dirtyOptEnabled = enabled; }
+
+    /**
+     * @brief Get render batch (cached between frames if scene unchanged)
+     */
+    [[nodiscard]] const RenderBatch& GetCachedRenderBatch() const { return m_renderBatch; }
+
+    /**
+     * @brief Mark render batch as needing rebuild
+     */
+    void InvalidateRenderBatch() { m_renderBatchDirty = true; }
+
 protected:
     std::string m_name = "Unnamed Scene";
     std::unique_ptr<SceneNode> m_root;
     std::unique_ptr<Camera> m_camera;
+
+    // Optimization state
+    mutable RenderBatch m_renderBatch;
+    mutable bool m_renderBatchDirty = true;
+    bool m_dirtyOptEnabled = true;
 };
 
 } // namespace Nova

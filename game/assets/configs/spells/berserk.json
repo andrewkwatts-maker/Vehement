@@ -1,0 +1,237 @@
+{
+    // Berserk - Self buff for attack speed and damage
+    // Powerful self-enhancement for melee combat
+
+    "id": "spell_berserk",
+    "name": "Berserk",
+    "description": "Enter a berserker rage, greatly increasing attack speed and damage but reducing armor.",
+    "icon": "icons/spells/berserk.png",
+    "school": "physical",
+    "tags": ["buff", "self", "physical", "melee", "rage"],
+
+    "targeting": {
+        "mode": "self",
+        "range": 0.0,
+
+        "filter": {
+            "faction": "self",
+            "can_target_self": true
+        },
+
+        "preview": {
+            "shape": "none"
+        }
+    },
+
+    "timing": {
+        "cast_time": 0.0,
+        "cooldown": 90.0,
+        "charges": 1,
+        "triggers_gcd": false,
+        "affected_by_gcd": false
+    },
+
+    "cost": {
+        "rage": 50,
+        "health": 0
+    },
+
+    "effects": [
+        {
+            "id": "attack_speed_buff",
+            "type": "stat_modifier",
+            "timing": "instant",
+            "duration": 15.0,
+            "stacking": "refresh",
+            "stat_modifier": {
+                "stat": "attack_speed",
+                "mod_type": "percent",
+                "value": 50.0
+            },
+            "description": "Attack speed increased by 50%."
+        },
+        {
+            "id": "damage_buff",
+            "type": "stat_modifier",
+            "timing": "instant",
+            "duration": 15.0,
+            "stacking": "refresh",
+            "stat_modifier": {
+                "stat": "damage",
+                "mod_type": "percent",
+                "value": 30.0
+            },
+            "description": "Damage increased by 30%."
+        },
+        {
+            "id": "crit_buff",
+            "type": "stat_modifier",
+            "timing": "instant",
+            "duration": 15.0,
+            "stacking": "refresh",
+            "stat_modifier": {
+                "stat": "crit_chance",
+                "mod_type": "flat",
+                "value": 0.15
+            },
+            "description": "Critical strike chance increased by 15%."
+        },
+        {
+            "id": "armor_debuff",
+            "type": "stat_modifier",
+            "timing": "instant",
+            "duration": 15.0,
+            "stacking": "refresh",
+            "stat_modifier": {
+                "stat": "armor",
+                "mod_type": "percent",
+                "value": -25.0
+            },
+            "description": "Armor reduced by 25%."
+        },
+        {
+            "id": "movement_buff",
+            "type": "stat_modifier",
+            "timing": "instant",
+            "duration": 15.0,
+            "stacking": "refresh",
+            "stat_modifier": {
+                "stat": "movement_speed",
+                "mod_type": "percent",
+                "value": 15.0
+            },
+            "description": "Movement speed increased by 15%."
+        },
+        {
+            "id": "berserk_visual_buff",
+            "type": "buff",
+            "timing": "instant",
+            "duration": 15.0,
+            "stacking": "refresh",
+            "icon": "icons/buffs/berserk.png",
+            "description": "In a berserker rage!"
+        }
+    ],
+
+    "conditionals": [
+        {
+            "condition": "on_kill",
+            "chance": 1.0,
+            "bonus": {
+                "type": "buff",
+                "effect_id": "berserk_visual_buff",
+                "duration_extend": 3.0,
+                "description": "Berserk duration extended by 3s on kill."
+            }
+        },
+        {
+            "condition": "on_low_health",
+            "threshold": 0.3,
+            "bonus": {
+                "type": "stat_modifier",
+                "stat": "damage",
+                "mod_type": "percent",
+                "value": 20.0,
+                "description": "Gain 20% more damage when below 30% health."
+            }
+        }
+    ],
+
+    "flags": {
+        "can_crit": false,
+        "can_miss": false,
+        "can_be_interrupted": false,
+        "can_be_silenced": false,
+        "requires_los": false,
+        "cast_while_moving": true,
+        "cast_while_casting": true,
+        "breaks_on_damage": false
+    },
+
+    "requirements": {
+        "min_level": 25,
+        "requires_combat": true
+    },
+
+    "events": {
+        "on_cast_complete": "scripts/spells/berserk_activate.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/berserk.png",
+        "effects": [
+            {
+                "id": "rage_aura",
+                "type": "particle",
+                "trigger": "continuous",
+                "attach": "caster",
+                "path": "effects/rage_aura.fx",
+                "scale": 1.2,
+                "loop": true
+            },
+            {
+                "id": "eyes_glow",
+                "type": "light",
+                "trigger": "continuous",
+                "attach": "caster_head",
+                "intensity": 1.5,
+                "range": 2.0,
+                "flicker": true,
+                "flicker_frequency": 15.0
+            },
+            {
+                "id": "activation_burst",
+                "type": "particle",
+                "trigger": "on_cast_complete",
+                "attach": "caster",
+                "path": "effects/rage_burst.fx",
+                "scale": 2.0
+            },
+            {
+                "id": "screen_tint",
+                "type": "screen_effect",
+                "trigger": "continuous",
+                "intensity": 0.2,
+                "self_only": true
+            },
+            {
+                "id": "ground_cracks",
+                "type": "decal",
+                "trigger": "on_cast_complete",
+                "attach": "caster_feet",
+                "texture": "textures/decals/impact_cracks.png",
+                "size": 2.0,
+                "duration": 2.0
+            }
+        ],
+        "sounds": [
+            {
+                "id": "roar_sound",
+                "path": "sounds/spells/berserk_roar.wav",
+                "trigger": "on_cast_complete",
+                "volume": 1.0
+            },
+            {
+                "id": "heartbeat",
+                "path": "sounds/spells/heartbeat_fast.wav",
+                "trigger": "continuous",
+                "volume": 0.4,
+                "loop": true
+            },
+            {
+                "id": "end_sound",
+                "path": "sounds/spells/berserk_end.wav",
+                "trigger": "on_expire",
+                "volume": 0.8
+            }
+        ],
+        "animations": [
+            {
+                "id": "roar_anim",
+                "name": "roar",
+                "trigger": "on_cast_complete",
+                "speed": 1.2
+            }
+        ]
+    }
+}

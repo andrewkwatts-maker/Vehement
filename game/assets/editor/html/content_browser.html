@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Content Browser</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body class="content-browser">
+    <div class="browser-container">
+        <!-- Sidebar with categories -->
+        <div class="sidebar">
+            <div class="search-box">
+                <input type="text" id="search" placeholder="Search..." autocomplete="off">
+                <button class="search-clear" onclick="clearSearch()">x</button>
+            </div>
+
+            <div class="toolbar">
+                <button class="btn btn-icon" onclick="refreshContent()" title="Refresh">
+                    <span class="icon">&#x21bb;</span>
+                </button>
+                <button class="btn btn-icon" onclick="toggleGridView()" title="Toggle View">
+                    <span class="icon grid-icon">&#x2630;</span>
+                </button>
+            </div>
+
+            <div class="category-list" id="category-list">
+                <div class="category active" data-type="all" onclick="selectCategory('all')">
+                    <span class="icon">&#x2302;</span>
+                    <span class="name">All Content</span>
+                    <span class="count" id="count-all">0</span>
+                </div>
+                <div class="category" data-type="spells" onclick="selectCategory('spells')">
+                    <span class="icon">&#x2728;</span>
+                    <span class="name">Spells</span>
+                    <span class="count" id="count-spells">0</span>
+                </div>
+                <div class="category" data-type="units" onclick="selectCategory('units')">
+                    <span class="icon">&#x2694;</span>
+                    <span class="name">Units</span>
+                    <span class="count" id="count-units">0</span>
+                </div>
+                <div class="category" data-type="buildings" onclick="selectCategory('buildings')">
+                    <span class="icon">&#x26F1;</span>
+                    <span class="name">Buildings</span>
+                    <span class="count" id="count-buildings">0</span>
+                </div>
+                <div class="category" data-type="techtrees" onclick="selectCategory('techtrees')">
+                    <span class="icon">&#x26ED;</span>
+                    <span class="name">Tech Trees</span>
+                    <span class="count" id="count-techtrees">0</span>
+                </div>
+                <div class="category" data-type="effects" onclick="selectCategory('effects')">
+                    <span class="icon">&#x2747;</span>
+                    <span class="name">Effects</span>
+                    <span class="count" id="count-effects">0</span>
+                </div>
+                <div class="category" data-type="buffs" onclick="selectCategory('buffs')">
+                    <span class="icon">&#x2B50;</span>
+                    <span class="name">Buffs</span>
+                    <span class="count" id="count-buffs">0</span>
+                </div>
+                <div class="category" data-type="cultures" onclick="selectCategory('cultures')">
+                    <span class="icon">&#x26E8;</span>
+                    <span class="name">Cultures</span>
+                    <span class="count" id="count-cultures">0</span>
+                </div>
+                <div class="category" data-type="heroes" onclick="selectCategory('heroes')">
+                    <span class="icon">&#x26A1;</span>
+                    <span class="name">Heroes</span>
+                    <span class="count" id="count-heroes">0</span>
+                </div>
+            </div>
+
+            <div class="create-new">
+                <select id="new-type">
+                    <option value="">-- Create New --</option>
+                    <option value="spells">Spell</option>
+                    <option value="units">Unit</option>
+                    <option value="buildings">Building</option>
+                    <option value="effects">Effect</option>
+                    <option value="buffs">Buff</option>
+                </select>
+                <button class="btn btn-primary" onclick="createNew()">+</button>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div class="content-area">
+            <div class="content-header">
+                <h2 id="current-category">All Content</h2>
+                <div class="sort-options">
+                    <select id="sort-by" onchange="sortContent()">
+                        <option value="name">Name</option>
+                        <option value="type">Type</option>
+                        <option value="modified">Modified</option>
+                    </select>
+                    <button class="btn btn-icon" onclick="toggleSortOrder()" title="Sort Order">
+                        <span class="icon" id="sort-order-icon">&#x25B2;</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-grid" id="content-grid">
+                <!-- Content items will be inserted here -->
+            </div>
+
+            <div class="content-list" id="content-list" style="display: none;">
+                <!-- List view items -->
+            </div>
+
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <div class="empty-icon">&#x1F4C2;</div>
+                <h3>No content found</h3>
+                <p>Create new content or adjust your filters</p>
+            </div>
+        </div>
+
+        <!-- Preview panel -->
+        <div class="preview-panel" id="preview-panel">
+            <div class="preview-header">
+                <h3>Preview</h3>
+                <button class="btn btn-icon" onclick="togglePreviewPanel()" title="Close">x</button>
+            </div>
+            <div class="preview-content" id="preview-content">
+                <p class="no-selection">Select an item to preview</p>
+            </div>
+            <div class="preview-actions" id="preview-actions" style="display: none;">
+                <button class="btn btn-primary" onclick="editSelected()">Edit</button>
+                <button class="btn" onclick="duplicateSelected()">Duplicate</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context menu -->
+    <div class="context-menu" id="context-menu" style="display: none;">
+        <div class="menu-item" onclick="editItem()">Edit</div>
+        <div class="menu-item" onclick="duplicateItem()">Duplicate</div>
+        <div class="menu-item" onclick="renameItem()">Rename</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item danger" onclick="deleteItem()">Delete</div>
+    </div>
+
+    <!-- Create dialog -->
+    <div class="dialog-overlay" id="create-dialog" style="display: none;">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h3>Create New Item</h3>
+                <button class="btn-close" onclick="closeCreateDialog()">x</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label for="new-name">Name</label>
+                    <input type="text" id="new-name" placeholder="Enter name...">
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" onclick="closeCreateDialog()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmCreate()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script src="content_browser.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+{
+    // Burning - Fire Damage over Time
+    // Applied by fire-based attacks and abilities
+
+    "id": "effect_burning",
+    "name": "Burning",
+    "description": "Engulfed in flames, taking fire damage over time.",
+    "type": "debuff",
+    "tags": ["dot", "fire", "damage", "elemental"],
+    "categories": ["damage_over_time", "fire_effect"],
+
+    "duration": 5.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "intensity",
+        "max_stacks": 3,
+        "intensity_per_stack": 1.0
+    },
+
+    "periodic": {
+        "interval": 1.0,
+        "type": "damage",
+        "amount": 10,
+        "damage_type": "fire",
+        "tick_on_apply": false
+    },
+
+    "modifiers": [
+        {
+            "stat": "fire_resist",
+            "op": "percent",
+            "value": -10
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/burning.png",
+        "particle": "particles/burning.json",
+        "tint": [1.0, 0.5, 0.2, 1.0],
+        "glow": 0.3,
+        "attach_point": "body"
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/burning_apply.py",
+        "on_tick": "scripts/effects/burning_tick.py",
+        "on_expire": "scripts/effects/burning_expire.py"
+    },
+
+    "dispellable": true,
+    "purgeable": true,
+    "priority": 0
+}

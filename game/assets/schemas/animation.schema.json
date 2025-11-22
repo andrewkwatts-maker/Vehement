@@ -1,0 +1,541 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "animation.schema.json",
+  "title": "Animation Definition",
+  "description": "Defines an animation clip or animation controller",
+  "type": "object",
+  "required": ["id", "name", "type"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^anim_[a-z_]+$",
+      "description": "Unique animation identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "type": {
+      "enum": ["clip", "controller", "blend_tree", "state_machine"],
+      "description": "Animation type"
+    },
+    "clip": {
+      "$ref": "#/definitions/animationClip"
+    },
+    "controller": {
+      "$ref": "#/definitions/animationController"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    }
+  },
+
+  "definitions": {
+    "animationClip": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "$ref": "common.schema.json#/definitions/assetPath",
+          "description": "Animation file path"
+        },
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "frameRate": {
+          "type": "number",
+          "default": 30
+        },
+        "looping": {
+          "type": "boolean",
+          "default": true
+        },
+        "rootMotion": {
+          "$ref": "#/definitions/rootMotionConfig"
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationEvent" }
+        },
+        "curves": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationCurve" }
+        },
+        "channels": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationChannel" }
+        },
+        "masks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationMask" }
+        },
+        "blending": {
+          "$ref": "#/definitions/blendingConfig"
+        },
+        "speed": {
+          "type": "number",
+          "default": 1
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false
+        },
+        "additive": {
+          "type": "boolean",
+          "default": false
+        },
+        "bounds": {
+          "$ref": "common.schema.json#/definitions/bounds"
+        }
+      }
+    },
+
+    "animationController": {
+      "type": "object",
+      "properties": {
+        "states": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationState" }
+        },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationTransition" }
+        },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationParameter" }
+        },
+        "layers": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationLayer" }
+        },
+        "defaultState": {
+          "type": "string"
+        }
+      },
+      "required": ["states", "defaultState"]
+    },
+
+    "animationState": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "clip": {
+          "type": "string",
+          "description": "Animation clip ID"
+        },
+        "blendTree": {
+          "$ref": "#/definitions/blendTree"
+        },
+        "speed": {
+          "type": "number",
+          "default": 1
+        },
+        "speedMultiplierParameter": {
+          "type": "string"
+        },
+        "timeParameter": {
+          "type": "string"
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false
+        },
+        "mirrorParameter": {
+          "type": "string"
+        },
+        "cycleOffset": {
+          "type": "number",
+          "default": 0
+        },
+        "footIK": {
+          "type": "boolean",
+          "default": false
+        },
+        "writeDefaultValues": {
+          "type": "boolean",
+          "default": true
+        },
+        "behaviors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/stateBehavior" }
+        }
+      },
+      "required": ["name"]
+    },
+
+    "blendTree": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["simple_1d", "simple_2d", "freeform_2d", "direct"],
+          "default": "simple_1d"
+        },
+        "parameter": {
+          "type": "string"
+        },
+        "parameterX": {
+          "type": "string"
+        },
+        "parameterY": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "clip": { "type": "string" },
+              "blendTree": { "$ref": "#/definitions/blendTree" },
+              "threshold": { "type": "number" },
+              "position": { "$ref": "common.schema.json#/definitions/vector2" },
+              "directBlendParameter": { "type": "string" },
+              "timeScale": { "type": "number", "default": 1 },
+              "cycleOffset": { "type": "number", "default": 0 },
+              "mirror": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        "normalizeBlendValues": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": ["type", "children"]
+    },
+
+    "animationTransition": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source state (empty for any state)"
+        },
+        "to": {
+          "type": "string",
+          "description": "Destination state"
+        },
+        "duration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "offset": {
+          "type": "number",
+          "default": 0,
+          "description": "Normalized time in destination"
+        },
+        "exitTime": {
+          "type": "number",
+          "description": "Normalized exit time (null = immediate)"
+        },
+        "hasExitTime": {
+          "type": "boolean",
+          "default": false
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/transitionCondition" }
+        },
+        "interruptionSource": {
+          "enum": ["none", "current", "next", "both"],
+          "default": "none"
+        },
+        "orderedInterruption": {
+          "type": "boolean",
+          "default": true
+        },
+        "canTransitionToSelf": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["to"]
+    },
+
+    "transitionCondition": {
+      "type": "object",
+      "properties": {
+        "parameter": {
+          "type": "string"
+        },
+        "mode": {
+          "enum": ["if_true", "if_false", "greater", "less", "equals", "not_equals"]
+        },
+        "threshold": {
+          "type": "number"
+        }
+      },
+      "required": ["parameter", "mode"]
+    },
+
+    "animationParameter": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "enum": ["float", "int", "bool", "trigger"]
+        },
+        "defaultValue": {}
+      },
+      "required": ["name", "type"]
+    },
+
+    "animationLayer": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1
+        },
+        "blendingMode": {
+          "enum": ["override", "additive"],
+          "default": "override"
+        },
+        "mask": {
+          "type": "string",
+          "description": "Mask ID"
+        },
+        "states": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationState" }
+        },
+        "defaultState": {
+          "type": "string"
+        },
+        "syncedLayerIndex": {
+          "type": "integer",
+          "description": "Layer to sync with"
+        },
+        "IKPass": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["name"]
+    },
+
+    "animationEvent": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "number",
+          "description": "Normalized time (0-1)"
+        },
+        "name": {
+          "type": "string"
+        },
+        "functionName": {
+          "type": "string"
+        },
+        "stringParameter": {
+          "type": "string"
+        },
+        "floatParameter": {
+          "type": "number"
+        },
+        "intParameter": {
+          "type": "integer"
+        },
+        "objectParameter": {
+          "type": "string"
+        }
+      },
+      "required": ["time", "name"]
+    },
+
+    "animationCurve": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Target object path"
+        },
+        "property": {
+          "type": "string",
+          "description": "Property to animate"
+        },
+        "type": {
+          "enum": ["position", "rotation", "scale", "blendShape", "custom"]
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": { "type": "number" },
+              "value": { "type": "number" },
+              "inTangent": { "type": "number" },
+              "outTangent": { "type": "number" },
+              "inWeight": { "type": "number" },
+              "outWeight": { "type": "number" },
+              "tangentMode": { "enum": ["free", "auto", "linear", "constant"] }
+            },
+            "required": ["time", "value"]
+          }
+        },
+        "preWrapMode": {
+          "enum": ["once", "loop", "ping_pong", "clamp"],
+          "default": "clamp"
+        },
+        "postWrapMode": {
+          "enum": ["once", "loop", "ping_pong", "clamp"],
+          "default": "clamp"
+        }
+      },
+      "required": ["property", "keys"]
+    },
+
+    "animationChannel": {
+      "type": "object",
+      "properties": {
+        "nodeName": {
+          "type": "string"
+        },
+        "interpolation": {
+          "enum": ["linear", "step", "catmull_rom", "cubic"],
+          "default": "linear"
+        },
+        "positionKeys": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/vectorKeyframe" }
+        },
+        "rotationKeys": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/quaternionKeyframe" }
+        },
+        "scaleKeys": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/vectorKeyframe" }
+        }
+      },
+      "required": ["nodeName"]
+    },
+
+    "vectorKeyframe": {
+      "type": "object",
+      "properties": {
+        "time": { "type": "number" },
+        "value": { "$ref": "common.schema.json#/definitions/vector3" }
+      },
+      "required": ["time", "value"]
+    },
+
+    "quaternionKeyframe": {
+      "type": "object",
+      "properties": {
+        "time": { "type": "number" },
+        "value": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" },
+            "w": { "type": "number" }
+          },
+          "required": ["x", "y", "z", "w"]
+        }
+      },
+      "required": ["time", "value"]
+    },
+
+    "animationMask": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "bones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string" },
+              "weight": { "type": "number", "default": 1 }
+            },
+            "required": ["path"]
+          }
+        },
+        "transforms": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["id"]
+    },
+
+    "rootMotionConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "lockX": {
+          "type": "boolean",
+          "default": false
+        },
+        "lockY": {
+          "type": "boolean",
+          "default": true
+        },
+        "lockZ": {
+          "type": "boolean",
+          "default": false
+        },
+        "lockRotation": {
+          "type": "boolean",
+          "default": false
+        },
+        "bakeIntoPose": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "blendingConfig": {
+      "type": "object",
+      "properties": {
+        "inTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "outTime": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "curve": {
+          "enum": ["linear", "ease_in", "ease_out", "ease_in_out", "custom"]
+        }
+      }
+    },
+
+    "stateBehavior": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "onEnter": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        },
+        "onExit": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        },
+        "onUpdate": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" }
+        }
+      }
+    }
+  }
+}

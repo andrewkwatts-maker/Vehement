@@ -1,0 +1,162 @@
+{
+    "spatial": {
+        "cell_size": 10.0,
+        "max_entities_per_cell": 100,
+        "expected_entity_count": 1000,
+        "track_static_entities": true,
+        "use_quadtree_for_statics": true,
+        "quadtree_min_node_size": 5.0,
+        "quadtree_max_entities_per_node": 8,
+        "quadtree_max_depth": 8
+    },
+
+    "ai": {
+        "updates_per_frame": 50,
+        "time_budget_ms": 2.0,
+
+        "lod_full_distance": 20.0,
+        "lod_medium_distance": 50.0,
+        "lod_low_distance": 100.0,
+
+        "critical_update_interval": 0.0,
+        "high_update_interval": 0.033,
+        "normal_update_interval": 0.1,
+        "low_update_interval": 0.25,
+        "background_update_interval": 1.0,
+
+        "medium_lod_multiplier": 2.0,
+        "low_lod_multiplier": 4.0,
+        "dormant_lod_multiplier": 10.0,
+
+        "enable_adaptive_budget": true,
+        "target_frame_time_ms": 16.67,
+
+        "group_max_size": 10,
+        "group_formation_radius": 15.0,
+        "group_path_share_radius": 5.0
+    },
+
+    "pathfinding": {
+        "async": true,
+        "async_thread_count": 2,
+        "cache_size": 1000,
+        "cache_expiration_seconds": 30.0,
+        "share_paths": true,
+        "path_share_radius": 3.0,
+        "goal_tolerance": 1.0,
+        "max_queued_requests": 100,
+        "request_timeout_seconds": 5.0,
+
+        "hierarchical": {
+            "enabled": true,
+            "region_size": 50.0,
+            "threshold_distance": 100.0
+        },
+
+        "smoothing": {
+            "enabled": true,
+            "segment_length": 1.0
+        }
+    },
+
+    "flow_field": {
+        "cell_size": 1.0,
+        "base_cost": 1.0,
+        "diagonal_cost": 1.414,
+        "danger_cost": 10.0,
+        "blocked_cost": 1000.0,
+
+        "cache": {
+            "max_cached_fields": 10,
+            "expiration_seconds": 30.0
+        },
+
+        "steering": {
+            "max_speed": 5.0,
+            "max_force": 10.0,
+            "arrival_radius": 2.0,
+            "separation_radius": 1.0,
+            "separation_weight": 1.5,
+            "flow_weight": 1.0,
+            "cohesion_weight": 0.3
+        }
+    },
+
+    "collision": {
+        "broad_phase": {
+            "enabled": true,
+            "use_spatial_hash": true,
+            "conservative_radius_multiplier": 2.0
+        },
+
+        "sleep": {
+            "enabled": true,
+            "velocity_threshold": 0.01,
+            "frames_before_sleep": 60
+        },
+
+        "layers": {
+            "player": {
+                "mask": ["enemy", "projectile", "pickup", "trigger"]
+            },
+            "enemy": {
+                "mask": ["player", "projectile", "enemy"]
+            },
+            "projectile": {
+                "mask": ["player", "enemy", "static"]
+            },
+            "pickup": {
+                "mask": ["player"]
+            },
+            "static": {
+                "mask": ["projectile"]
+            }
+        },
+
+        "batch_size": 64
+    },
+
+    "config_cache": {
+        "enable_hot_reload": true,
+        "hot_reload_interval_ms": 1000,
+        "precompute_derived": true,
+        "string_id_validation": false
+    },
+
+    "entity_pooling": {
+        "enabled": true,
+        "pools": {
+            "zombie": {
+                "initial_size": 100,
+                "max_size": 500,
+                "growth_rate": 50
+            },
+            "projectile": {
+                "initial_size": 200,
+                "max_size": 1000,
+                "growth_rate": 100
+            },
+            "effect": {
+                "initial_size": 50,
+                "max_size": 200,
+                "growth_rate": 25
+            }
+        }
+    },
+
+    "memory": {
+        "preallocate_vectors": true,
+        "vector_reserve_multiplier": 1.5,
+        "string_interning": true,
+        "cache_line_alignment": 64
+    },
+
+    "debug": {
+        "profile_ai": false,
+        "profile_pathfinding": false,
+        "profile_collision": false,
+        "log_cache_stats": false,
+        "visualize_spatial_grid": false,
+        "visualize_flow_fields": false
+    }
+}

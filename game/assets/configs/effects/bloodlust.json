@@ -1,0 +1,82 @@
+{
+    // Bloodlust - Stacking Kill Buff
+    // Stacks on kills, providing increasing power
+
+    "id": "effect_bloodlust",
+    "name": "Bloodlust",
+    "description": "The thrill of combat fuels your power. Each stack increases damage.",
+    "type": "buff",
+    "tags": ["buff", "offensive", "stacking", "kill_based"],
+    "categories": ["offensive_buff", "stacking_buff"],
+
+    "duration": 15.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "intensity",
+        "max_stacks": 10,
+        "intensity_per_stack": 1.0
+    },
+
+    "modifiers": [
+        {
+            "stat": "damage",
+            "op": "percent",
+            "value": 5
+        },
+        {
+            "stat": "lifesteal",
+            "op": "add",
+            "value": 2
+        },
+        {
+            "stat": "move_speed",
+            "op": "percent",
+            "value": 3
+        },
+        {
+            "stat": "attack_speed",
+            "op": "percent",
+            "value": 2
+        }
+    ],
+
+    "triggers": [
+        {
+            "condition": "on_kill",
+            "action": "add_stacks",
+            "stacks": 1,
+            "target": "self"
+        },
+        {
+            "condition": "on_kill",
+            "action": "refresh_effect",
+            "target": "self"
+        },
+        {
+            "condition": "on_health_below",
+            "threshold": 25,
+            "action": "apply_effect",
+            "effect_id": "effect_desperate_fury",
+            "target": "self",
+            "max_triggers": 1
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/bloodlust.png",
+        "particle": "particles/blood_aura.json",
+        "tint": [0.8, 0.1, 0.1, 1.0],
+        "glow": 0.3,
+        "scale": 1.0
+    },
+
+    "events": {
+        "on_stack": "scripts/effects/bloodlust_stack.py",
+        "on_expire": "scripts/effects/bloodlust_expire.py"
+    },
+
+    "dispellable": false,
+    "purgeable": true,
+    "priority": 3
+}

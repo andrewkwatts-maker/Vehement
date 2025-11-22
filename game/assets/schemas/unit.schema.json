@@ -1,0 +1,357 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "unit.schema.json",
+  "title": "Unit Definition",
+  "description": "Defines a game unit (zombie, NPC, creature)",
+  "type": "object",
+  "required": ["id", "name", "type", "stats"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^unit_[a-z_]+$",
+      "description": "Unique unit identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Unit description"
+    },
+    "type": {
+      "enum": ["zombie", "npc", "creature", "boss", "minion", "vehicle"],
+      "description": "Unit category"
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Specific variant (e.g., 'runner', 'tank')"
+    },
+    "stats": {
+      "$ref": "#/definitions/unitStats"
+    },
+    "combat": {
+      "$ref": "#/definitions/combatConfig"
+    },
+    "ai": {
+      "$ref": "#/definitions/aiConfig"
+    },
+    "movement": {
+      "$ref": "#/definitions/movementConfig"
+    },
+    "visuals": {
+      "$ref": "#/definitions/unitVisuals"
+    },
+    "audio": {
+      "$ref": "#/definitions/unitAudio"
+    },
+    "loot": {
+      "$ref": "#/definitions/unitLoot"
+    },
+    "spawning": {
+      "$ref": "#/definitions/spawningConfig"
+    },
+    "abilities": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/unitAbility" },
+      "description": "Special abilities"
+    },
+    "passiveEffects": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Effect IDs applied on spawn"
+    },
+    "immunities": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/definitions/damageType" }
+    },
+    "resistances": {
+      "type": "object",
+      "additionalProperties": { "type": "number" },
+      "description": "Damage type to resistance percentage"
+    },
+    "weaknesses": {
+      "type": "object",
+      "additionalProperties": { "type": "number" },
+      "description": "Damage type to weakness percentage"
+    },
+    "faction": {
+      "type": "string",
+      "description": "Faction affiliation"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    },
+    "events": {
+      "$ref": "common.schema.json#/definitions/events"
+    }
+  },
+
+  "definitions": {
+    "unitStats": {
+      "type": "object",
+      "properties": {
+        "health": { "$ref": "common.schema.json#/definitions/stat" },
+        "maxHealth": { "$ref": "common.schema.json#/definitions/stat" },
+        "armor": { "$ref": "common.schema.json#/definitions/stat" },
+        "magicResist": { "$ref": "common.schema.json#/definitions/stat" },
+        "damage": { "$ref": "common.schema.json#/definitions/stat" },
+        "attackSpeed": { "$ref": "common.schema.json#/definitions/stat" },
+        "moveSpeed": { "$ref": "common.schema.json#/definitions/stat" },
+        "detectionRange": { "$ref": "common.schema.json#/definitions/stat" },
+        "attackRange": { "$ref": "common.schema.json#/definitions/stat" },
+        "experience": {
+          "type": "integer",
+          "description": "XP granted on kill"
+        }
+      },
+      "required": ["health", "damage"]
+    },
+
+    "combatConfig": {
+      "type": "object",
+      "properties": {
+        "attackType": {
+          "enum": ["melee", "ranged", "magic", "none"]
+        },
+        "damageType": {
+          "$ref": "common.schema.json#/definitions/damageType"
+        },
+        "attackRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "attackCooldown": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "projectile": {
+          "type": "string",
+          "description": "Projectile ID for ranged units"
+        },
+        "attackAnimation": {
+          "type": "string"
+        },
+        "canCritical": {
+          "type": "boolean",
+          "default": false
+        },
+        "criticalChance": {
+          "$ref": "common.schema.json#/definitions/probability"
+        },
+        "criticalMultiplier": {
+          "type": "number",
+          "default": 2
+        },
+        "cleave": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "angle": { "type": "number" },
+            "damagePercent": { "type": "number" }
+          }
+        }
+      }
+    },
+
+    "aiConfig": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "enum": ["aggressive", "passive", "defensive", "patrol", "stationary", "flee", "custom"]
+        },
+        "aggroRange": {
+          "type": "number",
+          "description": "Detection range"
+        },
+        "leashRange": {
+          "type": "number",
+          "description": "Max chase distance from spawn"
+        },
+        "preferredTargets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "targetPriority": {
+          "enum": ["nearest", "lowest_health", "highest_threat", "random"]
+        },
+        "fleeHealthPercent": {
+          "$ref": "common.schema.json#/definitions/percentage"
+        },
+        "callForHelp": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "radius": { "type": "number" },
+            "allies": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "wanderRadius": {
+          "type": "number"
+        },
+        "wanderInterval": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "customScript": {
+          "$ref": "common.schema.json#/definitions/scriptReference"
+        }
+      }
+    },
+
+    "movementConfig": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["walk", "fly", "swim", "hover", "burrow", "teleport"]
+        },
+        "speed": {
+          "type": "number"
+        },
+        "acceleration": {
+          "type": "number"
+        },
+        "turnSpeed": {
+          "type": "number"
+        },
+        "canJump": {
+          "type": "boolean",
+          "default": false
+        },
+        "jumpHeight": {
+          "type": "number"
+        },
+        "pathfinding": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "avoidWater": { "type": "boolean", "default": true },
+            "avoidDamage": { "type": "boolean", "default": true },
+            "updateInterval": { "$ref": "common.schema.json#/definitions/duration" }
+          }
+        },
+        "collisionRadius": {
+          "type": "number"
+        }
+      }
+    },
+
+    "unitVisuals": {
+      "type": "object",
+      "properties": {
+        "sprite": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "model": {
+          "$ref": "common.schema.json#/definitions/assetPath"
+        },
+        "animations": {
+          "type": "object",
+          "properties": {
+            "idle": { "type": "string" },
+            "walk": { "type": "string" },
+            "run": { "type": "string" },
+            "attack": { "type": "string" },
+            "death": { "type": "string" },
+            "hit": { "type": "string" },
+            "special": { "type": "string" }
+          }
+        },
+        "scale": {
+          "type": "number",
+          "default": 1
+        },
+        "tint": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "shadow": {
+          "type": "boolean",
+          "default": true
+        },
+        "healthBar": {
+          "type": "object",
+          "properties": {
+            "show": { "type": "boolean", "default": true },
+            "offset": { "$ref": "common.schema.json#/definitions/vector3" },
+            "color": { "$ref": "common.schema.json#/definitions/color" }
+          }
+        }
+      }
+    },
+
+    "unitAudio": {
+      "type": "object",
+      "properties": {
+        "spawn": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "idle": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "aggro": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "attack": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "hurt": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "death": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "footsteps": { "$ref": "common.schema.json#/definitions/assetPath" }
+      }
+    },
+
+    "unitLoot": {
+      "type": "object",
+      "properties": {
+        "table": {
+          "type": "string",
+          "description": "Loot table ID"
+        },
+        "guaranteedDrops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "enum": ["coins", "ammo", "item", "experience"] },
+              "amount": { "$ref": "common.schema.json#/definitions/rangeInt" },
+              "itemId": { "type": "string" }
+            },
+            "required": ["type", "amount"]
+          }
+        },
+        "dropChance": {
+          "$ref": "common.schema.json#/definitions/probability"
+        }
+      }
+    },
+
+    "spawningConfig": {
+      "type": "object",
+      "properties": {
+        "spawnAnimation": {
+          "type": "string"
+        },
+        "spawnDelay": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "invulnerableDuration": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "spawnEffect": {
+          "type": "string"
+        }
+      }
+    },
+
+    "unitAbility": {
+      "type": "object",
+      "properties": {
+        "abilityId": {
+          "type": "string"
+        },
+        "cooldown": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "useConditions": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/condition" }
+        },
+        "priority": {
+          "type": "integer"
+        }
+      },
+      "required": ["abilityId"]
+    }
+  }
+}

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Unit Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body class="unit-editor">
+    <div class="editor-container">
+        <!-- Header toolbar -->
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-icon" onclick="goBack()" title="Back">&#x2190;</button>
+                <h2 id="unit-name">New Unit</h2>
+                <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="save()">Save</button>
+            </div>
+        </div>
+
+        <div class="editor-content">
+            <!-- Properties panel -->
+            <div class="properties-panel">
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Basic Info</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="id">ID</label>
+                            <input type="text" id="id" data-path="id" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" data-path="name" placeholder="Unit name">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" data-path="description" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="unitClass">Class</label>
+                            <select id="unitClass" data-path="class">
+                                <option value="infantry">Infantry</option>
+                                <option value="cavalry">Cavalry</option>
+                                <option value="ranged">Ranged</option>
+                                <option value="siege">Siege</option>
+                                <option value="support">Support</option>
+                                <option value="hero">Hero</option>
+                                <option value="worker">Worker</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Combat Stats</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="health">Health</label>
+                            <input type="number" id="health" data-path="stats.health" min="1" value="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="mana">Mana</label>
+                            <input type="number" id="mana" data-path="stats.mana" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="attack">Attack</label>
+                            <input type="number" id="attack" data-path="stats.attack" min="0" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="defense">Defense</label>
+                            <input type="number" id="defense" data-path="stats.defense" min="0" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="attackSpeed">Attack Speed</label>
+                            <input type="number" id="attackSpeed" data-path="stats.attackSpeed" min="0.1" step="0.1" value="1.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="attackRange">Attack Range</label>
+                            <input type="number" id="attackRange" data-path="stats.attackRange" min="0" step="0.5" value="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Movement</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="moveSpeed">Move Speed</label>
+                            <input type="number" id="moveSpeed" data-path="stats.moveSpeed" min="0" step="0.1" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="turnRate">Turn Rate</label>
+                            <input type="number" id="turnRate" data-path="stats.turnRate" min="0" step="0.1" value="180">
+                        </div>
+                        <div class="form-group">
+                            <label>Movement Type</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" data-path="movement.ground" checked> Ground</label>
+                                <label><input type="checkbox" data-path="movement.water"> Water</label>
+                                <label><input type="checkbox" data-path="movement.air"> Air</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Collision</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="collisionType">Collision Shape</label>
+                            <select id="collisionType" data-path="collision.type">
+                                <option value="box">Box</option>
+                                <option value="sphere">Sphere</option>
+                                <option value="capsule">Capsule</option>
+                                <option value="cylinder">Cylinder</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Size</label>
+                            <div class="vector3-input">
+                                <input type="number" data-path="collision.size.x" placeholder="X" step="0.1" value="1">
+                                <input type="number" data-path="collision.size.y" placeholder="Y" step="0.1" value="2">
+                                <input type="number" data-path="collision.size.z" placeholder="Z" step="0.1" value="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Abilities</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="array-editor" data-path="abilities">
+                            <div class="array-items" id="abilities-items"></div>
+                            <button class="btn btn-small btn-add" onclick="addAbility()">+ Add Ability</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Training</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="trainTime">Train Time (s)</label>
+                            <input type="number" id="trainTime" data-path="training.time" min="0" value="30">
+                        </div>
+                        <div class="form-group">
+                            <label>Cost</label>
+                            <div class="cost-editor">
+                                <div class="cost-row">
+                                    <label>Food</label>
+                                    <input type="number" data-path="training.cost.food" min="0" value="50">
+                                </div>
+                                <div class="cost-row">
+                                    <label>Wood</label>
+                                    <input type="number" data-path="training.cost.wood" min="0" value="0">
+                                </div>
+                                <div class="cost-row">
+                                    <label>Gold</label>
+                                    <input type="number" data-path="training.cost.gold" min="0" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="population">Population</label>
+                            <input type="number" id="population" data-path="training.population" min="0" value="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Visual</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="model">3D Model</label>
+                            <div class="file-picker">
+                                <input type="text" id="model" data-path="visual.model" placeholder="models/unit.gltf">
+                                <button class="btn btn-small" onclick="browseModel()">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="portrait">Portrait</label>
+                            <div class="file-picker">
+                                <input type="text" id="portrait" data-path="visual.portrait" placeholder="textures/portrait.png">
+                                <button class="btn btn-small" onclick="browsePortrait()">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="icon">Icon</label>
+                            <div class="file-picker">
+                                <input type="text" id="icon" data-path="visual.icon" placeholder="textures/icon.png">
+                                <button class="btn btn-small" onclick="browseIcon()">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="scale">Model Scale</label>
+                            <input type="number" id="scale" data-path="visual.scale" min="0.1" step="0.1" value="1.0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>AI Behavior</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="aiScript">AI Script</label>
+                            <input type="text" id="aiScript" data-path="ai.script" placeholder="scripts/unit_ai.py">
+                        </div>
+                        <div class="form-group">
+                            <label for="behaviorTree">Behavior Tree</label>
+                            <div class="file-picker">
+                                <input type="text" id="behaviorTree" data-path="ai.behaviorTree" placeholder="configs/bt/unit.json">
+                                <button class="btn btn-small" onclick="editBehaviorTree()">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3D Preview -->
+            <div class="preview-viewport">
+                <div class="preview-header">
+                    <span>3D Preview</span>
+                    <div class="preview-controls">
+                        <button class="btn btn-icon" onclick="resetCamera()" title="Reset Camera">&#x21BA;</button>
+                        <label><input type="checkbox" id="showCollision" onchange="toggleCollision()"> Collision</label>
+                    </div>
+                </div>
+                <div class="preview-canvas" id="preview-canvas">
+                    <canvas id="unit-preview"></canvas>
+                </div>
+                <div class="model-controls">
+                    <label>Animation:</label>
+                    <select id="animation" onchange="playAnimation()">
+                        <option value="idle">Idle</option>
+                        <option value="walk">Walk</option>
+                        <option value="run">Run</option>
+                        <option value="attack">Attack</option>
+                        <option value="die">Die</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script src="schema_form.js"></script>
+    <script>
+        var unitEditor = new SchemaEditor('unit', {
+            containerSelector: '.properties-panel',
+            onDataChange: function(path, value) {
+                updatePreview();
+            }
+        });
+
+        var unitId = WebEditor.getQueryParam('id');
+        if (unitId) {
+            loadUnit(unitId);
+        }
+
+        function loadUnit(id) {
+            WebEditor.invoke('contentBrowser.getItemData', [id], function(err, data) {
+                if (err) {
+                    console.error('Failed to load unit:', err);
+                    return;
+                }
+                unitEditor.setData(data);
+                document.getElementById('unit-name').textContent = data.name || 'Unnamed Unit';
+            });
+        }
+
+        function save() {
+            var data = unitEditor.getData();
+            WebEditor.invoke('contentBrowser.saveItem', [unitId, data], function(err) {
+                if (err) {
+                    console.error('Failed to save:', err);
+                } else {
+                    setDirty(false);
+                }
+            });
+        }
+
+        function updatePreview() {
+            // Update 3D model preview
+        }
+    </script>
+</body>
+</html>

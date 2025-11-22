@@ -1,0 +1,427 @@
+{
+    "id": "tech_tree_universal",
+    "name": "Universal Technologies",
+    "description": "Fundamental technologies available to all cultures. These form the backbone of any civilization's advancement.",
+    "icon": "icons/techtrees/universal.png",
+    "universal": true,
+
+    "nodes": [
+        {
+            "id": "tech_agriculture",
+            "name": "Agriculture",
+            "description": "Develop farming techniques to produce food more efficiently. Enables construction of farms and granaries.",
+            "icon": "icons/tech/agriculture.png",
+            "tier": 1,
+            "category": "economy",
+            "age_requirement": "stone",
+            "cost": {
+                "food": 100,
+                "time": 60
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["farm", "granary"],
+                "abilities": ["harvest_bonus"]
+            },
+            "modifiers": [
+                {"stat": "food_production", "type": "percent", "value": 15, "scope": "global"}
+            ],
+            "events": {
+                "on_research_complete": "scripts/tech/agriculture_complete.py"
+            },
+            "position": {"x": 0, "y": 0, "row": 0, "column": 0}
+        },
+        {
+            "id": "tech_animal_husbandry",
+            "name": "Animal Husbandry",
+            "description": "Learn to domesticate and breed animals for food, labor, and materials.",
+            "icon": "icons/tech/animal_husbandry.png",
+            "tier": 1,
+            "category": "economy",
+            "age_requirement": "stone",
+            "cost": {
+                "food": 120,
+                "time": 75
+            },
+            "prerequisites": ["tech_agriculture"],
+            "unlocks": {
+                "buildings": ["pasture", "stable"],
+                "units": ["scout_cavalry"]
+            },
+            "modifiers": [
+                {"stat": "food_production", "type": "percent", "value": 10, "scope": "global"}
+            ],
+            "position": {"x": 150, "y": 0, "row": 0, "column": 1}
+        },
+        {
+            "id": "tech_irrigation",
+            "name": "Irrigation",
+            "description": "Build canals and water systems to increase crop yields dramatically.",
+            "icon": "icons/tech/irrigation.png",
+            "tier": 2,
+            "category": "economy",
+            "age_requirement": "bronze",
+            "cost": {
+                "food": 150,
+                "wood": 100,
+                "time": 90
+            },
+            "prerequisites": ["tech_agriculture"],
+            "unlocks": {
+                "buildings": ["irrigation_canal", "aqueduct"]
+            },
+            "modifiers": [
+                {"stat": "food_production", "type": "percent", "value": 25, "scope": {"building_type": "farm"}}
+            ],
+            "position": {"x": 0, "y": 120, "row": 1, "column": 0}
+        },
+        {
+            "id": "tech_bronze_working",
+            "name": "Bronze Working",
+            "description": "Discover the art of alloying copper and tin to create bronze tools and weapons.",
+            "icon": "icons/tech/bronze_working.png",
+            "tier": 1,
+            "category": "military",
+            "age_requirement": "bronze",
+            "cost": {
+                "metal": 150,
+                "time": 90
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["bronze_forge"],
+                "units": ["spearman"],
+                "upgrades": ["bronze_tools"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "flat", "value": 3, "scope": {"unit_type": "melee"}},
+                {"stat": "gather_speed", "type": "percent", "value": 10, "scope": "global"}
+            ],
+            "position": {"x": 300, "y": 0, "row": 0, "column": 2}
+        },
+        {
+            "id": "tech_iron_weapons",
+            "name": "Iron Weapons",
+            "description": "Forge stronger weapons from iron ore. Unlocks powerful military units.",
+            "icon": "icons/tech/iron_weapons.png",
+            "tier": 2,
+            "category": "military",
+            "age_requirement": "iron",
+            "cost": {
+                "metal": 200,
+                "gold": 50,
+                "time": 120
+            },
+            "prerequisites": ["tech_bronze_working"],
+            "unlocks": {
+                "units": ["swordsman", "pikeman"],
+                "upgrades": ["iron_sword", "iron_armor"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "flat", "value": 5, "scope": {"unit_type": "melee"}},
+                {"stat": "armor", "type": "flat", "value": 2, "scope": {"unit_type": "melee"}}
+            ],
+            "position": {"x": 300, "y": 120, "row": 1, "column": 2}
+        },
+        {
+            "id": "tech_steel_forging",
+            "name": "Steel Forging",
+            "description": "Master the creation of steel for superior weapons and armor.",
+            "icon": "icons/tech/steel_forging.png",
+            "tier": 3,
+            "category": "military",
+            "age_requirement": "medieval",
+            "cost": {
+                "metal": 300,
+                "gold": 100,
+                "time": 180
+            },
+            "prerequisites": ["tech_iron_weapons"],
+            "unlocks": {
+                "units": ["knight", "heavy_infantry"],
+                "upgrades": ["steel_weapons", "plate_armor"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 15, "scope": {"unit_type": "melee"}},
+                {"stat": "armor", "type": "flat", "value": 5, "scope": {"unit_type": "heavy"}}
+            ],
+            "position": {"x": 300, "y": 240, "row": 2, "column": 2}
+        },
+        {
+            "id": "tech_archery",
+            "name": "Archery",
+            "description": "Develop bows and arrows for ranged warfare.",
+            "icon": "icons/tech/archery.png",
+            "tier": 1,
+            "category": "military",
+            "age_requirement": "stone",
+            "cost": {
+                "wood": 100,
+                "time": 60
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["archery_range"],
+                "units": ["archer"]
+            },
+            "modifiers": [
+                {"stat": "attack_range", "type": "flat", "value": 1, "scope": {"unit_type": "ranged"}}
+            ],
+            "position": {"x": 450, "y": 0, "row": 0, "column": 3}
+        },
+        {
+            "id": "tech_composite_bow",
+            "name": "Composite Bow",
+            "description": "Create more powerful bows using multiple materials.",
+            "icon": "icons/tech/composite_bow.png",
+            "tier": 2,
+            "category": "military",
+            "age_requirement": "bronze",
+            "cost": {
+                "wood": 150,
+                "metal": 50,
+                "time": 90
+            },
+            "prerequisites": ["tech_archery"],
+            "unlocks": {
+                "units": ["longbowman"],
+                "upgrades": ["composite_arrows"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 20, "scope": {"unit_type": "ranged"}},
+                {"stat": "attack_range", "type": "flat", "value": 2, "scope": {"unit_type": "ranged"}}
+            ],
+            "position": {"x": 450, "y": 120, "row": 1, "column": 3}
+        },
+        {
+            "id": "tech_masonry",
+            "name": "Masonry",
+            "description": "Learn to cut and shape stone for construction. Enables defensive structures.",
+            "icon": "icons/tech/masonry.png",
+            "tier": 1,
+            "category": "defense",
+            "age_requirement": "bronze",
+            "cost": {
+                "stone": 150,
+                "time": 90
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["stone_wall", "watchtower"],
+                "features": ["stone_construction"]
+            },
+            "modifiers": [
+                {"stat": "max_health", "type": "percent", "value": 20, "scope": {"building_type": "defensive"}}
+            ],
+            "position": {"x": 600, "y": 0, "row": 0, "column": 4}
+        },
+        {
+            "id": "tech_fortification",
+            "name": "Fortification",
+            "description": "Build stronger walls and defensive structures.",
+            "icon": "icons/tech/fortification.png",
+            "tier": 2,
+            "category": "defense",
+            "age_requirement": "iron",
+            "cost": {
+                "stone": 250,
+                "metal": 100,
+                "time": 150
+            },
+            "prerequisites": ["tech_masonry"],
+            "unlocks": {
+                "buildings": ["fortress_wall", "gate_house", "moat"],
+                "upgrades": ["reinforced_walls"]
+            },
+            "modifiers": [
+                {"stat": "max_health", "type": "percent", "value": 30, "scope": {"building_type": "wall"}},
+                {"stat": "armor", "type": "flat", "value": 10, "scope": {"building_type": "defensive"}}
+            ],
+            "position": {"x": 600, "y": 120, "row": 1, "column": 4}
+        },
+        {
+            "id": "tech_siege_weapons",
+            "name": "Siege Weapons",
+            "description": "Construct powerful machines to break enemy fortifications.",
+            "icon": "icons/tech/siege_weapons.png",
+            "tier": 3,
+            "category": "military",
+            "age_requirement": "medieval",
+            "cost": {
+                "wood": 200,
+                "metal": 200,
+                "gold": 100,
+                "time": 180
+            },
+            "prerequisites": ["tech_fortification", "tech_iron_weapons"],
+            "unlocks": {
+                "buildings": ["siege_workshop"],
+                "units": ["battering_ram", "catapult", "trebuchet"]
+            },
+            "modifiers": [
+                {"stat": "damage", "type": "percent", "value": 50, "scope": {"category": "siege"}, "condition": {"type": "when_near_building", "target": "wall", "radius": 15}}
+            ],
+            "position": {"x": 450, "y": 240, "row": 2, "column": 3}
+        },
+        {
+            "id": "tech_wheel",
+            "name": "The Wheel",
+            "description": "Invent the wheel for improved transportation and warfare.",
+            "icon": "icons/tech/wheel.png",
+            "tier": 1,
+            "category": "infrastructure",
+            "age_requirement": "bronze",
+            "cost": {
+                "wood": 100,
+                "time": 60
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["road"],
+                "units": ["chariot"]
+            },
+            "modifiers": [
+                {"stat": "movement_speed", "type": "percent", "value": 10, "scope": "global"}
+            ],
+            "position": {"x": 750, "y": 0, "row": 0, "column": 5}
+        },
+        {
+            "id": "tech_currency",
+            "name": "Currency",
+            "description": "Establish a monetary system for efficient trade.",
+            "icon": "icons/tech/currency.png",
+            "tier": 2,
+            "category": "economy",
+            "age_requirement": "bronze",
+            "cost": {
+                "gold": 200,
+                "time": 120
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["market", "bank"],
+                "features": ["trading"]
+            },
+            "modifiers": [
+                {"stat": "gold_production", "type": "percent", "value": 15, "scope": "global"}
+            ],
+            "position": {"x": 150, "y": 120, "row": 1, "column": 1}
+        },
+        {
+            "id": "tech_writing",
+            "name": "Writing",
+            "description": "Develop written language for record-keeping and knowledge preservation.",
+            "icon": "icons/tech/writing.png",
+            "tier": 2,
+            "category": "science",
+            "age_requirement": "bronze",
+            "cost": {
+                "gold": 150,
+                "time": 90
+            },
+            "prerequisites": [],
+            "unlocks": {
+                "buildings": ["library", "academy"],
+                "features": ["research_bonus"]
+            },
+            "modifiers": [
+                {"stat": "research_time", "type": "percent", "value": -10, "scope": "global"}
+            ],
+            "position": {"x": 900, "y": 0, "row": 0, "column": 6}
+        },
+        {
+            "id": "tech_mathematics",
+            "name": "Mathematics",
+            "description": "Develop mathematical principles for engineering and science.",
+            "icon": "icons/tech/mathematics.png",
+            "tier": 3,
+            "category": "science",
+            "age_requirement": "iron",
+            "cost": {
+                "gold": 250,
+                "time": 150
+            },
+            "prerequisites": ["tech_writing"],
+            "unlocks": {
+                "buildings": ["university"],
+                "features": ["advanced_engineering"]
+            },
+            "modifiers": [
+                {"stat": "research_time", "type": "percent", "value": -15, "scope": "global"},
+                {"stat": "construction_speed", "type": "percent", "value": 10, "scope": "global"}
+            ],
+            "position": {"x": 900, "y": 120, "row": 1, "column": 6}
+        },
+        {
+            "id": "tech_medicine",
+            "name": "Medicine",
+            "description": "Develop healing techniques to treat wounds and diseases.",
+            "icon": "icons/tech/medicine.png",
+            "tier": 2,
+            "category": "science",
+            "age_requirement": "iron",
+            "cost": {
+                "gold": 200,
+                "food": 100,
+                "time": 120
+            },
+            "prerequisites": ["tech_writing"],
+            "unlocks": {
+                "buildings": ["hospital"],
+                "abilities": ["heal_unit"]
+            },
+            "modifiers": [
+                {"stat": "health_regen", "type": "percent", "value": 50, "scope": "global"}
+            ],
+            "position": {"x": 1050, "y": 120, "row": 1, "column": 7}
+        }
+    ],
+
+    "connections": [
+        {"from": "tech_agriculture", "to": "tech_irrigation"},
+        {"from": "tech_agriculture", "to": "tech_animal_husbandry"},
+        {"from": "tech_bronze_working", "to": "tech_iron_weapons"},
+        {"from": "tech_iron_weapons", "to": "tech_steel_forging"},
+        {"from": "tech_archery", "to": "tech_composite_bow"},
+        {"from": "tech_masonry", "to": "tech_fortification"},
+        {"from": "tech_fortification", "to": "tech_siege_weapons"},
+        {"from": "tech_iron_weapons", "to": "tech_siege_weapons"},
+        {"from": "tech_writing", "to": "tech_mathematics"},
+        {"from": "tech_writing", "to": "tech_medicine"}
+    ],
+
+    "branches": [
+        {
+            "id": "branch_economy",
+            "name": "Economy",
+            "description": "Technologies for resource production and trade.",
+            "category": "economy",
+            "techs": ["tech_agriculture", "tech_animal_husbandry", "tech_irrigation", "tech_currency"],
+            "display_order": 0
+        },
+        {
+            "id": "branch_military",
+            "name": "Military",
+            "description": "Technologies for warfare and combat.",
+            "category": "military",
+            "techs": ["tech_bronze_working", "tech_iron_weapons", "tech_steel_forging", "tech_archery", "tech_composite_bow", "tech_siege_weapons"],
+            "display_order": 1
+        },
+        {
+            "id": "branch_defense",
+            "name": "Defense",
+            "description": "Technologies for fortification and protection.",
+            "category": "defense",
+            "techs": ["tech_masonry", "tech_fortification"],
+            "display_order": 2
+        },
+        {
+            "id": "branch_science",
+            "name": "Science",
+            "description": "Technologies for research and knowledge.",
+            "category": "science",
+            "techs": ["tech_writing", "tech_mathematics", "tech_medicine"],
+            "display_order": 3
+        }
+    ]
+}

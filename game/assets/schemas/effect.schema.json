@@ -1,0 +1,279 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "effect.schema.json",
+  "title": "Effect Definition",
+  "description": "Defines a buff, debuff, or status effect",
+  "type": "object",
+  "required": ["id", "name", "type"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^effect_[a-z_]+$",
+      "description": "Unique effect identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Effect description"
+    },
+    "icon": {
+      "$ref": "common.schema.json#/definitions/assetPath",
+      "description": "Icon texture path"
+    },
+    "type": {
+      "enum": ["buff", "debuff", "neutral", "aura", "passive", "status"],
+      "description": "Effect category"
+    },
+    "duration": {
+      "$ref": "#/definitions/effectDuration",
+      "description": "Duration configuration"
+    },
+    "stacking": {
+      "$ref": "#/definitions/stacking",
+      "description": "How effect stacks"
+    },
+    "modifiers": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/definitions/modifier" },
+      "description": "Stat modifiers applied"
+    },
+    "periodicEffects": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/periodicEffect" },
+      "description": "Effects that occur periodically"
+    },
+    "triggers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/effectTrigger" },
+      "description": "Triggered effects"
+    },
+    "immunities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Effect types this grants immunity to"
+    },
+    "dispelType": {
+      "enum": ["none", "magic", "curse", "poison", "disease", "all"],
+      "description": "How this effect can be dispelled"
+    },
+    "priority": {
+      "type": "integer",
+      "description": "Priority for effect ordering"
+    },
+    "visuals": {
+      "$ref": "#/definitions/effectVisuals"
+    },
+    "audio": {
+      "$ref": "#/definitions/effectAudio"
+    },
+    "flags": {
+      "$ref": "#/definitions/effectFlags"
+    },
+    "tags": {
+      "$ref": "common.schema.json#/definitions/tags"
+    },
+    "events": {
+      "$ref": "common.schema.json#/definitions/events"
+    }
+  },
+
+  "definitions": {
+    "effectDuration": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "$ref": "common.schema.json#/definitions/duration",
+          "description": "Base duration"
+        },
+        "permanent": {
+          "type": "boolean",
+          "default": false,
+          "description": "Effect persists until removed"
+        },
+        "infinite": {
+          "type": "boolean",
+          "default": false,
+          "description": "Effect never expires"
+        },
+        "chargesBased": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Expires after N triggers"
+        },
+        "scalingFactor": {
+          "type": "number",
+          "description": "Duration scaling multiplier"
+        }
+      }
+    },
+
+    "stacking": {
+      "type": "object",
+      "properties": {
+        "maxStacks": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "stackBehavior": {
+          "enum": ["refresh", "extend", "independent", "replace"],
+          "description": "How new applications interact"
+        },
+        "perSource": {
+          "type": "boolean",
+          "default": false,
+          "description": "Stack separately per source"
+        },
+        "stackModifier": {
+          "type": "number",
+          "description": "Multiplier per stack"
+        }
+      }
+    },
+
+    "periodicEffect": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["damage", "heal", "mana_drain", "mana_restore", "trigger_effect", "spawn_entity"]
+        },
+        "interval": {
+          "$ref": "common.schema.json#/definitions/duration"
+        },
+        "amount": {
+          "$ref": "common.schema.json#/definitions/range"
+        },
+        "damageType": {
+          "$ref": "common.schema.json#/definitions/damageType"
+        },
+        "scaling": {
+          "type": "object",
+          "properties": {
+            "stat": { "type": "string" },
+            "ratio": { "type": "number" }
+          }
+        },
+        "firstTickImmediate": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["type", "interval"]
+    },
+
+    "effectTrigger": {
+      "type": "object",
+      "properties": {
+        "trigger": {
+          "$ref": "common.schema.json#/definitions/trigger"
+        },
+        "effect": {
+          "$ref": "common.schema.json#/definitions/action"
+        },
+        "consumeStack": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["trigger", "effect"]
+    },
+
+    "effectVisuals": {
+      "type": "object",
+      "properties": {
+        "particle": {
+          "$ref": "common.schema.json#/definitions/assetPath",
+          "description": "Particle effect"
+        },
+        "attachPoint": {
+          "enum": ["root", "head", "chest", "feet", "weapon", "overhead"],
+          "default": "root"
+        },
+        "tint": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "outline": {
+          "$ref": "common.schema.json#/definitions/color"
+        },
+        "scale": {
+          "type": "number",
+          "default": 1
+        },
+        "animation": {
+          "type": "string"
+        },
+        "screenEffect": {
+          "enum": ["none", "blur", "vignette", "desaturate", "pulse"]
+        },
+        "iconAnimation": {
+          "enum": ["none", "pulse", "bounce", "shake", "fade"]
+        }
+      }
+    },
+
+    "effectAudio": {
+      "type": "object",
+      "properties": {
+        "onApply": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "onRemove": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "onTick": { "$ref": "common.schema.json#/definitions/assetPath" },
+        "ambient": { "$ref": "common.schema.json#/definitions/assetPath" }
+      }
+    },
+
+    "effectFlags": {
+      "type": "object",
+      "properties": {
+        "hidden": {
+          "type": "boolean",
+          "default": false,
+          "description": "Don't show in UI"
+        },
+        "removeOnDeath": {
+          "type": "boolean",
+          "default": true
+        },
+        "persistThroughDeath": {
+          "type": "boolean",
+          "default": false
+        },
+        "transferable": {
+          "type": "boolean",
+          "default": false
+        },
+        "canBeStolen": {
+          "type": "boolean",
+          "default": false
+        },
+        "preventMovement": {
+          "type": "boolean",
+          "default": false
+        },
+        "preventAttacking": {
+          "type": "boolean",
+          "default": false
+        },
+        "preventCasting": {
+          "type": "boolean",
+          "default": false
+        },
+        "invulnerable": {
+          "type": "boolean",
+          "default": false
+        },
+        "invisible": {
+          "type": "boolean",
+          "default": false
+        },
+        "untargetable": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

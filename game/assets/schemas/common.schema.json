@@ -1,0 +1,372 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "common.schema.json",
+  "title": "Common Definitions",
+  "description": "Shared definitions for Nova3D/Vehement2 game systems",
+
+  "definitions": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Lowercase identifier with underscores"
+    },
+
+    "localizedString": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "key": { "type": "string" },
+            "default": { "type": "string" },
+            "params": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "required": ["key"]
+        }
+      ],
+      "description": "String that can be localized"
+    },
+
+    "assetPath": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_/.-]+$",
+      "description": "Path to an asset file"
+    },
+
+    "color": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$",
+          "description": "Hex color (#RRGGBB or #RRGGBBAA)"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "r": { "type": "number", "minimum": 0, "maximum": 1 },
+            "g": { "type": "number", "minimum": 0, "maximum": 1 },
+            "b": { "type": "number", "minimum": 0, "maximum": 1 },
+            "a": { "type": "number", "minimum": 0, "maximum": 1, "default": 1 }
+          },
+          "required": ["r", "g", "b"]
+        },
+        {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minItems": 3,
+          "maxItems": 4
+        }
+      ],
+      "description": "Color value in various formats"
+    },
+
+    "vector2": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          },
+          "required": ["x", "y"]
+        },
+        {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      ],
+      "description": "2D vector"
+    },
+
+    "vector3": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" }
+          },
+          "required": ["x", "y", "z"]
+        },
+        {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      ],
+      "description": "3D vector"
+    },
+
+    "range": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      },
+      "required": ["min", "max"],
+      "description": "Numeric range with min/max"
+    },
+
+    "rangeInt": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "integer" },
+        "max": { "type": "integer" }
+      },
+      "required": ["min", "max"],
+      "description": "Integer range with min/max"
+    },
+
+    "duration": {
+      "oneOf": [
+        { "type": "number", "minimum": 0 },
+        {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?(s|ms|m|h)?$"
+        }
+      ],
+      "description": "Duration in seconds or with unit suffix"
+    },
+
+    "percentage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percentage value (0-100)"
+    },
+
+    "probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability value (0-1)"
+    },
+
+    "resourceCost": {
+      "type": "object",
+      "properties": {
+        "coins": { "type": "integer", "minimum": 0 },
+        "gems": { "type": "integer", "minimum": 0 },
+        "experience": { "type": "integer", "minimum": 0 },
+        "energy": { "type": "integer", "minimum": 0 },
+        "ammo": { "type": "integer", "minimum": 0 },
+        "health": { "type": "number", "minimum": 0 },
+        "mana": { "type": "number", "minimum": 0 },
+        "custom": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        }
+      },
+      "description": "Resource cost for actions"
+    },
+
+    "stat": {
+      "type": "object",
+      "properties": {
+        "base": { "type": "number" },
+        "perLevel": { "type": "number", "default": 0 },
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      },
+      "required": ["base"],
+      "description": "Scalable stat value"
+    },
+
+    "modifier": {
+      "type": "object",
+      "properties": {
+        "stat": { "type": "string" },
+        "operation": {
+          "enum": ["add", "multiply", "set", "add_percent", "multiply_base"]
+        },
+        "value": { "type": "number" },
+        "source": { "type": "string" },
+        "duration": { "$ref": "#/definitions/duration" },
+        "stacks": { "type": "integer", "minimum": 1, "default": 1 },
+        "maxStacks": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["stat", "operation", "value"],
+      "description": "Stat modifier"
+    },
+
+    "condition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "health_below", "health_above", "health_percent",
+            "has_buff", "has_debuff", "has_status",
+            "target_type", "target_health", "target_distance",
+            "cooldown_ready", "resource_available",
+            "time_of_day", "weather", "in_zone",
+            "player_level", "has_item", "has_weapon",
+            "kills_count", "and", "or", "not"
+          ]
+        },
+        "value": {},
+        "threshold": { "type": "number" },
+        "target": { "type": "string" },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/condition" }
+        }
+      },
+      "required": ["type"],
+      "description": "Conditional check"
+    },
+
+    "trigger": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "enum": [
+            "on_spawn", "on_death", "on_damage_taken", "on_damage_dealt",
+            "on_kill", "on_hit", "on_miss", "on_critical",
+            "on_heal", "on_buff_applied", "on_buff_removed",
+            "on_ability_cast", "on_ability_end",
+            "on_move", "on_enter_zone", "on_exit_zone",
+            "on_interact", "on_timer", "on_wave_start", "on_wave_end"
+          ]
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/condition" }
+        },
+        "chance": { "$ref": "#/definitions/probability" },
+        "cooldown": { "$ref": "#/definitions/duration" }
+      },
+      "required": ["event"],
+      "description": "Event trigger"
+    },
+
+    "events": {
+      "type": "object",
+      "properties": {
+        "onSpawn": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onDeath": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onDamage": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onHeal": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onKill": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onHit": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onCritical": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onUpdate": { "type": "array", "items": { "$ref": "#/definitions/action" } },
+        "onInteract": { "type": "array", "items": { "$ref": "#/definitions/action" } }
+      },
+      "description": "Event handlers"
+    },
+
+    "action": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "deal_damage", "heal", "apply_effect", "remove_effect",
+            "spawn_entity", "destroy_entity", "spawn_projectile",
+            "play_sound", "play_animation", "spawn_particles",
+            "modify_stat", "grant_experience", "grant_currency",
+            "teleport", "push", "pull", "stun", "slow",
+            "trigger_ability", "set_variable", "send_event",
+            "run_script"
+          ]
+        },
+        "target": {
+          "enum": ["self", "target", "caster", "all_enemies", "all_allies", "area", "random"]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "delay": { "$ref": "#/definitions/duration" },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/condition" }
+        }
+      },
+      "required": ["type"],
+      "description": "Action to execute"
+    },
+
+    "damageType": {
+      "enum": ["physical", "fire", "ice", "lightning", "poison", "holy", "dark", "true"],
+      "description": "Type of damage"
+    },
+
+    "targetFilter": {
+      "type": "object",
+      "properties": {
+        "teams": {
+          "type": "array",
+          "items": { "enum": ["ally", "enemy", "neutral", "self"] }
+        },
+        "entityTypes": {
+          "type": "array",
+          "items": { "enum": ["player", "zombie", "npc", "projectile", "pickup", "effect", "building"] }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "excludeTags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "maxTargets": { "type": "integer", "minimum": 1 },
+        "requireLineOfSight": { "type": "boolean", "default": false },
+        "includeDeceased": { "type": "boolean", "default": false }
+      },
+      "description": "Filter for target selection"
+    },
+
+    "transform": {
+      "type": "object",
+      "properties": {
+        "position": { "$ref": "#/definitions/vector3" },
+        "rotation": { "$ref": "#/definitions/vector3" },
+        "scale": { "$ref": "#/definitions/vector3" }
+      },
+      "description": "3D transform"
+    },
+
+    "bounds": {
+      "type": "object",
+      "properties": {
+        "min": { "$ref": "#/definitions/vector3" },
+        "max": { "$ref": "#/definitions/vector3" }
+      },
+      "required": ["min", "max"],
+      "description": "Axis-aligned bounding box"
+    },
+
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "List of tags for filtering and categorization"
+    },
+
+    "weight": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Weight for weighted random selection"
+    },
+
+    "scriptReference": {
+      "type": "object",
+      "properties": {
+        "file": { "$ref": "#/definitions/assetPath" },
+        "function": { "type": "string" },
+        "inline": { "type": "string" }
+      },
+      "description": "Reference to a script or inline script"
+    }
+  }
+}

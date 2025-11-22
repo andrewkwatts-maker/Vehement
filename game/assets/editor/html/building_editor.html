@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Building Editor</title>
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body class="building-editor">
+    <div class="editor-container">
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+                <h2 id="building-name">New Building</h2>
+                <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn" onclick="undo()">Undo</button>
+                <button class="btn" onclick="redo()">Redo</button>
+                <button class="btn btn-primary" onclick="save()">Save</button>
+            </div>
+        </div>
+
+        <div class="editor-content">
+            <div class="properties-panel">
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Basic Info</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="id">ID</label>
+                            <input type="text" id="id" data-path="id" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" data-path="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" data-path="description" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select id="category" data-path="category">
+                                <option value="resource">Resource</option>
+                                <option value="military">Military</option>
+                                <option value="defense">Defense</option>
+                                <option value="research">Research</option>
+                                <option value="wonder">Wonder</option>
+                                <option value="infrastructure">Infrastructure</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Building Stats</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="health">Health</label>
+                            <input type="number" id="health" data-path="stats.health" min="1" value="500">
+                        </div>
+                        <div class="form-group">
+                            <label for="armor">Armor</label>
+                            <input type="number" id="armor" data-path="stats.armor" min="0" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="sightRange">Sight Range</label>
+                            <input type="number" id="sightRange" data-path="stats.sightRange" min="0" value="10">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Footprint</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="footprintWidth">Width (tiles)</label>
+                            <input type="number" id="footprintWidth" data-path="footprint.width" min="1" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="footprintHeight">Height (tiles)</label>
+                            <input type="number" id="footprintHeight" data-path="footprint.height" min="1" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label for="gridType">Grid Type</label>
+                            <select id="gridType" data-path="footprint.gridType">
+                                <option value="rect">Rectangle</option>
+                                <option value="hex">Hexagonal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Buildable On</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" data-path="footprint.terrain.grass" checked> Grass</label>
+                                <label><input type="checkbox" data-path="footprint.terrain.sand"> Sand</label>
+                                <label><input type="checkbox" data-path="footprint.terrain.stone"> Stone</label>
+                                <label><input type="checkbox" data-path="footprint.terrain.water"> Water</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Construction</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="buildTime">Build Time (s)</label>
+                            <input type="number" id="buildTime" data-path="construction.time" min="0" value="60">
+                        </div>
+                        <div class="form-group">
+                            <label>Cost</label>
+                            <div class="cost-editor">
+                                <div class="cost-row"><label>Wood</label><input type="number" data-path="construction.cost.wood" min="0" value="150"></div>
+                                <div class="cost-row"><label>Stone</label><input type="number" data-path="construction.cost.stone" min="0" value="0"></div>
+                                <div class="cost-row"><label>Gold</label><input type="number" data-path="construction.cost.gold" min="0" value="0"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="requiredTech">Required Technology</label>
+                            <input type="text" id="requiredTech" data-path="construction.requiredTech">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Production</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Produces Units</label>
+                            <div class="array-editor" data-path="production.units">
+                                <div class="array-items" id="production-units"></div>
+                                <button class="btn btn-small btn-add" onclick="addProductionUnit()">+ Add Unit</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Researches Technologies</label>
+                            <div class="array-editor" data-path="production.techs">
+                                <div class="array-items" id="production-techs"></div>
+                                <button class="btn btn-small btn-add" onclick="addProductionTech()">+ Add Tech</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Resource Generation</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Generates per Minute</label>
+                            <div class="cost-editor">
+                                <div class="cost-row"><label>Food</label><input type="number" data-path="resources.food" value="0"></div>
+                                <div class="cost-row"><label>Wood</label><input type="number" data-path="resources.wood" value="0"></div>
+                                <div class="cost-row"><label>Gold</label><input type="number" data-path="resources.gold" value="0"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="populationCap">Population Cap Bonus</label>
+                            <input type="number" id="populationCap" data-path="resources.populationCap" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Visual</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label for="model">3D Model</label>
+                            <div class="file-picker">
+                                <input type="text" id="model" data-path="visual.model">
+                                <button class="btn btn-small" onclick="browseModel()">Browse</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="constructionModel">Construction Model</label>
+                            <input type="text" id="constructionModel" data-path="visual.constructionModel">
+                        </div>
+                        <div class="form-group">
+                            <label for="icon">Icon</label>
+                            <input type="text" id="icon" data-path="visual.icon">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <span class="icon">&#x25BC;</span>
+                        <span>Upgrades</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Upgrade Path</label>
+                            <div class="array-editor" data-path="upgrades">
+                                <div class="array-items" id="upgrades-list"></div>
+                                <button class="btn btn-small btn-add" onclick="addUpgrade()">+ Add Upgrade</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-viewport">
+                <div class="preview-header">
+                    <span>3D Preview</span>
+                    <div class="preview-controls">
+                        <button class="btn btn-icon" onclick="resetCamera()">&#x21BA;</button>
+                        <label><input type="checkbox" id="showFootprint" onchange="toggleFootprint()" checked> Footprint</label>
+                    </div>
+                </div>
+                <div class="preview-canvas">
+                    <canvas id="building-preview"></canvas>
+                </div>
+                <div class="footprint-grid" id="footprint-grid">
+                    <!-- Visual footprint grid -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script src="schema_form.js"></script>
+    <script>
+        var buildingEditor = new SchemaEditor('building', {
+            containerSelector: '.properties-panel',
+            onDataChange: function(path, value) {
+                updatePreview();
+                if (path.startsWith('footprint')) {
+                    updateFootprintGrid();
+                }
+            }
+        });
+
+        var buildingId = WebEditor.getQueryParam('id');
+        if (buildingId) {
+            loadBuilding(buildingId);
+        }
+
+        function loadBuilding(id) {
+            WebEditor.invoke('contentBrowser.getItemData', [id], function(err, data) {
+                if (err) return;
+                buildingEditor.setData(data);
+                document.getElementById('building-name').textContent = data.name || 'Unnamed Building';
+                updateFootprintGrid();
+            });
+        }
+
+        function save() {
+            var data = buildingEditor.getData();
+            WebEditor.invoke('contentBrowser.saveItem', [buildingId, data], function(err) {
+                if (!err) setDirty(false);
+            });
+        }
+
+        function updateFootprintGrid() {
+            var data = buildingEditor.getData();
+            var grid = document.getElementById('footprint-grid');
+            var w = data.footprint ? data.footprint.width : 3;
+            var h = data.footprint ? data.footprint.height : 3;
+
+            grid.innerHTML = '';
+            for (var y = 0; y < h; y++) {
+                for (var x = 0; x < w; x++) {
+                    var cell = document.createElement('div');
+                    cell.className = 'footprint-cell';
+                    grid.appendChild(cell);
+                }
+            }
+            grid.style.gridTemplateColumns = 'repeat(' + w + ', 20px)';
+        }
+    </script>
+</body>
+</html>

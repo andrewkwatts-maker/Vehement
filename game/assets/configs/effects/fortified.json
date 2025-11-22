@@ -1,0 +1,66 @@
+{
+    // Fortified - Defensive Buff
+    // Increased armor and resistances
+
+    "id": "effect_fortified",
+    "name": "Fortified",
+    "description": "Your defenses are significantly enhanced.",
+    "type": "buff",
+    "tags": ["defensive", "armor", "tank", "protection"],
+    "categories": ["defensive_buff"],
+
+    "duration": 15.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "refresh",
+        "max_stacks": 1
+    },
+
+    "modifiers": [
+        {
+            "stat": "armor",
+            "op": "percent",
+            "value": 50
+        },
+        {
+            "stat": "physical_resist",
+            "op": "add",
+            "value": 15
+        },
+        {
+            "stat": "magic_resist",
+            "op": "add",
+            "value": 10
+        },
+        {
+            "stat": "move_speed",
+            "op": "percent",
+            "value": -15
+        }
+    ],
+
+    "triggers": [
+        {
+            "condition": "on_damage_taken",
+            "chance": 0.15,
+            "action": "apply_effect",
+            "effect_id": "effect_thorns",
+            "target": "damage_source"
+        }
+    ],
+
+    "immunity_tags": ["knockback"],
+
+    "visual": {
+        "icon": "icons/effects/fortified.png",
+        "particle": "particles/stone_armor.json",
+        "tint": [0.6, 0.5, 0.4, 1.0],
+        "shader": "shaders/stone_skin.glsl",
+        "glow": 0.1
+    },
+
+    "dispellable": true,
+    "purgeable": false,
+    "priority": 5
+}

@@ -1,0 +1,140 @@
+{
+    // Heal Aura - Passive radius healing effect
+    // Continuously heals nearby allies
+
+    "id": "spell_heal_aura",
+    "name": "Healing Aura",
+    "description": "Emanates a healing aura that restores health to nearby allies over time.",
+    "icon": "icons/spells/heal_aura.png",
+    "school": "holy",
+    "tags": ["healing", "aura", "support", "holy", "passive"],
+
+    "targeting": {
+        "mode": "passive_radius",
+        "range": 0.0,
+        "radius": 15.0,
+        "max_targets": 10,
+        "priority": "lowest_health",
+
+        "filter": {
+            "faction": "friendly",
+            "can_target_self": true,
+            "must_be_alive": true
+        },
+
+        "preview": {
+            "shape": "circle",
+            "show_range": true,
+            "show_aoe": true,
+            "pulse": true,
+            "pulse_speed": 1.5
+        }
+    },
+
+    "timing": {
+        "cast_time": 0.0,
+        "channel_duration": 0.0,
+        "cooldown": 30.0,
+        "charges": 1,
+        "triggers_gcd": true,
+        "affected_by_gcd": true
+    },
+
+    "cost": {
+        "mana": 50,
+        "health": 0,
+        "stamina": 0
+    },
+
+    "effects": [
+        {
+            "id": "aura_hot",
+            "type": "hot",
+            "timing": "over_time",
+            "amount": 15,
+            "duration": 20.0,
+            "tick_interval": 2.0,
+            "stacking": "refresh",
+            "max_stacks": 1,
+            "scaling": {
+                "stat": "spell_power",
+                "coefficient": 0.25
+            },
+            "description": "Healing for health every 2 seconds."
+        },
+        {
+            "id": "aura_buff",
+            "type": "buff",
+            "timing": "instant",
+            "duration": 20.0,
+            "stacking": "refresh",
+            "description": "Blessed by the healing aura."
+        }
+    ],
+
+    "flags": {
+        "can_crit": true,
+        "can_miss": false,
+        "can_be_interrupted": false,
+        "can_be_silenced": true,
+        "requires_los": false,
+        "cast_while_moving": true,
+        "passive": false,
+        "aura": true
+    },
+
+    "requirements": {
+        "min_level": 5
+    },
+
+    "events": {
+        "on_cast_complete": "scripts/spells/heal_aura_activate.py"
+    },
+
+    "visuals": {
+        "icon": "icons/spells/heal_aura.png",
+        "effects": [
+            {
+                "id": "aura_ring",
+                "type": "particle",
+                "trigger": "continuous",
+                "attach": "caster_feet",
+                "path": "effects/holy_aura_ring.fx",
+                "scale": 2.0,
+                "loop": true
+            },
+            {
+                "id": "aura_glow",
+                "type": "light",
+                "trigger": "continuous",
+                "attach": "caster",
+                "intensity": 0.5,
+                "range": 15.0,
+                "flicker": true
+            },
+            {
+                "id": "heal_particles",
+                "type": "particle",
+                "trigger": "on_hit",
+                "attach": "target",
+                "path": "effects/heal_sparkle.fx",
+                "scale": 0.8
+            }
+        ],
+        "sounds": [
+            {
+                "id": "activate_sound",
+                "path": "sounds/spells/holy_activate.wav",
+                "trigger": "on_cast_complete",
+                "volume": 0.8
+            },
+            {
+                "id": "ambient_hum",
+                "path": "sounds/spells/holy_ambient.wav",
+                "trigger": "continuous",
+                "volume": 0.3,
+                "loop": true
+            }
+        ]
+    }
+}

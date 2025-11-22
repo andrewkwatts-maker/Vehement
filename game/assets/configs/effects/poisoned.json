@@ -1,0 +1,60 @@
+{
+    // Poisoned - Nature Damage over Time
+    // Long duration poison effect with healing reduction
+
+    "id": "effect_poisoned",
+    "name": "Poisoned",
+    "description": "Poison courses through your veins, dealing damage and reducing healing.",
+    "type": "debuff",
+    "tags": ["dot", "poison", "nature", "healing_reduction"],
+    "categories": ["damage_over_time", "poison_effect"],
+
+    "duration": 8.0,
+    "duration_type": "timed",
+
+    "stacking": {
+        "mode": "intensity",
+        "max_stacks": 5,
+        "intensity_per_stack": 1.0,
+        "duration_bonus": 2.0
+    },
+
+    "periodic": {
+        "interval": 2.0,
+        "type": "damage",
+        "amount": 8,
+        "damage_type": "poison",
+        "scaling": 0.1,
+        "scaling_stat": "damage"
+    },
+
+    "modifiers": [
+        {
+            "stat": "health_regen",
+            "op": "percent",
+            "value": -50
+        },
+        {
+            "stat": "lifesteal",
+            "op": "percent",
+            "value": -30
+        }
+    ],
+
+    "visual": {
+        "icon": "icons/effects/poisoned.png",
+        "particle": "particles/poison_bubbles.json",
+        "tint": [0.4, 0.8, 0.2, 1.0],
+        "glow": 0.15,
+        "attach_point": "body"
+    },
+
+    "events": {
+        "on_apply": "scripts/effects/poison_apply.py",
+        "on_stack": "scripts/effects/poison_stack.py"
+    },
+
+    "dispellable": true,
+    "purgeable": true,
+    "priority": 0
+}

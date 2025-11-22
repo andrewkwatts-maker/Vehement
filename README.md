@@ -1,3 +1,12 @@
+//====== Project/folder/examplefile.txt ======//  
+//\!copyright (c) 2025 Andrew Keith Watts. All rights reserved.  
+//\!  
+//\!This is the intellectual property of Andrew Keith Watts. Unauthorized  
+//\!reproduction, distribution, or modification of this code, in whole or in part,  
+//\!without the express written permission of Andrew Keith Watts is strictly prohibited.  
+//\!  
+//\!For inquiries, please contact AndrewKWatts@Gmail.com
+
 # Nova3D Engine
 
 A modern C++23 game engine built for real-time strategy and action games with support for Windows, macOS, Linux, Android, and iOS platforms.
@@ -155,7 +164,14 @@ Nova3D/
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+//====== Project/folder/examplefile.txt ======//  
+//\!copyright (c) 2025 Andrew Keith Watts. All rights reserved.  
+//\!  
+//\!This is the intellectual property of Andrew Keith Watts. Unauthorized  
+//\!reproduction, distribution, or modification of this code, in whole or in part,  
+//\!without the express written permission of Andrew Keith Watts is strictly prohibited.  
+//\!  
+//\!For inquiries, please contact AndrewKWatts@Gmail.com
 
 ## Acknowledgments
 

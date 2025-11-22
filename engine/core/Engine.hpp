@@ -1,3 +1,64 @@
+/**
+ * @file Engine.hpp
+ * @brief Core engine class and application lifecycle management
+ *
+ * This file contains the main Engine singleton class that orchestrates all
+ * engine subsystems including rendering, input, timing, and scene management.
+ *
+ * @section engine_usage Basic Usage
+ *
+ * @code{.cpp}
+ * #include <engine/core/Engine.hpp>
+ *
+ * int main() {
+ *     auto& engine = Nova::Engine::Instance();
+ *
+ *     Nova::Engine::InitParams params;
+ *     params.configPath = "config/engine.json";
+ *     params.enableImGui = true;
+ *
+ *     if (!engine.Initialize(params)) {
+ *         return -1;
+ *     }
+ *
+ *     Nova::Engine::ApplicationCallbacks callbacks;
+ *     callbacks.onStartup = []() {
+ *         // Load resources, initialize game state
+ *         return true;
+ *     };
+ *     callbacks.onUpdate = [](float dt) {
+ *         // Update game logic each frame
+ *     };
+ *     callbacks.onRender = []() {
+ *         // Render the game world
+ *     };
+ *     callbacks.onImGui = []() {
+ *         // Render debug UI (optional)
+ *     };
+ *     callbacks.onShutdown = []() {
+ *         // Cleanup resources
+ *     };
+ *
+ *     return engine.Run(std::move(callbacks));
+ * }
+ * @endcode
+ *
+ * @section engine_subsystems Subsystem Access
+ *
+ * Access engine subsystems through getter methods:
+ * - GetWindow() - Window management and display settings
+ * - GetTime() - Frame timing and delta time
+ * - GetRenderer() - Graphics rendering
+ * - GetInput() - Keyboard, mouse, and gamepad input
+ * - GetActiveScene() - Current game scene
+ *
+ * @see Window, Time, Renderer, InputManager, Scene
+ * @see docs/api/Engine.md for complete API documentation
+ *
+ * @author Nova3D Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include <memory>

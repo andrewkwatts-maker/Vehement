@@ -31,6 +31,26 @@ if(WIN32)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
     set(NOVA_PLATFORM_SOURCES
         engine/platform/windows/WindowsPlatform.cpp
+        engine/platform/windows/WindowsInput.cpp
+        engine/platform/windows/WindowsGL.cpp
+        engine/platform/windows/WindowsAudio.cpp
+        engine/platform/desktop/DesktopInput.cpp
+    )
+    set(NOVA_PLATFORM_LIBS
+        winmm           # Multimedia API (audio, joystick)
+        xinput          # Xbox controller support
+        ws2_32          # Winsock (networking)
+        ole32           # COM (audio, shell)
+        oleaut32        # COM automation
+        uuid            # GUID support
+        user32          # Window management
+        gdi32           # Graphics Device Interface
+        dwmapi          # Desktop Window Manager
+        imm32           # Input Method Manager
+        shell32         # Shell functions
+        shlwapi         # Shell lightweight utilities
+        version         # Version info
+        opengl32        # OpenGL
     )
 elseif(ANDROID)
     set(NOVA_PLATFORM "Android")
@@ -69,15 +89,26 @@ elseif(APPLE)
     else()
         set(NOVA_PLATFORM "macOS")
         add_definitions(-DNOVA_PLATFORM_MACOS)
+        enable_language(OBJCXX)
+        set(CMAKE_OBJCXX_STANDARD 23)
         set(NOVA_PLATFORM_SOURCES
             engine/platform/macos/MacOSPlatform.mm
+            engine/platform/macos/MacOSMetal.mm
             engine/platform/desktop/DesktopInput.cpp
         )
         set(NOVA_PLATFORM_LIBS
             "-framework Cocoa"
+            "-framework Metal"
+            "-framework MetalKit"
             "-framework OpenGL"
             "-framework CoreLocation"
+            "-framework CoreAudio"
+            "-framework AudioToolbox"
+            "-framework AudioUnit"
             "-framework IOKit"
+            "-framework GameController"
+            "-framework SystemConfiguration"
+            "-framework Security"
         )
     endif()
 elseif(EMSCRIPTEN)
@@ -90,16 +121,85 @@ elseif(EMSCRIPTEN)
 elseif(UNIX)
     set(NOVA_PLATFORM "Linux")
     add_definitions(-DNOVA_PLATFORM_LINUX)
+
+    # Cross-compilation options for Linux
+    option(NOVA_LINUX_VULKAN "Enable Vulkan support on Linux" ON)
+    option(NOVA_LINUX_WAYLAND "Enable Wayland support on Linux" ON)
+    option(NOVA_LINUX_X11 "Enable X11 support on Linux" ON)
+    option(NOVA_LINUX_PULSEAUDIO "Enable PulseAudio support" ON)
+    option(NOVA_LINUX_ALSA "Enable ALSA support" ON)
+
     set(NOVA_PLATFORM_SOURCES
         engine/platform/linux/LinuxPlatform.cpp
+        engine/platform/linux/LinuxVulkan.cpp
+        engine/platform/linux/LinuxAudio.cpp
         engine/platform/desktop/DesktopInput.cpp
     )
+
     # Find X11 for native window access
-    find_package(X11)
-    if(X11_FOUND)
-        add_definitions(-DGLFW_EXPOSE_NATIVE_X11)
-        list(APPEND NOVA_PLATFORM_LIBS ${X11_LIBRARIES})
+    if(NOVA_LINUX_X11)
+        find_package(X11)
+        if(X11_FOUND)
+            add_definitions(-DGLFW_EXPOSE_NATIVE_X11 -DNOVA_HAS_X11)
+            list(APPEND NOVA_PLATFORM_LIBS ${X11_LIBRARIES})
+            message(STATUS "X11 support: ENABLED")
+
+            # X11 extensions
+            if(X11_Xrandr_FOUND)
+                list(APPEND NOVA_PLATFORM_LIBS ${X11_Xrandr_LIB})
+            endif()
+            if(X11_Xcursor_FOUND)
+                list(APPEND NOVA_PLATFORM_LIBS ${X11_Xcursor_LIB})
+            endif()
+            if(X11_Xi_FOUND)
+                list(APPEND NOVA_PLATFORM_LIBS ${X11_Xi_LIB})
+            endif()
+        else()
+            message(STATUS "X11 support: DISABLED (not found)")
+        endif()
     endif()
+
+    # Find Wayland
+    if(NOVA_LINUX_WAYLAND)
+        find_package(PkgConfig QUIET)
+        if(PkgConfig_FOUND)
+            pkg_check_modules(WAYLAND wayland-client wayland-egl)
+            if(WAYLAND_FOUND)
+                add_definitions(-DGLFW_EXPOSE_NATIVE_WAYLAND -DNOVA_HAS_WAYLAND)
+                list(APPEND NOVA_PLATFORM_LIBS ${WAYLAND_LIBRARIES})
+                message(STATUS "Wayland support: ENABLED")
+            else()
+                message(STATUS "Wayland support: DISABLED (not found)")
+            endif()
+        endif()
+    endif()
+
+    # Find Vulkan
+    if(NOVA_LINUX_VULKAN)
+        find_package(Vulkan)
+        if(Vulkan_FOUND)
+            add_definitions(-DNOVA_HAS_VULKAN -DVK_USE_PLATFORM_XLIB_KHR)
+            if(WAYLAND_FOUND)
+                add_definitions(-DVK_USE_PLATFORM_WAYLAND_KHR)
+            endif()
+            list(APPEND NOVA_PLATFORM_LIBS Vulkan::Vulkan)
+            message(STATUS "Vulkan support: ENABLED")
+        else()
+            message(STATUS "Vulkan support: DISABLED (not found)")
+        endif()
+    endif()
+
+    # Audio backend definitions
+    if(NOVA_LINUX_PULSEAUDIO)
+        add_definitions(-DNOVA_HAS_PULSEAUDIO)
+    endif()
+    if(NOVA_LINUX_ALSA)
+        add_definitions(-DNOVA_HAS_ALSA)
+    endif()
+
+    # Threading and dynamic loading
+    find_package(Threads REQUIRED)
+    list(APPEND NOVA_PLATFORM_LIBS Threads::Threads dl)
 endif()
 
 message(STATUS "Target Platform: ${NOVA_PLATFORM}")
@@ -452,6 +552,14 @@ if(NOVA_BUILD_EXAMPLES)
 endif()
 
 # =============================================================================
+# Tests
+# =============================================================================
+if(NOVA_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+# =============================================================================
 # Installation
 # =============================================================================
 install(TARGETS nova3d
@@ -463,6 +571,82 @@ install(TARGETS nova3d
 install(DIRECTORY engine/ DESTINATION include/nova3d
     FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h"
 )
+
+# Install shaders
+install(DIRECTORY engine/shaders/ DESTINATION share/nova3d/shaders
+    FILES_MATCHING
+    PATTERN "*.glsl"
+    PATTERN "*.vert"
+    PATTERN "*.frag"
+    PATTERN "*.comp"
+    PATTERN "*.metal"
+    PATTERN "*.hlsl"
+    PATTERN "*.hlsli"
+)
+
+# =============================================================================
+# Shader Compilation (optional)
+# =============================================================================
+option(NOVA_PRECOMPILE_SHADERS "Precompile shaders for Metal/D3D12" OFF)
+
+if(NOVA_PRECOMPILE_SHADERS)
+    # Metal shader compilation (macOS/iOS)
+    if(APPLE)
+        find_program(METAL_COMPILER xcrun)
+        if(METAL_COMPILER)
+            file(GLOB METAL_SHADERS "${CMAKE_SOURCE_DIR}/engine/shaders/metal/*.metal")
+            foreach(SHADER ${METAL_SHADERS})
+                get_filename_component(SHADER_NAME ${SHADER} NAME_WE)
+                set(AIR_OUTPUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.air")
+                set(METALLIB_OUTPUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.metallib")
+                add_custom_command(
+                    OUTPUT ${METALLIB_OUTPUT}
+                    COMMAND ${METAL_COMPILER} -sdk macosx metal -c ${SHADER} -o ${AIR_OUTPUT}
+                    COMMAND ${METAL_COMPILER} -sdk macosx metallib ${AIR_OUTPUT} -o ${METALLIB_OUTPUT}
+                    DEPENDS ${SHADER}
+                    COMMENT "Compiling Metal shader: ${SHADER_NAME}"
+                )
+                list(APPEND COMPILED_METAL_SHADERS ${METALLIB_OUTPUT})
+            endforeach()
+            add_custom_target(metal_shaders ALL DEPENDS ${COMPILED_METAL_SHADERS})
+        endif()
+    endif()
+
+    # HLSL shader compilation (Windows with D3D12)
+    if(WIN32)
+        find_program(DXC_COMPILER dxc)
+        if(DXC_COMPILER)
+            file(GLOB HLSL_VS_SHADERS "${CMAKE_SOURCE_DIR}/engine/shaders/hlsl/*_vs.hlsl")
+            file(GLOB HLSL_PS_SHADERS "${CMAKE_SOURCE_DIR}/engine/shaders/hlsl/*_ps.hlsl")
+
+            foreach(SHADER ${HLSL_VS_SHADERS})
+                get_filename_component(SHADER_NAME ${SHADER} NAME_WE)
+                set(CSO_OUTPUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.cso")
+                add_custom_command(
+                    OUTPUT ${CSO_OUTPUT}
+                    COMMAND ${DXC_COMPILER} -T vs_6_0 -Fo ${CSO_OUTPUT} ${SHADER}
+                    DEPENDS ${SHADER}
+                    COMMENT "Compiling HLSL vertex shader: ${SHADER_NAME}"
+                )
+                list(APPEND COMPILED_HLSL_SHADERS ${CSO_OUTPUT})
+            endforeach()
+
+            foreach(SHADER ${HLSL_PS_SHADERS})
+                get_filename_component(SHADER_NAME ${SHADER} NAME_WE)
+                set(CSO_OUTPUT "${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}.cso")
+                add_custom_command(
+                    OUTPUT ${CSO_OUTPUT}
+                    COMMAND ${DXC_COMPILER} -T ps_6_0 -Fo ${CSO_OUTPUT} ${SHADER}
+                    DEPENDS ${SHADER}
+                    COMMENT "Compiling HLSL pixel shader: ${SHADER_NAME}"
+                )
+                list(APPEND COMPILED_HLSL_SHADERS ${CSO_OUTPUT})
+            endforeach()
+
+            add_custom_target(hlsl_shaders ALL DEPENDS ${COMPILED_HLSL_SHADERS})
+        endif()
+    endif()
+endif()
 
 # Print configuration summary
 message(STATUS "")

@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Texture Import Settings</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        .texture-import {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .panel-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            background: var(--bg-primary, #1e1e1e);
+        }
+
+        .comparison-container {
+            flex: 1;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-tertiary, #333);
+            background-image:
+                linear-gradient(45deg, #444 25%, transparent 25%),
+                linear-gradient(-45deg, #444 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #444 75%),
+                linear-gradient(-45deg, transparent 75%, #444 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        .comparison-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .comparison-original {
+            clip-path: polygon(0 0, var(--split-pos, 50%) 0, var(--split-pos, 50%) 100%, 0 100%);
+        }
+
+        .comparison-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: var(--split-pos, 50%);
+            width: 4px;
+            background: white;
+            cursor: ew-resize;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .comparison-slider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .comparison-slider::after {
+            content: '<  >';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .comparison-labels {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .comparison-label {
+            padding: 4px 8px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* Preview controls */
+        .preview-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px;
+            background: var(--bg-secondary, #252525);
+            border-radius: 4px;
+        }
+
+        .preview-controls .btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .preview-controls .btn.active {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .zoom-slider {
+            width: 100px;
+        }
+
+        /* Settings Section */
+        .settings-section {
+            width: 360px;
+            border-left: 1px solid var(--border-color, #3c3c3c);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary, #252525);
+            overflow-y: auto;
+        }
+
+        .settings-group {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .settings-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .settings-group-header h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .settings-group-toggle {
+            font-size: 12px;
+            color: var(--text-secondary, #888);
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .settings-row label {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .settings-row input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .settings-row select,
+        .settings-row input[type="number"],
+        .settings-row input[type="text"] {
+            width: 140px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+            font-size: 12px;
+        }
+
+        .settings-row.full-width {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .settings-row.full-width label {
+            margin-bottom: 6px;
+        }
+
+        .settings-row.full-width select,
+        .settings-row.full-width input {
+            width: 100%;
+        }
+
+        /* Quality Slider */
+        .quality-slider-container {
+            margin-top: 8px;
+        }
+
+        .quality-slider {
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .quality-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        /* Size Info */
+        .size-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+
+        .size-stat {
+            text-align: center;
+        }
+
+        .size-stat-value {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .size-stat-label {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        .size-reduction {
+            color: var(--success-color, #28a745);
+        }
+
+        .size-increase {
+            color: var(--danger-color, #dc3545);
+        }
+
+        /* Mipmap Preview */
+        .mipmap-preview {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .mipmap-level {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+        }
+
+        .mipmap-level.selected {
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        .mipmap-thumb {
+            background: var(--bg-primary, #1e1e1e);
+            border-radius: 2px;
+        }
+
+        .mipmap-info {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+            margin-top: 4px;
+        }
+
+        /* Channel Toggles */
+        .channel-toggles {
+            display: flex;
+            gap: 4px;
+        }
+
+        .channel-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .channel-btn.active {
+            color: white;
+        }
+
+        .channel-btn.r.active { background: #c53030; border-color: #c53030; }
+        .channel-btn.g.active { background: #38a169; border-color: #38a169; }
+        .channel-btn.b.active { background: #3182ce; border-color: #3182ce; }
+        .channel-btn.a.active { background: #718096; border-color: #718096; }
+
+        /* Presets */
+        .preset-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent-color, #0078d4);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        /* Footer */
+        .panel-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-top: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .panel-footer .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .panel-footer .btn-primary {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        /* Sprite Grid Overlay */
+        .sprite-grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .sprite-grid-line {
+            position: absolute;
+            background: rgba(255, 255, 0, 0.5);
+        }
+
+        .sprite-grid-line.horizontal {
+            left: 0;
+            right: 0;
+            height: 1px;
+        }
+
+        .sprite-grid-line.vertical {
+            top: 0;
+            bottom: 0;
+            width: 1px;
+        }
+    </style>
+</head>
+<body class="texture-import">
+    <div class="panel-header">
+        <h2>Texture Import Settings</h2>
+        <div style="display: flex; gap: 8px;">
+            <span id="texture-name" style="color: var(--text-secondary);">No texture loaded</span>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        <!-- Preview Section -->
+        <div class="preview-section">
+            <div class="comparison-container" id="comparison-container" style="--split-pos: 50%;">
+                <img class="comparison-image comparison-compressed" id="compressed-image" src="" alt="Compressed">
+                <img class="comparison-image comparison-original" id="original-image" src="" alt="Original">
+                <div class="comparison-slider" id="comparison-slider"></div>
+                <div class="comparison-labels">
+                    <span class="comparison-label">Original</span>
+                    <span class="comparison-label">Compressed</span>
+                </div>
+                <div class="sprite-grid-overlay" id="sprite-grid" style="display: none;"></div>
+            </div>
+
+            <div class="preview-controls">
+                <div class="channel-toggles">
+                    <button class="channel-btn r active" onclick="toggleChannel('r')">R</button>
+                    <button class="channel-btn g active" onclick="toggleChannel('g')">G</button>
+                    <button class="channel-btn b active" onclick="toggleChannel('b')">B</button>
+                    <button class="channel-btn a" onclick="toggleChannel('a')">A</button>
+                </div>
+                <button class="btn" onclick="toggleTiling()">Tiling</button>
+                <button class="btn" onclick="toggleNormalPreview()">Normal Preview</button>
+                <div class="zoom-controls">
+                    <span style="font-size: 11px;">Zoom:</span>
+                    <input type="range" class="zoom-slider" min="25" max="400" value="100"
+                           oninput="setZoom(this.value)">
+                    <span id="zoom-value" style="font-size: 11px; width: 40px;">100%</span>
+                </div>
+            </div>
+
+            <!-- Mipmap Preview -->
+            <div class="mipmap-preview" id="mipmap-preview" style="margin-top: 12px; display: none;">
+                <div class="mipmap-level selected" onclick="selectMipLevel(0)">
+                    <div class="mipmap-thumb" style="width: 64px; height: 64px;"></div>
+                    <span class="mipmap-info">Level 0</span>
+                    <span class="mipmap-info" id="mip-size-0">2048x2048</span>
+                </div>
+                <div class="mipmap-level" onclick="selectMipLevel(1)">
+                    <div class="mipmap-thumb" style="width: 32px; height: 32px;"></div>
+                    <span class="mipmap-info">Level 1</span>
+                    <span class="mipmap-info" id="mip-size-1">1024x1024</span>
+                </div>
+                <div class="mipmap-level" onclick="selectMipLevel(2)">
+                    <div class="mipmap-thumb" style="width: 16px; height: 16px;"></div>
+                    <span class="mipmap-info">Level 2</span>
+                    <span class="mipmap-info" id="mip-size-2">512x512</span>
+                </div>
+                <div class="mipmap-level" onclick="selectMipLevel(3)">
+                    <div class="mipmap-thumb" style="width: 8px; height: 8px;"></div>
+                    <span class="mipmap-info">Level 3</span>
+                    <span class="mipmap-info" id="mip-size-3">256x256</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="settings-section">
+            <!-- Presets -->
+            <div class="settings-group">
+                <div class="preset-row">
+                    <button class="preset-btn" onclick="applyPreset('mobile')">Mobile</button>
+                    <button class="preset-btn active" onclick="applyPreset('desktop')">Desktop</button>
+                    <button class="preset-btn" onclick="applyPreset('highQuality')">High Quality</button>
+                </div>
+            </div>
+
+            <!-- Texture Type -->
+            <div class="settings-group">
+                <div class="settings-group-header" onclick="toggleGroup(this)">
+                    <h3>Texture Type</h3>
+                    <span class="settings-group-toggle">-</span>
+                </div>
+                <div class="settings-group-content">
+                    <div class="settings-row full-width">
+                        <label>Type</label>
+                        <select id="texture-type" onchange="onTextureTypeChange()">
+                            <option value="default">Default (Color)</option>
+                            <option value="normal">Normal Map</option>
+                            <option value="heightmap">Height Map</option>
+                            <option value="roughness">Roughness</option>
+                            <option value="metallic">Metallic</option>
+                            <option value="ao">Ambient Occlusion</option>
+                            <option value="emissive">Emissive</option>
+                            <option value="sprite">Sprite/UI</option>
+                            <option value="hdr">HDR Environment</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label>sRGB Color Space</label>
+                        <input type="checkbox" id="srgb" checked onchange="onSettingChange()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compression -->
+            <div class="settings-group">
+                <div class="settings-group-header" onclick="toggleGroup(this)">
+                    <h3>Compression</h3>
+                    <span class="settings-group-toggle">-</span>
+                </div>
+                <div class="settings-group-content">
+                    <div class="settings-row full-width">
+                        <label>Format</label>
+                        <select id="compression-format" onchange="onSettingChange()">
+                            <option value="none">None (RGBA8)</option>
+                            <option value="bc1">BC1 (DXT1) - RGB</option>
+                            <option value="bc3">BC3 (DXT5) - RGBA</option>
+                            <option value="bc4">BC4 - Single Channel</option>
+                            <option value="bc5">BC5 - Two Channel (Normal)</option>
+                            <option value="bc6h">BC6H - HDR</option>
+                            <option value="bc7" selected>BC7 - High Quality</option>
+                            <option value="etc1">ETC1 - Mobile RGB</option>
+                            <option value="etc2_rgb">ETC2 RGB - Mobile</option>
+                            <option value="etc2_rgba">ETC2 RGBA - Mobile</option>
+                            <option value="astc4x4">ASTC 4x4 - High Quality</option>
+                            <option value="astc6x6">ASTC 6x6 - Balanced</option>
+                            <option value="astc8x8">ASTC 8x8 - Small Size</option>
+                        </select>
+                    </div>
+                    <div class="quality-slider-container">
+                        <label style="font-size: 12px;">Quality</label>
+                        <input type="range" class="quality-slider" id="compression-quality"
+                               min="0" max="100" value="75" oninput="onQualityChange()">
+                        <div class="quality-labels">
+                            <span>Fast</span>
+                            <span id="quality-value">75</span>
+                            <span>Best</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Size Settings -->
+            <div class="settings-group">
+                <div class="settings-group-header" onclick="toggleGroup(this)">
+                    <h3>Size</h3>
+                    <span class="settings-group-toggle">-</span>
+                </div>
+                <div class="settings-group-content">
+                    <div class="settings-row">
+                        <label>Max Size</label>
+                        <select id="max-size" onchange="onSettingChange()">
+                            <option value="256">256</option>
+                            <option value="512">512</option>
+                            <option value="1024">1024</option>
+                            <option value="2048" selected>2048</option>
+                            <option value="4096">4096</option>
+                            <option value="8192">8192</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label>Force Power of Two</label>
+                        <input type="checkbox" id="power-of-two" checked onchange="onSettingChange()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Flip Vertically</label>
+                        <input type="checkbox" id="flip-v" onchange="onSettingChange()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Flip Horizontally</label>
+                        <input type="checkbox" id="flip-h" onchange="onSettingChange()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mipmaps -->
+            <div class="settings-group">
+                <div class="settings-group-header" onclick="toggleGroup(this)">
+                    <h3>Mipmaps</h3>
+                    <span class="settings-group-toggle">-</span>
+                </div>
+                <div class="settings-group-content">
+                    <div class="settings-row">
+                        <label>Generate Mipmaps</label>
+                        <input type="checkbox" id="generate-mipmaps" checked onchange="onMipmapToggle()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Filter</label>
+                        <select id="mipmap-filter" onchange="onSettingChange()">
+                            <option value="box">Box</option>
+                            <option value="triangle">Triangle</option>
+                            <option value="lanczos" selected>Lanczos</option>
+                            <option value="kaiser">Kaiser</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label>Sharpening</label>
+                        <input type="number" id="mipmap-sharpen" min="0" max="1" step="0.1" value="0"
+                               onchange="onSettingChange()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Normal Map Settings -->
+            <div class="settings-group" id="normal-map-settings" style="display: none;">
+                <div class="settings-group-header" onclick="toggleGroup(this)">
+                    <h3>Normal Map</h3>
+                    <span class="settings-group-toggle">-</span>
+                </div>
+                <div class="settings-group-content">
+                    <div class="settings-row">
+                        <label>Generate from Height</label>
+                        <input type="checkbox" id="normal-from-height" onchange="onSettingChange()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Strength</label>
+                        <input type="number" id="normal-strength" min="0.1" max="10" step="0.1" value="1"
+                               onchange="onSettingChange()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Reconstruct Z</label>
+                        <input type="checkbox" id="reconstruct-z" checked onchange="onSettingChange()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Normalize</label>
+                        <input type="checkbox" id="normalize-normals" checked onchange="onSettingChange()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sprite Settings -->
+            <div class="settings-group" id="sprite-settings" style="display: none;">
+                <div class="settings-group-header" onclick="toggleGroup(this)">
+                    <h3>Sprite Sheet</h3>
+                    <span class="settings-group-toggle">-</span>
+                </div>
+                <div class="settings-group-content">
+                    <div class="settings-row">
+                        <label>Slice into Sprites</label>
+                        <input type="checkbox" id="slice-sprites" onchange="onSpriteSliceToggle()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Slice Width</label>
+                        <input type="number" id="slice-width" min="1" value="32" onchange="updateSpriteGrid()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Slice Height</label>
+                        <input type="number" id="slice-height" min="1" value="32" onchange="updateSpriteGrid()">
+                    </div>
+                    <div class="settings-row">
+                        <label>Trim Whitespace</label>
+                        <input type="checkbox" id="trim-whitespace" onchange="onSettingChange()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Size Information -->
+            <div class="settings-group">
+                <div class="size-info">
+                    <div class="size-stat">
+                        <div class="size-stat-value" id="original-size">2.5 MB</div>
+                        <div class="size-stat-label">Original</div>
+                    </div>
+                    <div class="size-stat">
+                        <div class="size-stat-value" id="estimated-size">512 KB</div>
+                        <div class="size-stat-label">Estimated</div>
+                    </div>
+                    <div class="size-stat">
+                        <div class="size-stat-value size-reduction" id="size-ratio">-80%</div>
+                        <div class="size-stat-label">Reduction</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-footer">
+        <button class="btn" onclick="resetSettings()">Reset</button>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn" onclick="cancel()">Cancel</button>
+            <button class="btn btn-primary" onclick="applySettings()">Apply</button>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script>
+        // State
+        let settings = {
+            textureType: 'default',
+            sRGB: true,
+            compression: 'bc7',
+            quality: 75,
+            maxSize: 2048,
+            powerOfTwo: true,
+            flipV: false,
+            flipH: false,
+            generateMipmaps: true,
+            mipmapFilter: 'lanczos',
+            mipmapSharpen: 0,
+            normalFromHeight: false,
+            normalStrength: 1,
+            reconstructZ: true,
+            sliceSprites: false,
+            sliceWidth: 32,
+            sliceHeight: 32
+        };
+
+        let textureInfo = {
+            width: 2048,
+            height: 2048,
+            channels: 4,
+            originalSize: 2621440 // 2.5MB
+        };
+
+        let activeChannels = { r: true, g: true, b: true, a: false };
+        let currentZoom = 100;
+        let selectedMipLevel = 0;
+
+        // Comparison slider
+        const slider = document.getElementById('comparison-slider');
+        const container = document.getElementById('comparison-container');
+        let isDragging = false;
+
+        slider.addEventListener('mousedown', () => isDragging = true);
+        document.addEventListener('mouseup', () => isDragging = false);
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const rect = container.getBoundingClientRect();
+            let pos = (e.clientX - rect.left) / rect.width * 100;
+            pos = Math.max(0, Math.min(100, pos));
+            container.style.setProperty('--split-pos', pos + '%');
+        });
+
+        function toggleChannel(channel) {
+            activeChannels[channel] = !activeChannels[channel];
+            document.querySelector(`.channel-btn.${channel}`).classList.toggle('active');
+            updatePreview();
+        }
+
+        function setZoom(value) {
+            currentZoom = parseInt(value);
+            document.getElementById('zoom-value').textContent = value + '%';
+            // Apply zoom to preview images
+            const scale = value / 100;
+            document.querySelectorAll('.comparison-image').forEach(img => {
+                img.style.transform = `scale(${scale})`;
+            });
+        }
+
+        function toggleTiling() {
+            // Toggle tiled preview
+            const btn = event.target;
+            btn.classList.toggle('active');
+        }
+
+        function toggleNormalPreview() {
+            // Toggle normal map lighting preview
+            const btn = event.target;
+            btn.classList.toggle('active');
+        }
+
+        function toggleGroup(header) {
+            const content = header.nextElementSibling;
+            const toggle = header.querySelector('.settings-group-toggle');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '-';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '+';
+            }
+        }
+
+        function applyPreset(preset) {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            switch (preset) {
+                case 'mobile':
+                    document.getElementById('compression-format').value = 'etc2_rgba';
+                    document.getElementById('max-size').value = '1024';
+                    document.getElementById('compression-quality').value = '60';
+                    break;
+                case 'desktop':
+                    document.getElementById('compression-format').value = 'bc7';
+                    document.getElementById('max-size').value = '2048';
+                    document.getElementById('compression-quality').value = '75';
+                    break;
+                case 'highQuality':
+                    document.getElementById('compression-format').value = 'bc7';
+                    document.getElementById('max-size').value = '4096';
+                    document.getElementById('compression-quality').value = '100';
+                    break;
+            }
+            onSettingChange();
+        }
+
+        function onTextureTypeChange() {
+            const type = document.getElementById('texture-type').value;
+            settings.textureType = type;
+
+            // Show/hide relevant settings
+            document.getElementById('normal-map-settings').style.display =
+                (type === 'normal' || type === 'heightmap') ? 'block' : 'none';
+            document.getElementById('sprite-settings').style.display =
+                type === 'sprite' ? 'block' : 'none';
+
+            // Auto-configure based on type
+            if (type === 'normal') {
+                document.getElementById('srgb').checked = false;
+                document.getElementById('compression-format').value = 'bc5';
+            } else if (type === 'roughness' || type === 'metallic' || type === 'ao') {
+                document.getElementById('srgb').checked = false;
+                document.getElementById('compression-format').value = 'bc4';
+            } else if (type === 'hdr') {
+                document.getElementById('srgb').checked = false;
+                document.getElementById('compression-format').value = 'bc6h';
+            } else if (type === 'sprite') {
+                document.getElementById('generate-mipmaps').checked = false;
+                document.getElementById('compression-format').value = 'none';
+            }
+
+            onSettingChange();
+        }
+
+        function onQualityChange() {
+            const quality = document.getElementById('compression-quality').value;
+            document.getElementById('quality-value').textContent = quality;
+            settings.quality = parseInt(quality);
+            updateEstimatedSize();
+        }
+
+        function onMipmapToggle() {
+            const enabled = document.getElementById('generate-mipmaps').checked;
+            settings.generateMipmaps = enabled;
+            document.getElementById('mipmap-preview').style.display = enabled ? 'flex' : 'none';
+            updateEstimatedSize();
+        }
+
+        function selectMipLevel(level) {
+            selectedMipLevel = level;
+            document.querySelectorAll('.mipmap-level').forEach((el, i) => {
+                el.classList.toggle('selected', i === level);
+            });
+            // Update preview to show selected mip
+        }
+
+        function onSpriteSliceToggle() {
+            const enabled = document.getElementById('slice-sprites').checked;
+            settings.sliceSprites = enabled;
+            document.getElementById('sprite-grid').style.display = enabled ? 'block' : 'none';
+            if (enabled) updateSpriteGrid();
+        }
+
+        function updateSpriteGrid() {
+            const gridOverlay = document.getElementById('sprite-grid');
+            const sliceW = parseInt(document.getElementById('slice-width').value);
+            const sliceH = parseInt(document.getElementById('slice-height').value);
+
+            gridOverlay.innerHTML = '';
+
+            // Calculate grid lines based on texture size and slice size
+            const cols = Math.floor(textureInfo.width / sliceW);
+            const rows = Math.floor(textureInfo.height / sliceH);
+
+            // Add vertical lines
+            for (let i = 1; i < cols; i++) {
+                const line = document.createElement('div');
+                line.className = 'sprite-grid-line vertical';
+                line.style.left = (i / cols * 100) + '%';
+                gridOverlay.appendChild(line);
+            }
+
+            // Add horizontal lines
+            for (let i = 1; i < rows; i++) {
+                const line = document.createElement('div');
+                line.className = 'sprite-grid-line horizontal';
+                line.style.top = (i / rows * 100) + '%';
+                gridOverlay.appendChild(line);
+            }
+        }
+
+        function onSettingChange() {
+            updateEstimatedSize();
+            updatePreview();
+        }
+
+        function updateEstimatedSize() {
+            const compression = document.getElementById('compression-format').value;
+            const maxSize = parseInt(document.getElementById('max-size').value);
+            const generateMipmaps = document.getElementById('generate-mipmaps').checked;
+
+            // Calculate estimated size based on compression format
+            let bpp = 32; // bits per pixel
+            switch (compression) {
+                case 'bc1': bpp = 4; break;
+                case 'bc3': bpp = 8; break;
+                case 'bc4': bpp = 4; break;
+                case 'bc5': bpp = 8; break;
+                case 'bc6h': bpp = 8; break;
+                case 'bc7': bpp = 8; break;
+                case 'etc1': bpp = 4; break;
+                case 'etc2_rgb': bpp = 4; break;
+                case 'etc2_rgba': bpp = 8; break;
+                case 'astc4x4': bpp = 8; break;
+                case 'astc6x6': bpp = 3.56; break;
+                case 'astc8x8': bpp = 2; break;
+            }
+
+            const width = Math.min(textureInfo.width, maxSize);
+            const height = Math.min(textureInfo.height, maxSize);
+            let size = (width * height * bpp) / 8;
+
+            if (generateMipmaps) {
+                size *= 1.33; // Mipmaps add ~33%
+            }
+
+            // Update UI
+            const originalMB = (textureInfo.originalSize / (1024 * 1024)).toFixed(2);
+            const estimatedKB = (size / 1024).toFixed(0);
+            const ratio = Math.round((1 - size / textureInfo.originalSize) * 100);
+
+            document.getElementById('original-size').textContent = originalMB + ' MB';
+            document.getElementById('estimated-size').textContent = estimatedKB + ' KB';
+
+            const ratioEl = document.getElementById('size-ratio');
+            ratioEl.textContent = (ratio >= 0 ? '-' : '+') + Math.abs(ratio) + '%';
+            ratioEl.className = 'size-stat-value ' + (ratio >= 0 ? 'size-reduction' : 'size-increase');
+
+            // Update mipmap sizes
+            if (generateMipmaps) {
+                let w = width, h = height;
+                for (let i = 0; i < 4; i++) {
+                    const el = document.getElementById('mip-size-' + i);
+                    if (el) el.textContent = w + 'x' + h;
+                    w = Math.max(1, Math.floor(w / 2));
+                    h = Math.max(1, Math.floor(h / 2));
+                }
+            }
+        }
+
+        function updatePreview() {
+            // Would update WebGL preview based on channel selection and settings
+        }
+
+        function resetSettings() {
+            document.getElementById('texture-type').value = 'default';
+            document.getElementById('srgb').checked = true;
+            document.getElementById('compression-format').value = 'bc7';
+            document.getElementById('compression-quality').value = '75';
+            document.getElementById('max-size').value = '2048';
+            document.getElementById('power-of-two').checked = true;
+            document.getElementById('flip-v').checked = false;
+            document.getElementById('flip-h').checked = false;
+            document.getElementById('generate-mipmaps').checked = true;
+            document.getElementById('mipmap-filter').value = 'lanczos';
+            onMipmapToggle();
+            onSettingChange();
+        }
+
+        function cancel() {
+            if (window.engine) {
+                window.engine.closeTextureImportPanel();
+            }
+        }
+
+        function applySettings() {
+            // Collect all settings
+            const finalSettings = {
+                textureType: document.getElementById('texture-type').value,
+                sRGB: document.getElementById('srgb').checked,
+                compression: document.getElementById('compression-format').value,
+                quality: parseInt(document.getElementById('compression-quality').value),
+                maxSize: parseInt(document.getElementById('max-size').value),
+                powerOfTwo: document.getElementById('power-of-two').checked,
+                flipV: document.getElementById('flip-v').checked,
+                flipH: document.getElementById('flip-h').checked,
+                generateMipmaps: document.getElementById('generate-mipmaps').checked,
+                mipmapFilter: document.getElementById('mipmap-filter').value,
+                mipmapSharpen: parseFloat(document.getElementById('mipmap-sharpen').value)
+            };
+
+            if (window.engine) {
+                window.engine.applyTextureImportSettings(finalSettings);
+            }
+        }
+
+        // Load texture info from engine
+        function loadTextureInfo(info) {
+            textureInfo = info;
+            document.getElementById('texture-name').textContent = info.name || 'texture.png';
+            updateEstimatedSize();
+        }
+
+        // Initialize
+        updateEstimatedSize();
+    </script>
+</body>
+</html>

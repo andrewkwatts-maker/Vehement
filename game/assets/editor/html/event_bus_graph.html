@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Event Bus Graph Editor</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        :root {
+            --bg-dark: #1e1e2e;
+            --bg-darker: #181825;
+            --bg-lighter: #313244;
+            --surface: #45475a;
+            --text: #cdd6f4;
+            --text-dim: #6c7086;
+            --accent: #89b4fa;
+            --accent-hover: #b4befe;
+            --success: #a6e3a1;
+            --warning: #f9e2af;
+            --error: #f38ba8;
+            --purple: #cba6f7;
+            --pink: #f5c2e7;
+            --teal: #94e2d5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: var(--bg-darker);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--bg-lighter);
+            z-index: 100;
+        }
+
+        .toolbar button {
+            background: var(--bg-lighter);
+            border: none;
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toolbar button:hover {
+            background: var(--surface);
+        }
+
+        .toolbar button.active {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .toolbar button.danger {
+            background: var(--error);
+            color: var(--bg-dark);
+        }
+
+        .toolbar .separator {
+            width: 1px;
+            height: 24px;
+            background: var(--bg-lighter);
+            margin: 0 8px;
+        }
+
+        .toolbar .status {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Node Palette */
+        .node-palette {
+            width: 200px;
+            background: var(--bg-darker);
+            border-right: 1px solid var(--bg-lighter);
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .palette-section {
+            margin-bottom: 16px;
+        }
+
+        .palette-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .palette-item {
+            background: var(--bg-lighter);
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .palette-item:hover {
+            background: var(--surface);
+        }
+
+        .palette-item:active {
+            cursor: grabbing;
+        }
+
+        .palette-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Graph Canvas */
+        .graph-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-dark);
+        }
+
+        .graph-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle, var(--bg-lighter) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .graph-viewport {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+        }
+
+        /* Nodes */
+        .graph-node {
+            position: absolute;
+            background: var(--bg-darker);
+            border: 2px solid var(--bg-lighter);
+            border-radius: 8px;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            cursor: move;
+            user-select: none;
+        }
+
+        .graph-node.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent), 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .graph-node.executing {
+            border-color: var(--success);
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 2px var(--success), 0 4px 12px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 0 0 6px var(--success), 0 4px 16px rgba(0, 0, 0, 0.4); }
+        }
+
+        .node-header {
+            padding: 8px 12px;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .node-header .icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .node-content {
+            padding: 8px 12px;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .node-ports {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .port-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .port {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: crosshair;
+        }
+
+        .port.input {
+            flex-direction: row;
+        }
+
+        .port.output {
+            flex-direction: row-reverse;
+        }
+
+        .port-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--bg-lighter);
+            border: 2px solid var(--text-dim);
+            transition: all 0.2s;
+        }
+
+        .port:hover .port-dot {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: scale(1.2);
+        }
+
+        .port.connected .port-dot {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        /* Connections */
+        .connections-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .connection {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+
+        .connection:hover {
+            stroke-width: 3;
+            stroke: var(--accent-hover);
+        }
+
+        .connection.active {
+            stroke: var(--success);
+            stroke-width: 3;
+            animation: flow 1s linear infinite;
+        }
+
+        @keyframes flow {
+            0% { stroke-dashoffset: 20; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .connection-temp {
+            stroke: var(--accent);
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+            opacity: 0.7;
+        }
+
+        /* Minimap */
+        .minimap {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 180px;
+            height: 120px;
+            background: var(--bg-darker);
+            border: 1px solid var(--bg-lighter);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .minimap-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .minimap-viewport {
+            position: absolute;
+            border: 2px solid var(--accent);
+            background: rgba(137, 180, 250, 0.1);
+            cursor: move;
+        }
+
+        .minimap-node {
+            position: absolute;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* Properties Panel */
+        .properties-panel {
+            width: 280px;
+            background: var(--bg-darker);
+            border-left: 1px solid var(--bg-lighter);
+            padding: 12px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .properties-panel.visible {
+            display: block;
+        }
+
+        .properties-panel h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .property-group {
+            margin-bottom: 12px;
+        }
+
+        .property-group label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .property-group input,
+        .property-group select,
+        .property-group textarea {
+            width: 100%;
+            background: var(--bg-lighter);
+            border: 1px solid transparent;
+            color: var(--text);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .property-group input:focus,
+        .property-group select:focus,
+        .property-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .property-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .property-actions button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .property-actions button.primary {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .property-actions button.danger {
+            background: var(--error);
+            color: var(--bg-dark);
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-darker);
+            border: 1px solid var(--bg-lighter);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 180px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu.visible {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-menu-item:hover {
+            background: var(--bg-lighter);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--bg-lighter);
+            margin: 4px 0;
+        }
+
+        /* Node Types */
+        .node-type-entity .node-header { background: var(--accent); color: var(--bg-dark); }
+        .node-type-timer .node-header { background: var(--teal); color: var(--bg-dark); }
+        .node-type-input .node-header { background: var(--purple); color: var(--bg-dark); }
+        .node-type-network .node-header { background: var(--pink); color: var(--bg-dark); }
+        .node-type-condition .node-header { background: var(--warning); color: var(--bg-dark); }
+        .node-type-action .node-header { background: var(--success); color: var(--bg-dark); }
+        .node-type-custom .node-header { background: var(--error); color: var(--bg-dark); }
+
+        /* Event Flow Visualization */
+        .event-flow-indicator {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: flowDot 0.5s ease-out forwards;
+        }
+
+        @keyframes flowDot {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-darker);
+            padding: 4px 16px;
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-top: 1px solid var(--bg-lighter);
+        }
+
+        .status-bar .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-bar .status-item.active {
+            color: var(--success);
+        }
+
+        .status-bar .status-item.paused {
+            color: var(--warning);
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="zoomIn()" title="Zoom In">+</button>
+        <span id="zoom-level">100%</span>
+        <button onclick="zoomOut()" title="Zoom Out">-</button>
+        <button onclick="zoomToFit()" title="Fit All">Fit</button>
+        <div class="separator"></div>
+        <button onclick="autoLayout()" title="Auto Layout">Auto Layout</button>
+        <button onclick="alignSelected()" title="Align Selected">Align</button>
+        <div class="separator"></div>
+        <button id="pauseBtn" onclick="togglePause()">Pause</button>
+        <button onclick="clearFlow()">Clear Flow</button>
+        <div class="separator"></div>
+        <button onclick="exportGraph()">Export</button>
+        <button onclick="importGraph()">Import</button>
+        <div class="status">
+            Events: <span id="event-count">0</span> |
+            Connections: <span id="connection-count">0</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="node-palette">
+            <div class="palette-section">
+                <h3>Event Sources</h3>
+                <div class="palette-item" draggable="true" data-type="entity">
+                    <div class="palette-icon" style="background: var(--accent);">E</div>
+                    <span>Entity Event</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="timer">
+                    <div class="palette-icon" style="background: var(--teal);">T</div>
+                    <span>Timer</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="input">
+                    <div class="palette-icon" style="background: var(--purple);">I</div>
+                    <span>Input Event</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="network">
+                    <div class="palette-icon" style="background: var(--pink);">N</div>
+                    <span>Network Event</span>
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <h3>Conditions</h3>
+                <div class="palette-item" draggable="true" data-type="condition-and">
+                    <div class="palette-icon" style="background: var(--warning);">&&</div>
+                    <span>AND Gate</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="condition-or">
+                    <div class="palette-icon" style="background: var(--warning);">||</div>
+                    <span>OR Gate</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="condition-not">
+                    <div class="palette-icon" style="background: var(--warning);">!</div>
+                    <span>NOT Gate</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="condition-compare">
+                    <div class="palette-icon" style="background: var(--warning);">?</div>
+                    <span>Comparison</span>
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <h3>Actions</h3>
+                <div class="palette-item" draggable="true" data-type="action-python">
+                    <div class="palette-icon" style="background: var(--success);">Py</div>
+                    <span>Python Callback</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="action-native">
+                    <div class="palette-icon" style="background: var(--success);">C++</div>
+                    <span>Native Function</span>
+                </div>
+                <div class="palette-item" draggable="true" data-type="action-emit">
+                    <div class="palette-icon" style="background: var(--success);">Em</div>
+                    <span>Emit Event</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="graph-container" id="graph-container">
+            <div class="graph-background"></div>
+            <svg class="connections-layer" id="connections-layer"></svg>
+            <div class="graph-viewport" id="graph-viewport"></div>
+            <div class="minimap" id="minimap">
+                <div class="minimap-content" id="minimap-content"></div>
+                <div class="minimap-viewport" id="minimap-viewport"></div>
+            </div>
+        </div>
+
+        <div class="properties-panel" id="properties-panel">
+            <h3>Node Properties</h3>
+            <div id="properties-content"></div>
+        </div>
+    </div>
+
+    <div class="context-menu" id="context-menu">
+        <div class="context-menu-item" onclick="duplicateNode()">Duplicate</div>
+        <div class="context-menu-item" onclick="deleteNode()">Delete</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="disconnectAll()">Disconnect All</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="enableNode()">Enable</div>
+        <div class="context-menu-item" onclick="disableNode()">Disable</div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item" id="flow-status">
+            <span>Flow: Running</span>
+        </div>
+        <div class="status-item">
+            <span id="events-per-sec">0</span> events/sec
+        </div>
+        <div class="status-item">
+            Zoom: <span id="zoom-status">100%</span>
+        </div>
+    </div>
+
+    <script>
+        // Graph state
+        const state = {
+            nodes: [],
+            connections: [],
+            selectedNodes: [],
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            isPaused: false,
+            nextNodeId: 1,
+            nextConnectionId: 1,
+            draggingNode: null,
+            connectingFrom: null,
+            tempConnection: null
+        };
+
+        // DOM elements
+        const container = document.getElementById('graph-container');
+        const viewport = document.getElementById('graph-viewport');
+        const connectionsLayer = document.getElementById('connections-layer');
+        const propertiesPanel = document.getElementById('properties-panel');
+        const contextMenu = document.getElementById('context-menu');
+
+        // Initialize
+        function init() {
+            setupEventListeners();
+            setupPaletteDrag();
+            updateUI();
+        }
+
+        function setupEventListeners() {
+            // Canvas events
+            container.addEventListener('mousedown', onCanvasMouseDown);
+            container.addEventListener('mousemove', onCanvasMouseMove);
+            container.addEventListener('mouseup', onCanvasMouseUp);
+            container.addEventListener('wheel', onCanvasWheel);
+            container.addEventListener('contextmenu', onContextMenu);
+
+            // Drop events
+            container.addEventListener('dragover', (e) => e.preventDefault());
+            container.addEventListener('drop', onDrop);
+
+            // Keyboard events
+            document.addEventListener('keydown', onKeyDown);
+
+            // Click outside to close menus
+            document.addEventListener('click', (e) => {
+                if (!contextMenu.contains(e.target)) {
+                    contextMenu.classList.remove('visible');
+                }
+            });
+        }
+
+        function setupPaletteDrag() {
+            document.querySelectorAll('.palette-item').forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('nodeType', item.dataset.type);
+                });
+            });
+        }
+
+        // Node creation
+        function createNode(type, x, y) {
+            const nodeConfig = getNodeConfig(type);
+            const node = {
+                id: 'node_' + state.nextNodeId++,
+                type: type,
+                x: x,
+                y: y,
+                title: nodeConfig.title,
+                data: { ...nodeConfig.defaultData },
+                inputs: nodeConfig.inputs || [],
+                outputs: nodeConfig.outputs || [],
+                enabled: true
+            };
+
+            state.nodes.push(node);
+            renderNode(node);
+            updateUI();
+            return node;
+        }
+
+        function getNodeConfig(type) {
+            const configs = {
+                'entity': {
+                    title: 'Entity Event',
+                    inputs: [],
+                    outputs: [{ id: 'out', name: 'Event' }],
+                    defaultData: { entityType: '*', eventName: 'OnDamage' }
+                },
+                'timer': {
+                    title: 'Timer',
+                    inputs: [],
+                    outputs: [{ id: 'out', name: 'Trigger' }],
+                    defaultData: { interval: 1.0, repeating: true }
+                },
+                'input': {
+                    title: 'Input Event',
+                    inputs: [],
+                    outputs: [{ id: 'out', name: 'Event' }],
+                    defaultData: { inputAction: 'jump' }
+                },
+                'network': {
+                    title: 'Network Event',
+                    inputs: [],
+                    outputs: [{ id: 'out', name: 'Event' }],
+                    defaultData: { eventType: 'playerJoined' }
+                },
+                'condition-and': {
+                    title: 'AND',
+                    inputs: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }],
+                    outputs: [{ id: 'out', name: 'Result' }],
+                    defaultData: {}
+                },
+                'condition-or': {
+                    title: 'OR',
+                    inputs: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }],
+                    outputs: [{ id: 'out', name: 'Result' }],
+                    defaultData: {}
+                },
+                'condition-not': {
+                    title: 'NOT',
+                    inputs: [{ id: 'in', name: 'Input' }],
+                    outputs: [{ id: 'out', name: 'Result' }],
+                    defaultData: {}
+                },
+                'condition-compare': {
+                    title: 'Compare',
+                    inputs: [{ id: 'in', name: 'Value' }],
+                    outputs: [{ id: 'true', name: 'True' }, { id: 'false', name: 'False' }],
+                    defaultData: { property: '', operator: '==', value: '' }
+                },
+                'action-python': {
+                    title: 'Python Callback',
+                    inputs: [{ id: 'in', name: 'Trigger' }],
+                    outputs: [{ id: 'out', name: 'Done' }],
+                    defaultData: { module: '', function: '' }
+                },
+                'action-native': {
+                    title: 'Native Function',
+                    inputs: [{ id: 'in', name: 'Trigger' }],
+                    outputs: [{ id: 'out', name: 'Done' }],
+                    defaultData: { function: '' }
+                },
+                'action-emit': {
+                    title: 'Emit Event',
+                    inputs: [{ id: 'in', name: 'Trigger' }],
+                    outputs: [],
+                    defaultData: { eventType: '', payload: '{}' }
+                }
+            };
+            return configs[type] || { title: 'Unknown', inputs: [], outputs: [], defaultData: {} };
+        }
+
+        function renderNode(node) {
+            const typeClass = node.type.startsWith('condition') ? 'condition' :
+                             node.type.startsWith('action') ? 'action' : node.type;
+
+            const el = document.createElement('div');
+            el.className = `graph-node node-type-${typeClass}`;
+            el.id = node.id;
+            el.style.left = node.x + 'px';
+            el.style.top = node.y + 'px';
+            el.dataset.nodeId = node.id;
+
+            let inputsHtml = node.inputs.map(p =>
+                `<div class="port input" data-port="${p.id}">
+                    <div class="port-dot"></div>
+                    <span>${p.name}</span>
+                </div>`
+            ).join('');
+
+            let outputsHtml = node.outputs.map(p =>
+                `<div class="port output" data-port="${p.id}">
+                    <span>${p.name}</span>
+                    <div class="port-dot"></div>
+                </div>`
+            ).join('');
+
+            el.innerHTML = `
+                <div class="node-header">
+                    <div class="icon">${node.title[0]}</div>
+                    <span>${node.title}</span>
+                </div>
+                <div class="node-content">
+                    ${getNodeDescription(node)}
+                </div>
+                <div class="node-ports">
+                    <div class="port-group">${inputsHtml}</div>
+                    <div class="port-group">${outputsHtml}</div>
+                </div>
+            `;
+
+            // Event listeners
+            el.addEventListener('mousedown', (e) => onNodeMouseDown(e, node));
+            el.querySelectorAll('.port').forEach(port => {
+                port.addEventListener('mousedown', (e) => onPortMouseDown(e, node, port.dataset.port));
+                port.addEventListener('mouseup', (e) => onPortMouseUp(e, node, port.dataset.port));
+            });
+
+            viewport.appendChild(el);
+        }
+
+        function getNodeDescription(node) {
+            if (node.type === 'entity') {
+                return `${node.data.entityType} : ${node.data.eventName}`;
+            } else if (node.type === 'timer') {
+                return `${node.data.interval}s ${node.data.repeating ? '(repeat)' : ''}`;
+            } else if (node.type === 'action-python') {
+                return `${node.data.module}.${node.data.function}`;
+            }
+            return '';
+        }
+
+        // Connection handling
+        function createConnection(fromNode, fromPort, toNode, toPort) {
+            const connection = {
+                id: 'conn_' + state.nextConnectionId++,
+                from: { nodeId: fromNode.id, portId: fromPort },
+                to: { nodeId: toNode.id, portId: toPort }
+            };
+
+            state.connections.push(connection);
+            renderConnection(connection);
+            updateUI();
+            return connection;
+        }
+
+        function renderConnection(conn) {
+            const fromEl = document.querySelector(`#${conn.from.nodeId} .port.output[data-port="${conn.from.portId}"] .port-dot`);
+            const toEl = document.querySelector(`#${conn.to.nodeId} .port.input[data-port="${conn.to.portId}"] .port-dot`);
+
+            if (!fromEl || !toEl) return;
+
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const x1 = (fromRect.left + fromRect.width / 2 - containerRect.left - state.panX) / state.zoom;
+            const y1 = (fromRect.top + fromRect.height / 2 - containerRect.top - state.panY) / state.zoom;
+            const x2 = (toRect.left + toRect.width / 2 - containerRect.left - state.panX) / state.zoom;
+            const y2 = (toRect.top + toRect.height / 2 - containerRect.top - state.panY) / state.zoom;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('class', 'connection');
+            path.setAttribute('id', conn.id);
+            path.setAttribute('d', createBezierPath(x1, y1, x2, y2));
+            path.dataset.connectionId = conn.id;
+
+            path.addEventListener('click', () => selectConnection(conn));
+            path.addEventListener('dblclick', () => deleteConnection(conn.id));
+
+            connectionsLayer.appendChild(path);
+
+            // Mark ports as connected
+            fromEl.parentElement.classList.add('connected');
+            toEl.parentElement.classList.add('connected');
+        }
+
+        function createBezierPath(x1, y1, x2, y2) {
+            const dx = Math.abs(x2 - x1);
+            const cp = Math.min(dx * 0.5, 100);
+            return `M ${x1} ${y1} C ${x1 + cp} ${y1}, ${x2 - cp} ${y2}, ${x2} ${y2}`;
+        }
+
+        function updateConnections() {
+            connectionsLayer.innerHTML = '';
+            state.connections.forEach(renderConnection);
+        }
+
+        function deleteConnection(connId) {
+            state.connections = state.connections.filter(c => c.id !== connId);
+            const el = document.getElementById(connId);
+            if (el) el.remove();
+            updateUI();
+        }
+
+        // Mouse event handlers
+        function onCanvasMouseDown(e) {
+            if (e.target === container || e.target.classList.contains('graph-background')) {
+                // Deselect all
+                state.selectedNodes = [];
+                updateSelection();
+                propertiesPanel.classList.remove('visible');
+
+                // Start panning
+                state.isPanning = true;
+                state.panStartX = e.clientX;
+                state.panStartY = e.clientY;
+            }
+        }
+
+        function onCanvasMouseMove(e) {
+            if (state.isPanning) {
+                const dx = e.clientX - state.panStartX;
+                const dy = e.clientY - state.panStartY;
+                state.panX += dx;
+                state.panY += dy;
+                state.panStartX = e.clientX;
+                state.panStartY = e.clientY;
+                updateViewport();
+            }
+
+            if (state.draggingNode) {
+                const node = state.draggingNode;
+                const rect = container.getBoundingClientRect();
+                node.x = (e.clientX - rect.left - state.panX - state.dragOffsetX) / state.zoom;
+                node.y = (e.clientY - rect.top - state.panY - state.dragOffsetY) / state.zoom;
+
+                const el = document.getElementById(node.id);
+                el.style.left = node.x + 'px';
+                el.style.top = node.y + 'px';
+
+                updateConnections();
+            }
+
+            if (state.connectingFrom) {
+                updateTempConnection(e);
+            }
+        }
+
+        function onCanvasMouseUp(e) {
+            state.isPanning = false;
+            state.draggingNode = null;
+
+            if (state.connectingFrom && !e.target.closest('.port')) {
+                cancelConnection();
+            }
+        }
+
+        function onCanvasWheel(e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newZoom = Math.max(0.2, Math.min(3, state.zoom * delta));
+
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            state.panX = mouseX - (mouseX - state.panX) * (newZoom / state.zoom);
+            state.panY = mouseY - (mouseY - state.panY) * (newZoom / state.zoom);
+            state.zoom = newZoom;
+
+            updateViewport();
+            updateZoomDisplay();
+        }
+
+        function onNodeMouseDown(e, node) {
+            e.stopPropagation();
+
+            if (!e.shiftKey) {
+                state.selectedNodes = [node.id];
+            } else {
+                if (state.selectedNodes.includes(node.id)) {
+                    state.selectedNodes = state.selectedNodes.filter(id => id !== node.id);
+                } else {
+                    state.selectedNodes.push(node.id);
+                }
+            }
+            updateSelection();
+            showNodeProperties(node);
+
+            // Start dragging
+            const el = document.getElementById(node.id);
+            const rect = el.getBoundingClientRect();
+            state.draggingNode = node;
+            state.dragOffsetX = (e.clientX - rect.left) * state.zoom;
+            state.dragOffsetY = (e.clientY - rect.top) * state.zoom;
+        }
+
+        function onPortMouseDown(e, node, portId) {
+            e.stopPropagation();
+            const isOutput = e.target.closest('.port').classList.contains('output');
+
+            if (isOutput) {
+                state.connectingFrom = { node, portId };
+                createTempConnection(e);
+            }
+        }
+
+        function onPortMouseUp(e, node, portId) {
+            e.stopPropagation();
+            const isInput = e.target.closest('.port').classList.contains('input');
+
+            if (state.connectingFrom && isInput) {
+                // Create connection
+                createConnection(state.connectingFrom.node, state.connectingFrom.portId, node, portId);
+            }
+
+            cancelConnection();
+        }
+
+        function createTempConnection(e) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            line.setAttribute('class', 'connection-temp');
+            line.setAttribute('id', 'temp-connection');
+            connectionsLayer.appendChild(line);
+            state.tempConnection = line;
+        }
+
+        function updateTempConnection(e) {
+            if (!state.tempConnection) return;
+
+            const fromPort = document.querySelector(
+                `#${state.connectingFrom.node.id} .port.output[data-port="${state.connectingFrom.portId}"] .port-dot`
+            );
+            const fromRect = fromPort.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const x1 = (fromRect.left + fromRect.width / 2 - containerRect.left - state.panX) / state.zoom;
+            const y1 = (fromRect.top + fromRect.height / 2 - containerRect.top - state.panY) / state.zoom;
+            const x2 = (e.clientX - containerRect.left - state.panX) / state.zoom;
+            const y2 = (e.clientY - containerRect.top - state.panY) / state.zoom;
+
+            state.tempConnection.setAttribute('d', createBezierPath(x1, y1, x2, y2));
+        }
+
+        function cancelConnection() {
+            state.connectingFrom = null;
+            if (state.tempConnection) {
+                state.tempConnection.remove();
+                state.tempConnection = null;
+            }
+        }
+
+        function onContextMenu(e) {
+            e.preventDefault();
+            const nodeEl = e.target.closest('.graph-node');
+
+            if (nodeEl) {
+                const node = state.nodes.find(n => n.id === nodeEl.id);
+                if (node) {
+                    state.selectedNodes = [node.id];
+                    updateSelection();
+                }
+            }
+
+            contextMenu.style.left = e.clientX + 'px';
+            contextMenu.style.top = e.clientY + 'px';
+            contextMenu.classList.add('visible');
+        }
+
+        function onKeyDown(e) {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                deleteSelectedNodes();
+            } else if (e.key === 'Escape') {
+                cancelConnection();
+                state.selectedNodes = [];
+                updateSelection();
+            } else if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                duplicateNode();
+            }
+        }
+
+        function onDrop(e) {
+            e.preventDefault();
+            const type = e.dataTransfer.getData('nodeType');
+            if (type) {
+                const rect = container.getBoundingClientRect();
+                const x = (e.clientX - rect.left - state.panX) / state.zoom;
+                const y = (e.clientY - rect.top - state.panY) / state.zoom;
+                createNode(type, x, y);
+            }
+        }
+
+        // Selection
+        function updateSelection() {
+            document.querySelectorAll('.graph-node').forEach(el => {
+                if (state.selectedNodes.includes(el.id)) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+        }
+
+        function selectConnection(conn) {
+            // Highlight connection
+            document.querySelectorAll('.connection').forEach(c => c.classList.remove('selected'));
+            document.getElementById(conn.id)?.classList.add('selected');
+        }
+
+        // Properties panel
+        function showNodeProperties(node) {
+            propertiesPanel.classList.add('visible');
+            const content = document.getElementById('properties-content');
+
+            let html = `
+                <div class="property-group">
+                    <label>ID</label>
+                    <input type="text" value="${node.id}" readonly>
+                </div>
+                <div class="property-group">
+                    <label>Title</label>
+                    <input type="text" value="${node.title}" onchange="updateNodeProperty('${node.id}', 'title', this.value)">
+                </div>
+            `;
+
+            // Type-specific properties
+            for (const [key, value] of Object.entries(node.data)) {
+                html += `
+                    <div class="property-group">
+                        <label>${key}</label>
+                        <input type="text" value="${value}" onchange="updateNodeData('${node.id}', '${key}', this.value)">
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="property-actions">
+                    <button class="danger" onclick="deleteSelectedNodes()">Delete</button>
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        function updateNodeProperty(nodeId, prop, value) {
+            const node = state.nodes.find(n => n.id === nodeId);
+            if (node) {
+                node[prop] = value;
+                const el = document.getElementById(nodeId);
+                el.querySelector('.node-header span').textContent = value;
+            }
+        }
+
+        function updateNodeData(nodeId, key, value) {
+            const node = state.nodes.find(n => n.id === nodeId);
+            if (node) {
+                node.data[key] = value;
+                const el = document.getElementById(nodeId);
+                el.querySelector('.node-content').textContent = getNodeDescription(node);
+            }
+        }
+
+        // Actions
+        function deleteSelectedNodes() {
+            state.selectedNodes.forEach(nodeId => {
+                const el = document.getElementById(nodeId);
+                if (el) el.remove();
+
+                // Remove connections
+                state.connections = state.connections.filter(c =>
+                    c.from.nodeId !== nodeId && c.to.nodeId !== nodeId
+                );
+            });
+
+            state.nodes = state.nodes.filter(n => !state.selectedNodes.includes(n.id));
+            state.selectedNodes = [];
+            updateConnections();
+            updateUI();
+            propertiesPanel.classList.remove('visible');
+        }
+
+        function duplicateNode() {
+            const newNodes = [];
+            state.selectedNodes.forEach(nodeId => {
+                const node = state.nodes.find(n => n.id === nodeId);
+                if (node) {
+                    const newNode = createNode(node.type, node.x + 50, node.y + 50);
+                    newNode.title = node.title + ' (copy)';
+                    newNode.data = { ...node.data };
+                    newNodes.push(newNode.id);
+                }
+            });
+            state.selectedNodes = newNodes;
+            updateSelection();
+        }
+
+        function deleteNode() {
+            deleteSelectedNodes();
+            contextMenu.classList.remove('visible');
+        }
+
+        function disconnectAll() {
+            state.selectedNodes.forEach(nodeId => {
+                state.connections = state.connections.filter(c =>
+                    c.from.nodeId !== nodeId && c.to.nodeId !== nodeId
+                );
+            });
+            updateConnections();
+            updateUI();
+            contextMenu.classList.remove('visible');
+        }
+
+        function enableNode() {
+            state.selectedNodes.forEach(nodeId => {
+                const node = state.nodes.find(n => n.id === nodeId);
+                if (node) node.enabled = true;
+            });
+            contextMenu.classList.remove('visible');
+        }
+
+        function disableNode() {
+            state.selectedNodes.forEach(nodeId => {
+                const node = state.nodes.find(n => n.id === nodeId);
+                if (node) node.enabled = false;
+            });
+            contextMenu.classList.remove('visible');
+        }
+
+        // View controls
+        function updateViewport() {
+            viewport.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+            connectionsLayer.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+            updateMinimap();
+        }
+
+        function updateZoomDisplay() {
+            document.getElementById('zoom-level').textContent = Math.round(state.zoom * 100) + '%';
+            document.getElementById('zoom-status').textContent = Math.round(state.zoom * 100) + '%';
+        }
+
+        function zoomIn() {
+            state.zoom = Math.min(3, state.zoom * 1.2);
+            updateViewport();
+            updateZoomDisplay();
+        }
+
+        function zoomOut() {
+            state.zoom = Math.max(0.2, state.zoom * 0.8);
+            updateViewport();
+            updateZoomDisplay();
+        }
+
+        function zoomToFit() {
+            if (state.nodes.length === 0) return;
+
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            state.nodes.forEach(node => {
+                minX = Math.min(minX, node.x);
+                minY = Math.min(minY, node.y);
+                maxX = Math.max(maxX, node.x + 180);
+                maxY = Math.max(maxY, node.y + 100);
+            });
+
+            const rect = container.getBoundingClientRect();
+            const width = maxX - minX + 100;
+            const height = maxY - minY + 100;
+
+            state.zoom = Math.min(rect.width / width, rect.height / height, 1);
+            state.panX = (rect.width - width * state.zoom) / 2 - minX * state.zoom + 50;
+            state.panY = (rect.height - height * state.zoom) / 2 - minY * state.zoom + 50;
+
+            updateViewport();
+            updateZoomDisplay();
+        }
+
+        function autoLayout() {
+            // Simple hierarchical layout
+            const levels = {};
+            const visited = new Set();
+
+            // Find roots (no inputs connected)
+            const roots = state.nodes.filter(node => {
+                return !state.connections.some(c => c.to.nodeId === node.id);
+            });
+
+            function assignLevel(node, level) {
+                if (visited.has(node.id)) return;
+                visited.add(node.id);
+
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(node);
+
+                // Find connected nodes
+                state.connections
+                    .filter(c => c.from.nodeId === node.id)
+                    .forEach(c => {
+                        const target = state.nodes.find(n => n.id === c.to.nodeId);
+                        if (target) assignLevel(target, level + 1);
+                    });
+            }
+
+            roots.forEach(root => assignLevel(root, 0));
+
+            // Position nodes
+            const xSpacing = 250;
+            const ySpacing = 120;
+
+            Object.entries(levels).forEach(([level, nodes]) => {
+                nodes.forEach((node, index) => {
+                    node.x = parseInt(level) * xSpacing + 50;
+                    node.y = index * ySpacing + 50;
+
+                    const el = document.getElementById(node.id);
+                    if (el) {
+                        el.style.left = node.x + 'px';
+                        el.style.top = node.y + 'px';
+                    }
+                });
+            });
+
+            updateConnections();
+            zoomToFit();
+        }
+
+        function alignSelected() {
+            if (state.selectedNodes.length < 2) return;
+
+            const selected = state.nodes.filter(n => state.selectedNodes.includes(n.id));
+            const avgY = selected.reduce((sum, n) => sum + n.y, 0) / selected.length;
+
+            selected.forEach(node => {
+                node.y = avgY;
+                const el = document.getElementById(node.id);
+                el.style.top = node.y + 'px';
+            });
+
+            updateConnections();
+        }
+
+        // Event flow
+        function togglePause() {
+            state.isPaused = !state.isPaused;
+            const btn = document.getElementById('pauseBtn');
+            btn.textContent = state.isPaused ? 'Resume' : 'Pause';
+            btn.classList.toggle('active', state.isPaused);
+
+            const status = document.getElementById('flow-status');
+            status.textContent = state.isPaused ? 'Flow: Paused' : 'Flow: Running';
+            status.classList.toggle('paused', state.isPaused);
+        }
+
+        function clearFlow() {
+            document.querySelectorAll('.graph-node.executing').forEach(el => {
+                el.classList.remove('executing');
+            });
+            document.querySelectorAll('.connection.active').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+
+        function simulateEventFlow(nodeId) {
+            const el = document.getElementById(nodeId);
+            if (el) {
+                el.classList.add('executing');
+                setTimeout(() => el.classList.remove('executing'), 500);
+            }
+
+            // Highlight outgoing connections
+            state.connections
+                .filter(c => c.from.nodeId === nodeId)
+                .forEach(c => {
+                    const connEl = document.getElementById(c.id);
+                    if (connEl) {
+                        connEl.classList.add('active');
+                        setTimeout(() => connEl.classList.remove('active'), 500);
+
+                        // Propagate
+                        setTimeout(() => simulateEventFlow(c.to.nodeId), 300);
+                    }
+                });
+        }
+
+        // Minimap
+        function updateMinimap() {
+            const content = document.getElementById('minimap-content');
+            const viewportEl = document.getElementById('minimap-viewport');
+            const rect = container.getBoundingClientRect();
+            const miniRect = content.getBoundingClientRect();
+
+            content.innerHTML = '';
+            const scale = 0.05;
+
+            state.nodes.forEach(node => {
+                const mini = document.createElement('div');
+                mini.className = 'minimap-node';
+                mini.style.left = (node.x * scale) + 'px';
+                mini.style.top = (node.y * scale) + 'px';
+                mini.style.width = '8px';
+                mini.style.height = '5px';
+                content.appendChild(mini);
+            });
+
+            // Viewport indicator
+            viewportEl.style.width = (rect.width / state.zoom * scale) + 'px';
+            viewportEl.style.height = (rect.height / state.zoom * scale) + 'px';
+            viewportEl.style.left = (-state.panX / state.zoom * scale) + 'px';
+            viewportEl.style.top = (-state.panY / state.zoom * scale) + 'px';
+        }
+
+        // Export/Import
+        function exportGraph() {
+            const data = {
+                nodes: state.nodes,
+                connections: state.connections
+            };
+            console.log(JSON.stringify(data, null, 2));
+
+            // Send to C++
+            if (window.WebEditor) {
+                WebEditor.invoke('eventBus.export', [data]);
+            }
+        }
+
+        function importGraph() {
+            // Would show file dialog or receive from C++
+        }
+
+        // UI updates
+        function updateUI() {
+            document.getElementById('event-count').textContent = state.nodes.length;
+            document.getElementById('connection-count').textContent = state.connections.length;
+            updateMinimap();
+        }
+
+        // WebEditor bridge
+        const WebEditor = {
+            invoke: function(method, args, callback) {
+                console.log('WebEditor.invoke:', method, args);
+                if (callback) setTimeout(() => callback(null, {}), 100);
+            }
+        };
+
+        // Initialize on load
+        init();
+
+        // Demo: Create some sample nodes
+        setTimeout(() => {
+            const entityNode = createNode('entity', 100, 100);
+            const conditionNode = createNode('condition-and', 350, 100);
+            const actionNode = createNode('action-python', 600, 100);
+
+            createConnection(entityNode, 'out', conditionNode, 'a');
+            createConnection(conditionNode, 'out', actionNode, 'in');
+
+            zoomToFit();
+        }, 100);
+    </script>
+</body>
+</html>

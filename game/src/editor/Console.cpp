@@ -1,10 +1,27 @@
 #include "Console.hpp"
 #include "Editor.hpp"
+#include "../../engine/scripting/PythonEngine.hpp"
+#include "../config/ConfigRegistry.hpp"
 #include <imgui.h>
 #include <ctime>
 #include <algorithm>
+#include <vector>
 
 namespace Vehement {
+
+// Available commands for tab completion
+static const std::vector<std::string> s_commands = {
+    "help", "clear", "python", "lua", "spawn", "teleport", "reload",
+    "list", "info", "save", "load", "quit", "debug", "fps", "stats",
+    "entity", "config", "script", "world"
+};
+
+// Python built-ins for tab completion in Python mode
+static const std::vector<std::string> s_pythonBuiltins = {
+    "print", "len", "range", "list", "dict", "str", "int", "float",
+    "import", "from", "def", "class", "if", "else", "for", "while",
+    "True", "False", "None", "return", "yield", "pass"
+};
 
 Console::Console(Editor* editor) : m_editor(editor) {
     Log("Console initialized", LogLevel::Info);
@@ -189,7 +206,65 @@ int Console::TextEditCallback(void* data) {
             break;
         }
         case ImGuiInputTextFlags_CallbackCompletion: {
-            // TODO: Tab completion
+            // Tab completion
+            std::string currentInput(cbData->Buf, cbData->CursorPos);
+
+            // Find the word being typed
+            size_t wordStart = currentInput.find_last_of(" ");
+            std::string prefix;
+            if (wordStart == std::string::npos) {
+                wordStart = 0;
+                prefix = currentInput;
+            } else {
+                wordStart++;
+                prefix = currentInput.substr(wordStart);
+            }
+
+            if (prefix.empty()) break;
+
+            // Get completions based on mode
+            std::vector<std::string> candidates;
+            const std::vector<std::string>& completionList = m_pythonMode ? s_pythonBuiltins : s_commands;
+
+            for (const auto& cmd : completionList) {
+                if (cmd.size() >= prefix.size() &&
+                    cmd.compare(0, prefix.size(), prefix) == 0) {
+                    candidates.push_back(cmd);
+                }
+            }
+
+            if (candidates.empty()) {
+                // No matches
+            } else if (candidates.size() == 1) {
+                // Single match - complete it
+                cbData->DeleteChars((int)wordStart, (int)(currentInput.size() - wordStart));
+                cbData->InsertChars((int)wordStart, candidates[0].c_str());
+                cbData->InsertChars(cbData->CursorPos, " ");
+            } else {
+                // Multiple matches - find common prefix
+                std::string commonPrefix = candidates[0];
+                for (size_t i = 1; i < candidates.size(); i++) {
+                    size_t j = 0;
+                    while (j < commonPrefix.size() && j < candidates[i].size() &&
+                           commonPrefix[j] == candidates[i][j]) {
+                        j++;
+                    }
+                    commonPrefix = commonPrefix.substr(0, j);
+                }
+
+                if (commonPrefix.size() > prefix.size()) {
+                    cbData->DeleteChars((int)wordStart, (int)(currentInput.size() - wordStart));
+                    cbData->InsertChars((int)wordStart, commonPrefix.c_str());
+                } else {
+                    // Show all candidates
+                    Log("Completions:", LogLevel::Debug);
+                    std::string completionList;
+                    for (const auto& c : candidates) {
+                        completionList += c + "  ";
+                    }
+                    Log("  " + completionList, LogLevel::Debug);
+                }
+            }
             break;
         }
     }
@@ -246,14 +321,69 @@ void Console::ExecuteCommand(const std::string& command) {
     }
     else if (command == "reload") {
         Log("Reloading configs...", LogLevel::Info);
-        // TODO: Trigger hot-reload
-        Log("Configs reloaded", LogLevel::Info);
+
+        // Trigger hot-reload of configs
+        auto& configRegistry = Config::ConfigRegistry::Instance();
+        int reloadedCount = configRegistry.ReloadAll();
+        Log("Reloaded " + std::to_string(reloadedCount) + " configs", LogLevel::Info);
+
+        // Trigger hot-reload of Python scripts
+        auto& pythonEngine = Nova::Scripting::PythonEngine::Instance();
+        if (pythonEngine.IsInitialized()) {
+            pythonEngine.TriggerHotReload();
+            Log("Python scripts hot-reloaded", LogLevel::Info);
+        }
+
+        // Notify editor
+        if (m_editor) {
+            m_editor->OnHotReload();
+        }
+
+        Log("Hot-reload complete", LogLevel::Info);
     }
     else if (m_pythonMode) {
-        // Execute as Python
+        // Execute as Python using the Python engine
         Log("Executing Python: " + command, LogLevel::Debug);
-        // TODO: Actually execute Python
-        Log("Python execution not implemented", LogLevel::Warning);
+
+        auto& pythonEngine = Nova::Scripting::PythonEngine::Instance();
+
+        if (!pythonEngine.IsInitialized()) {
+            // Initialize Python engine with default config
+            Nova::Scripting::PythonEngineConfig config;
+            config.scriptPaths = {"scripts/", "game/scripts/"};
+            config.enableHotReload = true;
+            config.verboseErrors = true;
+
+            if (!pythonEngine.Initialize(config)) {
+                Log("Failed to initialize Python engine: " + pythonEngine.GetLastError(), LogLevel::Error);
+            } else {
+                Log("Python engine initialized", LogLevel::Info);
+            }
+        }
+
+        if (pythonEngine.IsInitialized()) {
+            // Execute the command
+            auto result = pythonEngine.ExecuteString(command, "console_repl");
+
+            if (result.success) {
+                // Check for output/return value
+                if (auto strVal = result.GetValue<std::string>()) {
+                    Log(*strVal, LogLevel::Info);
+                } else if (auto intVal = result.GetValue<int>()) {
+                    Log(std::to_string(*intVal), LogLevel::Info);
+                } else if (auto floatVal = result.GetValue<float>()) {
+                    Log(std::to_string(*floatVal), LogLevel::Info);
+                }
+                // Also capture stdout if available
+                if (!result.output.empty()) {
+                    Log(result.output, LogLevel::Info);
+                }
+            } else {
+                Log("Python error: " + result.errorMessage, LogLevel::Error);
+            }
+        } else {
+            Log("Python engine not available", LogLevel::Error);
+        }
     }
     else {
         // Custom command handler

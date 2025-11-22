@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>2D Blend Space Editor</title>
+    <link rel="stylesheet" href="../editor.css">
+    <style>
+        .blend-space-2d-container {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            background: #1a1a1a;
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: #252530;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .canvas-panel {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .properties-panel {
+            background: #1e1e24;
+            padding: 16px;
+            border-left: 1px solid #333;
+            overflow-y: auto;
+        }
+
+        .canvas-container {
+            position: relative;
+            background: #1e1e24;
+            border-radius: 8px;
+        }
+
+        .blend-canvas {
+            display: block;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .sample-point {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            background: #3a3a45;
+            border: 3px solid #4a9eff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            pointer-events: auto;
+            transition: transform 0.1s ease;
+        }
+
+        .sample-point:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+        }
+
+        .sample-point.selected {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .sample-point.dragging {
+            cursor: grabbing;
+            z-index: 100;
+        }
+
+        .sample-label {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #888;
+            white-space: nowrap;
+            background: rgba(30, 30, 36, 0.9);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .preview-cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff9e4a;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(255, 158, 74, 0.5);
+        }
+
+        .cursor-crosshair {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .cursor-crosshair-h {
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 158, 74, 0.3);
+        }
+
+        .cursor-crosshair-v {
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255, 158, 74, 0.3);
+        }
+
+        .axis-label {
+            position: absolute;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .axis-label-x {
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .axis-label-y {
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        .cursor-coords {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #ff9e4a;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            background: #252530;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .range-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .sample-list {
+            margin-top: 16px;
+        }
+
+        .sample-item {
+            background: #252530;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            font-size: 13px;
+        }
+
+        .sample-item.selected {
+            border-color: #4a9eff;
+        }
+
+        .sample-item-coords {
+            color: #666;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .weight-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .add-sample-btn {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 2px dashed #444;
+            border-radius: 6px;
+            color: #666;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .add-sample-btn:hover {
+            border-color: #4a9eff;
+            color: #4a9eff;
+        }
+    </style>
+</head>
+<body>
+    <div class="blend-space-2d-container">
+        <div class="toolbar">
+            <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+            <h2 id="blend-space-name">2D Blend Space</h2>
+            <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            <div style="flex: 1;"></div>
+            <button class="btn" onclick="addSample()">Add Sample</button>
+            <button class="btn btn-primary" onclick="save()">Save</button>
+        </div>
+
+        <div class="canvas-panel">
+            <div class="canvas-container" id="canvas-container">
+                <canvas id="blend-canvas" class="blend-canvas" width="500" height="500"></canvas>
+                <div class="canvas-overlay" id="canvas-overlay">
+                    <div class="preview-cursor" id="preview-cursor"></div>
+                    <div class="cursor-crosshair cursor-crosshair-h" id="crosshair-h"></div>
+                    <div class="cursor-crosshair cursor-crosshair-v" id="crosshair-v"></div>
+                </div>
+                <span class="axis-label axis-label-x" id="x-axis-label">X</span>
+                <span class="axis-label axis-label-y" id="y-axis-label">Y</span>
+                <div class="cursor-coords" id="cursor-coords">0.00, 0.00</div>
+            </div>
+        </div>
+
+        <div class="properties-panel">
+            <h3>Settings</h3>
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="name-input" value="Locomotion 2D" onchange="updateName(this.value)">
+            </div>
+
+            <div class="form-group">
+                <label>X Parameter</label>
+                <input type="text" id="param-x-input" value="DirectionX" onchange="updateParams()">
+            </div>
+
+            <div class="form-group">
+                <label>Y Parameter</label>
+                <input type="text" id="param-y-input" value="Speed" onchange="updateParams()">
+            </div>
+
+            <div class="form-group">
+                <label>X Range</label>
+                <div class="range-inputs">
+                    <input type="number" id="min-x" value="-1" step="0.1" onchange="updateRange()">
+                    <input type="number" id="max-x" value="1" step="0.1" onchange="updateRange()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Y Range</label>
+                <div class="range-inputs">
+                    <input type="number" id="min-y" value="0" step="0.1" onchange="updateRange()">
+                    <input type="number" id="max-y" value="2" step="0.1" onchange="updateRange()">
+                </div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-triangles" checked onchange="render()">
+                <label for="show-triangles">Show Triangulation</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-weights" onchange="render()">
+                <label for="show-weights">Show Weights</label>
+            </div>
+
+            <h3 style="margin-top: 24px;">Samples</h3>
+            <div class="sample-list" id="sample-list"></div>
+            <button class="add-sample-btn" onclick="addSample()">+ Add Sample</button>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script>
+        var state = {
+            name: 'Locomotion 2D',
+            paramX: 'DirectionX',
+            paramY: 'Speed',
+            minX: -1, maxX: 1,
+            minY: 0, maxY: 2,
+            samples: [
+                { id: 1, clip: 'idle', x: 0, y: 0 },
+                { id: 2, clip: 'walk_fwd', x: 0, y: 1 },
+                { id: 3, clip: 'walk_left', x: -1, y: 1 },
+                { id: 4, clip: 'walk_right', x: 1, y: 1 },
+                { id: 5, clip: 'run_fwd', x: 0, y: 2 }
+            ],
+            triangles: [],
+            previewX: 0,
+            previewY: 0.5,
+            selectedSampleIndex: -1,
+            draggingSampleIndex: -1,
+            isDirty: false
+        };
+
+        var canvas, ctx, overlay;
+        var canvasSize = 500;
+        var padding = 40;
+
+        function init() {
+            canvas = document.getElementById('blend-canvas');
+            ctx = canvas.getContext('2d');
+            overlay = document.getElementById('canvas-overlay');
+
+            computeTriangulation();
+            render();
+            renderSampleList();
+            updateCursor();
+
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onCanvasMouseMove);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function valueToCanvas(x, y) {
+            var px = padding + ((x - state.minX) / (state.maxX - state.minX)) * (canvasSize - 2 * padding);
+            var py = canvasSize - padding - ((y - state.minY) / (state.maxY - state.minY)) * (canvasSize - 2 * padding);
+            return { x: px, y: py };
+        }
+
+        function canvasToValue(px, py) {
+            var x = state.minX + ((px - padding) / (canvasSize - 2 * padding)) * (state.maxX - state.minX);
+            var y = state.minY + ((canvasSize - padding - py) / (canvasSize - 2 * padding)) * (state.maxY - state.minY);
+            return { x: x, y: y };
+        }
+
+        function computeTriangulation() {
+            // Simple Delaunay triangulation
+            state.triangles = [];
+            if (state.samples.length < 3) return;
+
+            // For simplicity, create triangles connecting all points
+            for (var i = 0; i < state.samples.length; i++) {
+                for (var j = i + 1; j < state.samples.length; j++) {
+                    for (var k = j + 1; k < state.samples.length; k++) {
+                        state.triangles.push([i, j, k]);
+                    }
+                }
+            }
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+            // Draw grid
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            for (var i = 0; i <= 10; i++) {
+                var pos = padding + i * (canvasSize - 2 * padding) / 10;
+                ctx.beginPath();
+                ctx.moveTo(pos, padding);
+                ctx.lineTo(pos, canvasSize - padding);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(padding, pos);
+                ctx.lineTo(canvasSize - padding, pos);
+                ctx.stroke();
+            }
+
+            // Draw axis
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, canvasSize - padding);
+            ctx.lineTo(canvasSize - padding, canvasSize - padding);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvasSize - padding);
+            ctx.stroke();
+
+            // Draw triangulation
+            if (document.getElementById('show-triangles').checked) {
+                ctx.strokeStyle = 'rgba(74, 158, 255, 0.3)';
+                ctx.lineWidth = 1;
+                state.triangles.forEach(function(tri) {
+                    var p0 = valueToCanvas(state.samples[tri[0]].x, state.samples[tri[0]].y);
+                    var p1 = valueToCanvas(state.samples[tri[1]].x, state.samples[tri[1]].y);
+                    var p2 = valueToCanvas(state.samples[tri[2]].x, state.samples[tri[2]].y);
+                    ctx.beginPath();
+                    ctx.moveTo(p0.x, p0.y);
+                    ctx.lineTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.closePath();
+                    ctx.stroke();
+                });
+            }
+
+            // Draw samples
+            state.samples.forEach(function(sample, index) {
+                var pos = valueToCanvas(sample.x, sample.y);
+
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 18, 0, Math.PI * 2);
+                ctx.fillStyle = index === state.selectedSampleIndex ? '#4a9eff' : '#3a3a45';
+                ctx.fill();
+                ctx.strokeStyle = '#4a9eff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.fillStyle = index === state.selectedSampleIndex ? '#fff' : '#ccc';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(index + 1, pos.x, pos.y);
+            });
+
+            // Update overlay sample points (for interactivity)
+            renderOverlaySamples();
+        }
+
+        function renderOverlaySamples() {
+            // Remove old sample points
+            var oldPoints = overlay.querySelectorAll('.sample-point');
+            oldPoints.forEach(function(p) { p.remove(); });
+
+            state.samples.forEach(function(sample, index) {
+                var pos = valueToCanvas(sample.x, sample.y);
+
+                var point = document.createElement('div');
+                point.className = 'sample-point' +
+                    (index === state.selectedSampleIndex ? ' selected' : '') +
+                    (index === state.draggingSampleIndex ? ' dragging' : '');
+                point.style.left = pos.x + 'px';
+                point.style.top = pos.y + 'px';
+                point.innerHTML = '<span class="sample-label">' + sample.clip + '</span>' + (index + 1);
+
+                point.addEventListener('mousedown', function(e) {
+                    e.stopPropagation();
+                    startDrag(index, e);
+                });
+
+                overlay.appendChild(point);
+            });
+        }
+
+        function renderSampleList() {
+            var container = document.getElementById('sample-list');
+            container.innerHTML = '';
+
+            var weights = calculateWeights(state.previewX, state.previewY);
+
+            state.samples.forEach(function(sample, index) {
+                var item = document.createElement('div');
+                item.className = 'sample-item' + (index === state.selectedSampleIndex ? ' selected' : '');
+                item.onclick = function() { selectSample(index); };
+
+                var weightColor = 'rgba(74, 158, 255, ' + weights[index] + ')';
+                item.innerHTML = '\
+                    <span class="weight-indicator" style="background: ' + weightColor + '"></span>\
+                    ' + sample.clip + '\
+                    <div class="sample-item-coords">(' + sample.x.toFixed(2) + ', ' + sample.y.toFixed(2) + ')</div>\
+                ';
+
+                container.appendChild(item);
+            });
+        }
+
+        function calculateWeights(x, y) {
+            var weights = new Array(state.samples.length).fill(0);
+            if (state.samples.length === 0) return weights;
+
+            // Simple inverse distance weighting
+            var totalWeight = 0;
+            state.samples.forEach(function(sample, i) {
+                var dx = x - sample.x;
+                var dy = y - sample.y;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+                weights[i] = 1 / (dist + 0.01);
+                totalWeight += weights[i];
+            });
+
+            if (totalWeight > 0) {
+                weights = weights.map(function(w) { return w / totalWeight; });
+            }
+
+            return weights;
+        }
+
+        function updateCursor() {
+            var pos = valueToCanvas(state.previewX, state.previewY);
+            var cursor = document.getElementById('preview-cursor');
+            cursor.style.left = pos.x + 'px';
+            cursor.style.top = pos.y + 'px';
+
+            var crosshairH = document.getElementById('crosshair-h');
+            var crosshairV = document.getElementById('crosshair-v');
+            crosshairH.style.top = pos.y + 'px';
+            crosshairV.style.left = pos.x + 'px';
+
+            document.getElementById('cursor-coords').textContent =
+                state.previewX.toFixed(2) + ', ' + state.previewY.toFixed(2);
+
+            renderSampleList();
+        }
+
+        function onMouseDown(e) {
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+
+            // Check if clicking on a sample
+            for (var i = 0; i < state.samples.length; i++) {
+                var pos = valueToCanvas(state.samples[i].x, state.samples[i].y);
+                var dx = x - pos.x;
+                var dy = y - pos.y;
+                if (dx * dx + dy * dy < 400) {
+                    startDrag(i, e);
+                    return;
+                }
+            }
+
+            // Move preview cursor
+            var value = canvasToValue(x, y);
+            state.previewX = Math.max(state.minX, Math.min(state.maxX, value.x));
+            state.previewY = Math.max(state.minY, Math.min(state.maxY, value.y));
+            updateCursor();
+        }
+
+        function onCanvasMouseMove(e) {
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var value = canvasToValue(x, y);
+
+            if (state.draggingSampleIndex < 0) {
+                // Just show coordinates
+            }
+        }
+
+        function startDrag(index, e) {
+            state.draggingSampleIndex = index;
+            selectSample(index);
+        }
+
+        function onMouseMove(e) {
+            if (state.draggingSampleIndex < 0) return;
+
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+
+            var value = canvasToValue(x, y);
+            state.samples[state.draggingSampleIndex].x = Math.max(state.minX, Math.min(state.maxX, value.x));
+            state.samples[state.draggingSampleIndex].y = Math.max(state.minY, Math.min(state.maxY, value.y));
+
+            setDirty(true);
+            computeTriangulation();
+            render();
+        }
+
+        function onMouseUp() {
+            if (state.draggingSampleIndex >= 0) {
+                var sample = state.samples[state.draggingSampleIndex];
+                if (window.bridge) {
+                    window.bridge.moveSample(state.draggingSampleIndex, sample.x, sample.y);
+                }
+            }
+            state.draggingSampleIndex = -1;
+            render();
+        }
+
+        function selectSample(index) {
+            state.selectedSampleIndex = index;
+            render();
+            renderSampleList();
+
+            if (window.bridge) {
+                window.bridge.selectSample(index);
+            }
+        }
+
+        function addSample() {
+            var clip = prompt('Animation clip name:', 'clip_' + (state.samples.length + 1));
+            if (!clip) return;
+
+            state.samples.push({
+                id: Date.now(),
+                clip: clip,
+                x: state.previewX,
+                y: state.previewY
+            });
+
+            setDirty(true);
+            computeTriangulation();
+            render();
+            renderSampleList();
+        }
+
+        function updateName(name) {
+            state.name = name;
+            setDirty(true);
+        }
+
+        function updateParams() {
+            state.paramX = document.getElementById('param-x-input').value;
+            state.paramY = document.getElementById('param-y-input').value;
+            document.getElementById('x-axis-label').textContent = state.paramX;
+            document.getElementById('y-axis-label').textContent = state.paramY;
+            setDirty(true);
+        }
+
+        function updateRange() {
+            state.minX = parseFloat(document.getElementById('min-x').value);
+            state.maxX = parseFloat(document.getElementById('max-x').value);
+            state.minY = parseFloat(document.getElementById('min-y').value);
+            state.maxY = parseFloat(document.getElementById('max-y').value);
+            setDirty(true);
+            render();
+            updateCursor();
+        }
+
+        function setDirty(dirty) {
+            state.isDirty = dirty;
+            document.getElementById('dirty-indicator').style.display = dirty ? 'inline' : 'none';
+        }
+
+        function save() {
+            console.log('Saving:', state);
+            if (window.bridge) {
+                window.bridge.save(JSON.stringify(state));
+            }
+            setDirty(false);
+        }
+
+        function goBack() {
+            if (state.isDirty) {
+                if (!confirm('Unsaved changes will be lost. Continue?')) return;
+            }
+            history.back();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

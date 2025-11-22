@@ -1,0 +1,403 @@
+{
+  "version": "1.0.0",
+  "entities": [
+    {
+      "name": "NetworkedUnit",
+      "networkId": 1,
+      "relevanceMode": "distance",
+      "relevanceRadius": 500.0,
+      "dormancyEnabled": true,
+      "dormancyTimeout": 5.0,
+      "snapshotRate": 20,
+      "properties": [
+        {
+          "name": "position",
+          "type": "vector3",
+          "replicationMode": "always",
+          "interpolation": "smooth",
+          "compression": "quantize",
+          "quantizationBits": 16,
+          "priority": 255
+        },
+        {
+          "name": "rotation",
+          "type": "quaternion",
+          "replicationMode": "onchange",
+          "interpolation": "smooth",
+          "compression": "quantize",
+          "quantizationBits": 10,
+          "priority": 200
+        },
+        {
+          "name": "velocity",
+          "type": "vector3",
+          "replicationMode": "always",
+          "interpolation": "linear",
+          "compression": "quantize",
+          "quantizationBits": 12,
+          "priority": 240
+        },
+        {
+          "name": "health",
+          "type": "float",
+          "replicationMode": "onchange",
+          "interpolation": "snap",
+          "compression": "quantize",
+          "quantizationBits": 8,
+          "priority": 220
+        },
+        {
+          "name": "maxHealth",
+          "type": "float",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "state",
+          "type": "int32",
+          "replicationMode": "onchange",
+          "priority": 200
+        },
+        {
+          "name": "targetId",
+          "type": "uint64",
+          "replicationMode": "onchange",
+          "priority": 180
+        },
+        {
+          "name": "animationState",
+          "type": "int32",
+          "replicationMode": "onchange",
+          "priority": 150
+        },
+        {
+          "name": "teamId",
+          "type": "int32",
+          "replicationMode": "initial",
+          "priority": 100
+        }
+      ],
+      "rpcs": [
+        {
+          "name": "TakeDamage",
+          "authority": "server",
+          "target": "all_clients",
+          "reliable": true,
+          "parameters": [
+            { "name": "amount", "type": "float" },
+            { "name": "attackerId", "type": "uint64" },
+            { "name": "damageType", "type": "int32" }
+          ]
+        },
+        {
+          "name": "PlayEffect",
+          "authority": "server",
+          "target": "all_clients",
+          "reliable": false,
+          "parameters": [
+            { "name": "effectId", "type": "int32" },
+            { "name": "position", "type": "vector3" }
+          ]
+        },
+        {
+          "name": "RequestMove",
+          "authority": "owner",
+          "target": "server",
+          "reliable": true,
+          "rateLimit": 30,
+          "parameters": [
+            { "name": "destination", "type": "vector3" },
+            { "name": "timestamp", "type": "float" }
+          ],
+          "validation": "distance(destination, position) < 1000"
+        }
+      ],
+      "groups": [
+        {
+          "name": "combat",
+          "properties": ["health", "state", "targetId"],
+          "condition": "inCombat"
+        },
+        {
+          "name": "movement",
+          "properties": ["position", "rotation", "velocity"],
+          "condition": "isMoving"
+        }
+      ]
+    },
+    {
+      "name": "NetworkedBuilding",
+      "networkId": 2,
+      "relevanceMode": "always",
+      "dormancyEnabled": true,
+      "dormancyTimeout": 30.0,
+      "snapshotRate": 5,
+      "properties": [
+        {
+          "name": "position",
+          "type": "vector3",
+          "replicationMode": "initial",
+          "priority": 200
+        },
+        {
+          "name": "rotation",
+          "type": "quaternion",
+          "replicationMode": "initial",
+          "priority": 150
+        },
+        {
+          "name": "health",
+          "type": "float",
+          "replicationMode": "onchange",
+          "compression": "quantize",
+          "quantizationBits": 8,
+          "priority": 220
+        },
+        {
+          "name": "maxHealth",
+          "type": "float",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "buildingType",
+          "type": "int32",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "constructionProgress",
+          "type": "float",
+          "replicationMode": "onchange",
+          "compression": "quantize",
+          "quantizationBits": 8,
+          "priority": 180
+        },
+        {
+          "name": "ownerId",
+          "type": "uint64",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "teamId",
+          "type": "int32",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "rallyPoint",
+          "type": "vector3",
+          "replicationMode": "onchange",
+          "relevanceDistance": 200,
+          "priority": 80
+        }
+      ],
+      "rpcs": [
+        {
+          "name": "StartConstruction",
+          "authority": "server",
+          "target": "all_clients",
+          "reliable": true,
+          "parameters": [
+            { "name": "builderId", "type": "uint64" }
+          ]
+        },
+        {
+          "name": "CompleteConstruction",
+          "authority": "server",
+          "target": "all_clients",
+          "reliable": true
+        },
+        {
+          "name": "TakeDamage",
+          "authority": "server",
+          "target": "all_clients",
+          "reliable": true,
+          "parameters": [
+            { "name": "amount", "type": "float" },
+            { "name": "attackerId", "type": "uint64" }
+          ]
+        },
+        {
+          "name": "SetRallyPoint",
+          "authority": "owner",
+          "target": "server",
+          "reliable": true,
+          "parameters": [
+            { "name": "point", "type": "vector3" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NetworkedProjectile",
+      "networkId": 3,
+      "relevanceMode": "distance",
+      "relevanceRadius": 300.0,
+      "dormancyEnabled": false,
+      "snapshotRate": 30,
+      "properties": [
+        {
+          "name": "position",
+          "type": "vector3",
+          "replicationMode": "always",
+          "interpolation": "linear",
+          "compression": "quantize",
+          "quantizationBits": 16,
+          "priority": 255
+        },
+        {
+          "name": "velocity",
+          "type": "vector3",
+          "replicationMode": "initial",
+          "compression": "quantize",
+          "quantizationBits": 12,
+          "priority": 240
+        },
+        {
+          "name": "projectileType",
+          "type": "int32",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "ownerId",
+          "type": "uint64",
+          "replicationMode": "initial",
+          "priority": 100
+        }
+      ],
+      "rpcs": [
+        {
+          "name": "Impact",
+          "authority": "server",
+          "target": "all_clients",
+          "reliable": false,
+          "parameters": [
+            { "name": "position", "type": "vector3" },
+            { "name": "hitEntityId", "type": "uint64" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ResourceNode",
+      "networkId": 4,
+      "relevanceMode": "always",
+      "dormancyEnabled": true,
+      "dormancyTimeout": 60.0,
+      "snapshotRate": 2,
+      "properties": [
+        {
+          "name": "position",
+          "type": "vector3",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "resourceType",
+          "type": "int32",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "currentAmount",
+          "type": "int32",
+          "replicationMode": "onchange",
+          "priority": 150
+        },
+        {
+          "name": "maxAmount",
+          "type": "int32",
+          "replicationMode": "initial",
+          "priority": 100
+        },
+        {
+          "name": "harvesterId",
+          "type": "uint64",
+          "replicationMode": "onchange",
+          "priority": 120
+        }
+      ]
+    }
+  ],
+  "channels": [
+    {
+      "name": "reliable",
+      "id": 0,
+      "reliable": true,
+      "ordered": true,
+      "priority": 255
+    },
+    {
+      "name": "unreliable",
+      "id": 1,
+      "reliable": false,
+      "ordered": false,
+      "priority": 200
+    },
+    {
+      "name": "position",
+      "id": 2,
+      "reliable": false,
+      "ordered": false,
+      "priority": 240,
+      "maxBandwidth": 102400
+    },
+    {
+      "name": "chat",
+      "id": 3,
+      "reliable": true,
+      "ordered": true,
+      "priority": 128
+    },
+    {
+      "name": "voice",
+      "id": 4,
+      "reliable": false,
+      "ordered": false,
+      "priority": 180,
+      "maxBandwidth": 51200
+    },
+    {
+      "name": "rpc",
+      "id": 5,
+      "reliable": true,
+      "ordered": true,
+      "priority": 220
+    },
+    {
+      "name": "snapshot",
+      "id": 6,
+      "reliable": false,
+      "ordered": true,
+      "priority": 200,
+      "maxBandwidth": 204800
+    }
+  ],
+  "globalSettings": {
+    "maxEntitiesPerClient": 2000,
+    "maxPropertiesPerEntity": 64,
+    "defaultSnapshotRate": 20,
+    "defaultRelevanceRadius": 500,
+    "compressionEnabled": true,
+    "deltaCompressionEnabled": true,
+    "prediction": {
+      "enabled": true,
+      "maxPredictionFrames": 8,
+      "reconciliationThreshold": 0.1,
+      "interpolationDelay": 100
+    },
+    "bandwidth": {
+      "maxOutgoingBytesPerSecond": 262144,
+      "maxIncomingBytesPerSecond": 524288,
+      "priorityDecayRate": 0.9
+    },
+    "lagCompensation": {
+      "enabled": true,
+      "maxRewindTime": 200,
+      "snapshotBufferSize": 64
+    }
+  }
+}

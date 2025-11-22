@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Picker Component</title>
+    <link rel="stylesheet" href="../design/design_tokens.css">
+    <link rel="stylesheet" href="../design/components.css">
+    <link rel="stylesheet" href="../design/layout.css">
+    <style>
+        .file-picker-dialog {
+            width: 700px;
+            max-height: 80vh;
+        }
+
+        .file-picker-content {
+            display: flex;
+            height: 400px;
+        }
+
+        .file-picker-sidebar {
+            width: 180px;
+            border-right: 1px solid var(--border-default);
+            overflow-y: auto;
+            padding: var(--space-2);
+        }
+
+        .file-picker-quick-access {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .file-picker-quick-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2);
+            font-size: var(--text-sm);
+            border-radius: var(--radius-default);
+            cursor: pointer;
+        }
+
+        .file-picker-quick-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .file-picker-quick-item.active {
+            background: var(--bg-selected);
+        }
+
+        .file-picker-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .file-picker-toolbar {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .file-picker-path {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+            font-size: var(--text-sm);
+        }
+
+        .file-picker-path-segment {
+            padding: var(--space-1) var(--space-2);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-default);
+            cursor: pointer;
+        }
+
+        .file-picker-path-segment:hover {
+            background: var(--bg-hover);
+        }
+
+        .file-picker-path-sep {
+            color: var(--text-muted);
+        }
+
+        .file-picker-files {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-2);
+        }
+
+        .file-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: var(--space-2);
+        }
+
+        .file-picker-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition-colors);
+        }
+
+        .file-picker-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .file-picker-item.selected {
+            background: var(--bg-selected);
+            outline: 2px solid var(--accent-primary);
+        }
+
+        .file-picker-item-icon {
+            font-size: 36px;
+            margin-bottom: var(--space-2);
+        }
+
+        .file-picker-item-name {
+            font-size: var(--text-xs);
+            text-align: center;
+            word-break: break-word;
+            max-width: 100%;
+        }
+
+        .file-picker-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .file-picker-list .file-picker-item {
+            flex-direction: row;
+            justify-content: flex-start;
+            padding: var(--space-2);
+        }
+
+        .file-picker-list .file-picker-item-icon {
+            font-size: 20px;
+            margin-bottom: 0;
+            margin-right: var(--space-2);
+        }
+
+        .file-picker-list .file-picker-item-name {
+            flex: 1;
+            text-align: left;
+        }
+
+        .file-picker-list .file-picker-item-meta {
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+            margin-left: var(--space-4);
+        }
+
+        .file-picker-footer {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            border-top: 1px solid var(--border-default);
+            background: var(--bg-elevated);
+        }
+
+        .file-picker-footer .form-group {
+            flex: 1;
+            margin: 0;
+        }
+
+        .file-picker-filter {
+            width: 150px;
+        }
+
+        .demo-container {
+            padding: var(--space-6);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="text-2xl font-semibold mb-6">File Picker Dialog</h1>
+
+        <button class="btn btn-primary" id="open-picker">Open File Picker</button>
+
+        <div class="modal-overlay" id="file-picker-modal">
+            <div class="modal file-picker-dialog">
+                <div class="modal-header">
+                    <h3 class="modal-title">Select File</h3>
+                    <button class="modal-close" id="close-modal">&times;</button>
+                </div>
+
+                <div class="file-picker-content">
+                    <div class="file-picker-sidebar">
+                        <ul class="file-picker-quick-access">
+                            <li class="file-picker-quick-item active" data-path="/">
+                                <span data-icon="folder"></span>
+                                <span>Root</span>
+                            </li>
+                            <li class="file-picker-quick-item" data-path="/assets">
+                                <span data-icon="folder"></span>
+                                <span>Assets</span>
+                            </li>
+                            <li class="file-picker-quick-item" data-path="/textures">
+                                <span data-icon="image"></span>
+                                <span>Textures</span>
+                            </li>
+                            <li class="file-picker-quick-item" data-path="/models">
+                                <span data-icon="cube"></span>
+                                <span>Models</span>
+                            </li>
+                            <li class="file-picker-quick-item" data-path="/scripts">
+                                <span data-icon="code"></span>
+                                <span>Scripts</span>
+                            </li>
+                            <li class="file-picker-quick-item" data-path="/audio">
+                                <span data-icon="spell"></span>
+                                <span>Audio</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="file-picker-main">
+                        <div class="file-picker-toolbar">
+                            <button class="btn btn-icon btn-ghost btn-sm" id="back-btn" title="Back">
+                                <span data-icon="chevron-left"></span>
+                            </button>
+                            <button class="btn btn-icon btn-ghost btn-sm" id="up-btn" title="Up">
+                                <span data-icon="chevron-up"></span>
+                            </button>
+                            <div class="file-picker-path" id="path-display">
+                                <span class="file-picker-path-segment">Root</span>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-icon btn-ghost btn-sm active" id="grid-view" title="Grid View">
+                                    <span data-icon="grid"></span>
+                                </button>
+                                <button class="btn btn-icon btn-ghost btn-sm" id="list-view" title="List View">
+                                    <span data-icon="list"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="file-picker-files">
+                            <div class="file-picker-grid" id="file-list">
+                                <!-- Files populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="file-picker-footer">
+                    <div class="form-group">
+                        <input type="text" id="filename-input" placeholder="File name...">
+                    </div>
+                    <select class="file-picker-filter" id="filter-select">
+                        <option value="*">All Files</option>
+                        <option value=".png,.jpg,.jpeg">Images</option>
+                        <option value=".glb,.gltf,.obj">3D Models</option>
+                        <option value=".json">JSON</option>
+                        <option value=".py">Python</option>
+                    </select>
+                    <button class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                    <button class="btn btn-primary" id="select-btn">Select</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <h3 class="text-md font-semibold mb-2">Selected File:</h3>
+            <input type="text" id="result-display" readonly placeholder="No file selected">
+        </div>
+    </div>
+
+    <script src="../design/design_tokens.js"></script>
+    <script src="../design/icons.js"></script>
+    <script>
+    class FilePicker {
+        constructor(modalId) {
+            this.modal = document.getElementById(modalId);
+            this.currentPath = '/';
+            this.history = [];
+            this.selectedFile = null;
+            this.viewMode = 'grid';
+
+            // Demo file system
+            this.fileSystem = {
+                '/': [
+                    { name: 'assets', type: 'folder' },
+                    { name: 'textures', type: 'folder' },
+                    { name: 'models', type: 'folder' },
+                    { name: 'scripts', type: 'folder' },
+                    { name: 'config.json', type: 'file', size: '2.4 KB' }
+                ],
+                '/assets': [
+                    { name: 'units', type: 'folder' },
+                    { name: 'buildings', type: 'folder' },
+                    { name: 'main.json', type: 'file', size: '12 KB' }
+                ],
+                '/textures': [
+                    { name: 'grass.png', type: 'file', size: '256 KB' },
+                    { name: 'stone.png', type: 'file', size: '512 KB' },
+                    { name: 'water.png', type: 'file', size: '128 KB' },
+                    { name: 'sky_hdri.jpg', type: 'file', size: '4.2 MB' }
+                ],
+                '/models': [
+                    { name: 'character.glb', type: 'file', size: '1.2 MB' },
+                    { name: 'building.gltf', type: 'file', size: '856 KB' },
+                    { name: 'tree.obj', type: 'file', size: '124 KB' }
+                ],
+                '/scripts': [
+                    { name: 'main.py', type: 'file', size: '8 KB' },
+                    { name: 'ai_behavior.py', type: 'file', size: '12 KB' },
+                    { name: 'utils.py', type: 'file', size: '4 KB' }
+                ]
+            };
+
+            this._init();
+        }
+
+        _init() {
+            // Open/close
+            document.getElementById('open-picker').addEventListener('click', () => this.open());
+            document.getElementById('close-modal').addEventListener('click', () => this.close());
+            document.getElementById('cancel-btn').addEventListener('click', () => this.close());
+
+            // Navigation
+            document.getElementById('back-btn').addEventListener('click', () => this.goBack());
+            document.getElementById('up-btn').addEventListener('click', () => this.goUp());
+
+            // View mode
+            document.getElementById('grid-view').addEventListener('click', () => this.setViewMode('grid'));
+            document.getElementById('list-view').addEventListener('click', () => this.setViewMode('list'));
+
+            // Quick access
+            document.querySelectorAll('.file-picker-quick-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const path = item.dataset.path;
+                    this.navigate(path);
+                });
+            });
+
+            // Select button
+            document.getElementById('select-btn').addEventListener('click', () => this.confirm());
+
+            // Filter
+            document.getElementById('filter-select').addEventListener('change', () => this.render());
+
+            // File list
+            document.getElementById('file-list').addEventListener('click', (e) => {
+                const item = e.target.closest('.file-picker-item');
+                if (item) this._onItemClick(item);
+            });
+
+            document.getElementById('file-list').addEventListener('dblclick', (e) => {
+                const item = e.target.closest('.file-picker-item');
+                if (item) this._onItemDoubleClick(item);
+            });
+
+            this.render();
+        }
+
+        open() {
+            this.modal.classList.add('open');
+            NovaIcons.replaceIcons(this.modal);
+        }
+
+        close() {
+            this.modal.classList.remove('open');
+        }
+
+        navigate(path) {
+            this.history.push(this.currentPath);
+            this.currentPath = path;
+            this.selectedFile = null;
+            this.render();
+            this._updateQuickAccess();
+        }
+
+        goBack() {
+            if (this.history.length > 0) {
+                this.currentPath = this.history.pop();
+                this.selectedFile = null;
+                this.render();
+            }
+        }
+
+        goUp() {
+            if (this.currentPath !== '/') {
+                const parts = this.currentPath.split('/').filter(p => p);
+                parts.pop();
+                this.navigate('/' + parts.join('/') || '/');
+            }
+        }
+
+        setViewMode(mode) {
+            this.viewMode = mode;
+            document.getElementById('grid-view').classList.toggle('active', mode === 'grid');
+            document.getElementById('list-view').classList.toggle('active', mode === 'list');
+            this.render();
+        }
+
+        render() {
+            const fileList = document.getElementById('file-list');
+            const filter = document.getElementById('filter-select').value;
+
+            fileList.className = this.viewMode === 'grid' ? 'file-picker-grid' : 'file-picker-list';
+            fileList.innerHTML = '';
+
+            const files = this.fileSystem[this.currentPath] || [];
+
+            files.forEach(file => {
+                // Apply filter
+                if (filter !== '*' && file.type === 'file') {
+                    const extensions = filter.split(',');
+                    if (!extensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                        return;
+                    }
+                }
+
+                const div = document.createElement('div');
+                div.className = 'file-picker-item';
+                div.dataset.name = file.name;
+                div.dataset.type = file.type;
+
+                const icon = this._getIcon(file);
+
+                if (this.viewMode === 'grid') {
+                    div.innerHTML = `
+                        <span class="file-picker-item-icon">${icon}</span>
+                        <span class="file-picker-item-name">${file.name}</span>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <span class="file-picker-item-icon">${icon}</span>
+                        <span class="file-picker-item-name">${file.name}</span>
+                        <span class="file-picker-item-meta">${file.size || ''}</span>
+                    `;
+                }
+
+                fileList.appendChild(div);
+            });
+
+            this._updatePath();
+        }
+
+        _getIcon(file) {
+            if (file.type === 'folder') return '&#x1F4C1;';
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const icons = {
+                png: '&#x1F5BC;', jpg: '&#x1F5BC;', jpeg: '&#x1F5BC;',
+                glb: '&#x1F4E6;', gltf: '&#x1F4E6;', obj: '&#x1F4E6;',
+                py: '&#x1F40D;',
+                json: '&#x2699;',
+                txt: '&#x1F4C4;'
+            };
+            return icons[ext] || '&#x1F4C4;';
+        }
+
+        _updatePath() {
+            const pathDisplay = document.getElementById('path-display');
+            const parts = this.currentPath === '/' ? ['Root'] : ['Root', ...this.currentPath.split('/').filter(p => p)];
+
+            pathDisplay.innerHTML = parts.map((part, i) => {
+                const path = i === 0 ? '/' : '/' + parts.slice(1, i + 1).join('/');
+                return `<span class="file-picker-path-segment" data-path="${path}">${part}</span>` +
+                    (i < parts.length - 1 ? '<span class="file-picker-path-sep">/</span>' : '');
+            }).join('');
+
+            pathDisplay.querySelectorAll('.file-picker-path-segment').forEach(seg => {
+                seg.addEventListener('click', () => this.navigate(seg.dataset.path));
+            });
+        }
+
+        _updateQuickAccess() {
+            document.querySelectorAll('.file-picker-quick-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.path === this.currentPath);
+            });
+        }
+
+        _onItemClick(item) {
+            document.querySelectorAll('.file-picker-item.selected').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+
+            if (item.dataset.type === 'file') {
+                this.selectedFile = this.currentPath + '/' + item.dataset.name;
+                this.selectedFile = this.selectedFile.replace('//', '/');
+                document.getElementById('filename-input').value = item.dataset.name;
+            }
+        }
+
+        _onItemDoubleClick(item) {
+            if (item.dataset.type === 'folder') {
+                let newPath = this.currentPath + '/' + item.dataset.name;
+                newPath = newPath.replace('//', '/');
+                this.navigate(newPath);
+            } else {
+                this.confirm();
+            }
+        }
+
+        confirm() {
+            if (this.selectedFile) {
+                document.getElementById('result-display').value = this.selectedFile;
+                this.close();
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        NovaIcons.replaceIcons();
+        window.filePicker = new FilePicker('file-picker-modal');
+    });
+    </script>
+</body>
+</html>

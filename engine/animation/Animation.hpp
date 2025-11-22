@@ -1,3 +1,73 @@
+/**
+ * @file Animation.hpp
+ * @brief Core animation data structures and interpolation utilities
+ *
+ * This file provides the fundamental building blocks for the animation system:
+ * - Keyframe: A single point in time with position, rotation, and scale
+ * - AnimationChannel: A sequence of keyframes for one bone/node
+ * - Animation: A collection of channels forming a complete animation clip
+ *
+ * @section animation_concepts Key Concepts
+ *
+ * **Keyframes** store transformation data at specific points in time.
+ * The system interpolates between keyframes for smooth animation.
+ *
+ * **Channels** contain keyframes for a single bone or node. Each channel
+ * is identified by name and maps to a skeleton bone or scene node.
+ *
+ * **Animations** group multiple channels together to form complete clips
+ * like "walk", "run", or "attack".
+ *
+ * @section animation_usage Usage Example
+ *
+ * @code{.cpp}
+ * // Create a simple animation
+ * Nova::Animation walkAnim("Walk");
+ * walkAnim.SetDuration(1.0f);
+ * walkAnim.SetLooping(true);
+ *
+ * // Add a channel for the "Spine" bone
+ * Nova::AnimationChannel spineChannel;
+ * spineChannel.nodeName = "Spine";
+ * spineChannel.interpolationMode = Nova::InterpolationMode::Linear;
+ *
+ * // Add keyframes
+ * spineChannel.keyframes.push_back({0.0f, {0,0,0}, glm::quat(1,0,0,0), {1,1,1}});
+ * spineChannel.keyframes.push_back({0.5f, {0,0.1f,0}, glm::quat(1,0,0,0), {1,1,1}});
+ * spineChannel.keyframes.push_back({1.0f, {0,0,0}, glm::quat(1,0,0,0), {1,1,1}});
+ *
+ * walkAnim.AddChannel(std::move(spineChannel));
+ *
+ * // Evaluate at a specific time
+ * auto transforms = walkAnim.Evaluate(0.25f);
+ * glm::mat4 spineTransform = transforms["Spine"];
+ * @endcode
+ *
+ * @section animation_interpolation Interpolation Modes
+ *
+ * - **Linear**: Simple linear interpolation (default, fastest)
+ * - **Step**: No interpolation, snaps to keyframe values
+ * - **CatmullRom**: Smooth spline interpolation through control points
+ * - **Cubic**: Bezier curve interpolation for custom easing
+ *
+ * @section animation_blending Animation Blending
+ *
+ * Use AnimationLayer for blending multiple animations:
+ *
+ * @code{.cpp}
+ * Nova::AnimationLayer baseLayer{&walkAnim, 0.0f, 1.0f, Nova::BlendMode::Override};
+ * Nova::AnimationLayer additiveLayer{&waveAnim, 0.0f, 0.5f, Nova::BlendMode::Additive};
+ * additiveLayer.boneMask = {"RightArm", "RightHand"}; // Only affect arm
+ * @endcode
+ *
+ * @see AnimationController for playback management
+ * @see AnimationStateMachine for state-based transitions
+ * @see docs/api/Animation.md for complete API documentation
+ *
+ * @author Nova3D Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include <vector>

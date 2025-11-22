@@ -82,15 +82,52 @@ void TileBrowser::Render() {
 
         if (ImGui::BeginMenu("Palette")) {
             if (ImGui::MenuItem("Create Group...")) {
-                // TODO: Show create dialog
+                ImGui::OpenPopup("CreatePaletteGroup");
             }
             ImGui::Separator();
             for (const auto& group : m_paletteGroups) {
                 if (ImGui::MenuItem(group.name.c_str())) {
                     // Navigate to palette group
+                    m_selectedPaletteGroup = group.id;
+                    ApplyFilters();
                 }
             }
             ImGui::EndMenu();
+        }
+
+        // Create palette group popup
+        if (ImGui::BeginPopup("CreatePaletteGroup")) {
+            ImGui::Text("Create New Palette Group");
+            ImGui::Separator();
+
+            static char groupName[128] = "";
+            ImGui::InputText("Group Name", groupName, sizeof(groupName));
+
+            static char groupDesc[256] = "";
+            ImGui::InputTextMultiline("Description", groupDesc, sizeof(groupDesc), ImVec2(200, 60));
+
+            ImGui::Separator();
+            if (ImGui::Button("Create", ImVec2(100, 0))) {
+                if (strlen(groupName) > 0) {
+                    PaletteGroup newGroup;
+                    newGroup.id = "group_" + std::to_string(m_paletteGroups.size() + 1);
+                    newGroup.name = groupName;
+                    newGroup.description = groupDesc;
+                    m_paletteGroups.push_back(newGroup);
+
+                    groupName[0] = '\0';
+                    groupDesc[0] = '\0';
+                    if (m_editor) m_editor->MarkDirty();
+                }
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(100, 0))) {
+                groupName[0] = '\0';
+                groupDesc[0] = '\0';
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
         }
 
         ImGui::EndMenuBar();

@@ -1,0 +1,508 @@
+{
+  "$schema": "../schemas/event_binding_extended.schema.json",
+  "version": "1.0",
+  "metadata": {
+    "name": "Custom Events Configuration",
+    "description": "Defines custom game events, their parameters, and validation rules",
+    "author": "Game Development Team",
+    "lastModified": "2024-01-15T10:30:00Z"
+  },
+
+  "customEvents": [
+    {
+      "id": "player.levelUp",
+      "name": "Player Level Up",
+      "description": "Fired when a player gains enough experience to level up",
+      "category": "gameplay",
+      "parameters": {
+        "playerId": {
+          "type": "string",
+          "required": true,
+          "description": "Unique identifier of the player"
+        },
+        "previousLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "required": true
+        },
+        "newLevel": {
+          "type": "integer",
+          "minimum": 2,
+          "required": true
+        },
+        "totalExperience": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unlockedAbilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      },
+      "tags": ["player", "progression", "milestone"],
+      "debounce": 500,
+      "maxListeners": 20
+    },
+    {
+      "id": "player.death",
+      "name": "Player Death",
+      "description": "Fired when a player character dies",
+      "category": "gameplay",
+      "parameters": {
+        "playerId": {
+          "type": "string",
+          "required": true
+        },
+        "causeOfDeath": {
+          "type": "string",
+          "enum": ["combat", "fall", "poison", "environmental", "scripted"],
+          "required": true
+        },
+        "killerEntityId": {
+          "type": "string",
+          "description": "Entity that caused the death, if applicable"
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" },
+            "zone": { "type": "string" }
+          }
+        },
+        "respawnDelay": {
+          "type": "number",
+          "default": 5.0
+        }
+      },
+      "tags": ["player", "death", "critical"],
+      "priority": 100
+    },
+    {
+      "id": "player.respawn",
+      "name": "Player Respawn",
+      "description": "Fired when a player respawns after death",
+      "category": "gameplay",
+      "parameters": {
+        "playerId": { "type": "string", "required": true },
+        "respawnPoint": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" },
+            "name": { "type": "string" }
+          }
+        },
+        "healthPercentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 100
+        }
+      },
+      "tags": ["player", "spawn"]
+    },
+    {
+      "id": "inventory.itemAdded",
+      "name": "Item Added to Inventory",
+      "description": "Fired when an item is added to any inventory",
+      "category": "gameplay",
+      "parameters": {
+        "inventoryId": { "type": "string", "required": true },
+        "itemId": { "type": "string", "required": true },
+        "itemName": { "type": "string" },
+        "quantity": { "type": "integer", "minimum": 1, "default": 1 },
+        "slot": { "type": "integer", "minimum": 0 },
+        "rarity": {
+          "type": "string",
+          "enum": ["common", "uncommon", "rare", "epic", "legendary"]
+        },
+        "source": {
+          "type": "string",
+          "enum": ["pickup", "purchase", "reward", "craft", "trade", "admin"],
+          "default": "pickup"
+        }
+      },
+      "tags": ["inventory", "items"],
+      "throttle": 100
+    },
+    {
+      "id": "inventory.itemRemoved",
+      "name": "Item Removed from Inventory",
+      "description": "Fired when an item is removed from any inventory",
+      "category": "gameplay",
+      "parameters": {
+        "inventoryId": { "type": "string", "required": true },
+        "itemId": { "type": "string", "required": true },
+        "quantity": { "type": "integer", "minimum": 1, "default": 1 },
+        "reason": {
+          "type": "string",
+          "enum": ["used", "dropped", "sold", "traded", "destroyed", "expired"],
+          "default": "used"
+        }
+      },
+      "tags": ["inventory", "items"],
+      "throttle": 100
+    },
+    {
+      "id": "quest.started",
+      "name": "Quest Started",
+      "description": "Fired when a player starts a new quest",
+      "category": "gameplay",
+      "parameters": {
+        "playerId": { "type": "string", "required": true },
+        "questId": { "type": "string", "required": true },
+        "questName": { "type": "string" },
+        "questType": {
+          "type": "string",
+          "enum": ["main", "side", "daily", "weekly", "event"]
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "normal", "hard", "legendary"]
+        },
+        "estimatedDuration": {
+          "type": "integer",
+          "description": "Estimated completion time in minutes"
+        }
+      },
+      "tags": ["quest", "progression"]
+    },
+    {
+      "id": "quest.completed",
+      "name": "Quest Completed",
+      "description": "Fired when a player completes a quest",
+      "category": "gameplay",
+      "parameters": {
+        "playerId": { "type": "string", "required": true },
+        "questId": { "type": "string", "required": true },
+        "completionTime": {
+          "type": "integer",
+          "description": "Time taken to complete in seconds"
+        },
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string" },
+              "id": { "type": "string" },
+              "quantity": { "type": "integer" }
+            }
+          }
+        },
+        "rating": {
+          "type": "string",
+          "enum": ["bronze", "silver", "gold", "platinum"],
+          "description": "Performance rating"
+        }
+      },
+      "tags": ["quest", "progression", "milestone"]
+    },
+    {
+      "id": "quest.failed",
+      "name": "Quest Failed",
+      "description": "Fired when a player fails a quest",
+      "category": "gameplay",
+      "parameters": {
+        "playerId": { "type": "string", "required": true },
+        "questId": { "type": "string", "required": true },
+        "failureReason": {
+          "type": "string",
+          "enum": ["timeout", "death", "abandoned", "objective_failed", "npc_death"]
+        },
+        "canRetry": { "type": "boolean", "default": true },
+        "retryDelay": { "type": "integer", "description": "Delay before retry in seconds" }
+      },
+      "tags": ["quest", "failure"]
+    },
+    {
+      "id": "combat.damageDealt",
+      "name": "Damage Dealt",
+      "description": "Fired when an entity deals damage to another",
+      "category": "combat",
+      "parameters": {
+        "attackerId": { "type": "string", "required": true },
+        "targetId": { "type": "string", "required": true },
+        "damage": { "type": "number", "minimum": 0, "required": true },
+        "damageType": {
+          "type": "string",
+          "enum": ["physical", "fire", "ice", "lightning", "poison", "holy", "dark", "true"],
+          "default": "physical"
+        },
+        "isCritical": { "type": "boolean", "default": false },
+        "isBlocked": { "type": "boolean", "default": false },
+        "isDodged": { "type": "boolean", "default": false },
+        "weaponId": { "type": "string" },
+        "abilityId": { "type": "string" }
+      },
+      "tags": ["combat", "damage"],
+      "throttle": 16,
+      "maxListeners": 50
+    },
+    {
+      "id": "combat.enemyKilled",
+      "name": "Enemy Killed",
+      "description": "Fired when an enemy is killed",
+      "category": "combat",
+      "parameters": {
+        "killerId": { "type": "string", "required": true },
+        "enemyId": { "type": "string", "required": true },
+        "enemyType": { "type": "string" },
+        "experienceAwarded": { "type": "integer", "minimum": 0 },
+        "lootDropped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemId": { "type": "string" },
+              "quantity": { "type": "integer" }
+            }
+          }
+        },
+        "isElite": { "type": "boolean", "default": false },
+        "isBoss": { "type": "boolean", "default": false }
+      },
+      "tags": ["combat", "kill", "progression"]
+    },
+    {
+      "id": "world.zoneEntered",
+      "name": "Zone Entered",
+      "description": "Fired when an entity enters a new zone",
+      "category": "world",
+      "parameters": {
+        "entityId": { "type": "string", "required": true },
+        "zoneId": { "type": "string", "required": true },
+        "zoneName": { "type": "string" },
+        "previousZoneId": { "type": "string" },
+        "zoneType": {
+          "type": "string",
+          "enum": ["safe", "combat", "dungeon", "raid", "pvp", "city", "wilderness"]
+        },
+        "isFirstVisit": { "type": "boolean", "default": false }
+      },
+      "tags": ["world", "navigation"],
+      "debounce": 1000
+    },
+    {
+      "id": "world.zoneExited",
+      "name": "Zone Exited",
+      "description": "Fired when an entity exits a zone",
+      "category": "world",
+      "parameters": {
+        "entityId": { "type": "string", "required": true },
+        "zoneId": { "type": "string", "required": true },
+        "timeInZone": { "type": "number", "description": "Time spent in zone in seconds" }
+      },
+      "tags": ["world", "navigation"],
+      "debounce": 1000
+    },
+    {
+      "id": "ui.menuOpened",
+      "name": "Menu Opened",
+      "description": "Fired when a UI menu is opened",
+      "category": "ui",
+      "parameters": {
+        "menuId": { "type": "string", "required": true },
+        "menuName": { "type": "string" },
+        "parentMenuId": { "type": "string" },
+        "openedBy": {
+          "type": "string",
+          "enum": ["click", "hotkey", "script", "auto"],
+          "default": "click"
+        }
+      },
+      "tags": ["ui", "menu"]
+    },
+    {
+      "id": "ui.menuClosed",
+      "name": "Menu Closed",
+      "description": "Fired when a UI menu is closed",
+      "category": "ui",
+      "parameters": {
+        "menuId": { "type": "string", "required": true },
+        "closedBy": {
+          "type": "string",
+          "enum": ["click", "hotkey", "script", "auto", "escape"],
+          "default": "click"
+        },
+        "timeOpen": { "type": "number", "description": "Time menu was open in seconds" }
+      },
+      "tags": ["ui", "menu"]
+    },
+    {
+      "id": "achievement.unlocked",
+      "name": "Achievement Unlocked",
+      "description": "Fired when a player unlocks an achievement",
+      "category": "progression",
+      "parameters": {
+        "playerId": { "type": "string", "required": true },
+        "achievementId": { "type": "string", "required": true },
+        "achievementName": { "type": "string" },
+        "achievementDescription": { "type": "string" },
+        "points": { "type": "integer", "minimum": 0 },
+        "rarity": {
+          "type": "string",
+          "enum": ["common", "uncommon", "rare", "ultra_rare", "legendary"]
+        },
+        "category": { "type": "string" },
+        "isSecret": { "type": "boolean", "default": false }
+      },
+      "tags": ["achievement", "progression", "milestone"],
+      "priority": 90
+    },
+    {
+      "id": "audio.musicChanged",
+      "name": "Music Track Changed",
+      "description": "Fired when background music changes",
+      "category": "audio",
+      "parameters": {
+        "previousTrackId": { "type": "string" },
+        "newTrackId": { "type": "string", "required": true },
+        "trackName": { "type": "string" },
+        "fadeTime": { "type": "number", "default": 2.0 },
+        "reason": {
+          "type": "string",
+          "enum": ["zone_change", "combat_start", "combat_end", "scripted", "player_action"]
+        }
+      },
+      "tags": ["audio", "music"]
+    },
+    {
+      "id": "network.connectionChanged",
+      "name": "Network Connection Changed",
+      "description": "Fired when network connection status changes",
+      "category": "network",
+      "parameters": {
+        "previousState": {
+          "type": "string",
+          "enum": ["connected", "disconnected", "connecting", "reconnecting"]
+        },
+        "newState": {
+          "type": "string",
+          "enum": ["connected", "disconnected", "connecting", "reconnecting"],
+          "required": true
+        },
+        "latency": { "type": "integer", "description": "Current latency in ms" },
+        "reason": { "type": "string" }
+      },
+      "tags": ["network", "connection"],
+      "priority": 100
+    },
+    {
+      "id": "save.gameAutosaved",
+      "name": "Game Autosaved",
+      "description": "Fired when the game performs an autosave",
+      "category": "system",
+      "parameters": {
+        "saveSlot": { "type": "integer", "minimum": 0 },
+        "saveName": { "type": "string" },
+        "saveSize": { "type": "integer", "description": "Save file size in bytes" },
+        "playTime": { "type": "number", "description": "Total play time in seconds" },
+        "success": { "type": "boolean", "required": true }
+      },
+      "tags": ["save", "system"],
+      "debounce": 5000
+    },
+    {
+      "id": "debug.performanceWarning",
+      "name": "Performance Warning",
+      "description": "Fired when performance drops below acceptable threshold",
+      "category": "debug",
+      "parameters": {
+        "fps": { "type": "number", "required": true },
+        "frameTime": { "type": "number" },
+        "memoryUsage": { "type": "integer" },
+        "drawCalls": { "type": "integer" },
+        "triangleCount": { "type": "integer" },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "required": true
+        },
+        "suggestedAction": { "type": "string" }
+      },
+      "tags": ["debug", "performance"],
+      "throttle": 5000
+    }
+  ],
+
+  "eventCategories": [
+    {
+      "id": "gameplay",
+      "name": "Gameplay Events",
+      "description": "Core gameplay mechanics events",
+      "color": "#4CAF50",
+      "icon": "gamepad"
+    },
+    {
+      "id": "combat",
+      "name": "Combat Events",
+      "description": "Combat and damage related events",
+      "color": "#F44336",
+      "icon": "sword"
+    },
+    {
+      "id": "world",
+      "name": "World Events",
+      "description": "World and environment events",
+      "color": "#2196F3",
+      "icon": "globe"
+    },
+    {
+      "id": "ui",
+      "name": "UI Events",
+      "description": "User interface events",
+      "color": "#9C27B0",
+      "icon": "window"
+    },
+    {
+      "id": "progression",
+      "name": "Progression Events",
+      "description": "Player progression and achievement events",
+      "color": "#FF9800",
+      "icon": "trophy"
+    },
+    {
+      "id": "audio",
+      "name": "Audio Events",
+      "description": "Sound and music events",
+      "color": "#00BCD4",
+      "icon": "music"
+    },
+    {
+      "id": "network",
+      "name": "Network Events",
+      "description": "Multiplayer and network events",
+      "color": "#607D8B",
+      "icon": "wifi"
+    },
+    {
+      "id": "system",
+      "name": "System Events",
+      "description": "Core system events",
+      "color": "#795548",
+      "icon": "cog"
+    },
+    {
+      "id": "debug",
+      "name": "Debug Events",
+      "description": "Development and debugging events",
+      "color": "#9E9E9E",
+      "icon": "bug"
+    }
+  ],
+
+  "globalSettings": {
+    "defaultDebounce": 0,
+    "defaultThrottle": 0,
+    "defaultMaxListeners": 10,
+    "enableEventLogging": true,
+    "logLevel": "info",
+    "enableMetrics": true,
+    "metricsFlushInterval": 60
+  }
+}

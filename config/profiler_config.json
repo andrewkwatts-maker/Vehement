@@ -1,0 +1,163 @@
+{
+  "profiler": {
+    "version": "1.0",
+    "description": "Nova3D Profiler and Performance Monitoring Configuration",
+
+    "general": {
+      "enabled": true,
+      "auto_start": false,
+      "output_directory": "profiles/",
+      "max_history_frames": 300
+    },
+
+    "cpu_profiling": {
+      "enabled": true,
+      "thread_profiling": true,
+      "call_stack_depth": 64,
+      "sample_rate_hz": 1000,
+      "capture_context_switches": false
+    },
+
+    "gpu_profiling": {
+      "enabled": true,
+      "query_pool_size": 256,
+      "pipeline_statistics": true,
+      "timestamp_queries": true
+    },
+
+    "memory_profiling": {
+      "enabled": true,
+      "track_allocations": true,
+      "track_deallocations": true,
+      "capture_call_stacks": false,
+      "call_stack_depth": 16,
+      "allocation_sampling_rate": 1.0,
+      "min_allocation_size": 0,
+      "categories": [
+        "general",
+        "textures",
+        "meshes",
+        "audio",
+        "physics",
+        "particles",
+        "scripts",
+        "ui"
+      ]
+    },
+
+    "frame_profiling": {
+      "enabled": true,
+      "zones": {
+        "update": true,
+        "physics": true,
+        "render": true,
+        "gpu": true,
+        "audio": true,
+        "scripts": true,
+        "ui": true,
+        "network": true
+      },
+      "track_draw_calls": true,
+      "track_state_changes": true,
+      "track_buffer_uploads": true
+    },
+
+    "network_profiling": {
+      "enabled": true,
+      "track_bandwidth": true,
+      "track_packets": true,
+      "track_latency": true,
+      "track_rpc_calls": true,
+      "sample_rate_hz": 10
+    },
+
+    "chrome_tracing": {
+      "enabled": true,
+      "output_file": "trace.json",
+      "max_events": 1000000,
+      "include_thread_names": true,
+      "include_process_name": true,
+      "include_metadata": true,
+      "categories": [
+        "frame",
+        "render",
+        "physics",
+        "audio",
+        "scripts",
+        "loading",
+        "network"
+      ],
+      "auto_flush_threshold": 100000
+    },
+
+    "statistics": {
+      "fps": {
+        "enabled": true,
+        "update_interval_ms": 500,
+        "show_min_max": true,
+        "show_percentiles": true,
+        "percentiles": [95, 99]
+      },
+      "frame_time": {
+        "enabled": true,
+        "histogram_buckets": [8, 16, 33, 50, 100, 200]
+      },
+      "memory": {
+        "enabled": true,
+        "update_interval_ms": 1000
+      }
+    },
+
+    "alerts": {
+      "enabled": true,
+      "frame_time_threshold_ms": 33.33,
+      "memory_threshold_percent": 90,
+      "gpu_memory_threshold_percent": 85,
+      "draw_call_threshold": 2000,
+      "triangle_threshold": 5000000
+    },
+
+    "recording": {
+      "enabled": true,
+      "max_recording_time_seconds": 300,
+      "buffer_size_mb": 128,
+      "include_screenshots": false,
+      "screenshot_interval_frames": 60
+    },
+
+    "export": {
+      "formats": ["json", "csv", "chrome_trace"],
+      "default_format": "chrome_trace",
+      "compress_output": true,
+      "include_raw_data": false
+    },
+
+    "display": {
+      "overlay_enabled": false,
+      "overlay_position": "top_left",
+      "overlay_opacity": 0.8,
+      "show_fps": true,
+      "show_frame_time": true,
+      "show_memory": true,
+      "show_draw_calls": true,
+      "show_triangles": false,
+      "graph_enabled": true,
+      "graph_height": 100,
+      "graph_history_seconds": 5.0
+    },
+
+    "hot_keys": {
+      "toggle_overlay": "F3",
+      "start_recording": "F4",
+      "stop_recording": "F4",
+      "take_snapshot": "F5",
+      "export_trace": "F6"
+    },
+
+    "debug": {
+      "verbose_logging": false,
+      "log_zone_events": false,
+      "validate_traces": false
+    }
+  }
+}

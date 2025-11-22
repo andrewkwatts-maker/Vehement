@@ -1,0 +1,881 @@
+{
+  "$schema": "../schemas/event_binding_extended.schema.json",
+  "version": "1.0",
+  "metadata": {
+    "name": "Master Event Bindings Configuration",
+    "description": "Central configuration for all event bindings, handlers, and action chains",
+    "author": "Game Development Team",
+    "lastModified": "2024-01-15T10:30:00Z"
+  },
+
+  "bindings": [
+    {
+      "id": "level_up_effects",
+      "name": "Level Up Visual and Audio Effects",
+      "description": "Triggers particle effects and sounds when player levels up",
+      "enabled": true,
+      "event": "player.levelUp",
+      "priority": 100,
+      "conditions": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "type": "property",
+            "property": "newLevel",
+            "operator": "greaterThan",
+            "value": 1
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_level_up",
+            "volume": 1.0,
+            "pitch": 1.0
+          },
+          "delay": 0
+        },
+        {
+          "type": "spawnParticle",
+          "parameters": {
+            "particleId": "vfx_level_up_burst",
+            "attachToEntity": "{{playerId}}",
+            "duration": 3.0
+          },
+          "delay": 100
+        },
+        {
+          "type": "showNotification",
+          "parameters": {
+            "title": "Level Up!",
+            "message": "You reached level {{newLevel}}!",
+            "type": "achievement",
+            "duration": 5000
+          },
+          "delay": 500
+        },
+        {
+          "type": "callFunction",
+          "parameters": {
+            "module": "game.progression",
+            "function": "check_ability_unlocks",
+            "args": {
+              "player_id": "{{playerId}}",
+              "level": "{{newLevel}}"
+            }
+          },
+          "delay": 0
+        }
+      ],
+      "tags": ["player", "vfx", "audio", "notification"]
+    },
+    {
+      "id": "milestone_level_celebration",
+      "name": "Milestone Level Celebration",
+      "description": "Extra celebration for milestone levels (10, 25, 50, etc.)",
+      "enabled": true,
+      "event": "player.levelUp",
+      "priority": 90,
+      "conditions": {
+        "type": "compound",
+        "operator": "or",
+        "conditions": [
+          {
+            "type": "property",
+            "property": "newLevel",
+            "operator": "equals",
+            "value": 10
+          },
+          {
+            "type": "property",
+            "property": "newLevel",
+            "operator": "equals",
+            "value": 25
+          },
+          {
+            "type": "property",
+            "property": "newLevel",
+            "operator": "equals",
+            "value": 50
+          },
+          {
+            "type": "property",
+            "property": "newLevel",
+            "operator": "equals",
+            "value": 75
+          },
+          {
+            "type": "property",
+            "property": "newLevel",
+            "operator": "equals",
+            "value": 100
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "spawnParticle",
+          "parameters": {
+            "particleId": "vfx_milestone_fireworks",
+            "position": "player_head",
+            "scale": 2.0
+          }
+        },
+        {
+          "type": "screenEffect",
+          "parameters": {
+            "effectId": "golden_flash",
+            "intensity": 0.8,
+            "duration": 1.5
+          }
+        },
+        {
+          "type": "broadcastMessage",
+          "parameters": {
+            "channel": "server",
+            "message": "{{playerName}} reached milestone level {{newLevel}}!"
+          }
+        }
+      ],
+      "tags": ["player", "milestone", "celebration"]
+    },
+    {
+      "id": "death_handler",
+      "name": "Player Death Handler",
+      "description": "Handles player death sequence",
+      "enabled": true,
+      "event": "player.death",
+      "priority": 100,
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_player_death",
+            "volume": 0.9
+          }
+        },
+        {
+          "type": "cameraEffect",
+          "parameters": {
+            "effect": "death_fade",
+            "duration": 2.0
+          }
+        },
+        {
+          "type": "setGameState",
+          "parameters": {
+            "state": "respawn_pending",
+            "playerId": "{{playerId}}"
+          },
+          "delay": 2000
+        },
+        {
+          "type": "showUI",
+          "parameters": {
+            "uiId": "respawn_screen",
+            "data": {
+              "deathCause": "{{causeOfDeath}}",
+              "respawnTimer": "{{respawnDelay}}"
+            }
+          },
+          "delay": 2500
+        }
+      ],
+      "tags": ["player", "death", "critical"]
+    },
+    {
+      "id": "combat_death_penalty",
+      "name": "Combat Death Experience Penalty",
+      "description": "Apply experience penalty when dying in combat",
+      "enabled": true,
+      "event": "player.death",
+      "conditions": {
+        "type": "property",
+        "property": "causeOfDeath",
+        "operator": "equals",
+        "value": "combat"
+      },
+      "actions": [
+        {
+          "type": "callFunction",
+          "parameters": {
+            "module": "game.progression",
+            "function": "apply_death_penalty",
+            "args": {
+              "player_id": "{{playerId}}",
+              "penalty_percent": 5
+            }
+          }
+        }
+      ],
+      "tags": ["player", "death", "penalty"]
+    },
+    {
+      "id": "rare_item_notification",
+      "name": "Rare Item Pickup Notification",
+      "description": "Special notification when picking up rare or better items",
+      "enabled": true,
+      "event": "inventory.itemAdded",
+      "conditions": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "type": "property",
+            "property": "rarity",
+            "operator": "in",
+            "value": ["rare", "epic", "legendary"]
+          },
+          {
+            "type": "property",
+            "property": "source",
+            "operator": "notEquals",
+            "value": "admin"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_rare_item_{{rarity}}",
+            "volume": 0.8
+          }
+        },
+        {
+          "type": "showItemPopup",
+          "parameters": {
+            "itemId": "{{itemId}}",
+            "style": "{{rarity}}",
+            "duration": 4000
+          }
+        }
+      ],
+      "tags": ["inventory", "notification", "loot"]
+    },
+    {
+      "id": "legendary_item_server_announce",
+      "name": "Legendary Item Server Announcement",
+      "description": "Announce legendary item drops to the server",
+      "enabled": true,
+      "event": "inventory.itemAdded",
+      "conditions": {
+        "type": "property",
+        "property": "rarity",
+        "operator": "equals",
+        "value": "legendary"
+      },
+      "actions": [
+        {
+          "type": "broadcastMessage",
+          "parameters": {
+            "channel": "server",
+            "message": "{{playerName}} found {{itemName}}!",
+            "style": "legendary"
+          }
+        },
+        {
+          "type": "spawnParticle",
+          "parameters": {
+            "particleId": "vfx_legendary_aura",
+            "attachToEntity": "{{playerId}}",
+            "duration": 10.0
+          }
+        }
+      ],
+      "tags": ["inventory", "legendary", "broadcast"]
+    },
+    {
+      "id": "quest_start_handler",
+      "name": "Quest Start Handler",
+      "description": "Handle quest start events",
+      "enabled": true,
+      "event": "quest.started",
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_quest_accepted"
+          }
+        },
+        {
+          "type": "showNotification",
+          "parameters": {
+            "title": "New Quest",
+            "message": "{{questName}}",
+            "type": "quest",
+            "icon": "quest_{{questType}}"
+          }
+        },
+        {
+          "type": "updateUI",
+          "parameters": {
+            "component": "quest_tracker",
+            "action": "add_quest",
+            "data": {
+              "questId": "{{questId}}"
+            }
+          }
+        }
+      ],
+      "tags": ["quest", "ui"]
+    },
+    {
+      "id": "quest_complete_rewards",
+      "name": "Quest Completion Rewards",
+      "description": "Grant rewards and show celebration on quest completion",
+      "enabled": true,
+      "event": "quest.completed",
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_quest_complete"
+          }
+        },
+        {
+          "type": "showNotification",
+          "parameters": {
+            "title": "Quest Complete!",
+            "message": "{{questName}}",
+            "type": "success"
+          }
+        },
+        {
+          "type": "callFunction",
+          "parameters": {
+            "module": "game.rewards",
+            "function": "grant_quest_rewards",
+            "args": {
+              "player_id": "{{playerId}}",
+              "quest_id": "{{questId}}",
+              "rewards": "{{rewards}}"
+            }
+          }
+        },
+        {
+          "type": "updateUI",
+          "parameters": {
+            "component": "quest_tracker",
+            "action": "remove_quest",
+            "data": {
+              "questId": "{{questId}}"
+            }
+          }
+        }
+      ],
+      "tags": ["quest", "rewards", "celebration"]
+    },
+    {
+      "id": "boss_kill_celebration",
+      "name": "Boss Kill Celebration",
+      "description": "Special celebration when killing a boss enemy",
+      "enabled": true,
+      "event": "combat.enemyKilled",
+      "conditions": {
+        "type": "property",
+        "property": "isBoss",
+        "operator": "equals",
+        "value": true
+      },
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_boss_defeated",
+            "volume": 1.0
+          }
+        },
+        {
+          "type": "screenEffect",
+          "parameters": {
+            "effectId": "boss_defeated_flash",
+            "duration": 2.0
+          }
+        },
+        {
+          "type": "slowMotion",
+          "parameters": {
+            "timeScale": 0.3,
+            "duration": 2.0,
+            "easeOut": true
+          }
+        },
+        {
+          "type": "cameraEffect",
+          "parameters": {
+            "effect": "victory_zoom",
+            "target": "{{enemyId}}",
+            "duration": 3.0
+          }
+        },
+        {
+          "type": "broadcastMessage",
+          "parameters": {
+            "channel": "zone",
+            "message": "{{playerName}} defeated {{enemyType}}!"
+          },
+          "delay": 2000
+        }
+      ],
+      "tags": ["combat", "boss", "celebration"]
+    },
+    {
+      "id": "elite_kill_bonus",
+      "name": "Elite Enemy Kill Bonus",
+      "description": "Bonus effects for killing elite enemies",
+      "enabled": true,
+      "event": "combat.enemyKilled",
+      "conditions": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "type": "property",
+            "property": "isElite",
+            "operator": "equals",
+            "value": true
+          },
+          {
+            "type": "property",
+            "property": "isBoss",
+            "operator": "equals",
+            "value": false
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_elite_killed"
+          }
+        },
+        {
+          "type": "spawnParticle",
+          "parameters": {
+            "particleId": "vfx_elite_death",
+            "position": "{{enemyPosition}}"
+          }
+        }
+      ],
+      "tags": ["combat", "elite"]
+    },
+    {
+      "id": "zone_enter_music",
+      "name": "Zone Enter Music Change",
+      "description": "Change music when entering different zone types",
+      "enabled": true,
+      "event": "world.zoneEntered",
+      "actions": [
+        {
+          "type": "callFunction",
+          "parameters": {
+            "module": "game.audio",
+            "function": "set_zone_music",
+            "args": {
+              "zone_id": "{{zoneId}}",
+              "zone_type": "{{zoneType}}"
+            }
+          }
+        }
+      ],
+      "tags": ["world", "audio"]
+    },
+    {
+      "id": "first_visit_discovery",
+      "name": "First Zone Visit Discovery",
+      "description": "Show discovery notification on first zone visit",
+      "enabled": true,
+      "event": "world.zoneEntered",
+      "conditions": {
+        "type": "property",
+        "property": "isFirstVisit",
+        "operator": "equals",
+        "value": true
+      },
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_area_discovered"
+          }
+        },
+        {
+          "type": "showNotification",
+          "parameters": {
+            "title": "New Area Discovered",
+            "message": "{{zoneName}}",
+            "type": "discovery",
+            "duration": 4000
+          }
+        },
+        {
+          "type": "callFunction",
+          "parameters": {
+            "module": "game.progression",
+            "function": "award_discovery_xp",
+            "args": {
+              "player_id": "{{entityId}}",
+              "zone_id": "{{zoneId}}"
+            }
+          }
+        }
+      ],
+      "tags": ["world", "discovery", "progression"]
+    },
+    {
+      "id": "combat_zone_warning",
+      "name": "Combat Zone Warning",
+      "description": "Warn player when entering combat zones",
+      "enabled": true,
+      "event": "world.zoneEntered",
+      "conditions": {
+        "type": "property",
+        "property": "zoneType",
+        "operator": "in",
+        "value": ["combat", "dungeon", "raid", "pvp"]
+      },
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_danger_zone"
+          }
+        },
+        {
+          "type": "showNotification",
+          "parameters": {
+            "title": "Warning",
+            "message": "You are entering a dangerous area",
+            "type": "warning",
+            "duration": 3000
+          }
+        }
+      ],
+      "tags": ["world", "warning"]
+    },
+    {
+      "id": "achievement_celebration",
+      "name": "Achievement Unlock Celebration",
+      "description": "Celebrate achievement unlocks",
+      "enabled": true,
+      "event": "achievement.unlocked",
+      "actions": [
+        {
+          "type": "playSound",
+          "parameters": {
+            "soundId": "sfx_achievement_{{rarity}}",
+            "volume": 0.9
+          }
+        },
+        {
+          "type": "showAchievementPopup",
+          "parameters": {
+            "achievementId": "{{achievementId}}",
+            "name": "{{achievementName}}",
+            "description": "{{achievementDescription}}",
+            "points": "{{points}}",
+            "rarity": "{{rarity}}"
+          }
+        },
+        {
+          "type": "spawnParticle",
+          "parameters": {
+            "particleId": "vfx_achievement_unlock",
+            "attachToEntity": "{{playerId}}"
+          }
+        }
+      ],
+      "tags": ["achievement", "celebration"]
+    },
+    {
+      "id": "rare_achievement_broadcast",
+      "name": "Rare Achievement Server Broadcast",
+      "description": "Broadcast rare achievement unlocks to server",
+      "enabled": true,
+      "event": "achievement.unlocked",
+      "conditions": {
+        "type": "property",
+        "property": "rarity",
+        "operator": "in",
+        "value": ["ultra_rare", "legendary"]
+      },
+      "actions": [
+        {
+          "type": "broadcastMessage",
+          "parameters": {
+            "channel": "server",
+            "message": "{{playerName}} earned the {{rarity}} achievement: {{achievementName}}!",
+            "style": "achievement_{{rarity}}"
+          }
+        }
+      ],
+      "tags": ["achievement", "broadcast"]
+    },
+    {
+      "id": "network_disconnect_handler",
+      "name": "Network Disconnect Handler",
+      "description": "Handle network disconnection",
+      "enabled": true,
+      "event": "network.connectionChanged",
+      "conditions": {
+        "type": "property",
+        "property": "newState",
+        "operator": "equals",
+        "value": "disconnected"
+      },
+      "actions": [
+        {
+          "type": "showNotification",
+          "parameters": {
+            "title": "Connection Lost",
+            "message": "Attempting to reconnect...",
+            "type": "error",
+            "persistent": true
+          }
+        },
+        {
+          "type": "setGameState",
+          "parameters": {
+            "state": "paused",
+            "reason": "network_disconnect"
+          }
+        }
+      ],
+      "tags": ["network", "critical"]
+    },
+    {
+      "id": "network_reconnect_handler",
+      "name": "Network Reconnect Handler",
+      "description": "Handle network reconnection",
+      "enabled": true,
+      "event": "network.connectionChanged",
+      "conditions": {
+        "type": "compound",
+        "operator": "and",
+        "conditions": [
+          {
+            "type": "property",
+            "property": "newState",
+            "operator": "equals",
+            "value": "connected"
+          },
+          {
+            "type": "property",
+            "property": "previousState",
+            "operator": "in",
+            "value": ["disconnected", "reconnecting"]
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "hideNotification",
+          "parameters": {
+            "id": "connection_lost"
+          }
+        },
+        {
+          "type": "showNotification",
+          "parameters": {
+            "title": "Connected",
+            "message": "Connection restored",
+            "type": "success",
+            "duration": 3000
+          }
+        },
+        {
+          "type": "setGameState",
+          "parameters": {
+            "state": "playing"
+          }
+        }
+      ],
+      "tags": ["network"]
+    },
+    {
+      "id": "autosave_notification",
+      "name": "Autosave Notification",
+      "description": "Show subtle notification on successful autosave",
+      "enabled": true,
+      "event": "save.gameAutosaved",
+      "conditions": {
+        "type": "property",
+        "property": "success",
+        "operator": "equals",
+        "value": true
+      },
+      "actions": [
+        {
+          "type": "showNotification",
+          "parameters": {
+            "message": "Game saved",
+            "type": "info",
+            "duration": 2000,
+            "position": "bottom-right",
+            "minimal": true
+          }
+        }
+      ],
+      "tags": ["save", "notification"]
+    },
+    {
+      "id": "performance_warning_handler",
+      "name": "Performance Warning Handler",
+      "description": "Handle performance warnings in debug builds",
+      "enabled": true,
+      "event": "debug.performanceWarning",
+      "conditions": {
+        "type": "property",
+        "property": "severity",
+        "operator": "in",
+        "value": ["high", "critical"]
+      },
+      "actions": [
+        {
+          "type": "logMessage",
+          "parameters": {
+            "level": "warning",
+            "message": "Performance warning: FPS={{fps}}, Severity={{severity}}"
+          }
+        },
+        {
+          "type": "callFunction",
+          "parameters": {
+            "module": "game.debug",
+            "function": "auto_adjust_quality",
+            "args": {
+              "current_fps": "{{fps}}",
+              "severity": "{{severity}}"
+            }
+          }
+        }
+      ],
+      "tags": ["debug", "performance"],
+      "buildConfig": ["debug"]
+    }
+  ],
+
+  "actionChains": [
+    {
+      "id": "death_sequence",
+      "name": "Full Death Sequence",
+      "description": "Complete death, respawn selection, and respawn sequence",
+      "steps": [
+        {
+          "event": "player.death",
+          "waitForCompletion": true
+        },
+        {
+          "action": {
+            "type": "waitForInput",
+            "parameters": {
+              "inputType": "respawn_selection",
+              "timeout": 30000
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "fireEvent",
+            "parameters": {
+              "eventId": "player.respawn"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "dungeon_complete_sequence",
+      "name": "Dungeon Completion Sequence",
+      "description": "Sequence of events when completing a dungeon",
+      "steps": [
+        {
+          "action": {
+            "type": "playSound",
+            "parameters": {
+              "soundId": "sfx_dungeon_complete"
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "delay",
+            "parameters": {
+              "duration": 2000
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "showUI",
+            "parameters": {
+              "uiId": "dungeon_results"
+            }
+          }
+        },
+        {
+          "action": {
+            "type": "callFunction",
+            "parameters": {
+              "module": "game.rewards",
+              "function": "calculate_dungeon_rewards"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "globalFilters": [
+    {
+      "id": "pause_filter",
+      "name": "Pause State Filter",
+      "description": "Block most events when game is paused",
+      "enabled": true,
+      "condition": {
+        "type": "gameState",
+        "state": "paused"
+      },
+      "blockedEvents": ["*"],
+      "allowedEvents": [
+        "ui.*",
+        "network.*",
+        "save.*",
+        "debug.*"
+      ]
+    },
+    {
+      "id": "loading_filter",
+      "name": "Loading State Filter",
+      "description": "Block gameplay events during loading",
+      "enabled": true,
+      "condition": {
+        "type": "gameState",
+        "state": "loading"
+      },
+      "blockedEvents": [
+        "player.*",
+        "combat.*",
+        "quest.*",
+        "inventory.*"
+      ]
+    }
+  ],
+
+  "settings": {
+    "enableBindings": true,
+    "enableLogging": true,
+    "logLevel": "info",
+    "enableMetrics": true,
+    "maxConcurrentActions": 10,
+    "defaultActionTimeout": 5000,
+    "retryFailedActions": true,
+    "maxRetries": 3,
+    "retryDelay": 1000
+  }
+}

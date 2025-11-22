@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector Editor Component</title>
+    <link rel="stylesheet" href="../design/design_tokens.css">
+    <link rel="stylesheet" href="../design/components.css">
+    <link rel="stylesheet" href="../design/layout.css">
+    <style>
+        /* Vector Editor Component Styles */
+        .vector-editor {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .vector-editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .vector-editor-title {
+            font-size: var(--text-sm);
+            font-weight: var(--font-semibold);
+            color: var(--text-primary);
+        }
+
+        .vector-editor-actions {
+            display: flex;
+            gap: var(--space-1);
+        }
+
+        .vector-editor-fields {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .vector-field {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .vector-field-label {
+            font-size: var(--text-xs);
+            font-weight: var(--font-semibold);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: var(--tracking-wide);
+        }
+
+        .vector-field-label.x { color: var(--color-red-400); }
+        .vector-field-label.y { color: var(--color-green-400); }
+        .vector-field-label.z { color: var(--color-blue-400); }
+        .vector-field-label.w { color: var(--color-purple-400); }
+
+        .vector-field input {
+            width: 100%;
+            padding: var(--space-2);
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+        }
+
+        .vector-field input:focus {
+            border-color: var(--border-focus);
+        }
+
+        .vector-field.x input:focus { border-color: var(--color-red-400); }
+        .vector-field.y input:focus { border-color: var(--color-green-400); }
+        .vector-field.z input:focus { border-color: var(--color-blue-400); }
+        .vector-field.w input:focus { border-color: var(--color-purple-400); }
+
+        /* Compact Mode */
+        .vector-editor.compact .vector-editor-fields {
+            gap: var(--space-1);
+        }
+
+        .vector-editor.compact .vector-field input {
+            padding: var(--space-1) var(--space-2);
+        }
+
+        /* Inline Mode */
+        .vector-editor.inline {
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .vector-editor.inline .vector-editor-title {
+            margin-right: var(--space-3);
+        }
+
+        .vector-editor.inline .vector-editor-fields {
+            flex: 1;
+        }
+
+        /* Linked Mode Indicator */
+        .vector-editor.linked .link-btn {
+            color: var(--accent-primary);
+        }
+
+        /* Preview Section */
+        .vector-preview {
+            margin-top: var(--space-2);
+            padding: var(--space-2);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            font-family: var(--font-mono);
+            font-size: var(--text-xs);
+            color: var(--text-secondary);
+        }
+
+        /* Demo Container */
+        .demo-container {
+            padding: var(--space-6);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            margin-bottom: var(--space-6);
+            padding: var(--space-4);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+        }
+
+        .demo-section h3 {
+            margin-bottom: var(--space-4);
+            font-size: var(--text-md);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="text-2xl font-semibold mb-6">Vector Editor Components</h1>
+
+        <!-- Vec2 Editor -->
+        <div class="demo-section">
+            <h3>Vector2 Editor</h3>
+            <div class="vector-editor" id="vec2-editor">
+                <div class="vector-editor-header">
+                    <span class="vector-editor-title">Position</span>
+                    <div class="vector-editor-actions">
+                        <button class="btn btn-icon btn-ghost btn-xs reset-btn" title="Reset">
+                            <span data-icon="refresh"></span>
+                        </button>
+                        <button class="btn btn-icon btn-ghost btn-xs copy-btn" title="Copy">
+                            <span data-icon="copy"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="vector-editor-fields">
+                    <div class="vector-field x">
+                        <label class="vector-field-label x">X</label>
+                        <input type="number" step="0.01" value="0" data-axis="x">
+                    </div>
+                    <div class="vector-field y">
+                        <label class="vector-field-label y">Y</label>
+                        <input type="number" step="0.01" value="0" data-axis="y">
+                    </div>
+                </div>
+                <div class="vector-preview">vec2(0.00, 0.00)</div>
+            </div>
+        </div>
+
+        <!-- Vec3 Editor -->
+        <div class="demo-section">
+            <h3>Vector3 Editor</h3>
+            <div class="vector-editor" id="vec3-editor">
+                <div class="vector-editor-header">
+                    <span class="vector-editor-title">Transform</span>
+                    <div class="vector-editor-actions">
+                        <button class="btn btn-icon btn-ghost btn-xs link-btn" title="Link Axes">
+                            <span data-icon="link"></span>
+                        </button>
+                        <button class="btn btn-icon btn-ghost btn-xs reset-btn" title="Reset">
+                            <span data-icon="refresh"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="vector-editor-fields">
+                    <div class="vector-field x">
+                        <label class="vector-field-label x">X</label>
+                        <input type="number" step="0.1" value="0" data-axis="x">
+                    </div>
+                    <div class="vector-field y">
+                        <label class="vector-field-label y">Y</label>
+                        <input type="number" step="0.1" value="0" data-axis="y">
+                    </div>
+                    <div class="vector-field z">
+                        <label class="vector-field-label z">Z</label>
+                        <input type="number" step="0.1" value="0" data-axis="z">
+                    </div>
+                </div>
+                <div class="vector-preview">vec3(0.00, 0.00, 0.00)</div>
+            </div>
+        </div>
+
+        <!-- Vec4 Editor -->
+        <div class="demo-section">
+            <h3>Vector4 / Quaternion Editor</h3>
+            <div class="vector-editor" id="vec4-editor">
+                <div class="vector-editor-header">
+                    <span class="vector-editor-title">Rotation (Quaternion)</span>
+                </div>
+                <div class="vector-editor-fields">
+                    <div class="vector-field x">
+                        <label class="vector-field-label x">X</label>
+                        <input type="number" step="0.001" value="0" data-axis="x">
+                    </div>
+                    <div class="vector-field y">
+                        <label class="vector-field-label y">Y</label>
+                        <input type="number" step="0.001" value="0" data-axis="y">
+                    </div>
+                    <div class="vector-field z">
+                        <label class="vector-field-label z">Z</label>
+                        <input type="number" step="0.001" value="0" data-axis="z">
+                    </div>
+                    <div class="vector-field w">
+                        <label class="vector-field-label w">W</label>
+                        <input type="number" step="0.001" value="1" data-axis="w">
+                    </div>
+                </div>
+                <div class="vector-preview">quat(0.000, 0.000, 0.000, 1.000)</div>
+            </div>
+        </div>
+
+        <!-- Compact Vec3 -->
+        <div class="demo-section">
+            <h3>Compact Mode</h3>
+            <div class="vector-editor compact" id="compact-editor">
+                <div class="vector-editor-fields">
+                    <div class="vector-field x">
+                        <label class="vector-field-label x">X</label>
+                        <input type="number" step="1" value="100" data-axis="x">
+                    </div>
+                    <div class="vector-field y">
+                        <label class="vector-field-label y">Y</label>
+                        <input type="number" step="1" value="200" data-axis="y">
+                    </div>
+                    <div class="vector-field z">
+                        <label class="vector-field-label z">Z</label>
+                        <input type="number" step="1" value="300" data-axis="z">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../design/design_tokens.js"></script>
+    <script src="../design/icons.js"></script>
+    <script>
+    /**
+     * Vector Editor Component
+     */
+    class VectorEditor {
+        constructor(container, options = {}) {
+            this.container = typeof container === 'string' ? document.querySelector(container) : container;
+            this.options = {
+                dimensions: options.dimensions || 3,
+                labels: options.labels || ['X', 'Y', 'Z', 'W'],
+                step: options.step || 0.1,
+                precision: options.precision || 2,
+                linked: options.linked || false,
+                showPreview: options.showPreview !== false,
+                onChange: options.onChange || null,
+                ...options
+            };
+
+            this._value = new Array(this.options.dimensions).fill(0);
+            this._linked = this.options.linked;
+
+            this._init();
+        }
+
+        _init() {
+            this.inputs = this.container.querySelectorAll('input[data-axis]');
+            this.preview = this.container.querySelector('.vector-preview');
+            this.linkBtn = this.container.querySelector('.link-btn');
+            this.resetBtn = this.container.querySelector('.reset-btn');
+            this.copyBtn = this.container.querySelector('.copy-btn');
+
+            // Setup input listeners
+            this.inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => this._onInputChange(index, e));
+                input.addEventListener('change', (e) => this._onInputChange(index, e));
+                input.addEventListener('wheel', (e) => this._onWheel(index, e));
+            });
+
+            // Setup button listeners
+            if (this.linkBtn) {
+                this.linkBtn.addEventListener('click', () => this.toggleLinked());
+            }
+            if (this.resetBtn) {
+                this.resetBtn.addEventListener('click', () => this.reset());
+            }
+            if (this.copyBtn) {
+                this.copyBtn.addEventListener('click', () => this.copyToClipboard());
+            }
+
+            this._updatePreview();
+        }
+
+        _onInputChange(index, e) {
+            const value = parseFloat(e.target.value) || 0;
+
+            if (this._linked) {
+                // Update all axes with the same delta
+                const delta = value - this._value[index];
+                this._value = this._value.map(v => v + delta);
+                this.inputs.forEach((input, i) => {
+                    input.value = this._value[i].toFixed(this.options.precision);
+                });
+            } else {
+                this._value[index] = value;
+            }
+
+            this._updatePreview();
+            this._emitChange();
+        }
+
+        _onWheel(index, e) {
+            if (document.activeElement !== e.target) return;
+            e.preventDefault();
+
+            const delta = e.deltaY > 0 ? -this.options.step : this.options.step;
+            const input = this.inputs[index];
+            input.value = (parseFloat(input.value) + delta).toFixed(this.options.precision);
+            input.dispatchEvent(new Event('input'));
+        }
+
+        _updatePreview() {
+            if (!this.preview) return;
+
+            const values = Array.from(this.inputs).map(input =>
+                parseFloat(input.value).toFixed(this.options.precision)
+            );
+
+            const prefix = this.options.dimensions === 2 ? 'vec2' :
+                          this.options.dimensions === 3 ? 'vec3' :
+                          this.options.dimensions === 4 && this.container.querySelector('.vector-field.w') ? 'quat' : 'vec4';
+
+            this.preview.textContent = `${prefix}(${values.join(', ')})`;
+        }
+
+        _emitChange() {
+            if (this.options.onChange) {
+                this.options.onChange(this.getValue());
+            }
+        }
+
+        getValue() {
+            return Array.from(this.inputs).map(input => parseFloat(input.value) || 0);
+        }
+
+        setValue(values) {
+            values.forEach((val, i) => {
+                if (this.inputs[i]) {
+                    this.inputs[i].value = val.toFixed(this.options.precision);
+                    this._value[i] = val;
+                }
+            });
+            this._updatePreview();
+        }
+
+        reset() {
+            const defaultValue = this.options.dimensions === 4 ? [0, 0, 0, 1] :
+                                new Array(this.options.dimensions).fill(0);
+            this.setValue(defaultValue);
+            this._emitChange();
+        }
+
+        toggleLinked() {
+            this._linked = !this._linked;
+            this.container.classList.toggle('linked', this._linked);
+        }
+
+        copyToClipboard() {
+            const text = this.getValue().join(', ');
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('Copied:', text);
+            });
+        }
+    }
+
+    // Initialize editors
+    document.addEventListener('DOMContentLoaded', () => {
+        NovaIcons.replaceIcons();
+
+        new VectorEditor('#vec2-editor', {
+            dimensions: 2,
+            precision: 2,
+            onChange: (v) => console.log('Vec2:', v)
+        });
+
+        new VectorEditor('#vec3-editor', {
+            dimensions: 3,
+            precision: 2,
+            onChange: (v) => console.log('Vec3:', v)
+        });
+
+        new VectorEditor('#vec4-editor', {
+            dimensions: 4,
+            precision: 3,
+            onChange: (v) => console.log('Vec4:', v)
+        });
+
+        new VectorEditor('#compact-editor', {
+            dimensions: 3,
+            precision: 0,
+            step: 1,
+            showPreview: false
+        });
+    });
+    </script>
+</body>
+</html>

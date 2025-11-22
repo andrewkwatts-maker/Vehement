@@ -688,10 +688,23 @@ void BuildingBrowser::RenderBuildingCard(const BuildingStats& building) {
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Duplicate")) {
-            // TODO
+            // Duplicate the building with a new ID
+            BuildingEntry newBuilding = building;
+            newBuilding.id = "copy_" + building.id + "_" + std::to_string(rand() % 1000);
+            newBuilding.name = building.name + " (Copy)";
+            m_allBuildings.push_back(newBuilding);
+            ApplyFilters();
+            if (m_editor) m_editor->MarkDirty();
         }
         if (ImGui::MenuItem("Delete")) {
-            // TODO
+            // Delete the building from the list
+            auto it = std::find_if(m_allBuildings.begin(), m_allBuildings.end(),
+                [&building](const BuildingEntry& b) { return b.id == building.id; });
+            if (it != m_allBuildings.end()) {
+                m_allBuildings.erase(it);
+                ApplyFilters();
+                if (m_editor) m_editor->MarkDirty();
+            }
         }
         ImGui::EndPopup();
     }

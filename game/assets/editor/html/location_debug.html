@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Debug Panel - Nova Engine</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: #16213e;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #0f3460;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #map {
+            flex: 1;
+            background: #0a0a0a;
+        }
+
+        h1 {
+            font-size: 18px;
+            color: #e94560;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        h2 {
+            font-size: 14px;
+            color: #0f3460;
+            background: #e94560;
+            padding: 8px 12px;
+            margin: 15px -20px 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-group {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .info-value {
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            color: #4ecca3;
+        }
+
+        .info-value.warning {
+            color: #ffc107;
+        }
+
+        .info-value.error {
+            color: #e94560;
+        }
+
+        .coordinate-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            background: #0f3460;
+            border: none;
+            color: #fff;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #e94560;
+        }
+
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        button.active {
+            background: #4ecca3;
+            color: #000;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #0f3460;
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background: #4ecca3;
+            box-shadow: 0 0 8px #4ecca3;
+        }
+
+        .status-indicator.inactive {
+            background: #666;
+        }
+
+        .status-indicator.warning {
+            background: #ffc107;
+            box-shadow: 0 0 8px #ffc107;
+        }
+
+        .accuracy-bar {
+            height: 6px;
+            background: #0a0a0a;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .accuracy-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecca3, #ffc107, #e94560);
+            transition: width 0.3s;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #e94560;
+        }
+
+        .slider-group {
+            margin: 10px 0;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #e94560;
+        }
+
+        .bottom-bar {
+            background: #16213e;
+            padding: 10px 20px;
+            border-top: 1px solid #0f3460;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .route-path {
+            stroke: #e94560;
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .accuracy-circle {
+            fill: rgba(78, 204, 163, 0.2);
+            stroke: #4ecca3;
+            stroke-width: 2;
+        }
+
+        /* Leaflet customization */
+        .leaflet-container {
+            background: #0a0a0a;
+        }
+
+        .custom-marker {
+            background: #e94560;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>Location Debug Panel</h1>
+
+        <h2>Current Location</h2>
+        <div class="info-group">
+            <div class="coordinate-display">
+                <div>
+                    <div class="info-label">Latitude</div>
+                    <div class="info-value" id="latitude">--</div>
+                </div>
+                <div>
+                    <div class="info-label">Longitude</div>
+                    <div class="info-value" id="longitude">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-group">
+            <div class="coordinate-display">
+                <div>
+                    <div class="info-label">Altitude</div>
+                    <div class="info-value" id="altitude">--</div>
+                </div>
+                <div>
+                    <div class="info-label">Accuracy</div>
+                    <div class="info-value" id="accuracy">--</div>
+                </div>
+            </div>
+            <div class="accuracy-bar">
+                <div class="accuracy-bar-fill" id="accuracy-bar" style="width: 50%"></div>
+            </div>
+        </div>
+
+        <div class="info-group">
+            <div class="coordinate-display">
+                <div>
+                    <div class="info-label">Speed</div>
+                    <div class="info-value" id="speed">--</div>
+                </div>
+                <div>
+                    <div class="info-label">Heading</div>
+                    <div class="info-value" id="heading">--</div>
+                </div>
+            </div>
+        </div>
+
+        <h2>World Position</h2>
+        <div class="info-group">
+            <div class="info-label">Game Coordinates</div>
+            <div class="info-value" id="world-pos">X: -- Y: -- Z: --</div>
+        </div>
+
+        <h2>Service Status</h2>
+        <div class="info-group">
+            <div>
+                <span class="status-indicator" id="service-indicator"></span>
+                <span id="service-name">--</span>
+            </div>
+        </div>
+
+        <h2>Mock Location</h2>
+        <div class="controls">
+            <div class="input-group">
+                <input type="number" id="mock-lat" placeholder="Latitude" step="0.0001">
+                <input type="number" id="mock-lon" placeholder="Longitude" step="0.0001">
+            </div>
+            <button id="btn-set-mock">Set Mock Location</button>
+            <button id="btn-current-location">Use My Location</button>
+        </div>
+
+        <h2>Simulator</h2>
+        <div class="controls">
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk-simulator">
+                <label for="chk-simulator">Enable Location Simulator</label>
+            </div>
+            <div class="slider-group">
+                <label>Simulation Speed: <span id="sim-speed-value">1x</span></label>
+                <input type="range" id="sim-speed" min="0.1" max="10" step="0.1" value="1">
+            </div>
+        </div>
+
+        <h2>Recording</h2>
+        <div class="controls">
+            <button id="btn-record">Start Recording</button>
+            <button id="btn-save" disabled>Save Recording</button>
+            <button id="btn-load">Load Track</button>
+            <div class="info-group">
+                <div class="info-label">Recorded Points</div>
+                <div class="info-value" id="record-count">0</div>
+            </div>
+        </div>
+
+        <h2>Map Settings</h2>
+        <div class="controls">
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk-auto-center" checked>
+                <label for="chk-auto-center">Auto-center on location</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk-show-path" checked>
+                <label for="chk-show-path">Show location history</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="chk-show-accuracy" checked>
+                <label for="chk-show-accuracy">Show accuracy circle</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div id="map"></div>
+        <div class="bottom-bar">
+            <span id="update-time">Last update: --</span>
+            <span id="history-count">History: 0 points</span>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([-37.8136, 144.9631], 15);
+
+        // Use CartoDB dark tiles
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Current position marker
+        const markerIcon = L.divIcon({
+            className: 'custom-marker',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        let currentMarker = null;
+        let accuracyCircle = null;
+        let pathPolyline = null;
+        let locationHistory = [];
+
+        // State
+        let isRecording = false;
+        let autoCenter = true;
+        let showPath = true;
+        let showAccuracy = true;
+        let simulatorEnabled = false;
+
+        // DOM elements
+        const elements = {
+            latitude: document.getElementById('latitude'),
+            longitude: document.getElementById('longitude'),
+            altitude: document.getElementById('altitude'),
+            accuracy: document.getElementById('accuracy'),
+            accuracyBar: document.getElementById('accuracy-bar'),
+            speed: document.getElementById('speed'),
+            heading: document.getElementById('heading'),
+            worldPos: document.getElementById('world-pos'),
+            serviceName: document.getElementById('service-name'),
+            serviceIndicator: document.getElementById('service-indicator'),
+            recordCount: document.getElementById('record-count'),
+            updateTime: document.getElementById('update-time'),
+            historyCount: document.getElementById('history-count'),
+            mockLat: document.getElementById('mock-lat'),
+            mockLon: document.getElementById('mock-lon'),
+            btnRecord: document.getElementById('btn-record'),
+            btnSave: document.getElementById('btn-save'),
+            simSpeed: document.getElementById('sim-speed'),
+            simSpeedValue: document.getElementById('sim-speed-value')
+        };
+
+        // Update display with location data
+        function updateDisplay(data) {
+            if (!data || !data.current) return;
+
+            const loc = data.current;
+            const world = data.world;
+            const status = data.status;
+
+            // Update coordinates
+            elements.latitude.textContent = loc.latitude.toFixed(6);
+            elements.longitude.textContent = loc.longitude.toFixed(6);
+            elements.altitude.textContent = loc.altitude.toFixed(1) + ' m';
+            elements.accuracy.textContent = loc.accuracy.toFixed(1) + ' m';
+            elements.speed.textContent = loc.speed >= 0 ? (loc.speed * 3.6).toFixed(1) + ' km/h' : '--';
+            elements.heading.textContent = loc.heading >= 0 ? loc.heading.toFixed(0) + '°' : '--';
+
+            // Accuracy bar (0-100m range)
+            const accuracyPercent = Math.min(100, (loc.accuracy / 100) * 100);
+            elements.accuracyBar.style.width = accuracyPercent + '%';
+
+            // World position
+            elements.worldPos.textContent = `X: ${world.x.toFixed(2)} Y: ${world.y.toFixed(2)} Z: ${world.z.toFixed(2)}`;
+
+            // Status
+            elements.serviceName.textContent = status.service;
+            elements.serviceIndicator.className = 'status-indicator ' + (loc.valid ? 'active' : 'inactive');
+            elements.recordCount.textContent = status.recordedPoints;
+
+            // Update time
+            elements.updateTime.textContent = 'Last update: ' + new Date(loc.timestamp).toLocaleTimeString();
+            elements.historyCount.textContent = 'History: ' + data.history.length + ' points';
+
+            // Update map marker
+            if (loc.valid) {
+                const latLng = [loc.latitude, loc.longitude];
+
+                if (!currentMarker) {
+                    currentMarker = L.marker(latLng, { icon: markerIcon }).addTo(map);
+                } else {
+                    currentMarker.setLatLng(latLng);
+                }
+
+                // Accuracy circle
+                if (showAccuracy) {
+                    if (!accuracyCircle) {
+                        accuracyCircle = L.circle(latLng, {
+                            radius: loc.accuracy,
+                            className: 'accuracy-circle'
+                        }).addTo(map);
+                    } else {
+                        accuracyCircle.setLatLng(latLng);
+                        accuracyCircle.setRadius(loc.accuracy);
+                    }
+                } else if (accuracyCircle) {
+                    map.removeLayer(accuracyCircle);
+                    accuracyCircle = null;
+                }
+
+                // Auto center
+                if (autoCenter) {
+                    map.setView(latLng);
+                }
+            }
+
+            // Update path
+            if (showPath && data.history.length > 0) {
+                const pathCoords = data.history.map(p => [p[0], p[1]]);
+                if (!pathPolyline) {
+                    pathPolyline = L.polyline(pathCoords, {
+                        color: '#e94560',
+                        weight: 3,
+                        opacity: 0.8
+                    }).addTo(map);
+                } else {
+                    pathPolyline.setLatLngs(pathCoords);
+                }
+            }
+
+            // Mock indicator
+            if (loc.mock) {
+                elements.accuracy.classList.add('warning');
+            } else {
+                elements.accuracy.classList.remove('warning');
+            }
+        }
+
+        // Send command to native code
+        function sendCommand(command, data = '') {
+            // In a real implementation, this would communicate with the C++ backend
+            // via WebSocket, HTTP, or native bridge
+            console.log('Command:', command, 'Data:', data);
+
+            // For testing, simulate response
+            if (command === 'getData') {
+                // Return mock data for testing
+                return getMockData();
+            }
+
+            if (window.novaLocationBridge) {
+                window.novaLocationBridge.sendCommand(command, data);
+            }
+        }
+
+        // Mock data for testing
+        function getMockData() {
+            const now = Date.now();
+            return {
+                current: {
+                    latitude: -37.8136 + (Math.random() - 0.5) * 0.001,
+                    longitude: 144.9631 + (Math.random() - 0.5) * 0.001,
+                    altitude: 30 + Math.random() * 10,
+                    accuracy: 5 + Math.random() * 20,
+                    speed: Math.random() * 5,
+                    heading: Math.random() * 360,
+                    timestamp: now,
+                    valid: true,
+                    mock: simulatorEnabled
+                },
+                world: {
+                    x: (Math.random() - 0.5) * 100,
+                    y: 0,
+                    z: (Math.random() - 0.5) * 100
+                },
+                history: locationHistory.slice(-100),
+                status: {
+                    service: simulatorEnabled ? 'Location Simulator' : 'Platform GPS',
+                    recording: isRecording,
+                    simulator: simulatorEnabled,
+                    recordedPoints: isRecording ? locationHistory.length : 0
+                },
+                map: {
+                    centerLat: -37.8136,
+                    centerLon: 144.9631,
+                    zoom: 15,
+                    autoCenter: autoCenter
+                }
+            };
+        }
+
+        // Event handlers
+        document.getElementById('btn-set-mock').addEventListener('click', () => {
+            const lat = parseFloat(elements.mockLat.value);
+            const lon = parseFloat(elements.mockLon.value);
+            if (!isNaN(lat) && !isNaN(lon)) {
+                sendCommand('setMockLocation', `${lat},${lon}`);
+            }
+        });
+
+        document.getElementById('btn-current-location').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    elements.mockLat.value = pos.coords.latitude.toFixed(6);
+                    elements.mockLon.value = pos.coords.longitude.toFixed(6);
+                });
+            }
+        });
+
+        document.getElementById('chk-simulator').addEventListener('change', (e) => {
+            simulatorEnabled = e.target.checked;
+            sendCommand(e.target.checked ? 'enableSimulator' : 'disableSimulator');
+        });
+
+        elements.simSpeed.addEventListener('input', (e) => {
+            elements.simSpeedValue.textContent = e.target.value + 'x';
+        });
+
+        elements.btnRecord.addEventListener('click', () => {
+            isRecording = !isRecording;
+            elements.btnRecord.textContent = isRecording ? 'Stop Recording' : 'Start Recording';
+            elements.btnRecord.classList.toggle('active', isRecording);
+            elements.btnSave.disabled = !isRecording && locationHistory.length === 0;
+            sendCommand(isRecording ? 'startRecording' : 'stopRecording');
+        });
+
+        elements.btnSave.addEventListener('click', () => {
+            sendCommand('saveRecording');
+        });
+
+        document.getElementById('btn-load').addEventListener('click', () => {
+            sendCommand('loadTrack');
+        });
+
+        document.getElementById('chk-auto-center').addEventListener('change', (e) => {
+            autoCenter = e.target.checked;
+            sendCommand('setAutoCenter', autoCenter.toString());
+        });
+
+        document.getElementById('chk-show-path').addEventListener('change', (e) => {
+            showPath = e.target.checked;
+            if (!showPath && pathPolyline) {
+                map.removeLayer(pathPolyline);
+                pathPolyline = null;
+            }
+        });
+
+        document.getElementById('chk-show-accuracy').addEventListener('change', (e) => {
+            showAccuracy = e.target.checked;
+        });
+
+        // Click on map to set mock location
+        map.on('click', (e) => {
+            elements.mockLat.value = e.latlng.lat.toFixed(6);
+            elements.mockLon.value = e.latlng.lng.toFixed(6);
+        });
+
+        // Update loop
+        function update() {
+            const data = getMockData();
+
+            // Add to history for testing
+            if (data.current.valid) {
+                locationHistory.push([data.current.latitude, data.current.longitude]);
+                if (locationHistory.length > 100) {
+                    locationHistory.shift();
+                }
+            }
+
+            updateDisplay(data);
+        }
+
+        // Start updates
+        setInterval(update, 1000);
+
+        // Initial update
+        update();
+    </script>
+</body>
+</html>

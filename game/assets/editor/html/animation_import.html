@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Animation Import Settings</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        .animation-import {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .panel-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+        }
+
+        /* 3D Pose Preview */
+        .pose-preview {
+            flex: 1;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .pose-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .pose-controls {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            gap: 4px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .pose-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .pose-btn.active {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        /* Root Motion Graph */
+        .root-motion-panel {
+            height: 120px;
+            border-top: 1px solid var(--border-color, #3c3c3c);
+            padding: 8px;
+            background: var(--bg-secondary, #252525);
+        }
+
+        .root-motion-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .root-motion-header h4 {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .root-motion-canvas {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+        }
+
+        /* Timeline */
+        .timeline-section {
+            background: var(--bg-secondary, #252525);
+            border-top: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .playback-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .playback-btn:hover {
+            background: var(--bg-hover, #3a3a3a);
+        }
+
+        .playback-btn.active {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        .time-display {
+            font-family: monospace;
+            font-size: 13px;
+            min-width: 100px;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .speed-control label {
+            font-size: 11px;
+            color: var(--text-secondary, #888);
+        }
+
+        .speed-control select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+            font-size: 11px;
+        }
+
+        /* Timeline Track */
+        .timeline-container {
+            position: relative;
+            height: 180px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .timeline-track {
+            position: relative;
+            height: 100%;
+            min-width: 100%;
+            background: var(--bg-primary, #1e1e1e);
+        }
+
+        /* Time Ruler */
+        .time-ruler {
+            height: 24px;
+            background: var(--bg-tertiary, #333);
+            position: relative;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .time-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+            padding-top: 4px;
+        }
+
+        .time-marker::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 0;
+            width: 1px;
+            height: 8px;
+            background: var(--border-color, #3c3c3c);
+        }
+
+        /* Playhead */
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent-color, #0078d4);
+            cursor: ew-resize;
+            z-index: 20;
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -6px;
+            width: 14px;
+            height: 14px;
+            background: var(--accent-color, #0078d4);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+        }
+
+        /* Clip Markers Track */
+        .clip-markers-track {
+            height: 40px;
+            position: relative;
+            background: var(--bg-secondary, #252525);
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .clip-marker {
+            position: absolute;
+            top: 4px;
+            height: 32px;
+            background: rgba(100, 149, 237, 0.3);
+            border: 2px solid cornflowerblue;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .clip-marker.selected {
+            background: rgba(100, 149, 237, 0.5);
+            border-color: #4169E1;
+        }
+
+        .clip-marker .resize-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            cursor: ew-resize;
+        }
+
+        .clip-marker .resize-handle.left { left: 0; }
+        .clip-marker .resize-handle.right { right: 0; }
+
+        /* Event Markers Track */
+        .event-markers-track {
+            height: 28px;
+            position: relative;
+            background: var(--bg-primary, #1e1e1e);
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .event-marker {
+            position: absolute;
+            top: 4px;
+            width: 12px;
+            height: 20px;
+            background: #f59e0b;
+            border-radius: 2px;
+            cursor: pointer;
+            transform: translateX(-50%);
+        }
+
+        .event-marker.selected {
+            background: #d97706;
+            box-shadow: 0 0 0 2px white;
+        }
+
+        .event-marker::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #f59e0b;
+        }
+
+        /* Keyframe Track */
+        .keyframe-track {
+            height: 60px;
+            position: relative;
+            background: var(--bg-tertiary, #333);
+        }
+
+        .keyframe-curve {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .keyframe-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+
+        .keyframe-dot:hover {
+            background: var(--accent-color, #0078d4);
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            width: 360px;
+            border-left: 1px solid var(--border-color, #3c3c3c);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary, #252525);
+            overflow-y: auto;
+        }
+
+        .settings-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .settings-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary, #888);
+            font-size: 12px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .settings-tab.active {
+            color: var(--text-primary, #e0e0e0);
+            border-bottom-color: var(--accent-color, #0078d4);
+        }
+
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .settings-group {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .settings-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .settings-group-header h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .settings-row label {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .settings-row select,
+        .settings-row input[type="number"],
+        .settings-row input[type="text"] {
+            width: 120px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+            font-size: 12px;
+        }
+
+        /* Clip List */
+        .clip-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .clip-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+
+        .clip-item:hover {
+            background: var(--bg-hover, #2a2a2a);
+        }
+
+        .clip-item.selected {
+            background: var(--selection-bg, #094771);
+        }
+
+        .clip-color {
+            width: 4px;
+            height: 32px;
+            border-radius: 2px;
+        }
+
+        .clip-info {
+            flex: 1;
+        }
+
+        .clip-name {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .clip-duration {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        .clip-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .clip-action-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: none;
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .clip-action-btn:hover {
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        /* Event List */
+        .event-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+
+        .event-item:hover {
+            background: var(--bg-hover, #2a2a2a);
+        }
+
+        .event-item.selected {
+            background: var(--selection-bg, #094771);
+        }
+
+        .event-marker-icon {
+            width: 16px;
+            height: 16px;
+            background: #f59e0b;
+            border-radius: 2px;
+        }
+
+        .event-info {
+            flex: 1;
+        }
+
+        .event-name {
+            font-size: 12px;
+        }
+
+        .event-time {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        /* Presets */
+        .preset-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent-color, #0078d4);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        /* Stats */
+        .stats-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-secondary, #888);
+        }
+
+        /* Footer */
+        .panel-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-top: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .panel-footer .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .panel-footer .btn-primary {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        /* Retarget Bone Mapping */
+        .bone-mapping {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .bone-mapping-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .bone-mapping-row .source-bone {
+            flex: 1;
+            font-size: 11px;
+        }
+
+        .bone-mapping-row select {
+            flex: 1;
+            font-size: 11px;
+        }
+
+        /* Tab content visibility */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="animation-import">
+    <div class="panel-header">
+        <h2>Animation Import Settings</h2>
+        <span id="anim-name" style="color: var(--text-secondary);">No animation loaded</span>
+    </div>
+
+    <div class="panel-body">
+        <!-- Preview Section -->
+        <div class="preview-section">
+            <!-- Pose Preview -->
+            <div class="pose-preview">
+                <canvas class="pose-canvas" id="pose-canvas"></canvas>
+                <div class="pose-controls">
+                    <button class="pose-btn active" onclick="setPoseMode('animation')" title="Play Animation">A</button>
+                    <button class="pose-btn" onclick="setPoseMode('pose')" title="Show Pose">P</button>
+                    <button class="pose-btn" onclick="toggleBoneNames()" title="Bone Names">N</button>
+                    <button class="pose-btn" onclick="toggleRootMotion()" title="Root Motion">R</button>
+                </div>
+            </div>
+
+            <!-- Root Motion Graph -->
+            <div class="root-motion-panel" id="root-motion-panel">
+                <div class="root-motion-header">
+                    <h4>Root Motion Path</h4>
+                    <div>
+                        <label style="font-size: 11px; color: var(--text-secondary);">
+                            <input type="checkbox" id="show-root-x" checked> X
+                        </label>
+                        <label style="font-size: 11px; color: var(--text-secondary); margin-left: 8px;">
+                            <input type="checkbox" id="show-root-z" checked> Z
+                        </label>
+                    </div>
+                </div>
+                <canvas class="root-motion-canvas" id="root-motion-canvas"></canvas>
+            </div>
+
+            <!-- Timeline -->
+            <div class="timeline-section">
+                <div class="timeline-header">
+                    <div class="playback-controls">
+                        <button class="playback-btn" onclick="skipToStart()" title="Start">|&lt;</button>
+                        <button class="playback-btn" onclick="stepBackward()" title="Step Back">&lt;</button>
+                        <button class="playback-btn" onclick="togglePlay()" id="play-btn" title="Play">></button>
+                        <button class="playback-btn" onclick="stepForward()" title="Step Forward">&gt;</button>
+                        <button class="playback-btn" onclick="skipToEnd()" title="End">&gt;|</button>
+                        <button class="playback-btn" onclick="toggleLoop()" id="loop-btn" title="Loop">L</button>
+                    </div>
+                    <div class="time-display">
+                        <span id="current-time">0:00.000</span> / <span id="total-time">0:00.000</span>
+                    </div>
+                    <div class="speed-control">
+                        <label>Speed:</label>
+                        <select id="playback-speed" onchange="setPlaybackSpeed(this.value)">
+                            <option value="0.25">0.25x</option>
+                            <option value="0.5">0.5x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="2">2x</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="timeline-container" id="timeline-container">
+                    <div class="timeline-track" id="timeline-track" style="width: 1000px;">
+                        <!-- Time Ruler -->
+                        <div class="time-ruler" id="time-ruler">
+                            <!-- Time markers generated dynamically -->
+                        </div>
+
+                        <!-- Clip Markers Track -->
+                        <div class="clip-markers-track" id="clip-markers-track">
+                            <!-- Clip markers generated dynamically -->
+                        </div>
+
+                        <!-- Event Markers Track -->
+                        <div class="event-markers-track" id="event-markers-track">
+                            <!-- Event markers generated dynamically -->
+                        </div>
+
+                        <!-- Keyframe Track -->
+                        <div class="keyframe-track" id="keyframe-track">
+                            <canvas class="keyframe-curve" id="keyframe-canvas"></canvas>
+                        </div>
+
+                        <!-- Playhead -->
+                        <div class="playhead" id="playhead" style="left: 0;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+            <div class="settings-tabs">
+                <button class="settings-tab active" onclick="showTab('general')">General</button>
+                <button class="settings-tab" onclick="showTab('clips')">Clips</button>
+                <button class="settings-tab" onclick="showTab('events')">Events</button>
+                <button class="settings-tab" onclick="showTab('retarget')">Retarget</button>
+            </div>
+
+            <div class="settings-content">
+                <!-- General Tab -->
+                <div class="tab-content active" id="tab-general">
+                    <!-- Presets -->
+                    <div class="settings-group">
+                        <div class="preset-row">
+                            <button class="preset-btn" onclick="applyPreset('mobile')">Mobile</button>
+                            <button class="preset-btn active" onclick="applyPreset('desktop')">Desktop</button>
+                            <button class="preset-btn" onclick="applyPreset('highQuality')">High Quality</button>
+                        </div>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Statistics</h3>
+                        </div>
+                        <div class="stats-box">
+                            <div class="stat-item">
+                                <div class="stat-value" id="anim-duration">0.0s</div>
+                                <div class="stat-label">Duration</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="anim-fps">30</div>
+                                <div class="stat-label">FPS</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="anim-frames">0</div>
+                                <div class="stat-label">Frames</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="anim-bones">0</div>
+                                <div class="stat-label">Bones</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compression Settings -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Compression</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Compression Mode</label>
+                            <select id="compression-mode" onchange="onSettingChange()">
+                                <option value="none">None</option>
+                                <option value="keyframe" selected>Keyframe Reduction</option>
+                                <option value="curve">Curve Fitting</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <label>Position Error</label>
+                            <input type="number" id="pos-error" step="0.001" value="0.001" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Rotation Error</label>
+                            <input type="number" id="rot-error" step="0.001" value="0.001" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Scale Error</label>
+                            <input type="number" id="scale-error" step="0.001" value="0.001" onchange="onSettingChange()">
+                        </div>
+                    </div>
+
+                    <!-- Root Motion Settings -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Root Motion</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Extract Root Motion</label>
+                            <input type="checkbox" id="extract-root" checked onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Root Bone</label>
+                            <select id="root-bone" onchange="onSettingChange()">
+                                <option value="auto">Auto Detect</option>
+                                <option value="hips">Hips</option>
+                                <option value="root">Root</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <label>Lock Y Position</label>
+                            <input type="checkbox" id="lock-y" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Lock Rotation</label>
+                            <input type="checkbox" id="lock-rotation" onchange="onSettingChange()">
+                        </div>
+                    </div>
+
+                    <!-- Loop Settings -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Looping</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Loop Animation</label>
+                            <input type="checkbox" id="loop-anim" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Auto-detect Loop</label>
+                            <input type="checkbox" id="auto-loop" checked onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Loop Blend Frames</label>
+                            <input type="number" id="loop-blend" min="0" value="5" onchange="onSettingChange()">
+                        </div>
+                    </div>
+
+                    <!-- Additive Animation -->
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Additive</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Convert to Additive</label>
+                            <input type="checkbox" id="additive" onchange="onSettingChange()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Base Pose</label>
+                            <select id="base-pose" onchange="onSettingChange()">
+                                <option value="first">First Frame</option>
+                                <option value="ref">Reference Pose</option>
+                                <option value="custom">Custom Frame</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clips Tab -->
+                <div class="tab-content" id="tab-clips">
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Animation Clips</h3>
+                            <button class="preset-btn" onclick="addClip()">+ Add Clip</button>
+                        </div>
+                        <div class="clip-list" id="clip-list">
+                            <!-- Clips populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="settings-group" id="clip-details" style="display: none;">
+                        <div class="settings-group-header">
+                            <h3>Clip Settings</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Name</label>
+                            <input type="text" id="clip-name" onchange="updateClip()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Start Frame</label>
+                            <input type="number" id="clip-start" onchange="updateClip()">
+                        </div>
+                        <div class="settings-row">
+                            <label>End Frame</label>
+                            <input type="number" id="clip-end" onchange="updateClip()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Loop</label>
+                            <input type="checkbox" id="clip-loop" onchange="updateClip()">
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <button class="preset-btn" onclick="previewClip()">Preview</button>
+                            <button class="preset-btn" onclick="deleteClip()" style="color: #dc3545;">Delete</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Auto Split</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Split by Markers</label>
+                            <input type="checkbox" id="split-markers">
+                        </div>
+                        <div class="settings-row">
+                            <label>Split by Name</label>
+                            <input type="checkbox" id="split-name">
+                        </div>
+                        <button class="preset-btn" onclick="autoSplitClips()" style="margin-top: 8px;">Auto Split</button>
+                    </div>
+                </div>
+
+                <!-- Events Tab -->
+                <div class="tab-content" id="tab-events">
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Animation Events</h3>
+                            <button class="preset-btn" onclick="addEvent()">+ Add Event</button>
+                        </div>
+                        <div class="event-list" id="event-list">
+                            <!-- Events populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="settings-group" id="event-details" style="display: none;">
+                        <div class="settings-group-header">
+                            <h3>Event Settings</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Name</label>
+                            <input type="text" id="event-name" onchange="updateEvent()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Time (s)</label>
+                            <input type="number" id="event-time" step="0.001" onchange="updateEvent()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Type</label>
+                            <select id="event-type" onchange="updateEvent()">
+                                <option value="sound">Sound</option>
+                                <option value="effect">Effect</option>
+                                <option value="footstep">Footstep</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="settings-row">
+                            <label>Parameter</label>
+                            <input type="text" id="event-param" onchange="updateEvent()">
+                        </div>
+                        <button class="preset-btn" onclick="deleteEvent()" style="margin-top: 8px; color: #dc3545;">Delete Event</button>
+                    </div>
+
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Auto Events</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Detect Footsteps</label>
+                            <input type="checkbox" id="detect-footsteps">
+                        </div>
+                        <button class="preset-btn" onclick="detectEvents()" style="margin-top: 8px;">Auto Detect</button>
+                    </div>
+                </div>
+
+                <!-- Retarget Tab -->
+                <div class="tab-content" id="tab-retarget">
+                    <div class="settings-group">
+                        <div class="settings-group-header">
+                            <h3>Retargeting</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Enable Retargeting</label>
+                            <input type="checkbox" id="enable-retarget" onchange="onRetargetToggle()">
+                        </div>
+                        <div class="settings-row">
+                            <label>Target Skeleton</label>
+                            <select id="target-skeleton" onchange="loadTargetSkeleton()">
+                                <option value="">Select skeleton...</option>
+                                <option value="humanoid">Humanoid</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group" id="bone-mapping-section" style="display: none;">
+                        <div class="settings-group-header">
+                            <h3>Bone Mapping</h3>
+                            <button class="preset-btn" onclick="autoMapBones()">Auto Map</button>
+                        </div>
+                        <div class="bone-mapping" id="bone-mapping">
+                            <!-- Bone mapping rows populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="settings-group" id="retarget-settings" style="display: none;">
+                        <div class="settings-group-header">
+                            <h3>Retarget Settings</h3>
+                        </div>
+                        <div class="settings-row">
+                            <label>Scale Compensation</label>
+                            <input type="checkbox" id="scale-compensation" checked>
+                        </div>
+                        <div class="settings-row">
+                            <label>IK Fixing</label>
+                            <input type="checkbox" id="ik-fixing" checked>
+                        </div>
+                        <div class="settings-row">
+                            <label>Preserve Root Motion</label>
+                            <input type="checkbox" id="preserve-root" checked>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-footer">
+        <button class="btn" onclick="resetSettings()">Reset</button>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn" onclick="cancel()">Cancel</button>
+            <button class="btn btn-primary" onclick="applySettings()">Apply</button>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script>
+        // State
+        let currentTab = 'general';
+        let isPlaying = false;
+        let isLooping = true;
+        let playbackSpeed = 1.0;
+        let currentTime = 0;
+        let totalDuration = 3.5; // seconds
+        let selectedClipIndex = -1;
+        let selectedEventIndex = -1;
+
+        // Animation info
+        const animInfo = {
+            duration: 3.5,
+            fps: 30,
+            frames: 105,
+            bones: 45
+        };
+
+        // Clips
+        let clips = [
+            { name: 'Walk', startFrame: 0, endFrame: 30, color: '#6495ED', loop: true },
+            { name: 'Run', startFrame: 31, endFrame: 60, color: '#32CD32', loop: true },
+            { name: 'Jump', startFrame: 61, endFrame: 90, color: '#FFD700', loop: false }
+        ];
+
+        // Events
+        let events = [
+            { name: 'Footstep_L', time: 0.25, type: 'footstep', param: 'left' },
+            { name: 'Footstep_R', time: 0.75, type: 'footstep', param: 'right' },
+            { name: 'Impact', time: 1.5, type: 'sound', param: 'impact_heavy' }
+        ];
+
+        // Tab navigation
+        function showTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.toLowerCase() === tabId);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === 'tab-' + tabId);
+            });
+        }
+
+        // Playback controls
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('play-btn').classList.toggle('active', isPlaying);
+            document.getElementById('play-btn').textContent = isPlaying ? '||' : '>';
+            if (isPlaying) startPlayback();
+        }
+
+        function toggleLoop() {
+            isLooping = !isLooping;
+            document.getElementById('loop-btn').classList.toggle('active', isLooping);
+        }
+
+        function skipToStart() {
+            currentTime = 0;
+            updatePlayhead();
+        }
+
+        function skipToEnd() {
+            currentTime = totalDuration;
+            updatePlayhead();
+        }
+
+        function stepBackward() {
+            currentTime = Math.max(0, currentTime - 1/30);
+            updatePlayhead();
+        }
+
+        function stepForward() {
+            currentTime = Math.min(totalDuration, currentTime + 1/30);
+            updatePlayhead();
+        }
+
+        function setPlaybackSpeed(speed) {
+            playbackSpeed = parseFloat(speed);
+        }
+
+        function startPlayback() {
+            let lastTime = performance.now();
+            function animate() {
+                if (!isPlaying) return;
+
+                const now = performance.now();
+                const delta = (now - lastTime) / 1000;
+                lastTime = now;
+
+                currentTime += delta * playbackSpeed;
+
+                if (currentTime >= totalDuration) {
+                    if (isLooping) {
+                        currentTime = 0;
+                    } else {
+                        currentTime = totalDuration;
+                        isPlaying = false;
+                        document.getElementById('play-btn').classList.remove('active');
+                        document.getElementById('play-btn').textContent = '>';
+                    }
+                }
+
+                updatePlayhead();
+                requestAnimationFrame(animate);
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function updatePlayhead() {
+            const timelineWidth = document.getElementById('timeline-track').offsetWidth;
+            const playheadPos = (currentTime / totalDuration) * timelineWidth;
+            document.getElementById('playhead').style.left = playheadPos + 'px';
+
+            // Update time display
+            const mins = Math.floor(currentTime / 60);
+            const secs = currentTime % 60;
+            document.getElementById('current-time').textContent =
+                `${mins}:${secs.toFixed(3).padStart(6, '0')}`;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toFixed(3).padStart(6, '0')}`;
+        }
+
+        // Timeline setup
+        function setupTimeline() {
+            const ruler = document.getElementById('time-ruler');
+            const trackWidth = 1000;
+            const numMarkers = 10;
+
+            ruler.innerHTML = '';
+            for (let i = 0; i <= numMarkers; i++) {
+                const time = (i / numMarkers) * totalDuration;
+                const pos = (i / numMarkers) * trackWidth;
+                const marker = document.createElement('div');
+                marker.className = 'time-marker';
+                marker.style.left = pos + 'px';
+                marker.textContent = formatTime(time);
+                ruler.appendChild(marker);
+            }
+
+            // Update total time display
+            document.getElementById('total-time').textContent = formatTime(totalDuration);
+
+            // Setup clip markers
+            updateClipMarkers();
+
+            // Setup event markers
+            updateEventMarkers();
+
+            // Make playhead draggable
+            const playhead = document.getElementById('playhead');
+            const container = document.getElementById('timeline-container');
+
+            playhead.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const onMove = (e) => {
+                    const rect = document.getElementById('timeline-track').getBoundingClientRect();
+                    let pos = e.clientX - rect.left;
+                    pos = Math.max(0, Math.min(pos, rect.width));
+                    currentTime = (pos / rect.width) * totalDuration;
+                    updatePlayhead();
+                };
+                const onUp = () => {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+        }
+
+        function updateClipMarkers() {
+            const track = document.getElementById('clip-markers-track');
+            const trackWidth = 1000;
+            const frameWidth = trackWidth / animInfo.frames;
+
+            track.innerHTML = clips.map((clip, i) => {
+                const left = clip.startFrame * frameWidth;
+                const width = (clip.endFrame - clip.startFrame) * frameWidth;
+                return `
+                    <div class="clip-marker ${selectedClipIndex === i ? 'selected' : ''}"
+                         style="left: ${left}px; width: ${width}px; border-color: ${clip.color}; background: ${clip.color}33;"
+                         onclick="selectClip(${i})">
+                        <div class="resize-handle left" onmousedown="startResizeClip(${i}, 'start', event)"></div>
+                        <span>${clip.name}</span>
+                        <div class="resize-handle right" onmousedown="startResizeClip(${i}, 'end', event)"></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateEventMarkers() {
+            const track = document.getElementById('event-markers-track');
+            const trackWidth = 1000;
+
+            track.innerHTML = events.map((event, i) => {
+                const left = (event.time / totalDuration) * trackWidth;
+                return `
+                    <div class="event-marker ${selectedEventIndex === i ? 'selected' : ''}"
+                         style="left: ${left}px;"
+                         onclick="selectEvent(${i})"
+                         title="${event.name}">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Clip management
+        function populateClipList() {
+            const list = document.getElementById('clip-list');
+            list.innerHTML = clips.map((clip, i) => `
+                <div class="clip-item ${selectedClipIndex === i ? 'selected' : ''}" onclick="selectClip(${i})">
+                    <div class="clip-color" style="background: ${clip.color}"></div>
+                    <div class="clip-info">
+                        <div class="clip-name">${clip.name}</div>
+                        <div class="clip-duration">Frames ${clip.startFrame}-${clip.endFrame} (${((clip.endFrame - clip.startFrame) / 30).toFixed(2)}s)</div>
+                    </div>
+                    <div class="clip-actions">
+                        <button class="clip-action-btn" onclick="previewClipAt(${i}, event)" title="Preview">></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectClip(index) {
+            selectedClipIndex = index;
+            populateClipList();
+            updateClipMarkers();
+
+            document.getElementById('clip-details').style.display = 'block';
+            const clip = clips[index];
+            document.getElementById('clip-name').value = clip.name;
+            document.getElementById('clip-start').value = clip.startFrame;
+            document.getElementById('clip-end').value = clip.endFrame;
+            document.getElementById('clip-loop').checked = clip.loop;
+        }
+
+        function addClip() {
+            clips.push({
+                name: 'New Clip',
+                startFrame: 0,
+                endFrame: 30,
+                color: '#' + Math.floor(Math.random()*16777215).toString(16),
+                loop: false
+            });
+            selectedClipIndex = clips.length - 1;
+            populateClipList();
+            updateClipMarkers();
+            selectClip(selectedClipIndex);
+        }
+
+        function updateClip() {
+            if (selectedClipIndex < 0) return;
+            clips[selectedClipIndex].name = document.getElementById('clip-name').value;
+            clips[selectedClipIndex].startFrame = parseInt(document.getElementById('clip-start').value);
+            clips[selectedClipIndex].endFrame = parseInt(document.getElementById('clip-end').value);
+            clips[selectedClipIndex].loop = document.getElementById('clip-loop').checked;
+            populateClipList();
+            updateClipMarkers();
+        }
+
+        function deleteClip() {
+            if (selectedClipIndex < 0) return;
+            clips.splice(selectedClipIndex, 1);
+            selectedClipIndex = -1;
+            document.getElementById('clip-details').style.display = 'none';
+            populateClipList();
+            updateClipMarkers();
+        }
+
+        function previewClip() {
+            if (selectedClipIndex < 0) return;
+            const clip = clips[selectedClipIndex];
+            currentTime = clip.startFrame / animInfo.fps;
+            updatePlayhead();
+        }
+
+        function previewClipAt(index, e) {
+            e.stopPropagation();
+            const clip = clips[index];
+            currentTime = clip.startFrame / animInfo.fps;
+            updatePlayhead();
+        }
+
+        function startResizeClip(index, side, e) {
+            e.stopPropagation();
+            const trackWidth = 1000;
+            const frameWidth = trackWidth / animInfo.frames;
+
+            const onMove = (e) => {
+                const rect = document.getElementById('clip-markers-track').getBoundingClientRect();
+                const frame = Math.round((e.clientX - rect.left) / frameWidth);
+
+                if (side === 'start') {
+                    clips[index].startFrame = Math.max(0, Math.min(frame, clips[index].endFrame - 1));
+                } else {
+                    clips[index].endFrame = Math.max(clips[index].startFrame + 1, Math.min(frame, animInfo.frames));
+                }
+                updateClipMarkers();
+                if (selectedClipIndex === index) {
+                    document.getElementById('clip-start').value = clips[index].startFrame;
+                    document.getElementById('clip-end').value = clips[index].endFrame;
+                }
+            };
+
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            };
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        }
+
+        // Event management
+        function populateEventList() {
+            const list = document.getElementById('event-list');
+            list.innerHTML = events.map((event, i) => `
+                <div class="event-item ${selectedEventIndex === i ? 'selected' : ''}" onclick="selectEvent(${i})">
+                    <div class="event-marker-icon"></div>
+                    <div class="event-info">
+                        <div class="event-name">${event.name}</div>
+                        <div class="event-time">${event.time.toFixed(3)}s - ${event.type}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectEvent(index) {
+            selectedEventIndex = index;
+            populateEventList();
+            updateEventMarkers();
+
+            document.getElementById('event-details').style.display = 'block';
+            const event = events[index];
+            document.getElementById('event-name').value = event.name;
+            document.getElementById('event-time').value = event.time;
+            document.getElementById('event-type').value = event.type;
+            document.getElementById('event-param').value = event.param || '';
+        }
+
+        function addEvent() {
+            events.push({
+                name: 'New Event',
+                time: currentTime,
+                type: 'custom',
+                param: ''
+            });
+            selectedEventIndex = events.length - 1;
+            populateEventList();
+            updateEventMarkers();
+            selectEvent(selectedEventIndex);
+        }
+
+        function updateEvent() {
+            if (selectedEventIndex < 0) return;
+            events[selectedEventIndex].name = document.getElementById('event-name').value;
+            events[selectedEventIndex].time = parseFloat(document.getElementById('event-time').value);
+            events[selectedEventIndex].type = document.getElementById('event-type').value;
+            events[selectedEventIndex].param = document.getElementById('event-param').value;
+            populateEventList();
+            updateEventMarkers();
+        }
+
+        function deleteEvent() {
+            if (selectedEventIndex < 0) return;
+            events.splice(selectedEventIndex, 1);
+            selectedEventIndex = -1;
+            document.getElementById('event-details').style.display = 'none';
+            populateEventList();
+            updateEventMarkers();
+        }
+
+        // Retargeting
+        function onRetargetToggle() {
+            const enabled = document.getElementById('enable-retarget').checked;
+            document.getElementById('bone-mapping-section').style.display = enabled ? 'block' : 'none';
+            document.getElementById('retarget-settings').style.display = enabled ? 'block' : 'none';
+        }
+
+        function loadTargetSkeleton() {
+            const skeleton = document.getElementById('target-skeleton').value;
+            if (!skeleton) return;
+
+            // Populate bone mapping
+            const mapping = document.getElementById('bone-mapping');
+            const sourceBones = ['Hips', 'Spine', 'Chest', 'Neck', 'Head', 'LeftShoulder', 'LeftArm', 'RightShoulder', 'RightArm'];
+            const targetBones = ['pelvis', 'spine_01', 'spine_02', 'neck', 'head', 'clavicle_l', 'upperarm_l', 'clavicle_r', 'upperarm_r'];
+
+            mapping.innerHTML = sourceBones.map((bone, i) => `
+                <div class="bone-mapping-row">
+                    <span class="source-bone">${bone}</span>
+                    <select>
+                        <option value="">-- None --</option>
+                        ${targetBones.map(t => `<option value="${t}" ${t === targetBones[i] ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                </div>
+            `).join('');
+        }
+
+        function autoMapBones() {
+            // Auto-map by name similarity
+            loadTargetSkeleton();
+        }
+
+        // Presets
+        function applyPreset(preset) {
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            switch (preset) {
+                case 'mobile':
+                    document.getElementById('compression-mode').value = 'curve';
+                    document.getElementById('pos-error').value = '0.01';
+                    document.getElementById('rot-error').value = '0.01';
+                    break;
+                case 'desktop':
+                    document.getElementById('compression-mode').value = 'keyframe';
+                    document.getElementById('pos-error').value = '0.001';
+                    document.getElementById('rot-error').value = '0.001';
+                    break;
+                case 'highQuality':
+                    document.getElementById('compression-mode').value = 'none';
+                    break;
+            }
+        }
+
+        // Pose preview modes
+        function setPoseMode(mode) {
+            document.querySelectorAll('.pose-controls .pose-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === (mode === 'animation' ? 0 : 1));
+            });
+        }
+
+        function toggleBoneNames() {
+            document.querySelectorAll('.pose-controls .pose-btn')[2].classList.toggle('active');
+        }
+
+        function toggleRootMotion() {
+            document.querySelectorAll('.pose-controls .pose-btn')[3].classList.toggle('active');
+            document.getElementById('root-motion-panel').style.display =
+                document.querySelectorAll('.pose-controls .pose-btn')[3].classList.contains('active') ? 'block' : 'none';
+        }
+
+        // Stats update
+        function updateStats() {
+            document.getElementById('anim-duration').textContent = animInfo.duration.toFixed(1) + 's';
+            document.getElementById('anim-fps').textContent = animInfo.fps;
+            document.getElementById('anim-frames').textContent = animInfo.frames;
+            document.getElementById('anim-bones').textContent = animInfo.bones;
+        }
+
+        function onSettingChange() {
+            // Handle setting changes
+        }
+
+        function resetSettings() {
+            document.getElementById('compression-mode').value = 'keyframe';
+            document.getElementById('pos-error').value = '0.001';
+            document.getElementById('rot-error').value = '0.001';
+            document.getElementById('scale-error').value = '0.001';
+            document.getElementById('extract-root').checked = true;
+            document.getElementById('root-bone').value = 'auto';
+            document.getElementById('loop-anim').checked = false;
+            document.getElementById('auto-loop').checked = true;
+        }
+
+        function cancel() {
+            if (window.engine) {
+                window.engine.closeAnimationImportPanel();
+            }
+        }
+
+        function applySettings() {
+            const settings = {
+                compression: document.getElementById('compression-mode').value,
+                positionError: parseFloat(document.getElementById('pos-error').value),
+                rotationError: parseFloat(document.getElementById('rot-error').value),
+                scaleError: parseFloat(document.getElementById('scale-error').value),
+                extractRootMotion: document.getElementById('extract-root').checked,
+                rootBone: document.getElementById('root-bone').value,
+                loopAnimation: document.getElementById('loop-anim').checked,
+                convertToAdditive: document.getElementById('additive').checked,
+                clips: clips,
+                events: events
+            };
+
+            if (window.engine) {
+                window.engine.applyAnimationImportSettings(settings);
+            }
+        }
+
+        function autoSplitClips() {
+            // Auto split based on markers or name patterns
+        }
+
+        function detectEvents() {
+            // Auto detect footsteps based on foot bone positions
+        }
+
+        // Initialize
+        updateStats();
+        setupTimeline();
+        populateClipList();
+        populateEventList();
+    </script>
+</body>
+</html>

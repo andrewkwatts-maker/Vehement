@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>1D Blend Space Editor</title>
+    <link rel="stylesheet" href="../editor.css">
+    <style>
+        .blend-space-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            background: #1a1a1a;
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: #252530;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #333;
+        }
+
+        .track-panel {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .properties-panel {
+            background: #1e1e24;
+            padding: 16px;
+            border-left: 1px solid #333;
+            overflow-y: auto;
+        }
+
+        .preview-section {
+            grid-column: 1 / -1;
+            background: #0a0a0a;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #333;
+        }
+
+        .track-container {
+            background: #1e1e24;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .track-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .track-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .track {
+            position: relative;
+            height: 100px;
+            background: #252530;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .track-line {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            right: 20px;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+
+        .sample-marker {
+            position: absolute;
+            top: 50%;
+            width: 40px;
+            height: 40px;
+            background: #3a3a45;
+            border: 3px solid #4a9eff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+
+        .sample-marker:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .sample-marker.selected {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .sample-marker.dragging {
+            cursor: grabbing;
+            z-index: 100;
+        }
+
+        .sample-label {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        .preview-cursor {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #ff9e4a;
+            pointer-events: none;
+            transform: translateX(-50%);
+        }
+
+        .preview-cursor::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #ff9e4a;
+        }
+
+        .cursor-value {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #ff9e4a;
+            font-weight: 600;
+        }
+
+        .scrubber-container {
+            position: relative;
+            height: 30px;
+            background: #252530;
+            border-radius: 4px;
+            margin-top: 16px;
+        }
+
+        .scrubber-track {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            right: 20px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+
+        .scrubber-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #4a9eff;
+            border-radius: 2px;
+        }
+
+        .scrubber-handle {
+            position: absolute;
+            top: 50%;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            background: #252530;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .sync-markers {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .sync-marker-tag {
+            background: #2e7d32;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sample-list {
+            margin-top: 16px;
+        }
+
+        .sample-item {
+            background: #252530;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .sample-item.selected {
+            border-color: #4a9eff;
+        }
+
+        .sample-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weight-bar {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .weight-fill {
+            height: 100%;
+            background: #4a9eff;
+            transition: width 0.1s ease;
+        }
+
+        .preview-placeholder {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .add-sample-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px dashed #444;
+            border-radius: 6px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .add-sample-btn:hover {
+            border-color: #4a9eff;
+            color: #4a9eff;
+        }
+    </style>
+</head>
+<body>
+    <div class="blend-space-container">
+        <div class="toolbar">
+            <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+            <h2 id="blend-space-name">1D Blend Space</h2>
+            <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            <div style="flex: 1;"></div>
+            <button class="btn" onclick="addSample()">Add Sample</button>
+            <button class="btn btn-primary" onclick="save()">Save</button>
+        </div>
+
+        <div class="track-panel">
+            <div class="track-container">
+                <div class="track-header">
+                    <span>Parameter: <strong id="param-name">Speed</strong></span>
+                    <div>
+                        <button class="btn btn-icon" onclick="toggleSync()" title="Time Sync">&#x1F517;</button>
+                    </div>
+                </div>
+
+                <div class="track-labels">
+                    <span id="min-label">0.0</span>
+                    <span id="max-label">2.0</span>
+                </div>
+
+                <div class="track" id="track" onclick="onTrackClick(event)">
+                    <div class="track-line"></div>
+                    <div class="preview-cursor" id="preview-cursor">
+                        <span class="cursor-value" id="cursor-value">0.5</span>
+                    </div>
+                    <div id="sample-markers"></div>
+                </div>
+
+                <div class="sync-markers" id="sync-markers"></div>
+            </div>
+
+            <div class="scrubber-container">
+                <div class="scrubber-track" onclick="onScrubberClick(event)">
+                    <div class="scrubber-fill" id="scrubber-fill" style="width: 0%;"></div>
+                    <div class="scrubber-handle" id="scrubber-handle" style="left: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="properties-panel">
+            <h3>Blend Space Settings</h3>
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="name-input" value="Locomotion" onchange="updateName(this.value)">
+            </div>
+
+            <div class="form-group">
+                <label>Parameter</label>
+                <input type="text" id="param-input" value="Speed" onchange="updateParameter(this.value)">
+            </div>
+
+            <div class="form-group">
+                <label>Min Value</label>
+                <input type="number" id="min-input" value="0" step="0.1" onchange="updateRange()">
+            </div>
+
+            <div class="form-group">
+                <label>Max Value</label>
+                <input type="number" id="max-input" value="2" step="0.1" onchange="updateRange()">
+            </div>
+
+            <div class="form-group">
+                <label>Interpolation</label>
+                <select id="interp-select" onchange="updateInterpolation(this.value)">
+                    <option value="linear">Linear</option>
+                    <option value="smooth">Smooth</option>
+                    <option value="cubic">Cubic</option>
+                </select>
+            </div>
+
+            <h3 style="margin-top: 24px;">Samples</h3>
+            <div class="sample-list" id="sample-list"></div>
+            <button class="add-sample-btn" onclick="addSample()">+ Add Sample</button>
+        </div>
+
+        <div class="preview-section">
+            <span class="preview-placeholder">Animation Preview</span>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script>
+        var state = {
+            name: 'Locomotion',
+            parameter: 'Speed',
+            minValue: 0,
+            maxValue: 2,
+            interpolation: 'linear',
+            samples: [
+                { id: 1, clip: 'idle', position: 0, speed: 1 },
+                { id: 2, clip: 'walk', position: 1, speed: 1 },
+                { id: 3, clip: 'run', position: 2, speed: 1 }
+            ],
+            syncMarkers: ['foot_l', 'foot_r'],
+            previewValue: 0.5,
+            previewTime: 0,
+            selectedSampleIndex: -1,
+            draggingSampleIndex: -1,
+            isDirty: false
+        };
+
+        var track, trackRect;
+
+        function init() {
+            track = document.getElementById('track');
+            updateTrackRect();
+            renderSamples();
+            renderSampleList();
+            renderSyncMarkers();
+            updateCursor();
+
+            // Mouse events
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('resize', updateTrackRect);
+        }
+
+        function updateTrackRect() {
+            trackRect = track.getBoundingClientRect();
+        }
+
+        function valueToPercent(value) {
+            return ((value - state.minValue) / (state.maxValue - state.minValue)) * 100;
+        }
+
+        function percentToValue(percent) {
+            return state.minValue + (percent / 100) * (state.maxValue - state.minValue);
+        }
+
+        function renderSamples() {
+            var container = document.getElementById('sample-markers');
+            container.innerHTML = '';
+
+            state.samples.forEach(function(sample, index) {
+                var marker = document.createElement('div');
+                marker.className = 'sample-marker' +
+                    (index === state.selectedSampleIndex ? ' selected' : '') +
+                    (index === state.draggingSampleIndex ? ' dragging' : '');
+                marker.style.left = 'calc(20px + ' + valueToPercent(sample.position) + '% * (100% - 40px) / 100)';
+
+                marker.innerHTML = '\
+                    <span class="sample-label">' + sample.clip + '</span>\
+                    ' + (index + 1) + '\
+                ';
+
+                marker.onmousedown = function(e) {
+                    e.stopPropagation();
+                    startDrag(index);
+                };
+                marker.onclick = function(e) {
+                    e.stopPropagation();
+                    selectSample(index);
+                };
+
+                container.appendChild(marker);
+            });
+        }
+
+        function renderSampleList() {
+            var container = document.getElementById('sample-list');
+            container.innerHTML = '';
+
+            // Calculate weights
+            var weights = calculateWeights(state.previewValue);
+
+            state.samples.forEach(function(sample, index) {
+                var item = document.createElement('div');
+                item.className = 'sample-item' + (index === state.selectedSampleIndex ? ' selected' : '');
+                item.onclick = function() { selectSample(index); };
+
+                item.innerHTML = '\
+                    <div class="sample-item-header">\
+                        <span>' + sample.clip + '</span>\
+                        <span style="color: #666">@ ' + sample.position.toFixed(2) + '</span>\
+                    </div>\
+                    <div class="weight-bar">\
+                        <div class="weight-fill" style="width: ' + (weights[index] * 100) + '%"></div>\
+                    </div>\
+                ';
+
+                container.appendChild(item);
+            });
+        }
+
+        function renderSyncMarkers() {
+            var container = document.getElementById('sync-markers');
+            container.innerHTML = '';
+
+            state.syncMarkers.forEach(function(marker) {
+                var tag = document.createElement('span');
+                tag.className = 'sync-marker-tag';
+                tag.innerHTML = marker + ' <button onclick="removeSyncMarker(\'' + marker + '\')" style="background:none;border:none;color:#fff;cursor:pointer;">&times;</button>';
+                container.appendChild(tag);
+            });
+        }
+
+        function calculateWeights(value) {
+            var weights = new Array(state.samples.length).fill(0);
+
+            if (state.samples.length === 0) return weights;
+            if (state.samples.length === 1) {
+                weights[0] = 1;
+                return weights;
+            }
+
+            // Sort samples by position
+            var sorted = state.samples.map(function(s, i) {
+                return { sample: s, index: i };
+            }).sort(function(a, b) {
+                return a.sample.position - b.sample.position;
+            });
+
+            // Find surrounding samples
+            for (var i = 0; i < sorted.length - 1; i++) {
+                if (value >= sorted[i].sample.position && value <= sorted[i + 1].sample.position) {
+                    var range = sorted[i + 1].sample.position - sorted[i].sample.position;
+                    var t = range > 0 ? (value - sorted[i].sample.position) / range : 0;
+                    weights[sorted[i].index] = 1 - t;
+                    weights[sorted[i + 1].index] = t;
+                    return weights;
+                }
+            }
+
+            // Outside range
+            if (value <= sorted[0].sample.position) {
+                weights[sorted[0].index] = 1;
+            } else {
+                weights[sorted[sorted.length - 1].index] = 1;
+            }
+
+            return weights;
+        }
+
+        function updateCursor() {
+            var cursor = document.getElementById('preview-cursor');
+            var percent = valueToPercent(state.previewValue);
+            cursor.style.left = 'calc(20px + ' + percent + '% * (100% - 40px) / 100)';
+            document.getElementById('cursor-value').textContent = state.previewValue.toFixed(2);
+            renderSampleList();
+        }
+
+        function onTrackClick(e) {
+            if (state.draggingSampleIndex >= 0) return;
+            var rect = track.getBoundingClientRect();
+            var x = e.clientX - rect.left - 20;
+            var width = rect.width - 40;
+            var percent = Math.max(0, Math.min(100, (x / width) * 100));
+            state.previewValue = percentToValue(percent);
+            updateCursor();
+
+            if (window.bridge) {
+                window.bridge.setPreviewValue(state.previewValue);
+            }
+        }
+
+        function startDrag(index) {
+            state.draggingSampleIndex = index;
+            selectSample(index);
+        }
+
+        function onMouseMove(e) {
+            if (state.draggingSampleIndex < 0) return;
+
+            updateTrackRect();
+            var x = e.clientX - trackRect.left - 20;
+            var width = trackRect.width - 40;
+            var percent = Math.max(0, Math.min(100, (x / width) * 100));
+            var value = percentToValue(percent);
+
+            state.samples[state.draggingSampleIndex].position = value;
+            setDirty(true);
+            renderSamples();
+            renderSampleList();
+        }
+
+        function onMouseUp() {
+            if (state.draggingSampleIndex >= 0) {
+                if (window.bridge) {
+                    window.bridge.moveSample(state.draggingSampleIndex,
+                        state.samples[state.draggingSampleIndex].position);
+                }
+            }
+            state.draggingSampleIndex = -1;
+            renderSamples();
+        }
+
+        function selectSample(index) {
+            state.selectedSampleIndex = index;
+            renderSamples();
+            renderSampleList();
+
+            if (window.bridge) {
+                window.bridge.selectSample(index);
+            }
+        }
+
+        function addSample() {
+            var clip = prompt('Animation clip name:', 'clip_' + (state.samples.length + 1));
+            if (!clip) return;
+
+            var position = state.previewValue;
+            state.samples.push({
+                id: Date.now(),
+                clip: clip,
+                position: position,
+                speed: 1
+            });
+
+            setDirty(true);
+            renderSamples();
+            renderSampleList();
+
+            if (window.bridge) {
+                window.bridge.addSample(clip, position);
+            }
+        }
+
+        function removeSyncMarker(name) {
+            state.syncMarkers = state.syncMarkers.filter(function(m) { return m !== name; });
+            setDirty(true);
+            renderSyncMarkers();
+        }
+
+        function updateName(name) {
+            state.name = name;
+            document.getElementById('blend-space-name').textContent = name;
+            setDirty(true);
+        }
+
+        function updateParameter(param) {
+            state.parameter = param;
+            document.getElementById('param-name').textContent = param;
+            setDirty(true);
+        }
+
+        function updateRange() {
+            state.minValue = parseFloat(document.getElementById('min-input').value);
+            state.maxValue = parseFloat(document.getElementById('max-input').value);
+            document.getElementById('min-label').textContent = state.minValue.toFixed(1);
+            document.getElementById('max-label').textContent = state.maxValue.toFixed(1);
+            setDirty(true);
+            renderSamples();
+            updateCursor();
+        }
+
+        function updateInterpolation(mode) {
+            state.interpolation = mode;
+            setDirty(true);
+        }
+
+        function toggleSync() {
+            // Toggle sync visualization
+        }
+
+        function onScrubberClick(e) {
+            var rect = e.target.getBoundingClientRect();
+            var percent = ((e.clientX - rect.left) / rect.width) * 100;
+            state.previewTime = percent / 100;
+            document.getElementById('scrubber-fill').style.width = percent + '%';
+            document.getElementById('scrubber-handle').style.left = percent + '%';
+        }
+
+        function setDirty(dirty) {
+            state.isDirty = dirty;
+            document.getElementById('dirty-indicator').style.display = dirty ? 'inline' : 'none';
+        }
+
+        function save() {
+            console.log('Saving:', state);
+            if (window.bridge) {
+                window.bridge.save(JSON.stringify(state));
+            }
+            setDirty(false);
+        }
+
+        function goBack() {
+            if (state.isDirty) {
+                if (!confirm('Unsaved changes will be lost. Continue?')) return;
+            }
+            history.back();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

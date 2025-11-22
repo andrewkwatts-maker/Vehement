@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dialogue</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../css/ui_animations.css">
+</head>
+<body>
+    <div id="dialogue-container" class="dialogue-container">
+        <!-- Portraits -->
+        <div class="portrait-container left" id="portrait-left">
+            <img src="" alt="" class="portrait-image">
+        </div>
+        <div class="portrait-container right" id="portrait-right">
+            <img src="" alt="" class="portrait-image">
+        </div>
+
+        <!-- Main Dialogue Box -->
+        <div class="dialogue-box">
+            <div class="dialogue-header">
+                <span id="speaker-name" class="speaker-name"></span>
+            </div>
+            <div class="dialogue-content">
+                <p id="dialogue-text" class="dialogue-text"></p>
+                <div id="continue-indicator" class="continue-indicator" style="display: none;">
+                    Click to continue...
+                </div>
+            </div>
+
+            <!-- Choices -->
+            <div id="dialogue-choices" class="dialogue-choices"></div>
+        </div>
+
+        <!-- History Panel -->
+        <div id="history-panel" class="history-panel" style="display: none;">
+            <div class="history-header">
+                <span>Dialogue History</span>
+                <button onclick="Dialogue.hideHistory()">X</button>
+            </div>
+            <div id="history-content" class="history-content"></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="dialogue-controls">
+            <button id="btn-skip" onclick="Dialogue.skip()">Skip</button>
+            <button id="btn-auto" onclick="Dialogue.toggleAuto()">Auto</button>
+            <button id="btn-history" onclick="Dialogue.showHistory()">Log</button>
+        </div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const Dialogue = {
+            autoMode: false,
+            typewriterComplete: true,
+
+            init: function() {
+                document.getElementById('dialogue-container').addEventListener('click', (e) => {
+                    if (!e.target.closest('.dialogue-choices') && !e.target.closest('.dialogue-controls')) {
+                        this.onContinue();
+                    }
+                });
+            },
+
+            setSpeaker: function(data) {
+                document.getElementById('speaker-name').textContent = data.name || '';
+                if (data.portrait) {
+                    const leftPortrait = document.getElementById('portrait-left');
+                    leftPortrait.querySelector('img').src = data.portrait;
+                    leftPortrait.classList.add('active');
+                }
+            },
+
+            setText: function(data) {
+                const textEl = document.getElementById('dialogue-text');
+                textEl.textContent = data.text;
+                this.typewriterComplete = data.text === textEl.dataset.fullText;
+
+                const indicator = document.getElementById('continue-indicator');
+                indicator.style.display = this.typewriterComplete ? 'block' : 'none';
+            },
+
+            setFullText: function(text) {
+                document.getElementById('dialogue-text').dataset.fullText = text;
+            },
+
+            setChoices: function(choices) {
+                const container = document.getElementById('dialogue-choices');
+                container.innerHTML = '';
+
+                if (!choices || choices.length === 0) {
+                    container.style.display = 'none';
+                    return;
+                }
+
+                container.style.display = 'flex';
+                choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'dialogue-choice' + (!choice.enabled ? ' disabled' : '') + (choice.visited ? ' visited' : '');
+                    btn.innerHTML = `<span class="choice-number">${index + 1}.</span> ${choice.text}`;
+                    btn.disabled = !choice.enabled;
+                    btn.onclick = () => this.selectChoice(choice.id, index);
+                    container.appendChild(btn);
+                });
+            },
+
+            clearChoices: function() {
+                const container = document.getElementById('dialogue-choices');
+                container.innerHTML = '';
+                container.style.display = 'none';
+            },
+
+            selectChoice: function(id, index) {
+                Engine.call('Dialogue.onChoiceSelect', { id: id, index: index });
+            },
+
+            onContinue: function() {
+                Engine.call('Dialogue.onContinue', {});
+            },
+
+            skip: function() {
+                Engine.call('Dialogue.onSkip', {});
+            },
+
+            toggleAuto: function() {
+                this.autoMode = !this.autoMode;
+                document.getElementById('btn-auto').classList.toggle('active', this.autoMode);
+            },
+
+            setLeftPortrait: function(data) {
+                const container = document.getElementById('portrait-left');
+                if (data.path) {
+                    container.querySelector('img').src = data.path;
+                    container.classList.toggle('active', data.active);
+                } else {
+                    container.classList.remove('active');
+                }
+            },
+
+            setRightPortrait: function(data) {
+                const container = document.getElementById('portrait-right');
+                if (data.path) {
+                    container.querySelector('img').src = data.path;
+                    container.classList.toggle('active', data.active);
+                } else {
+                    container.classList.remove('active');
+                }
+            },
+
+            addHistory: function(entry) {
+                const content = document.getElementById('history-content');
+                const div = document.createElement('div');
+                div.className = 'history-entry';
+                div.innerHTML = `<span class="history-speaker">${entry.speaker}:</span> <span class="history-text">${entry.text}</span>`;
+                content.appendChild(div);
+                content.scrollTop = content.scrollHeight;
+            },
+
+            clearHistory: function() {
+                document.getElementById('history-content').innerHTML = '';
+            },
+
+            showHistory: function() {
+                document.getElementById('history-panel').style.display = 'flex';
+            },
+
+            hideHistory: function() {
+                document.getElementById('history-panel').style.display = 'none';
+            },
+
+            setPosition: function(data) {
+                const container = document.getElementById('dialogue-container');
+                container.className = 'dialogue-container position-' + data.position;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => Dialogue.init());
+
+        // Expose to engine
+        window.Dialogue = window.Dialogue || {};
+        Object.assign(window.Dialogue, Dialogue);
+    </script>
+</body>
+</html>

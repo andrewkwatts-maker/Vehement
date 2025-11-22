@@ -1,0 +1,374 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://old3dengine.com/schemas/matchmaking.schema.json",
+  "title": "Matchmaking Schema",
+  "description": "Schema for matchmaking configuration and game modes",
+  "type": "object",
+  "definitions": {
+    "mmrRange": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "integer" },
+        "max": { "type": "integer" },
+        "name": { "type": "string" }
+      },
+      "required": ["min", "max"]
+    },
+    "teamConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Team identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Team display name"
+        },
+        "minPlayers": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Minimum players required"
+        },
+        "maxPlayers": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum players allowed"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Team color in hex format"
+        },
+        "allowSpectators": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["id", "name", "minPlayers", "maxPlayers"]
+    },
+    "gameModeConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique game mode identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Mode description"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon asset path"
+        },
+        "ranked": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this mode affects rankings"
+        },
+        "teams": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/teamConfig" },
+          "description": "Team configurations for this mode"
+        },
+        "minPlayersTotal": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Minimum total players to start"
+        },
+        "maxPlayersTotal": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum total players"
+        },
+        "allowParties": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether pre-made parties can queue"
+        },
+        "maxPartySize": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum players in a party"
+        },
+        "mmrEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether skill-based matching is used"
+        },
+        "initialMmrRange": {
+          "type": "integer",
+          "default": 100,
+          "description": "Initial MMR search range"
+        },
+        "maxMmrRange": {
+          "type": "integer",
+          "default": 500,
+          "description": "Maximum MMR search range after expansion"
+        },
+        "mmrExpandRate": {
+          "type": "number",
+          "default": 50,
+          "description": "MMR range expansion per interval"
+        },
+        "mmrExpandInterval": {
+          "type": "number",
+          "default": 30,
+          "description": "Seconds between MMR expansions"
+        },
+        "readyCheckTimeout": {
+          "type": "number",
+          "default": 30,
+          "description": "Seconds for ready check"
+        },
+        "lobbyTimeout": {
+          "type": "number",
+          "default": 300,
+          "description": "Seconds before lobby is closed"
+        },
+        "mapPool": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Available maps for this mode"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Mode-specific settings"
+        }
+      },
+      "required": ["id", "name", "teams", "minPlayersTotal", "maxPlayersTotal"]
+    },
+    "tierConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Tier identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Tier name"
+        },
+        "minMmr": {
+          "type": "integer",
+          "description": "Minimum MMR for this tier"
+        },
+        "maxMmr": {
+          "type": "integer",
+          "description": "Maximum MMR for this tier"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Tier icon asset"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "divisions": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 4,
+          "description": "Number of divisions within tier"
+        },
+        "promotionGames": {
+          "type": "integer",
+          "description": "Games required for promotion"
+        },
+        "demotionProtection": {
+          "type": "integer",
+          "description": "Games of demotion protection"
+        }
+      },
+      "required": ["id", "name", "minMmr", "maxMmr"]
+    },
+    "seasonConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Season identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Season display name"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Season start date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Season end date"
+        },
+        "softReset": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to do soft MMR reset"
+        },
+        "resetFormula": {
+          "type": "string",
+          "description": "Formula for MMR reset calculation"
+        },
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tier": { "type": "integer" },
+              "rewards": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "required": ["id", "name", "startDate", "endDate"]
+    }
+  },
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version"
+    },
+    "gameModes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/gameModeConfig" },
+      "description": "Available game modes"
+    },
+    "tiers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/tierConfig" },
+      "description": "Ranking tiers"
+    },
+    "seasons": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/seasonConfig" },
+      "description": "Season configurations"
+    },
+    "ratingSystem": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["elo", "glicko2", "trueskill", "custom"],
+          "default": "elo",
+          "description": "Rating system type"
+        },
+        "initialRating": {
+          "type": "integer",
+          "default": 1500,
+          "description": "Starting rating for new players"
+        },
+        "kFactor": {
+          "type": "number",
+          "default": 32,
+          "description": "K-factor for ELO calculation"
+        },
+        "kFactorTiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "minGames": { "type": "integer" },
+              "kFactor": { "type": "number" }
+            }
+          },
+          "description": "K-factor by games played"
+        },
+        "minRating": {
+          "type": "integer",
+          "default": 100,
+          "description": "Minimum possible rating"
+        },
+        "maxRating": {
+          "type": "integer",
+          "default": 3000,
+          "description": "Maximum possible rating"
+        },
+        "provisionalGames": {
+          "type": "integer",
+          "default": 10,
+          "description": "Games before rating is settled"
+        },
+        "decayEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether ratings decay over time"
+        },
+        "decayDays": {
+          "type": "integer",
+          "description": "Days of inactivity before decay"
+        },
+        "decayRate": {
+          "type": "number",
+          "description": "Rating points lost per decay period"
+        }
+      }
+    },
+    "antiCheat": {
+      "type": "object",
+      "properties": {
+        "smurfDetection": {
+          "type": "boolean",
+          "default": true
+        },
+        "winStreakBoost": {
+          "type": "boolean",
+          "default": true
+        },
+        "lossStreakProtection": {
+          "type": "boolean",
+          "default": true
+        },
+        "afkDetection": {
+          "type": "boolean",
+          "default": true
+        },
+        "afkPenalty": {
+          "type": "integer",
+          "description": "Rating penalty for AFK"
+        }
+      }
+    },
+    "queueSettings": {
+      "type": "object",
+      "properties": {
+        "maxQueueTime": {
+          "type": "integer",
+          "default": 600,
+          "description": "Maximum queue time in seconds"
+        },
+        "estimatedWaitRefreshRate": {
+          "type": "integer",
+          "default": 10,
+          "description": "Seconds between wait time updates"
+        },
+        "regionLock": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to restrict to same region"
+        },
+        "crossPlayEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether cross-platform play is allowed"
+        },
+        "priorityQueueEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether priority queue is available"
+        }
+      }
+    }
+  },
+  "required": ["version", "gameModes", "ratingSystem"]
+}

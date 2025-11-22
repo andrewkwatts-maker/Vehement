@@ -1,0 +1,205 @@
+{
+    "$schema": "location_settings_schema.json",
+    "version": "1.0.0",
+    "description": "Location services configuration for Vehement game",
+
+    "accuracy": {
+        "default": "best",
+        "options": ["bestForNavigation", "best", "nearestTenMeters", "hundredMeters", "kilometer", "threeKilometers", "passive"],
+        "minAccuracyMeters": 50,
+        "maxAcceptableAgeMs": 30000
+    },
+
+    "updates": {
+        "intervalMs": 1000,
+        "distanceFilterMeters": 1.0,
+        "backgroundEnabled": false,
+        "significantChangesOnly": false,
+        "pauseUpdatesWhenStationary": true,
+        "stationaryThresholdMeters": 5.0,
+        "stationaryTimeMs": 60000
+    },
+
+    "caching": {
+        "enabled": true,
+        "maxEntries": 1000,
+        "ttlMinutes": 60,
+        "persistToFile": true,
+        "cacheFilePath": "location_cache.dat"
+    },
+
+    "privacy": {
+        "shareLocationWithOtherPlayers": true,
+        "shareAccuracy": "reduced",
+        "blurRadiusMeters": 100,
+        "allowBackgroundTracking": false,
+        "collectLocationHistory": true,
+        "maxHistoryDays": 7,
+        "anonymizeAfterDays": 1
+    },
+
+    "permissions": {
+        "requestOnStartup": false,
+        "requestWhenNeeded": true,
+        "explainBeforeRequest": true,
+        "explanationTitle": "Location Access Required",
+        "explanationMessage": "This game uses your location to place you in the game world and find nearby players. Your precise location is never shared with other players."
+    },
+
+    "geocoding": {
+        "provider": "nominatim",
+        "apiUrl": "https://nominatim.openstreetmap.org",
+        "apiKey": "",
+        "cacheEnabled": true,
+        "cacheTTLMinutes": 1440,
+        "maxRequestsPerMinute": 1,
+        "language": "en"
+    },
+
+    "worldMapping": {
+        "coordinateSystem": "cartesian",
+        "origin": {
+            "latitude": -37.8136,
+            "longitude": 144.9631,
+            "description": "Melbourne, Australia"
+        },
+        "metersPerUnit": 1.0,
+        "gridSnapping": {
+            "enabled": false,
+            "sizeUnits": 1.0
+        },
+        "bounds": {
+            "enabled": false,
+            "minX": -10000,
+            "minZ": -10000,
+            "maxX": 10000,
+            "maxZ": 10000
+        },
+        "altitudeMapping": {
+            "mapToY": true,
+            "scale": 1.0
+        },
+        "rotation": 0.0
+    },
+
+    "geofencing": {
+        "enabled": true,
+        "maxRegions": 100,
+        "hysteresisMeters": 5.0,
+        "dwellDetection": {
+            "enabled": true,
+            "defaultDwellTimeMs": 30000
+        },
+        "persistRegions": true,
+        "regionsFilePath": "geofences.dat"
+    },
+
+    "simulation": {
+        "allowInRelease": false,
+        "defaultLocation": {
+            "latitude": -37.8136,
+            "longitude": 144.9631
+        },
+        "defaultAccuracyMeters": 10.0,
+        "positionNoiseMeters": 2.0,
+        "accuracyJitter": {
+            "enabled": true,
+            "maxMeters": 5.0
+        }
+    },
+
+    "mockLocationDetection": {
+        "enabled": true,
+        "rejectMockLocations": false,
+        "warnOnMockLocation": true,
+        "allowInDebug": true
+    },
+
+    "nearbyPlayers": {
+        "enabled": true,
+        "searchRadiusMeters": 1000,
+        "updateIntervalSeconds": 5.0,
+        "maxVisiblePlayers": 50,
+        "showDistanceToPlayers": true,
+        "showDirectionToPlayers": true
+    },
+
+    "pointsOfInterest": {
+        "enabled": true,
+        "loadFromFile": "pois.json",
+        "defaultInteractionRadiusMeters": 10.0,
+        "showOnMap": true,
+        "notifyOnApproach": true,
+        "approachDistanceMeters": 50.0
+    },
+
+    "events": {
+        "enabled": true,
+        "checkIntervalSeconds": 1.0,
+        "maxActiveEvents": 10,
+        "notifyOnNewEvent": true,
+        "autoJoinRadius": 0
+    },
+
+    "weather": {
+        "enabled": false,
+        "provider": "openweathermap",
+        "apiUrl": "https://api.openweathermap.org/data/2.5/weather",
+        "apiKey": "",
+        "updateIntervalMinutes": 30,
+        "affectsGameplay": true
+    },
+
+    "debug": {
+        "enabled": true,
+        "logLocationUpdates": false,
+        "logGeofenceEvents": true,
+        "showDebugOverlay": false,
+        "htmlDebugPanel": {
+            "enabled": true,
+            "port": 8088,
+            "allowRemoteAccess": false
+        }
+    },
+
+    "platformOverrides": {
+        "android": {
+            "updates": {
+                "intervalMs": 2000
+            },
+            "accuracy": {
+                "default": "best"
+            },
+            "permissions": {
+                "requestBackgroundLocation": false
+            }
+        },
+        "ios": {
+            "updates": {
+                "intervalMs": 1000
+            },
+            "permissions": {
+                "usageDescriptionWhenInUse": "Your location is used to place you in the game world.",
+                "usageDescriptionAlways": "Background location is used to notify you of nearby events."
+            }
+        },
+        "linux": {
+            "geocoding": {
+                "provider": "nominatim"
+            },
+            "simulation": {
+                "allowInRelease": true
+            }
+        },
+        "windows": {
+            "updates": {
+                "intervalMs": 2000
+            }
+        },
+        "macos": {
+            "permissions": {
+                "usageDescription": "Your location is used to place you in the game world."
+            }
+        }
+    }
+}

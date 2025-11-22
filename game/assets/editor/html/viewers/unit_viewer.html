@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unit Viewer - Nova3D Editor</title>
 
+    <!-- Design System -->
+    <link rel="stylesheet" href="../design/design_tokens.css">
+    <link rel="stylesheet" href="../design/theme_dark.css">
+    <link rel="stylesheet" href="../design/components.css">
+    <link rel="stylesheet" href="../design/layout.css">
+    <link rel="stylesheet" href="../design/icons.css">
+
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -18,96 +25,70 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
 
     <style>
-        :root {
-            --bg-primary: #1e1e1e;
-            --bg-secondary: #252526;
-            --bg-tertiary: #2d2d30;
-            --bg-hover: #3e3e42;
-            --border-color: #3c3c3c;
-            --text-primary: #cccccc;
-            --text-secondary: #9d9d9d;
-            --text-bright: #ffffff;
-            --accent-primary: #007acc;
-            --success: #4ec9b0;
-            --warning: #dcdcaa;
-            --error: #f14c4c;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 13px;
-            color: var(--text-primary);
-            background: var(--bg-primary);
-            height: 100vh;
-            overflow: hidden;
-        }
-
+        /* Viewer Layout - Using design tokens */
         .viewer-container {
             display: flex;
             flex-direction: column;
             height: 100vh;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
-        .toolbar {
+        /* Toolbar */
+        .viewer-toolbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 12px;
+            padding: var(--space-2) var(--space-3);
             background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-default);
+            gap: var(--space-2);
         }
 
-        .toolbar-left, .toolbar-right {
+        .viewer-toolbar-left,
+        .viewer-toolbar-right {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
-        .toolbar h1 {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-bright);
+        .viewer-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--text-primary);
+            margin: 0;
         }
 
         .dirty-indicator {
-            color: var(--warning);
-            font-size: 18px;
+            color: var(--color-yellow-400);
+            font-size: var(--text-lg);
             display: none;
         }
 
-        .btn {
-            padding: 6px 12px;
-            font-size: 13px;
-            color: var(--text-primary);
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        .btn:hover { background: var(--bg-hover); }
-        .btn-primary { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
-        .btn-small { padding: 4px 8px; font-size: 12px; }
-
+        /* Main content area */
         .main-content {
             display: flex;
             flex: 1;
             overflow: hidden;
         }
 
+        /* Properties Panel */
         .properties-panel {
             width: 320px;
+            min-width: 280px;
             background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-default);
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
+        /* Preview Area */
         .preview-area {
             flex: 1;
             display: flex;
             flex-direction: column;
+            background: var(--bg-tertiary);
         }
 
         .preview-canvas {
@@ -123,82 +104,95 @@
         .preview-controls {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
+            gap: var(--space-3);
+            padding: var(--space-2) var(--space-3);
             background: var(--bg-secondary);
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-default);
         }
 
+        /* Collapsible Sections */
         .section {
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-default);
         }
 
         .section-header {
             display: flex;
             align-items: center;
-            padding: 10px 12px;
+            padding: var(--space-2) var(--space-3);
             cursor: pointer;
-            font-weight: 500;
-            color: var(--text-bright);
+            font-weight: var(--font-medium);
+            color: var(--text-primary);
             user-select: none;
+            transition: background var(--transition-fast);
         }
 
-        .section-header:hover { background: var(--bg-hover); }
-
-        .section-header .icon {
-            margin-right: 8px;
-            font-size: 10px;
-            transition: transform 0.2s;
+        .section-header:hover {
+            background: var(--bg-hover);
         }
 
-        .section.collapsed .section-header .icon { transform: rotate(-90deg); }
-        .section.collapsed .section-content { display: none; }
+        .section-header .section-icon {
+            margin-right: var(--space-2);
+            font-size: var(--text-xs);
+            transition: transform var(--transition-fast);
+        }
+
+        .section.collapsed .section-header .section-icon {
+            transform: rotate(-90deg);
+        }
+
+        .section.collapsed .section-content {
+            display: none;
+        }
 
         .section-content {
-            padding: 12px;
+            padding: var(--space-3);
         }
 
+        /* Form Elements */
         .form-group {
-            margin-bottom: 12px;
+            margin-bottom: var(--space-3);
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: var(--space-1);
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: var(--text-sm);
         }
 
-        input[type="text"],
-        input[type="number"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 6px 8px;
-            font-size: 13px;
-            color: var(--text-primary);
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-        }
-
+        /* Vector3 Input */
         .vector3-input {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 4px;
+            gap: var(--space-1);
         }
 
-        .vector3-input input { text-align: center; }
+        .vector3-input input {
+            text-align: center;
+        }
 
+        /* Stat Row */
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--space-2);
+        }
+
+        .stat-row label {
+            width: 100px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+        }
+
+        .stat-row input {
+            flex: 1;
+        }
+
+        /* Checkbox Group */
         .checkbox-group {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: var(--space-3);
         }
 
         .checkbox-group label {
@@ -208,207 +202,201 @@
             cursor: pointer;
         }
 
-        .checkbox-group input { margin-right: 6px; }
+        .checkbox-group input {
+            margin-right: var(--space-1);
+        }
 
+        /* Array Editor */
         .array-editor {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .array-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px;
+            gap: var(--space-2);
+            padding: var(--space-2);
             background: var(--bg-tertiary);
-            border-radius: 3px;
+            border-radius: var(--radius-md);
         }
 
-        .array-item input, .array-item select { flex: 1; }
-
-        .btn-add {
-            color: var(--success);
-            border-style: dashed;
+        .array-item input,
+        .array-item select {
+            flex: 1;
         }
 
+        /* File Picker */
         .file-picker {
             display: flex;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
-        .file-picker input { flex: 1; }
-
-        .stat-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
+        .file-picker input {
+            flex: 1;
         }
 
-        .stat-row label {
-            width: 100px;
-            margin-bottom: 0;
-        }
-
-        .stat-row input { flex: 1; }
-
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .tab {
-            padding: 8px 16px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            color: var(--text-secondary);
-        }
-
-        .tab:hover { color: var(--text-primary); }
-        .tab.active {
-            color: var(--text-bright);
-            border-bottom-color: var(--accent-primary);
-        }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
+        /* Event Items */
         .events-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .event-item {
-            padding: 8px;
+            padding: var(--space-2);
             background: var(--bg-tertiary);
-            border-radius: 3px;
+            border-radius: var(--radius-md);
         }
 
         .event-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: var(--space-2);
         }
 
         .event-name {
-            font-weight: 500;
-            color: var(--text-bright);
+            font-weight: var(--font-medium);
+            color: var(--text-primary);
         }
 
+        /* Python Editor */
         .python-editor-container {
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
             overflow: hidden;
         }
 
         .CodeMirror {
             height: 150px;
-            font-size: 12px;
+            font-size: var(--text-sm);
+            font-family: var(--font-mono);
         }
 
+        /* Collision Panel */
         .collision-panel {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: var(--space-3);
+            right: var(--space-3);
             width: 250px;
             background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
         }
 
         .collision-panel-header {
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 500;
+            padding: var(--space-2) var(--space-3);
+            border-bottom: 1px solid var(--border-default);
+            font-weight: var(--font-medium);
         }
 
         .collision-panel-content {
-            padding: 12px;
+            padding: var(--space-3);
             max-height: 300px;
             overflow-y: auto;
         }
 
         .collision-tools {
             display: flex;
-            gap: 4px;
-            margin-bottom: 12px;
+            gap: var(--space-1);
+            margin-bottom: var(--space-3);
         }
 
         .collision-shape-list {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: var(--space-1);
         }
 
         .collision-shape-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 8px;
+            padding: var(--space-2);
             background: var(--bg-tertiary);
-            border-radius: 3px;
+            border-radius: var(--radius-md);
             cursor: pointer;
+            transition: background var(--transition-fast);
         }
 
-        .collision-shape-item:hover { background: var(--bg-hover); }
-        .collision-shape-item.selected { border: 1px solid var(--accent-primary); }
+        .collision-shape-item:hover {
+            background: var(--bg-hover);
+        }
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-primary); }
-        ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+        .collision-shape-item.selected {
+            border: 1px solid var(--accent-primary);
+        }
     </style>
 </head>
 <body>
     <div class="viewer-container">
-        <div class="toolbar">
-            <div class="toolbar-left">
-                <button class="btn" onclick="goBack()">Back</button>
-                <h1 id="unit-title">Unit Viewer</h1>
+        <!-- Toolbar -->
+        <div class="viewer-toolbar">
+            <div class="viewer-toolbar-left">
+                <button class="btn btn-sm btn-ghost" onclick="goBack()">
+                    <span data-icon="arrow-left"></span>
+                    Back
+                </button>
+                <h1 class="viewer-title" id="unit-title">Unit Viewer</h1>
                 <span class="dirty-indicator" id="dirty-indicator">*</span>
             </div>
-            <div class="toolbar-right">
-                <button class="btn" onclick="loadConfig()">Load</button>
-                <button class="btn" onclick="undo()">Undo</button>
-                <button class="btn" onclick="redo()">Redo</button>
-                <button class="btn btn-primary" onclick="saveConfig()">Save</button>
+            <div class="viewer-toolbar-right">
+                <button class="btn btn-sm btn-secondary" onclick="loadConfig()">
+                    <span data-icon="folder-open"></span>
+                    Load
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="undo()">
+                    <span data-icon="undo"></span>
+                    Undo
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="redo()">
+                    <span data-icon="redo"></span>
+                    Redo
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="saveConfig()">
+                    <span data-icon="save"></span>
+                    Save
+                </button>
             </div>
         </div>
 
         <div class="main-content">
+            <!-- Properties Panel -->
             <div class="properties-panel">
+                <!-- Tabs -->
                 <div class="tabs">
-                    <div class="tab active" data-tab="general">General</div>
-                    <div class="tab" data-tab="combat">Combat</div>
-                    <div class="tab" data-tab="visuals">Visuals</div>
-                    <div class="tab" data-tab="events">Events</div>
+                    <button class="tab active" data-tab="general">General</button>
+                    <button class="tab" data-tab="combat">Combat</button>
+                    <button class="tab" data-tab="visuals">Visuals</button>
+                    <button class="tab" data-tab="events">Events</button>
                 </div>
 
                 <!-- General Tab -->
                 <div class="tab-content active" id="tab-general">
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Basic Info</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>ID</label>
-                                <input type="text" id="unit-id" data-path="id" readonly>
+                                <input type="text" class="input" id="unit-id" data-path="id" readonly>
                             </div>
                             <div class="form-group">
                                 <label>Name</label>
-                                <input type="text" id="unit-name" data-path="name">
+                                <input type="text" class="input" id="unit-name" data-path="name">
                             </div>
                             <div class="form-group">
                                 <label>Description</label>
-                                <textarea id="unit-desc" data-path="description" rows="3"></textarea>
+                                <textarea class="input" id="unit-desc" data-path="description" rows="3"></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Type</label>
-                                <select id="unit-type" data-path="type">
+                                <select class="select" id="unit-type" data-path="type">
                                     <option value="zombie">Zombie</option>
                                     <option value="npc">NPC</option>
                                     <option value="creature">Creature</option>
@@ -419,61 +407,61 @@
                             </div>
                             <div class="form-group">
                                 <label>Subtype</label>
-                                <input type="text" data-path="subtype" placeholder="e.g., runner, tank">
+                                <input type="text" class="input" data-path="subtype" placeholder="e.g., runner, tank">
                             </div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Base Stats</span>
                         </div>
                         <div class="section-content">
                             <div class="stat-row">
                                 <label>Health</label>
-                                <input type="number" data-path="stats.health" value="100" min="1">
+                                <input type="number" class="input" data-path="stats.health" value="100" min="1">
                             </div>
                             <div class="stat-row">
                                 <label>Max Health</label>
-                                <input type="number" data-path="stats.maxHealth" value="100" min="1">
+                                <input type="number" class="input" data-path="stats.maxHealth" value="100" min="1">
                             </div>
                             <div class="stat-row">
                                 <label>Armor</label>
-                                <input type="number" data-path="stats.armor" value="0" min="0">
+                                <input type="number" class="input" data-path="stats.armor" value="0" min="0">
                             </div>
                             <div class="stat-row">
                                 <label>Magic Resist</label>
-                                <input type="number" data-path="stats.magicResist" value="0" min="0">
+                                <input type="number" class="input" data-path="stats.magicResist" value="0" min="0">
                             </div>
                             <div class="stat-row">
                                 <label>Damage</label>
-                                <input type="number" data-path="stats.damage" value="10" min="0">
+                                <input type="number" class="input" data-path="stats.damage" value="10" min="0">
                             </div>
                             <div class="stat-row">
                                 <label>Attack Speed</label>
-                                <input type="number" data-path="stats.attackSpeed" value="1" min="0.1" step="0.1">
+                                <input type="number" class="input" data-path="stats.attackSpeed" value="1" min="0.1" step="0.1">
                             </div>
                             <div class="stat-row">
                                 <label>Move Speed</label>
-                                <input type="number" data-path="stats.moveSpeed" value="5" min="0" step="0.1">
+                                <input type="number" class="input" data-path="stats.moveSpeed" value="5" min="0" step="0.1">
                             </div>
                             <div class="stat-row">
                                 <label>XP Value</label>
-                                <input type="number" data-path="stats.experience" value="10" min="0">
+                                <input type="number" class="input" data-path="stats.experience" value="10" min="0">
                             </div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Movement</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>Movement Type</label>
-                                <select data-path="movement.type">
+                                <select class="select" data-path="movement.type">
                                     <option value="walk">Walk</option>
                                     <option value="fly">Fly</option>
                                     <option value="swim">Swim</option>
@@ -483,19 +471,21 @@
                             </div>
                             <div class="stat-row">
                                 <label>Speed</label>
-                                <input type="number" data-path="movement.speed" value="5" min="0" step="0.1">
+                                <input type="number" class="input" data-path="movement.speed" value="5" min="0" step="0.1">
                             </div>
                             <div class="stat-row">
                                 <label>Acceleration</label>
-                                <input type="number" data-path="movement.acceleration" value="10" min="0" step="0.1">
+                                <input type="number" class="input" data-path="movement.acceleration" value="10" min="0" step="0.1">
                             </div>
                             <div class="stat-row">
                                 <label>Turn Speed</label>
-                                <input type="number" data-path="movement.turnSpeed" value="180" min="0">
+                                <input type="number" class="input" data-path="movement.turnSpeed" value="180" min="0">
                             </div>
                             <div class="form-group">
-                                <label>
-                                    <input type="checkbox" data-path="movement.canJump"> Can Jump
+                                <label class="checkbox">
+                                    <input type="checkbox" data-path="movement.canJump">
+                                    <span class="checkbox-mark"></span>
+                                    Can Jump
                                 </label>
                             </div>
                         </div>
@@ -506,13 +496,13 @@
                 <div class="tab-content" id="tab-combat">
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Attack Config</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>Attack Type</label>
-                                <select data-path="combat.attackType">
+                                <select class="select" data-path="combat.attackType">
                                     <option value="melee">Melee</option>
                                     <option value="ranged">Ranged</option>
                                     <option value="magic">Magic</option>
@@ -521,7 +511,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Damage Type</label>
-                                <select data-path="combat.damageType">
+                                <select class="select" data-path="combat.damageType">
                                     <option value="physical">Physical</option>
                                     <option value="magic">Magic</option>
                                     <option value="fire">Fire</option>
@@ -533,50 +523,52 @@
                             </div>
                             <div class="stat-row">
                                 <label>Attack Range</label>
-                                <input type="number" data-path="combat.attackRange" value="1" min="0" step="0.5">
+                                <input type="number" class="input" data-path="combat.attackRange" value="1" min="0" step="0.5">
                             </div>
                             <div class="stat-row">
                                 <label>Cooldown (s)</label>
-                                <input type="number" data-path="combat.attackCooldown" value="1" min="0" step="0.1">
+                                <input type="number" class="input" data-path="combat.attackCooldown" value="1" min="0" step="0.1">
                             </div>
                             <div class="form-group">
                                 <label>Projectile ID</label>
-                                <input type="text" data-path="combat.projectile" placeholder="projectile_arrow">
+                                <input type="text" class="input" data-path="combat.projectile" placeholder="projectile_arrow">
                             </div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Critical Hits</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
-                                <label>
-                                    <input type="checkbox" data-path="combat.canCritical"> Can Critical
+                                <label class="checkbox">
+                                    <input type="checkbox" data-path="combat.canCritical">
+                                    <span class="checkbox-mark"></span>
+                                    Can Critical
                                 </label>
                             </div>
                             <div class="stat-row">
                                 <label>Crit Chance</label>
-                                <input type="number" data-path="combat.criticalChance" value="0" min="0" max="1" step="0.01">
+                                <input type="number" class="input" data-path="combat.criticalChance" value="0" min="0" max="1" step="0.01">
                             </div>
                             <div class="stat-row">
                                 <label>Crit Multiplier</label>
-                                <input type="number" data-path="combat.criticalMultiplier" value="2" min="1" step="0.1">
+                                <input type="number" class="input" data-path="combat.criticalMultiplier" value="2" min="1" step="0.1">
                             </div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>AI Behavior</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>Behavior</label>
-                                <select data-path="ai.behavior">
+                                <select class="select" data-path="ai.behavior">
                                     <option value="aggressive">Aggressive</option>
                                     <option value="passive">Passive</option>
                                     <option value="defensive">Defensive</option>
@@ -588,15 +580,15 @@
                             </div>
                             <div class="stat-row">
                                 <label>Aggro Range</label>
-                                <input type="number" data-path="ai.aggroRange" value="10" min="0">
+                                <input type="number" class="input" data-path="ai.aggroRange" value="10" min="0">
                             </div>
                             <div class="stat-row">
                                 <label>Leash Range</label>
-                                <input type="number" data-path="ai.leashRange" value="30" min="0">
+                                <input type="number" class="input" data-path="ai.leashRange" value="30" min="0">
                             </div>
                             <div class="form-group">
                                 <label>Target Priority</label>
-                                <select data-path="ai.targetPriority">
+                                <select class="select" data-path="ai.targetPriority">
                                     <option value="nearest">Nearest</option>
                                     <option value="lowest_health">Lowest Health</option>
                                     <option value="highest_threat">Highest Threat</option>
@@ -608,12 +600,15 @@
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Abilities</span>
                         </div>
                         <div class="section-content">
                             <div class="array-editor" id="abilities-list"></div>
-                            <button class="btn btn-small btn-add" onclick="addAbility()">+ Add Ability</button>
+                            <button class="btn btn-sm btn-ghost btn-success mt-2" onclick="addAbility()">
+                                <span data-icon="plus"></span>
+                                Add Ability
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -622,28 +617,30 @@
                 <div class="tab-content" id="tab-visuals">
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Model</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>3D Model</label>
                                 <div class="file-picker">
-                                    <input type="text" data-path="visuals.model" placeholder="models/unit.gltf">
-                                    <button class="btn btn-small" onclick="browseModel()">Browse</button>
+                                    <input type="text" class="input" data-path="visuals.model" placeholder="models/unit.gltf">
+                                    <button class="btn btn-sm btn-secondary" onclick="browseModel()">Browse</button>
                                 </div>
                             </div>
                             <div class="stat-row">
                                 <label>Scale</label>
-                                <input type="number" data-path="visuals.scale" value="1" min="0.1" step="0.1">
+                                <input type="number" class="input" data-path="visuals.scale" value="1" min="0.1" step="0.1">
                             </div>
                             <div class="form-group">
                                 <label>Tint Color</label>
-                                <input type="color" data-path="visuals.tint" value="#ffffff">
+                                <input type="color" class="input" data-path="visuals.tint" value="#ffffff">
                             </div>
                             <div class="form-group">
-                                <label>
-                                    <input type="checkbox" data-path="visuals.shadow" checked> Cast Shadow
+                                <label class="checkbox">
+                                    <input type="checkbox" data-path="visuals.shadow" checked>
+                                    <span class="checkbox-mark"></span>
+                                    Cast Shadow
                                 </label>
                             </div>
                         </div>
@@ -651,63 +648,63 @@
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Animations</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>Idle</label>
-                                <input type="text" data-path="visuals.animations.idle" placeholder="idle">
+                                <input type="text" class="input" data-path="visuals.animations.idle" placeholder="idle">
                             </div>
                             <div class="form-group">
                                 <label>Walk</label>
-                                <input type="text" data-path="visuals.animations.walk" placeholder="walk">
+                                <input type="text" class="input" data-path="visuals.animations.walk" placeholder="walk">
                             </div>
                             <div class="form-group">
                                 <label>Run</label>
-                                <input type="text" data-path="visuals.animations.run" placeholder="run">
+                                <input type="text" class="input" data-path="visuals.animations.run" placeholder="run">
                             </div>
                             <div class="form-group">
                                 <label>Attack</label>
-                                <input type="text" data-path="visuals.animations.attack" placeholder="attack">
+                                <input type="text" class="input" data-path="visuals.animations.attack" placeholder="attack">
                             </div>
                             <div class="form-group">
                                 <label>Death</label>
-                                <input type="text" data-path="visuals.animations.death" placeholder="death">
+                                <input type="text" class="input" data-path="visuals.animations.death" placeholder="death">
                             </div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Audio</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>Spawn Sound</label>
-                                <input type="text" data-path="audio.spawn" placeholder="sounds/spawn.wav">
+                                <input type="text" class="input" data-path="audio.spawn" placeholder="sounds/spawn.wav">
                             </div>
                             <div class="form-group">
                                 <label>Attack Sound</label>
-                                <input type="text" data-path="audio.attack" placeholder="sounds/attack.wav">
+                                <input type="text" class="input" data-path="audio.attack" placeholder="sounds/attack.wav">
                             </div>
                             <div class="form-group">
                                 <label>Death Sound</label>
-                                <input type="text" data-path="audio.death" placeholder="sounds/death.wav">
+                                <input type="text" class="input" data-path="audio.death" placeholder="sounds/death.wav">
                             </div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Collision Shape</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>Shape Type</label>
-                                <select id="collision-type" data-path="collision.type" onchange="updateCollisionShape()">
+                                <select class="select" id="collision-type" data-path="collision.type" onchange="updateCollisionShape()">
                                     <option value="box">Box</option>
                                     <option value="sphere">Sphere</option>
                                     <option value="capsule">Capsule</option>
@@ -717,20 +714,20 @@
                             <div class="form-group" id="collision-size-box">
                                 <label>Size</label>
                                 <div class="vector3-input">
-                                    <input type="number" data-path="collision.size.x" placeholder="W" step="0.1" value="1">
-                                    <input type="number" data-path="collision.size.y" placeholder="H" step="0.1" value="2">
-                                    <input type="number" data-path="collision.size.z" placeholder="D" step="0.1" value="1">
+                                    <input type="number" class="input" data-path="collision.size.x" placeholder="W" step="0.1" value="1">
+                                    <input type="number" class="input" data-path="collision.size.y" placeholder="H" step="0.1" value="2">
+                                    <input type="number" class="input" data-path="collision.size.z" placeholder="D" step="0.1" value="1">
                                 </div>
                             </div>
                             <div class="form-group" id="collision-radius" style="display:none;">
                                 <label>Radius</label>
-                                <input type="number" data-path="collision.radius" value="0.5" step="0.1">
+                                <input type="number" class="input" data-path="collision.radius" value="0.5" step="0.1">
                             </div>
                             <div class="form-group" id="collision-height" style="display:none;">
                                 <label>Height</label>
-                                <input type="number" data-path="collision.height" value="2" step="0.1">
+                                <input type="number" class="input" data-path="collision.height" value="2" step="0.1">
                             </div>
-                            <button class="btn btn-small" onclick="toggleCollisionEditor()">Edit in 3D</button>
+                            <button class="btn btn-sm btn-secondary" onclick="toggleCollisionEditor()">Edit in 3D</button>
                         </div>
                     </div>
                 </div>
@@ -739,15 +736,15 @@
                 <div class="tab-content" id="tab-events">
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Python Script</span>
                         </div>
                         <div class="section-content">
                             <div class="form-group">
                                 <label>Script Path</label>
                                 <div class="file-picker">
-                                    <input type="text" id="script-path" data-path="events.script" placeholder="scripts/unit_behavior.py">
-                                    <button class="btn btn-small" onclick="browsePythonScript()">Browse</button>
+                                    <input type="text" class="input" id="script-path" data-path="events.script" placeholder="scripts/unit_behavior.py">
+                                    <button class="btn btn-sm btn-secondary" onclick="browsePythonScript()">Browse</button>
                                 </div>
                             </div>
                         </div>
@@ -755,7 +752,7 @@
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Event Bindings</span>
                         </div>
                         <div class="section-content">
@@ -763,49 +760,49 @@
                                 <div class="event-item">
                                     <div class="event-item-header">
                                         <span class="event-name">OnCreate</span>
-                                        <button class="btn btn-small" onclick="toggleEventEditor('OnCreate')">Edit</button>
+                                        <button class="btn btn-xs btn-ghost" onclick="toggleEventEditor('OnCreate')">Edit</button>
                                     </div>
-                                    <input type="text" data-path="events.OnCreate" placeholder="on_unit_create">
+                                    <input type="text" class="input" data-path="events.OnCreate" placeholder="on_unit_create">
                                 </div>
 
                                 <div class="event-item">
                                     <div class="event-item-header">
                                         <span class="event-name">OnTick</span>
-                                        <button class="btn btn-small" onclick="toggleEventEditor('OnTick')">Edit</button>
+                                        <button class="btn btn-xs btn-ghost" onclick="toggleEventEditor('OnTick')">Edit</button>
                                     </div>
-                                    <input type="text" data-path="events.OnTick" placeholder="on_unit_tick">
+                                    <input type="text" class="input" data-path="events.OnTick" placeholder="on_unit_tick">
                                 </div>
 
                                 <div class="event-item">
                                     <div class="event-item-header">
                                         <span class="event-name">OnDamage</span>
-                                        <button class="btn btn-small" onclick="toggleEventEditor('OnDamage')">Edit</button>
+                                        <button class="btn btn-xs btn-ghost" onclick="toggleEventEditor('OnDamage')">Edit</button>
                                     </div>
-                                    <input type="text" data-path="events.OnDamage" placeholder="on_unit_damage">
+                                    <input type="text" class="input" data-path="events.OnDamage" placeholder="on_unit_damage">
                                 </div>
 
                                 <div class="event-item">
                                     <div class="event-item-header">
                                         <span class="event-name">OnDeath</span>
-                                        <button class="btn btn-small" onclick="toggleEventEditor('OnDeath')">Edit</button>
+                                        <button class="btn btn-xs btn-ghost" onclick="toggleEventEditor('OnDeath')">Edit</button>
                                     </div>
-                                    <input type="text" data-path="events.OnDeath" placeholder="on_unit_death">
+                                    <input type="text" class="input" data-path="events.OnDeath" placeholder="on_unit_death">
                                 </div>
 
                                 <div class="event-item">
                                     <div class="event-item-header">
                                         <span class="event-name">OnAttack</span>
-                                        <button class="btn btn-small" onclick="toggleEventEditor('OnAttack')">Edit</button>
+                                        <button class="btn btn-xs btn-ghost" onclick="toggleEventEditor('OnAttack')">Edit</button>
                                     </div>
-                                    <input type="text" data-path="events.OnAttack" placeholder="on_unit_attack">
+                                    <input type="text" class="input" data-path="events.OnAttack" placeholder="on_unit_attack">
                                 </div>
 
                                 <div class="event-item">
                                     <div class="event-item-header">
                                         <span class="event-name">OnKill</span>
-                                        <button class="btn btn-small" onclick="toggleEventEditor('OnKill')">Edit</button>
+                                        <button class="btn btn-xs btn-ghost" onclick="toggleEventEditor('OnKill')">Edit</button>
                                     </div>
-                                    <input type="text" data-path="events.OnKill" placeholder="on_unit_kill">
+                                    <input type="text" class="input" data-path="events.OnKill" placeholder="on_unit_kill">
                                 </div>
                             </div>
                         </div>
@@ -813,22 +810,23 @@
 
                     <div class="section">
                         <div class="section-header" onclick="toggleSection(this)">
-                            <span class="icon">&#x25BC;</span>
+                            <span class="section-icon" data-icon="chevron-down"></span>
                             <span>Inline Script Editor</span>
                         </div>
                         <div class="section-content">
                             <div class="python-editor-container">
                                 <div id="python-editor"></div>
                             </div>
-                            <div style="margin-top: 8px;">
-                                <button class="btn btn-small" onclick="runScript()">Run Script</button>
-                                <button class="btn btn-small" onclick="saveScriptToFile()">Save to File</button>
+                            <div class="mt-2 flex gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="runScript()">Run Script</button>
+                                <button class="btn btn-sm btn-secondary" onclick="saveScriptToFile()">Save to File</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Preview Area -->
             <div class="preview-area">
                 <div class="preview-canvas" id="preview-container">
                     <canvas id="preview-canvas"></canvas>
@@ -838,9 +836,9 @@
                         <div class="collision-panel-header">Collision Editor</div>
                         <div class="collision-panel-content">
                             <div class="collision-tools">
-                                <button class="btn btn-small" onclick="addCollisionBox()">Box</button>
-                                <button class="btn btn-small" onclick="addCollisionSphere()">Sphere</button>
-                                <button class="btn btn-small" onclick="addCollisionCapsule()">Capsule</button>
+                                <button class="btn btn-xs btn-secondary" onclick="addCollisionBox()">Box</button>
+                                <button class="btn btn-xs btn-secondary" onclick="addCollisionSphere()">Sphere</button>
+                                <button class="btn btn-xs btn-secondary" onclick="addCollisionCapsule()">Capsule</button>
                             </div>
                             <div class="collision-shape-list" id="collision-shapes"></div>
                         </div>
@@ -848,29 +846,43 @@
                 </div>
 
                 <div class="preview-controls">
-                    <label>Animation:</label>
-                    <select id="animation-select" onchange="playAnimation()">
+                    <label class="text-sm text-secondary">Animation:</label>
+                    <select class="select select-sm" id="animation-select" onchange="playAnimation()">
                         <option value="idle">Idle</option>
                         <option value="walk">Walk</option>
                         <option value="run">Run</option>
                         <option value="attack">Attack</option>
                         <option value="death">Death</option>
                     </select>
-                    <button class="btn btn-small" onclick="resetCamera()">Reset Camera</button>
-                    <label>
-                        <input type="checkbox" id="show-collision" onchange="toggleCollisionView()"> Show Collision
+                    <button class="btn btn-sm btn-ghost" onclick="resetCamera()">
+                        <span data-icon="refresh"></span>
+                        Reset Camera
+                    </button>
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox" id="show-collision" onchange="toggleCollisionView()">
+                        <span class="checkbox-mark"></span>
+                        Show Collision
                     </label>
-                    <label>
-                        <input type="checkbox" id="show-grid" checked onchange="toggleGrid()"> Show Grid
+                    <label class="checkbox checkbox-sm">
+                        <input type="checkbox" id="show-grid" checked onchange="toggleGrid()">
+                        <span class="checkbox-mark"></span>
+                        Show Grid
                     </label>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="../editor_core.js"></script>
+    <!-- Design System Scripts -->
+    <script src="../design/design_tokens.js"></script>
+    <script src="../design/icons.js"></script>
+    <script src="../design/components.js"></script>
+    <script src="../js/editor_core.js"></script>
+    <script src="../js/editor_layout.js"></script>
+    <script src="../js/editor_3d.js"></script>
     <script src="../js/viewer_common.js"></script>
     <script src="../js/collision_editor.js"></script>
+
     <script>
         // ====================================================================
         // Global Variables
@@ -888,6 +900,10 @@
         // Initialization
         // ====================================================================
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize icons
+            NovaIcons.replaceIcons();
+
+            // Initialize scene
             initScene();
             initTabs();
             initFormBindings();
@@ -942,7 +958,7 @@
                 });
 
                 if (input.type === 'text' || input.tagName === 'TEXTAREA') {
-                    input.addEventListener('input', debounce(function() {
+                    input.addEventListener('input', EditorCore.Utils.debounce(function() {
                         const path = this.getAttribute('data-path');
                         const value = getInputValue(this);
                         setPath(configData, path, value);
@@ -1011,7 +1027,7 @@
         }
 
         function loadConfig() {
-            viewerBridge.browseFile('*.json').then(path => {
+            EditorCore.Bridge.browseFile('*.json').then(path => {
                 if (path) {
                     loadConfigFromPath(path);
                 }
@@ -1022,7 +1038,7 @@
 
         function loadConfigFromPath(path) {
             currentFile = path;
-            viewerBridge.loadConfig(path).then(data => {
+            EditorCore.Bridge.loadConfig(path).then(data => {
                 configData = data;
                 originalData = JSON.parse(JSON.stringify(data));
                 populateForm();
@@ -1039,12 +1055,13 @@
                 setDirty(false);
             }).catch(err => {
                 console.error('Load failed:', err);
+                EditorCore.Notifications.error('Failed to load config');
             });
         }
 
         function saveConfig() {
             if (!currentFile) {
-                viewerBridge.browseFile('*.json').then(path => {
+                EditorCore.Bridge.browseFile('*.json').then(path => {
                     if (path) {
                         currentFile = path;
                         doSave();
@@ -1056,11 +1073,13 @@
         }
 
         function doSave() {
-            viewerBridge.saveConfig(currentFile, configData).then(() => {
+            EditorCore.Bridge.saveConfig(currentFile, configData).then(() => {
                 originalData = JSON.parse(JSON.stringify(configData));
                 setDirty(false);
+                EditorCore.Notifications.success('Config saved successfully');
             }).catch(err => {
                 console.error('Save failed:', err);
+                EditorCore.Notifications.error('Failed to save config');
             });
         }
 
@@ -1094,7 +1113,7 @@
         }
 
         // ====================================================================
-        // Undo/Redo
+        // Undo/Redo - Using EditorCore.UndoRedo
         // ====================================================================
         function saveUndoState() {
             undoStack.push(JSON.parse(JSON.stringify(configData)));
@@ -1128,7 +1147,6 @@
             document.getElementById('collision-radius').style.display = (type === 'sphere' || type === 'capsule' || type === 'cylinder') ? 'block' : 'none';
             document.getElementById('collision-height').style.display = (type === 'capsule' || type === 'cylinder') ? 'block' : 'none';
 
-            // Update 3D collision visualization
             collisionEditor.clearAll();
             const collision = configData.collision || {};
 
@@ -1192,17 +1210,9 @@
             collisionEditor.importFromJSON({ shapes: [collision] });
         }
 
-        function addCollisionBox() {
-            collisionEditor.createBox();
-        }
-
-        function addCollisionSphere() {
-            collisionEditor.createSphere();
-        }
-
-        function addCollisionCapsule() {
-            collisionEditor.createCapsule();
-        }
+        function addCollisionBox() { collisionEditor.createBox(); }
+        function addCollisionSphere() { collisionEditor.createSphere(); }
+        function addCollisionCapsule() { collisionEditor.createCapsule(); }
 
         // ====================================================================
         // Abilities
@@ -1213,14 +1223,18 @@
 
             container.innerHTML = abilities.map((ability, index) => `
                 <div class="array-item">
-                    <input type="text" value="${ability.abilityId || ''}"
+                    <input type="text" class="input" value="${ability.abilityId || ''}"
                            onchange="updateAbility(${index}, 'abilityId', this.value)">
-                    <input type="number" value="${ability.cooldown || 0}" min="0" step="0.1"
-                           style="width: 60px;" title="Cooldown"
+                    <input type="number" class="input" value="${ability.cooldown || 0}" min="0" step="0.1"
+                           style="width: 80px;" title="Cooldown"
                            onchange="updateAbility(${index}, 'cooldown', parseFloat(this.value))">
-                    <button class="btn btn-small" onclick="removeAbility(${index})">X</button>
+                    <button class="btn btn-xs btn-ghost btn-danger" onclick="removeAbility(${index})">
+                        <span data-icon="x"></span>
+                    </button>
                 </div>
             `).join('');
+
+            NovaIcons.replaceIcons(container);
         }
 
         function addAbility() {
@@ -1248,11 +1262,10 @@
         // Python Script
         // ====================================================================
         function toggleEventEditor(eventName) {
-            // Focus the inline editor and load template for the event
             const templates = {
                 OnCreate: 'def on_unit_create(unit):\n    """Called when the unit is created."""\n    pass',
                 OnTick: 'def on_unit_tick(unit, delta_time):\n    """Called every frame."""\n    pass',
-                OnDamage: 'def on_unit_damage(unit, damage, source):\n    """Called when the unit takes damage."""\n    return damage  # Return modified damage',
+                OnDamage: 'def on_unit_damage(unit, damage, source):\n    """Called when the unit takes damage."""\n    return damage',
                 OnDeath: 'def on_unit_death(unit, killer):\n    """Called when the unit dies."""\n    pass',
                 OnAttack: 'def on_unit_attack(unit, target):\n    """Called when the unit attacks."""\n    pass',
                 OnKill: 'def on_unit_kill(unit, victim):\n    """Called when the unit kills another."""\n    pass'
@@ -1266,10 +1279,12 @@
         function runScript() {
             if (pythonEditor) {
                 const script = pythonEditor.getValue();
-                viewerBridge.executePython(script).then(result => {
+                EditorCore.Bridge.executePython(script).then(result => {
                     console.log('Script result:', result);
+                    EditorCore.Notifications.success('Script executed');
                 }).catch(err => {
                     console.error('Script error:', err);
+                    EditorCore.Notifications.error('Script error: ' + err);
                 });
             }
         }
@@ -1279,7 +1294,7 @@
         }
 
         function browsePythonScript() {
-            viewerBridge.browseFile('*.py').then(path => {
+            EditorCore.Bridge.browseFile('*.py').then(path => {
                 if (path) {
                     document.getElementById('script-path').value = path;
                     setPath(configData, 'events.script', path);
@@ -1306,7 +1321,7 @@
         }
 
         function browseModel() {
-            viewerBridge.browseFile('*.gltf,*.glb').then(path => {
+            EditorCore.Bridge.browseFile('*.gltf,*.glb').then(path => {
                 if (path) {
                     setPath(configData, 'visuals.model', path);
                     document.querySelector('[data-path="visuals.model"]').value = path;
@@ -1371,14 +1386,6 @@
             } else {
                 input.value = value !== undefined && value !== null ? value : '';
             }
-        }
-
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
         }
 
         // Keyboard shortcuts

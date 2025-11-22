@@ -1,0 +1,253 @@
+{
+  "id": "combat_ranged",
+  "name": "Ranged Combat State Machine",
+  "defaultState": "idle",
+
+  "parameters": [
+    { "name": "attack", "type": "trigger" },
+    { "name": "aiming", "type": "bool", "defaultValue": false },
+    { "name": "aimX", "type": "float", "defaultValue": 0 },
+    { "name": "aimY", "type": "float", "defaultValue": 0 },
+    { "name": "reload", "type": "trigger" },
+    { "name": "ammo", "type": "int", "defaultValue": 10 },
+    { "name": "weaponType", "type": "int", "defaultValue": 0 },
+    { "name": "hurt", "type": "trigger" },
+    { "name": "death", "type": "trigger" }
+  ],
+
+  "states": [
+    {
+      "name": "idle",
+      "clip": "animations/ranged/idle",
+      "loop": true,
+      "transitions": [
+        {
+          "to": "aim_start",
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_true" }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "reload",
+          "conditions": [
+            { "parameter": "reload", "mode": "if_true" }
+          ],
+          "duration": 0.2
+        },
+        {
+          "to": "hurt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05
+        }
+      ]
+    },
+    {
+      "name": "aim_start",
+      "clip": "animations/ranged/aim_start",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "aim_hold",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "aim_end",
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_false" }
+          ],
+          "duration": 0.15
+        }
+      ]
+    },
+    {
+      "name": "aim_hold",
+      "blendTree": {
+        "type": "simple_2d",
+        "parameterX": "aimX",
+        "parameterY": "aimY",
+        "children": [
+          { "clip": "animations/ranged/aim_up", "position": { "x": 0, "y": 1 } },
+          { "clip": "animations/ranged/aim_center", "position": { "x": 0, "y": 0 } },
+          { "clip": "animations/ranged/aim_down", "position": { "x": 0, "y": -1 } },
+          { "clip": "animations/ranged/aim_left", "position": { "x": -1, "y": 0 } },
+          { "clip": "animations/ranged/aim_right", "position": { "x": 1, "y": 0 } }
+        ]
+      },
+      "loop": true,
+      "transitions": [
+        {
+          "to": "fire",
+          "conditions": [
+            { "parameter": "attack", "mode": "if_true" },
+            { "parameter": "ammo", "mode": "greater", "threshold": 0 }
+          ],
+          "duration": 0.05
+        },
+        {
+          "to": "aim_end",
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_false" }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "reload",
+          "conditions": [
+            { "parameter": "reload", "mode": "if_true" }
+          ],
+          "duration": 0.2
+        }
+      ]
+    },
+    {
+      "name": "aim_end",
+      "clip": "animations/ranged/aim_end",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "duration": 0.15
+        },
+        {
+          "to": "aim_start",
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "fire",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "weaponType",
+        "children": [
+          { "clip": "animations/ranged/fire_pistol", "threshold": 0 },
+          { "clip": "animations/ranged/fire_rifle", "threshold": 1 },
+          { "clip": "animations/ranged/fire_shotgun", "threshold": 2 },
+          { "clip": "animations/ranged/fire_bow", "threshold": 3 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/gunshot" } },
+        {
+          "time": 0.1,
+          "name": "spawn_projectile",
+          "data": {
+            "type": "bullet",
+            "bone": "muzzle",
+            "offset": { "x": 0, "y": 0, "z": 0.1 }
+          }
+        },
+        {
+          "time": 0.1,
+          "name": "spawn_vfx",
+          "data": {
+            "vfx": "vfx/muzzle_flash",
+            "bone": "muzzle"
+          }
+        },
+        { "time": 0.15, "name": "spawn_vfx", "data": { "vfx": "vfx/shell_eject", "bone": "ejector" } }
+      ],
+      "transitions": [
+        {
+          "to": "aim_hold",
+          "hasExitTime": true,
+          "exitTime": 0.7,
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.7,
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_false" }
+          ],
+          "duration": 0.2
+        }
+      ]
+    },
+    {
+      "name": "reload",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "weaponType",
+        "children": [
+          { "clip": "animations/ranged/reload_pistol", "threshold": 0 },
+          { "clip": "animations/ranged/reload_rifle", "threshold": 1 },
+          { "clip": "animations/ranged/reload_shotgun", "threshold": 2 },
+          { "clip": "animations/ranged/reload_bow", "threshold": 3 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.2, "name": "play_sound", "data": { "sound": "sfx/mag_out" } },
+        { "time": 0.5, "name": "play_sound", "data": { "sound": "sfx/mag_in" } },
+        { "time": 0.7, "name": "play_sound", "data": { "sound": "sfx/weapon_cock" } },
+        { "time": 0.75, "name": "reload_complete", "data": {} }
+      ],
+      "transitions": [
+        {
+          "to": "aim_hold",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_true" }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.2
+        },
+        {
+          "to": "hurt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 10
+        }
+      ]
+    },
+    {
+      "name": "hurt",
+      "clip": "animations/ranged/hurt",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "aim_hold",
+          "hasExitTime": true,
+          "exitTime": 0.7,
+          "conditions": [
+            { "parameter": "aiming", "mode": "if_true" }
+          ],
+          "duration": 0.15
+        },
+        {
+          "to": "idle",
+          "hasExitTime": true,
+          "exitTime": 0.7,
+          "duration": 0.2
+        }
+      ]
+    }
+  ]
+}

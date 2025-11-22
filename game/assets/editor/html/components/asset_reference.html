@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Reference Picker Component</title>
+    <link rel="stylesheet" href="../design/design_tokens.css">
+    <link rel="stylesheet" href="../design/components.css">
+    <link rel="stylesheet" href="../design/layout.css">
+    <style>
+        /* Asset Reference Picker Styles */
+        .asset-reference {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            min-height: 48px;
+        }
+
+        .asset-reference:hover {
+            border-color: var(--border-emphasis);
+        }
+
+        .asset-reference.drag-over {
+            border-color: var(--accent-primary);
+            background: var(--bg-selected);
+        }
+
+        .asset-reference-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-default);
+            flex-shrink: 0;
+        }
+
+        .asset-reference-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .asset-reference-name {
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .asset-reference-type {
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+        }
+
+        .asset-reference-empty {
+            font-size: var(--text-sm);
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .asset-reference-actions {
+            display: flex;
+            gap: var(--space-1);
+        }
+
+        /* Asset Browser Dropdown */
+        .asset-browser-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: var(--space-1);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-dark-lg);
+            z-index: var(--z-dropdown);
+            max-height: 300px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .asset-browser-dropdown.visible {
+            display: block;
+        }
+
+        .asset-browser-search {
+            padding: var(--space-2);
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .asset-browser-search input {
+            width: 100%;
+        }
+
+        .asset-browser-list {
+            overflow-y: auto;
+            max-height: 220px;
+        }
+
+        .asset-browser-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            cursor: pointer;
+            transition: var(--transition-colors);
+        }
+
+        .asset-browser-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .asset-browser-item.selected {
+            background: var(--bg-selected);
+        }
+
+        .asset-browser-item-icon {
+            font-size: 16px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .asset-browser-item-name {
+            flex: 1;
+            font-size: var(--text-sm);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .asset-browser-item-id {
+            font-size: var(--text-xs);
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .asset-browser-empty {
+            padding: var(--space-6);
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        /* Wrapper for positioning */
+        .asset-reference-wrapper {
+            position: relative;
+        }
+
+        /* Demo styles */
+        .demo-container {
+            padding: var(--space-6);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            margin-bottom: var(--space-6);
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .property-label {
+            width: 120px;
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            color: var(--text-secondary);
+        }
+
+        .property-value {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="text-2xl font-semibold mb-6">Asset Reference Picker</h1>
+
+        <div class="demo-section">
+            <h3 class="text-md font-semibold mb-4">Properties Panel Example</h3>
+            <div class="card">
+                <div class="card-body">
+                    <!-- Unit Reference -->
+                    <div class="property-row">
+                        <span class="property-label">Target Unit</span>
+                        <div class="property-value">
+                            <div class="asset-reference-wrapper" id="unit-ref-wrapper">
+                                <div class="asset-reference" id="unit-ref" data-type="units">
+                                    <span class="asset-reference-icon">&#x2694;</span>
+                                    <div class="asset-reference-info">
+                                        <div class="asset-reference-name">Warrior</div>
+                                        <div class="asset-reference-type">units/warrior</div>
+                                    </div>
+                                    <div class="asset-reference-actions">
+                                        <button class="btn btn-icon btn-ghost btn-xs browse-btn" title="Browse">
+                                            <span data-icon="folder"></span>
+                                        </button>
+                                        <button class="btn btn-icon btn-ghost btn-xs goto-btn" title="Go to Asset">
+                                            <span data-icon="external-link"></span>
+                                        </button>
+                                        <button class="btn btn-icon btn-ghost btn-xs clear-btn" title="Clear">
+                                            <span data-icon="x"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="asset-browser-dropdown" id="unit-browser">
+                                    <div class="asset-browser-search">
+                                        <input type="text" placeholder="Search units...">
+                                    </div>
+                                    <div class="asset-browser-list">
+                                        <!-- Items populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Effect Reference (Empty) -->
+                    <div class="property-row">
+                        <span class="property-label">Spawn Effect</span>
+                        <div class="property-value">
+                            <div class="asset-reference-wrapper" id="effect-ref-wrapper">
+                                <div class="asset-reference" id="effect-ref" data-type="effects">
+                                    <span class="asset-reference-icon">&#x2747;</span>
+                                    <div class="asset-reference-info">
+                                        <span class="asset-reference-empty">None (drag asset here)</span>
+                                    </div>
+                                    <div class="asset-reference-actions">
+                                        <button class="btn btn-icon btn-ghost btn-xs browse-btn" title="Browse">
+                                            <span data-icon="folder"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="asset-browser-dropdown" id="effect-browser">
+                                    <div class="asset-browser-search">
+                                        <input type="text" placeholder="Search effects...">
+                                    </div>
+                                    <div class="asset-browser-list">
+                                        <!-- Items populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spell Reference -->
+                    <div class="property-row">
+                        <span class="property-label">Ability</span>
+                        <div class="property-value">
+                            <div class="asset-reference-wrapper" id="spell-ref-wrapper">
+                                <div class="asset-reference" id="spell-ref" data-type="spells">
+                                    <span class="asset-reference-icon">&#x2728;</span>
+                                    <div class="asset-reference-info">
+                                        <div class="asset-reference-name">Fireball</div>
+                                        <div class="asset-reference-type">spells/fireball</div>
+                                    </div>
+                                    <div class="asset-reference-actions">
+                                        <button class="btn btn-icon btn-ghost btn-xs browse-btn" title="Browse">
+                                            <span data-icon="folder"></span>
+                                        </button>
+                                        <button class="btn btn-icon btn-ghost btn-xs goto-btn" title="Go to Asset">
+                                            <span data-icon="external-link"></span>
+                                        </button>
+                                        <button class="btn btn-icon btn-ghost btn-xs clear-btn" title="Clear">
+                                            <span data-icon="x"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="asset-browser-dropdown" id="spell-browser">
+                                    <div class="asset-browser-search">
+                                        <input type="text" placeholder="Search spells...">
+                                    </div>
+                                    <div class="asset-browser-list">
+                                        <!-- Items populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3 class="text-md font-semibold mb-4">Selected Assets</h3>
+            <pre id="output" class="p-4 bg-tertiary rounded-lg text-sm font-mono">{}</pre>
+        </div>
+    </div>
+
+    <script src="../design/design_tokens.js"></script>
+    <script src="../design/icons.js"></script>
+    <script>
+    /**
+     * Asset Reference Picker
+     */
+    class AssetReferencePicker {
+        constructor(wrapperId, options = {}) {
+            this.wrapper = document.getElementById(wrapperId);
+            this.refElement = this.wrapper.querySelector('.asset-reference');
+            this.dropdown = this.wrapper.querySelector('.asset-browser-dropdown');
+            this.type = this.refElement.dataset.type;
+            this.value = options.value || null;
+            this.onChange = options.onChange || null;
+
+            // Demo data
+            this.assets = this._getDemoAssets();
+
+            this._init();
+        }
+
+        _getDemoAssets() {
+            const data = {
+                units: [
+                    { id: 'warrior', name: 'Warrior', icon: '&#x2694;' },
+                    { id: 'archer', name: 'Archer', icon: '&#x1F3F9;' },
+                    { id: 'mage', name: 'Mage', icon: '&#x1F9D9;' },
+                    { id: 'knight', name: 'Knight', icon: '&#x1F6E1;' },
+                    { id: 'healer', name: 'Healer', icon: '&#x2764;' }
+                ],
+                effects: [
+                    { id: 'explosion', name: 'Explosion', icon: '&#x1F4A5;' },
+                    { id: 'sparkle', name: 'Sparkle', icon: '&#x2728;' },
+                    { id: 'smoke', name: 'Smoke', icon: '&#x1F4A8;' },
+                    { id: 'fire', name: 'Fire', icon: '&#x1F525;' },
+                    { id: 'ice', name: 'Ice', icon: '&#x2744;' }
+                ],
+                spells: [
+                    { id: 'fireball', name: 'Fireball', icon: '&#x1F525;' },
+                    { id: 'lightning', name: 'Lightning Bolt', icon: '&#x26A1;' },
+                    { id: 'heal', name: 'Heal', icon: '&#x1F49A;' },
+                    { id: 'shield', name: 'Shield', icon: '&#x1F6E1;' },
+                    { id: 'teleport', name: 'Teleport', icon: '&#x2728;' }
+                ]
+            };
+            return data[this.type] || [];
+        }
+
+        _init() {
+            // Browse button
+            this.wrapper.querySelector('.browse-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._toggleDropdown();
+            });
+
+            // Clear button
+            const clearBtn = this.wrapper.querySelector('.clear-btn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._clear();
+                });
+            }
+
+            // Go to button
+            const gotoBtn = this.wrapper.querySelector('.goto-btn');
+            if (gotoBtn) {
+                gotoBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._goToAsset();
+                });
+            }
+
+            // Search
+            const searchInput = this.dropdown.querySelector('input');
+            searchInput.addEventListener('input', () => this._filterAssets(searchInput.value));
+
+            // Close on click outside
+            document.addEventListener('click', (e) => {
+                if (!this.wrapper.contains(e.target)) {
+                    this._closeDropdown();
+                }
+            });
+
+            // Drag and drop
+            this.refElement.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                this.refElement.classList.add('drag-over');
+            });
+
+            this.refElement.addEventListener('dragleave', () => {
+                this.refElement.classList.remove('drag-over');
+            });
+
+            this.refElement.addEventListener('drop', (e) => {
+                e.preventDefault();
+                this.refElement.classList.remove('drag-over');
+                const data = e.dataTransfer.getData('text/plain');
+                try {
+                    const asset = JSON.parse(data);
+                    if (asset.type === this.type) {
+                        this.setValue(asset);
+                    }
+                } catch (err) {}
+            });
+
+            // Populate dropdown
+            this._renderAssets();
+        }
+
+        _toggleDropdown() {
+            const isVisible = this.dropdown.classList.contains('visible');
+            if (isVisible) {
+                this._closeDropdown();
+            } else {
+                this._openDropdown();
+            }
+        }
+
+        _openDropdown() {
+            // Close other dropdowns
+            document.querySelectorAll('.asset-browser-dropdown.visible').forEach(d => {
+                d.classList.remove('visible');
+            });
+
+            this.dropdown.classList.add('visible');
+            this.dropdown.querySelector('input').focus();
+        }
+
+        _closeDropdown() {
+            this.dropdown.classList.remove('visible');
+        }
+
+        _renderAssets(filter = '') {
+            const list = this.dropdown.querySelector('.asset-browser-list');
+            const filtered = this.assets.filter(a =>
+                a.name.toLowerCase().includes(filter.toLowerCase()) ||
+                a.id.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="asset-browser-empty">No assets found</div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(asset => `
+                <div class="asset-browser-item" data-id="${asset.id}">
+                    <span class="asset-browser-item-icon">${asset.icon}</span>
+                    <span class="asset-browser-item-name">${asset.name}</span>
+                    <span class="asset-browser-item-id">${asset.id}</span>
+                </div>
+            `).join('');
+
+            list.querySelectorAll('.asset-browser-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const asset = this.assets.find(a => a.id === item.dataset.id);
+                    if (asset) {
+                        this.setValue(asset);
+                        this._closeDropdown();
+                    }
+                });
+            });
+        }
+
+        _filterAssets(query) {
+            this._renderAssets(query);
+        }
+
+        setValue(asset) {
+            this.value = asset;
+
+            const info = this.refElement.querySelector('.asset-reference-info');
+            const actions = this.refElement.querySelector('.asset-reference-actions');
+
+            if (asset) {
+                info.innerHTML = `
+                    <div class="asset-reference-name">${asset.name}</div>
+                    <div class="asset-reference-type">${this.type}/${asset.id}</div>
+                `;
+
+                // Ensure goto and clear buttons exist
+                if (!actions.querySelector('.goto-btn')) {
+                    const gotoBtn = document.createElement('button');
+                    gotoBtn.className = 'btn btn-icon btn-ghost btn-xs goto-btn';
+                    gotoBtn.title = 'Go to Asset';
+                    gotoBtn.innerHTML = '<span data-icon="external-link"></span>';
+                    gotoBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this._goToAsset();
+                    });
+                    actions.insertBefore(gotoBtn, actions.querySelector('.browse-btn').nextSibling);
+                }
+
+                if (!actions.querySelector('.clear-btn')) {
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = 'btn btn-icon btn-ghost btn-xs clear-btn';
+                    clearBtn.title = 'Clear';
+                    clearBtn.innerHTML = '<span data-icon="x"></span>';
+                    clearBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this._clear();
+                    });
+                    actions.appendChild(clearBtn);
+                }
+
+                NovaIcons.replaceIcons(actions);
+            } else {
+                info.innerHTML = '<span class="asset-reference-empty">None (drag asset here)</span>';
+
+                // Remove goto and clear buttons
+                actions.querySelector('.goto-btn')?.remove();
+                actions.querySelector('.clear-btn')?.remove();
+            }
+
+            this._updateOutput();
+
+            if (this.onChange) {
+                this.onChange(this.value);
+            }
+        }
+
+        _clear() {
+            this.setValue(null);
+        }
+
+        _goToAsset() {
+            if (this.value) {
+                console.log('Navigate to:', this.type, this.value.id);
+                // In real implementation: EditorCore.Bridge.navigate(...)
+            }
+        }
+
+        _updateOutput() {
+            // Update demo output
+            updateOutput();
+        }
+    }
+
+    // State for demo
+    const assetState = {};
+
+    function updateOutput() {
+        document.getElementById('output').textContent = JSON.stringify(assetState, null, 2);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        NovaIcons.replaceIcons();
+
+        const unitPicker = new AssetReferencePicker('unit-ref-wrapper', {
+            value: { id: 'warrior', name: 'Warrior', icon: '&#x2694;' },
+            onChange: (v) => { assetState.targetUnit = v; updateOutput(); }
+        });
+
+        const effectPicker = new AssetReferencePicker('effect-ref-wrapper', {
+            onChange: (v) => { assetState.spawnEffect = v; updateOutput(); }
+        });
+
+        const spellPicker = new AssetReferencePicker('spell-ref-wrapper', {
+            value: { id: 'fireball', name: 'Fireball', icon: '&#x1F525;' },
+            onChange: (v) => { assetState.ability = v; updateOutput(); }
+        });
+
+        assetState.targetUnit = { id: 'warrior', name: 'Warrior' };
+        assetState.ability = { id: 'fireball', name: 'Fireball' };
+        updateOutput();
+    });
+    </script>
+</body>
+</html>

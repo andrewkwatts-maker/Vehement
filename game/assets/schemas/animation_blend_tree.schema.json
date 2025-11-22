@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "animation_blend_tree.schema.json",
+  "title": "Animation Blend Tree",
+  "description": "Defines a blend tree for complex animation blending",
+  "type": "object",
+  "required": ["type", "children"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Blend tree identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "type": {
+      "enum": ["simple_1d", "simple_2d", "freeform_2d", "direct", "additive"],
+      "description": "Blend tree type"
+    },
+    "parameter": {
+      "type": "string",
+      "description": "Parameter for 1D blending"
+    },
+    "parameterX": {
+      "type": "string",
+      "description": "X parameter for 2D blending"
+    },
+    "parameterY": {
+      "type": "string",
+      "description": "Y parameter for 2D blending"
+    },
+    "normalizeBlendValues": {
+      "type": "boolean",
+      "default": true,
+      "description": "Normalize blend weights to sum to 1"
+    },
+    "children": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/blendTreeChild" },
+      "minItems": 1,
+      "description": "Child clips or nested blend trees"
+    },
+    "mask": {
+      "$ref": "#/definitions/animationMask",
+      "description": "Bone mask for partial body blending"
+    },
+    "additiveReferencePose": {
+      "type": "string",
+      "description": "Reference pose for additive blending"
+    },
+    "ikConfigs": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/ikBlendConfig" },
+      "description": "IK blend configurations"
+    }
+  },
+
+  "definitions": {
+    "blendTree": {
+      "type": "object",
+      "required": ["type", "children"],
+      "properties": {
+        "type": {
+          "enum": ["simple_1d", "simple_2d", "freeform_2d", "direct", "additive"]
+        },
+        "parameter": { "type": "string" },
+        "parameterX": { "type": "string" },
+        "parameterY": { "type": "string" },
+        "normalizeBlendValues": { "type": "boolean", "default": true },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/blendTreeChild" }
+        }
+      }
+    },
+
+    "blendTreeChild": {
+      "type": "object",
+      "properties": {
+        "clip": {
+          "type": "string",
+          "description": "Animation clip ID"
+        },
+        "blendTree": {
+          "$ref": "#/definitions/blendTree",
+          "description": "Nested blend tree"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "1D blend position"
+        },
+        "position": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "x": { "type": "number" },
+                "y": { "type": "number" }
+              },
+              "required": ["x", "y"]
+            },
+            {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "2D blend position"
+        },
+        "directBlendParameter": {
+          "type": "string",
+          "description": "Parameter for direct blend weight"
+        },
+        "timeScale": {
+          "type": "number",
+          "default": 1,
+          "description": "Time scale multiplier"
+        },
+        "cycleOffset": {
+          "type": "number",
+          "default": 0,
+          "description": "Cycle offset (0-1)"
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mirror this animation"
+        }
+      }
+    },
+
+    "animationMask": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Mask identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "includedBones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bones to include"
+        },
+        "excludedBones": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Bones to exclude"
+        },
+        "boneWeights": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 },
+          "description": "Per-bone weights"
+        }
+      }
+    },
+
+    "ikBlendConfig": {
+      "type": "object",
+      "required": ["targetBone"],
+      "properties": {
+        "targetBone": {
+          "type": "string",
+          "description": "IK target bone"
+        },
+        "positionWeight": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Position IK weight"
+        },
+        "rotationWeight": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Rotation IK weight"
+        },
+        "hintWeight": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Hint weight"
+        },
+        "hintBone": {
+          "type": "string",
+          "description": "Hint bone name"
+        }
+      }
+    }
+  }
+}

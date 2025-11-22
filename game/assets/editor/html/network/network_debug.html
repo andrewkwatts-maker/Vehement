@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Debug Panel</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --text-primary: #eef;
+            --text-secondary: #888;
+            --accent-green: #4ecca3;
+            --accent-yellow: #f9ed69;
+            --accent-red: #f38181;
+            --accent-blue: #6c63ff;
+            --border-color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: var(--accent-green);
+        }
+
+        .status-indicator.disconnected {
+            background: var(--accent-red);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--bg-tertiary);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .tab.active {
+            color: var(--accent-green);
+            border-bottom: 2px solid var(--accent-green);
+            margin-bottom: -2px;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .panel h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .stat-value.warn {
+            color: var(--accent-yellow);
+        }
+
+        .stat-value.bad {
+            color: var(--accent-red);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .graph-container {
+            height: 200px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .graph-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .graph-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tag-in { background: var(--accent-blue); }
+        .tag-out { background: var(--accent-green); }
+        .tag-reliable { background: var(--accent-yellow); color: #333; }
+
+        .simulation-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 60px;
+            text-align: right;
+            font-family: monospace;
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-green);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+
+        .button {
+            padding: 10px 20px;
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .button:hover {
+            opacity: 0.8;
+        }
+
+        .button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .packet-preview {
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--text-secondary);
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .hex-view {
+            font-family: monospace;
+            font-size: 12px;
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        .hex-offset {
+            color: var(--text-secondary);
+        }
+
+        .hex-bytes {
+            color: var(--accent-green);
+        }
+
+        .hex-ascii {
+            color: var(--accent-yellow);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .entity-card {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .entity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .entity-id {
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .entity-type {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .property-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .property {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .property-name {
+            color: var(--text-secondary);
+        }
+
+        .property-value {
+            font-family: monospace;
+        }
+
+        .dirty {
+            color: var(--accent-yellow);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Network Debug Panel</h1>
+        <div class="connection-status">
+            <div class="status-indicator connected" id="connectionIndicator"></div>
+            <span id="connectionText">Connected</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab" data-tab="latency">Latency</button>
+        <button class="tab" data-tab="bandwidth">Bandwidth</button>
+        <button class="tab" data-tab="entities">Entities</button>
+        <button class="tab" data-tab="packets">Packets</button>
+        <button class="tab" data-tab="simulation">Simulation</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div class="tab-content active" id="overview">
+        <div class="panel">
+            <h2>Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-value" id="statLatency">0</div>
+                    <div class="stat-label">Latency (ms)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statUpload">0</div>
+                    <div class="stat-label">Upload (KB/s)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statDownload">0</div>
+                    <div class="stat-label">Download (KB/s)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statEntities">0</div>
+                    <div class="stat-label">Entities</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statDirty">0</div>
+                    <div class="stat-label">Dirty Props</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statPackets">0</div>
+                    <div class="stat-label">Packets/s</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Network Graph</h2>
+            <div class="graph-container">
+                <canvas class="graph-canvas" id="overviewGraph"></canvas>
+            </div>
+            <div class="graph-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--accent-green)"></div>
+                    <span>Latency</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--accent-blue)"></div>
+                    <span>Upload</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--accent-yellow)"></div>
+                    <span>Download</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latency Tab -->
+    <div class="tab-content" id="latency">
+        <div class="panel">
+            <h2>Latency Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-value" id="latencyCurrent">0</div>
+                    <div class="stat-label">Current (ms)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="latencyAvg">0</div>
+                    <div class="stat-label">Average (ms)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="latencyMin">0</div>
+                    <div class="stat-label">Min (ms)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="latencyMax">0</div>
+                    <div class="stat-label">Max (ms)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="latencyJitter">0</div>
+                    <div class="stat-label">Jitter (ms)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Latency Graph</h2>
+            <div class="graph-container">
+                <canvas class="graph-canvas" id="latencyGraph"></canvas>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Per-Peer Latency</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Peer ID</th>
+                        <th>Current</th>
+                        <th>Average</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                    </tr>
+                </thead>
+                <tbody id="peerLatencyTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bandwidth Tab -->
+    <div class="tab-content" id="bandwidth">
+        <div class="panel">
+            <h2>Bandwidth Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-value" id="bwSent">0</div>
+                    <div class="stat-label">Sent (KB/s)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="bwReceived">0</div>
+                    <div class="stat-label">Received (KB/s)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="bwTotalSent">0</div>
+                    <div class="stat-label">Total Sent (MB)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="bwTotalReceived">0</div>
+                    <div class="stat-label">Total Received (MB)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Bandwidth Graph</h2>
+            <div class="graph-container">
+                <canvas class="graph-canvas" id="bandwidthGraph"></canvas>
+            </div>
+            <div class="graph-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--accent-green)"></div>
+                    <span>Upload</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--accent-blue)"></div>
+                    <span>Download</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entities Tab -->
+    <div class="tab-content" id="entities">
+        <div class="panel">
+            <h2>Replicated Entities</h2>
+            <div id="entityList">
+                <!-- Entity cards generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Packets Tab -->
+    <div class="tab-content" id="packets">
+        <div class="panel">
+            <h2>Packet History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Seq</th>
+                        <th>Channel</th>
+                        <th>Size</th>
+                        <th>Direction</th>
+                        <th>Reliable</th>
+                        <th>Preview</th>
+                    </tr>
+                </thead>
+                <tbody id="packetTable">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h2>Packet Inspector</h2>
+            <div class="hex-view" id="hexView">
+Select a packet to view its contents
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Tab -->
+    <div class="tab-content" id="simulation">
+        <div class="panel">
+            <h2>Network Simulation</h2>
+            <div class="toggle" style="margin-bottom: 20px;">
+                <div class="toggle-switch" id="simulationToggle"></div>
+                <span>Enable Simulation</span>
+            </div>
+
+            <div class="simulation-controls">
+                <div class="control-group">
+                    <label>Min Latency</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="minLatency" min="0" max="500" value="0">
+                        <span class="slider-value" id="minLatencyValue">0ms</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Max Latency</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="maxLatency" min="0" max="500" value="0">
+                        <span class="slider-value" id="maxLatencyValue">0ms</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Packet Loss</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="packetLoss" min="0" max="100" value="0">
+                        <span class="slider-value" id="packetLossValue">0%</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Jitter</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="jitter" min="0" max="100" value="0">
+                        <span class="slider-value" id="jitterValue">0ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="button" id="applySimulation">Apply</button>
+                <button class="button secondary" id="clearSimulation">Clear</button>
+                <button class="button secondary" id="presetBad">Bad Network</button>
+                <button class="button secondary" id="presetMobile">Mobile 3G</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Simulation toggle
+        const simToggle = document.getElementById('simulationToggle');
+        simToggle.addEventListener('click', () => {
+            simToggle.classList.toggle('active');
+        });
+
+        // Slider value updates
+        ['minLatency', 'maxLatency', 'jitter'].forEach(id => {
+            const slider = document.getElementById(id);
+            const value = document.getElementById(id + 'Value');
+            slider.addEventListener('input', () => {
+                value.textContent = slider.value + 'ms';
+            });
+        });
+
+        const packetLossSlider = document.getElementById('packetLoss');
+        const packetLossValue = document.getElementById('packetLossValue');
+        packetLossSlider.addEventListener('input', () => {
+            packetLossValue.textContent = packetLossSlider.value + '%';
+        });
+
+        // Preset buttons
+        document.getElementById('presetBad').addEventListener('click', () => {
+            document.getElementById('minLatency').value = 100;
+            document.getElementById('maxLatency').value = 300;
+            document.getElementById('packetLoss').value = 5;
+            document.getElementById('jitter').value = 50;
+            updateSliderValues();
+        });
+
+        document.getElementById('presetMobile').addEventListener('click', () => {
+            document.getElementById('minLatency').value = 150;
+            document.getElementById('maxLatency').value = 400;
+            document.getElementById('packetLoss').value = 2;
+            document.getElementById('jitter').value = 30;
+            updateSliderValues();
+        });
+
+        function updateSliderValues() {
+            document.getElementById('minLatencyValue').textContent = document.getElementById('minLatency').value + 'ms';
+            document.getElementById('maxLatencyValue').textContent = document.getElementById('maxLatency').value + 'ms';
+            document.getElementById('packetLossValue').textContent = document.getElementById('packetLoss').value + '%';
+            document.getElementById('jitterValue').textContent = document.getElementById('jitter').value + 'ms';
+        }
+
+        // Graph rendering
+        class NetworkGraph {
+            constructor(canvas, options = {}) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.data = [];
+                this.maxPoints = options.maxPoints || 60;
+                this.colors = options.colors || ['#4ecca3'];
+                this.maxValue = options.maxValue || 100;
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+            }
+
+            addPoint(values) {
+                this.data.push(values);
+                if (this.data.length > this.maxPoints) {
+                    this.data.shift();
+                }
+                this.render();
+            }
+
+            render() {
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                ctx.clearRect(0, 0, w, h);
+
+                // Grid
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) {
+                    const y = (h / 4) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
+                }
+
+                if (this.data.length < 2) return;
+
+                // Lines
+                const xStep = w / (this.maxPoints - 1);
+
+                this.colors.forEach((color, seriesIndex) => {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+
+                    this.data.forEach((point, i) => {
+                        const x = i * xStep;
+                        const value = Array.isArray(point) ? point[seriesIndex] : point;
+                        const y = h - (value / this.maxValue) * h;
+
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
+
+                    ctx.stroke();
+                });
+            }
+        }
+
+        // Initialize graphs
+        const overviewGraph = new NetworkGraph(document.getElementById('overviewGraph'), {
+            colors: ['#4ecca3', '#6c63ff', '#f9ed69'],
+            maxValue: 200
+        });
+
+        const latencyGraph = new NetworkGraph(document.getElementById('latencyGraph'), {
+            colors: ['#4ecca3'],
+            maxValue: 200
+        });
+
+        const bandwidthGraph = new NetworkGraph(document.getElementById('bandwidthGraph'), {
+            colors: ['#4ecca3', '#6c63ff'],
+            maxValue: 100
+        });
+
+        // Simulate data updates
+        function updateStats() {
+            const latency = Math.random() * 50 + 20;
+            const upload = Math.random() * 30 + 10;
+            const download = Math.random() * 50 + 20;
+
+            document.getElementById('statLatency').textContent = latency.toFixed(1);
+            document.getElementById('statUpload').textContent = upload.toFixed(1);
+            document.getElementById('statDownload').textContent = download.toFixed(1);
+
+            overviewGraph.addPoint([latency, upload, download]);
+            latencyGraph.addPoint(latency);
+            bandwidthGraph.addPoint([upload, download]);
+
+            // Update latency stats
+            document.getElementById('latencyCurrent').textContent = latency.toFixed(1);
+            document.getElementById('latencyAvg').textContent = (latency * 0.9 + 30).toFixed(1);
+            document.getElementById('latencyMin').textContent = '15.2';
+            document.getElementById('latencyMax').textContent = '89.4';
+            document.getElementById('latencyJitter').textContent = (Math.random() * 10).toFixed(1);
+
+            // Update bandwidth stats
+            document.getElementById('bwSent').textContent = upload.toFixed(1);
+            document.getElementById('bwReceived').textContent = download.toFixed(1);
+        }
+
+        // Start simulation
+        setInterval(updateStats, 1000);
+        updateStats();
+
+        // Entity interaction bridge
+        window.NetworkDebugBridge = {
+            updateStats: function(stats) {
+                document.getElementById('statLatency').textContent = stats.latency.toFixed(1);
+                document.getElementById('statUpload').textContent = (stats.upload / 1024).toFixed(1);
+                document.getElementById('statDownload').textContent = (stats.download / 1024).toFixed(1);
+                document.getElementById('statEntities').textContent = stats.entityCount;
+                document.getElementById('statDirty').textContent = stats.dirtyProps;
+            },
+
+            setConnectionState: function(connected) {
+                const indicator = document.getElementById('connectionIndicator');
+                const text = document.getElementById('connectionText');
+                if (connected) {
+                    indicator.classList.add('connected');
+                    indicator.classList.remove('disconnected');
+                    text.textContent = 'Connected';
+                } else {
+                    indicator.classList.remove('connected');
+                    indicator.classList.add('disconnected');
+                    text.textContent = 'Disconnected';
+                }
+            },
+
+            addPacket: function(packet) {
+                const tbody = document.getElementById('packetTable');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${packet.seq}</td>
+                    <td>${packet.channel}</td>
+                    <td>${packet.size}</td>
+                    <td><span class="tag ${packet.outgoing ? 'tag-out' : 'tag-in'}">${packet.outgoing ? 'OUT' : 'IN'}</span></td>
+                    <td>${packet.reliable ? '<span class="tag tag-reliable">YES</span>' : 'NO'}</td>
+                    <td class="packet-preview">${packet.preview}</td>
+                `;
+                tbody.insertBefore(row, tbody.firstChild);
+                if (tbody.children.length > 50) {
+                    tbody.removeChild(tbody.lastChild);
+                }
+            },
+
+            updateEntity: function(entity) {
+                let card = document.getElementById('entity-' + entity.id);
+                if (!card) {
+                    card = document.createElement('div');
+                    card.className = 'entity-card';
+                    card.id = 'entity-' + entity.id;
+                    document.getElementById('entityList').appendChild(card);
+                }
+                card.innerHTML = `
+                    <div class="entity-header">
+                        <span class="entity-id">#${entity.id}</span>
+                        <span class="entity-type">${entity.type}</span>
+                    </div>
+                    <div class="property-list">
+                        <div class="property">
+                            <span class="property-name">Owner</span>
+                            <span class="property-value">${entity.owner}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-name">Authority</span>
+                            <span class="property-value">${entity.hasAuthority ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-name">Dirty Props</span>
+                            <span class="property-value ${entity.dirtyCount > 0 ? 'dirty' : ''}">${entity.dirtyCount}</span>
+                        </div>
+                        <div class="property">
+                            <span class="property-name">Bytes Sent</span>
+                            <span class="property-value">${entity.bytesSent}</span>
+                        </div>
+                    </div>
+                `;
+            },
+
+            getSimulationSettings: function() {
+                return {
+                    enabled: document.getElementById('simulationToggle').classList.contains('active'),
+                    minLatency: parseInt(document.getElementById('minLatency').value),
+                    maxLatency: parseInt(document.getElementById('maxLatency').value),
+                    packetLoss: parseInt(document.getElementById('packetLoss').value),
+                    jitter: parseInt(document.getElementById('jitter').value)
+                };
+            }
+        };
+    </script>
+</body>
+</html>

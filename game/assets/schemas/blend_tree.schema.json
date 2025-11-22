@@ -1,0 +1,618 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "blend_tree.schema.json",
+  "title": "Blend Tree Configuration",
+  "description": "Comprehensive blend tree schema for animation blending systems",
+  "type": "object",
+  "required": ["id", "rootNode"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique blend tree identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable display name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Tree description for documentation"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version (semver)"
+    },
+    "skeleton": {
+      "type": "string",
+      "description": "Reference skeleton asset path"
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/parameter" },
+      "description": "Named parameters used by the tree"
+    },
+    "rootNode": {
+      "$ref": "#/definitions/blendNode",
+      "description": "Root node of the blend tree"
+    },
+    "layers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/animationLayer" },
+      "description": "Animation layers for multi-layer blending"
+    },
+    "syncGroups": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/syncGroup" },
+      "description": "Synchronization groups for coordinated playback"
+    },
+    "defaultMask": {
+      "$ref": "#/definitions/blendMaskReference",
+      "description": "Default mask applied to the tree"
+    },
+    "rootMotion": {
+      "$ref": "#/definitions/rootMotionConfig",
+      "description": "Root motion extraction settings"
+    },
+    "debugSettings": {
+      "$ref": "#/definitions/debugSettings",
+      "description": "Debug and visualization settings"
+    }
+  },
+
+  "definitions": {
+    "parameter": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["float", "int", "bool", "trigger"],
+          "description": "Parameter data type"
+        },
+        "defaultValue": {
+          "oneOf": [
+            { "type": "number" },
+            { "type": "boolean" }
+          ],
+          "description": "Default value"
+        },
+        "min": {
+          "type": "number",
+          "description": "Minimum value for numeric types"
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value for numeric types"
+        },
+        "smoothing": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Parameter smoothing factor (0 = instant, 1 = very smooth)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Parameter description"
+        }
+      }
+    },
+
+    "blendNode": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Node identifier for debugging"
+        },
+        "type": {
+          "enum": [
+            "clip",
+            "blend1d",
+            "blend2d",
+            "additive",
+            "layered",
+            "state_selector",
+            "random_selector",
+            "sequence"
+          ],
+          "description": "Node type"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether node is active"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "clip" } } },
+          "then": { "$ref": "#/definitions/clipNode" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "blend1d" } } },
+          "then": { "$ref": "#/definitions/blend1DNode" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "blend2d" } } },
+          "then": { "$ref": "#/definitions/blend2DNode" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "additive" } } },
+          "then": { "$ref": "#/definitions/additiveNode" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "layered" } } },
+          "then": { "$ref": "#/definitions/layeredNode" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "state_selector" } } },
+          "then": { "$ref": "#/definitions/stateSelectorNode" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "random_selector" } } },
+          "then": { "$ref": "#/definitions/randomSelectorNode" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "sequence" } } },
+          "then": { "$ref": "#/definitions/sequenceNode" }
+        }
+      ]
+    },
+
+    "clipNode": {
+      "type": "object",
+      "required": ["clip"],
+      "properties": {
+        "clip": {
+          "type": "string",
+          "description": "Animation clip asset path or ID"
+        },
+        "playbackSpeed": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Playback speed multiplier"
+        },
+        "loop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Loop animation"
+        },
+        "startTime": {
+          "type": "number",
+          "default": 0,
+          "description": "Start time offset in seconds"
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mirror animation horizontally"
+        },
+        "syncGroup": {
+          "type": "string",
+          "description": "Sync group membership"
+        },
+        "footIK": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable foot IK for this clip"
+        }
+      }
+    },
+
+    "blend1DNode": {
+      "type": "object",
+      "required": ["parameter", "samples"],
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "description": "Parameter name for blend weight"
+        },
+        "interpolation": {
+          "enum": ["linear", "smooth", "cubic"],
+          "default": "linear",
+          "description": "Interpolation mode"
+        },
+        "samples": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/blend1DSample" },
+          "minItems": 2,
+          "description": "Sample points along the blend axis"
+        },
+        "syncMarkers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Synchronize animation phase using markers"
+        },
+        "extrapolate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow extrapolation beyond sample range"
+        }
+      }
+    },
+
+    "blend1DSample": {
+      "type": "object",
+      "required": ["position", "node"],
+      "properties": {
+        "position": {
+          "type": "number",
+          "description": "Position on the blend axis"
+        },
+        "node": {
+          "$ref": "#/definitions/blendNode",
+          "description": "Child node at this position"
+        },
+        "playbackSpeed": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Speed multiplier for this sample"
+        }
+      }
+    },
+
+    "blend2DNode": {
+      "type": "object",
+      "required": ["parameterX", "parameterY", "samples"],
+      "properties": {
+        "parameterX": {
+          "type": "string",
+          "description": "X-axis parameter name"
+        },
+        "parameterY": {
+          "type": "string",
+          "description": "Y-axis parameter name"
+        },
+        "blendMode": {
+          "enum": ["simple", "freeform_directional", "freeform_cartesian"],
+          "default": "simple",
+          "description": "2D blend mode algorithm"
+        },
+        "samples": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/blend2DSample" },
+          "minItems": 3,
+          "description": "Sample points in 2D space"
+        },
+        "useTriangulation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Delaunay triangulation"
+        },
+        "syncMarkers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Synchronize animation phase"
+        }
+      }
+    },
+
+    "blend2DSample": {
+      "type": "object",
+      "required": ["position", "node"],
+      "properties": {
+        "position": {
+          "type": "object",
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+          },
+          "description": "2D position"
+        },
+        "node": {
+          "$ref": "#/definitions/blendNode",
+          "description": "Child node at this position"
+        },
+        "playbackSpeed": {
+          "type": "number",
+          "default": 1.0
+        }
+      }
+    },
+
+    "additiveNode": {
+      "type": "object",
+      "required": ["baseNode", "additiveNode"],
+      "properties": {
+        "baseNode": {
+          "$ref": "#/definitions/blendNode",
+          "description": "Base pose node"
+        },
+        "additiveNode": {
+          "$ref": "#/definitions/blendNode",
+          "description": "Additive layer node"
+        },
+        "weightParameter": {
+          "type": "string",
+          "description": "Parameter controlling additive weight"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Static additive weight if no parameter"
+        },
+        "referencePose": {
+          "type": "string",
+          "description": "Reference pose for additive calculation"
+        }
+      }
+    },
+
+    "layeredNode": {
+      "type": "object",
+      "required": ["layers"],
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/nodeLayer" },
+          "minItems": 1,
+          "description": "Layers to blend"
+        }
+      }
+    },
+
+    "nodeLayer": {
+      "type": "object",
+      "required": ["node"],
+      "properties": {
+        "node": {
+          "$ref": "#/definitions/blendNode",
+          "description": "Layer's blend node"
+        },
+        "weightParameter": {
+          "type": "string",
+          "description": "Parameter for layer weight"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "blendMode": {
+          "enum": ["override", "additive", "multiply"],
+          "default": "override"
+        },
+        "mask": {
+          "$ref": "#/definitions/blendMaskReference"
+        }
+      }
+    },
+
+    "stateSelectorNode": {
+      "type": "object",
+      "required": ["parameter", "states"],
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "description": "Integer parameter for state selection"
+        },
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["value", "node"],
+            "properties": {
+              "value": { "type": "integer" },
+              "node": { "$ref": "#/definitions/blendNode" }
+            }
+          },
+          "description": "State mappings"
+        },
+        "transitionTime": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Transition duration between states"
+        }
+      }
+    },
+
+    "randomSelectorNode": {
+      "type": "object",
+      "required": ["options"],
+      "properties": {
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["node"],
+            "properties": {
+              "node": { "$ref": "#/definitions/blendNode" },
+              "weight": {
+                "type": "number",
+                "default": 1.0,
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "avoidRepeat": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+
+    "sequenceNode": {
+      "type": "object",
+      "required": ["nodes"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/blendNode" },
+          "minItems": 1
+        },
+        "loop": {
+          "type": "boolean",
+          "default": true
+        },
+        "transitionTime": {
+          "type": "number",
+          "default": 0.1
+        }
+      }
+    },
+
+    "animationLayer": {
+      "type": "object",
+      "required": ["name", "node"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Layer name"
+        },
+        "node": {
+          "$ref": "#/definitions/blendNode"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "weightParameter": {
+          "type": "string"
+        },
+        "blendMode": {
+          "enum": ["override", "additive", "multiply"],
+          "default": "override"
+        },
+        "mask": {
+          "$ref": "#/definitions/blendMaskReference"
+        },
+        "syncMode": {
+          "enum": ["independent", "sync_to_base", "sync_ratio"],
+          "default": "independent"
+        },
+        "solo": {
+          "type": "boolean",
+          "default": false
+        },
+        "mute": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+
+    "syncGroup": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "leaderPolicy": {
+          "enum": ["first", "highest_weight", "explicit"],
+          "default": "highest_weight"
+        },
+        "explicitLeader": {
+          "type": "string"
+        }
+      }
+    },
+
+    "blendMaskReference": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Reference to a named mask"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "preset": {
+              "enum": [
+                "full_body",
+                "upper_body",
+                "lower_body",
+                "left_arm",
+                "right_arm",
+                "spine",
+                "head",
+                "hands",
+                "legs"
+              ]
+            },
+            "includeBones": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "excludeBones": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "boneWeights": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "featherDepth": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 5
+            }
+          }
+        }
+      ]
+    },
+
+    "rootMotionConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "extractPosition": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "boolean", "default": true },
+            "y": { "type": "boolean", "default": false },
+            "z": { "type": "boolean", "default": true }
+          }
+        },
+        "extractRotation": {
+          "type": "boolean",
+          "default": true
+        },
+        "rootBone": {
+          "type": "string",
+          "description": "Override root bone name"
+        }
+      }
+    },
+
+    "debugSettings": {
+      "type": "object",
+      "properties": {
+        "showSkeleton": {
+          "type": "boolean",
+          "default": false
+        },
+        "showBoneNames": {
+          "type": "boolean",
+          "default": false
+        },
+        "highlightActiveBones": {
+          "type": "boolean",
+          "default": false
+        },
+        "logEvaluations": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

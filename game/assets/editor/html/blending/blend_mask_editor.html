@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Blend Mask Editor</title>
+    <link rel="stylesheet" href="../editor.css">
+    <style>
+        .mask-editor-container {
+            display: grid;
+            grid-template-columns: 350px 1fr 280px;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            background: #1a1a1a;
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: #252530;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .skeleton-panel {
+            background: #0a0a0a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bone-tree-panel {
+            background: #1e1e24;
+            overflow-y: auto;
+            border-right: 1px solid #333;
+        }
+
+        .properties-panel {
+            background: #1e1e24;
+            padding: 16px;
+            border-left: 1px solid #333;
+            overflow-y: auto;
+        }
+
+        .skeleton-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .bone-node {
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .bone-node:hover circle {
+            stroke-width: 4;
+        }
+
+        .bone-link {
+            stroke: #444;
+            stroke-width: 3;
+        }
+
+        .bone-tree {
+            padding: 8px;
+        }
+
+        .tree-node {
+            padding: 4px 8px 4px 24px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 2px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .tree-node:hover {
+            background: #2a2a35;
+        }
+
+        .tree-node.selected {
+            background: #4a9eff33;
+        }
+
+        .tree-node-weight {
+            width: 40px;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: auto;
+        }
+
+        .tree-node-weight-fill {
+            height: 100%;
+            background: #4a9eff;
+            transition: width 0.1s ease;
+        }
+
+        .tree-node-toggle {
+            width: 16px;
+            text-align: center;
+            color: #666;
+        }
+
+        .tree-children {
+            margin-left: 16px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .preset-btn {
+            padding: 10px;
+            background: #252530;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s ease;
+        }
+
+        .preset-btn:hover {
+            border-color: #4a9eff;
+            color: #fff;
+        }
+
+        .preset-btn.active {
+            background: #4a9eff;
+            border-color: #4a9eff;
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            background: #252530;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px;
+            background: #252530;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .action-btn:hover {
+            background: #3a3a45;
+            color: #fff;
+        }
+
+        .weight-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weight-slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .weight-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .feather-controls {
+            background: #252530;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 16px;
+        }
+
+        .feather-controls h4 {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+        }
+
+        .view-controls {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .legend {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(30, 30, 36, 0.9);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="mask-editor-container">
+        <div class="toolbar">
+            <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+            <h2 id="mask-name">Blend Mask</h2>
+            <span class="dirty-indicator" id="dirty-indicator" style="display: none;">*</span>
+            <div style="flex: 1;"></div>
+            <button class="btn" onclick="clearAll()">Clear All</button>
+            <button class="btn" onclick="selectAll()">Select All</button>
+            <button class="btn btn-primary" onclick="save()">Save</button>
+        </div>
+
+        <div class="bone-tree-panel">
+            <div class="bone-tree" id="bone-tree"></div>
+        </div>
+
+        <div class="skeleton-panel">
+            <svg class="skeleton-svg" id="skeleton-svg" viewBox="0 0 400 600"></svg>
+            <div class="view-controls">
+                <button class="btn btn-icon" onclick="rotateView(-15)">&#x21BA;</button>
+                <button class="btn btn-icon" onclick="rotateView(15)">&#x21BB;</button>
+                <button class="btn btn-icon" onclick="resetView()">&#x2302;</button>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4a9eff;"></div>
+                    <span>Full Weight</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #666;"></div>
+                    <span>Zero Weight</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="properties-panel">
+            <h3>Presets</h3>
+            <div class="preset-grid">
+                <button class="preset-btn" onclick="applyPreset('fullBody')">Full Body</button>
+                <button class="preset-btn" onclick="applyPreset('upperBody')">Upper Body</button>
+                <button class="preset-btn" onclick="applyPreset('lowerBody')">Lower Body</button>
+                <button class="preset-btn" onclick="applyPreset('leftArm')">Left Arm</button>
+                <button class="preset-btn" onclick="applyPreset('rightArm')">Right Arm</button>
+                <button class="preset-btn" onclick="applyPreset('head')">Head</button>
+            </div>
+
+            <h3>Actions</h3>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="invertMask()">Invert</button>
+                <button class="action-btn" onclick="mirrorMask()">Mirror</button>
+            </div>
+
+            <div class="feather-controls">
+                <h4>Feathering</h4>
+                <div class="form-group">
+                    <label>Levels</label>
+                    <input type="number" id="feather-levels" value="2" min="1" max="10">
+                </div>
+                <div class="form-group">
+                    <label>Start Weight</label>
+                    <input type="range" class="weight-slider" id="feather-start" min="0" max="100" value="100">
+                </div>
+                <div class="form-group">
+                    <label>End Weight</label>
+                    <input type="range" class="weight-slider" id="feather-end" min="0" max="100" value="0">
+                </div>
+                <button class="action-btn" style="width: 100%;" onclick="applyFeathering()">Apply Feathering</button>
+            </div>
+
+            <h3 style="margin-top: 24px;">Selected Bone</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="selected-bone-name" readonly>
+            </div>
+            <div class="form-group">
+                <label>Weight</label>
+                <div class="weight-slider-container">
+                    <input type="range" class="weight-slider" id="bone-weight-slider" min="0" max="100" value="0" oninput="updateSelectedWeight(this.value / 100)">
+                    <span id="weight-value">0%</span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="setSelectedBranch(1)">Set Branch</button>
+                <button class="action-btn" onclick="setSelectedBranch(0)">Clear Branch</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script>
+        var state = {
+            name: 'Upper Body Mask',
+            bones: [
+                { name: 'Hips', parent: -1, x: 200, y: 300, weight: 0 },
+                { name: 'Spine', parent: 0, x: 200, y: 260, weight: 1 },
+                { name: 'Spine1', parent: 1, x: 200, y: 220, weight: 1 },
+                { name: 'Spine2', parent: 2, x: 200, y: 180, weight: 1 },
+                { name: 'Neck', parent: 3, x: 200, y: 150, weight: 1 },
+                { name: 'Head', parent: 4, x: 200, y: 110, weight: 1 },
+                { name: 'LeftShoulder', parent: 3, x: 160, y: 180, weight: 1 },
+                { name: 'LeftUpperArm', parent: 6, x: 120, y: 200, weight: 1 },
+                { name: 'LeftLowerArm', parent: 7, x: 90, y: 240, weight: 1 },
+                { name: 'LeftHand', parent: 8, x: 70, y: 280, weight: 1 },
+                { name: 'RightShoulder', parent: 3, x: 240, y: 180, weight: 1 },
+                { name: 'RightUpperArm', parent: 10, x: 280, y: 200, weight: 1 },
+                { name: 'RightLowerArm', parent: 11, x: 310, y: 240, weight: 1 },
+                { name: 'RightHand', parent: 12, x: 330, y: 280, weight: 1 },
+                { name: 'LeftUpperLeg', parent: 0, x: 170, y: 340, weight: 0 },
+                { name: 'LeftLowerLeg', parent: 14, x: 165, y: 420, weight: 0 },
+                { name: 'LeftFoot', parent: 15, x: 160, y: 500, weight: 0 },
+                { name: 'RightUpperLeg', parent: 0, x: 230, y: 340, weight: 0 },
+                { name: 'RightLowerLeg', parent: 17, x: 235, y: 420, weight: 0 },
+                { name: 'RightFoot', parent: 18, x: 240, y: 500, weight: 0 }
+            ],
+            selectedBoneIndex: -1,
+            viewRotation: 0,
+            isDirty: false
+        };
+
+        function init() {
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function renderSkeleton() {
+            var svg = document.getElementById('skeleton-svg');
+            svg.innerHTML = '';
+
+            // Draw bone links
+            state.bones.forEach(function(bone, index) {
+                if (bone.parent >= 0) {
+                    var parent = state.bones[bone.parent];
+                    var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', parent.x);
+                    line.setAttribute('y1', parent.y);
+                    line.setAttribute('x2', bone.x);
+                    line.setAttribute('y2', bone.y);
+                    line.setAttribute('class', 'bone-link');
+                    svg.appendChild(line);
+                }
+            });
+
+            // Draw bone nodes
+            state.bones.forEach(function(bone, index) {
+                var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'bone-node');
+                g.setAttribute('transform', 'translate(' + bone.x + ',' + bone.y + ')');
+
+                var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('r', 12);
+                circle.setAttribute('fill', getWeightColor(bone.weight));
+                circle.setAttribute('stroke', index === state.selectedBoneIndex ? '#ff9e4a' : '#4a9eff');
+                circle.setAttribute('stroke-width', index === state.selectedBoneIndex ? 4 : 2);
+
+                g.appendChild(circle);
+
+                g.addEventListener('click', function() {
+                    selectBone(index);
+                });
+
+                svg.appendChild(g);
+            });
+        }
+
+        function getWeightColor(weight) {
+            var r = Math.round(102 + (74 - 102) * weight);
+            var g = Math.round(102 + (158 - 102) * weight);
+            var b = Math.round(102 + (255 - 102) * weight);
+            return 'rgb(' + r + ',' + g + ',' + b + ')';
+        }
+
+        function renderBoneTree() {
+            var container = document.getElementById('bone-tree');
+            container.innerHTML = '';
+
+            // Build tree structure
+            var rootBones = state.bones.filter(function(b) { return b.parent < 0; });
+            rootBones.forEach(function(bone) {
+                var index = state.bones.indexOf(bone);
+                container.appendChild(createTreeNode(bone, index));
+            });
+        }
+
+        function createTreeNode(bone, index) {
+            var div = document.createElement('div');
+
+            var node = document.createElement('div');
+            node.className = 'tree-node' + (index === state.selectedBoneIndex ? ' selected' : '');
+            node.onclick = function() { selectBone(index); };
+
+            var children = state.bones.filter(function(b) {
+                return b.parent === index;
+            });
+
+            node.innerHTML = '\
+                <span class="tree-node-toggle">' + (children.length > 0 ? '&#x25BC;' : '') + '</span>\
+                <span>' + bone.name + '</span>\
+                <div class="tree-node-weight">\
+                    <div class="tree-node-weight-fill" style="width: ' + (bone.weight * 100) + '%"></div>\
+                </div>\
+            ';
+
+            div.appendChild(node);
+
+            if (children.length > 0) {
+                var childContainer = document.createElement('div');
+                childContainer.className = 'tree-children';
+                children.forEach(function(child) {
+                    var childIndex = state.bones.indexOf(child);
+                    childContainer.appendChild(createTreeNode(child, childIndex));
+                });
+                div.appendChild(childContainer);
+            }
+
+            return div;
+        }
+
+        function selectBone(index) {
+            state.selectedBoneIndex = index;
+            var bone = state.bones[index];
+
+            document.getElementById('selected-bone-name').value = bone.name;
+            document.getElementById('bone-weight-slider').value = bone.weight * 100;
+            document.getElementById('weight-value').textContent = Math.round(bone.weight * 100) + '%';
+
+            renderSkeleton();
+            renderBoneTree();
+
+            if (window.bridge) {
+                window.bridge.selectBone(index);
+            }
+        }
+
+        function updateSelectedWeight(weight) {
+            if (state.selectedBoneIndex < 0) return;
+
+            state.bones[state.selectedBoneIndex].weight = weight;
+            document.getElementById('weight-value').textContent = Math.round(weight * 100) + '%';
+
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+
+            if (window.bridge) {
+                window.bridge.setBoneWeight(state.selectedBoneIndex, weight);
+            }
+        }
+
+        function setSelectedBranch(weight) {
+            if (state.selectedBoneIndex < 0) return;
+
+            setBranchWeight(state.selectedBoneIndex, weight);
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function setBranchWeight(index, weight) {
+            state.bones[index].weight = weight;
+
+            // Recursively set children
+            state.bones.forEach(function(bone, i) {
+                if (bone.parent === index) {
+                    setBranchWeight(i, weight);
+                }
+            });
+        }
+
+        function applyPreset(preset) {
+            // Clear all first
+            state.bones.forEach(function(bone) { bone.weight = 0; });
+
+            switch (preset) {
+                case 'fullBody':
+                    state.bones.forEach(function(bone) { bone.weight = 1; });
+                    break;
+                case 'upperBody':
+                    setBranchWeight(1, 1); // Spine and above
+                    break;
+                case 'lowerBody':
+                    setBranchWeight(14, 1); // Left leg
+                    setBranchWeight(17, 1); // Right leg
+                    break;
+                case 'leftArm':
+                    setBranchWeight(6, 1); // Left shoulder
+                    break;
+                case 'rightArm':
+                    setBranchWeight(10, 1); // Right shoulder
+                    break;
+                case 'head':
+                    setBranchWeight(4, 1); // Neck
+                    break;
+            }
+
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function invertMask() {
+            state.bones.forEach(function(bone) {
+                bone.weight = 1 - bone.weight;
+            });
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function mirrorMask() {
+            var pairs = [
+                ['LeftShoulder', 'RightShoulder'],
+                ['LeftUpperArm', 'RightUpperArm'],
+                ['LeftLowerArm', 'RightLowerArm'],
+                ['LeftHand', 'RightHand'],
+                ['LeftUpperLeg', 'RightUpperLeg'],
+                ['LeftLowerLeg', 'RightLowerLeg'],
+                ['LeftFoot', 'RightFoot']
+            ];
+
+            pairs.forEach(function(pair) {
+                var left = state.bones.find(function(b) { return b.name === pair[0]; });
+                var right = state.bones.find(function(b) { return b.name === pair[1]; });
+                if (left && right) {
+                    var temp = left.weight;
+                    left.weight = right.weight;
+                    right.weight = temp;
+                }
+            });
+
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function applyFeathering() {
+            if (state.selectedBoneIndex < 0) return;
+
+            var levels = parseInt(document.getElementById('feather-levels').value);
+            var startWeight = parseInt(document.getElementById('feather-start').value) / 100;
+            var endWeight = parseInt(document.getElementById('feather-end').value) / 100;
+
+            var index = state.selectedBoneIndex;
+            for (var i = 0; i <= levels && index >= 0; i++) {
+                var t = i / levels;
+                state.bones[index].weight = startWeight + (endWeight - startWeight) * t;
+                index = state.bones[index].parent;
+            }
+
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function clearAll() {
+            state.bones.forEach(function(bone) { bone.weight = 0; });
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function selectAll() {
+            state.bones.forEach(function(bone) { bone.weight = 1; });
+            setDirty(true);
+            renderSkeleton();
+            renderBoneTree();
+        }
+
+        function rotateView(angle) {
+            state.viewRotation += angle;
+            // Would rotate skeleton visualization
+        }
+
+        function resetView() {
+            state.viewRotation = 0;
+        }
+
+        function setDirty(dirty) {
+            state.isDirty = dirty;
+            document.getElementById('dirty-indicator').style.display = dirty ? 'inline' : 'none';
+        }
+
+        function save() {
+            var maskData = {
+                name: state.name,
+                bones: state.bones.map(function(b) {
+                    return { name: b.name, weight: b.weight };
+                })
+            };
+            console.log('Saving:', maskData);
+
+            if (window.bridge) {
+                window.bridge.save(JSON.stringify(maskData));
+            }
+            setDirty(false);
+        }
+
+        function goBack() {
+            if (state.isDirty) {
+                if (!confirm('Unsaved changes will be lost. Continue?')) return;
+            }
+            history.back();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

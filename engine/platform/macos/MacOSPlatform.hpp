@@ -2,14 +2,22 @@
 
 /**
  * @file MacOSPlatform.hpp
- * @brief macOS-specific platform implementation (stub)
+ * @brief macOS-specific platform implementation
  *
- * Full implementation would use Cocoa/AppKit with Metal or OpenGL.
+ * Full macOS platform layer with:
+ * - Cocoa/AppKit window management
+ * - Retina display support
+ * - Native fullscreen (Mission Control)
+ * - Menu bar and dock integration
+ * - Core Location for GPS
+ * - Force Touch trackpad haptics
  */
 
 #include "../Platform.hpp"
 
 #ifdef NOVA_PLATFORM_MACOS
+
+#include <memory>
 
 namespace Nova {
 
@@ -27,13 +35,19 @@ public:
     MacOSPlatform();
     ~MacOSPlatform() override;
 
+    // -------------------------------------------------------------------------
     // Lifecycle
+    // -------------------------------------------------------------------------
+
     bool Initialize() override;
     void Shutdown() override;
     [[nodiscard]] bool IsInitialized() const noexcept override { return m_initialized; }
     [[nodiscard]] PlatformState GetState() const override { return m_state; }
 
+    // -------------------------------------------------------------------------
     // Window Management
+    // -------------------------------------------------------------------------
+
     bool CreateWindow(const WindowConfig& config) override;
     void DestroyWindow() override;
     [[nodiscard]] bool HasWindow() const noexcept override;
@@ -47,17 +61,23 @@ public:
     void SetWindowTitle(const std::string& title) override;
     void SetWindowSize(int width, int height) override;
 
-    [[nodiscard]] void* GetNativeWindowHandle() const override;  // NSWindow*
+    [[nodiscard]] void* GetNativeWindowHandle() const override;  // Returns NSWindow*
     [[nodiscard]] void* GetNativeDisplayHandle() const override;
 
+    // -------------------------------------------------------------------------
     // Input/Events
+    // -------------------------------------------------------------------------
+
     void PollEvents() override;
     void WaitEvents() override;
     void WaitEventsTimeout(double timeout) override;
     [[nodiscard]] bool ShouldClose() const override;
     void RequestClose() override;
 
-    // File System (macOS paths)
+    // -------------------------------------------------------------------------
+    // File System
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] std::string GetDataPath() const override;      // ~/Library/Application Support/
     [[nodiscard]] std::string GetCachePath() const override;     // ~/Library/Caches/
     [[nodiscard]] std::string GetDocumentsPath() const override; // ~/Documents/
@@ -74,13 +94,19 @@ public:
     bool DeleteFile(const std::string& path) override;
     [[nodiscard]] std::vector<std::string> ListFiles(const std::string& path, bool recursive) override;
 
+    // -------------------------------------------------------------------------
     // Permissions
+    // -------------------------------------------------------------------------
+
     void RequestPermission(Permission permission, PermissionCallback callback) override;
     [[nodiscard]] bool HasPermission(Permission permission) const override;
     [[nodiscard]] PermissionResult GetPermissionStatus(Permission permission) const override;
     void OpenPermissionSettings() override;
 
+    // -------------------------------------------------------------------------
     // GPS/Location (Core Location)
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] bool IsLocationAvailable() const override;
     [[nodiscard]] bool IsLocationEnabled() const override;
     void StartLocationUpdates(const LocationConfig& config, LocationCallback callback,
@@ -90,7 +116,10 @@ public:
     void RequestSingleLocation(LocationCallback callback) override;
     [[nodiscard]] GPSCoordinates GetLastKnownLocation() const override;
 
+    // -------------------------------------------------------------------------
     // System Information
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] uint64_t GetAvailableMemory() const override;
     [[nodiscard]] uint64_t GetTotalMemory() const override;
     [[nodiscard]] int GetCPUCores() const override;
@@ -103,21 +132,41 @@ public:
     [[nodiscard]] int GetTimezoneOffset() const override;
     [[nodiscard]] bool HasHardwareFeature(const std::string& feature) const override;
 
+    // -------------------------------------------------------------------------
     // Battery/Network
+    // -------------------------------------------------------------------------
+
     [[nodiscard]] float GetBatteryLevel() const override;
     [[nodiscard]] bool IsBatteryCharging() const override;
     [[nodiscard]] bool IsNetworkAvailable() const override;
     [[nodiscard]] bool IsWifiConnected() const override;
     [[nodiscard]] bool IsCellularConnected() const override;
 
+    // -------------------------------------------------------------------------
     // Lifecycle & Haptics
+    // -------------------------------------------------------------------------
+
     void SetLifecycleCallbacks(LifecycleCallbacks callbacks) override;
     void TriggerHaptic(HapticType type) override;
     [[nodiscard]] bool HasHaptics() const override;  // Force Touch trackpad
 
-private:
+    // -------------------------------------------------------------------------
+    // Internal Callbacks (called from Obj-C delegates)
+    // -------------------------------------------------------------------------
+
+    void OnWindowResize(int width, int height);
+    void OnWindowFocus(bool focused);
+    void OnWindowClose();
+    void OnFullscreenChange(bool fullscreen);
+    void OnLocationUpdate(const GPSCoordinates& coords);
+    void OnLocationError(int code, const std::string& message);
+
+    // Allow Obj-C delegates to access internal state
     struct Impl;
-    std::unique_ptr<Impl> m_impl;  // PIMPL for Obj-C types
+    std::unique_ptr<Impl> m_impl;
+
+private:
+    void CreateMenuBar();
 
     bool m_initialized = false;
     PlatformState m_state = PlatformState::Unknown;

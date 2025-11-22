@@ -1,0 +1,152 @@
+{
+  "navmesh": {
+    "version": "1.0",
+    "description": "Nova3D Navigation Mesh Configuration",
+
+    "generation": {
+      "cell_size": 0.3,
+      "cell_height": 0.2,
+      "agent_height": 2.0,
+      "agent_radius": 0.6,
+      "agent_max_climb": 0.4,
+      "agent_max_slope": 45.0,
+      "region_min_size": 8,
+      "region_merge_size": 20,
+      "edge_max_length": 12.0,
+      "edge_max_error": 1.3,
+      "verts_per_poly": 6,
+      "detail_sample_distance": 6.0,
+      "detail_sample_max_error": 1.0,
+      "partition_type": "watershed"
+    },
+
+    "agent_types": {
+      "humanoid": {
+        "height": 2.0,
+        "radius": 0.6,
+        "max_climb": 0.4,
+        "max_slope": 45.0
+      },
+      "large": {
+        "height": 3.0,
+        "radius": 1.2,
+        "max_climb": 0.6,
+        "max_slope": 35.0
+      },
+      "small": {
+        "height": 1.0,
+        "radius": 0.3,
+        "max_climb": 0.3,
+        "max_slope": 60.0
+      },
+      "flying": {
+        "height": 1.5,
+        "radius": 0.5,
+        "max_climb": 999.0,
+        "max_slope": 90.0
+      }
+    },
+
+    "pathfinding": {
+      "algorithm": "astar",
+      "heuristic": "euclidean",
+      "heuristic_weight": 1.0,
+      "max_iterations": 10000,
+      "max_path_length": 1000,
+      "allow_partial_paths": true,
+      "smoothing_enabled": true,
+      "smoothing_iterations": 3,
+      "string_pulling": true
+    },
+
+    "dynamic_obstacles": {
+      "enabled": true,
+      "update_rate_hz": 10,
+      "carve_navmesh": true,
+      "cylinder_segments": 8,
+      "prediction_time": 0.5
+    },
+
+    "off_mesh_links": {
+      "enabled": true,
+      "max_links_per_tile": 16,
+      "auto_generate_jumps": true,
+      "jump_max_distance": 4.0,
+      "jump_max_height": 2.0,
+      "auto_generate_drops": true,
+      "drop_max_height": 4.0
+    },
+
+    "crowd_simulation": {
+      "enabled": true,
+      "max_agents": 256,
+      "max_neighbors": 8,
+      "neighbor_distance": 6.0,
+      "separation_weight": 2.0,
+      "collision_query_range": 8.0,
+      "path_optimization_range": 30.0,
+      "velocity_sample_count": 6,
+      "time_horizon": 1.5,
+      "time_horizon_obstacle": 0.75,
+      "update_rate_hz": 60
+    },
+
+    "area_types": {
+      "walkable": { "id": 0, "cost": 1.0, "flags": ["walk"] },
+      "road": { "id": 1, "cost": 0.5, "flags": ["walk", "fast"] },
+      "grass": { "id": 2, "cost": 1.5, "flags": ["walk"] },
+      "water_shallow": { "id": 3, "cost": 3.0, "flags": ["walk", "swim"] },
+      "water_deep": { "id": 4, "cost": 999.0, "flags": ["swim"] },
+      "jump": { "id": 5, "cost": 2.0, "flags": ["jump"] },
+      "door": { "id": 6, "cost": 1.0, "flags": ["walk", "door"] },
+      "ladder": { "id": 7, "cost": 2.0, "flags": ["climb"] }
+    },
+
+    "query_filters": {
+      "default": {
+        "include_flags": ["walk"],
+        "exclude_flags": [],
+        "area_costs": {}
+      },
+      "water_capable": {
+        "include_flags": ["walk", "swim"],
+        "exclude_flags": [],
+        "area_costs": { "water_shallow": 1.5 }
+      },
+      "flying": {
+        "include_flags": ["walk", "swim", "jump"],
+        "exclude_flags": [],
+        "area_costs": {}
+      }
+    },
+
+    "tiling": {
+      "enabled": true,
+      "tile_size": 48,
+      "max_tiles": 1024,
+      "max_polys_per_tile": 4096,
+      "async_build": true,
+      "build_threads": 4
+    },
+
+    "streaming": {
+      "enabled": true,
+      "load_radius": 100.0,
+      "unload_radius": 150.0,
+      "priority_distance": 50.0
+    },
+
+    "debug": {
+      "draw_navmesh": false,
+      "draw_bounds": false,
+      "draw_obstacles": false,
+      "draw_off_mesh_links": false,
+      "draw_paths": false,
+      "draw_agents": false,
+      "draw_agent_corners": false,
+      "draw_agent_targets": false,
+      "log_path_queries": false,
+      "log_generation": false
+    }
+  }
+}

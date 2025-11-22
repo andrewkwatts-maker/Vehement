@@ -1,0 +1,379 @@
+{
+    "version": "1.0",
+    "name": "Default HUD Layout",
+    "description": "Standard game HUD configuration",
+
+    "viewport": {
+        "referenceWidth": 1920,
+        "referenceHeight": 1080,
+        "scaleMode": "fit",
+        "minScale": 0.5,
+        "maxScale": 2.0
+    },
+
+    "sections": {
+        "topLeft": {
+            "anchor": { "x": 0, "y": 0 },
+            "offset": { "x": 16, "y": 16 },
+            "elements": ["playerInfo", "healthBar", "manaBar", "expBar"]
+        },
+        "topRight": {
+            "anchor": { "x": 1, "y": 0 },
+            "offset": { "x": -16, "y": 16 },
+            "elements": ["minimap", "questTracker"]
+        },
+        "topCenter": {
+            "anchor": { "x": 0.5, "y": 0 },
+            "offset": { "x": 0, "y": 16 },
+            "elements": ["targetInfo", "bossBar"]
+        },
+        "bottomLeft": {
+            "anchor": { "x": 0, "y": 1 },
+            "offset": { "x": 16, "y": -16 },
+            "elements": ["chat"]
+        },
+        "bottomCenter": {
+            "anchor": { "x": 0.5, "y": 1 },
+            "offset": { "x": 0, "y": -16 },
+            "elements": ["abilityBar", "itemBar"]
+        },
+        "bottomRight": {
+            "anchor": { "x": 1, "y": 1 },
+            "offset": { "x": -16, "y": -16 },
+            "elements": ["resourceDisplay", "buffBar"]
+        },
+        "center": {
+            "anchor": { "x": 0.5, "y": 0.5 },
+            "offset": { "x": 0, "y": 0 },
+            "elements": ["crosshair", "interactionPrompt"]
+        }
+    },
+
+    "elements": {
+        "playerInfo": {
+            "type": "panel",
+            "template": "player_info",
+            "size": { "width": 250, "height": 80 },
+            "visible": true,
+            "zIndex": 10,
+            "bindings": {
+                "playerName": "player.name",
+                "playerLevel": "player.level",
+                "playerClass": "player.class",
+                "portraitUrl": "player.portrait"
+            }
+        },
+
+        "healthBar": {
+            "type": "statBar",
+            "template": "health_bar",
+            "size": { "width": 200, "height": 24 },
+            "visible": true,
+            "zIndex": 10,
+            "style": {
+                "fillColor": "#ff4444",
+                "backgroundColor": "#333333",
+                "borderColor": "#666666",
+                "showText": true,
+                "textFormat": "{current}/{max}",
+                "animateChanges": true,
+                "animationDuration": 300
+            },
+            "bindings": {
+                "current": "player.health",
+                "max": "player.maxHealth"
+            },
+            "effects": {
+                "onDamage": {
+                    "animation": "shake",
+                    "flash": "#ff0000"
+                },
+                "onHeal": {
+                    "animation": "pulse",
+                    "flash": "#00ff00"
+                },
+                "onLow": {
+                    "threshold": 0.25,
+                    "animation": "pulseGlow",
+                    "color": "#ff0000"
+                }
+            }
+        },
+
+        "manaBar": {
+            "type": "statBar",
+            "template": "mana_bar",
+            "size": { "width": 200, "height": 18 },
+            "visible": true,
+            "zIndex": 10,
+            "style": {
+                "fillColor": "#4488ff",
+                "backgroundColor": "#333333",
+                "showText": true,
+                "textFormat": "{current}/{max}"
+            },
+            "bindings": {
+                "current": "player.mana",
+                "max": "player.maxMana"
+            }
+        },
+
+        "expBar": {
+            "type": "statBar",
+            "template": "exp_bar",
+            "size": { "width": 200, "height": 6 },
+            "visible": true,
+            "zIndex": 10,
+            "style": {
+                "fillColor": "#ffcc00",
+                "backgroundColor": "#333333",
+                "showText": false
+            },
+            "bindings": {
+                "current": "player.experience",
+                "max": "player.experienceToLevel"
+            },
+            "effects": {
+                "onGain": {
+                    "animation": "shimmer"
+                }
+            }
+        },
+
+        "minimap": {
+            "type": "minimap",
+            "template": "minimap",
+            "size": { "width": 200, "height": 200 },
+            "visible": true,
+            "zIndex": 10,
+            "config": {
+                "zoom": 1.0,
+                "rotation": "player",
+                "showPlayerIcon": true,
+                "showMarkers": true,
+                "showFog": true,
+                "borderRadius": 8
+            },
+            "markers": {
+                "enemy": { "color": "#ff0000", "icon": "marker_enemy", "size": 8 },
+                "ally": { "color": "#00ff00", "icon": "marker_ally", "size": 8 },
+                "objective": { "color": "#ffcc00", "icon": "marker_objective", "size": 12, "blinking": true },
+                "resource": { "color": "#00ccff", "icon": "marker_resource", "size": 6 },
+                "poi": { "color": "#ffffff", "icon": "marker_poi", "size": 10 }
+            }
+        },
+
+        "questTracker": {
+            "type": "list",
+            "template": "quest_tracker",
+            "size": { "width": 250, "height": "auto" },
+            "maxHeight": 300,
+            "visible": true,
+            "zIndex": 10,
+            "bindings": {
+                "quests": "quests.tracked"
+            },
+            "itemTemplate": {
+                "height": 60,
+                "expandable": true
+            }
+        },
+
+        "targetInfo": {
+            "type": "panel",
+            "template": "target_info",
+            "size": { "width": 300, "height": 60 },
+            "visible": false,
+            "zIndex": 20,
+            "showCondition": "target.exists",
+            "bindings": {
+                "name": "target.name",
+                "level": "target.level",
+                "health": "target.health",
+                "maxHealth": "target.maxHealth",
+                "type": "target.type"
+            },
+            "animations": {
+                "show": "fadeInDown",
+                "hide": "fadeOutUp"
+            }
+        },
+
+        "bossBar": {
+            "type": "bossBar",
+            "template": "boss_bar",
+            "size": { "width": 600, "height": 40 },
+            "visible": false,
+            "zIndex": 25,
+            "showCondition": "boss.active",
+            "bindings": {
+                "name": "boss.name",
+                "health": "boss.health",
+                "maxHealth": "boss.maxHealth",
+                "phase": "boss.phase"
+            },
+            "style": {
+                "segments": true,
+                "phaseColors": ["#ff4444", "#ff8800", "#ffcc00"]
+            }
+        },
+
+        "abilityBar": {
+            "type": "abilityBar",
+            "template": "ability_bar",
+            "size": { "width": 500, "height": 60 },
+            "visible": true,
+            "zIndex": 10,
+            "config": {
+                "slotCount": 8,
+                "slotSize": 50,
+                "spacing": 4,
+                "showHotkeys": true,
+                "showCooldowns": true,
+                "showCosts": true
+            },
+            "bindings": {
+                "abilities": "player.abilities"
+            }
+        },
+
+        "itemBar": {
+            "type": "itemBar",
+            "template": "item_bar",
+            "size": { "width": 300, "height": 50 },
+            "visible": true,
+            "zIndex": 10,
+            "config": {
+                "slotCount": 5,
+                "slotSize": 45,
+                "spacing": 4
+            },
+            "bindings": {
+                "items": "player.quickItems"
+            }
+        },
+
+        "chat": {
+            "type": "chat",
+            "template": "chat",
+            "size": { "width": 350, "height": 200 },
+            "visible": true,
+            "zIndex": 5,
+            "config": {
+                "maxMessages": 100,
+                "fadeTime": 10,
+                "channels": ["general", "party", "guild", "whisper", "system"]
+            }
+        },
+
+        "resourceDisplay": {
+            "type": "resourceList",
+            "template": "resources",
+            "size": { "width": 150, "height": "auto" },
+            "visible": true,
+            "zIndex": 10,
+            "bindings": {
+                "gold": "player.gold",
+                "gems": "player.gems",
+                "currency": "player.currency"
+            }
+        },
+
+        "buffBar": {
+            "type": "buffBar",
+            "template": "buffs",
+            "size": { "width": 200, "height": 50 },
+            "visible": true,
+            "zIndex": 10,
+            "config": {
+                "maxVisible": 8,
+                "iconSize": 32,
+                "showDuration": true,
+                "showStacks": true
+            },
+            "bindings": {
+                "buffs": "player.buffs",
+                "debuffs": "player.debuffs"
+            }
+        },
+
+        "crosshair": {
+            "type": "crosshair",
+            "template": "crosshair",
+            "size": { "width": 32, "height": 32 },
+            "visible": true,
+            "zIndex": 100,
+            "config": {
+                "style": "default",
+                "color": "#ffffff",
+                "dynamicSpread": true
+            }
+        },
+
+        "interactionPrompt": {
+            "type": "prompt",
+            "template": "interaction_prompt",
+            "size": { "width": 200, "height": 40 },
+            "visible": false,
+            "zIndex": 50,
+            "offset": { "y": 50 },
+            "showCondition": "interaction.available",
+            "bindings": {
+                "action": "interaction.action",
+                "key": "interaction.key",
+                "target": "interaction.target"
+            },
+            "animations": {
+                "show": "fadeInUp",
+                "hide": "fadeOut"
+            }
+        }
+    },
+
+    "notifications": {
+        "position": { "anchor": { "x": 1, "y": 0.3 }, "offset": { "x": -16, "y": 0 } },
+        "width": 300,
+        "maxVisible": 5,
+        "defaultDuration": 5000,
+        "stackDirection": "down",
+        "animations": {
+            "enter": "slideInRight",
+            "exit": "slideOutRight"
+        }
+    },
+
+    "modals": {
+        "backdrop": {
+            "color": "rgba(0, 0, 0, 0.7)",
+            "blur": 2,
+            "clickToClose": true
+        },
+        "animation": {
+            "open": "scaleIn",
+            "close": "scaleOut",
+            "duration": 200
+        }
+    },
+
+    "tooltips": {
+        "delay": 300,
+        "offset": { "x": 15, "y": 15 },
+        "followMouse": true,
+        "maxWidth": 350
+    },
+
+    "responsive": {
+        "breakpoints": {
+            "small": 720,
+            "medium": 1080,
+            "large": 1440
+        },
+        "overrides": {
+            "small": {
+                "minimap": { "size": { "width": 150, "height": 150 } },
+                "abilityBar": { "config": { "slotCount": 6, "slotSize": 40 } },
+                "chat": { "visible": false }
+            }
+        }
+    }
+}

@@ -691,10 +691,23 @@ void SpellBrowser::RenderSpellCard(const SpellStats& spell) {
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Duplicate")) {
-            // TODO
+            // Duplicate the spell with a new ID
+            SpellEntry newSpell = spell;
+            newSpell.id = "copy_" + spell.id + "_" + std::to_string(rand() % 1000);
+            newSpell.name = spell.name + " (Copy)";
+            m_allSpells.push_back(newSpell);
+            ApplyFilters();
+            if (m_editor) m_editor->MarkDirty();
         }
         if (ImGui::MenuItem("Delete")) {
-            // TODO
+            // Delete the spell from the list
+            auto it = std::find_if(m_allSpells.begin(), m_allSpells.end(),
+                [&spell](const SpellEntry& s) { return s.id == spell.id; });
+            if (it != m_allSpells.end()) {
+                m_allSpells.erase(it);
+                ApplyFilters();
+                if (m_editor) m_editor->MarkDirty();
+            }
         }
         ImGui::EndPopup();
     }

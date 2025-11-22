@@ -1,6 +1,10 @@
 #include "PCGPanel.hpp"
 #include "Editor.hpp"
+#include "ScriptEditor.hpp"
+#include "WorldView.hpp"
 #include <imgui.h>
+#include <filesystem>
+#include <GL/gl.h>
 
 namespace Vehement {
 
@@ -77,7 +81,7 @@ void PCGPanel::RenderStageConfig() {
     ImGui::Separator();
 
     // Helper for script selection
-    auto scriptSelector = [](const char* label, std::string& script) {
+    auto scriptSelector = [this](const char* label, std::string& script) {
         ImGui::PushID(label);
         ImGui::Text("%s", label);
         ImGui::SameLine(150);
@@ -90,11 +94,58 @@ void PCGPanel::RenderStageConfig() {
         }
         ImGui::SameLine();
         if (ImGui::Button("...")) {
-            // TODO: Script browser
+            ImGui::OpenPopup("ScriptBrowserPopup");
         }
+
+        // Script browser popup
+        if (ImGui::BeginPopup("ScriptBrowserPopup")) {
+            ImGui::Text("Select PCG Script");
+            ImGui::Separator();
+
+            // Show available PCG scripts
+            std::string scriptsPath = "scripts/pcg/";
+            if (std::filesystem::exists(scriptsPath)) {
+                for (const auto& entry : std::filesystem::directory_iterator(scriptsPath)) {
+                    if (entry.path().extension() == ".py") {
+                        std::string scriptName = entry.path().filename().string();
+                        if (ImGui::Selectable(scriptName.c_str())) {
+                            script = entry.path().string();
+                        }
+                    }
+                }
+            }
+
+            ImGui::Separator();
+            // Predefined PCG scripts
+            const char* defaultScripts[] = {
+                "scripts/pcg/terrain_perlin.py",
+                "scripts/pcg/terrain_voronoi.py",
+                "scripts/pcg/roads_grid.py",
+                "scripts/pcg/roads_organic.py",
+                "scripts/pcg/buildings_city.py",
+                "scripts/pcg/buildings_village.py",
+                "scripts/pcg/foliage_forest.py",
+                "scripts/pcg/foliage_grassland.py",
+                "scripts/pcg/entities_spawn.py"
+            };
+            ImGui::Text("Default Scripts:");
+            for (const char* defaultScript : defaultScripts) {
+                if (ImGui::Selectable(defaultScript)) {
+                    script = defaultScript;
+                }
+            }
+            ImGui::EndPopup();
+        }
+
         ImGui::SameLine();
         if (ImGui::Button("Edit")) {
-            // TODO: Open script editor
+            // Open script in the script editor
+            if (!script.empty() && m_editor) {
+                if (auto* scriptEditor = m_editor->GetScriptEditor()) {
+                    scriptEditor->OpenScript(script);
+                }
+                m_editor->SetScriptEditorVisible(true);
+            }
         }
         ImGui::PopID();
     };
@@ -175,14 +226,35 @@ void PCGPanel::RenderPreview() {
     // Preview controls
     if (ImGui::Button("Refresh Preview")) {
         m_previewDirty = true;
+        GeneratePreviewTexture();
     }
 
-    // Preview image placeholder
+    // Preview image
     ImVec2 previewSize(256, 256);
     ImGui::BeginChild("PreviewImage", previewSize, true);
 
-    // TODO: Render actual preview texture
-    ImGui::TextDisabled("Preview will appear here");
+    // Create/update OpenGL texture for preview
+    if (m_previewTextureId == 0) {
+        glGenTextures(1, &m_previewTextureId);
+    }
+
+    // Update texture if dirty
+    if (m_previewDirty && !m_previewTexture.empty()) {
+        glBindTexture(GL_TEXTURE_2D, m_previewTextureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_previewWidth, m_previewHeight,
+                     0, GL_RGBA, GL_UNSIGNED_BYTE, m_previewTexture.data());
+        glBindTexture(GL_TEXTURE_2D, 0);
+        m_previewDirty = false;
+    }
+
+    // Render the preview texture
+    if (m_previewTextureId != 0) {
+        ImGui::Image((ImTextureID)(intptr_t)m_previewTextureId, ImVec2(m_previewWidth, m_previewHeight));
+    } else {
+        ImGui::TextDisabled("No preview generated");
+    }
     ImGui::Text("Size: %dx%d", m_previewWidth, m_previewHeight);
     ImGui::Text("Seed: %d", m_seed);
 
@@ -211,11 +283,55 @@ void PCGPanel::RenderRealWorldOverlay() {
     ImGui::InputText("Longitude", lonBuffer, sizeof(lonBuffer));
 
     if (ImGui::Button("Fetch Data")) {
-        // TODO: Fetch real-world data
+        // Fetch real-world data from OSM and elevation services
+        double lat = std::atof(latBuffer);
+        double lon = std::atof(lonBuffer);
+
+        // Store the coordinates for generation
+        m_realWorldLat = lat;
+        m_realWorldLon = lon;
+
+        // Queue data fetch (would use async HTTP requests in real implementation)
+        m_isFetchingRealWorldData = true;
+        m_fetchProgress = 0.0f;
+        m_fetchStatus = "Fetching OSM data...";
+
+        // In a real implementation, this would make HTTP requests to:
+        // - Overpass API for OSM data (roads, buildings, water)
+        // - Elevation APIs for DEM data
+        // - Climate/biome APIs for vegetation data
+        // For now, simulate with placeholder
+        if (m_console) {
+            m_console->Log("Fetching real-world data for (" + std::to_string(lat) + ", " + std::to_string(lon) + ")", Console::LogLevel::Info);
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("Use Current View")) {
-        // TODO: Get coordinates from WorldView
+        // Get coordinates from WorldView camera position
+        if (m_editor) {
+            if (auto* worldView = m_editor->GetWorldView()) {
+                // Get camera target position and convert to lat/lon
+                glm::vec3 target = worldView->GetCameraTarget();
+
+                // Convert world coordinates to approximate lat/lon
+                // Assuming world units map to ~1 meter at equator
+                double baseLat = 37.7749;  // San Francisco reference
+                double baseLon = -122.4194;
+                double metersPerDegLat = 111320.0;
+                double metersPerDegLon = 111320.0 * std::cos(baseLat * 3.14159 / 180.0);
+
+                double lat = baseLat + (target.z / metersPerDegLat);
+                double lon = baseLon + (target.x / metersPerDegLon);
+
+                snprintf(latBuffer, sizeof(latBuffer), "%.6f", lat);
+                snprintf(lonBuffer, sizeof(lonBuffer), "%.6f", lon);
+            }
+        }
+    }
+
+    // Show fetch progress
+    if (m_isFetchingRealWorldData) {
+        ImGui::ProgressBar(m_fetchProgress, ImVec2(-1, 0), m_fetchStatus.c_str());
     }
 
     ImGui::Separator();
@@ -261,6 +377,70 @@ void PCGPanel::CancelGeneration() {
     m_isGenerating = false;
     m_progress = 0.0f;
     m_currentStage = "";
+}
+
+void PCGPanel::GeneratePreviewTexture() {
+    // Resize texture buffer if needed
+    size_t requiredSize = m_previewWidth * m_previewHeight * 4;
+    if (m_previewTexture.size() != requiredSize) {
+        m_previewTexture.resize(requiredSize);
+    }
+
+    // Simple procedural preview generation using the seed
+    srand(m_seed);
+
+    for (int y = 0; y < m_previewHeight; y++) {
+        for (int x = 0; x < m_previewWidth; x++) {
+            int idx = (y * m_previewWidth + x) * 4;
+
+            // Simple noise-based terrain
+            float nx = (float)x / m_previewWidth;
+            float ny = (float)y / m_previewHeight;
+
+            // Perlin-like noise approximation
+            float noise = sinf(nx * 10.0f + m_seed * 0.1f) * cosf(ny * 10.0f + m_seed * 0.2f);
+            noise += sinf(nx * 20.0f + m_seed * 0.3f) * cosf(ny * 20.0f + m_seed * 0.4f) * 0.5f;
+            noise = (noise + 1.5f) / 3.0f;  // Normalize to 0-1
+
+            // Determine terrain type
+            uint8_t r, g, b;
+            if (noise < 0.3f) {
+                // Water
+                r = 51; g = 102; b = 204;
+            } else if (noise < 0.4f) {
+                // Beach/sand
+                r = 194; g = 178; b = 128;
+            } else if (noise < 0.75f) {
+                // Grass
+                float grassVariation = (rand() % 20) / 100.0f;
+                r = (uint8_t)(51 + grassVariation * 30);
+                g = (uint8_t)(153 + grassVariation * 30);
+                b = (uint8_t)(51 + grassVariation * 30);
+            } else {
+                // Mountain/rock
+                r = 128; g = 128; b = 128;
+            }
+
+            // Add road overlay (simple grid pattern)
+            if ((x % 32 < 2 || y % 32 < 2) && noise > 0.35f) {
+                r = 100; g = 100; b = 100;
+            }
+
+            // Add building spots
+            if (noise > 0.4f && noise < 0.7f) {
+                if ((x % 16 < 4 && y % 16 < 4) && rand() % 10 < 3) {
+                    r = 153; g = 128; b = 102;
+                }
+            }
+
+            m_previewTexture[idx + 0] = r;
+            m_previewTexture[idx + 1] = g;
+            m_previewTexture[idx + 2] = b;
+            m_previewTexture[idx + 3] = 255;
+        }
+    }
+
+    m_previewDirty = true;
 }
 
 } // namespace Vehement

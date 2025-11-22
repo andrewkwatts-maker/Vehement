@@ -1,0 +1,596 @@
+{
+  "$schema": "../../schemas/blend_tree.schema.json",
+  "id": "combat_layer_system",
+  "name": "Combat Layer Blend Tree",
+  "description": "Multi-layer combat system with upper/lower body separation, weapon animations, and hit reactions",
+  "version": "1.0.0",
+  "skeleton": "assets/skeletons/humanoid_standard.skeleton",
+
+  "parameters": {
+    "Speed": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 6,
+      "smoothing": 0.15,
+      "description": "Movement speed"
+    },
+    "CombatState": {
+      "type": "int",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 4,
+      "description": "0=Idle, 1=Ready, 2=Attacking, 3=Blocking, 4=Staggered"
+    },
+    "WeaponType": {
+      "type": "int",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 5,
+      "description": "0=Unarmed, 1=Sword, 2=Axe, 3=Bow, 4=Staff, 5=DualWield"
+    },
+    "AttackCombo": {
+      "type": "int",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 4,
+      "description": "Current combo stage"
+    },
+    "AttackDirection": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": -180,
+      "max": 180,
+      "description": "Attack direction angle"
+    },
+    "BlockWeight": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "smoothing": 0.1,
+      "description": "Block pose weight"
+    },
+    "AimWeight": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "smoothing": 0.2,
+      "description": "Aiming weight for ranged"
+    },
+    "AimPitch": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": -90,
+      "max": 90,
+      "smoothing": 0.15,
+      "description": "Aim pitch angle"
+    },
+    "AimYaw": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": -90,
+      "max": 90,
+      "smoothing": 0.15,
+      "description": "Aim yaw angle"
+    },
+    "HitDirection": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 360,
+      "description": "Direction of incoming hit"
+    },
+    "HitMagnitude": {
+      "type": "float",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "description": "Hit reaction intensity"
+    },
+    "IsTwoHanded": {
+      "type": "bool",
+      "defaultValue": false,
+      "description": "Two-handed weapon grip"
+    }
+  },
+
+  "rootNode": {
+    "id": "combat_root",
+    "type": "layered",
+    "layers": [
+      {
+        "node": {
+          "id": "lower_body_locomotion",
+          "type": "blend1d",
+          "parameter": "Speed",
+          "interpolation": "smooth",
+          "syncMarkers": true,
+          "samples": [
+            {
+              "position": 0,
+              "node": {
+                "type": "clip",
+                "clip": "animations/combat/combat_idle_lower.anim",
+                "loop": true
+              }
+            },
+            {
+              "position": 2,
+              "node": {
+                "type": "clip",
+                "clip": "animations/combat/combat_walk_lower.anim",
+                "loop": true,
+                "syncGroup": "combat_locomotion"
+              }
+            },
+            {
+              "position": 4,
+              "node": {
+                "type": "clip",
+                "clip": "animations/combat/combat_jog_lower.anim",
+                "loop": true,
+                "syncGroup": "combat_locomotion"
+              }
+            },
+            {
+              "position": 6,
+              "node": {
+                "type": "clip",
+                "clip": "animations/combat/combat_run_lower.anim",
+                "loop": true,
+                "syncGroup": "combat_locomotion"
+              }
+            }
+          ]
+        },
+        "weight": 1.0,
+        "blendMode": "override",
+        "mask": "lower_body_mask"
+      },
+      {
+        "node": {
+          "id": "upper_body_combat",
+          "type": "state_selector",
+          "parameter": "CombatState",
+          "transitionTime": 0.15,
+          "states": [
+            {
+              "value": 0,
+              "node": {
+                "id": "weapon_idle",
+                "type": "state_selector",
+                "parameter": "WeaponType",
+                "transitionTime": 0.2,
+                "states": [
+                  {
+                    "value": 0,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/idle_unarmed.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 1,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/idle_sword.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 2,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/idle_axe.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 3,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/idle_bow.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 4,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/idle_staff.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 5,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/idle_dual_wield.anim",
+                      "loop": true
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "value": 1,
+              "node": {
+                "id": "combat_ready",
+                "type": "state_selector",
+                "parameter": "WeaponType",
+                "transitionTime": 0.15,
+                "states": [
+                  {
+                    "value": 0,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/ready_unarmed.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 1,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/ready_sword.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 2,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/ready_axe.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 3,
+                    "node": {
+                      "id": "bow_aim",
+                      "type": "blend2d",
+                      "parameterX": "AimYaw",
+                      "parameterY": "AimPitch",
+                      "blendMode": "simple",
+                      "samples": [
+                        {
+                          "position": { "x": 0, "y": 0 },
+                          "node": {
+                            "type": "clip",
+                            "clip": "animations/combat/bow_aim_center.anim",
+                            "loop": true
+                          }
+                        },
+                        {
+                          "position": { "x": 0, "y": 45 },
+                          "node": {
+                            "type": "clip",
+                            "clip": "animations/combat/bow_aim_up.anim",
+                            "loop": true
+                          }
+                        },
+                        {
+                          "position": { "x": 0, "y": -45 },
+                          "node": {
+                            "type": "clip",
+                            "clip": "animations/combat/bow_aim_down.anim",
+                            "loop": true
+                          }
+                        },
+                        {
+                          "position": { "x": -45, "y": 0 },
+                          "node": {
+                            "type": "clip",
+                            "clip": "animations/combat/bow_aim_left.anim",
+                            "loop": true
+                          }
+                        },
+                        {
+                          "position": { "x": 45, "y": 0 },
+                          "node": {
+                            "type": "clip",
+                            "clip": "animations/combat/bow_aim_right.anim",
+                            "loop": true
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "value": 4,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/ready_staff.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "value": 5,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/ready_dual_wield.anim",
+                      "loop": true
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "value": 2,
+              "node": {
+                "id": "attack_combo",
+                "type": "sequence",
+                "loop": false,
+                "transitionTime": 0.05,
+                "nodes": [
+                  {
+                    "type": "clip",
+                    "clip": "animations/combat/sword_attack_1.anim",
+                    "loop": false
+                  },
+                  {
+                    "type": "clip",
+                    "clip": "animations/combat/sword_attack_2.anim",
+                    "loop": false
+                  },
+                  {
+                    "type": "clip",
+                    "clip": "animations/combat/sword_attack_3.anim",
+                    "loop": false
+                  },
+                  {
+                    "type": "clip",
+                    "clip": "animations/combat/sword_attack_finisher.anim",
+                    "loop": false
+                  }
+                ]
+              }
+            },
+            {
+              "value": 3,
+              "node": {
+                "id": "blocking",
+                "type": "blend1d",
+                "parameter": "HitDirection",
+                "interpolation": "smooth",
+                "samples": [
+                  {
+                    "position": 0,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/block_front.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "position": 90,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/block_right.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "position": 180,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/block_back.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "position": 270,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/block_left.anim",
+                      "loop": true
+                    }
+                  },
+                  {
+                    "position": 360,
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/block_front.anim",
+                      "loop": true
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "value": 4,
+              "node": {
+                "id": "hit_reactions",
+                "type": "blend2d",
+                "parameterX": "HitDirection",
+                "parameterY": "HitMagnitude",
+                "blendMode": "freeform_cartesian",
+                "samples": [
+                  {
+                    "position": { "x": 0, "y": 0.3 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_light_front.anim",
+                      "loop": false
+                    }
+                  },
+                  {
+                    "position": { "x": 0, "y": 0.7 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_heavy_front.anim",
+                      "loop": false
+                    }
+                  },
+                  {
+                    "position": { "x": 90, "y": 0.3 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_light_right.anim",
+                      "loop": false
+                    }
+                  },
+                  {
+                    "position": { "x": 90, "y": 0.7 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_heavy_right.anim",
+                      "loop": false
+                    }
+                  },
+                  {
+                    "position": { "x": 180, "y": 0.3 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_light_back.anim",
+                      "loop": false
+                    }
+                  },
+                  {
+                    "position": { "x": 180, "y": 0.7 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_heavy_back.anim",
+                      "loop": false
+                    }
+                  },
+                  {
+                    "position": { "x": 270, "y": 0.3 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_light_left.anim",
+                      "loop": false
+                    }
+                  },
+                  {
+                    "position": { "x": 270, "y": 0.7 },
+                    "node": {
+                      "type": "clip",
+                      "clip": "animations/combat/hit_heavy_left.anim",
+                      "loop": false
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "weight": 1.0,
+        "blendMode": "override",
+        "mask": "upper_body_mask"
+      }
+    ]
+  },
+
+  "layers": [
+    {
+      "name": "Base Combat Layer",
+      "node": {
+        "type": "clip",
+        "clip": "animations/combat/combat_idle.anim",
+        "loop": true
+      },
+      "weight": 1.0,
+      "blendMode": "override"
+    },
+    {
+      "name": "Hit Reaction Additive",
+      "node": {
+        "id": "hit_additive",
+        "type": "blend2d",
+        "parameterX": "HitDirection",
+        "parameterY": "HitMagnitude",
+        "blendMode": "simple",
+        "samples": [
+          {
+            "position": { "x": 0, "y": 0 },
+            "node": {
+              "type": "clip",
+              "clip": "animations/combat/additive_hit_front.anim",
+              "loop": false
+            }
+          },
+          {
+            "position": { "x": 90, "y": 0 },
+            "node": {
+              "type": "clip",
+              "clip": "animations/combat/additive_hit_right.anim",
+              "loop": false
+            }
+          },
+          {
+            "position": { "x": 180, "y": 0 },
+            "node": {
+              "type": "clip",
+              "clip": "animations/combat/additive_hit_back.anim",
+              "loop": false
+            }
+          },
+          {
+            "position": { "x": 270, "y": 0 },
+            "node": {
+              "type": "clip",
+              "clip": "animations/combat/additive_hit_left.anim",
+              "loop": false
+            }
+          }
+        ]
+      },
+      "weightParameter": "HitMagnitude",
+      "blendMode": "additive",
+      "mask": {
+        "preset": "torso",
+        "featherDepth": 1
+      }
+    },
+    {
+      "name": "Breathing",
+      "node": {
+        "type": "clip",
+        "clip": "animations/combat/additive_breathing_heavy.anim",
+        "loop": true
+      },
+      "weight": 0.3,
+      "blendMode": "additive",
+      "mask": {
+        "preset": "spine",
+        "includeBones": ["Spine", "Spine1", "Spine2", "Chest"]
+      }
+    }
+  ],
+
+  "syncGroups": [
+    {
+      "name": "combat_locomotion",
+      "leaderPolicy": "highest_weight"
+    },
+    {
+      "name": "attack_sync",
+      "leaderPolicy": "explicit",
+      "explicitLeader": "attack_combo"
+    }
+  ],
+
+  "defaultMask": "full_body_mask",
+
+  "rootMotion": {
+    "enabled": true,
+    "extractPosition": {
+      "x": true,
+      "y": false,
+      "z": true
+    },
+    "extractRotation": true,
+    "rootBone": "Hips"
+  },
+
+  "debugSettings": {
+    "showSkeleton": false,
+    "showBoneNames": false,
+    "highlightActiveBones": true,
+    "logEvaluations": false
+  }
+}

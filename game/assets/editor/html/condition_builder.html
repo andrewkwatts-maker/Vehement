@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Visual Condition Builder</title>
+    <style>
+        :root {
+            --bg-dark: #1e1e2e;
+            --bg-darker: #181825;
+            --bg-lighter: #313244;
+            --surface: #45475a;
+            --text: #cdd6f4;
+            --text-dim: #6c7086;
+            --accent: #89b4fa;
+            --success: #a6e3a1;
+            --warning: #f9e2af;
+            --error: #f38ba8;
+            --purple: #cba6f7;
+            --teal: #94e2d5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            background: var(--bg-darker);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .toolbar button {
+            background: var(--bg-lighter);
+            border: none;
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .toolbar button:hover { background: var(--surface); }
+        .toolbar button.primary { background: var(--accent); color: var(--bg-dark); }
+        .toolbar button.success { background: var(--success); color: var(--bg-dark); }
+
+        .toolbar .separator {
+            width: 1px;
+            height: 24px;
+            background: var(--bg-lighter);
+            margin: 0 8px;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Block Palette */
+        .block-palette {
+            width: 200px;
+            background: var(--bg-darker);
+            border-right: 1px solid var(--bg-lighter);
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .palette-section { margin-bottom: 16px; }
+        .palette-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .block-template {
+            background: var(--bg-lighter);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: grab;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .block-template:hover {
+            background: var(--surface);
+            transform: translateX(2px);
+        }
+
+        .block-template .icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* Builder Canvas */
+        .builder-canvas {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .canvas-area {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            background: var(--bg-dark);
+        }
+
+        .drop-zone {
+            min-height: 200px;
+            border: 2px dashed var(--bg-lighter);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(137, 180, 250, 0.1);
+        }
+
+        .drop-zone-hint {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 40px;
+        }
+
+        /* Condition Blocks */
+        .condition-block {
+            background: var(--bg-darker);
+            border: 2px solid var(--bg-lighter);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .condition-block.selected {
+            border-color: var(--accent);
+        }
+
+        .condition-block.logical { border-left: 4px solid var(--accent); }
+        .condition-block.comparison { border-left: 4px solid var(--success); }
+        .condition-block.property { border-left: 4px solid var(--warning); }
+
+        .block-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .block-type {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--bg-lighter);
+        }
+
+        .block-delete {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+        }
+
+        .block-delete:hover { color: var(--error); }
+
+        .block-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .block-content label {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .block-content input,
+        .block-content select {
+            background: var(--bg-lighter);
+            border: 1px solid transparent;
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .block-content input:focus,
+        .block-content select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .block-content input { width: 150px; }
+        .block-content select { min-width: 100px; }
+
+        /* Nested blocks */
+        .block-children {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            min-height: 60px;
+        }
+
+        .block-children.drop-zone {
+            border-style: dashed;
+        }
+
+        .gate-label {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--accent);
+            color: var(--bg-dark);
+            font-weight: bold;
+            font-size: 11px;
+            border-radius: 4px;
+            margin: 4px 0;
+        }
+
+        .gate-label.or { background: var(--purple); }
+        .gate-label.not { background: var(--error); }
+
+        /* Preview Panel */
+        .preview-panel {
+            width: 350px;
+            background: var(--bg-darker);
+            border-left: 1px solid var(--bg-lighter);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            padding: 12px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .preview-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .preview-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .preview-tab:hover { background: var(--bg-lighter); }
+        .preview-tab.active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow: auto;
+            padding: 12px;
+        }
+
+        .json-preview {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .json-key { color: var(--accent); }
+        .json-string { color: var(--success); }
+        .json-number { color: var(--warning); }
+        .json-boolean { color: var(--purple); }
+
+        /* Test Panel */
+        .test-panel {
+            border-top: 1px solid var(--bg-lighter);
+            padding: 12px;
+        }
+
+        .test-panel h4 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .test-data {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-lighter);
+            border: 1px solid transparent;
+            color: var(--text);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            resize: none;
+        }
+
+        .test-data:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .test-result {
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .test-result.success {
+            background: rgba(166, 227, 161, 0.2);
+            color: var(--success);
+        }
+
+        .test-result.failure {
+            background: rgba(243, 139, 168, 0.2);
+            color: var(--error);
+        }
+
+        .test-result.error {
+            background: rgba(249, 226, 175, 0.2);
+            color: var(--warning);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-darker);
+            padding: 4px 16px;
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-top: 1px solid var(--bg-lighter);
+        }
+
+        /* Block type colors */
+        .icon.and { background: var(--accent); }
+        .icon.or { background: var(--purple); }
+        .icon.not { background: var(--error); }
+        .icon.property { background: var(--warning); }
+        .icon.compare { background: var(--success); }
+        .icon.python { background: var(--teal); }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="clearAll()">Clear</button>
+        <button onclick="undo()">Undo</button>
+        <button onclick="redo()">Redo</button>
+        <div class="separator"></div>
+        <button class="success" onclick="testCondition()">Test</button>
+        <button onclick="saveAsTemplate()">Save Template</button>
+        <button onclick="loadTemplate()">Load Template</button>
+        <div class="separator"></div>
+        <button class="primary" onclick="apply()">Apply</button>
+    </div>
+
+    <div class="main-container">
+        <div class="block-palette">
+            <div class="palette-section">
+                <h3>Logic Gates</h3>
+                <div class="block-template" draggable="true" data-type="and">
+                    <div class="icon and">&&</div>
+                    <span>AND</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="or">
+                    <div class="icon or">||</div>
+                    <span>OR</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="not">
+                    <div class="icon not">!</div>
+                    <span>NOT</span>
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <h3>Comparisons</h3>
+                <div class="block-template" draggable="true" data-type="equals">
+                    <div class="icon compare">==</div>
+                    <span>Equals</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="notEquals">
+                    <div class="icon compare">!=</div>
+                    <span>Not Equals</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="greater">
+                    <div class="icon compare">&gt;</div>
+                    <span>Greater Than</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="less">
+                    <div class="icon compare">&lt;</div>
+                    <span>Less Than</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="range">
+                    <div class="icon compare">[]</div>
+                    <span>In Range</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="contains">
+                    <div class="icon compare">?</div>
+                    <span>Contains</span>
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <h3>Properties</h3>
+                <div class="block-template" draggable="true" data-type="property">
+                    <div class="icon property">P</div>
+                    <span>Property</span>
+                </div>
+                <div class="block-template" draggable="true" data-type="eventData">
+                    <div class="icon property">E</div>
+                    <span>Event Data</span>
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <h3>Advanced</h3>
+                <div class="block-template" draggable="true" data-type="python">
+                    <div class="icon python">Py</div>
+                    <span>Python Expr</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="builder-canvas">
+            <div class="canvas-area">
+                <div class="drop-zone" id="rootDropZone">
+                    <div class="drop-zone-hint" id="dropHint">
+                        Drag condition blocks here to build your condition
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-panel">
+            <div class="preview-header">Output</div>
+            <div class="preview-tabs">
+                <div class="preview-tab active" data-tab="json" onclick="switchTab('json')">JSON</div>
+                <div class="preview-tab" data-tab="tree" onclick="switchTab('tree')">Tree</div>
+                <div class="preview-tab" data-tab="text" onclick="switchTab('text')">Text</div>
+            </div>
+            <div class="preview-content">
+                <div id="previewJson" class="json-preview"></div>
+            </div>
+            <div class="test-panel">
+                <h4>Test Data</h4>
+                <textarea class="test-data" id="testData" placeholder='{"health": 50, "name": "Player1"}'>{}</textarea>
+                <button onclick="testCondition()" style="margin-top: 8px; width: 100%;">Run Test</button>
+                <div class="test-result" id="testResult" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span>Blocks: <span id="blockCount">0</span></span>
+        <span>Depth: <span id="maxDepth">0</span></span>
+        <span id="validStatus">Valid</span>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            rootCondition: null,
+            selectedBlockId: null,
+            nextBlockId: 1,
+            undoStack: [],
+            redoStack: []
+        };
+
+        // Block types configuration
+        const blockTypes = {
+            and: { label: 'AND', type: 'logical', hasChildren: true, minChildren: 2 },
+            or: { label: 'OR', type: 'logical', hasChildren: true, minChildren: 2 },
+            not: { label: 'NOT', type: 'logical', hasChildren: true, maxChildren: 1 },
+            equals: { label: '==', type: 'comparison', operator: '==' },
+            notEquals: { label: '!=', type: 'comparison', operator: '!=' },
+            greater: { label: '>', type: 'comparison', operator: '>' },
+            less: { label: '<', type: 'comparison', operator: '<' },
+            range: { label: 'In Range', type: 'comparison', operator: 'inRange' },
+            contains: { label: 'Contains', type: 'comparison', operator: 'contains' },
+            property: { label: 'Property', type: 'property' },
+            eventData: { label: 'Event Data', type: 'property' },
+            python: { label: 'Python', type: 'python' }
+        };
+
+        // Initialize
+        function init() {
+            setupDragAndDrop();
+            updatePreview();
+        }
+
+        function setupDragAndDrop() {
+            // Palette items
+            document.querySelectorAll('.block-template').forEach(el => {
+                el.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('blockType', el.dataset.type);
+                    e.dataTransfer.setData('isNew', 'true');
+                });
+            });
+
+            // Root drop zone
+            const rootZone = document.getElementById('rootDropZone');
+            setupDropZone(rootZone, null);
+        }
+
+        function setupDropZone(zone, parentId) {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+
+                const blockType = e.dataTransfer.getData('blockType');
+                const isNew = e.dataTransfer.getData('isNew') === 'true';
+
+                if (blockType && isNew) {
+                    const block = createBlock(blockType);
+                    if (parentId) {
+                        addChildBlock(parentId, block);
+                    } else {
+                        state.rootCondition = block;
+                    }
+                    renderBlocks();
+                    updatePreview();
+                }
+            });
+        }
+
+        // Block creation
+        function createBlock(type) {
+            const config = blockTypes[type];
+            const block = {
+                id: 'block_' + state.nextBlockId++,
+                type: type,
+                config: config,
+                children: config.hasChildren ? [] : null,
+                propertyPath: '',
+                value: '',
+                operator: config.operator || '==',
+                pythonExpr: ''
+            };
+            return block;
+        }
+
+        function addChildBlock(parentId, child) {
+            const parent = findBlock(state.rootCondition, parentId);
+            if (parent && parent.children) {
+                parent.children.push(child);
+            }
+        }
+
+        function findBlock(block, id) {
+            if (!block) return null;
+            if (block.id === id) return block;
+            if (block.children) {
+                for (const child of block.children) {
+                    const found = findBlock(child, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        function deleteBlock(id) {
+            if (state.rootCondition && state.rootCondition.id === id) {
+                state.rootCondition = null;
+            } else {
+                removeBlockRecursive(state.rootCondition, id);
+            }
+            renderBlocks();
+            updatePreview();
+        }
+
+        function removeBlockRecursive(block, id) {
+            if (!block || !block.children) return;
+            block.children = block.children.filter(c => c.id !== id);
+            block.children.forEach(c => removeBlockRecursive(c, id));
+        }
+
+        // Rendering
+        function renderBlocks() {
+            const zone = document.getElementById('rootDropZone');
+            zone.innerHTML = '';
+
+            if (state.rootCondition) {
+                zone.appendChild(renderBlock(state.rootCondition));
+            } else {
+                zone.innerHTML = '<div class="drop-zone-hint">Drag condition blocks here to build your condition</div>';
+            }
+
+            updateStats();
+        }
+
+        function renderBlock(block) {
+            const el = document.createElement('div');
+            el.className = `condition-block ${block.config.type}`;
+            el.id = block.id;
+
+            if (block.id === state.selectedBlockId) {
+                el.classList.add('selected');
+            }
+
+            let contentHtml = '';
+
+            if (block.config.type === 'logical') {
+                contentHtml = renderLogicalBlock(block);
+            } else if (block.config.type === 'comparison') {
+                contentHtml = renderComparisonBlock(block);
+            } else if (block.config.type === 'property') {
+                contentHtml = renderPropertyBlock(block);
+            } else if (block.config.type === 'python') {
+                contentHtml = renderPythonBlock(block);
+            }
+
+            el.innerHTML = `
+                <div class="block-header">
+                    <span class="block-type">${block.config.label}</span>
+                    <button class="block-delete" onclick="deleteBlock('${block.id}')">&times;</button>
+                </div>
+                ${contentHtml}
+            `;
+
+            // Click handler
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectBlock(block.id);
+            });
+
+            // Setup child drop zone for logical blocks
+            if (block.config.hasChildren) {
+                const childZone = el.querySelector('.block-children');
+                if (childZone) {
+                    setupDropZone(childZone, block.id);
+                }
+            }
+
+            return el;
+        }
+
+        function renderLogicalBlock(block) {
+            const gateClass = block.type === 'or' ? 'or' : block.type === 'not' ? 'not' : '';
+
+            let childrenHtml = block.children.map((child, index) => {
+                const separator = index < block.children.length - 1 ?
+                    `<span class="gate-label ${gateClass}">${block.config.label}</span>` : '';
+                return `<div>${renderBlock(child).outerHTML}${separator}</div>`;
+            }).join('');
+
+            if (block.children.length === 0) {
+                childrenHtml = '<div class="drop-zone-hint">Drop conditions here</div>';
+            }
+
+            return `
+                <div class="block-children drop-zone">
+                    ${childrenHtml}
+                </div>
+            `;
+        }
+
+        function renderComparisonBlock(block) {
+            return `
+                <div class="block-content">
+                    <input type="text" placeholder="property.path"
+                           value="${block.propertyPath}"
+                           onchange="updateBlockValue('${block.id}', 'propertyPath', this.value)">
+                    <select onchange="updateBlockValue('${block.id}', 'operator', this.value)">
+                        <option value="==" ${block.operator === '==' ? 'selected' : ''}>=</option>
+                        <option value="!=" ${block.operator === '!=' ? 'selected' : ''}>&ne;</option>
+                        <option value=">" ${block.operator === '>' ? 'selected' : ''}>&gt;</option>
+                        <option value="<" ${block.operator === '<' ? 'selected' : ''}>&lt;</option>
+                        <option value=">=" ${block.operator === '>=' ? 'selected' : ''}>&ge;</option>
+                        <option value="<=" ${block.operator === '<=' ? 'selected' : ''}>&le;</option>
+                        <option value="contains" ${block.operator === 'contains' ? 'selected' : ''}>contains</option>
+                    </select>
+                    <input type="text" placeholder="value"
+                           value="${block.value}"
+                           onchange="updateBlockValue('${block.id}', 'value', this.value)">
+                </div>
+            `;
+        }
+
+        function renderPropertyBlock(block) {
+            return `
+                <div class="block-content">
+                    <label>Path:</label>
+                    <input type="text" placeholder="entity.health"
+                           value="${block.propertyPath}"
+                           onchange="updateBlockValue('${block.id}', 'propertyPath', this.value)"
+                           style="width: 200px;">
+                </div>
+            `;
+        }
+
+        function renderPythonBlock(block) {
+            return `
+                <div class="block-content" style="flex-direction: column; align-items: stretch;">
+                    <label>Expression:</label>
+                    <input type="text" placeholder="ctx.health > 50 and ctx.name == 'Player'"
+                           value="${block.pythonExpr}"
+                           onchange="updateBlockValue('${block.id}', 'pythonExpr', this.value)"
+                           style="width: 100%;">
+                </div>
+            `;
+        }
+
+        function updateBlockValue(blockId, key, value) {
+            const block = findBlock(state.rootCondition, blockId);
+            if (block) {
+                block[key] = value;
+                updatePreview();
+            }
+        }
+
+        function selectBlock(id) {
+            state.selectedBlockId = id;
+            renderBlocks();
+        }
+
+        // Preview
+        function updatePreview() {
+            const json = blockToJson(state.rootCondition);
+            const formatted = JSON.stringify(json, null, 2);
+            document.getElementById('previewJson').innerHTML = syntaxHighlight(formatted);
+        }
+
+        function blockToJson(block) {
+            if (!block) return null;
+
+            if (block.config.type === 'logical') {
+                const key = block.type;
+                return {
+                    [key]: block.children.map(c => blockToJson(c)).filter(c => c !== null)
+                };
+            } else if (block.config.type === 'comparison') {
+                return {
+                    propertyPath: block.propertyPath,
+                    comparator: block.operator,
+                    compareValue: parseValue(block.value)
+                };
+            } else if (block.config.type === 'property') {
+                return {
+                    propertyPath: block.propertyPath
+                };
+            } else if (block.config.type === 'python') {
+                return {
+                    pythonCondition: block.pythonExpr
+                };
+            }
+
+            return null;
+        }
+
+        function parseValue(str) {
+            if (str === 'true') return true;
+            if (str === 'false') return false;
+            if (str === 'null') return null;
+            const num = parseFloat(str);
+            if (!isNaN(num)) return num;
+            return str;
+        }
+
+        function syntaxHighlight(json) {
+            return json
+                .replace(/("[\w]+")\s*:/g, '<span class="json-key">$1</span>:')
+                .replace(/:\s*"([^"]+)"/g, ': <span class="json-string">"$1"</span>')
+                .replace(/:\s*(\d+\.?\d*)/g, ': <span class="json-number">$1</span>')
+                .replace(/:\s*(true|false)/g, ': <span class="json-boolean">$1</span>');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.preview-tab[data-tab="${tab}"]`).classList.add('active');
+
+            // Would switch preview content based on tab
+        }
+
+        // Test
+        function testCondition() {
+            const testData = document.getElementById('testData').value;
+            const resultEl = document.getElementById('testResult');
+
+            try {
+                const data = JSON.parse(testData);
+                const condition = blockToJson(state.rootCondition);
+
+                if (!condition) {
+                    resultEl.textContent = 'No condition defined';
+                    resultEl.className = 'test-result error';
+                    resultEl.style.display = 'block';
+                    return;
+                }
+
+                const result = evaluateCondition(condition, data);
+
+                resultEl.textContent = result ? 'TRUE - Condition matches' : 'FALSE - Condition does not match';
+                resultEl.className = `test-result ${result ? 'success' : 'failure'}`;
+                resultEl.style.display = 'block';
+
+            } catch (e) {
+                resultEl.textContent = 'Error: ' + e.message;
+                resultEl.className = 'test-result error';
+                resultEl.style.display = 'block';
+            }
+        }
+
+        function evaluateCondition(condition, data) {
+            if (condition.and) {
+                return condition.and.every(c => evaluateCondition(c, data));
+            }
+            if (condition.or) {
+                return condition.or.some(c => evaluateCondition(c, data));
+            }
+            if (condition.not) {
+                return !condition.not.some(c => evaluateCondition(c, data));
+            }
+            if (condition.propertyPath) {
+                const value = getNestedValue(data, condition.propertyPath);
+                const compareValue = condition.compareValue;
+
+                switch (condition.comparator) {
+                    case '==': return value == compareValue;
+                    case '!=': return value != compareValue;
+                    case '>': return value > compareValue;
+                    case '<': return value < compareValue;
+                    case '>=': return value >= compareValue;
+                    case '<=': return value <= compareValue;
+                    case 'contains': return String(value).includes(String(compareValue));
+                    default: return false;
+                }
+            }
+            if (condition.pythonCondition) {
+                // Python evaluation would happen on backend
+                return true;
+            }
+            return false;
+        }
+
+        function getNestedValue(obj, path) {
+            return path.split('.').reduce((o, p) => o && o[p], obj);
+        }
+
+        // Stats
+        function updateStats() {
+            let blockCount = 0;
+            let maxDepth = 0;
+
+            function count(block, depth) {
+                if (!block) return;
+                blockCount++;
+                maxDepth = Math.max(maxDepth, depth);
+                if (block.children) {
+                    block.children.forEach(c => count(c, depth + 1));
+                }
+            }
+
+            count(state.rootCondition, 1);
+
+            document.getElementById('blockCount').textContent = blockCount;
+            document.getElementById('maxDepth').textContent = maxDepth;
+        }
+
+        // Actions
+        function clearAll() {
+            state.rootCondition = null;
+            renderBlocks();
+            updatePreview();
+        }
+
+        function undo() {
+            // Would implement undo
+        }
+
+        function redo() {
+            // Would implement redo
+        }
+
+        function saveAsTemplate() {
+            const json = blockToJson(state.rootCondition);
+            const name = prompt('Template name:');
+            if (name) {
+                console.log('Saving template:', name, json);
+                WebEditor.invoke('conditionBuilder.saveTemplate', [name, json]);
+            }
+        }
+
+        function loadTemplate() {
+            WebEditor.invoke('conditionBuilder.getTemplates', [], function(err, templates) {
+                // Would show template picker
+            });
+        }
+
+        function apply() {
+            const json = blockToJson(state.rootCondition);
+            WebEditor.invoke('conditionBuilder.apply', [json], function(err) {
+                if (!err) {
+                    console.log('Condition applied');
+                }
+            });
+        }
+
+        // WebEditor bridge
+        const WebEditor = {
+            invoke: function(method, args, callback) {
+                console.log('WebEditor.invoke:', method, args);
+                if (callback) setTimeout(() => callback(null, {}), 100);
+            }
+        };
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>

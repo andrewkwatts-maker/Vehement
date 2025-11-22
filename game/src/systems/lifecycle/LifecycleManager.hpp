@@ -1,3 +1,122 @@
+/**
+ * @file LifecycleManager.hpp
+ * @brief Central management system for game object lifecycles
+ *
+ * The LifecycleManager provides comprehensive object lifecycle management
+ * including creation, destruction, pooling, event routing, and tick scheduling.
+ * It serves as the backbone for all game entities and systems.
+ *
+ * @section lifecycle_concepts Key Concepts
+ *
+ * **Handles**: Objects are referenced via LifecycleHandle, a lightweight
+ * identifier that includes a generation counter for safe access to
+ * potentially destroyed objects.
+ *
+ * **Deferred Destruction**: By default, objects are destroyed at the end
+ * of the frame to prevent invalidating references during iteration.
+ *
+ * **Object Pools**: For frequently created/destroyed objects, enable
+ * pooling to reuse allocations and reduce garbage collection pressure.
+ *
+ * **Tick Scheduling**: Objects can register for per-frame updates with
+ * configurable tick rates and priorities.
+ *
+ * @section lifecycle_usage Basic Usage
+ *
+ * @code{.cpp}
+ * #include <game/src/systems/lifecycle/LifecycleManager.hpp>
+ *
+ * // Get the global manager
+ * auto& lifecycle = Vehement::Lifecycle::GetGlobalLifecycleManager();
+ *
+ * // Register types
+ * lifecycle.RegisterType<Zombie>("Zombie");
+ * lifecycle.RegisterType<Projectile>("Projectile");
+ *
+ * // Enable pooling for frequently used types
+ * lifecycle.EnablePooling<Projectile>(100);  // Pool of 100
+ *
+ * // Create objects
+ * auto zombieHandle = lifecycle.Create<Zombie>({
+ *     {"health", 100},
+ *     {"speed", 2.5f}
+ * });
+ *
+ * // Or create from config file
+ * auto bossHandle = lifecycle.CreateFromFile("config/entities/boss.json");
+ *
+ * // Access objects
+ * if (auto* zombie = lifecycle.GetAs<Zombie>(zombieHandle)) {
+ *     zombie->TakeDamage(50);
+ * }
+ *
+ * // Destroy (deferred by default)
+ * lifecycle.Destroy(zombieHandle);
+ *
+ * // Update each frame
+ * void GameLoop(float dt) {
+ *     lifecycle.Update(dt);
+ *     lifecycle.ProcessDeferredActions();
+ * }
+ * @endcode
+ *
+ * @section lifecycle_events Event System
+ *
+ * Objects receive events through the lifecycle event system:
+ *
+ * @code{.cpp}
+ * // Send event to specific object
+ * DamageEvent damage{50, DamageType::Fire, attackerId};
+ * lifecycle.SendEvent(targetHandle, damage);
+ *
+ * // Broadcast to all objects
+ * WaveStartEvent waveEvent{5};
+ * lifecycle.BroadcastEvent(waveEvent);
+ *
+ * // Queue for later processing
+ * lifecycle.QueueEvent(ExplosionEvent{position, radius});
+ * @endcode
+ *
+ * @section lifecycle_hierarchy Parent-Child Relationships
+ *
+ * Objects can form hierarchies where destroying a parent also
+ * destroys all children:
+ *
+ * @code{.cpp}
+ * auto parentHandle = lifecycle.Create<Squad>();
+ * auto childHandle = lifecycle.Create<Soldier>();
+ *
+ * lifecycle.SetParent(childHandle, parentHandle);
+ *
+ * // Get children
+ * auto soldiers = lifecycle.GetChildren(parentHandle);
+ *
+ * // Destroying parent destroys all children
+ * lifecycle.Destroy(parentHandle);
+ * @endcode
+ *
+ * @section lifecycle_pooling Object Pooling
+ *
+ * For high-frequency object creation (bullets, particles, etc.):
+ *
+ * @code{.cpp}
+ * // Enable pooling during initialization
+ * lifecycle.EnablePooling<Bullet>(200);
+ * lifecycle.PreWarmPools();  // Pre-allocate objects
+ *
+ * // Objects from pools are recycled automatically
+ * // OnActivate() is called when acquired from pool
+ * // OnDeactivate() is called when returned to pool
+ * @endcode
+ *
+ * @see ILifecycle for the object interface
+ * @see TickScheduler for update scheduling
+ * @see GameEvent for the event system
+ *
+ * @author Nova3D Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include "ILifecycle.hpp"

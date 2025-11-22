@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game HUD</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../css/ui_animations.css">
+</head>
+<body class="hud-body">
+    <!-- Top Bar -->
+    <div id="hud-top-bar" class="hud-section hud-top">
+        <!-- Player Info -->
+        <div id="player-info" class="player-info">
+            <div class="player-portrait">
+                <img id="player-portrait-img" src="" alt="Portrait" data-bind="player.portrait">
+            </div>
+            <div class="player-stats">
+                <div class="player-name" data-bind="player.name">Player</div>
+                <div class="player-level">Lv. <span data-bind="player.level">1</span></div>
+
+                <!-- Health Bar -->
+                <div class="stat-bar health-bar">
+                    <div class="stat-bar-fill" id="health-fill" style="width: 100%;" data-bind-style="width: player.healthPercent + '%'"></div>
+                    <div class="stat-bar-text">
+                        <span data-bind="player.health">100</span> / <span data-bind="player.maxHealth">100</span>
+                    </div>
+                </div>
+
+                <!-- Mana Bar -->
+                <div class="stat-bar mana-bar">
+                    <div class="stat-bar-fill" id="mana-fill" style="width: 100%;" data-bind-style="width: player.manaPercent + '%'"></div>
+                    <div class="stat-bar-text">
+                        <span data-bind="player.mana">0</span> / <span data-bind="player.maxMana">0</span>
+                    </div>
+                </div>
+
+                <!-- Experience Bar -->
+                <div class="stat-bar exp-bar">
+                    <div class="stat-bar-fill" id="exp-fill" style="width: 0%;" data-bind-style="width: player.expPercent + '%'"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources -->
+        <div id="resources" class="resources-container">
+            <template id="resource-template">
+                <div class="resource-item">
+                    <img class="resource-icon" src="" alt="">
+                    <span class="resource-value"></span>
+                    <span class="resource-rate"></span>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Minimap -->
+    <div id="minimap-container" class="minimap-container">
+        <div id="minimap" class="minimap">
+            <div class="minimap-texture" id="minimap-bg"></div>
+            <div class="minimap-player" id="minimap-player"></div>
+            <div class="minimap-markers" id="minimap-markers"></div>
+        </div>
+        <div class="minimap-coords">
+            X: <span id="coord-x">0</span>, Y: <span id="coord-y">0</span>
+        </div>
+    </div>
+
+    <!-- Objectives -->
+    <div id="objectives" class="objectives-container">
+        <div class="objectives-header">
+            <span class="objectives-icon">&#9733;</span>
+            <span class="objectives-title">Objectives</span>
+        </div>
+        <div id="objective-main" class="objective-main" data-bind="objective.text"></div>
+        <div id="sub-objectives" class="sub-objectives"></div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div id="hud-bottom-bar" class="hud-section hud-bottom">
+        <!-- Ability Bar -->
+        <div id="ability-bar" class="ability-bar">
+            <template id="ability-template">
+                <div class="ability-slot" data-ability-id="">
+                    <img class="ability-icon" src="" alt="">
+                    <div class="ability-cooldown"></div>
+                    <div class="ability-cost"></div>
+                    <div class="ability-hotkey"></div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Unit Selection -->
+        <div id="unit-selection" class="unit-selection">
+            <div class="unit-portrait">
+                <img id="selected-unit-icon" src="" alt="">
+            </div>
+            <div class="unit-info">
+                <div class="unit-name" data-bind="selection.unit.name"></div>
+                <div class="unit-type" data-bind="selection.unit.type"></div>
+                <div class="unit-health-bar stat-bar">
+                    <div class="stat-bar-fill"></div>
+                </div>
+            </div>
+            <div id="multi-select" class="multi-select-grid"></div>
+        </div>
+    </div>
+
+    <!-- Chat Window -->
+    <div id="chat-window" class="chat-window">
+        <div class="chat-header">
+            <span>Chat</span>
+            <button class="chat-toggle" onclick="UI.toggleChat()">_</button>
+        </div>
+        <div id="chat-messages" class="chat-messages"></div>
+        <div class="chat-input-container">
+            <select id="chat-channel" class="chat-channel">
+                <option value="all">All</option>
+                <option value="team">Team</option>
+                <option value="party">Party</option>
+            </select>
+            <input type="text" id="chat-input" class="chat-input" placeholder="Press Enter to chat..."
+                   onkeydown="if(event.key==='Enter')HUD.sendChat()">
+        </div>
+    </div>
+
+    <!-- Combat Text Container -->
+    <div id="combat-text-container" class="combat-text-container"></div>
+
+    <!-- Quick Notifications -->
+    <div id="hud-notifications" class="hud-notifications"></div>
+
+    <script src="../js/ui_core.js"></script>
+    <script src="../js/ui_binding.js"></script>
+    <script>
+        // HUD initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            UI.init('hud');
+
+            // Setup ability bar click handlers
+            document.querySelectorAll('.ability-slot').forEach(slot => {
+                slot.addEventListener('click', function() {
+                    const abilityId = this.dataset.abilityId;
+                    Engine.call('HUD.onAbilityClick', { abilityId: abilityId });
+                });
+            });
+
+            // Setup minimap click
+            document.getElementById('minimap').addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width * 100;
+                const y = (e.clientY - rect.top) / rect.height * 100;
+                Engine.call('HUD.onMinimapClick', { x: x, y: y });
+            });
+        });
+
+        // HUD functions
+        const HUD = {
+            sendChat: function() {
+                const input = document.getElementById('chat-input');
+                const channel = document.getElementById('chat-channel').value;
+                if (input.value.trim()) {
+                    Engine.call('HUD.onChatSend', { message: input.value, channel: channel });
+                    input.value = '';
+                }
+            },
+
+            addChatMessage: function(data) {
+                const container = document.getElementById('chat-messages');
+                const msg = document.createElement('div');
+                msg.className = 'chat-message' + (data.isSystem ? ' system' : '');
+                msg.innerHTML = '<span class="chat-sender">' + data.sender + ':</span> ' + data.message;
+                container.appendChild(msg);
+                container.scrollTop = container.scrollHeight;
+            },
+
+            updateAbilities: function(abilities) {
+                const bar = document.getElementById('ability-bar');
+                bar.innerHTML = '';
+                abilities.forEach((ability, index) => {
+                    const slot = document.createElement('div');
+                    slot.className = 'ability-slot' + (!ability.available ? ' disabled' : '') + (ability.active ? ' active' : '');
+                    slot.dataset.abilityId = ability.id;
+                    slot.innerHTML = `
+                        <img class="ability-icon" src="${ability.icon}" alt="${ability.name}">
+                        <div class="ability-cooldown" style="height: ${ability.cooldownPercent}%"></div>
+                        <div class="ability-cost">${ability.manaCost || ''}</div>
+                        <div class="ability-hotkey">${ability.hotkey || (index + 1)}</div>
+                    `;
+                    slot.onclick = () => Engine.call('HUD.onAbilityClick', { abilityId: ability.id });
+                    bar.appendChild(slot);
+                });
+            },
+
+            showCombatText: function(data) {
+                const container = document.getElementById('combat-text-container');
+                const text = document.createElement('div');
+                text.className = 'combat-text ' + data.type;
+                text.style.left = data.x + 'px';
+                text.style.top = data.y + 'px';
+                text.textContent = data.text;
+                container.appendChild(text);
+                setTimeout(() => text.remove(), 1500);
+            }
+        };
+
+        // Expose to engine
+        window.UI = window.UI || {};
+        Object.assign(window.UI, {
+            addChatMessage: HUD.addChatMessage,
+            showCombatText: HUD.showCombatText
+        });
+    </script>
+</body>
+</html>

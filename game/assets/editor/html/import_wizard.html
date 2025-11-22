@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Asset Import Wizard</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        .import-wizard {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        .wizard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .wizard-header h1 {
+            font-size: 18px;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .wizard-steps {
+            display: flex;
+            gap: 8px;
+        }
+
+        .wizard-step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            opacity: 0.5;
+        }
+
+        .wizard-step.active {
+            opacity: 1;
+            background: var(--accent-color, #0078d4);
+        }
+
+        .wizard-step.completed {
+            opacity: 1;
+        }
+
+        .wizard-step .step-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-tertiary, #333);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        .wizard-step.completed .step-num {
+            background: var(--success-color, #28a745);
+        }
+
+        .wizard-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Drop Zone */
+        .drop-zone-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--border-color, #3c3c3c);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--accent-color, #0078d4);
+            background: rgba(0, 120, 212, 0.1);
+        }
+
+        .drop-zone-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .drop-zone h2 {
+            margin: 0 0 8px;
+            font-weight: 500;
+        }
+
+        .drop-zone p {
+            color: var(--text-secondary, #888);
+            margin: 0;
+        }
+
+        .supported-formats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 24px;
+            justify-content: center;
+        }
+
+        .format-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: var(--bg-tertiary, #333);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .format-badge.texture { background: #4a5568; }
+        .format-badge.model { background: #2d3748; }
+        .format-badge.animation { background: #553c9a; }
+
+        /* File Queue */
+        .file-queue {
+            width: 360px;
+            border-left: 1px solid var(--border-color, #3c3c3c);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary, #252525);
+        }
+
+        .queue-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .queue-header h3 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .queue-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .queue-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .queue-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .queue-item:hover {
+            background: var(--bg-hover, #2a2a2a);
+        }
+
+        .queue-item.selected {
+            background: var(--selection-bg, #094771);
+        }
+
+        .queue-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-type-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .file-type-icon.texture { background: #4a5568; }
+        .file-type-icon.model { background: #2d3748; }
+        .file-type-icon.animation { background: #553c9a; }
+
+        .queue-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-item-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .queue-item-meta {
+            font-size: 11px;
+            color: var(--text-secondary, #888);
+            display: flex;
+            gap: 8px;
+        }
+
+        .queue-item-remove {
+            opacity: 0;
+            background: none;
+            border: none;
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .queue-item:hover .queue-item-remove {
+            opacity: 1;
+        }
+
+        .queue-item-settings {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .settings-row label {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .settings-row select,
+        .settings-row input {
+            width: 120px;
+            padding: 4px 8px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-primary, #e0e0e0);
+            font-size: 12px;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            width: 300px;
+            border-left: 1px solid var(--border-color, #3c3c3c);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary, #252525);
+        }
+
+        .preview-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .preview-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary, #888);
+            border-bottom: 2px solid transparent;
+        }
+
+        .preview-tab.active {
+            color: var(--text-primary, #e0e0e0);
+            border-bottom-color: var(--accent-color, #0078d4);
+        }
+
+        .preview-content {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-2d {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 4px;
+            background: var(--bg-tertiary, #333);
+        }
+
+        .preview-3d-viewport {
+            width: 100%;
+            height: 200px;
+            border-radius: 4px;
+            background: var(--bg-tertiary, #333);
+            position: relative;
+        }
+
+        .preview-stats {
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-color, #3c3c3c);
+            font-size: 12px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary, #888);
+        }
+
+        /* Progress Section */
+        .progress-section {
+            padding: 16px;
+            border-top: 1px solid var(--border-color, #3c3c3c);
+            background: var(--bg-secondary, #252525);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-container {
+            height: 8px;
+            background: var(--bg-tertiary, #333);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color, #0078d4);
+            transition: width 0.3s;
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-secondary, #888);
+        }
+
+        /* Wizard Footer */
+        .wizard-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #252525);
+            border-top: 1px solid var(--border-color, #3c3c3c);
+        }
+
+        .wizard-footer .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            background: var(--bg-tertiary, #333);
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .wizard-footer .btn-primary {
+            background: var(--accent-color, #0078d4);
+            border-color: var(--accent-color, #0078d4);
+        }
+
+        .wizard-footer .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Empty state */
+        .empty-queue {
+            padding: 32px 16px;
+            text-align: center;
+            color: var(--text-secondary, #888);
+        }
+
+        .empty-queue-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        /* Preset buttons */
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color, #3c3c3c);
+            border-radius: 4px;
+            background: var(--bg-primary, #1e1e1e);
+            color: var(--text-secondary, #888);
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent-color, #0078d4);
+            color: var(--text-primary, #e0e0e0);
+        }
+
+        /* Accordion */
+        .accordion-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border: none;
+            background: none;
+            color: var(--text-primary, #e0e0e0);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .accordion-content {
+            display: none;
+            padding-bottom: 8px;
+        }
+
+        .accordion-content.open {
+            display: block;
+        }
+    </style>
+</head>
+<body class="import-wizard">
+    <!-- Header -->
+    <div class="wizard-header">
+        <h1>Asset Import Wizard</h1>
+        <div class="wizard-steps">
+            <div class="wizard-step active" id="step-select">
+                <span class="step-num">1</span>
+                <span>Select Files</span>
+            </div>
+            <div class="wizard-step" id="step-configure">
+                <span class="step-num">2</span>
+                <span>Configure</span>
+            </div>
+            <div class="wizard-step" id="step-import">
+                <span class="step-num">3</span>
+                <span>Import</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="wizard-body">
+        <!-- Drop Zone -->
+        <div class="drop-zone-container">
+            <div class="drop-zone" id="drop-zone" onclick="browseFiles()">
+                <div class="drop-zone-icon">+</div>
+                <h2>Drop files here</h2>
+                <p>or click to browse</p>
+
+                <div class="supported-formats">
+                    <span class="format-badge texture">PNG</span>
+                    <span class="format-badge texture">JPG</span>
+                    <span class="format-badge texture">TGA</span>
+                    <span class="format-badge texture">DDS</span>
+                    <span class="format-badge texture">EXR</span>
+                    <span class="format-badge model">OBJ</span>
+                    <span class="format-badge model">FBX</span>
+                    <span class="format-badge model">GLTF</span>
+                    <span class="format-badge model">GLB</span>
+                    <span class="format-badge animation">BVH</span>
+                </div>
+            </div>
+            <input type="file" id="file-input" multiple style="display: none;"
+                   accept=".png,.jpg,.jpeg,.tga,.bmp,.dds,.ktx,.exr,.hdr,.obj,.fbx,.gltf,.glb,.dae,.3ds,.bvh">
+        </div>
+
+        <!-- File Queue -->
+        <div class="file-queue" id="file-queue">
+            <div class="queue-header">
+                <h3>Import Queue (<span id="queue-count">0</span>)</h3>
+                <div class="queue-actions">
+                    <button class="btn btn-icon" onclick="clearQueue()" title="Clear All">
+                        <span class="icon">x</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="queue-list" id="queue-list">
+                <div class="empty-queue" id="empty-queue">
+                    <div class="empty-queue-icon">+</div>
+                    <p>No files in queue</p>
+                    <p>Drop files or click to browse</p>
+                </div>
+            </div>
+
+            <!-- Global Preset Selection -->
+            <div class="progress-section" id="preset-section" style="display: none;">
+                <label style="font-size: 12px; margin-bottom: 8px; display: block;">Apply Preset to All</label>
+                <div class="preset-buttons">
+                    <button class="preset-btn" onclick="applyGlobalPreset('Mobile')">Mobile</button>
+                    <button class="preset-btn active" onclick="applyGlobalPreset('Desktop')">Desktop</button>
+                    <button class="preset-btn" onclick="applyGlobalPreset('HighQuality')">High Quality</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel" id="preview-panel">
+            <div class="preview-tabs">
+                <button class="preview-tab active" onclick="showPreviewTab('2d')">2D</button>
+                <button class="preview-tab" onclick="showPreviewTab('3d')">3D</button>
+                <button class="preview-tab" onclick="showPreviewTab('info')">Info</button>
+            </div>
+
+            <div class="preview-content" id="preview-2d">
+                <p style="color: var(--text-secondary);">Select a file to preview</p>
+            </div>
+
+            <div class="preview-content" id="preview-3d" style="display: none;">
+                <div class="preview-3d-viewport" id="viewport-3d">
+                    <canvas id="preview-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="preview-content" id="preview-info" style="display: none;">
+                <div class="preview-stats" id="preview-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">File Name</span>
+                        <span class="stat-value" id="stat-filename">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Type</span>
+                        <span class="stat-value" id="stat-type">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Size</span>
+                        <span class="stat-value" id="stat-size">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Dimensions</span>
+                        <span class="stat-value" id="stat-dimensions">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Format</span>
+                        <span class="stat-value" id="stat-format">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar (shown during import) -->
+    <div class="progress-section" id="progress-section" style="display: none;">
+        <div class="progress-header">
+            <span id="progress-stage">Preparing...</span>
+            <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+        </div>
+        <div class="progress-details">
+            <span id="progress-file">-</span>
+            <span id="progress-time">Estimating...</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="wizard-footer">
+        <div>
+            <button class="btn" onclick="openSettings()">Settings</button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn" onclick="closeWizard()">Cancel</button>
+            <button class="btn btn-primary" id="import-btn" onclick="startImport()" disabled>
+                Import (<span id="import-count">0</span> files)
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Dialog -->
+    <div class="dialog-overlay" id="settings-dialog" style="display: none;">
+        <div class="dialog" style="width: 480px;">
+            <div class="dialog-header">
+                <h3>Import Settings</h3>
+                <button class="btn-close" onclick="closeSettings()">x</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label>Default Output Directory</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="output-dir" value="assets/imported/" style="flex: 1;">
+                        <button class="btn" onclick="browseOutputDir()">Browse</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="auto-detect-type" checked>
+                        Auto-detect asset type from filename
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="overwrite-existing" checked>
+                        Overwrite existing assets
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="generate-thumbnails" checked>
+                        Generate thumbnails
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="parallel-import">
+                        Enable parallel import (faster, more memory)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Target Platform</label>
+                    <select id="target-platform" style="width: 100%;">
+                        <option value="desktop">Desktop (Windows/Mac/Linux)</option>
+                        <option value="mobile">Mobile (iOS/Android)</option>
+                        <option value="webgl">WebGL</option>
+                        <option value="console">Console</option>
+                    </select>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" onclick="resetSettings()">Reset to Default</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="editor_core.js"></script>
+    <script>
+        // Import queue state
+        let importQueue = [];
+        let selectedIndex = -1;
+        let currentPreviewTab = '2d';
+        let isImporting = false;
+        let globalPreset = 'Desktop';
+
+        // File type detection
+        const fileTypes = {
+            texture: ['png', 'jpg', 'jpeg', 'tga', 'bmp', 'dds', 'ktx', 'exr', 'hdr'],
+            model: ['obj', 'fbx', 'gltf', 'glb', 'dae', '3ds'],
+            animation: ['bvh']
+        };
+
+        function getFileType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            for (const [type, extensions] of Object.entries(fileTypes)) {
+                if (extensions.includes(ext)) return type;
+            }
+            return 'unknown';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Drop zone handling
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function browseFiles() {
+            fileInput.click();
+        }
+
+        function handleFiles(files) {
+            for (const file of files) {
+                const type = getFileType(file.name);
+                if (type === 'unknown') continue;
+
+                importQueue.push({
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    type: type,
+                    preset: globalPreset,
+                    settings: getDefaultSettings(type),
+                    status: 'pending'
+                });
+            }
+            updateQueueUI();
+            updateImportButton();
+        }
+
+        function getDefaultSettings(type) {
+            switch (type) {
+                case 'texture':
+                    return {
+                        compression: 'BC7',
+                        generateMipmaps: true,
+                        sRGB: true,
+                        maxSize: 2048
+                    };
+                case 'model':
+                    return {
+                        optimizeMesh: true,
+                        generateLODs: false,
+                        importSkeleton: true,
+                        scaleFactor: 1.0
+                    };
+                case 'animation':
+                    return {
+                        compression: 'keyframe',
+                        extractRootMotion: true,
+                        loopDetection: true
+                    };
+                default:
+                    return {};
+            }
+        }
+
+        function updateQueueUI() {
+            const queueList = document.getElementById('queue-list');
+            const emptyQueue = document.getElementById('empty-queue');
+            const queueCount = document.getElementById('queue-count');
+            const presetSection = document.getElementById('preset-section');
+
+            queueCount.textContent = importQueue.length;
+
+            if (importQueue.length === 0) {
+                queueList.innerHTML = '';
+                queueList.appendChild(emptyQueue);
+                emptyQueue.style.display = 'block';
+                presetSection.style.display = 'none';
+                return;
+            }
+
+            emptyQueue.style.display = 'none';
+            presetSection.style.display = 'block';
+
+            let html = '';
+            importQueue.forEach((item, index) => {
+                const selected = index === selectedIndex ? 'selected' : '';
+                html += `
+                    <div class="queue-item ${selected}" onclick="selectQueueItem(${index})">
+                        <div class="queue-item-header">
+                            <div class="file-type-icon ${item.type}">${getTypeIcon(item.type)}</div>
+                            <div class="queue-item-info">
+                                <div class="queue-item-name">${item.name}</div>
+                                <div class="queue-item-meta">
+                                    <span>${item.type}</span>
+                                    <span>${formatFileSize(item.size)}</span>
+                                </div>
+                            </div>
+                            <button class="queue-item-remove" onclick="removeFromQueue(${index}, event)">x</button>
+                        </div>
+                        <div class="queue-item-settings">
+                            <button class="accordion-toggle" onclick="toggleAccordion(this, event)">
+                                <span>Settings</span>
+                                <span>+</span>
+                            </button>
+                            <div class="accordion-content">
+                                ${renderItemSettings(item, index)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            queueList.innerHTML = html;
+        }
+
+        function getTypeIcon(type) {
+            switch (type) {
+                case 'texture': return 'T';
+                case 'model': return 'M';
+                case 'animation': return 'A';
+                default: return '?';
+            }
+        }
+
+        function renderItemSettings(item, index) {
+            if (item.type === 'texture') {
+                return `
+                    <div class="settings-row">
+                        <label>Compression</label>
+                        <select onchange="updateItemSetting(${index}, 'compression', this.value)">
+                            <option value="None" ${item.settings.compression === 'None' ? 'selected' : ''}>None</option>
+                            <option value="BC1" ${item.settings.compression === 'BC1' ? 'selected' : ''}>BC1 (DXT1)</option>
+                            <option value="BC3" ${item.settings.compression === 'BC3' ? 'selected' : ''}>BC3 (DXT5)</option>
+                            <option value="BC7" ${item.settings.compression === 'BC7' ? 'selected' : ''}>BC7</option>
+                            <option value="ETC2" ${item.settings.compression === 'ETC2' ? 'selected' : ''}>ETC2</option>
+                            <option value="ASTC" ${item.settings.compression === 'ASTC' ? 'selected' : ''}>ASTC</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label>Max Size</label>
+                        <select onchange="updateItemSetting(${index}, 'maxSize', parseInt(this.value))">
+                            <option value="512" ${item.settings.maxSize === 512 ? 'selected' : ''}>512</option>
+                            <option value="1024" ${item.settings.maxSize === 1024 ? 'selected' : ''}>1024</option>
+                            <option value="2048" ${item.settings.maxSize === 2048 ? 'selected' : ''}>2048</option>
+                            <option value="4096" ${item.settings.maxSize === 4096 ? 'selected' : ''}>4096</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label>Generate Mipmaps</label>
+                        <input type="checkbox" ${item.settings.generateMipmaps ? 'checked' : ''}
+                               onchange="updateItemSetting(${index}, 'generateMipmaps', this.checked)">
+                    </div>
+                `;
+            } else if (item.type === 'model') {
+                return `
+                    <div class="settings-row">
+                        <label>Scale Factor</label>
+                        <input type="number" step="0.01" value="${item.settings.scaleFactor}"
+                               onchange="updateItemSetting(${index}, 'scaleFactor', parseFloat(this.value))">
+                    </div>
+                    <div class="settings-row">
+                        <label>Optimize Mesh</label>
+                        <input type="checkbox" ${item.settings.optimizeMesh ? 'checked' : ''}
+                               onchange="updateItemSetting(${index}, 'optimizeMesh', this.checked)">
+                    </div>
+                    <div class="settings-row">
+                        <label>Generate LODs</label>
+                        <input type="checkbox" ${item.settings.generateLODs ? 'checked' : ''}
+                               onchange="updateItemSetting(${index}, 'generateLODs', this.checked)">
+                    </div>
+                `;
+            } else if (item.type === 'animation') {
+                return `
+                    <div class="settings-row">
+                        <label>Compression</label>
+                        <select onchange="updateItemSetting(${index}, 'compression', this.value)">
+                            <option value="none" ${item.settings.compression === 'none' ? 'selected' : ''}>None</option>
+                            <option value="keyframe" ${item.settings.compression === 'keyframe' ? 'selected' : ''}>Keyframe</option>
+                            <option value="curve" ${item.settings.compression === 'curve' ? 'selected' : ''}>Curve Fitting</option>
+                        </select>
+                    </div>
+                    <div class="settings-row">
+                        <label>Extract Root Motion</label>
+                        <input type="checkbox" ${item.settings.extractRootMotion ? 'checked' : ''}
+                               onchange="updateItemSetting(${index}, 'extractRootMotion', this.checked)">
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        function updateItemSetting(index, key, value) {
+            importQueue[index].settings[key] = value;
+        }
+
+        function selectQueueItem(index) {
+            selectedIndex = index;
+            updateQueueUI();
+            updatePreview();
+        }
+
+        function removeFromQueue(index, event) {
+            event.stopPropagation();
+            importQueue.splice(index, 1);
+            if (selectedIndex >= importQueue.length) {
+                selectedIndex = importQueue.length - 1;
+            }
+            updateQueueUI();
+            updateImportButton();
+            updatePreview();
+        }
+
+        function clearQueue() {
+            importQueue = [];
+            selectedIndex = -1;
+            updateQueueUI();
+            updateImportButton();
+            updatePreview();
+        }
+
+        function toggleAccordion(button, event) {
+            event.stopPropagation();
+            const content = button.nextElementSibling;
+            content.classList.toggle('open');
+            button.querySelector('span:last-child').textContent =
+                content.classList.contains('open') ? '-' : '+';
+        }
+
+        function applyGlobalPreset(preset) {
+            globalPreset = preset;
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(preset.replace('HighQuality', 'High Quality')));
+            });
+
+            // Apply to all items
+            importQueue.forEach(item => {
+                item.preset = preset;
+                // Update settings based on preset
+                if (preset === 'Mobile') {
+                    if (item.type === 'texture') {
+                        item.settings.compression = 'ETC2';
+                        item.settings.maxSize = 1024;
+                    } else if (item.type === 'model') {
+                        item.settings.generateLODs = true;
+                    }
+                } else if (preset === 'HighQuality') {
+                    if (item.type === 'texture') {
+                        item.settings.compression = 'BC7';
+                        item.settings.maxSize = 4096;
+                    }
+                }
+            });
+            updateQueueUI();
+        }
+
+        function updateImportButton() {
+            const btn = document.getElementById('import-btn');
+            const count = document.getElementById('import-count');
+            count.textContent = importQueue.length;
+            btn.disabled = importQueue.length === 0 || isImporting;
+        }
+
+        function showPreviewTab(tab) {
+            currentPreviewTab = tab;
+            document.querySelectorAll('.preview-tab').forEach(t => {
+                t.classList.toggle('active', t.textContent.toLowerCase() === tab ||
+                    (tab === 'info' && t.textContent === 'Info'));
+            });
+            document.getElementById('preview-2d').style.display = tab === '2d' ? 'flex' : 'none';
+            document.getElementById('preview-3d').style.display = tab === '3d' ? 'flex' : 'none';
+            document.getElementById('preview-info').style.display = tab === 'info' ? 'flex' : 'none';
+        }
+
+        function updatePreview() {
+            if (selectedIndex < 0 || selectedIndex >= importQueue.length) {
+                document.getElementById('preview-2d').innerHTML =
+                    '<p style="color: var(--text-secondary);">Select a file to preview</p>';
+                return;
+            }
+
+            const item = importQueue[selectedIndex];
+
+            // Update info tab
+            document.getElementById('stat-filename').textContent = item.name;
+            document.getElementById('stat-type').textContent = item.type;
+            document.getElementById('stat-size').textContent = formatFileSize(item.size);
+            document.getElementById('stat-format').textContent = item.name.split('.').pop().toUpperCase();
+
+            // Load preview for textures
+            if (item.type === 'texture') {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        document.getElementById('stat-dimensions').textContent =
+                            `${img.width} x ${img.height}`;
+                        document.getElementById('preview-2d').innerHTML =
+                            `<img src="${e.target.result}" class="preview-2d" alt="Preview">`;
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(item.file);
+            } else {
+                document.getElementById('stat-dimensions').textContent = '-';
+                document.getElementById('preview-2d').innerHTML =
+                    `<div class="file-type-icon ${item.type}" style="width: 64px; height: 64px; font-size: 32px;">
+                        ${getTypeIcon(item.type)}
+                    </div>`;
+            }
+        }
+
+        function startImport() {
+            if (importQueue.length === 0 || isImporting) return;
+
+            isImporting = true;
+            updateImportButton();
+            document.getElementById('progress-section').style.display = 'block';
+
+            // Simulate import progress
+            let currentFile = 0;
+            let progress = 0;
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress >= 100) {
+                    progress = 0;
+                    currentFile++;
+                }
+
+                if (currentFile >= importQueue.length) {
+                    clearInterval(interval);
+                    finishImport();
+                    return;
+                }
+
+                const totalProgress = ((currentFile + progress / 100) / importQueue.length) * 100;
+                document.getElementById('progress-bar').style.width = totalProgress + '%';
+                document.getElementById('progress-percent').textContent = Math.round(totalProgress) + '%';
+                document.getElementById('progress-stage').textContent =
+                    `Importing ${importQueue[currentFile].name}...`;
+                document.getElementById('progress-file').textContent =
+                    `File ${currentFile + 1} of ${importQueue.length}`;
+            }, 100);
+        }
+
+        function finishImport() {
+            isImporting = false;
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('progress-percent').textContent = '100%';
+            document.getElementById('progress-stage').textContent = 'Import Complete!';
+
+            // Update wizard steps
+            document.getElementById('step-select').classList.add('completed');
+            document.getElementById('step-configure').classList.add('completed');
+            document.getElementById('step-import').classList.add('completed', 'active');
+            document.getElementById('step-select').classList.remove('active');
+
+            // Notify engine
+            if (window.engine) {
+                window.engine.onImportComplete(importQueue.map(item => ({
+                    path: item.name,
+                    type: item.type,
+                    settings: item.settings
+                })));
+            }
+        }
+
+        function openSettings() {
+            document.getElementById('settings-dialog').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-dialog').style.display = 'none';
+        }
+
+        function saveSettings() {
+            closeSettings();
+        }
+
+        function resetSettings() {
+            document.getElementById('output-dir').value = 'assets/imported/';
+            document.getElementById('auto-detect-type').checked = true;
+            document.getElementById('overwrite-existing').checked = true;
+            document.getElementById('generate-thumbnails').checked = true;
+            document.getElementById('parallel-import').checked = false;
+            document.getElementById('target-platform').value = 'desktop';
+        }
+
+        function closeWizard() {
+            if (window.engine) {
+                window.engine.closeImportWizard();
+            }
+        }
+
+        // Initialize
+        updateQueueUI();
+        updateImportButton();
+    </script>
+</body>
+</html>

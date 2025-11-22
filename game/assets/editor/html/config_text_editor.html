@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>JSON Config Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/lint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.css">
+    <style>
+        :root {
+            --bg-dark: #1e1e2e;
+            --bg-darker: #181825;
+            --bg-lighter: #313244;
+            --surface: #45475a;
+            --text: #cdd6f4;
+            --text-dim: #6c7086;
+            --accent: #89b4fa;
+            --success: #a6e3a1;
+            --warning: #f9e2af;
+            --error: #f38ba8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            background: var(--bg-darker);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .toolbar button {
+            background: var(--bg-lighter);
+            border: none;
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .toolbar button:hover {
+            background: var(--surface);
+        }
+
+        .toolbar button.primary {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .toolbar .separator {
+            width: 1px;
+            height: 24px;
+            background: var(--bg-lighter);
+            margin: 0 8px;
+        }
+
+        .toolbar .file-name {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .toolbar .file-name.modified::after {
+            content: ' *';
+            color: var(--warning);
+        }
+
+        .toolbar .status {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Outline Panel */
+        .outline-panel {
+            width: 220px;
+            background: var(--bg-darker);
+            border-right: 1px solid var(--bg-lighter);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .outline-header {
+            padding: 8px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .outline-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .outline-item {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .outline-item:hover {
+            background: var(--bg-lighter);
+        }
+
+        .outline-item.active {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .outline-item .icon {
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+        }
+
+        .outline-item .icon.object { background: var(--accent); }
+        .outline-item .icon.array { background: var(--success); }
+        .outline-item .icon.string { background: var(--warning); }
+        .outline-item .icon.number { background: #cba6f7; }
+        .outline-item .icon.boolean { background: var(--error); }
+
+        .outline-children {
+            padding-left: 12px;
+        }
+
+        /* Editor Panel */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .find-bar {
+            background: var(--bg-darker);
+            padding: 8px 12px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--bg-lighter);
+        }
+
+        .find-bar.visible {
+            display: flex;
+        }
+
+        .find-bar input {
+            background: var(--bg-lighter);
+            border: 1px solid transparent;
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            width: 200px;
+        }
+
+        .find-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .find-bar button {
+            background: var(--bg-lighter);
+            border: none;
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .find-bar button:hover {
+            background: var(--surface);
+        }
+
+        .find-bar label {
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .CodeMirror {
+            flex: 1;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            height: 100%;
+        }
+
+        .CodeMirror-gutters {
+            background: var(--bg-darker);
+            border-right: 1px solid var(--bg-lighter);
+        }
+
+        .CodeMirror-linenumber {
+            color: var(--text-dim);
+        }
+
+        .CodeMirror-foldgutter {
+            width: 16px;
+        }
+
+        .CodeMirror-foldmarker {
+            background: var(--accent);
+            color: var(--bg-dark);
+            padding: 0 4px;
+            border-radius: 2px;
+            font-size: 10px;
+        }
+
+        /* Error markers */
+        .cm-error-line {
+            background: rgba(243, 139, 168, 0.1);
+        }
+
+        .lint-error {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3"><path d="M0 3 L3 0 L6 3" fill="none" stroke="%23f38ba8" stroke-width="1"/></svg>') bottom repeat-x;
+        }
+
+        .lint-warning {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3"><path d="M0 3 L3 0 L6 3" fill="none" stroke="%23f9e2af" stroke-width="1"/></svg>') bottom repeat-x;
+        }
+
+        .CodeMirror-lint-marker-error {
+            background: var(--error);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 4px;
+        }
+
+        .CodeMirror-lint-marker-warning {
+            background: var(--warning);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 4px;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            width: 300px;
+            background: var(--bg-darker);
+            border-left: 1px solid var(--bg-lighter);
+            display: none;
+            flex-direction: column;
+        }
+
+        .preview-panel.visible {
+            display: flex;
+        }
+
+        .preview-header {
+            padding: 8px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--bg-lighter);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .preview-content pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Problems Panel */
+        .problems-panel {
+            background: var(--bg-darker);
+            border-top: 1px solid var(--bg-lighter);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .problems-panel.visible {
+            display: block;
+        }
+
+        .problems-header {
+            padding: 8px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--bg-lighter);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-darker);
+        }
+
+        .problem-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .problem-item:hover {
+            background: var(--bg-lighter);
+        }
+
+        .problem-item .icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .problem-item .icon.error { background: var(--error); }
+        .problem-item .icon.warning { background: var(--warning); }
+        .problem-item .icon.info { background: var(--accent); }
+
+        .problem-item .location {
+            color: var(--text-dim);
+            margin-left: auto;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-darker);
+            padding: 4px 16px;
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-top: 1px solid var(--bg-lighter);
+        }
+
+        .status-bar .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-bar .validation-status.valid {
+            color: var(--success);
+        }
+
+        .status-bar .validation-status.invalid {
+            color: var(--error);
+        }
+
+        /* Autocomplete */
+        .CodeMirror-hints {
+            background: var(--bg-darker);
+            border: 1px solid var(--bg-lighter);
+            border-radius: 4px;
+            padding: 4px 0;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .CodeMirror-hint {
+            padding: 4px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .CodeMirror-hint-active {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .completion-type {
+            float: right;
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-left: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="newFile()">New</button>
+        <button onclick="openFile()">Open</button>
+        <button onclick="saveFile()">Save</button>
+        <div class="separator"></div>
+        <button onclick="undo()">Undo</button>
+        <button onclick="redo()">Redo</button>
+        <div class="separator"></div>
+        <button onclick="formatJson()">Format</button>
+        <button onclick="minifyJson()">Minify</button>
+        <button onclick="validateJson()">Validate</button>
+        <div class="separator"></div>
+        <button onclick="toggleFind()">Find</button>
+        <button onclick="toggleOutline()">Outline</button>
+        <button onclick="togglePreview()">Preview</button>
+        <button onclick="toggleProblems()">Problems</button>
+        <div class="file-name" id="fileName">Untitled</div>
+        <div class="status" id="validationBadge">Valid</div>
+    </div>
+
+    <div class="find-bar" id="findBar">
+        <input type="text" id="findInput" placeholder="Find...">
+        <input type="text" id="replaceInput" placeholder="Replace...">
+        <button onclick="findNext()">Next</button>
+        <button onclick="findPrev()">Prev</button>
+        <button onclick="replaceOne()">Replace</button>
+        <button onclick="replaceAll()">Replace All</button>
+        <label><input type="checkbox" id="caseCheck"> Case</label>
+        <label><input type="checkbox" id="regexCheck"> Regex</label>
+        <span id="findCount"></span>
+    </div>
+
+    <div class="main-container">
+        <div class="outline-panel" id="outlinePanel">
+            <div class="outline-header">Document Outline</div>
+            <div class="outline-content" id="outlineContent"></div>
+        </div>
+
+        <div class="editor-panel">
+            <div class="editor-container">
+                <textarea id="editor"></textarea>
+            </div>
+        </div>
+
+        <div class="preview-panel" id="previewPanel">
+            <div class="preview-header">
+                <span>Preview</span>
+                <button onclick="togglePreview()">Close</button>
+            </div>
+            <div class="preview-content" id="previewContent"></div>
+        </div>
+    </div>
+
+    <div class="problems-panel" id="problemsPanel">
+        <div class="problems-header">
+            <span>Problems (<span id="problemCount">0</span>)</span>
+            <button onclick="toggleProblems()">Close</button>
+        </div>
+        <div id="problemsList"></div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            Ln <span id="cursorLine">1</span>, Col <span id="cursorCol">1</span>
+        </div>
+        <div class="status-item">
+            <span id="fileSize">0</span> bytes
+        </div>
+        <div class="status-item validation-status" id="validationStatus">
+            Valid JSON
+        </div>
+        <div class="status-item">
+            Schema: <span id="schemaName">None</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/brace-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/lint/json-lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsonlint/1.6.3/jsonlint.min.js"></script>
+    <script>
+        // State
+        let state = {
+            filePath: null,
+            isDirty: false,
+            schema: null,
+            problems: [],
+            outlineVisible: true,
+            previewVisible: false,
+            problemsVisible: true
+        };
+
+        // Initialize CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+            mode: { name: 'javascript', json: true },
+            theme: 'dracula',
+            lineNumbers: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            indentUnit: 2,
+            tabSize: 2,
+            indentWithTabs: false,
+            lineWrapping: true,
+            foldGutter: true,
+            gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+            lint: true,
+            extraKeys: {
+                'Ctrl-Space': 'autocomplete',
+                'Ctrl-S': saveFile,
+                'Ctrl-F': toggleFind,
+                'Ctrl-Z': () => editor.undo(),
+                'Ctrl-Y': () => editor.redo(),
+                'Alt-Shift-F': formatJson,
+                'Ctrl-G': goToLine,
+                'Tab': (cm) => cm.execCommand('indentMore'),
+                'Shift-Tab': (cm) => cm.execCommand('indentLess')
+            }
+        });
+
+        // Custom JSON linter
+        CodeMirror.registerHelper('lint', 'json', function(text) {
+            const found = [];
+            try {
+                jsonlint.parse(text);
+            } catch (e) {
+                const match = e.message.match(/line (\d+)/);
+                const line = match ? parseInt(match[1]) - 1 : 0;
+                found.push({
+                    from: CodeMirror.Pos(line, 0),
+                    to: CodeMirror.Pos(line),
+                    message: e.message,
+                    severity: 'error'
+                });
+            }
+            return found;
+        });
+
+        // Schema-aware completions
+        const schemaCompletions = {
+            'root': ['$schema', 'version', 'events', 'bindings', 'conditions'],
+            'event': ['id', 'name', 'category', 'description', 'enabled', 'priority'],
+            'binding': ['id', 'condition', 'callbackType', 'pythonModule', 'pythonFunction'],
+            'condition': ['eventName', 'sourceType', 'propertyPath', 'comparator', 'compareValue']
+        };
+
+        CodeMirror.registerHelper('hint', 'json', function(cm) {
+            const cursor = cm.getCursor();
+            const token = cm.getTokenAt(cursor);
+            const line = cm.getLine(cursor.line);
+
+            // Determine context
+            let context = 'root';
+            const beforeCursor = line.substring(0, cursor.ch);
+            if (beforeCursor.includes('"events"')) context = 'event';
+            if (beforeCursor.includes('"bindings"')) context = 'binding';
+            if (beforeCursor.includes('"condition"')) context = 'condition';
+
+            const completions = schemaCompletions[context] || schemaCompletions['root'];
+            const word = token.string.replace(/"/g, '');
+
+            const list = completions
+                .filter(c => c.toLowerCase().startsWith(word.toLowerCase()))
+                .map(c => ({
+                    text: `"${c}"`,
+                    displayText: c,
+                    className: 'json-completion',
+                    render: function(elt, data, cur) {
+                        elt.innerHTML = `${cur.displayText} <span class="completion-type">property</span>`;
+                    }
+                }));
+
+            return {
+                list: list,
+                from: CodeMirror.Pos(cursor.line, token.start),
+                to: CodeMirror.Pos(cursor.line, token.end)
+            };
+        });
+
+        // Editor events
+        editor.on('change', function() {
+            state.isDirty = true;
+            updateFileName();
+            updateFileSize();
+            debouncedValidate();
+            debouncedUpdateOutline();
+            debouncedUpdatePreview();
+        });
+
+        editor.on('cursorActivity', function() {
+            const pos = editor.getCursor();
+            document.getElementById('cursorLine').textContent = pos.line + 1;
+            document.getElementById('cursorCol').textContent = pos.ch + 1;
+        });
+
+        // Debounced functions
+        let validateTimeout, outlineTimeout, previewTimeout;
+
+        function debouncedValidate() {
+            clearTimeout(validateTimeout);
+            validateTimeout = setTimeout(validateJson, 300);
+        }
+
+        function debouncedUpdateOutline() {
+            clearTimeout(outlineTimeout);
+            outlineTimeout = setTimeout(updateOutline, 300);
+        }
+
+        function debouncedUpdatePreview() {
+            clearTimeout(previewTimeout);
+            previewTimeout = setTimeout(updatePreview, 300);
+        }
+
+        // File operations
+        function newFile() {
+            editor.setValue('{\n  \n}');
+            state.filePath = null;
+            state.isDirty = false;
+            updateFileName();
+        }
+
+        function openFile() {
+            WebEditor.invoke('configEditor.openFile', [], function(err, data) {
+                if (!err && data) {
+                    editor.setValue(data.content);
+                    state.filePath = data.path;
+                    state.isDirty = false;
+                    updateFileName();
+                }
+            });
+        }
+
+        function saveFile() {
+            const content = editor.getValue();
+            if (state.filePath) {
+                WebEditor.invoke('configEditor.saveFile', [state.filePath, content], function(err) {
+                    if (!err) {
+                        state.isDirty = false;
+                        updateFileName();
+                    }
+                });
+            } else {
+                // Save as
+                WebEditor.invoke('configEditor.saveFileAs', [content], function(err, path) {
+                    if (!err && path) {
+                        state.filePath = path;
+                        state.isDirty = false;
+                        updateFileName();
+                    }
+                });
+            }
+        }
+
+        // Edit operations
+        function undo() {
+            editor.undo();
+        }
+
+        function redo() {
+            editor.redo();
+        }
+
+        function formatJson() {
+            try {
+                const content = editor.getValue();
+                const parsed = JSON.parse(content);
+                const formatted = JSON.stringify(parsed, null, 2);
+                editor.setValue(formatted);
+            } catch (e) {
+                showProblem('error', e.message, 1, 1);
+            }
+        }
+
+        function minifyJson() {
+            try {
+                const content = editor.getValue();
+                const parsed = JSON.parse(content);
+                const minified = JSON.stringify(parsed);
+                editor.setValue(minified);
+            } catch (e) {
+                showProblem('error', e.message, 1, 1);
+            }
+        }
+
+        function validateJson() {
+            state.problems = [];
+            const content = editor.getValue();
+
+            try {
+                JSON.parse(content);
+                document.getElementById('validationBadge').textContent = 'Valid';
+                document.getElementById('validationBadge').style.color = 'var(--success)';
+                document.getElementById('validationStatus').textContent = 'Valid JSON';
+                document.getElementById('validationStatus').className = 'status-item validation-status valid';
+            } catch (e) {
+                const match = e.message.match(/position (\d+)/);
+                let line = 1, col = 1;
+
+                if (match) {
+                    const pos = parseInt(match[1]);
+                    let charCount = 0;
+                    const lines = content.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        if (charCount + lines[i].length >= pos) {
+                            line = i + 1;
+                            col = pos - charCount + 1;
+                            break;
+                        }
+                        charCount += lines[i].length + 1;
+                    }
+                }
+
+                showProblem('error', e.message, line, col);
+                document.getElementById('validationBadge').textContent = 'Invalid';
+                document.getElementById('validationBadge').style.color = 'var(--error)';
+                document.getElementById('validationStatus').textContent = 'Invalid JSON';
+                document.getElementById('validationStatus').className = 'status-item validation-status invalid';
+            }
+
+            updateProblemsPanel();
+        }
+
+        function showProblem(severity, message, line, col) {
+            state.problems.push({ severity, message, line, col });
+        }
+
+        function updateProblemsPanel() {
+            const list = document.getElementById('problemsList');
+            const count = document.getElementById('problemCount');
+
+            count.textContent = state.problems.length;
+            list.innerHTML = '';
+
+            state.problems.forEach(problem => {
+                const item = document.createElement('div');
+                item.className = 'problem-item';
+                item.innerHTML = `
+                    <div class="icon ${problem.severity}">${problem.severity[0].toUpperCase()}</div>
+                    <span>${problem.message}</span>
+                    <span class="location">${problem.line}:${problem.col}</span>
+                `;
+                item.onclick = () => {
+                    editor.setCursor({ line: problem.line - 1, ch: problem.col - 1 });
+                    editor.focus();
+                };
+                list.appendChild(item);
+            });
+        }
+
+        // Find/Replace
+        function toggleFind() {
+            const findBar = document.getElementById('findBar');
+            findBar.classList.toggle('visible');
+            if (findBar.classList.contains('visible')) {
+                document.getElementById('findInput').focus();
+            }
+        }
+
+        let searchCursor = null;
+        let searchMatches = [];
+
+        function findNext() {
+            const query = document.getElementById('findInput').value;
+            if (!query) return;
+
+            const useRegex = document.getElementById('regexCheck').checked;
+            const caseSensitive = document.getElementById('caseCheck').checked;
+
+            searchCursor = editor.getSearchCursor(
+                useRegex ? new RegExp(query, caseSensitive ? '' : 'i') : query,
+                editor.getCursor(),
+                { caseFold: !caseSensitive }
+            );
+
+            if (searchCursor.findNext()) {
+                editor.setSelection(searchCursor.from(), searchCursor.to());
+                editor.scrollIntoView({ from: searchCursor.from(), to: searchCursor.to() });
+            } else {
+                // Wrap
+                searchCursor = editor.getSearchCursor(
+                    useRegex ? new RegExp(query, caseSensitive ? '' : 'i') : query,
+                    { line: 0, ch: 0 },
+                    { caseFold: !caseSensitive }
+                );
+                if (searchCursor.findNext()) {
+                    editor.setSelection(searchCursor.from(), searchCursor.to());
+                    editor.scrollIntoView({ from: searchCursor.from(), to: searchCursor.to() });
+                }
+            }
+        }
+
+        function findPrev() {
+            const query = document.getElementById('findInput').value;
+            if (!query) return;
+
+            searchCursor = editor.getSearchCursor(query, editor.getCursor('from'));
+            if (searchCursor.findPrevious()) {
+                editor.setSelection(searchCursor.from(), searchCursor.to());
+                editor.scrollIntoView({ from: searchCursor.from(), to: searchCursor.to() });
+            }
+        }
+
+        function replaceOne() {
+            const replacement = document.getElementById('replaceInput').value;
+            if (searchCursor && editor.somethingSelected()) {
+                editor.replaceSelection(replacement);
+                findNext();
+            }
+        }
+
+        function replaceAll() {
+            const query = document.getElementById('findInput').value;
+            const replacement = document.getElementById('replaceInput').value;
+            if (!query) return;
+
+            let cursor = editor.getSearchCursor(query);
+            let count = 0;
+            while (cursor.findNext()) {
+                cursor.replace(replacement);
+                count++;
+            }
+
+            document.getElementById('findCount').textContent = count + ' replaced';
+        }
+
+        // Outline
+        function toggleOutline() {
+            state.outlineVisible = !state.outlineVisible;
+            document.getElementById('outlinePanel').style.display = state.outlineVisible ? 'flex' : 'none';
+        }
+
+        function updateOutline() {
+            const content = document.getElementById('outlineContent');
+            content.innerHTML = '';
+
+            try {
+                const json = JSON.parse(editor.getValue());
+                renderOutlineNode(json, '', content, 0);
+            } catch (e) {
+                content.innerHTML = '<div style="color: var(--error); padding: 8px;">Invalid JSON</div>';
+            }
+        }
+
+        function renderOutlineNode(obj, path, container, depth) {
+            if (depth > 5) return;
+
+            if (typeof obj === 'object' && obj !== null) {
+                const isArray = Array.isArray(obj);
+                const entries = isArray ? obj.map((v, i) => [i, v]) : Object.entries(obj);
+
+                entries.forEach(([key, value]) => {
+                    const itemPath = path ? `${path}.${key}` : key;
+                    const item = document.createElement('div');
+                    item.className = 'outline-item';
+                    item.style.paddingLeft = (depth * 12 + 8) + 'px';
+
+                    const type = Array.isArray(value) ? 'array' :
+                                typeof value === 'object' && value !== null ? 'object' :
+                                typeof value;
+
+                    item.innerHTML = `
+                        <div class="icon ${type}">${type[0].toUpperCase()}</div>
+                        <span>${key}</span>
+                    `;
+
+                    item.onclick = () => goToPath(itemPath);
+                    container.appendChild(item);
+
+                    if (typeof value === 'object' && value !== null) {
+                        renderOutlineNode(value, itemPath, container, depth + 1);
+                    }
+                });
+            }
+        }
+
+        function goToPath(path) {
+            // Find position in JSON
+            const parts = path.split('.');
+            // Simplified - would need proper position finding
+            editor.focus();
+        }
+
+        // Preview
+        function togglePreview() {
+            state.previewVisible = !state.previewVisible;
+            document.getElementById('previewPanel').classList.toggle('visible', state.previewVisible);
+            if (state.previewVisible) {
+                updatePreview();
+            }
+        }
+
+        function updatePreview() {
+            if (!state.previewVisible) return;
+
+            const content = document.getElementById('previewContent');
+            try {
+                const json = JSON.parse(editor.getValue());
+                content.innerHTML = `<pre>${JSON.stringify(json, null, 2)}</pre>`;
+            } catch (e) {
+                content.innerHTML = `<div style="color: var(--error);">Invalid JSON</div>`;
+            }
+        }
+
+        // Problems
+        function toggleProblems() {
+            state.problemsVisible = !state.problemsVisible;
+            document.getElementById('problemsPanel').classList.toggle('visible', state.problemsVisible);
+        }
+
+        // Go to line
+        function goToLine() {
+            const line = prompt('Go to line:');
+            if (line) {
+                editor.setCursor({ line: parseInt(line) - 1, ch: 0 });
+                editor.focus();
+            }
+        }
+
+        // UI updates
+        function updateFileName() {
+            const el = document.getElementById('fileName');
+            el.textContent = state.filePath || 'Untitled';
+            el.classList.toggle('modified', state.isDirty);
+        }
+
+        function updateFileSize() {
+            const size = new Blob([editor.getValue()]).size;
+            document.getElementById('fileSize').textContent = size;
+        }
+
+        // WebEditor bridge
+        const WebEditor = {
+            invoke: function(method, args, callback) {
+                console.log('WebEditor.invoke:', method, args);
+                if (callback) setTimeout(() => callback(null, {}), 100);
+            }
+        };
+
+        // Initialize
+        editor.setValue('{\n  "$schema": "../../schemas/event_binding.schema.json",\n  "version": "1.0",\n  "bindings": [\n    {\n      "id": "example_binding",\n      "condition": {\n        "eventName": "OnDamage",\n        "sourceType": "Unit"\n      },\n      "pythonModule": "game.events",\n      "pythonFunction": "on_damage_handler"\n    }\n  ]\n}');
+
+        updateOutline();
+        validateJson();
+        updateFileSize();
+    </script>
+</body>
+</html>

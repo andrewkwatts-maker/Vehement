@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Layer Stack Editor</title>
+    <link rel="stylesheet" href="../editor.css">
+    <style>
+        .layer-stack-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #1a1a1a;
+        }
+
+        .toolbar {
+            background: #252530;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid #333;
+        }
+
+        .content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .layer-card {
+            background: #1e1e24;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .layer-card:hover {
+            background: #252530;
+        }
+
+        .layer-card.selected {
+            border-color: #4a9eff;
+        }
+
+        .layer-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        .layer-card-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: grab;
+            background: #252530;
+        }
+
+        .layer-card-header:active {
+            cursor: grabbing;
+        }
+
+        .drag-handle {
+            color: #555;
+            margin-right: 12px;
+            font-size: 14px;
+        }
+
+        .layer-checkbox {
+            margin-right: 12px;
+        }
+
+        .layer-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .layer-name-input {
+            background: transparent;
+            border: none;
+            color: inherit;
+            font-weight: 500;
+            font-size: inherit;
+            width: 100%;
+        }
+
+        .layer-name-input:focus {
+            outline: none;
+            background: #333;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin: -4px -8px;
+        }
+
+        .layer-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .layer-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 4px;
+            background: #3a3a45;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layer-btn:hover {
+            background: #4a4a55;
+            color: #fff;
+        }
+
+        .layer-btn.active {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .layer-btn.solo.active {
+            background: #f5a623;
+        }
+
+        .layer-btn.mute.active {
+            background: #e74c3c;
+        }
+
+        .layer-card-body {
+            padding: 16px;
+        }
+
+        .layer-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .weight-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weight-slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .weight-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4a9eff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .weight-value {
+            width: 45px;
+            text-align: right;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .blend-mode-select {
+            width: 100%;
+            padding: 8px;
+            background: #252530;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .mask-select {
+            width: 100%;
+            padding: 8px;
+            background: #252530;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .edit-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .edit-btn {
+            flex: 1;
+            padding: 8px;
+            background: #3a3a45;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .edit-btn:hover {
+            background: #4a4a55;
+            color: #fff;
+        }
+
+        .add-layer-btn {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.15s ease;
+        }
+
+        .add-layer-btn:hover {
+            border-color: #4a9eff;
+            color: #4a9eff;
+        }
+
+        .drop-indicator {
+            height: 4px;
+            background: #4a9eff;
+            border-radius: 2px;
+            margin: 8px 0;
+        }
+
+        .layer-index {
+            background: #333;
+            color: #888;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-right: 12px;
+        }
+
+        .base-layer-badge {
+            background: #2e7d32;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layer-stack-container">
+        <div class="toolbar">
+            <button class="btn btn-icon" onclick="goBack()">&#x2190;</button>
+            <h2>Layer Stack</h2>
+            <div style="flex: 1;"></div>
+            <button class="btn" onclick="clearSolo()" title="Clear Solo">&#x23F9; Clear Solo</button>
+            <button class="btn btn-primary" onclick="save()">Save</button>
+        </div>
+
+        <div class="content" id="layer-list"></div>
+    </div>
+
+    <script src="../editor_core.js"></script>
+    <script>
+        var state = {
+            layers: [
+                {
+                    name: 'Base Layer',
+                    weight: 1.0,
+                    enabled: true,
+                    solo: false,
+                    muted: false,
+                    blendMode: 'override',
+                    mask: ''
+                },
+                {
+                    name: 'Upper Body Actions',
+                    weight: 0.8,
+                    enabled: true,
+                    solo: false,
+                    muted: false,
+                    blendMode: 'override',
+                    mask: 'upper_body'
+                },
+                {
+                    name: 'Additive Breathing',
+                    weight: 0.5,
+                    enabled: true,
+                    solo: false,
+                    muted: false,
+                    blendMode: 'additive',
+                    mask: ''
+                }
+            ],
+            selectedLayerIndex: 0,
+            draggingLayerIndex: -1,
+            dropTargetIndex: -1,
+            masks: ['', 'upper_body', 'lower_body', 'left_arm', 'right_arm', 'head'],
+            isDirty: false
+        };
+
+        function init() {
+            renderLayers();
+        }
+
+        function renderLayers() {
+            var container = document.getElementById('layer-list');
+            container.innerHTML = '';
+
+            state.layers.forEach(function(layer, index) {
+                if (state.dropTargetIndex === index) {
+                    var indicator = document.createElement('div');
+                    indicator.className = 'drop-indicator';
+                    container.appendChild(indicator);
+                }
+
+                var card = document.createElement('div');
+                card.className = 'layer-card' +
+                    (index === state.selectedLayerIndex ? ' selected' : '') +
+                    (index === state.draggingLayerIndex ? ' dragging' : '');
+                card.draggable = true;
+                card.onclick = function(e) {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') {
+                        selectLayer(index);
+                    }
+                };
+                card.ondragstart = function(e) {
+                    state.draggingLayerIndex = index;
+                    e.dataTransfer.setData('layerIndex', index);
+                    setTimeout(function() { renderLayers(); }, 0);
+                };
+                card.ondragend = function() {
+                    state.draggingLayerIndex = -1;
+                    state.dropTargetIndex = -1;
+                    renderLayers();
+                };
+                card.ondragover = function(e) {
+                    e.preventDefault();
+                    if (state.draggingLayerIndex !== index) {
+                        state.dropTargetIndex = index;
+                        renderLayers();
+                    }
+                };
+                card.ondrop = function(e) {
+                    e.preventDefault();
+                    var fromIndex = parseInt(e.dataTransfer.getData('layerIndex'));
+                    if (fromIndex !== index) {
+                        moveLayer(fromIndex, index);
+                    }
+                };
+
+                card.innerHTML = '\
+                    <div class="layer-card-header">\
+                        <span class="drag-handle">&#x2630;</span>\
+                        <span class="layer-index">' + index + '</span>\
+                        <input type="checkbox" class="layer-checkbox" ' + (layer.enabled ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleEnabled(' + index + ')">\
+                        <input type="text" class="layer-name layer-name-input" value="' + layer.name + '" onchange="updateLayerName(' + index + ', this.value)" onclick="event.stopPropagation()">\
+                        ' + (index === 0 ? '<span class="base-layer-badge">BASE</span>' : '') + '\
+                        <div class="layer-buttons">\
+                            <button class="layer-btn solo' + (layer.solo ? ' active' : '') + '" onclick="event.stopPropagation(); toggleSolo(' + index + ')" title="Solo">S</button>\
+                            <button class="layer-btn mute' + (layer.muted ? ' active' : '') + '" onclick="event.stopPropagation(); toggleMute(' + index + ')" title="Mute">M</button>\
+                            ' + (index > 0 ? '<button class="layer-btn" onclick="event.stopPropagation(); deleteLayer(' + index + ')" title="Delete">&#x2715;</button>' : '') + '\
+                        </div>\
+                    </div>\
+                    <div class="layer-card-body">\
+                        <div class="layer-controls">\
+                            <div class="control-group">\
+                                <span class="control-label">Weight</span>\
+                                <div class="weight-control">\
+                                    <input type="range" class="weight-slider" min="0" max="100" value="' + (layer.weight * 100) + '" oninput="setLayerWeight(' + index + ', this.value / 100)">\
+                                    <span class="weight-value">' + Math.round(layer.weight * 100) + '%</span>\
+                                </div>\
+                            </div>\
+                            <div class="control-group">\
+                                <span class="control-label">Blend Mode</span>\
+                                <select class="blend-mode-select" onchange="setLayerBlendMode(' + index + ', this.value)">\
+                                    <option value="override"' + (layer.blendMode === 'override' ? ' selected' : '') + '>Override</option>\
+                                    <option value="additive"' + (layer.blendMode === 'additive' ? ' selected' : '') + '>Additive</option>\
+                                    <option value="multiply"' + (layer.blendMode === 'multiply' ? ' selected' : '') + '>Multiply</option>\
+                                </select>\
+                            </div>\
+                            <div class="control-group" style="grid-column: 1 / -1;">\
+                                <span class="control-label">Mask</span>\
+                                <select class="mask-select" onchange="setLayerMask(' + index + ', this.value)">\
+                                    <option value="">None</option>\
+                                    ' + state.masks.filter(function(m) { return m; }).map(function(m) {
+                                        return '<option value="' + m + '"' + (layer.mask === m ? ' selected' : '') + '>' + m.replace('_', ' ') + '</option>';
+                                    }).join('') + '\
+                                </select>\
+                            </div>\
+                        </div>\
+                        <div class="edit-buttons">\
+                            <button class="edit-btn" onclick="event.stopPropagation(); editTree(' + index + ')">Edit Blend Tree</button>\
+                            <button class="edit-btn" onclick="event.stopPropagation(); editMask(' + index + ')">Edit Mask</button>\
+                        </div>\
+                    </div>\
+                ';
+
+                container.appendChild(card);
+            });
+
+            if (state.dropTargetIndex === state.layers.length) {
+                var indicator = document.createElement('div');
+                indicator.className = 'drop-indicator';
+                container.appendChild(indicator);
+            }
+
+            var addBtn = document.createElement('button');
+            addBtn.className = 'add-layer-btn';
+            addBtn.textContent = '+ Add Layer';
+            addBtn.onclick = addLayer;
+            addBtn.ondragover = function(e) {
+                e.preventDefault();
+                state.dropTargetIndex = state.layers.length;
+                renderLayers();
+            };
+            container.appendChild(addBtn);
+        }
+
+        function selectLayer(index) {
+            state.selectedLayerIndex = index;
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.selectLayer(index);
+            }
+        }
+
+        function addLayer() {
+            state.layers.push({
+                name: 'New Layer ' + state.layers.length,
+                weight: 1.0,
+                enabled: true,
+                solo: false,
+                muted: false,
+                blendMode: 'override',
+                mask: ''
+            });
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.addLayer('New Layer');
+            }
+        }
+
+        function deleteLayer(index) {
+            if (index === 0) return; // Can't delete base layer
+            state.layers.splice(index, 1);
+            if (state.selectedLayerIndex >= state.layers.length) {
+                state.selectedLayerIndex = state.layers.length - 1;
+            }
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.removeLayer(index);
+            }
+        }
+
+        function moveLayer(fromIndex, toIndex) {
+            var layer = state.layers.splice(fromIndex, 1)[0];
+            state.layers.splice(toIndex, 0, layer);
+            state.draggingLayerIndex = -1;
+            state.dropTargetIndex = -1;
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.moveLayer(fromIndex, toIndex);
+            }
+        }
+
+        function updateLayerName(index, name) {
+            state.layers[index].name = name;
+            setDirty(true);
+        }
+
+        function setLayerWeight(index, weight) {
+            state.layers[index].weight = weight;
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.setLayerWeight(index, weight);
+            }
+        }
+
+        function setLayerBlendMode(index, mode) {
+            state.layers[index].blendMode = mode;
+            setDirty(true);
+
+            if (window.bridge) {
+                window.bridge.setLayerBlendMode(index, mode);
+            }
+        }
+
+        function setLayerMask(index, mask) {
+            state.layers[index].mask = mask;
+            setDirty(true);
+
+            if (window.bridge) {
+                window.bridge.setLayerMask(index, mask);
+            }
+        }
+
+        function toggleEnabled(index) {
+            state.layers[index].enabled = !state.layers[index].enabled;
+            setDirty(true);
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.setLayerEnabled(index, state.layers[index].enabled);
+            }
+        }
+
+        function toggleSolo(index) {
+            state.layers[index].solo = !state.layers[index].solo;
+            if (state.layers[index].solo) {
+                state.layers.forEach(function(l, i) {
+                    if (i !== index) l.solo = false;
+                });
+            }
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.soloLayer(index);
+            }
+        }
+
+        function toggleMute(index) {
+            state.layers[index].muted = !state.layers[index].muted;
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.muteLayer(index, state.layers[index].muted);
+            }
+        }
+
+        function clearSolo() {
+            state.layers.forEach(function(l) { l.solo = false; });
+            renderLayers();
+
+            if (window.bridge) {
+                window.bridge.clearSolo();
+            }
+        }
+
+        function editTree(index) {
+            if (window.bridge) {
+                window.bridge.editLayerTree(index);
+            }
+        }
+
+        function editMask(index) {
+            if (window.bridge) {
+                window.bridge.editLayerMask(index);
+            }
+        }
+
+        function setDirty(dirty) {
+            state.isDirty = dirty;
+        }
+
+        function save() {
+            console.log('Saving:', state.layers);
+            if (window.bridge) {
+                window.bridge.save(JSON.stringify(state.layers));
+            }
+            setDirty(false);
+        }
+
+        function goBack() {
+            if (state.isDirty) {
+                if (!confirm('Unsaved changes will be lost. Continue?')) return;
+            }
+            history.back();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

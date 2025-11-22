@@ -1,0 +1,320 @@
+{
+  "id": "ability_casting",
+  "name": "Ability Casting State Machine",
+  "defaultState": "ready",
+
+  "parameters": [
+    { "name": "beginCast", "type": "trigger" },
+    { "name": "completeCast", "type": "trigger" },
+    { "name": "cancelCast", "type": "trigger" },
+    { "name": "beginChannel", "type": "trigger" },
+    { "name": "endChannel", "type": "trigger" },
+    { "name": "abilityType", "type": "int", "defaultValue": 0 },
+    { "name": "castProgress", "type": "float", "defaultValue": 0 },
+    { "name": "channelDuration", "type": "float", "defaultValue": 0 },
+    { "name": "hurt", "type": "trigger" },
+    { "name": "interrupted", "type": "bool", "defaultValue": false }
+  ],
+
+  "states": [
+    {
+      "name": "ready",
+      "clip": "animations/abilities/ready",
+      "loop": true,
+      "transitions": [
+        {
+          "to": "cast_start",
+          "conditions": [
+            { "parameter": "beginCast", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "channel_start",
+          "conditions": [
+            { "parameter": "beginChannel", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "cast_start",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "abilityType",
+        "children": [
+          { "clip": "animations/abilities/cast_fire_start", "threshold": 0 },
+          { "clip": "animations/abilities/cast_ice_start", "threshold": 1 },
+          { "clip": "animations/abilities/cast_lightning_start", "threshold": 2 },
+          { "clip": "animations/abilities/cast_heal_start", "threshold": 3 },
+          { "clip": "animations/abilities/cast_buff_start", "threshold": 4 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/cast_start" } },
+        {
+          "time": 0.2,
+          "name": "spawn_vfx",
+          "data": {
+            "vfx": "vfx/cast_charge",
+            "bone": "hand_r",
+            "attach": true
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "to": "casting",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.1
+        },
+        {
+          "to": "cast_cancel",
+          "conditions": [
+            { "parameter": "cancelCast", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "cast_interrupt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 10
+        }
+      ]
+    },
+    {
+      "name": "casting",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "abilityType",
+        "children": [
+          { "clip": "animations/abilities/cast_fire_hold", "threshold": 0 },
+          { "clip": "animations/abilities/cast_ice_hold", "threshold": 1 },
+          { "clip": "animations/abilities/cast_lightning_hold", "threshold": 2 },
+          { "clip": "animations/abilities/cast_heal_hold", "threshold": 3 },
+          { "clip": "animations/abilities/cast_buff_hold", "threshold": 4 }
+        ]
+      },
+      "loop": true,
+      "speedMultiplierParameter": "castProgress",
+      "transitions": [
+        {
+          "to": "cast_release",
+          "conditions": [
+            { "parameter": "completeCast", "mode": "if_true" }
+          ],
+          "duration": 0.05
+        },
+        {
+          "to": "cast_cancel",
+          "conditions": [
+            { "parameter": "cancelCast", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "cast_interrupt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 10
+        }
+      ]
+    },
+    {
+      "name": "cast_release",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "abilityType",
+        "children": [
+          { "clip": "animations/abilities/cast_fire_release", "threshold": 0 },
+          { "clip": "animations/abilities/cast_ice_release", "threshold": 1 },
+          { "clip": "animations/abilities/cast_lightning_release", "threshold": 2 },
+          { "clip": "animations/abilities/cast_heal_release", "threshold": 3 },
+          { "clip": "animations/abilities/cast_buff_release", "threshold": 4 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.15, "name": "play_sound", "data": { "sound": "sfx/cast_release" } },
+        {
+          "time": 0.2,
+          "name": "ability_execute",
+          "data": {
+            "spawnPoint": "hand_r"
+          }
+        },
+        {
+          "time": 0.2,
+          "name": "spawn_vfx",
+          "data": {
+            "vfx": "vfx/cast_burst",
+            "bone": "hand_r"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "to": "cast_recovery",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "cast_recovery",
+      "clip": "animations/abilities/cast_recovery",
+      "loop": false,
+      "transitions": [
+        {
+          "to": "ready",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.15
+        },
+        {
+          "to": "cast_start",
+          "hasExitTime": true,
+          "exitTime": 0.5,
+          "conditions": [
+            { "parameter": "beginCast", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        }
+      ]
+    },
+    {
+      "name": "cast_cancel",
+      "clip": "animations/abilities/cast_cancel",
+      "loop": false,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/cast_fizzle" } },
+        { "time": 0.1, "name": "ability_cancelled", "data": {} }
+      ],
+      "transitions": [
+        {
+          "to": "ready",
+          "hasExitTime": true,
+          "exitTime": 0.8,
+          "duration": 0.15
+        }
+      ]
+    },
+    {
+      "name": "cast_interrupt",
+      "clip": "animations/abilities/cast_interrupt",
+      "loop": false,
+      "events": [
+        { "time": 0.05, "name": "play_sound", "data": { "sound": "sfx/cast_interrupt" } },
+        { "time": 0.05, "name": "spawn_vfx", "data": { "vfx": "vfx/cast_fizzle" } },
+        { "time": 0.05, "name": "ability_interrupted", "data": {} }
+      ],
+      "transitions": [
+        {
+          "to": "ready",
+          "hasExitTime": true,
+          "exitTime": 0.7,
+          "duration": 0.2
+        }
+      ]
+    },
+    {
+      "name": "channel_start",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "abilityType",
+        "children": [
+          { "clip": "animations/abilities/channel_beam_start", "threshold": 0 },
+          { "clip": "animations/abilities/channel_aoe_start", "threshold": 1 },
+          { "clip": "animations/abilities/channel_summon_start", "threshold": 2 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.1, "name": "play_sound", "data": { "sound": "sfx/channel_start" } },
+        { "time": 0.3, "name": "channel_begun", "data": {} }
+      ],
+      "transitions": [
+        {
+          "to": "channeling",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.1
+        },
+        {
+          "to": "cast_interrupt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 10
+        }
+      ]
+    },
+    {
+      "name": "channeling",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "abilityType",
+        "children": [
+          { "clip": "animations/abilities/channel_beam_hold", "threshold": 0 },
+          { "clip": "animations/abilities/channel_aoe_hold", "threshold": 1 },
+          { "clip": "animations/abilities/channel_summon_hold", "threshold": 2 }
+        ]
+      },
+      "loop": true,
+      "events": [
+        { "time": 0.5, "name": "channel_tick", "data": {} }
+      ],
+      "transitions": [
+        {
+          "to": "channel_end",
+          "conditions": [
+            { "parameter": "endChannel", "mode": "if_true" }
+          ],
+          "duration": 0.1
+        },
+        {
+          "to": "cast_interrupt",
+          "conditions": [
+            { "parameter": "hurt", "mode": "if_true" }
+          ],
+          "duration": 0.05,
+          "priority": 10
+        }
+      ]
+    },
+    {
+      "name": "channel_end",
+      "blendTree": {
+        "type": "simple_1d",
+        "parameter": "abilityType",
+        "children": [
+          { "clip": "animations/abilities/channel_beam_end", "threshold": 0 },
+          { "clip": "animations/abilities/channel_aoe_end", "threshold": 1 },
+          { "clip": "animations/abilities/channel_summon_end", "threshold": 2 }
+        ]
+      },
+      "loop": false,
+      "events": [
+        { "time": 0.3, "name": "channel_complete", "data": {} }
+      ],
+      "transitions": [
+        {
+          "to": "ready",
+          "hasExitTime": true,
+          "exitTime": 0.9,
+          "duration": 0.15
+        }
+      ]
+    }
+  ]
+}

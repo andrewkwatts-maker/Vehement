@@ -1,0 +1,302 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "animation_state_machine.schema.json",
+  "title": "Animation State Machine",
+  "description": "Defines a data-driven animation state machine",
+  "type": "object",
+  "required": ["id", "states", "defaultState"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Unique state machine identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "extends": {
+      "type": "string",
+      "description": "Base state machine to inherit from"
+    },
+    "defaultState": {
+      "type": "string",
+      "description": "Initial state name"
+    },
+    "parameters": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/parameter" },
+      "description": "Animation parameters"
+    },
+    "states": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/state" },
+      "minItems": 1,
+      "description": "Animation states"
+    },
+    "layers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/layer" },
+      "description": "Animation layers for blending"
+    },
+    "anyStateTransitions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/transition" },
+      "description": "Transitions that can occur from any state"
+    }
+  },
+
+  "definitions": {
+    "parameter": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Parameter name"
+        },
+        "type": {
+          "enum": ["float", "int", "bool", "trigger"],
+          "description": "Parameter type"
+        },
+        "defaultValue": {
+          "description": "Default value"
+        },
+        "min": {
+          "type": "number",
+          "description": "Minimum value (for float/int)"
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value (for float/int)"
+        }
+      }
+    },
+
+    "state": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "State name"
+        },
+        "clip": {
+          "type": "string",
+          "description": "Animation clip ID"
+        },
+        "blendTree": {
+          "$ref": "animation_blend_tree.schema.json#/definitions/blendTree",
+          "description": "Inline blend tree"
+        },
+        "blendTreeId": {
+          "type": "string",
+          "description": "Reference to external blend tree"
+        },
+        "speed": {
+          "type": "number",
+          "default": 1,
+          "description": "Playback speed multiplier"
+        },
+        "speedMultiplierParameter": {
+          "type": "string",
+          "description": "Parameter to multiply speed by"
+        },
+        "loop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether animation loops"
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mirror the animation"
+        },
+        "mirrorParameter": {
+          "type": "string",
+          "description": "Parameter to control mirroring"
+        },
+        "cycleOffset": {
+          "type": "number",
+          "default": 0,
+          "description": "Starting offset (0-1)"
+        },
+        "timeParameter": {
+          "type": "string",
+          "description": "Parameter to write normalized time to"
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationEvent" },
+          "description": "Events triggered during playback"
+        },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/transition" },
+          "description": "Transitions from this state"
+        },
+        "behaviors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/stateBehavior" },
+          "description": "State behaviors (scripts)"
+        }
+      }
+    },
+
+    "transition": {
+      "type": "object",
+      "required": ["to"],
+      "properties": {
+        "to": {
+          "type": "string",
+          "description": "Target state name"
+        },
+        "condition": {
+          "type": "string",
+          "description": "Expression condition (e.g., 'speed > 0.1')"
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/transitionCondition" },
+          "description": "Structured conditions"
+        },
+        "duration": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Blend duration in seconds"
+        },
+        "priority": {
+          "type": "integer",
+          "default": 0,
+          "description": "Transition priority (higher = checked first)"
+        },
+        "hasExitTime": {
+          "type": "boolean",
+          "default": false,
+          "description": "Wait for exit time before transitioning"
+        },
+        "exitTime": {
+          "type": "number",
+          "description": "Normalized time to exit (0-1)"
+        },
+        "canTransitionToSelf": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow transition to same state"
+        }
+      }
+    },
+
+    "transitionCondition": {
+      "type": "object",
+      "required": ["parameter", "mode"],
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "description": "Parameter name"
+        },
+        "mode": {
+          "enum": ["if_true", "if_false", "greater", "less", "equals", "not_equals", "greater_or_equal", "less_or_equal"],
+          "description": "Comparison mode"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Threshold value for comparison"
+        }
+      }
+    },
+
+    "animationEvent": {
+      "type": "object",
+      "required": ["time", "name"],
+      "properties": {
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized time (0-1)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Event name"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Event data payload"
+        }
+      }
+    },
+
+    "stateBehavior": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Behavior type"
+        },
+        "onEnter": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" },
+          "description": "Actions on state enter"
+        },
+        "onExit": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" },
+          "description": "Actions on state exit"
+        },
+        "onUpdate": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/definitions/action" },
+          "description": "Actions each frame"
+        }
+      }
+    },
+
+    "layer": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Layer name"
+        },
+        "weight": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Layer weight"
+        },
+        "blendingMode": {
+          "enum": ["override", "additive"],
+          "default": "override",
+          "description": "How layer blends with lower layers"
+        },
+        "mask": {
+          "type": "string",
+          "description": "Mask ID for partial body blending"
+        },
+        "states": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/state" },
+          "description": "States in this layer"
+        },
+        "defaultState": {
+          "type": "string",
+          "description": "Default state for this layer"
+        },
+        "syncedLayerIndex": {
+          "type": "integer",
+          "description": "Layer to sync timing with"
+        },
+        "IKPass": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable IK pass for this layer"
+        }
+      }
+    }
+  }
+}

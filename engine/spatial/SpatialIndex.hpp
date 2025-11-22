@@ -1,3 +1,88 @@
+/**
+ * @file SpatialIndex.hpp
+ * @brief Spatial acceleration structures for efficient geometric queries
+ *
+ * This file defines the ISpatialIndex interface and related types for
+ * efficient spatial queries in 3D space. Implementations include:
+ * - Octree: Hierarchical spatial partitioning for static scenes
+ * - LooseOctree: Variant with oversized nodes for dynamic objects
+ * - BVH: Bounding Volume Hierarchy for ray tracing
+ * - SpatialHash: Grid-based hashing for uniform object distributions
+ *
+ * @section spatial_concepts Key Concepts
+ *
+ * **Spatial Index**: A data structure that organizes objects by their
+ * spatial location to accelerate queries like "find all objects near X"
+ * or "what objects does this ray hit?".
+ *
+ * **AABB (Axis-Aligned Bounding Box)**: The simplest bounding volume,
+ * used for fast intersection tests and as the primary query primitive.
+ *
+ * **Layers**: Objects can be assigned to layers (64 available) for
+ * filtering queries. Use layer masks to include/exclude specific layers.
+ *
+ * @section spatial_usage Basic Usage
+ *
+ * @code{.cpp}
+ * #include <engine/spatial/SpatialIndex.hpp>
+ *
+ * // Create an octree spatial index
+ * auto spatialIndex = Nova::CreateSpatialIndex(
+ *     Nova::SpatialIndexType::Octree,
+ *     Nova::AABB(glm::vec3(-500), glm::vec3(500))  // World bounds
+ * );
+ *
+ * // Insert objects
+ * spatialIndex->Insert(entityId, entityAABB, layer);
+ *
+ * // Query objects in an area
+ * auto nearbyEntities = spatialIndex->QueryAABB(queryArea);
+ *
+ * // Query with filtering
+ * Nova::SpatialQueryFilter filter;
+ * filter.layerMask = LAYER_ENEMIES | LAYER_DESTRUCTIBLES;
+ * filter.excludeId = playerId;  // Don't include self
+ * auto enemies = spatialIndex->QuerySphere(position, radius, filter);
+ *
+ * // Ray casting
+ * Nova::Ray ray{cameraPos, cameraForward};
+ * auto hits = spatialIndex->QueryRay(ray, 100.0f);
+ * if (!hits.empty()) {
+ *     // Process hit: hits[0] is closest
+ * }
+ *
+ * // Update when objects move
+ * spatialIndex->Update(entityId, newAABB);
+ * @endcode
+ *
+ * @section spatial_performance Performance Considerations
+ *
+ * - **Octree**: Best for static scenes with varying object sizes
+ * - **LooseOctree**: Best for dynamic scenes with frequent updates
+ * - **BVH**: Best for ray tracing and complex mesh queries
+ * - **SpatialHash**: Best for many uniformly-sized objects
+ *
+ * Use `SpatialIndexType::Auto` to let the system choose based on
+ * object distribution and update patterns.
+ *
+ * @section spatial_callbacks Callback Queries
+ *
+ * For hot paths, use callback-based queries to avoid allocations:
+ *
+ * @code{.cpp}
+ * spatialIndex->QueryAABB(area, [&](uint64_t id, const AABB& bounds) {
+ *     ProcessEntity(id);
+ *     return true;  // Continue searching, false to stop early
+ * });
+ * @endcode
+ *
+ * @see AABB, Ray, Frustum for query primitives
+ * @see docs/api/Spatial.md for complete API documentation
+ *
+ * @author Nova3D Team
+ * @version 1.0.0
+ */
+
 #pragma once
 
 #include "AABB.hpp"

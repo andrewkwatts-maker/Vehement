@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Blend Tree Editor</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #4488ff;
+            --accent-secondary: #44ff88;
+            --accent-warning: #ffaa44;
+            --accent-danger: #ff4444;
+            --border-color: #404060;
+            --node-blend: #44aa88;
+            --node-clip: #aa8844;
+            --node-root: #4488ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .editor-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 40px;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #treeCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+        }
+
+        #treeCanvas.dragging {
+            cursor: grabbing;
+        }
+
+        /* Parameter Panel */
+        .parameter-panel {
+            height: 150px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .parameter-panel h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .param-slider-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .param-name {
+            width: 80px;
+            font-size: 12px;
+        }
+
+        .param-slider {
+            flex: 1;
+            margin: 0 10px;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .param-value {
+            width: 60px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-section {
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px;
+        }
+
+        .panel-section h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 80px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .property-input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Blend Space Panel */
+        .blend-space {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .blend-space-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .blend-space-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--node-clip);
+            border: 2px solid var(--text-primary);
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .blend-space-point:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+
+        .blend-space-point.active {
+            background: var(--accent-secondary);
+            box-shadow: 0 0 10px var(--accent-secondary);
+        }
+
+        .blend-space-cursor {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .blend-space-label {
+            position: absolute;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Weight Display */
+        .weights-display {
+            margin-top: 15px;
+        }
+
+        .weight-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .weight-name {
+            flex: 1;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .weight-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+
+        .weight-bar-fill {
+            height: 100%;
+            background: var(--accent-secondary);
+            border-radius: 4px;
+            transition: width 0.1s;
+        }
+
+        .weight-value {
+            width: 40px;
+            font-size: 11px;
+            text-align: right;
+            color: var(--text-secondary);
+        }
+
+        /* Tree Node Styles */
+        .tree-node {
+            position: absolute;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            min-width: 140px;
+            cursor: move;
+            user-select: none;
+        }
+
+        .tree-node.selected {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(68, 136, 255, 0.5);
+        }
+
+        .tree-node.root {
+            border-color: var(--node-root);
+        }
+
+        .tree-node.blend {
+            border-color: var(--node-blend);
+        }
+
+        .tree-node.clip {
+            border-color: var(--node-clip);
+        }
+
+        .tree-node-header {
+            padding: 6px 10px;
+            border-radius: 5px 5px 0 0;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .tree-node.root .tree-node-header {
+            background: var(--node-root);
+        }
+
+        .tree-node.blend .tree-node-header {
+            background: var(--node-blend);
+        }
+
+        .tree-node.clip .tree-node-header {
+            background: var(--node-clip);
+        }
+
+        .tree-node-body {
+            padding: 8px 10px;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .tree-node-port {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 50%;
+        }
+
+        .tree-node-port.input {
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tree-node-port.output {
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Add Node Menu */
+        .add-node-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 5px 0;
+            min-width: 160px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .add-node-menu.visible {
+            display: block;
+        }
+
+        .add-node-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .add-node-item:hover {
+            background: var(--accent-primary);
+        }
+
+        .add-node-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 5px 0;
+        }
+
+        /* Preview Panel */
+        .preview-section {
+            flex: 1;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-canvas {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            min-height: 200px;
+        }
+
+        .preview-controls {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .preview-btn {
+            width: 30px;
+            height: 30px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 25px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-item {
+            margin-right: 20px;
+        }
+
+        .status-item span {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="newBlendTree()">New</button>
+            <button class="toolbar-btn" onclick="loadBlendTree()">Load</button>
+            <button class="toolbar-btn" onclick="saveBlendTree()">Save</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="undo()" id="undoBtn" disabled>Undo</button>
+            <button class="toolbar-btn" onclick="redo()" id="redoBtn" disabled>Redo</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="showAddNodeMenu(event)">Add Node</button>
+            <button class="toolbar-btn" onclick="deleteSelected()" id="deleteBtn" disabled>Delete</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="autoLayout()">Auto Layout</button>
+            <button class="toolbar-btn" onclick="zoomToFit()">Fit View</button>
+        </div>
+        <div class="toolbar-group">
+            <span style="font-size: 12px; color: var(--text-secondary);">Type:</span>
+            <select class="property-input" id="treeType" onchange="changeTreeType()" style="width: 120px;">
+                <option value="simple_1d">1D Blend</option>
+                <option value="simple_2d">2D Blend</option>
+                <option value="freeform_2d">Freeform 2D</option>
+                <option value="direct">Direct</option>
+                <option value="additive">Additive</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="editor-layout">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Canvas Area -->
+            <div class="canvas-area">
+                <canvas id="treeCanvas"></canvas>
+            </div>
+
+            <!-- Parameter Panel -->
+            <div class="parameter-panel">
+                <h3>Parameters</h3>
+                <div id="parameterSliders"></div>
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="side-panel">
+            <!-- Node Properties -->
+            <div class="panel-section" id="nodeProperties">
+                <h3>Node Properties</h3>
+                <div class="property-row">
+                    <span class="property-label">Name</span>
+                    <input type="text" class="property-input" id="nodeName" onchange="updateNodeName()">
+                </div>
+                <div class="property-row" id="clipRow">
+                    <span class="property-label">Clip</span>
+                    <input type="text" class="property-input" id="nodeClip" onchange="updateNodeClip()">
+                </div>
+                <div class="property-row" id="thresholdRow">
+                    <span class="property-label">Threshold</span>
+                    <input type="number" class="property-input" id="nodeThreshold" step="0.1" onchange="updateNodeThreshold()">
+                </div>
+                <div class="property-row" id="positionRow" style="display: none;">
+                    <span class="property-label">Position</span>
+                    <input type="number" class="property-input" id="nodePosX" step="0.1" style="width: 50px;" onchange="updateNodePosition()">
+                    <input type="number" class="property-input" id="nodePosY" step="0.1" style="width: 50px; margin-left: 5px;" onchange="updateNodePosition()">
+                </div>
+            </div>
+
+            <!-- Blend Space Visualization -->
+            <div class="panel-section" id="blendSpaceSection">
+                <h3>Blend Space</h3>
+                <div class="blend-space" id="blendSpace">
+                    <canvas id="blendSpaceCanvas"></canvas>
+                    <div class="blend-space-cursor" id="blendCursor"></div>
+                </div>
+
+                <!-- Weight Display -->
+                <div class="weights-display" id="weightsDisplay"></div>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-section">
+                <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px;">Preview</h3>
+                <canvas class="preview-canvas" id="previewCanvas"></canvas>
+                <div class="preview-controls">
+                    <button class="preview-btn" onclick="playPreview()">&#9658;</button>
+                    <button class="preview-btn" onclick="pausePreview()">&#10074;&#10074;</button>
+                    <button class="preview-btn" onclick="resetPreview()">&#8635;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Node Menu -->
+    <div class="add-node-menu" id="addNodeMenu">
+        <div class="add-node-item" onclick="addNode('clip')">Animation Clip</div>
+        <div class="add-node-divider"></div>
+        <div class="add-node-item" onclick="addNode('blend_1d')">1D Blend Node</div>
+        <div class="add-node-item" onclick="addNode('blend_2d')">2D Blend Node</div>
+        <div class="add-node-item" onclick="addNode('additive')">Additive Node</div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">Zoom: <span id="zoomLevel">100%</span></div>
+        <div class="status-item">Nodes: <span id="nodeCount">0</span></div>
+        <div class="status-item" id="dirtyIndicator" style="display: none; color: var(--accent-warning);">* Unsaved Changes</div>
+    </div>
+
+    <script>
+        // Blend Tree Data
+        let blendTree = {
+            type: 'simple_1d',
+            parameter: 'blend',
+            parameterX: 'blendX',
+            parameterY: 'blendY',
+            children: []
+        };
+
+        // Editor State
+        let canvas, ctx;
+        let blendSpaceCanvas, blendSpaceCtx;
+        let previewCanvas, previewCtx;
+        let viewOffset = { x: 0, y: 0 };
+        let zoom = 1;
+        let nodes = [];
+        let connections = [];
+        let selectedNode = null;
+        let isDragging = false;
+        let isPanning = false;
+        let dragOffset = { x: 0, y: 0 };
+        let undoStack = [];
+        let redoStack = [];
+        let isDirty = false;
+
+        // Parameters
+        let parameters = {
+            blend: 0.5,
+            blendX: 0,
+            blendY: 0
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            canvas = document.getElementById('treeCanvas');
+            ctx = canvas.getContext('2d');
+
+            blendSpaceCanvas = document.getElementById('blendSpaceCanvas');
+            blendSpaceCtx = blendSpaceCanvas.getContext('2d');
+
+            previewCanvas = document.getElementById('previewCanvas');
+            previewCtx = previewCanvas.getContext('2d');
+
+            resizeCanvases();
+            window.addEventListener('resize', resizeCanvases);
+
+            setupEventListeners();
+            createDefaultTree();
+            render();
+        });
+
+        function resizeCanvases() {
+            const canvasArea = document.querySelector('.canvas-area');
+            canvas.width = canvasArea.clientWidth;
+            canvas.height = canvasArea.clientHeight;
+
+            const blendSpace = document.getElementById('blendSpace');
+            blendSpaceCanvas.width = blendSpace.clientWidth;
+            blendSpaceCanvas.height = blendSpace.clientHeight;
+
+            render();
+            renderBlendSpace();
+        }
+
+        function setupEventListeners() {
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('wheel', onWheel);
+            canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+            const blendSpace = document.getElementById('blendSpace');
+            blendSpace.addEventListener('mousedown', onBlendSpaceMouseDown);
+            blendSpace.addEventListener('mousemove', onBlendSpaceMouseMove);
+            blendSpace.addEventListener('mouseup', onBlendSpaceMouseUp);
+
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('click', hideMenus);
+        }
+
+        function createDefaultTree() {
+            nodes = [];
+            connections = [];
+
+            // Create root node
+            const root = {
+                id: 'root',
+                type: 'blend_1d',
+                name: 'Root',
+                x: 300,
+                y: 50,
+                parameter: 'blend',
+                children: []
+            };
+            nodes.push(root);
+
+            // Create default clip nodes
+            const clip1 = {
+                id: 'clip_0',
+                type: 'clip',
+                name: 'Idle',
+                clip: 'animations/idle',
+                threshold: 0,
+                position: { x: 0, y: 0 },
+                x: 150,
+                y: 200
+            };
+            nodes.push(clip1);
+
+            const clip2 = {
+                id: 'clip_1',
+                type: 'clip',
+                name: 'Walk',
+                clip: 'animations/walk',
+                threshold: 0.5,
+                position: { x: 0, y: 0 },
+                x: 300,
+                y: 200
+            };
+            nodes.push(clip2);
+
+            const clip3 = {
+                id: 'clip_2',
+                type: 'clip',
+                name: 'Run',
+                clip: 'animations/run',
+                threshold: 1,
+                position: { x: 0, y: 0 },
+                x: 450,
+                y: 200
+            };
+            nodes.push(clip3);
+
+            // Connect nodes
+            connections.push({ from: 'root', to: 'clip_0' });
+            connections.push({ from: 'root', to: 'clip_1' });
+            connections.push({ from: 'root', to: 'clip_2' });
+
+            updateParameterSliders();
+            updateBlendTree();
+        }
+
+        // Rendering
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawGrid();
+            drawConnections();
+            drawNodes();
+
+            updateStatus();
+        }
+
+        function drawGrid() {
+            const gridSize = 20 * zoom;
+            const offsetX = viewOffset.x % gridSize;
+            const offsetY = viewOffset.y % gridSize;
+
+            ctx.strokeStyle = '#2a2a3e';
+            ctx.lineWidth = 1;
+
+            for (let x = -offsetX; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            for (let y = -offsetY; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawNodes() {
+            nodes.forEach(node => {
+                const screenPos = worldToScreen(node.x, node.y);
+                const width = 140 * zoom;
+                const height = node.type === 'clip' ? 50 * zoom : 60 * zoom;
+
+                // Node background
+                ctx.fillStyle = '#363650';
+
+                let borderColor = '#404060';
+                if (node === selectedNode) {
+                    borderColor = '#4488ff';
+                } else if (node.type === 'clip') {
+                    borderColor = '#aa8844';
+                } else if (node.id === 'root') {
+                    borderColor = '#4488ff';
+                } else {
+                    borderColor = '#44aa88';
+                }
+
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = 2 * zoom;
+
+                roundRect(ctx, screenPos.x, screenPos.y, width, height, 8 * zoom);
+                ctx.fill();
+                ctx.stroke();
+
+                // Header
+                let headerColor = borderColor;
+                ctx.fillStyle = headerColor;
+                roundRectTop(ctx, screenPos.x, screenPos.y, width, 22 * zoom, 8 * zoom);
+                ctx.fill();
+
+                // Node name
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${11 * zoom}px 'Segoe UI'`;
+                ctx.textAlign = 'center';
+                ctx.fillText(node.name, screenPos.x + width / 2, screenPos.y + 15 * zoom);
+
+                // Node info
+                ctx.fillStyle = '#a0a0b0';
+                ctx.font = `${9 * zoom}px 'Segoe UI'`;
+
+                if (node.type === 'clip') {
+                    const clipName = node.clip ? node.clip.split('/').pop() : 'No clip';
+                    ctx.fillText(clipName, screenPos.x + width / 2, screenPos.y + 38 * zoom);
+                } else {
+                    ctx.fillText(node.parameter || 'blend', screenPos.x + width / 2, screenPos.y + 38 * zoom);
+                }
+
+                // Threshold/weight indicator for clips
+                if (node.type === 'clip') {
+                    const weight = calculateNodeWeight(node);
+                    if (weight > 0) {
+                        ctx.fillStyle = `rgba(68, 255, 136, ${weight})`;
+                        ctx.fillRect(screenPos.x + 2, screenPos.y + height - 4 * zoom,
+                                     (width - 4) * weight, 2 * zoom);
+                    }
+                }
+
+                // Input port
+                if (node.id !== 'root') {
+                    ctx.fillStyle = '#2a2a3e';
+                    ctx.strokeStyle = '#4488ff';
+                    ctx.lineWidth = 2 * zoom;
+                    ctx.beginPath();
+                    ctx.arc(screenPos.x + width / 2, screenPos.y, 5 * zoom, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                // Output port
+                if (node.type !== 'clip') {
+                    ctx.fillStyle = '#2a2a3e';
+                    ctx.strokeStyle = '#4488ff';
+                    ctx.lineWidth = 2 * zoom;
+                    ctx.beginPath();
+                    ctx.arc(screenPos.x + width / 2, screenPos.y + height, 5 * zoom, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                // Selection glow
+                if (node === selectedNode) {
+                    ctx.shadowColor = '#4488ff';
+                    ctx.shadowBlur = 15 * zoom;
+                    ctx.strokeStyle = '#66aaff';
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            });
+        }
+
+        function drawConnections() {
+            connections.forEach(conn => {
+                const fromNode = nodes.find(n => n.id === conn.from);
+                const toNode = nodes.find(n => n.id === conn.to);
+
+                if (!fromNode || !toNode) return;
+
+                const fromPos = worldToScreen(fromNode.x, fromNode.y);
+                const toPos = worldToScreen(toNode.x, toNode.y);
+
+                const fromHeight = fromNode.type === 'clip' ? 50 * zoom : 60 * zoom;
+                const width = 140 * zoom;
+
+                const startX = fromPos.x + width / 2;
+                const startY = fromPos.y + fromHeight;
+                const endX = toPos.x + width / 2;
+                const endY = toPos.y;
+
+                // Draw bezier curve
+                const controlOffset = Math.abs(endY - startY) * 0.5;
+
+                ctx.strokeStyle = '#606080';
+                ctx.lineWidth = 2 * zoom;
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.bezierCurveTo(
+                    startX, startY + controlOffset,
+                    endX, endY - controlOffset,
+                    endX, endY
+                );
+                ctx.stroke();
+
+                // Draw weight indicator
+                const weight = calculateNodeWeight(toNode);
+                if (weight > 0) {
+                    ctx.strokeStyle = `rgba(68, 255, 136, ${weight})`;
+                    ctx.lineWidth = 3 * zoom;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.bezierCurveTo(
+                        startX, startY + controlOffset,
+                        endX, endY - controlOffset,
+                        endX, endY
+                    );
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function renderBlendSpace() {
+            const width = blendSpaceCanvas.width;
+            const height = blendSpaceCanvas.height;
+
+            blendSpaceCtx.clearRect(0, 0, width, height);
+
+            // Draw grid
+            blendSpaceCtx.strokeStyle = '#404060';
+            blendSpaceCtx.lineWidth = 1;
+
+            // Center lines
+            blendSpaceCtx.beginPath();
+            blendSpaceCtx.moveTo(width / 2, 0);
+            blendSpaceCtx.lineTo(width / 2, height);
+            blendSpaceCtx.moveTo(0, height / 2);
+            blendSpaceCtx.lineTo(width, height / 2);
+            blendSpaceCtx.stroke();
+
+            // Draw grid lines
+            const gridSize = width / 4;
+            blendSpaceCtx.strokeStyle = '#2a2a3e';
+            for (let i = 1; i < 4; i++) {
+                blendSpaceCtx.beginPath();
+                blendSpaceCtx.moveTo(i * gridSize, 0);
+                blendSpaceCtx.lineTo(i * gridSize, height);
+                blendSpaceCtx.moveTo(0, i * gridSize);
+                blendSpaceCtx.lineTo(width, i * gridSize);
+                blendSpaceCtx.stroke();
+            }
+
+            // Draw clip positions
+            const clipNodes = nodes.filter(n => n.type === 'clip');
+            clipNodes.forEach(node => {
+                let x, y;
+
+                if (blendTree.type === 'simple_1d') {
+                    x = node.threshold * width;
+                    y = height / 2;
+                } else {
+                    x = (node.position.x + 1) / 2 * width;
+                    y = (1 - (node.position.y + 1) / 2) * height;
+                }
+
+                const weight = calculateNodeWeight(node);
+
+                // Draw point
+                blendSpaceCtx.fillStyle = weight > 0 ? '#44ff88' : '#aa8844';
+                blendSpaceCtx.beginPath();
+                blendSpaceCtx.arc(x, y, 6 + weight * 4, 0, Math.PI * 2);
+                blendSpaceCtx.fill();
+
+                // Draw label
+                blendSpaceCtx.fillStyle = '#e0e0e0';
+                blendSpaceCtx.font = '10px Segoe UI';
+                blendSpaceCtx.textAlign = 'center';
+                blendSpaceCtx.fillText(node.name, x, y - 12);
+            });
+
+            // Draw cursor position
+            let cursorX, cursorY;
+            if (blendTree.type === 'simple_1d') {
+                cursorX = parameters.blend * width;
+                cursorY = height / 2;
+            } else {
+                cursorX = (parameters.blendX + 1) / 2 * width;
+                cursorY = (1 - (parameters.blendY + 1) / 2) * height;
+            }
+
+            const cursor = document.getElementById('blendCursor');
+            cursor.style.left = cursorX + 'px';
+            cursor.style.top = cursorY + 'px';
+
+            updateWeightsDisplay();
+        }
+
+        function calculateNodeWeight(node) {
+            if (node.type !== 'clip') return 0;
+
+            const clipNodes = nodes.filter(n => n.type === 'clip');
+            if (clipNodes.length === 0) return 0;
+
+            if (blendTree.type === 'simple_1d') {
+                // 1D blend weight calculation
+                const blend = parameters.blend;
+                const sorted = [...clipNodes].sort((a, b) => a.threshold - b.threshold);
+
+                for (let i = 0; i < sorted.length; i++) {
+                    if (node.id !== sorted[i].id) continue;
+
+                    if (sorted.length === 1) return 1;
+
+                    if (i === 0) {
+                        if (blend <= sorted[0].threshold) return 1;
+                        if (blend >= sorted[1].threshold) return 0;
+                        return 1 - (blend - sorted[0].threshold) / (sorted[1].threshold - sorted[0].threshold);
+                    }
+
+                    if (i === sorted.length - 1) {
+                        if (blend >= sorted[i].threshold) return 1;
+                        if (blend <= sorted[i - 1].threshold) return 0;
+                        return (blend - sorted[i - 1].threshold) / (sorted[i].threshold - sorted[i - 1].threshold);
+                    }
+
+                    if (blend <= sorted[i - 1].threshold || blend >= sorted[i + 1].threshold) return 0;
+                    if (blend <= sorted[i].threshold) {
+                        return (blend - sorted[i - 1].threshold) / (sorted[i].threshold - sorted[i - 1].threshold);
+                    }
+                    return 1 - (blend - sorted[i].threshold) / (sorted[i + 1].threshold - sorted[i].threshold);
+                }
+            } else {
+                // 2D blend weight calculation (inverse distance)
+                const blendPos = { x: parameters.blendX, y: parameters.blendY };
+                const distances = clipNodes.map(n => {
+                    const dx = n.position.x - blendPos.x;
+                    const dy = n.position.y - blendPos.y;
+                    return { node: n, dist: Math.sqrt(dx * dx + dy * dy) };
+                });
+
+                const totalInvDist = distances.reduce((sum, d) => sum + 1 / (d.dist + 0.001), 0);
+                const nodeData = distances.find(d => d.node.id === node.id);
+                if (!nodeData) return 0;
+
+                return (1 / (nodeData.dist + 0.001)) / totalInvDist;
+            }
+
+            return 0;
+        }
+
+        function updateWeightsDisplay() {
+            const container = document.getElementById('weightsDisplay');
+            container.innerHTML = '';
+
+            const clipNodes = nodes.filter(n => n.type === 'clip');
+            clipNodes.forEach(node => {
+                const weight = calculateNodeWeight(node);
+
+                const item = document.createElement('div');
+                item.className = 'weight-item';
+                item.innerHTML = `
+                    <span class="weight-name">${node.name}</span>
+                    <div class="weight-bar">
+                        <div class="weight-bar-fill" style="width: ${weight * 100}%"></div>
+                    </div>
+                    <span class="weight-value">${(weight * 100).toFixed(0)}%</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Helper functions
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function roundRectTop(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h);
+            ctx.lineTo(x, y + h);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function worldToScreen(x, y) {
+            return {
+                x: (x - viewOffset.x) * zoom,
+                y: (y - viewOffset.y) * zoom
+            };
+        }
+
+        function screenToWorld(x, y) {
+            return {
+                x: x / zoom + viewOffset.x,
+                y: y / zoom + viewOffset.y
+            };
+        }
+
+        // Event Handlers
+        function onMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
+                isPanning = true;
+                canvas.classList.add('dragging');
+                return;
+            }
+
+            if (e.button === 0) {
+                const clickedNode = getNodeAtPosition(x, y);
+
+                if (clickedNode) {
+                    selectNode(clickedNode);
+                    isDragging = true;
+                    const screenPos = worldToScreen(clickedNode.x, clickedNode.y);
+                    dragOffset = {
+                        x: x - screenPos.x,
+                        y: y - screenPos.y
+                    };
+                } else {
+                    clearSelection();
+                }
+            }
+        }
+
+        let lastMousePos = { x: 0, y: 0 };
+
+        function onMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (isPanning) {
+                viewOffset.x -= (x - lastMousePos.x) / zoom;
+                viewOffset.y -= (y - lastMousePos.y) / zoom;
+                render();
+            } else if (isDragging && selectedNode) {
+                const worldPos = screenToWorld(x - dragOffset.x, y - dragOffset.y);
+                selectedNode.x = Math.round(worldPos.x / 20) * 20;
+                selectedNode.y = Math.round(worldPos.y / 20) * 20;
+                setDirty();
+                render();
+            }
+
+            lastMousePos = { x, y };
+        }
+
+        function onMouseUp(e) {
+            isDragging = false;
+            isPanning = false;
+            canvas.classList.remove('dragging');
+        }
+
+        function onWheel(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const worldBefore = screenToWorld(x, y);
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            zoom = Math.max(0.25, Math.min(4, zoom * delta));
+            const worldAfter = screenToWorld(x, y);
+
+            viewOffset.x += worldBefore.x - worldAfter.x;
+            viewOffset.y += worldBefore.y - worldAfter.y;
+
+            render();
+        }
+
+        let isBlendSpaceDragging = false;
+
+        function onBlendSpaceMouseDown(e) {
+            isBlendSpaceDragging = true;
+            updateBlendFromMouse(e);
+        }
+
+        function onBlendSpaceMouseMove(e) {
+            if (isBlendSpaceDragging) {
+                updateBlendFromMouse(e);
+            }
+        }
+
+        function onBlendSpaceMouseUp(e) {
+            isBlendSpaceDragging = false;
+        }
+
+        function updateBlendFromMouse(e) {
+            const rect = blendSpaceCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (blendTree.type === 'simple_1d') {
+                parameters.blend = Math.max(0, Math.min(1, x / rect.width));
+                updateParameterSlider('blend', parameters.blend);
+            } else {
+                parameters.blendX = Math.max(-1, Math.min(1, (x / rect.width) * 2 - 1));
+                parameters.blendY = Math.max(-1, Math.min(1, 1 - (y / rect.height) * 2));
+                updateParameterSlider('blendX', parameters.blendX);
+                updateParameterSlider('blendY', parameters.blendY);
+            }
+
+            renderBlendSpace();
+            render();
+        }
+
+        function onKeyDown(e) {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedNode && selectedNode.id !== 'root') {
+                    deleteSelected();
+                }
+            } else if (e.ctrlKey && e.key === 'z') {
+                undo();
+            } else if (e.ctrlKey && e.key === 'y') {
+                redo();
+            } else if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveBlendTree();
+            }
+        }
+
+        function hideMenus() {
+            document.getElementById('addNodeMenu').classList.remove('visible');
+        }
+
+        // Node Management
+        function getNodeAtPosition(x, y) {
+            for (let i = nodes.length - 1; i >= 0; i--) {
+                const node = nodes[i];
+                const screenPos = worldToScreen(node.x, node.y);
+                const width = 140 * zoom;
+                const height = node.type === 'clip' ? 50 * zoom : 60 * zoom;
+
+                if (x >= screenPos.x && x <= screenPos.x + width &&
+                    y >= screenPos.y && y <= screenPos.y + height) {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        function selectNode(node) {
+            selectedNode = node;
+            document.getElementById('deleteBtn').disabled = node.id === 'root';
+
+            // Update properties panel
+            document.getElementById('nodeName').value = node.name;
+
+            const isClip = node.type === 'clip';
+            document.getElementById('clipRow').style.display = isClip ? 'flex' : 'none';
+            document.getElementById('thresholdRow').style.display = isClip && blendTree.type === 'simple_1d' ? 'flex' : 'none';
+            document.getElementById('positionRow').style.display = isClip && blendTree.type !== 'simple_1d' ? 'flex' : 'none';
+
+            if (isClip) {
+                document.getElementById('nodeClip').value = node.clip || '';
+                document.getElementById('nodeThreshold').value = node.threshold || 0;
+                document.getElementById('nodePosX').value = node.position?.x || 0;
+                document.getElementById('nodePosY').value = node.position?.y || 0;
+            }
+
+            render();
+        }
+
+        function clearSelection() {
+            selectedNode = null;
+            document.getElementById('deleteBtn').disabled = true;
+            render();
+        }
+
+        // Actions
+        function showAddNodeMenu(e) {
+            const menu = document.getElementById('addNodeMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.add('visible');
+            e.stopPropagation();
+        }
+
+        function addNode(type) {
+            hideMenus();
+            pushUndo();
+
+            const id = type + '_' + Date.now();
+            const newNode = {
+                id: id,
+                type: type === 'clip' ? 'clip' : 'blend',
+                name: type === 'clip' ? 'New Clip' : 'Blend',
+                x: 300 + Math.random() * 100,
+                y: 150 + nodes.length * 30
+            };
+
+            if (type === 'clip') {
+                newNode.clip = '';
+                newNode.threshold = nodes.filter(n => n.type === 'clip').length * 0.5;
+                newNode.position = { x: 0, y: 0 };
+
+                // Connect to root
+                connections.push({ from: 'root', to: id });
+            }
+
+            nodes.push(newNode);
+            setDirty();
+            selectNode(newNode);
+            updateBlendTree();
+            render();
+            renderBlendSpace();
+        }
+
+        function deleteSelected() {
+            if (!selectedNode || selectedNode.id === 'root') return;
+
+            pushUndo();
+
+            // Remove connections
+            connections = connections.filter(c => c.from !== selectedNode.id && c.to !== selectedNode.id);
+
+            // Remove node
+            nodes = nodes.filter(n => n !== selectedNode);
+
+            clearSelection();
+            setDirty();
+            updateBlendTree();
+            render();
+            renderBlendSpace();
+        }
+
+        // Property Updates
+        function updateNodeName() {
+            if (!selectedNode) return;
+            pushUndo();
+            selectedNode.name = document.getElementById('nodeName').value;
+            setDirty();
+            render();
+            renderBlendSpace();
+        }
+
+        function updateNodeClip() {
+            if (!selectedNode || selectedNode.type !== 'clip') return;
+            pushUndo();
+            selectedNode.clip = document.getElementById('nodeClip').value;
+            setDirty();
+            updateBlendTree();
+        }
+
+        function updateNodeThreshold() {
+            if (!selectedNode || selectedNode.type !== 'clip') return;
+            pushUndo();
+            selectedNode.threshold = parseFloat(document.getElementById('nodeThreshold').value) || 0;
+            setDirty();
+            updateBlendTree();
+            render();
+            renderBlendSpace();
+        }
+
+        function updateNodePosition() {
+            if (!selectedNode || selectedNode.type !== 'clip') return;
+            pushUndo();
+            selectedNode.position = {
+                x: parseFloat(document.getElementById('nodePosX').value) || 0,
+                y: parseFloat(document.getElementById('nodePosY').value) || 0
+            };
+            setDirty();
+            updateBlendTree();
+            render();
+            renderBlendSpace();
+        }
+
+        // Parameter Sliders
+        function updateParameterSliders() {
+            const container = document.getElementById('parameterSliders');
+            container.innerHTML = '';
+
+            if (blendTree.type === 'simple_1d') {
+                addSlider(container, 'blend', 'Blend', 0, 1, parameters.blend);
+            } else {
+                addSlider(container, 'blendX', 'Blend X', -1, 1, parameters.blendX);
+                addSlider(container, 'blendY', 'Blend Y', -1, 1, parameters.blendY);
+            }
+        }
+
+        function addSlider(container, name, label, min, max, value) {
+            const row = document.createElement('div');
+            row.className = 'param-slider-row';
+            row.innerHTML = `
+                <span class="param-name">${label}</span>
+                <input type="range" class="param-slider" id="slider_${name}"
+                       min="${min}" max="${max}" step="0.01" value="${value}"
+                       oninput="onSliderChange('${name}', this.value)">
+                <input type="text" class="param-value" id="value_${name}"
+                       value="${value.toFixed(2)}"
+                       onchange="onValueChange('${name}', this.value)">
+            `;
+            container.appendChild(row);
+        }
+
+        function onSliderChange(name, value) {
+            parameters[name] = parseFloat(value);
+            document.getElementById('value_' + name).value = parseFloat(value).toFixed(2);
+            renderBlendSpace();
+            render();
+        }
+
+        function onValueChange(name, value) {
+            parameters[name] = parseFloat(value) || 0;
+            document.getElementById('slider_' + name).value = parameters[name];
+            renderBlendSpace();
+            render();
+        }
+
+        function updateParameterSlider(name, value) {
+            const slider = document.getElementById('slider_' + name);
+            const valueInput = document.getElementById('value_' + name);
+            if (slider) slider.value = value;
+            if (valueInput) valueInput.value = value.toFixed(2);
+        }
+
+        function changeTreeType() {
+            const type = document.getElementById('treeType').value;
+            blendTree.type = type;
+
+            // Update blend space section visibility
+            const blendSpaceSection = document.getElementById('blendSpaceSection');
+            blendSpaceSection.style.display = type !== 'direct' && type !== 'additive' ? 'block' : 'none';
+
+            updateParameterSliders();
+            updateBlendTree();
+            render();
+            renderBlendSpace();
+        }
+
+        function updateBlendTree() {
+            // Sync nodes to blend tree data structure
+            blendTree.children = nodes
+                .filter(n => n.type === 'clip')
+                .map(n => ({
+                    clip: n.clip,
+                    threshold: n.threshold,
+                    position: n.position
+                }));
+        }
+
+        // Undo/Redo
+        function pushUndo() {
+            undoStack.push({
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                connections: JSON.parse(JSON.stringify(connections)),
+                blendTree: JSON.parse(JSON.stringify(blendTree))
+            });
+            redoStack = [];
+            if (undoStack.length > 50) undoStack.shift();
+            updateUndoButtons();
+        }
+
+        function undo() {
+            if (undoStack.length === 0) return;
+            redoStack.push({
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                connections: JSON.parse(JSON.stringify(connections)),
+                blendTree: JSON.parse(JSON.stringify(blendTree))
+            });
+            const state = undoStack.pop();
+            nodes = state.nodes;
+            connections = state.connections;
+            blendTree = state.blendTree;
+            clearSelection();
+            updateUndoButtons();
+            render();
+            renderBlendSpace();
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            undoStack.push({
+                nodes: JSON.parse(JSON.stringify(nodes)),
+                connections: JSON.parse(JSON.stringify(connections)),
+                blendTree: JSON.parse(JSON.stringify(blendTree))
+            });
+            const state = redoStack.pop();
+            nodes = state.nodes;
+            connections = state.connections;
+            blendTree = state.blendTree;
+            clearSelection();
+            updateUndoButtons();
+            render();
+            renderBlendSpace();
+        }
+
+        function updateUndoButtons() {
+            document.getElementById('undoBtn').disabled = undoStack.length === 0;
+            document.getElementById('redoBtn').disabled = redoStack.length === 0;
+        }
+
+        // File Operations
+        function newBlendTree() {
+            if (isDirty && !confirm('Discard unsaved changes?')) return;
+            createDefaultTree();
+            undoStack = [];
+            redoStack = [];
+            isDirty = false;
+            document.getElementById('dirtyIndicator').style.display = 'none';
+            updateUndoButtons();
+            render();
+            renderBlendSpace();
+        }
+
+        function loadBlendTree() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        const data = JSON.parse(reader.result);
+                        importBlendTree(data);
+                    } catch (err) {
+                        alert('Error loading file: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function importBlendTree(data) {
+            blendTree = {
+                type: data.type || 'simple_1d',
+                parameter: data.parameter || 'blend',
+                parameterX: data.parameterX || 'blendX',
+                parameterY: data.parameterY || 'blendY',
+                children: data.children || []
+            };
+
+            document.getElementById('treeType').value = blendTree.type;
+
+            // Recreate nodes
+            nodes = [{
+                id: 'root',
+                type: 'blend_1d',
+                name: 'Root',
+                x: 300,
+                y: 50,
+                parameter: blendTree.parameter
+            }];
+
+            connections = [];
+
+            blendTree.children.forEach((child, i) => {
+                const clipName = child.clip ? child.clip.split('/').pop() : 'Clip ' + i;
+                const node = {
+                    id: 'clip_' + i,
+                    type: 'clip',
+                    name: clipName,
+                    clip: child.clip || '',
+                    threshold: child.threshold || 0,
+                    position: child.position || { x: 0, y: 0 },
+                    x: 150 + i * 150,
+                    y: 200
+                };
+                nodes.push(node);
+                connections.push({ from: 'root', to: node.id });
+            });
+
+            undoStack = [];
+            redoStack = [];
+            isDirty = false;
+            document.getElementById('dirtyIndicator').style.display = 'none';
+            updateParameterSliders();
+            updateUndoButtons();
+            clearSelection();
+            zoomToFit();
+            renderBlendSpace();
+        }
+
+        function saveBlendTree() {
+            updateBlendTree();
+
+            const exportData = {
+                type: blendTree.type,
+                children: blendTree.children
+            };
+
+            if (blendTree.type === 'simple_1d') {
+                exportData.parameter = blendTree.parameter || 'blend';
+            } else {
+                exportData.parameterX = blendTree.parameterX || 'blendX';
+                exportData.parameterY = blendTree.parameterY || 'blendY';
+            }
+
+            // Add editor metadata
+            exportData._editor = {
+                nodes: nodes.map(n => ({ id: n.id, x: n.x, y: n.y }))
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'blend_tree.json';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            isDirty = false;
+            document.getElementById('dirtyIndicator').style.display = 'none';
+        }
+
+        // Layout
+        function autoLayout() {
+            pushUndo();
+
+            const root = nodes.find(n => n.id === 'root');
+            if (root) {
+                root.x = 300;
+                root.y = 50;
+            }
+
+            const clipNodes = nodes.filter(n => n.type === 'clip');
+            const spacing = 150;
+            const startX = 300 - (clipNodes.length - 1) * spacing / 2;
+
+            clipNodes.forEach((node, i) => {
+                node.x = startX + i * spacing;
+                node.y = 200;
+            });
+
+            setDirty();
+            render();
+        }
+
+        function zoomToFit() {
+            if (nodes.length === 0) return;
+
+            let minX = Infinity, minY = Infinity;
+            let maxX = -Infinity, maxY = -Infinity;
+
+            nodes.forEach(node => {
+                minX = Math.min(minX, node.x);
+                minY = Math.min(minY, node.y);
+                maxX = Math.max(maxX, node.x + 140);
+                maxY = Math.max(maxY, node.y + 60);
+            });
+
+            const padding = 50;
+            const contentWidth = maxX - minX + padding * 2;
+            const contentHeight = maxY - minY + padding * 2;
+
+            zoom = Math.min(
+                canvas.width / contentWidth,
+                canvas.height / contentHeight,
+                2
+            );
+            zoom = Math.max(0.25, zoom);
+
+            viewOffset.x = minX - padding;
+            viewOffset.y = minY - padding;
+
+            render();
+        }
+
+        // Preview
+        function playPreview() {
+            // Would animate preview
+        }
+
+        function pausePreview() {
+            // Pause preview
+        }
+
+        function resetPreview() {
+            parameters.blend = 0.5;
+            parameters.blendX = 0;
+            parameters.blendY = 0;
+            updateParameterSliders();
+            renderBlendSpace();
+            render();
+        }
+
+        // Status
+        function setDirty() {
+            isDirty = true;
+            document.getElementById('dirtyIndicator').style.display = 'block';
+        }
+
+        function updateStatus() {
+            document.getElementById('zoomLevel').textContent = Math.round(zoom * 100) + '%';
+            document.getElementById('nodeCount').textContent = nodes.length;
+        }
+    </script>
+</body>
+</html>

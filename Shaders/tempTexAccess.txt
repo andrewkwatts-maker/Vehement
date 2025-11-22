@@ -1,0 +1,65 @@
+	return (Brightness*v)*(1-BaseLight)+BaseLight;
+	if(v==0)
+	{
+		return BaseLight;
+	}
+	else
+	{
+		vec3 DeltaN = normalize(vPosition-LightPos);
+		vec3 DeltaNA = abs(DeltaN);
+		float Max = max(DeltaNA.x,max(DeltaNA.y,DeltaNA.z));
+
+		vec3 MultDelt = DeltaN*(1/Max);
+
+		if(DeltaNA.x == Max)
+		{
+			if(DeltaN.x > 0)
+			{
+				if(v<=texture(XP,MultDelt.yz/2)
+					return (Brightness*v)*(1-BaseLight)+BaseLight;
+				else
+					return BaseLight;
+			}
+			else
+			{
+				//if(v>=texture(XN,MultDelt.yz)
+				//	return (Brightness*v)*(1-BaseLight)+BaseLight;
+				//else
+					return BaseLight;
+			}
+		}
+		else if(DeltaNA.z == Max)
+		{
+			if(DeltaN.z > 0)
+			{
+				//if(v<=texture(ZP,MultDelt.xy)
+				//	return (Brightness*v)*(1-BaseLight)+BaseLight;
+				else
+					return BaseLight;
+			}
+			else
+			{
+				if(v<=texture(ZN,MultDelt.xy)
+					return (Brightness*v)*(1-BaseLight)+BaseLight;
+				else
+					return BaseLight;
+			}
+		}
+		else
+		{
+			if(DeltaN.y > 0)
+			{
+				if(v<=texture(YP,MultDelt.xz)
+					return (Brightness*v)*(1-BaseLight)+BaseLight;
+				else
+					return BaseLight;
+			}
+			else
+			{
+				if(v<=texture(YN,MultDelt.xy)
+					return (Brightness*v)*(1-BaseLight)+BaseLight;
+				else
+					return BaseLight;
+			}
+		}
+	}

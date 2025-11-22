@@ -1,0 +1,192 @@
+#version 460 core
+/*
+ * Radiance Cascades - Merge Shader
+ *
+ * This compute shader merges cascade levels from coarse to fine.
+ * The key insight of radiance cascades is that coarser levels capture
+ * light from distant sources, while finer levels capture local detail.
+ * By merging them properly, we get accurate global illumination.
+ *
+ * The merge process:
+ * 1. Start with the coarsest cascade (captures furthest light)
+ * 2. Bilinearly sample the coarse cascade at each fine cascade pixel
+ * 3. Blend coarse contribution with fine level's local contribution
+ * 4. Repeat until we reach the finest level
+ */
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Current cascade level being updated (read/write)
+layout(rgba16f, binding = 0) uniform image2D u_CascadeCurrent;
+
+// Coarser cascade level to merge from (read only)
+layout(rgba16f, binding = 1) uniform readonly image2D u_CascadeCoarse;
+
+// Merge parameters
+uniform int u_CascadeLevel;         // Current level being processed
+uniform vec2 u_CurrentSize;         // Resolution of current cascade
+uniform vec2 u_CoarseSize;          // Resolution of coarser cascade
+uniform float u_MergeWeight;        // How much coarse cascade contributes (0-1)
+
+// Advanced merging options
+uniform float u_DistanceFalloff;    // Distance-based falloff for merging
+uniform bool u_UseDirectionalMerge; // Enable directional merging (more accurate)
+
+// ============================================================================
+// Sampling Functions
+// ============================================================================
+
+/**
+ * Bilinear interpolation from coarse cascade
+ * This ensures smooth transitions between cascade levels
+ */
+vec4 sampleBilinear(vec2 uv) {
+    // Convert to texel coordinates
+    vec2 texelCoord = uv * u_CoarseSize - 0.5;
+    ivec2 base = ivec2(floor(texelCoord));
+    vec2 frac = fract(texelCoord);
+
+    // Clamp to valid range
+    base = clamp(base, ivec2(0), ivec2(u_CoarseSize) - 2);
+
+    // Sample 4 neighbors
+    vec4 tl = imageLoad(u_CascadeCoarse, base);
+    vec4 tr = imageLoad(u_CascadeCoarse, base + ivec2(1, 0));
+    vec4 bl = imageLoad(u_CascadeCoarse, base + ivec2(0, 1));
+    vec4 br = imageLoad(u_CascadeCoarse, base + ivec2(1, 1));
+
+    // Bilinear interpolation
+    vec4 top = mix(tl, tr, frac.x);
+    vec4 bottom = mix(bl, br, frac.x);
+    return mix(top, bottom, frac.y);
+}
+
+/**
+ * Bicubic interpolation for higher quality (optional, more expensive)
+ */
+vec4 sampleBicubic(vec2 uv) {
+    vec2 texelCoord = uv * u_CoarseSize - 0.5;
+    ivec2 base = ivec2(floor(texelCoord));
+    vec2 frac = fract(texelCoord);
+
+    // Catmull-Rom weights
+    vec2 w0 = 0.5 * ((-frac + 2.0) * frac - 1.0) * frac;
+    vec2 w1 = 0.5 * ((3.0 * frac - 5.0) * frac * frac + 2.0);
+    vec2 w2 = 0.5 * ((-3.0 * frac + 4.0) * frac + 1.0) * frac;
+    vec2 w3 = 0.5 * ((frac - 1.0) * frac * frac);
+
+    // Fallback to bilinear at edges
+    if (base.x < 1 || base.y < 1 ||
+        base.x >= int(u_CoarseSize.x) - 2 || base.y >= int(u_CoarseSize.y) - 2) {
+        return sampleBilinear(uv);
+    }
+
+    // Sample 16 pixels and weight
+    vec4 result = vec4(0.0);
+
+    for (int j = -1; j <= 2; j++) {
+        float wy = (j == -1) ? w0.y : (j == 0) ? w1.y : (j == 1) ? w2.y : w3.y;
+        for (int i = -1; i <= 2; i++) {
+            float wx = (i == -1) ? w0.x : (i == 0) ? w1.x : (i == 1) ? w2.x : w3.x;
+            ivec2 samplePos = clamp(base + ivec2(i, j), ivec2(0), ivec2(u_CoarseSize) - 1);
+            result += imageLoad(u_CascadeCoarse, samplePos) * wx * wy;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Weighted merge based on cascade properties
+ * Coarser cascades represent light from further away
+ */
+vec4 mergeRadiance(vec4 fine, vec4 coarse) {
+    // RGB: Add coarse contribution (light from far away)
+    // The merge weight controls how much distant light propagates
+    vec3 mergedRadiance = fine.rgb + coarse.rgb * u_MergeWeight;
+
+    // Alpha (visibility): Use maximum for fog of war
+    // If either level sees the point, it should be visible
+    float mergedVisibility = max(fine.a, coarse.a * u_MergeWeight);
+
+    // Apply energy conservation - prevent excessive brightness
+    // This is a soft clamp that preserves color ratios
+    float maxComponent = max(max(mergedRadiance.r, mergedRadiance.g), mergedRadiance.b);
+    if (maxComponent > 2.0) {
+        mergedRadiance *= 2.0 / maxComponent;
+    }
+
+    return vec4(mergedRadiance, mergedVisibility);
+}
+
+/**
+ * Directional merge - more physically accurate but slower
+ * Accounts for the direction light travels between cascade levels
+ */
+vec4 mergeDirectional(ivec2 pixelCoord, vec4 fine) {
+    // Calculate UV for coarse sampling
+    vec2 uv = (vec2(pixelCoord) + 0.5) / u_CurrentSize;
+
+    // Sample multiple directions in coarse cascade
+    vec4 coarseAccum = vec4(0.0);
+    float totalWeight = 0.0;
+
+    // Sample in a small neighborhood to account for directional spread
+    const int samples = 4;
+    const float spread = 0.5 / u_CoarseSize.x;
+
+    for (int i = 0; i < samples; i++) {
+        float angle = float(i) / float(samples) * 6.28318;
+        vec2 offset = vec2(cos(angle), sin(angle)) * spread;
+        vec4 sample_val = sampleBilinear(uv + offset);
+
+        // Weight by sample validity
+        float w = 1.0;
+        coarseAccum += sample_val * w;
+        totalWeight += w;
+    }
+
+    if (totalWeight > 0.0) {
+        coarseAccum /= totalWeight;
+    }
+
+    return mergeRadiance(fine, coarseAccum);
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    // Bounds check
+    if (pixelCoord.x >= int(u_CurrentSize.x) || pixelCoord.y >= int(u_CurrentSize.y)) {
+        return;
+    }
+
+    // Load current (fine) cascade value
+    vec4 currentValue = imageLoad(u_CascadeCurrent, pixelCoord);
+
+    // Calculate UV coordinates for sampling coarse cascade
+    vec2 uv = (vec2(pixelCoord) + 0.5) / u_CurrentSize;
+
+    // Sample coarse cascade
+    vec4 coarseValue = sampleBilinear(uv);
+
+    // Merge cascades
+    vec4 merged;
+    if (u_UseDirectionalMerge) {
+        merged = mergeDirectional(pixelCoord, currentValue);
+    } else {
+        merged = mergeRadiance(currentValue, coarseValue);
+    }
+
+    // Apply cascade-level specific adjustments
+    // Higher cascade levels (coarser) contribute more diffuse light
+    float cascadeInfluence = 1.0 / (1.0 + float(u_CascadeLevel) * u_DistanceFalloff);
+    merged.rgb *= cascadeInfluence + (1.0 - cascadeInfluence);
+
+    // Store merged result
+    imageStore(u_CascadeCurrent, pixelCoord, merged);
+}

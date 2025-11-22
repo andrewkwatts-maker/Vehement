@@ -1,0 +1,238 @@
+#version 460 core
+/*
+ * Radiance Cascades - Final Composition Shader
+ *
+ * This compute shader produces the final radiance texture from the merged
+ * cascade data. It handles:
+ *
+ * 1. Direct light contributions (for lights very close to pixels)
+ * 2. Reading the fully merged cascade data
+ * 3. Computing visibility for fog of war
+ * 4. Applying tone mapping and color adjustments
+ * 5. Outputting the final RGBA texture for rendering
+ *
+ * Output format:
+ * - RGB: Final radiance/lighting color
+ * - A: Visibility factor (0 = not visible/fog of war, 1 = fully visible)
+ */
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Output: Final radiance texture
+layout(rgba16f, binding = 0) uniform writeonly image2D u_RadianceOutput;
+
+// Input: Finest cascade level (contains merged radiance data)
+layout(rgba16f, binding = 1) uniform readonly image2D u_CascadeFinest;
+
+// Input: Occlusion texture for wall detection
+layout(r8, binding = 2) uniform readonly image2D u_Occlusion;
+
+// Light data
+struct Light {
+    vec2 position;
+    vec2 _pad0;
+    vec3 color;
+    float intensity;
+    float radius;
+    vec3 _padding;
+};
+
+layout(std430, binding = 0) buffer LightBuffer {
+    int numLights;
+    int _pad1, _pad2, _pad3;
+    Light lights[];
+};
+
+// Resolution uniforms
+uniform vec2 u_Resolution;          // Output texture resolution
+uniform vec2 u_OcclusionSize;       // Occlusion texture resolution
+
+// Player/visibility uniforms
+uniform vec2 u_PlayerPosition;
+uniform float u_PlayerRadius;
+uniform bool u_HasPlayer;
+
+// Lighting parameters
+uniform float u_AmbientLight;       // Base ambient light level (0-1)
+uniform float u_Exposure;           // Exposure for tone mapping
+uniform float u_Gamma;              // Gamma correction value
+uniform vec3 u_AmbientColor;        // Ambient light color
+
+// Fog of war parameters
+uniform float u_FogDensity;         // How quickly visibility falls off
+uniform float u_ExploredBrightness; // Brightness of explored but not visible areas
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Sample occlusion texture
+ */
+float sampleOcclusion(vec2 screenPos) {
+    vec2 texCoord = screenPos / u_Resolution * u_OcclusionSize;
+    ivec2 ipos = ivec2(texCoord);
+
+    if (ipos.x < 0 || ipos.y < 0 ||
+        ipos.x >= int(u_OcclusionSize.x) || ipos.y >= int(u_OcclusionSize.y)) {
+        return 0.0;
+    }
+
+    return imageLoad(u_Occlusion, ipos).r;
+}
+
+/**
+ * Calculate direct light contribution
+ * For lights very close to a pixel, we add direct lighting
+ * to ensure bright spots at light sources
+ */
+vec3 calculateDirectLight(vec2 screenPos) {
+    vec3 direct = vec3(0.0);
+
+    for (int i = 0; i < numLights && i < 256; i++) {
+        Light light = lights[i];
+
+        vec2 toLight = light.position - screenPos;
+        float dist = length(toLight);
+
+        // Direct light only for very close pixels (within 10% of radius)
+        float directRadius = light.radius * 0.1;
+        if (dist < directRadius) {
+            float attenuation = 1.0 - (dist / directRadius);
+            attenuation = attenuation * attenuation * attenuation;  // Cubic falloff
+
+            // Add glow effect
+            direct += light.color * light.intensity * attenuation * 3.0;
+        }
+
+        // Also add a subtle glow for the full radius
+        if (dist < light.radius) {
+            float glowAttenuation = 1.0 - (dist / light.radius);
+            glowAttenuation = pow(glowAttenuation, 4.0);  // Sharp falloff
+            direct += light.color * light.intensity * glowAttenuation * 0.3;
+        }
+    }
+
+    return direct;
+}
+
+/**
+ * Calculate player-based visibility
+ */
+float calculatePlayerVisibility(vec2 screenPos) {
+    if (!u_HasPlayer) return 1.0;
+
+    float dist = length(u_PlayerPosition - screenPos);
+
+    if (dist >= u_PlayerRadius) return 0.0;
+
+    // Smooth visibility falloff
+    float t = dist / u_PlayerRadius;
+    float visibility = 1.0 - t * t;  // Quadratic falloff
+
+    // Apply fog density
+    visibility = pow(visibility, u_FogDensity);
+
+    return visibility;
+}
+
+// ============================================================================
+// Tone Mapping
+// ============================================================================
+
+/**
+ * ACES filmic tone mapping
+ * More cinematic than simple Reinhard
+ */
+vec3 tonemapACES(vec3 color) {
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
+/**
+ * Simple Reinhard tone mapping
+ */
+vec3 tonemapReinhard(vec3 color) {
+    return color / (color + vec3(1.0));
+}
+
+/**
+ * Uncharted 2 tone mapping
+ */
+vec3 tonemapUncharted2(vec3 color) {
+    const float A = 0.15;
+    const float B = 0.50;
+    const float C = 0.10;
+    const float D = 0.20;
+    const float E = 0.02;
+    const float F = 0.30;
+
+    return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    // Bounds check
+    if (pixelCoord.x >= int(u_Resolution.x) || pixelCoord.y >= int(u_Resolution.y)) {
+        return;
+    }
+
+    vec2 screenPos = vec2(pixelCoord) + 0.5;
+
+    // Check if pixel is inside a wall
+    float occlusion = sampleOcclusion(screenPos);
+    if (occlusion > 0.5) {
+        // Inside wall - render as dark/black
+        // Could also render wall color here
+        imageStore(u_RadianceOutput, pixelCoord, vec4(0.0, 0.0, 0.0, 0.0));
+        return;
+    }
+
+    // Sample cascade radiance
+    vec4 cascadeValue = imageLoad(u_CascadeFinest, pixelCoord);
+    vec3 radiance = cascadeValue.rgb;
+    float cascadeVisibility = cascadeValue.a;
+
+    // Add direct light contributions
+    vec3 directLight = calculateDirectLight(screenPos);
+    radiance += directLight;
+
+    // Calculate player visibility
+    float playerVisibility = calculatePlayerVisibility(screenPos);
+
+    // Combine visibility sources
+    // Cascade visibility comes from ray-traced light paths
+    // Player visibility is direct distance-based
+    float finalVisibility = max(cascadeVisibility, playerVisibility);
+
+    // Add ambient light
+    vec3 ambient = u_AmbientColor * u_AmbientLight;
+    radiance += ambient;
+
+    // Apply exposure
+    radiance *= u_Exposure;
+
+    // Tone mapping (choose one)
+    radiance = tonemapACES(radiance);
+    // radiance = tonemapReinhard(radiance);
+    // radiance = tonemapUncharted2(radiance);
+
+    // Gamma correction
+    radiance = pow(radiance, vec3(1.0 / u_Gamma));
+
+    // Clamp final values
+    radiance = clamp(radiance, 0.0, 1.0);
+    finalVisibility = clamp(finalVisibility, 0.0, 1.0);
+
+    // Output: RGB = lighting, A = visibility for fog of war
+    imageStore(u_RadianceOutput, pixelCoord, vec4(radiance, finalVisibility));
+}

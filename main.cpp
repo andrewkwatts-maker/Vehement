@@ -4,9 +4,14 @@
 
 int main()
 {
+	//Application* App = AppChooser::GetApp(GraphicsTutorial6a);
 
-	//Application* App = AppChooser::GetApp(fDistanceFields);
-	Application* App = AppChooser::GetApp(Blank);
+	//Application* App = AppChooser::GetApp(VoroExample3);
+	//Application* App = AppChooser::GetApp(GraphicsTutorial6);
+	//Application* App = AppChooser::GetApp(ComplexTutorial5);
+	//Application* App = AppChooser::GetApp(GraphicsAssigment1);
+	Application* App = AppChooser::GetApp(IndustryShowcase1);
+	//Application* App = AppChooser::GetApp(ComplexAssigment1);
 
 	if (App->startup() == true)
 	{

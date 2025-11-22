@@ -1,0 +1,176 @@
+{
+  "id": "crypt_fiend",
+  "name": "Crypt Fiend",
+  "race": "undead",
+  "tier": 2,
+  "type": "ranged",
+  "role": ["ranged_dps", "anti_air", "crowd_control"],
+
+  "description": "Undead spider creatures that fire webs to immobilize enemies and attack with deadly venom. Excellent against aerial units.",
+  "lore": "The nerubians were an ancient spider kingdom that fell to the Scourge. In undeath, their warriors serve as deadly hunters, using their webbing to trap prey for the swarm.",
+
+  "stats": {
+    "health": 550,
+    "healthRegen": 0.35,
+    "mana": 200,
+    "manaRegen": 0.5,
+    "armor": 1,
+    "armorType": "medium",
+    "moveSpeed": 280,
+    "turnRate": 0.7,
+    "collisionSize": 48,
+    "selectionScale": 1.2
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 26,
+      "variance": 4,
+      "type": "piercing"
+    },
+    "attackSpeed": 1.4,
+    "attackRange": 550,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/venom_spit.glb",
+      "speed": 1100,
+      "arc": 0.05
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.3,
+    "acquisitionRange": 600,
+    "aggroRange": 550
+  },
+
+  "abilities": [
+    {
+      "id": "web",
+      "name": "Web",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Binds a target enemy air unit in webbing, forcing it to the ground and immobilizing it",
+      "cooldown": 12.0,
+      "manaCost": 75,
+      "range": 600,
+      "effects": {
+        "duration": 12.0,
+        "groundsAirUnits": true,
+        "immobilizes": true,
+        "breakOnDamage": false
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/web.png"
+    },
+    {
+      "id": "burrow",
+      "name": "Burrow",
+      "type": "active",
+      "requiresResearch": "burrow_upgrade",
+      "description": "Burrow underground, becoming invisible and regenerating health but unable to attack",
+      "cooldown": 1.0,
+      "manaCost": 0,
+      "effects": {
+        "invisible": true,
+        "invulnerable": false,
+        "healthRegenBonus": 5.0,
+        "cannotAttack": true,
+        "cannotMove": true
+      },
+      "hotkey": "B",
+      "icon": "icons/abilities/burrow.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "crypt",
+    "buildTime": 30,
+    "cost": {
+      "gold": 215,
+      "lumber": 40,
+      "corpses": 0
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["crypt", "graveyard"],
+      "technologies": [],
+      "age": "crypt"
+    },
+    "hotkey": "F"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "creature_attack"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "creature_carapace"
+    },
+    "special": ["web_upgrade", "burrow_upgrade"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/crypt_fiend/ready.ogg",
+    "select": ["audio/units/crypt_fiend/select1.ogg", "audio/units/crypt_fiend/select2.ogg"],
+    "move": ["audio/units/crypt_fiend/move1.ogg", "audio/units/crypt_fiend/move2.ogg"],
+    "attack": ["audio/units/crypt_fiend/attack1.ogg", "audio/units/crypt_fiend/attack2.ogg"],
+    "death": "audio/units/crypt_fiend/death.ogg",
+    "web": "audio/units/crypt_fiend/web.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/crypt_fiend.glb",
+    "texture": "textures/units/undead/crypt_fiend.png",
+    "portrait": "textures/portraits/crypt_fiend.png",
+    "icon": "textures/icons/crypt_fiend.png",
+    "scale": 1.2,
+    "animations": {
+      "idle": "crypt_fiend_idle",
+      "walk": "crypt_fiend_walk",
+      "attack": "crypt_fiend_attack",
+      "death": "crypt_fiend_death",
+      "burrow": "crypt_fiend_burrow",
+      "unburrow": "crypt_fiend_unburrow"
+    },
+    "effects": {
+      "spawn": "effects/undead_spawn.vfx",
+      "death": "effects/spider_death.vfx",
+      "web": "effects/web_cast.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 4,
+    "priority": "medium",
+    "behavior": "defensive",
+    "fleeThreshold": 0.15,
+    "preferredTargets": ["air", "ranged", "caster"],
+    "useWebOnAir": true,
+    "burrowWhenLowHealth": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "canBurrow": true
+  },
+
+  "bounty": {
+    "gold": 25,
+    "experience": 40
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

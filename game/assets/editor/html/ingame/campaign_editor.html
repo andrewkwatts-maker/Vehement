@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Editor - Vehement</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --accent: #e94560;
+            --accent-hover: #ff6b6b;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --border: #333;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 260px 1fr 300px;
+            grid-template-rows: 48px 1fr 32px;
+            height: 100vh;
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .tool-btn.primary { background: var(--accent); color: white; }
+        .tool-btn svg { width: 16px; height: 16px; }
+
+        .toolbar-separator { width: 1px; height: 24px; background: var(--border); margin: 0 8px; }
+
+        /* Campaign Structure Panel */
+        .structure-panel {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .structure-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .tree-item:hover { background: var(--bg-tertiary); }
+        .tree-item.selected { background: var(--accent); }
+
+        .tree-expand {
+            width: 16px; height: 16px;
+            margin-right: 4px;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+        }
+
+        .tree-expand.collapsed { transform: rotate(-90deg); }
+
+        .tree-icon {
+            width: 16px; height: 16px;
+            margin-right: 8px;
+        }
+
+        .tree-icon.campaign { color: var(--warning); }
+        .tree-icon.chapter { color: var(--accent); }
+        .tree-icon.mission { color: var(--success); }
+        .tree-icon.cinematic { color: #a78bfa; }
+
+        .tree-name { flex: 1; font-size: 13px; }
+
+        .tree-children { padding-left: 20px; }
+
+        /* Main Editor Area */
+        .main-editor {
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .editor-tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .editor-tab:hover { color: var(--text-primary); }
+        .editor-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Mission Flow Editor */
+        .flow-editor {
+            min-height: 400px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .flow-node {
+            position: absolute;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            min-width: 150px;
+            cursor: move;
+        }
+
+        .flow-node:hover { border-color: var(--accent); }
+        .flow-node.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+
+        .flow-node.start { border-color: var(--success); }
+        .flow-node.end { border-color: var(--error); }
+        .flow-node.branch { border-color: var(--warning); }
+
+        .node-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+        .node-type { font-size: 11px; color: var(--text-secondary); }
+
+        .node-port {
+            position: absolute;
+            width: 12px; height: 12px;
+            background: var(--bg-primary);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            cursor: crosshair;
+        }
+
+        .node-port.input { left: -6px; top: 50%; transform: translateY(-50%); }
+        .node-port.output { right: -6px; top: 50%; transform: translateY(-50%); }
+
+        /* Chapter/Mission Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .mission-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mission-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+        .mission-card-image {
+            height: 120px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .mission-card-body { padding: 12px; }
+        .mission-card-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+        .mission-card-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+
+        .mission-card-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .mission-card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Timeline Editor */
+        .timeline {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .timeline-title { font-size: 14px; font-weight: 500; flex: 1; }
+
+        .timeline-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .timeline-track {
+            height: 40px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+        }
+
+        .timeline-track-label {
+            width: 80px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .timeline-track-content {
+            flex: 1;
+            height: 24px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .timeline-item {
+            position: absolute;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 11px;
+        }
+
+        /* Properties Panel */
+        .properties-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .properties-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .property-section { margin-bottom: 16px; }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .property-row { margin-bottom: 8px; }
+        .property-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+
+        .property-input input,
+        .property-input select,
+        .property-input textarea {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 10px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .property-input textarea { resize: vertical; min-height: 60px; }
+
+        .objective-list { display: flex; flex-direction: column; gap: 6px; }
+
+        .objective-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+
+        .objective-icon {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .objective-icon.primary { background: var(--warning); color: #000; }
+        .objective-icon.secondary { background: var(--bg-tertiary); }
+
+        .objective-text { flex: 1; font-size: 12px; }
+
+        /* Status Bar */
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-item { padding: 0 12px; border-right: 1px solid var(--border); }
+        .status-item:last-child { border-right: none; margin-left: auto; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <button class="tool-btn primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                New Campaign
+            </button>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                Open
+            </button>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                </svg>
+                Save
+            </button>
+            <div class="toolbar-separator"></div>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                Add Chapter
+            </button>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5,3 19,12 5,21"/>
+                </svg>
+                Add Mission
+            </button>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18"/>
+                    <line x1="7" y1="2" x2="7" y2="22"/>
+                    <line x1="17" y1="2" x2="17" y2="22"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                </svg>
+                Add Cinematic
+            </button>
+            <div style="flex:1;"></div>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5,3 19,12 5,21"/>
+                </svg>
+                Play Test
+            </button>
+        </div>
+
+        <div class="structure-panel">
+            <div class="panel-header">
+                <span>Campaign Structure</span>
+            </div>
+            <div class="structure-tree">
+                <div class="tree-item selected">
+                    <svg class="tree-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"/>
+                    </svg>
+                    <svg class="tree-icon campaign" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    <span class="tree-name">Human Campaign</span>
+                </div>
+                <div class="tree-children">
+                    <div class="tree-item">
+                        <svg class="tree-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                        <svg class="tree-icon chapter" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        <span class="tree-name">Chapter 1: The Defense</span>
+                    </div>
+                    <div class="tree-children">
+                        <div class="tree-item">
+                            <div style="width:16px;"></div>
+                            <svg class="tree-icon cinematic" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18"/>
+                            </svg>
+                            <span class="tree-name">Intro Cinematic</span>
+                        </div>
+                        <div class="tree-item">
+                            <div style="width:16px;"></div>
+                            <svg class="tree-icon mission" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>
+                            </svg>
+                            <span class="tree-name">Mission 1: Defend the Village</span>
+                        </div>
+                        <div class="tree-item">
+                            <div style="width:16px;"></div>
+                            <svg class="tree-icon mission" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>
+                            </svg>
+                            <span class="tree-name">Mission 2: Rescue the Prisoners</span>
+                        </div>
+                    </div>
+
+                    <div class="tree-item">
+                        <svg class="tree-expand collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                        <svg class="tree-icon chapter" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        <span class="tree-name">Chapter 2: The Siege</span>
+                    </div>
+
+                    <div class="tree-item">
+                        <svg class="tree-expand collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"/>
+                        </svg>
+                        <svg class="tree-icon chapter" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        <span class="tree-name">Chapter 3: Final Battle</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-editor">
+            <div class="editor-tabs">
+                <div class="editor-tab active">Overview</div>
+                <div class="editor-tab">Mission Flow</div>
+                <div class="editor-tab">Dialog</div>
+                <div class="editor-tab">Cinematics</div>
+            </div>
+            <div class="editor-content">
+                <h3 style="margin-bottom: 16px;">Chapter 1: The Defense</h3>
+
+                <div class="card-grid">
+                    <div class="mission-card">
+                        <div class="mission-card-image">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <rect x="2" y="2" width="20" height="20" rx="2.18"/>
+                                <line x1="7" y1="2" x2="7" y2="22"/>
+                                <line x1="17" y1="2" x2="17" y2="22"/>
+                            </svg>
+                        </div>
+                        <div class="mission-card-body">
+                            <div class="mission-card-title">Intro Cinematic</div>
+                            <div class="mission-card-desc">Introduction to the story and characters</div>
+                            <div class="mission-card-meta">
+                                <span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12,6 12,12 16,14"/>
+                                    </svg>
+                                    2:30
+                                </span>
+                                <span>Cinematic</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mission-card">
+                        <div class="mission-card-image" style="background: linear-gradient(135deg, #4a7c23, #2d4a16);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
+                                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>
+                            </svg>
+                        </div>
+                        <div class="mission-card-body">
+                            <div class="mission-card-title">Mission 1: Defend the Village</div>
+                            <div class="mission-card-desc">Protect the villagers from the orc raiders</div>
+                            <div class="mission-card-meta">
+                                <span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12,6 12,12 16,14"/>
+                                    </svg>
+                                    ~20 min
+                                </span>
+                                <span style="color: var(--success);">Easy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mission-card">
+                        <div class="mission-card-image" style="background: linear-gradient(135deg, #8b4513, #5c2d0e);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
+                                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>
+                            </svg>
+                        </div>
+                        <div class="mission-card-body">
+                            <div class="mission-card-title">Mission 2: Rescue the Prisoners</div>
+                            <div class="mission-card-desc">Free the captured soldiers from the enemy camp</div>
+                            <div class="mission-card-meta">
+                                <span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12,6 12,12 16,14"/>
+                                    </svg>
+                                    ~35 min
+                                </span>
+                                <span style="color: var(--warning);">Medium</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mission-card" style="border-style: dashed; opacity: 0.7;">
+                        <div class="mission-card-image">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </div>
+                        <div class="mission-card-body">
+                            <div class="mission-card-title" style="color: var(--text-secondary);">Add New Mission</div>
+                            <div class="mission-card-desc">Click to add a new mission to this chapter</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 24px 0 16px;">Mission Timeline</h3>
+
+                <div class="timeline">
+                    <div class="timeline-header">
+                        <div class="timeline-title">Chapter 1 Timeline</div>
+                        <div class="timeline-controls">
+                            <button class="tool-btn" style="padding: 4px 8px;">Zoom In</button>
+                            <button class="tool-btn" style="padding: 4px 8px;">Zoom Out</button>
+                        </div>
+                    </div>
+                    <div class="timeline-track">
+                        <div class="timeline-track-label">Cinematics</div>
+                        <div class="timeline-track-content">
+                            <div class="timeline-item" style="left: 0; width: 15%; background: #a78bfa;">Intro</div>
+                            <div class="timeline-item" style="left: 45%; width: 10%; background: #a78bfa;">Mid</div>
+                        </div>
+                    </div>
+                    <div class="timeline-track">
+                        <div class="timeline-track-label">Missions</div>
+                        <div class="timeline-track-content">
+                            <div class="timeline-item" style="left: 15%; width: 30%;">Mission 1</div>
+                            <div class="timeline-item" style="left: 55%; width: 40%;">Mission 2</div>
+                        </div>
+                    </div>
+                    <div class="timeline-track">
+                        <div class="timeline-track-label">Story Beats</div>
+                        <div class="timeline-track-content">
+                            <div class="timeline-item" style="left: 5%; width: 8%; background: var(--warning);">Setup</div>
+                            <div class="timeline-item" style="left: 35%; width: 8%; background: var(--warning);">Twist</div>
+                            <div class="timeline-item" style="left: 85%; width: 12%; background: var(--warning);">Climax</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="properties-panel">
+            <div class="panel-header">Properties</div>
+            <div class="properties-content">
+                <div class="property-section">
+                    <div class="section-title">Chapter Info</div>
+                    <div class="property-row">
+                        <div class="property-label">Name</div>
+                        <div class="property-input">
+                            <input type="text" value="Chapter 1: The Defense">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Description</div>
+                        <div class="property-input">
+                            <textarea>The kingdom is under attack. Lead your forces to protect the villages and rescue captured allies.</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-section">
+                    <div class="section-title">Selected: Mission 1</div>
+                    <div class="property-row">
+                        <div class="property-label">Mission Name</div>
+                        <div class="property-input">
+                            <input type="text" value="Defend the Village">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Difficulty</div>
+                        <div class="property-input">
+                            <select>
+                                <option selected>Easy</option>
+                                <option>Medium</option>
+                                <option>Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Map File</div>
+                        <div class="property-input">
+                            <input type="text" value="maps/campaign/ch1_mission1.vmap">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-section">
+                    <div class="section-title">Objectives</div>
+                    <div class="objective-list">
+                        <div class="objective-item">
+                            <span class="objective-icon primary">1</span>
+                            <span class="objective-text">Defend the village for 10 minutes</span>
+                        </div>
+                        <div class="objective-item">
+                            <span class="objective-icon primary">2</span>
+                            <span class="objective-text">Keep the Town Hall standing</span>
+                        </div>
+                        <div class="objective-item">
+                            <span class="objective-icon secondary">?</span>
+                            <span class="objective-text">Save all villagers (Optional)</span>
+                        </div>
+                    </div>
+                    <button class="tool-btn" style="margin-top: 8px; width: 100%; justify-content: center;">
+                        Add Objective
+                    </button>
+                </div>
+
+                <div class="property-section">
+                    <div class="section-title">Rewards</div>
+                    <div class="property-row">
+                        <div class="property-label">Hero XP</div>
+                        <div class="property-input">
+                            <input type="number" value="500">
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Unlocks</div>
+                        <div class="property-input">
+                            <input type="text" value="Knight unit, Chapter 1 Interlude">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">Campaign: Human Campaign</div>
+            <div class="status-item">Chapters: 3</div>
+            <div class="status-item">Missions: 9</div>
+            <div class="status-item">Cinematics: 6</div>
+            <div class="status-item">Total Duration: ~4 hours</div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.editor-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.tree-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
+
+                const expand = item.querySelector('.tree-expand');
+                if (expand) {
+                    expand.classList.toggle('collapsed');
+                }
+            });
+        });
+
+        document.querySelectorAll('.mission-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // Select mission card
+            });
+        });
+    </script>
+</body>
+</html>

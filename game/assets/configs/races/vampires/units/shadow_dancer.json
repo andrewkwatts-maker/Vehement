@@ -1,0 +1,234 @@
+{
+  "id": "shadow_dancer",
+  "name": "Shadow Dancer",
+  "race": "vampires",
+  "tier": 2,
+  "type": "assassin",
+  "role": ["assassin", "stealth", "burst_damage"],
+
+  "description": "Elegant vampire assassins who move through shadows to strike at vulnerable targets. Masters of stealth and deadly precision.",
+  "lore": "Shadow Dancers are vampires who have perfected the art of moving through darkness itself. They emerge from shadows to deliver lethal strikes before vanishing again, leaving only corpses in their wake.",
+
+  "stats": {
+    "health": 340,
+    "healthRegen": 1.0,
+    "mana": 150,
+    "manaRegen": 0.8,
+    "armor": 1,
+    "armorType": "light",
+    "moveSpeed": 320,
+    "turnRate": 0.8,
+    "collisionSize": 28,
+    "selectionScale": 0.95
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 18,
+      "variance": 4,
+      "type": "piercing"
+    },
+    "attackSpeed": 1.0,
+    "attackRange": 90,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.2,
+    "backswing": 0.2,
+    "acquisitionRange": 500,
+    "aggroRange": 300,
+    "lifeSteal": 0.20,
+    "criticalStrike": {
+      "enabled": true,
+      "chance": 0.20,
+      "multiplier": 2.5
+    },
+    "backstab": {
+      "enabled": true,
+      "bonusDamage": 0.5
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "critChanceBonus": 0.1,
+      "stealthBonusDuration": 5.0
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "stealthDurationPenalty": 0.5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "shadow_walk",
+      "name": "Shadow Walk",
+      "type": "active",
+      "targetType": "self",
+      "description": "Become invisible and move faster. First attack from stealth deals bonus damage",
+      "cooldown": 20,
+      "manaCost": 75,
+      "effects": {
+        "duration": 15.0,
+        "speedBonus": 0.3,
+        "ambushDamageBonus": 1.0,
+        "fadeTime": 1.5
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/shadow_walk.png"
+    },
+    {
+      "id": "shadow_strike",
+      "name": "Shadow Strike",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Blink to target and strike with shadow-infused blades, dealing damage and applying a slow",
+      "cooldown": 8,
+      "manaCost": 50,
+      "effects": {
+        "damage": 60,
+        "slowPercent": 0.4,
+        "slowDuration": 4.0,
+        "range": 600
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/shadow_strike.png"
+    },
+    {
+      "id": "fan_of_knives",
+      "name": "Fan of Knives",
+      "type": "active",
+      "targetType": "area",
+      "description": "Throw shadow knives at all nearby enemies",
+      "cooldown": 12,
+      "manaCost": 60,
+      "effects": {
+        "damage": 40,
+        "radius": 300,
+        "lifeSteal": 0.15
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/fan_of_knives.png"
+    },
+    {
+      "id": "cloak_of_shadows",
+      "name": "Cloak of Shadows",
+      "type": "active",
+      "targetType": "self",
+      "requiresResearch": "advanced_shadow_arts",
+      "description": "Instantly remove all debuffs and become briefly invulnerable",
+      "cooldown": 60,
+      "manaCost": 100,
+      "bloodCost": 20,
+      "effects": {
+        "duration": 1.5,
+        "invulnerable": true,
+        "removeDebuffs": true,
+        "grantStealth": true,
+        "stealthDuration": 5.0
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/cloak_of_shadows.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "cathedral_of_shadow",
+    "buildTime": 32,
+    "cost": {
+      "gold": 200,
+      "lumber": 25,
+      "blood": 20
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["cathedral_of_shadow"],
+      "technologies": [],
+      "age": "noble"
+    },
+    "hotkey": "D"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "shadow_blades"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "shadow_hide"
+    },
+    "special": ["advanced_shadow_arts", "deadly_precision", "extended_stealth"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/shadow_dancer/ready.ogg",
+    "select": ["audio/units/shadow_dancer/select1.ogg", "audio/units/shadow_dancer/select2.ogg"],
+    "move": ["audio/units/shadow_dancer/move1.ogg"],
+    "attack": ["audio/units/shadow_dancer/attack1.ogg", "audio/units/shadow_dancer/attack2.ogg"],
+    "death": "audio/units/shadow_dancer/death.ogg",
+    "stealth": "audio/units/shadow_dancer/stealth.ogg",
+    "shadowStrike": "audio/units/shadow_dancer/shadow_strike.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/shadow_dancer.glb",
+    "texture": "textures/units/vampires/shadow_dancer.png",
+    "portrait": "textures/portraits/shadow_dancer.png",
+    "icon": "textures/icons/shadow_dancer.png",
+    "scale": 0.95,
+    "animations": {
+      "idle": "dancer_idle",
+      "walk": "dancer_walk",
+      "run": "dancer_run",
+      "attack": "dancer_attack",
+      "death": "dancer_death",
+      "stealth": "dancer_stealth",
+      "blink": "dancer_blink"
+    },
+    "effects": {
+      "spawn": "effects/shadow_spawn.vfx",
+      "death": "effects/shadow_death.vfx",
+      "stealth": "effects/stealth_effect.vfx",
+      "shadowStrike": "effects/shadow_strike.vfx",
+      "fanOfKnives": "effects/fan_of_knives.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "high",
+    "behavior": "assassin",
+    "fleeThreshold": 0.25,
+    "preferredTargets": ["caster", "ranged", "hero"],
+    "useStealthForApproach": true,
+    "targetBackline": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isAssassin": true,
+    "canStealth": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 28,
+    "experience": 35,
+    "blood": 0
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

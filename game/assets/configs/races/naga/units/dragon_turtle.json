@@ -1,0 +1,246 @@
+{
+    "id": "naga_dragon_turtle",
+    "type": "unit",
+    "name": "Dragon Turtle",
+    "description": "An ancient sea creature armored with an impenetrable shell. These massive beasts serve as living siege engines, crushing fortifications with their devastating attacks.",
+    "race": "naga",
+    "tier": 3,
+    "class": "siege_beast",
+
+    "tags": ["military", "beast", "melee", "tier3", "amphibious", "siege", "tank"],
+
+    "model": {
+        "path": "models/races/naga/units/dragon_turtle.obj",
+        "scale": [1.8, 1.8, 1.8],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/dragon_turtle_diffuse.png",
+        "normal": "textures/races/naga/units/dragon_turtle_normal.png",
+        "specular": "textures/races/naga/units/dragon_turtle_spec.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [2.0, 1.5, 2.5],
+                "offset": [0.0, 1.5, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 800.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 3.2,
+        "turnRate": 120.0,
+        "acceleration": 6.0,
+        "deceleration": 10.0,
+        "canSwim": true,
+        "swimSpeed": 5.5,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.2,
+            "forest": 0.4,
+            "water": 1.5,
+            "deep_water": 1.6,
+            "desert": 0.3
+        }
+    },
+
+    "combat": {
+        "health": 1400,
+        "maxHealth": 1400,
+        "armor": 12,
+        "magicResist": 5,
+        "attackDamage": 45,
+        "attackSpeed": 2.5,
+        "attackRange": 2.0,
+        "critChance": 0.05,
+        "critMultiplier": 1.5,
+        "physicalDamage": true,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "bonusDamage": {
+            "vs_buildings": 2.5,
+            "vs_walls": 3.0
+        }
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "armor_bonus": 4
+        },
+        "in_water": {
+            "health_regen": 12.0,
+            "speed_bonus": 0.3
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "siege_crusher",
+            "name": "Siege Crusher",
+            "description": "Deals 250% damage to buildings and 300% to walls.",
+            "effect": {
+                "type": "bonus_damage",
+                "vs_building": 2.5,
+                "vs_wall": 3.0
+            }
+        },
+        {
+            "id": "hardened_shell",
+            "name": "Hardened Shell",
+            "description": "Takes 25% reduced damage from ranged attacks and cannot be critically hit.",
+            "effect": {
+                "type": "damage_reduction",
+                "ranged_reduction": 0.25,
+                "immune_to_crit": true
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely."
+        },
+        {
+            "id": "trample",
+            "name": "Trample",
+            "description": "While moving, deals 15 damage per second to enemies it passes through.",
+            "effect": {
+                "type": "movement_damage",
+                "damage_per_second": 15
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "shell_charge",
+            "name": "Shell Charge",
+            "description": "Charges forward, dealing 150 damage and stunning all enemies in its path for 1.5 seconds.",
+            "icon": "icons/abilities/naga/shell_charge.png",
+            "cooldown": 25.0,
+            "manaCost": 0,
+            "range": 12.0,
+            "targetType": "direction",
+            "width": 3.0,
+            "effects": [
+                {"type": "charge"},
+                {"type": "damage", "amount": 150},
+                {"type": "stun", "duration": 1.5}
+            ],
+            "castAnimation": "charge",
+            "castSound": "sounds/abilities/shell_charge.wav"
+        },
+        {
+            "id": "steam_breath",
+            "name": "Steam Breath",
+            "description": "Exhales superheated steam in a cone, dealing 120 damage and applying a scalding effect.",
+            "icon": "icons/abilities/naga/steam_breath.png",
+            "cooldown": 18.0,
+            "manaCost": 0,
+            "range": 8.0,
+            "targetType": "cone",
+            "cone_angle": 45,
+            "effects": [
+                {"type": "damage", "amount": 120, "damage_type": "fire"},
+                {"type": "dot", "damage_per_second": 20, "duration": 4.0}
+            ],
+            "castAnimation": "breath",
+            "castSound": "sounds/abilities/steam_breath.wav"
+        },
+        {
+            "id": "shell_fortress",
+            "name": "Shell Fortress",
+            "description": "Retreats into shell, becoming immobile but gaining 90% damage reduction for 6 seconds. Allied units can shelter behind.",
+            "icon": "icons/abilities/naga/shell_fortress.png",
+            "cooldown": 40.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 6.0,
+            "effects": [
+                {"type": "immobilize_self"},
+                {"type": "damage_reduction", "value": 0.9},
+                {"type": "ally_cover", "radius": 3.0, "cover_bonus": 0.3}
+            ],
+            "castAnimation": "retreat",
+            "castSound": "sounds/abilities/shell_fortress.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/dragon_turtle/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/dragon_turtle/walk.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/dragon_turtle/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/dragon_turtle/bite.anim",
+            "loop": false,
+            "events": [[0.5, "deal_damage"]]
+        },
+        "charge": {"path": "animations/naga/dragon_turtle/charge.anim", "loop": false},
+        "breath": {"path": "animations/naga/dragon_turtle/breath.anim", "loop": false},
+        "retreat": {"path": "animations/naga/dragon_turtle/shell_retreat.anim", "loop": false},
+        "shell_idle": {"path": "animations/naga/dragon_turtle/shell_idle.anim", "loop": true},
+        "death": {"path": "animations/naga/dragon_turtle/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/massive_thud_1.wav", "sounds/footsteps/massive_thud_2.wav"],
+            "volume": 0.9
+        },
+        "attack": "sounds/combat/massive_bite.wav",
+        "death": {"paths": ["sounds/death/dragon_turtle_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/dragon_turtle_groan.wav",
+        "acknowledge": {"paths": ["sounds/voice/naga/dragon_turtle_roar.wav"]}
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_dragon_turtle.bt",
+        "profile": "siege",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "preferWater": true,
+        "targetPriority": ["building", "wall", "tower"]
+    },
+
+    "production": {
+        "building": "naga_leviathan_pit",
+        "time": 60.0,
+        "cost": {
+            "gold": 480,
+            "coral": 280,
+            "abyssal_essence": 80
+        },
+        "requirements": {
+            "age": "age_abyss",
+            "techs": ["naga_siege_beasts"],
+            "buildings": ["naga_palace_of_waves"]
+        }
+    },
+
+    "properties": {
+        "populationCost": 6,
+        "supplyUpkeep": 5,
+        "squadSize": 1,
+        "experienceValue": 120,
+        "bountyGold": 100
+    },
+
+    "upgrades": {
+        "armor": ["naga_shell_armor_1", "naga_shell_armor_2", "naga_shell_armor_3"],
+        "siege": ["naga_siege_training"],
+        "special": ["naga_ancient_shell"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/dragon_turtle/on_spawn.py",
+        "on_death": "scripts/units/naga/dragon_turtle/on_death.py"
+    }
+}

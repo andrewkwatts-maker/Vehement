@@ -1,0 +1,172 @@
+{
+    "id": "human_lord_commander",
+    "type": "hero",
+    "race": "humans",
+    "name": "Lord Commander",
+    "title": "The Stalwart Defender",
+    "class": "warrior",
+    "primary_attribute": "strength",
+    "description": "A legendary warrior who leads from the front lines, inspiring troops with unwavering courage and protecting them with superior tactics.",
+    "lore": "Sir Aldric Valorheart rose from humble origins to become the greatest military commander in Valorheim's history. His legendary defense of the Silver Gate against overwhelming odds earned him the title Lord Commander and eternal respect of his people.",
+
+    "base_stats": {
+        "health": 800,
+        "mana": 200,
+        "damage": 35,
+        "armor": 6,
+        "magic_resist": 20,
+        "move_speed": 5.5,
+        "turn_rate": 0.6,
+        "attack_range": 1.5,
+        "attack_speed": 1.4,
+        "health_regen": 3.0,
+        "mana_regen": 0.8,
+        "strength": 28,
+        "agility": 18,
+        "intelligence": 16,
+        "day_vision": 18,
+        "night_vision": 10
+    },
+
+    "stat_growth": {
+        "health_per_level": 80,
+        "mana_per_level": 20,
+        "damage_per_level": 3.5,
+        "armor_per_level": 0.5,
+        "strength_per_level": 3.2,
+        "agility_per_level": 1.5,
+        "intelligence_per_level": 1.2,
+        "health_regen_per_level": 0.3,
+        "mana_regen_per_level": 0.1
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_shield_wall_hero",
+            "name": "Shield Wall",
+            "description": "Raise an impenetrable shield, reducing all damage taken by 75% and reflecting 25% of melee damage back to attackers for 6 seconds.",
+            "max_level": 4,
+            "hotkey": "Q",
+            "cooldown": [20, 18, 16, 14],
+            "mana_cost": [60, 65, 70, 75],
+            "duration": [4, 5, 6, 7],
+            "damage_reduction": [0.60, 0.65, 0.70, 0.75],
+            "reflect_damage": [0.15, 0.20, 0.25, 0.30]
+        },
+        {
+            "slot": 2,
+            "id": "ability_rallying_cry",
+            "name": "Rallying Cry",
+            "description": "Let out a powerful battle cry that increases the attack damage and move speed of nearby allied units.",
+            "max_level": 4,
+            "hotkey": "W",
+            "cooldown": [30, 28, 26, 24],
+            "mana_cost": [80, 85, 90, 95],
+            "radius": [12, 14, 16, 18],
+            "duration": [10, 12, 14, 16],
+            "damage_bonus": [0.15, 0.20, 0.25, 0.30],
+            "speed_bonus": [0.10, 0.15, 0.20, 0.25]
+        },
+        {
+            "slot": 3,
+            "id": "ability_blade_storm",
+            "name": "Blade Storm",
+            "description": "Spin with devastating force, dealing damage to all nearby enemies over 3 seconds. Immune to magic while spinning.",
+            "max_level": 4,
+            "hotkey": "E",
+            "cooldown": [25, 22, 19, 16],
+            "mana_cost": [100, 110, 120, 130],
+            "duration": 3.0,
+            "radius": [3, 3.5, 4, 4.5],
+            "damage_per_second": [80, 110, 140, 170],
+            "magic_immune": true
+        },
+        {
+            "slot": 4,
+            "id": "ability_avatar_of_war",
+            "name": "Avatar of War",
+            "description": "Transform into an Avatar of War, gaining massive bonuses to all stats. Nearby allies gain half the bonuses.",
+            "ultimate": true,
+            "unlock_level": 6,
+            "max_level": 3,
+            "hotkey": "R",
+            "cooldown": [120, 110, 100],
+            "mana_cost": [200, 250, 300],
+            "duration": [20, 25, 30],
+            "self_bonuses": {
+                "damage": [0.50, 0.75, 1.00],
+                "armor": [10, 15, 20],
+                "health_regen": [20, 30, 40],
+                "size_increase": 1.3
+            },
+            "ally_bonuses": {
+                "damage": [0.25, 0.375, 0.50],
+                "armor": [5, 7, 10]
+            },
+            "ally_radius": 15
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_shield_wall_heal", "talent_shield_wall_aoe"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_rally_duration", "talent_rally_cooldown"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_bladestorm_radius", "talent_bladestorm_slow"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_avatar_duration", "talent_avatar_aura_radius"]}
+    ],
+
+    "passive": {
+        "id": "passive_commanding_presence",
+        "name": "Commanding Presence",
+        "description": "Nearby allied units gain +2 armor and deal 10% more damage to enemies attacking the Lord Commander",
+        "radius": 12.0,
+        "armor_bonus": 2,
+        "focused_damage_bonus": 0.10
+    },
+
+    "visuals": {
+        "model": "models/races/humans/heroes/lord_commander.obj",
+        "skeleton": "models/races/humans/heroes/lord_commander_skeleton.skl",
+        "portrait": "textures/races/humans/portraits/lord_commander.png",
+        "icon": "textures/races/humans/icons/lord_commander.png",
+        "minimap_icon": "textures/minimap/lord_commander.png",
+        "animation_set": "animations/humans/heroes/lord_commander",
+        "scale": 1.15,
+        "attack_effect": "effects/sword_slash.fx",
+        "cast_effect": "effects/commander_cast.fx",
+        "death_effect": "effects/hero_death.fx",
+        "respawn_effect": "effects/hero_respawn.fx",
+        "avatar_effect": "effects/avatar_of_war.fx"
+    },
+
+    "events": {
+        "on_spawn": "scripts/heroes/lord_commander/on_spawn.py",
+        "on_level_up": "scripts/heroes/lord_commander/on_level_up.py",
+        "on_ability_learn": "scripts/heroes/lord_commander/on_ability_learn.py",
+        "on_kill": "scripts/heroes/lord_commander/on_kill.py"
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/heroes/lord_commander/select_1.wav", "sounds/humans/heroes/lord_commander/select_2.wav"],
+        "move": ["sounds/humans/heroes/lord_commander/move_1.wav", "sounds/humans/heroes/lord_commander/move_2.wav"],
+        "attack": ["sounds/humans/heroes/lord_commander/attack_1.wav", "sounds/humans/heroes/lord_commander/attack_2.wav"],
+        "ability_q": "sounds/abilities/shield_wall.wav",
+        "ability_w": "sounds/abilities/rallying_cry.wav",
+        "ability_e": "sounds/abilities/blade_storm.wav",
+        "ability_r": "sounds/abilities/avatar_of_war.wav",
+        "death": "sounds/humans/heroes/lord_commander/death.wav",
+        "respawn": "sounds/humans/heroes/lord_commander/respawn.wav"
+    },
+
+    "tags": ["melee", "strength", "tank", "support", "aura", "initiator"],
+
+    "properties": {
+        "attack_type": "melee",
+        "complexity": 2,
+        "roles": ["tank", "support", "initiator"],
+        "summon_building": "human_altar_of_kings",
+        "summon_cost": {"gold": 500},
+        "respawn_time_base": 60,
+        "respawn_time_per_level": 4
+    }
+}

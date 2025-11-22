@@ -1,0 +1,294 @@
+{
+    "id": "human_unit_abilities",
+    "race": "humans",
+    "description": "All unit abilities for the Kingdom of Valorheim",
+
+    "abilities": [
+        {
+            "id": "ability_call_to_arms",
+            "name": "Call to Arms",
+            "type": "passive",
+            "unit": "human_peasant",
+            "description": "Transform into Militia when Town Bell rings.",
+            "trigger": "town_bell",
+            "effects": [
+                {"type": "transform", "target": "human_militia", "duration": 60.0}
+            ]
+        },
+        {
+            "id": "ability_defend",
+            "name": "Defend",
+            "type": "toggle",
+            "units": ["human_militia", "human_footman"],
+            "description": "Raise shield for damage reduction at the cost of movement speed.",
+            "hotkey": "D",
+            "effects": [
+                {"type": "damage_reduction", "value": 0.30},
+                {"type": "move_speed_reduction", "value": 0.40}
+            ],
+            "icon": "textures/races/humans/icons/abilities/defend.png"
+        },
+        {
+            "id": "ability_shield_wall",
+            "name": "Shield Wall",
+            "type": "toggle",
+            "unit": "human_footman",
+            "description": "Form defensive formation with nearby footmen.",
+            "hotkey": "W",
+            "effects": [
+                {"type": "damage_reduction", "value": 0.40},
+                {"type": "ranged_resistance", "value": 0.50},
+                {"type": "move_speed_reduction", "value": 0.60}
+            ],
+            "stacks_with_nearby": "human_footman",
+            "stack_radius": 3.0,
+            "icon": "textures/races/humans/icons/abilities/shield_wall.png"
+        },
+        {
+            "id": "ability_flaming_arrows",
+            "name": "Flaming Arrows",
+            "type": "toggle",
+            "unit": "human_archer",
+            "description": "Ignite arrows for bonus fire damage.",
+            "hotkey": "F",
+            "mana_cost_per_shot": 2,
+            "effects": [
+                {"type": "dot", "damage": 5, "duration": 3.0, "damage_type": "fire"}
+            ],
+            "requires_upgrade": "upgrade_flaming_arrows",
+            "icon": "textures/races/humans/icons/abilities/flaming_arrows.png"
+        },
+        {
+            "id": "ability_flare",
+            "name": "Flare",
+            "type": "active",
+            "unit": "human_scout",
+            "description": "Reveal a target area.",
+            "hotkey": "F",
+            "cooldown": 45.0,
+            "range": 30.0,
+            "effects": [
+                {"type": "reveal", "radius": 12.0, "duration": 10.0}
+            ],
+            "icon": "textures/races/humans/icons/abilities/flare.png"
+        },
+        {
+            "id": "ability_sprint",
+            "name": "Sprint",
+            "type": "active",
+            "unit": "human_scout",
+            "description": "Increase movement speed temporarily.",
+            "hotkey": "R",
+            "cooldown": 30.0,
+            "duration": 5.0,
+            "effects": [
+                {"type": "move_speed_bonus", "value": 0.50}
+            ],
+            "icon": "textures/races/humans/icons/abilities/sprint.png"
+        },
+        {
+            "id": "ability_armor_piercing_bolt",
+            "name": "Armor Piercing Bolt",
+            "type": "active",
+            "unit": "human_crossbowman",
+            "description": "Fire a bolt that ignores armor.",
+            "hotkey": "Q",
+            "cooldown": 12.0,
+            "effects": [
+                {"type": "armor_ignore", "value": 0.50}
+            ],
+            "icon": "textures/races/humans/icons/abilities/armor_piercing.png"
+        },
+        {
+            "id": "ability_charge",
+            "name": "Charge",
+            "type": "active",
+            "unit": "human_knight",
+            "description": "Charge at an enemy dealing bonus damage and stunning.",
+            "hotkey": "C",
+            "cooldown": 8.0,
+            "range": 20.0,
+            "min_range": 5.0,
+            "effects": [
+                {"type": "damage_multiplier", "value": 2.50},
+                {"type": "stun", "duration": 1.0}
+            ],
+            "icon": "textures/races/humans/icons/abilities/charge.png"
+        },
+        {
+            "id": "ability_heal",
+            "name": "Heal",
+            "type": "active",
+            "unit": "human_priest",
+            "description": "Restore health to a friendly unit.",
+            "hotkey": "Q",
+            "cooldown": 1.5,
+            "mana_cost": 25,
+            "range": 10.0,
+            "effects": [
+                {"type": "heal", "value": 75}
+            ],
+            "auto_cast": true,
+            "icon": "textures/races/humans/icons/abilities/heal.png"
+        },
+        {
+            "id": "ability_dispel_magic",
+            "name": "Dispel Magic",
+            "type": "active",
+            "unit": "human_priest",
+            "description": "Remove magical effects from units in an area.",
+            "hotkey": "W",
+            "cooldown": 8.0,
+            "mana_cost": 50,
+            "range": 12.0,
+            "radius": 4.0,
+            "effects": [
+                {"type": "dispel", "target": "enemy", "removes": "buffs"},
+                {"type": "dispel", "target": "friendly", "removes": "debuffs"}
+            ],
+            "icon": "textures/races/humans/icons/abilities/dispel.png"
+        },
+        {
+            "id": "ability_holy_light_unit",
+            "name": "Holy Light",
+            "type": "active",
+            "unit": "human_paladin",
+            "description": "Heal an ally or damage undead.",
+            "hotkey": "Q",
+            "cooldown": 10.0,
+            "mana_cost": 50,
+            "range": 12.0,
+            "effects": [
+                {"type": "heal", "value": 200, "condition": "friendly"},
+                {"type": "damage", "value": 200, "damage_type": "holy", "condition": "undead"}
+            ],
+            "icon": "textures/races/humans/icons/abilities/holy_light.png"
+        },
+        {
+            "id": "ability_divine_shield_unit",
+            "name": "Divine Shield",
+            "type": "active",
+            "unit": "human_paladin",
+            "description": "Become invulnerable but unable to attack.",
+            "hotkey": "W",
+            "cooldown": 60.0,
+            "mana_cost": 75,
+            "duration": 5.0,
+            "effects": [
+                {"type": "invulnerable", "value": true},
+                {"type": "disarm", "value": true}
+            ],
+            "icon": "textures/races/humans/icons/abilities/divine_shield.png"
+        },
+        {
+            "id": "ability_fireball",
+            "name": "Fireball",
+            "type": "active",
+            "unit": "human_mage",
+            "description": "Hurl a ball of fire at enemies.",
+            "hotkey": "Q",
+            "cooldown": 8.0,
+            "mana_cost": 75,
+            "range": 14.0,
+            "radius": 3.0,
+            "effects": [
+                {"type": "damage", "value": 120, "damage_type": "fire"},
+                {"type": "splash_damage", "value": 60}
+            ],
+            "icon": "textures/races/humans/icons/abilities/fireball.png"
+        },
+        {
+            "id": "ability_blizzard",
+            "name": "Blizzard",
+            "type": "active",
+            "unit": "human_mage",
+            "description": "Call down ice shards in an area.",
+            "hotkey": "W",
+            "cooldown": 20.0,
+            "mana_cost": 120,
+            "range": 16.0,
+            "radius": 5.0,
+            "duration": 6.0,
+            "effects": [
+                {"type": "damage_per_tick", "value": 40, "tick_rate": 1.0, "damage_type": "frost"},
+                {"type": "slow", "value": 0.30}
+            ],
+            "icon": "textures/races/humans/icons/abilities/blizzard.png"
+        },
+        {
+            "id": "ability_spell_steal",
+            "name": "Spell Steal",
+            "type": "active",
+            "unit": "human_spellbreaker",
+            "description": "Steal a positive buff from an enemy.",
+            "hotkey": "Q",
+            "cooldown": 10.0,
+            "mana_cost": 50,
+            "range": 8.0,
+            "effects": [
+                {"type": "steal_buff", "target": "enemy"}
+            ],
+            "icon": "textures/races/humans/icons/abilities/spell_steal.png"
+        },
+        {
+            "id": "ability_feedback",
+            "name": "Feedback",
+            "type": "toggle",
+            "unit": "human_spellbreaker",
+            "description": "Attacks burn mana and deal bonus damage.",
+            "hotkey": "W",
+            "effects": [
+                {"type": "mana_burn", "value": 20},
+                {"type": "bonus_damage_per_mana", "value": 1.0}
+            ],
+            "auto_cast": true,
+            "icon": "textures/races/humans/icons/abilities/feedback.png"
+        },
+        {
+            "id": "ability_whirlwind",
+            "name": "Whirlwind",
+            "type": "active",
+            "unit": "human_champion",
+            "description": "Spin rapidly, damaging all nearby enemies.",
+            "hotkey": "Q",
+            "cooldown": 15.0,
+            "duration": 3.0,
+            "radius": 3.0,
+            "effects": [
+                {"type": "damage_per_second", "value": 60}
+            ],
+            "icon": "textures/races/humans/icons/abilities/whirlwind.png"
+        },
+        {
+            "id": "ability_dive_attack",
+            "name": "Dive Attack",
+            "type": "active",
+            "unit": "human_griffon_rider",
+            "description": "Dive from the sky for bonus damage and stun.",
+            "hotkey": "Q",
+            "cooldown": 12.0,
+            "effects": [
+                {"type": "damage_multiplier", "value": 1.50},
+                {"type": "stun", "duration": 1.5}
+            ],
+            "requires_flight": true,
+            "icon": "textures/races/humans/icons/abilities/dive_attack.png"
+        },
+        {
+            "id": "ability_dragon_breath",
+            "name": "Dragon Breath",
+            "type": "active",
+            "unit": "human_dragon_knight",
+            "description": "Unleash a cone of fire.",
+            "hotkey": "Q",
+            "cooldown": 15.0,
+            "range": 8.0,
+            "cone_angle": 60,
+            "effects": [
+                {"type": "damage", "value": 80, "damage_type": "fire"},
+                {"type": "dot", "damage": 20, "duration": 4.0, "damage_type": "fire"}
+            ],
+            "icon": "textures/races/humans/icons/abilities/dragon_breath.png"
+        }
+    ]
+}

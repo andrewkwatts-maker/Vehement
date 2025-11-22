@@ -1,0 +1,206 @@
+{
+    "id": "fairy_dream_dragon",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Dream Dragon",
+    "description": "The ultimate manifestation of Fae power - an ethereal dragon that exists between dream and reality. It commands illusions, nightmares, and devastating arcane power.",
+
+    "tags": ["military", "flying", "tier4", "massive", "legendary", "illusion", "dragon"],
+
+    "tier": 4,
+    "age_requirement": 7,
+
+    "model": {
+        "path": "models/races/fairies/units/dream_dragon.obj",
+        "scale": [2.0, 2.0, 2.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/dream_dragon_diffuse.png",
+        "normal": "textures/races/fairies/units/dream_dragon_normal.png",
+        "emissive": "textures/races/fairies/units/dream_dragon_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 1.0,
+                "height": 3.0,
+                "offset": [0.0, 4.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 1500.0,
+        "layer": "flying_unit"
+    },
+
+    "stats": {
+        "health": 1800,
+        "maxHealth": 1800,
+        "healthRegen": 3.0,
+        "mana": 800,
+        "maxMana": 800,
+        "manaRegen": 5.0,
+        "armor": 5,
+        "magicResist": 50,
+        "moveSpeed": 5.5,
+        "turnRate": 180.0
+    },
+
+    "combat": {
+        "attackDamage": 55,
+        "attackSpeed": 2.0,
+        "attackRange": 8.0,
+        "damageType": "chaos",
+        "armorType": "light",
+        "attackType": "ranged",
+        "projectile": "dream_breath",
+        "projectile_speed": 18.0,
+        "splash_damage": 0.35,
+        "splash_radius": 4.0
+    },
+
+    "flying": {
+        "enabled": true,
+        "flight_height": 6.0,
+        "can_hover": true,
+        "air_superiority": true
+    },
+
+    "abilities": [
+        {
+            "id": "ability_dream_breath",
+            "name": "Dream Breath",
+            "description": "Breathe ethereal fire that damages and puts enemies to sleep",
+            "hotkey": "Q",
+            "cooldown": 12.0,
+            "mana_cost": 100,
+            "range": 12.0,
+            "cone_angle": 45,
+            "cone_length": 10.0,
+            "effects": [
+                {"type": "damage", "value": 200, "damage_type": "magic"},
+                {"type": "sleep", "duration": 3.0, "break_on_damage": true}
+            ]
+        },
+        {
+            "id": "ability_mass_illusion",
+            "name": "Mass Illusion",
+            "description": "Create illusory copies of all nearby friendly units",
+            "hotkey": "W",
+            "cooldown": 60.0,
+            "mana_cost": 200,
+            "radius": 15.0,
+            "effects": [
+                {"type": "create_illusions_of_all", "count_per_unit": 1, "duration": 45.0},
+                {"type": "illusion_damage_dealt", "value": 0.30},
+                {"type": "illusion_damage_taken", "value": 2.5}
+            ]
+        },
+        {
+            "id": "ability_nightmare",
+            "name": "Nightmare",
+            "description": "Trap an enemy in a nightmare, dealing damage over time and preventing all actions",
+            "hotkey": "E",
+            "cooldown": 30.0,
+            "mana_cost": 150,
+            "range": 14.0,
+            "duration": 8.0,
+            "effects": [
+                {"type": "sleep", "value": true},
+                {"type": "dot", "damage": 50, "tick_rate": 1.0, "damage_type": "magic"},
+                {"type": "does_not_break_on_damage", "value": true}
+            ]
+        },
+        {
+            "id": "ability_ethereal_shift",
+            "name": "Ethereal Shift",
+            "description": "Become completely ethereal, invulnerable but unable to attack",
+            "hotkey": "R",
+            "cooldown": 45.0,
+            "mana_cost": 75,
+            "duration": 5.0,
+            "effects": [
+                {"type": "ethereal", "value": true},
+                {"type": "invulnerable", "value": true},
+                {"type": "disarm", "value": true},
+                {"type": "move_speed_bonus", "value": 0.30}
+            ]
+        },
+        {
+            "id": "ability_dream_aura",
+            "name": "Aura of Dreams",
+            "description": "Nearby enemy units have reduced attack and move speed, friendly illusions last longer",
+            "passive": true,
+            "radius": 12.0,
+            "effects": [
+                {"stat": "attackSpeed", "value": -0.15, "scope": "enemies_in_radius"},
+                {"stat": "moveSpeed", "value": -0.10, "scope": "enemies_in_radius"},
+                {"stat": "illusion_duration", "value": 0.50, "scope": "friendly_illusions"}
+            ]
+        }
+    ],
+
+    "resistances": {
+        "stun_resistance": 0.50,
+        "slow_resistance": 0.50,
+        "charm_immunity": true
+    },
+
+    "night_bonus": {
+        "attackDamage": 0.35,
+        "manaRegen": 1.0,
+        "illusion_damage": 0.25,
+        "nightmare_duration": 0.30
+    },
+
+    "production": {
+        "building": "fairy_chimera_roost",
+        "cost": {
+            "gold": 550,
+            "wood": 150,
+            "food": 8
+        },
+        "build_time": 80.0,
+        "population_cost": 7,
+        "prerequisites": ["fairy_tree_of_eternity", "upgrade_dream_calling"],
+        "limit": 2
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/dream_dragon.bt",
+        "profile": "hit_and_run",
+        "aggroRange": 16.0,
+        "leashRange": 35.0,
+        "priority_targets": ["caster", "siege", "building"],
+        "use_ethereal_when_low": true,
+        "ethereal_health_threshold": 0.25,
+        "nightmare_priority": ["hero", "heavy"]
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/dream_dragon/idle.anim", "loop": true},
+        "fly": {"path": "animations/fairies/dream_dragon/fly.anim", "loop": true},
+        "attack": {"path": "animations/fairies/dream_dragon/attack.anim", "loop": false},
+        "breath": {"path": "animations/fairies/dream_dragon/breath.anim", "loop": false},
+        "ethereal": {"path": "animations/fairies/dream_dragon/ethereal.anim", "loop": true},
+        "death": {"path": "animations/fairies/dream_dragon/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/dream_dragon/select_1.wav"],
+        "acknowledge": ["sounds/fairies/dream_dragon/ack_1.wav"],
+        "attack": "sounds/fairies/dream_dragon/attack.wav",
+        "breath": "sounds/fairies/dream_dragon/breath.wav",
+        "nightmare": "sounds/fairies/dream_dragon/nightmare.wav",
+        "death": "sounds/fairies/dream_dragon/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/dream_dragon.png",
+        "icon": "textures/races/fairies/icons/dream_dragon.png",
+        "hotkey": "D"
+    }
+}

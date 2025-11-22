@@ -1,0 +1,191 @@
+{
+  "id": "obsidian_statue",
+  "name": "Obsidian Statue",
+  "race": "undead",
+  "tier": 3,
+  "type": "support",
+  "role": ["healer", "mana_battery", "support"],
+
+  "description": "Ancient constructs that channel dark energy to restore health and mana to nearby undead units. Can transform into a devastating Destroyer.",
+  "lore": "Carved from pure obsidian and animated by trapped souls, these statues serve as fonts of dark power, sustaining the undead forces with stolen life essence.",
+
+  "stats": {
+    "health": 550,
+    "healthRegen": 0.5,
+    "mana": 400,
+    "manaRegen": 2.0,
+    "armor": 3,
+    "armorType": "heavy",
+    "moveSpeed": 220,
+    "turnRate": 0.5,
+    "collisionSize": 48,
+    "selectionScale": 1.2
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 80,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "combat": {
+    "canAttack": false,
+    "attackDamage": {
+      "base": 0,
+      "variance": 0,
+      "type": "none"
+    },
+    "attackSpeed": 0,
+    "attackRange": 0,
+    "attackType": "none",
+    "targets": []
+  },
+
+  "abilities": [
+    {
+      "id": "spirit_touch",
+      "name": "Spirit Touch",
+      "type": "passive",
+      "autocast": true,
+      "description": "Automatically replenishes the mana of nearby friendly units",
+      "effects": {
+        "auraRadius": 700,
+        "manaPerSecond": 3,
+        "affectsUndead": true,
+        "affectsHeroes": true,
+        "manaCost": 1
+      },
+      "icon": "icons/abilities/spirit_touch.png"
+    },
+    {
+      "id": "essence_of_blight",
+      "name": "Essence of Blight",
+      "type": "passive",
+      "autocast": true,
+      "description": "Automatically heals nearby friendly units",
+      "effects": {
+        "auraRadius": 700,
+        "healthPerSecond": 4,
+        "affectsUndead": true,
+        "affectsHeroes": true,
+        "manaCost": 2
+      },
+      "icon": "icons/abilities/essence_of_blight.png"
+    },
+    {
+      "id": "morph_destroyer",
+      "name": "Morph: Destroyer",
+      "type": "active",
+      "requiresResearch": "destroyer_form",
+      "description": "Transform into a Destroyer, a powerful anti-magic flying unit",
+      "cooldown": 0,
+      "manaCost": 0,
+      "effects": {
+        "morphInto": "destroyer",
+        "morphTime": 5.0,
+        "additionalCost": {
+          "gold": 75,
+          "lumber": 25
+        }
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/morph_destroyer.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "slaughterhouse",
+    "buildTime": 40,
+    "cost": {
+      "gold": 200,
+      "lumber": 35,
+      "corpses": 0
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["slaughterhouse", "graveyard"],
+      "technologies": [],
+      "age": "blight"
+    },
+    "hotkey": "O"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 0,
+      "maxLevel": 0,
+      "researchId": null
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "creature_carapace"
+    },
+    "special": ["destroyer_form"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/obsidian_statue/ready.ogg",
+    "select": ["audio/units/obsidian_statue/select1.ogg", "audio/units/obsidian_statue/select2.ogg"],
+    "move": ["audio/units/obsidian_statue/move1.ogg"],
+    "death": "audio/units/obsidian_statue/death.ogg",
+    "heal": "audio/units/obsidian_statue/heal.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/obsidian_statue.glb",
+    "texture": "textures/units/undead/obsidian_statue.png",
+    "portrait": "textures/portraits/obsidian_statue.png",
+    "icon": "textures/icons/obsidian_statue.png",
+    "scale": 1.2,
+    "animations": {
+      "idle": "obsidian_statue_idle",
+      "walk": "obsidian_statue_float",
+      "death": "obsidian_statue_death",
+      "morph": "obsidian_statue_morph"
+    },
+    "effects": {
+      "spawn": "effects/dark_summon.vfx",
+      "death": "effects/statue_shatter.vfx",
+      "spiritTouch": "effects/spirit_touch.vfx",
+      "essenceOfBlight": "effects/essence_blight.vfx",
+      "healAura": "effects/heal_aura.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 3,
+    "priority": "high",
+    "behavior": "support",
+    "fleeThreshold": 0.3,
+    "preferredTargets": [],
+    "stayNearArmy": true,
+    "autoHeal": true,
+    "autoMana": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isFlying": true,
+    "isSupport": true,
+    "cannotAttack": true,
+    "canMorph": true
+  },
+
+  "bounty": {
+    "gold": 30,
+    "experience": 40
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

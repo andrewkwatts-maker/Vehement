@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Curve Editor</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #4488ff;
+            --accent-secondary: #44ff88;
+            --accent-warning: #ffaa44;
+            --accent-danger: #ff4444;
+            --border-color: #404060;
+            --curve-position-x: #ff6666;
+            --curve-position-y: #66ff66;
+            --curve-position-z: #6666ff;
+            --curve-rotation-x: #ff66aa;
+            --curve-rotation-y: #aaff66;
+            --curve-rotation-z: #66aaff;
+            --curve-scale: #ffaa66;
+            --grid-major: #404060;
+            --grid-minor: #303050;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Channel List */
+        .channel-list {
+            width: 180px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-header {
+            padding: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .channel-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .channel-group {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .channel-group-header {
+            padding: 8px 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--bg-tertiary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .channel-group-header:hover {
+            background: var(--bg-primary);
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px 6px 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .channel-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .channel-item.selected {
+            background: var(--accent-primary);
+        }
+
+        .channel-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+
+        .channel-visibility {
+            width: 16px;
+            height: 16px;
+            margin-left: auto;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        .channel-visibility:hover {
+            opacity: 1;
+        }
+
+        /* Curve Canvas Area */
+        .curve-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .curve-canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #curveCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .curve-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .curve-value-display {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        /* Preset Panel */
+        .preset-panel {
+            height: 80px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .preset-item {
+            width: 60px;
+            height: 50px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .preset-item:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .preset-item.selected {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+        }
+
+        .preset-preview {
+            width: 40px;
+            height: 25px;
+        }
+
+        /* Right Panel - Properties */
+        .properties-panel {
+            width: 220px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-section {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 60px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .property-input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .tangent-mode-btns {
+            display: flex;
+            gap: 2px;
+        }
+
+        .tangent-btn {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .tangent-btn:first-child {
+            border-radius: 3px 0 0 3px;
+        }
+
+        .tangent-btn:last-child {
+            border-radius: 0 3px 3px 0;
+        }
+
+        .tangent-btn:hover {
+            background: var(--bg-primary);
+        }
+
+        .tangent-btn.active {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        /* Playhead */
+        .playhead-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--accent-danger);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="frameAllBtn">Frame All</button>
+                <button class="toolbar-btn" id="frameSelectedBtn">Frame Selected</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn active" id="selectBtn">Select</button>
+                <button class="toolbar-btn" id="addKeyBtn">Add Key</button>
+                <button class="toolbar-btn" id="moveKeyBtn">Move Key</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="tangentFreeBtn">Free</button>
+                <button class="toolbar-btn active" id="tangentAlignedBtn">Aligned</button>
+                <button class="toolbar-btn" id="tangentFlatBtn">Flat</button>
+                <button class="toolbar-btn" id="tangentLinearBtn">Linear</button>
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="snapGridBtn">Snap Grid</button>
+                <button class="toolbar-btn" id="snapKeyBtn">Snap Key</button>
+            </div>
+            <div class="toolbar-group">
+                <span style="font-size:11px;color:var(--text-secondary);">View:</span>
+                <button class="toolbar-btn" id="showAllBtn">All</button>
+                <button class="toolbar-btn" id="showSelectedBtn">Selected</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Channel List -->
+            <div class="channel-list">
+                <div class="channel-header">Channels</div>
+                <div class="channel-content" id="channelList">
+                    <div class="channel-group">
+                        <div class="channel-group-header">Position</div>
+                        <div class="channel-item" data-channel="posX">
+                            <div class="channel-color" style="background:var(--curve-position-x)"></div>
+                            <span>X</span>
+                            <svg class="channel-visibility" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                            </svg>
+                        </div>
+                        <div class="channel-item" data-channel="posY">
+                            <div class="channel-color" style="background:var(--curve-position-y)"></div>
+                            <span>Y</span>
+                            <svg class="channel-visibility" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                            </svg>
+                        </div>
+                        <div class="channel-item" data-channel="posZ">
+                            <div class="channel-color" style="background:var(--curve-position-z)"></div>
+                            <span>Z</span>
+                            <svg class="channel-visibility" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="channel-group">
+                        <div class="channel-group-header">Rotation</div>
+                        <div class="channel-item" data-channel="rotX">
+                            <div class="channel-color" style="background:var(--curve-rotation-x)"></div>
+                            <span>X</span>
+                            <svg class="channel-visibility" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                            </svg>
+                        </div>
+                        <div class="channel-item" data-channel="rotY">
+                            <div class="channel-color" style="background:var(--curve-rotation-y)"></div>
+                            <span>Y</span>
+                            <svg class="channel-visibility" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                            </svg>
+                        </div>
+                        <div class="channel-item" data-channel="rotZ">
+                            <div class="channel-color" style="background:var(--curve-rotation-z)"></div>
+                            <span>Z</span>
+                            <svg class="channel-visibility" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="channel-group">
+                        <div class="channel-group-header">Scale</div>
+                        <div class="channel-item" data-channel="scaleX">
+                            <div class="channel-color" style="background:var(--curve-scale)"></div>
+                            <span>Uniform</span>
+                            <svg class="channel-visibility" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Curve Canvas Area -->
+            <div class="curve-area">
+                <div class="curve-canvas-container">
+                    <canvas id="curveCanvas"></canvas>
+                    <div class="playhead-line" id="playhead"></div>
+                </div>
+                <div class="curve-info">
+                    <div>LMB: Select | RMB: Pan | Scroll: Zoom | Double-click: Add Key</div>
+                </div>
+                <div class="curve-value-display" id="valueDisplay">
+                    Time: 0.000 | Value: 0.000
+                </div>
+
+                <!-- Preset Panel -->
+                <div class="preset-panel">
+                    <div class="preset-item" data-preset="linear">
+                        <svg class="preset-preview" viewBox="0 0 40 25">
+                            <line x1="5" y1="20" x2="35" y2="5" stroke="#4488ff" stroke-width="2"/>
+                        </svg>
+                        <span>Linear</span>
+                    </div>
+                    <div class="preset-item" data-preset="easeIn">
+                        <svg class="preset-preview" viewBox="0 0 40 25">
+                            <path d="M5,20 Q5,5 35,5" fill="none" stroke="#4488ff" stroke-width="2"/>
+                        </svg>
+                        <span>Ease In</span>
+                    </div>
+                    <div class="preset-item" data-preset="easeOut">
+                        <svg class="preset-preview" viewBox="0 0 40 25">
+                            <path d="M5,20 Q35,20 35,5" fill="none" stroke="#4488ff" stroke-width="2"/>
+                        </svg>
+                        <span>Ease Out</span>
+                    </div>
+                    <div class="preset-item" data-preset="easeInOut">
+                        <svg class="preset-preview" viewBox="0 0 40 25">
+                            <path d="M5,20 C15,20 25,5 35,5" fill="none" stroke="#4488ff" stroke-width="2"/>
+                        </svg>
+                        <span>Ease Both</span>
+                    </div>
+                    <div class="preset-item" data-preset="bounce">
+                        <svg class="preset-preview" viewBox="0 0 40 25">
+                            <path d="M5,20 Q10,5 15,12 Q20,20 25,8 Q30,5 35,5" fill="none" stroke="#4488ff" stroke-width="2"/>
+                        </svg>
+                        <span>Bounce</span>
+                    </div>
+                    <div class="preset-item" data-preset="overshoot">
+                        <svg class="preset-preview" viewBox="0 0 40 25">
+                            <path d="M5,20 C20,20 30,-2 35,5" fill="none" stroke="#4488ff" stroke-width="2"/>
+                        </svg>
+                        <span>Overshoot</span>
+                    </div>
+                    <div class="preset-item" data-preset="step">
+                        <svg class="preset-preview" viewBox="0 0 40 25">
+                            <path d="M5,20 L20,20 L20,5 L35,5" fill="none" stroke="#4488ff" stroke-width="2"/>
+                        </svg>
+                        <span>Step</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Properties Panel -->
+            <div class="properties-panel">
+                <div class="panel-section">
+                    <div class="section-title">Keyframe</div>
+                    <div class="property-row">
+                        <span class="property-label">Time</span>
+                        <input type="number" class="property-input" id="keyTime" step="0.001" value="0">
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Value</span>
+                        <input type="number" class="property-input" id="keyValue" step="0.01" value="0">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-title">In Tangent</div>
+                    <div class="property-row">
+                        <span class="property-label">X</span>
+                        <input type="number" class="property-input" id="inTangentX" step="0.1" value="-1">
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Y</span>
+                        <input type="number" class="property-input" id="inTangentY" step="0.1" value="0">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-title">Out Tangent</div>
+                    <div class="property-row">
+                        <span class="property-label">X</span>
+                        <input type="number" class="property-input" id="outTangentX" step="0.1" value="1">
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Y</span>
+                        <input type="number" class="property-input" id="outTangentY" step="0.1" value="0">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-title">Tangent Mode</div>
+                    <div class="tangent-mode-btns">
+                        <button class="tangent-btn">Free</button>
+                        <button class="tangent-btn active">Aligned</button>
+                        <button class="tangent-btn">Flat</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="section-title">View</div>
+                    <div class="property-row">
+                        <span class="property-label">Min Time</span>
+                        <input type="number" class="property-input" id="viewMinTime" step="0.1" value="0">
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Max Time</span>
+                        <input type="number" class="property-input" id="viewMaxTime" step="0.1" value="5">
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Min Value</span>
+                        <input type="number" class="property-input" id="viewMinVal" step="0.1" value="-2">
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Max Value</span>
+                        <input type="number" class="property-input" id="viewMaxVal" step="0.1" value="2">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AnimationCurveEditor {
+            constructor() {
+                this.canvas = document.getElementById('curveCanvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                this.viewMinTime = 0;
+                this.viewMaxTime = 5;
+                this.viewMinValue = -2;
+                this.viewMaxValue = 2;
+
+                this.currentTime = 0;
+                this.selectedKeyframe = null;
+                this.selectedTangent = null; // 'in' or 'out'
+                this.isDragging = false;
+                this.isPanning = false;
+                this.panStart = { x: 0, y: 0 };
+
+                this.channels = {
+                    posX: { visible: true, color: '#ff6666', keyframes: [] },
+                    posY: { visible: true, color: '#66ff66', keyframes: [] },
+                    posZ: { visible: true, color: '#6666ff', keyframes: [] },
+                    rotX: { visible: false, color: '#ff66aa', keyframes: [] },
+                    rotY: { visible: false, color: '#aaff66', keyframes: [] },
+                    rotZ: { visible: false, color: '#66aaff', keyframes: [] },
+                    scaleX: { visible: false, color: '#ffaa66', keyframes: [] }
+                };
+
+                this.selectedChannel = 'posX';
+                this.tangentMode = 'aligned';
+
+                this.initSampleData();
+                this.init();
+            }
+
+            initSampleData() {
+                this.channels.posX.keyframes = [
+                    { time: 0, value: 0, inTangent: { x: -0.5, y: 0 }, outTangent: { x: 0.5, y: 0.5 }, selected: false },
+                    { time: 1.5, value: 1, inTangent: { x: -0.5, y: 0.3 }, outTangent: { x: 0.5, y: -0.3 }, selected: false },
+                    { time: 3, value: 0.5, inTangent: { x: -0.5, y: 0 }, outTangent: { x: 0.5, y: 0 }, selected: false },
+                    { time: 4.5, value: 0, inTangent: { x: -0.5, y: -0.2 }, outTangent: { x: 0.5, y: 0 }, selected: false }
+                ];
+
+                this.channels.posY.keyframes = [
+                    { time: 0, value: 0, inTangent: { x: -0.5, y: 0 }, outTangent: { x: 0.5, y: 1 }, selected: false },
+                    { time: 1, value: 1.5, inTangent: { x: -0.3, y: 0.5 }, outTangent: { x: 0.3, y: -0.5 }, selected: false },
+                    { time: 2, value: 0.2, inTangent: { x: -0.3, y: -0.5 }, outTangent: { x: 0.3, y: 0.5 }, selected: false },
+                    { time: 3.5, value: 1, inTangent: { x: -0.5, y: 0 }, outTangent: { x: 0.5, y: 0 }, selected: false }
+                ];
+            }
+
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
+                this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
+                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                // Channel selection
+                document.querySelectorAll('.channel-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.channel-item').forEach(i => i.classList.remove('selected'));
+                        item.classList.add('selected');
+                        this.selectedChannel = item.dataset.channel;
+                        this.render();
+                    });
+                });
+
+                // Preset selection
+                document.querySelectorAll('.preset-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        this.applyPreset(item.dataset.preset);
+                    });
+                });
+
+                // Property inputs
+                document.getElementById('keyTime').addEventListener('change', (e) => this.updateSelectedKeyframe('time', parseFloat(e.target.value)));
+                document.getElementById('keyValue').addEventListener('change', (e) => this.updateSelectedKeyframe('value', parseFloat(e.target.value)));
+
+                this.render();
+            }
+
+            resize() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+                this.render();
+            }
+
+            timeToX(time) {
+                return (time - this.viewMinTime) / (this.viewMaxTime - this.viewMinTime) * this.canvas.width;
+            }
+
+            valueToY(value) {
+                return this.canvas.height - (value - this.viewMinValue) / (this.viewMaxValue - this.viewMinValue) * this.canvas.height;
+            }
+
+            xToTime(x) {
+                return this.viewMinTime + x / this.canvas.width * (this.viewMaxTime - this.viewMinTime);
+            }
+
+            yToValue(y) {
+                return this.viewMaxValue - y / this.canvas.height * (this.viewMaxValue - this.viewMinValue);
+            }
+
+            render() {
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                // Clear
+                ctx.fillStyle = '#1a1a2a';
+                ctx.fillRect(0, 0, w, h);
+
+                this.renderGrid();
+                this.renderCurves();
+                this.renderPlayhead();
+            }
+
+            renderGrid() {
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                // Minor grid
+                ctx.strokeStyle = '#303050';
+                ctx.lineWidth = 1;
+
+                const timeStep = 0.5;
+                for (let t = Math.floor(this.viewMinTime / timeStep) * timeStep; t <= this.viewMaxTime; t += timeStep) {
+                    const x = this.timeToX(t);
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, h);
+                    ctx.stroke();
+                }
+
+                const valueStep = 0.5;
+                for (let v = Math.floor(this.viewMinValue / valueStep) * valueStep; v <= this.viewMaxValue; v += valueStep) {
+                    const y = this.valueToY(v);
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
+                }
+
+                // Major grid and labels
+                ctx.strokeStyle = '#404060';
+                ctx.fillStyle = '#808090';
+                ctx.font = '10px sans-serif';
+
+                for (let t = Math.floor(this.viewMinTime); t <= this.viewMaxTime; t++) {
+                    const x = this.timeToX(t);
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, h);
+                    ctx.stroke();
+                    ctx.fillText(t + 's', x + 3, h - 5);
+                }
+
+                for (let v = Math.floor(this.viewMinValue); v <= this.viewMaxValue; v++) {
+                    const y = this.valueToY(v);
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
+                    ctx.fillText(v.toFixed(1), 5, y - 3);
+                }
+
+                // Zero line
+                ctx.strokeStyle = '#505070';
+                ctx.lineWidth = 2;
+                const zeroY = this.valueToY(0);
+                ctx.beginPath();
+                ctx.moveTo(0, zeroY);
+                ctx.lineTo(w, zeroY);
+                ctx.stroke();
+            }
+
+            renderCurves() {
+                const ctx = this.ctx;
+
+                Object.entries(this.channels).forEach(([name, channel]) => {
+                    if (!channel.visible || channel.keyframes.length === 0) return;
+
+                    ctx.strokeStyle = channel.color;
+                    ctx.lineWidth = name === this.selectedChannel ? 2 : 1;
+
+                    // Draw curve
+                    ctx.beginPath();
+                    for (let i = 0; i < channel.keyframes.length - 1; i++) {
+                        const k0 = channel.keyframes[i];
+                        const k1 = channel.keyframes[i + 1];
+
+                        const x0 = this.timeToX(k0.time);
+                        const y0 = this.valueToY(k0.value);
+                        const x1 = this.timeToX(k1.time);
+                        const y1 = this.valueToY(k1.value);
+
+                        // Bezier control points
+                        const cp1x = x0 + k0.outTangent.x * (x1 - x0);
+                        const cp1y = y0 - k0.outTangent.y * (y1 - y0);
+                        const cp2x = x1 + k1.inTangent.x * (x1 - x0);
+                        const cp2y = y1 - k1.inTangent.y * (y1 - y0);
+
+                        if (i === 0) ctx.moveTo(x0, y0);
+                        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x1, y1);
+                    }
+                    ctx.stroke();
+
+                    // Draw keyframes
+                    channel.keyframes.forEach((kf, index) => {
+                        const x = this.timeToX(kf.time);
+                        const y = this.valueToY(kf.value);
+
+                        // Tangent handles for selected channel
+                        if (name === this.selectedChannel && kf.selected) {
+                            this.renderTangentHandles(kf, x, y, channel.color);
+                        }
+
+                        // Keyframe diamond
+                        ctx.save();
+                        ctx.translate(x, y);
+                        ctx.rotate(Math.PI / 4);
+
+                        ctx.fillStyle = kf.selected ? '#ffffff' : channel.color;
+                        ctx.fillRect(-5, -5, 10, 10);
+
+                        if (kf.selected) {
+                            ctx.strokeStyle = '#4488ff';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(-5, -5, 10, 10);
+                        }
+
+                        ctx.restore();
+                    });
+                });
+            }
+
+            renderTangentHandles(kf, x, y, color) {
+                const ctx = this.ctx;
+                const scale = 50;
+
+                // In tangent
+                const inX = x + kf.inTangent.x * scale;
+                const inY = y - kf.inTangent.y * scale;
+
+                ctx.strokeStyle = '#808080';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(inX, inY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#ff8888';
+                ctx.beginPath();
+                ctx.arc(inX, inY, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Out tangent
+                const outX = x + kf.outTangent.x * scale;
+                const outY = y - kf.outTangent.y * scale;
+
+                ctx.strokeStyle = '#808080';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(outX, outY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#88ff88';
+                ctx.beginPath();
+                ctx.arc(outX, outY, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            renderPlayhead() {
+                const x = this.timeToX(this.currentTime);
+                const playhead = document.getElementById('playhead');
+                playhead.style.left = x + 'px';
+            }
+
+            onMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (e.button === 2) {
+                    // Right click - pan
+                    this.isPanning = true;
+                    this.panStart = { x, y, viewMinTime: this.viewMinTime, viewMaxTime: this.viewMaxTime };
+                    return;
+                }
+
+                // Left click - select
+                const hit = this.hitTest(x, y);
+                if (hit) {
+                    if (hit.type === 'keyframe') {
+                        if (!e.shiftKey) {
+                            this.clearSelection();
+                        }
+                        hit.keyframe.selected = true;
+                        this.selectedKeyframe = hit.keyframe;
+                        this.updatePropertyInputs();
+                    } else if (hit.type === 'tangent') {
+                        this.selectedTangent = hit.tangent;
+                    }
+                    this.isDragging = true;
+                } else {
+                    this.clearSelection();
+                }
+                this.render();
+            }
+
+            onMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Update value display
+                const time = this.xToTime(x);
+                const value = this.yToValue(y);
+                document.getElementById('valueDisplay').textContent =
+                    `Time: ${time.toFixed(3)} | Value: ${value.toFixed(3)}`;
+
+                if (this.isPanning) {
+                    const dx = x - this.panStart.x;
+                    const timeRange = this.panStart.viewMaxTime - this.panStart.viewMinTime;
+                    const timeDelta = -dx / this.canvas.width * timeRange;
+
+                    this.viewMinTime = this.panStart.viewMinTime + timeDelta;
+                    this.viewMaxTime = this.panStart.viewMaxTime + timeDelta;
+
+                    this.updateViewInputs();
+                    this.render();
+                    return;
+                }
+
+                if (this.isDragging && this.selectedKeyframe) {
+                    this.selectedKeyframe.time = Math.max(0, this.xToTime(x));
+                    this.selectedKeyframe.value = this.yToValue(y);
+                    this.updatePropertyInputs();
+                    this.render();
+                }
+
+                if (this.isDragging && this.selectedTangent) {
+                    const kf = this.selectedKeyframe;
+                    const kfX = this.timeToX(kf.time);
+                    const kfY = this.valueToY(kf.value);
+                    const scale = 50;
+
+                    const tangent = this.selectedTangent === 'in' ? kf.inTangent : kf.outTangent;
+                    tangent.x = (x - kfX) / scale;
+                    tangent.y = -(y - kfY) / scale;
+
+                    // Aligned mode
+                    if (this.tangentMode === 'aligned') {
+                        const other = this.selectedTangent === 'in' ? kf.outTangent : kf.inTangent;
+                        const len = Math.sqrt(other.x * other.x + other.y * other.y);
+                        const newLen = Math.sqrt(tangent.x * tangent.x + tangent.y * tangent.y);
+                        if (newLen > 0.001) {
+                            other.x = -tangent.x / newLen * len;
+                            other.y = -tangent.y / newLen * len;
+                        }
+                    }
+
+                    this.render();
+                }
+            }
+
+            onMouseUp(e) {
+                this.isDragging = false;
+                this.isPanning = false;
+                this.selectedTangent = null;
+            }
+
+            onWheel(e) {
+                e.preventDefault();
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const pivotTime = this.xToTime(x);
+
+                const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+
+                const leftRange = pivotTime - this.viewMinTime;
+                const rightRange = this.viewMaxTime - pivotTime;
+
+                this.viewMinTime = pivotTime - leftRange * zoomFactor;
+                this.viewMaxTime = pivotTime + rightRange * zoomFactor;
+
+                this.updateViewInputs();
+                this.render();
+            }
+
+            onDoubleClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const time = this.xToTime(x);
+                const value = this.yToValue(y);
+
+                const channel = this.channels[this.selectedChannel];
+                channel.keyframes.push({
+                    time,
+                    value,
+                    inTangent: { x: -0.5, y: 0 },
+                    outTangent: { x: 0.5, y: 0 },
+                    selected: false
+                });
+
+                // Sort by time
+                channel.keyframes.sort((a, b) => a.time - b.time);
+                this.render();
+            }
+
+            hitTest(x, y) {
+                const channel = this.channels[this.selectedChannel];
+                if (!channel) return null;
+
+                for (const kf of channel.keyframes) {
+                    const kfX = this.timeToX(kf.time);
+                    const kfY = this.valueToY(kf.value);
+
+                    // Check tangent handles first (if selected)
+                    if (kf.selected) {
+                        const scale = 50;
+                        const inX = kfX + kf.inTangent.x * scale;
+                        const inY = kfY - kf.inTangent.y * scale;
+                        if (Math.hypot(x - inX, y - inY) < 8) {
+                            this.selectedKeyframe = kf;
+                            return { type: 'tangent', tangent: 'in', keyframe: kf };
+                        }
+
+                        const outX = kfX + kf.outTangent.x * scale;
+                        const outY = kfY - kf.outTangent.y * scale;
+                        if (Math.hypot(x - outX, y - outY) < 8) {
+                            this.selectedKeyframe = kf;
+                            return { type: 'tangent', tangent: 'out', keyframe: kf };
+                        }
+                    }
+
+                    // Check keyframe
+                    if (Math.hypot(x - kfX, y - kfY) < 10) {
+                        return { type: 'keyframe', keyframe: kf };
+                    }
+                }
+
+                return null;
+            }
+
+            clearSelection() {
+                Object.values(this.channels).forEach(channel => {
+                    channel.keyframes.forEach(kf => kf.selected = false);
+                });
+                this.selectedKeyframe = null;
+            }
+
+            updatePropertyInputs() {
+                if (this.selectedKeyframe) {
+                    document.getElementById('keyTime').value = this.selectedKeyframe.time.toFixed(3);
+                    document.getElementById('keyValue').value = this.selectedKeyframe.value.toFixed(3);
+                    document.getElementById('inTangentX').value = this.selectedKeyframe.inTangent.x.toFixed(2);
+                    document.getElementById('inTangentY').value = this.selectedKeyframe.inTangent.y.toFixed(2);
+                    document.getElementById('outTangentX').value = this.selectedKeyframe.outTangent.x.toFixed(2);
+                    document.getElementById('outTangentY').value = this.selectedKeyframe.outTangent.y.toFixed(2);
+                }
+            }
+
+            updateViewInputs() {
+                document.getElementById('viewMinTime').value = this.viewMinTime.toFixed(1);
+                document.getElementById('viewMaxTime').value = this.viewMaxTime.toFixed(1);
+            }
+
+            updateSelectedKeyframe(prop, value) {
+                if (this.selectedKeyframe) {
+                    this.selectedKeyframe[prop] = value;
+                    this.channels[this.selectedChannel].keyframes.sort((a, b) => a.time - b.time);
+                    this.render();
+                }
+            }
+
+            applyPreset(preset) {
+                if (!this.selectedKeyframe) return;
+
+                const presets = {
+                    linear: { in: { x: -0.33, y: -0.33 }, out: { x: 0.33, y: 0.33 } },
+                    easeIn: { in: { x: -0.5, y: 0 }, out: { x: 0.5, y: 1 } },
+                    easeOut: { in: { x: -0.5, y: 1 }, out: { x: 0.5, y: 0 } },
+                    easeInOut: { in: { x: -0.5, y: 0 }, out: { x: 0.5, y: 0 } },
+                    bounce: { in: { x: -0.2, y: -0.5 }, out: { x: 0.2, y: 0.5 } },
+                    overshoot: { in: { x: -0.5, y: 0.5 }, out: { x: 0.5, y: -0.2 } },
+                    step: { in: { x: 0, y: 0 }, out: { x: 0, y: 0 } }
+                };
+
+                const p = presets[preset];
+                if (p) {
+                    this.selectedKeyframe.inTangent = { ...p.in };
+                    this.selectedKeyframe.outTangent = { ...p.out };
+                    this.updatePropertyInputs();
+                    this.render();
+                }
+            }
+
+            setTime(time) {
+                this.currentTime = time;
+                this.render();
+            }
+        }
+
+        // Initialize
+        const editor = new AnimationCurveEditor();
+
+        // Native bridge
+        window.CurveEditor = {
+            setTime: (t) => editor.setTime(t),
+            loadCurves: (data) => {
+                if (data.channels) {
+                    Object.assign(editor.channels, data.channels);
+                    editor.render();
+                }
+            },
+            getCurveData: () => editor.channels,
+            setViewRange: (minT, maxT, minV, maxV) => {
+                editor.viewMinTime = minT;
+                editor.viewMaxTime = maxT;
+                editor.viewMinValue = minV;
+                editor.viewMaxValue = maxV;
+                editor.render();
+            }
+        };
+    </script>
+</body>
+</html>

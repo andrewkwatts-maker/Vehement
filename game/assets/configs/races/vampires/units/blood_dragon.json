@@ -1,0 +1,248 @@
+{
+  "id": "blood_dragon",
+  "name": "Blood Dragon",
+  "race": "vampires",
+  "tier": 4,
+  "type": "ultimate_flying",
+  "role": ["ultimate", "flying", "siege", "devastator"],
+
+  "description": "Colossal dragons corrupted by vampire blood, wielding devastating life-draining breath attacks.",
+  "lore": "Blood Dragons are the result of ancient vampires binding their essence to the greatest of wyrms. These monstrosities combine draconic power with vampiric hunger, their breath weapon draining the very life force from victims.",
+
+  "stats": {
+    "health": 1600,
+    "healthRegen": 4.0,
+    "mana": 300,
+    "manaRegen": 1.5,
+    "armor": 6,
+    "armorType": "fortified",
+    "moveSpeed": 320,
+    "turnRate": 0.4,
+    "collisionSize": 64,
+    "selectionScale": 1.8,
+    "isFlying": true
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 55,
+      "variance": 10,
+      "type": "chaos"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 100,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.5,
+    "acquisitionRange": 800,
+    "aggroRange": 700,
+    "lifeSteal": 0.30,
+    "splashDamage": {
+      "enabled": true,
+      "fullRadius": 75,
+      "halfRadius": 150,
+      "quarterRadius": 225
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "healthRegenBonus": 6.0,
+      "breathCooldownReduction": 0.25
+    },
+    "day": {
+      "damagePenalty": 0.3,
+      "healthRegenPenalty": 2.0
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "blood_breath",
+      "name": "Blood Breath",
+      "type": "active",
+      "targetType": "cone",
+      "description": "Breathe a cone of blood fire that damages enemies and heals the dragon for damage dealt",
+      "cooldown": 20,
+      "manaCost": 100,
+      "bloodCost": 30,
+      "effects": {
+        "damage": 200,
+        "coneAngle": 60,
+        "coneLength": 500,
+        "lifeSteal": 0.5,
+        "burnDamagePerSecond": 30,
+        "burnDuration": 5.0
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/blood_breath.png"
+    },
+    {
+      "id": "devour",
+      "name": "Devour",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Swallow a small or medium unit whole, instantly killing it and healing for its max health",
+      "cooldown": 45,
+      "manaCost": 75,
+      "effects": {
+        "instantKill": true,
+        "healPercent": 1.0,
+        "targetSizeLimit": "medium",
+        "cannotTargetHeroes": true,
+        "range": 200
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/devour.png"
+    },
+    {
+      "id": "wing_buffet",
+      "name": "Wing Buffet",
+      "type": "active",
+      "targetType": "area",
+      "description": "Beat wings powerfully, knocking back and damaging all nearby enemies",
+      "cooldown": 25,
+      "manaCost": 60,
+      "effects": {
+        "radius": 400,
+        "damage": 75,
+        "knockbackDistance": 300,
+        "stunDuration": 1.0
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/wing_buffet.png"
+    },
+    {
+      "id": "vampiric_roar",
+      "name": "Vampiric Roar",
+      "type": "active",
+      "targetType": "area",
+      "description": "Roar with ancient power, granting all nearby ally vampires increased life steal",
+      "cooldown": 60,
+      "manaCost": 100,
+      "effects": {
+        "radius": 600,
+        "lifeStealBonus": 0.25,
+        "duration": 15.0
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/vampiric_roar.png"
+    },
+    {
+      "id": "dragon_constitution",
+      "name": "Dragon Constitution",
+      "type": "passive",
+      "description": "Takes 25% reduced damage from all sources",
+      "effects": {
+        "damageReduction": 0.25
+      },
+      "icon": "icons/abilities/dragon_constitution.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bat_roost",
+    "buildTime": 100,
+    "cost": {
+      "gold": 700,
+      "lumber": 150,
+      "blood": 125,
+      "souls": 20
+    },
+    "foodCost": 7,
+    "prerequisites": {
+      "buildings": ["bat_roost", "citadel_of_night", "altar_of_darkness"],
+      "technologies": ["dragon_binding"],
+      "age": "lord"
+    },
+    "hotkey": "D",
+    "maxActive": 2
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 7,
+      "maxLevel": 3,
+      "researchId": "dragon_fangs"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "dragon_scales"
+    },
+    "special": ["improved_breath", "insatiable_hunger", "ancient_dragon"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/blood_dragon/ready.ogg",
+    "select": ["audio/units/blood_dragon/select1.ogg", "audio/units/blood_dragon/select2.ogg"],
+    "move": ["audio/units/blood_dragon/move1.ogg"],
+    "attack": ["audio/units/blood_dragon/attack1.ogg", "audio/units/blood_dragon/attack2.ogg"],
+    "death": "audio/units/blood_dragon/death.ogg",
+    "breath": "audio/units/blood_dragon/breath.ogg",
+    "roar": "audio/units/blood_dragon/roar.ogg",
+    "devour": "audio/units/blood_dragon/devour.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/blood_dragon.glb",
+    "texture": "textures/units/vampires/blood_dragon.png",
+    "portrait": "textures/portraits/blood_dragon.png",
+    "icon": "textures/icons/blood_dragon.png",
+    "scale": 1.8,
+    "animations": {
+      "idle": "dragon_idle",
+      "fly": "dragon_fly",
+      "attack": "dragon_attack",
+      "death": "dragon_death",
+      "breath": "dragon_breath",
+      "devour": "dragon_devour",
+      "roar": "dragon_roar",
+      "buffet": "dragon_buffet"
+    },
+    "effects": {
+      "spawn": "effects/dragon_spawn.vfx",
+      "death": "effects/dragon_death.vfx",
+      "bloodBreath": "effects/blood_breath.vfx",
+      "devour": "effects/devour.vfx",
+      "roar": "effects/vampiric_roar.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 10,
+    "priority": "critical",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.0,
+    "preferredTargets": ["building", "siege", "grouped_units"],
+    "useBreathOnGroups": true,
+    "devourHighValue": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isDragon": true,
+    "isUltimate": true,
+    "isFlying": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": false
+  },
+
+  "bounty": {
+    "gold": 140,
+    "experience": 180,
+    "blood": 0
+  },
+
+  "pointValue": 7,
+  "supplyProvided": 0,
+  "supplyUsed": 7
+}

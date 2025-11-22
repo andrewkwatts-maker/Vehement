@@ -1,0 +1,202 @@
+{
+  "id": "abomination",
+  "name": "Abomination",
+  "race": "undead",
+  "tier": 3,
+  "type": "melee",
+  "role": ["tank", "area_damage", "plague_spreader"],
+
+  "description": "Horrific constructs stitched together from multiple corpses. These hulking monstrosities cleave through enemies and spread disease with every strike.",
+  "lore": "Created in the Slaughterhouse from the parts of many bodies, Abominations are grotesque giants of rotting flesh and exposed bone. Their massive hooks and cleavers can strike multiple enemies at once.",
+
+  "stats": {
+    "health": 1080,
+    "healthRegen": 1.0,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 4,
+    "armorType": "heavy",
+    "moveSpeed": 250,
+    "turnRate": 0.4,
+    "collisionSize": 64,
+    "selectionScale": 1.5
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 34,
+      "variance": 6,
+      "type": "normal"
+    },
+    "attackSpeed": 1.6,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.56,
+    "backswing": 0.44,
+    "acquisitionRange": 500,
+    "aggroRange": 450,
+    "cleave": {
+      "enabled": true,
+      "angle": 120,
+      "distance": 150,
+      "damagePercent": 0.35
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "disease_cloud",
+      "name": "Disease Cloud",
+      "type": "passive",
+      "description": "Surrounds the Abomination with a cloud of disease that damages nearby enemies",
+      "effects": {
+        "auraRadius": 200,
+        "damagePerSecond": 3,
+        "affectsBuildings": false,
+        "affectsHeroes": true
+      },
+      "icon": "icons/abilities/disease_cloud.png"
+    },
+    {
+      "id": "hook",
+      "name": "Meat Hook",
+      "type": "active",
+      "targetType": "unit",
+      "requiresResearch": "hook_upgrade",
+      "description": "Throws a hook to drag an enemy unit to the Abomination",
+      "cooldown": 15.0,
+      "manaCost": 0,
+      "range": 600,
+      "effects": {
+        "pullTarget": true,
+        "damage": 50,
+        "stunDuration": 0.5,
+        "projectileSpeed": 1200
+      },
+      "hotkey": "H",
+      "icon": "icons/abilities/meat_hook.png"
+    },
+    {
+      "id": "cannibalize",
+      "name": "Cannibalize",
+      "type": "active",
+      "targetType": "corpse",
+      "description": "Consume a corpse to regenerate health",
+      "cooldown": 0,
+      "manaCost": 0,
+      "effects": {
+        "healthPerSecond": 15,
+        "duration": 15.0,
+        "channeled": true,
+        "destroysCorpse": true
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/cannibalize.png"
+    },
+    {
+      "id": "festering_wounds",
+      "name": "Festering Wounds",
+      "type": "passive",
+      "requiresResearch": "festering_wounds_upgrade",
+      "description": "Attacks apply a stacking disease that slows and damages over time",
+      "effects": {
+        "damagePerStack": 2,
+        "slowPerStack": 0.05,
+        "maxStacks": 5,
+        "duration": 8.0
+      }
+    }
+  ],
+
+  "production": {
+    "producedAt": "slaughterhouse",
+    "buildTime": 44,
+    "cost": {
+      "gold": 240,
+      "lumber": 70,
+      "corpses": 0
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["slaughterhouse"],
+      "technologies": [],
+      "age": "plague"
+    },
+    "hotkey": "A"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["hook_upgrade", "festering_wounds_upgrade"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/abomination/ready.ogg",
+    "select": ["audio/units/abomination/select1.ogg", "audio/units/abomination/select2.ogg"],
+    "move": ["audio/units/abomination/move1.ogg", "audio/units/abomination/move2.ogg"],
+    "attack": ["audio/units/abomination/attack1.ogg", "audio/units/abomination/attack2.ogg"],
+    "death": "audio/units/abomination/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/abomination.glb",
+    "texture": "textures/units/undead/abomination.png",
+    "portrait": "textures/portraits/abomination.png",
+    "icon": "textures/icons/abomination.png",
+    "scale": 1.5,
+    "animations": {
+      "idle": "abomination_idle",
+      "walk": "abomination_walk",
+      "attack": "abomination_attack",
+      "death": "abomination_death",
+      "cannibalize": "abomination_eat"
+    },
+    "effects": {
+      "spawn": "effects/undead_spawn_large.vfx",
+      "death": "effects/abomination_death.vfx",
+      "diseaseCloud": "effects/disease_cloud.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 7,
+    "priority": "high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0,
+    "preferredTargets": ["melee", "hero"],
+    "frontLineUnit": true,
+    "useHookOnRanged": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "plagueSpreader": true,
+    "hasCleave": true
+  },
+
+  "bounty": {
+    "gold": 40,
+    "experience": 65
+  },
+
+  "pointValue": 4,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

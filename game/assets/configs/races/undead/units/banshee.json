@@ -1,0 +1,225 @@
+{
+  "id": "banshee",
+  "name": "Banshee",
+  "race": "undead",
+  "tier": 2,
+  "type": "caster",
+  "role": ["caster", "debuffer", "possessor"],
+
+  "description": "Wailing spirits of tormented elves who can curse enemies and possess enemy units, turning them against their allies.",
+  "lore": "Once proud high elves, these tortured spirits were created when Arthas ravaged Quel'Thalas. Their mournful wails can shatter minds, and their ethereal forms allow them to seize control of living bodies.",
+
+  "stats": {
+    "health": 285,
+    "healthRegen": 0.25,
+    "mana": 350,
+    "manaRegen": 1.0,
+    "armor": 0,
+    "armorType": "unarmored",
+    "moveSpeed": 270,
+    "turnRate": 1.0,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 11,
+      "variance": 2,
+      "type": "magic"
+    },
+    "attackSpeed": 1.8,
+    "attackRange": 500,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/spectral_bolt.glb",
+      "speed": 800,
+      "arc": 0
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.3,
+    "backswing": 0.5,
+    "acquisitionRange": 550,
+    "aggroRange": 450
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 120,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "curse",
+      "name": "Curse",
+      "type": "active",
+      "targetType": "unit",
+      "autocast": true,
+      "description": "Curses a target enemy, causing their attacks to have a chance to miss",
+      "cooldown": 2.0,
+      "manaCost": 40,
+      "range": 600,
+      "effects": {
+        "missChance": 0.33,
+        "duration": 120.0,
+        "affectsHeroes": true
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/curse.png"
+    },
+    {
+      "id": "anti_magic_shell",
+      "name": "Anti-Magic Shell",
+      "type": "active",
+      "targetType": "unit",
+      "autocast": false,
+      "description": "Creates a barrier that absorbs magical damage",
+      "cooldown": 5.0,
+      "manaCost": 75,
+      "range": 500,
+      "effects": {
+        "magicAbsorb": 300,
+        "duration": 90.0,
+        "preventsMagicDebuffs": true
+      },
+      "hotkey": "A",
+      "icon": "icons/abilities/anti_magic_shell.png"
+    },
+    {
+      "id": "possession",
+      "name": "Possession",
+      "type": "active",
+      "targetType": "unit",
+      "requiresResearch": "possession_upgrade",
+      "description": "Takes permanent control of an enemy unit, but destroys the Banshee",
+      "cooldown": 0,
+      "manaCost": 250,
+      "range": 350,
+      "effects": {
+        "controlsTarget": true,
+        "permanent": true,
+        "destroysCaster": true,
+        "canTargetHeroes": false,
+        "channelTime": 1.5
+      },
+      "hotkey": "P",
+      "icon": "icons/abilities/possession.png"
+    },
+    {
+      "id": "wailing_scream",
+      "name": "Wailing Scream",
+      "type": "active",
+      "targetType": "area",
+      "requiresResearch": "banshee_master",
+      "description": "Releases a terrifying scream that damages and slows nearby enemies",
+      "cooldown": 15.0,
+      "manaCost": 100,
+      "effects": {
+        "damage": 75,
+        "slowPercent": 0.4,
+        "slowDuration": 5.0,
+        "radius": 300
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/wailing_scream.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "temple_of_the_damned",
+    "buildTime": 32,
+    "cost": {
+      "gold": 155,
+      "lumber": 30,
+      "corpses": 0
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["temple_of_the_damned"],
+      "technologies": [],
+      "age": "necropolis"
+    },
+    "hotkey": "B"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["possession_upgrade", "banshee_adept", "banshee_master"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/banshee/ready.ogg",
+    "select": ["audio/units/banshee/select1.ogg", "audio/units/banshee/select2.ogg"],
+    "move": ["audio/units/banshee/move1.ogg", "audio/units/banshee/move2.ogg"],
+    "attack": ["audio/units/banshee/attack1.ogg"],
+    "death": "audio/units/banshee/death.ogg",
+    "curse": "audio/units/banshee/curse.ogg",
+    "possession": "audio/units/banshee/possession.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/banshee.glb",
+    "texture": "textures/units/undead/banshee.png",
+    "portrait": "textures/portraits/banshee.png",
+    "icon": "textures/icons/banshee.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "banshee_idle",
+      "walk": "banshee_fly",
+      "attack": "banshee_attack",
+      "death": "banshee_death",
+      "cast": "banshee_cast"
+    },
+    "effects": {
+      "spawn": "effects/spectral_spawn.vfx",
+      "death": "effects/banshee_death.vfx",
+      "curse": "effects/curse.vfx",
+      "possession": "effects/possession.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "high",
+    "behavior": "support",
+    "fleeThreshold": 0.25,
+    "preferredTargets": [],
+    "maintainDistance": true,
+    "autoCurse": true,
+    "possessionTargets": ["expensive", "caster", "siege"]
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isCaster": true,
+    "isFlying": true,
+    "isEthereal": true
+  },
+
+  "bounty": {
+    "gold": 20,
+    "experience": 35
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

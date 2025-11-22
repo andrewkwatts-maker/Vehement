@@ -1,0 +1,232 @@
+{
+  "id": "shadow_thing",
+  "name": "Shadow Thing",
+  "race": "cryptids",
+  "type": "hero",
+  "class": "assassin",
+  "role": ["terror", "stealth", "mind_attack"],
+
+  "title": "The Fear Itself",
+  "description": "A being of pure darkness and terror that can meld with shadows and shatter minds. Its very presence erodes the sanity of enemies.",
+  "lore": "No one knows where Shadow Things come from - they simply appear where fear is strongest. They may be manifestations of terror itself, given form and purpose. What is certain is that they feed on fear, growing stronger as their enemies' resolve crumbles.",
+
+  "baseStats": {
+    "health": 550,
+    "healthRegen": 1.75,
+    "mana": 350,
+    "manaRegen": 2.0,
+    "armor": 3,
+    "armorType": "hero",
+    "moveSpeed": 320,
+    "turnRate": 1.0,
+    "collisionSize": 34,
+    "selectionScale": 1.1
+  },
+
+  "statsPerLevel": {
+    "health": 90,
+    "healthRegen": 0.25,
+    "mana": 45,
+    "manaRegen": 0.15,
+    "armor": 0.25,
+    "damage": 3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 28,
+      "variance": 6,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.4,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.25,
+    "backswing": 0.35,
+    "primaryAttribute": "agility",
+    "criticalChance": 0.15,
+    "criticalMultiplier": 2.0
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 18,
+      "perLevel": 2.0
+    },
+    "agility": {
+      "base": 26,
+      "perLevel": 3.0
+    },
+    "intelligence": {
+      "base": 20,
+      "perLevel": 2.2
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "fear_aura",
+      "name": "Fear Aura",
+      "type": "passive",
+      "hotkey": "Q",
+      "description": "Emanates an aura of terror that reduces enemy damage and movement speed",
+      "levels": [
+        {"radius": 400, "damageReduction": 0.10, "moveSpeedReduction": 0.10},
+        {"radius": 450, "damageReduction": 0.15, "moveSpeedReduction": 0.15},
+        {"radius": 500, "damageReduction": 0.20, "moveSpeedReduction": 0.20}
+      ],
+      "effects": {
+        "stacksFearOnEnemies": true,
+        "fearStacksPerSecond": 0.5
+      },
+      "icon": "icons/abilities/fear_aura.png"
+    },
+    {
+      "id": "shadow_meld",
+      "name": "Shadow Meld",
+      "type": "active",
+      "targetType": "none",
+      "hotkey": "W",
+      "description": "Melds with shadows, becoming invisible and gaining bonus damage on next attack",
+      "levels": [
+        {"manaCost": 60, "cooldown": 18, "fadeTime": 1.0, "bonusDamage": 80, "bonusDamageVsFeared": 40},
+        {"manaCost": 60, "cooldown": 15, "fadeTime": 0.75, "bonusDamage": 140, "bonusDamageVsFeared": 70},
+        {"manaCost": 60, "cooldown": 12, "fadeTime": 0.5, "bonusDamage": 200, "bonusDamageVsFeared": 100}
+      ],
+      "effects": {
+        "permanentInvisibility": false,
+        "breaksOnAttack": true,
+        "canMoveWhileInvisible": true
+      },
+      "icon": "icons/abilities/shadow_meld.png"
+    },
+    {
+      "id": "mind_shatter",
+      "name": "Mind Shatter",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "E",
+      "description": "Attacks the target's mind directly, dealing damage based on their current fear level",
+      "levels": [
+        {"manaCost": 100, "cooldown": 16, "baseDamage": 75, "damagePerFearStack": 30, "maxFearStacks": 5, "range": 500},
+        {"manaCost": 100, "cooldown": 14, "baseDamage": 125, "damagePerFearStack": 45, "maxFearStacks": 5, "range": 550},
+        {"manaCost": 100, "cooldown": 12, "baseDamage": 175, "damagePerFearStack": 60, "maxFearStacks": 5, "range": 600}
+      ],
+      "effects": {
+        "consumesFearStacks": true,
+        "stunDurationPerStack": 0.3,
+        "silenceDuration": 2.0
+      },
+      "icon": "icons/abilities/mind_shatter.png"
+    },
+    {
+      "id": "nightmare_walk",
+      "name": "Nightmare Walk",
+      "type": "active",
+      "targetType": "ground",
+      "hotkey": "R",
+      "ultimate": true,
+      "description": "Enters the realm of nightmares, teleporting a great distance and fearing all enemies at the destination",
+      "levels": [
+        {"manaCost": 175, "cooldown": 90, "range": 2000, "fearRadius": 450, "fearDuration": 4.0, "bonusDamageWindow": 5.0, "bonusDamage": 100}
+      ],
+      "effects": {
+        "invulnerableDuringTeleport": true,
+        "leavesNightmareTrail": true,
+        "trailDamagePerSecond": 30,
+        "trailDuration": 5.0
+      },
+      "icon": "icons/abilities/nightmare_walk.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bone_shrine",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "essence": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["bone_shrine"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "T"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/shadow_thing/ready.ogg",
+    "select": ["audio/heroes/shadow_thing/select1.ogg", "audio/heroes/shadow_thing/select2.ogg", "audio/heroes/shadow_thing/select3.ogg"],
+    "move": ["audio/heroes/shadow_thing/move1.ogg", "audio/heroes/shadow_thing/move2.ogg"],
+    "attack": ["audio/heroes/shadow_thing/attack1.ogg", "audio/heroes/shadow_thing/attack2.ogg"],
+    "death": "audio/heroes/shadow_thing/death.ogg",
+    "pissed": ["audio/heroes/shadow_thing/pissed1.ogg", "audio/heroes/shadow_thing/pissed2.ogg"],
+    "meld": "audio/heroes/shadow_thing/meld.ogg",
+    "nightmare": "audio/heroes/shadow_thing/nightmare.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/shadow_thing.glb",
+    "texture": "textures/heroes/shadow_thing.png",
+    "portrait": "textures/portraits/shadow_thing_hero.png",
+    "icon": "textures/icons/shadow_thing_hero.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "shadow_idle",
+      "walk": "shadow_glide",
+      "attack": "shadow_attack",
+      "death": "shadow_death",
+      "meld": "shadow_meld",
+      "nightmare": "shadow_nightmare"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/shadow_dissipate.vfx",
+      "fear_aura": "effects/fear_aura.vfx",
+      "meld": "effects/shadow_meld.vfx",
+      "mind_shatter": "effects/mind_shatter.vfx",
+      "nightmare_walk": "effects/nightmare_walk.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "assassin",
+    "useMeldToApproach": true,
+    "targetMaxFearStacks": true,
+    "nightmareWalkToEscape": true,
+    "prioritizeCasters": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "hasInvisibility": true,
+    "causesFear": true,
+    "fearImmune": true,
+    "nightBonus": true,
+    "canUseItems": true,
+    "canGainExperience": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

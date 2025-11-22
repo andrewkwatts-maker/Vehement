@@ -1,0 +1,196 @@
+{
+    "id": "fairy_wisp",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Wisp",
+    "description": "Ethereal spirits of nature that gather resources and detect invisible units. Wisps can merge with trees to create new buildings.",
+
+    "tags": ["worker", "gatherer", "detector", "tier1", "ethereal", "flying"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/fairies/units/wisp.obj",
+        "scale": [0.6, 0.6, 0.6],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/wisp_diffuse.png",
+        "emissive": "textures/races/fairies/units/wisp_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "sphere",
+                "radius": 0.25,
+                "offset": [0.0, 0.5, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 1.0,
+        "layer": "flying_unit"
+    },
+
+    "stats": {
+        "health": 100,
+        "maxHealth": 100,
+        "healthRegen": 0.75,
+        "mana": 200,
+        "maxMana": 200,
+        "manaRegen": 2.0,
+        "armor": 0,
+        "magicResist": 25,
+        "moveSpeed": 5.5,
+        "turnRate": 600.0
+    },
+
+    "combat": {
+        "attackDamage": 0,
+        "attackSpeed": 0,
+        "attackRange": 0,
+        "damageType": "none",
+        "armorType": "unarmored",
+        "attackType": "none",
+        "canAttack": false
+    },
+
+    "flying": {
+        "enabled": true,
+        "flight_height": 2.0,
+        "can_hover": true,
+        "phasing": true
+    },
+
+    "gathering": {
+        "enabled": true,
+        "rates": {
+            "gold": 10,
+            "wood": 15,
+            "stone": 6,
+            "food": 10,
+            "mana": 25
+        },
+        "carry_capacity": {
+            "gold": 10,
+            "wood": 20,
+            "stone": 8,
+            "food": 10
+        },
+        "wood_gathering_unique": true,
+        "wood_gathering_description": "Wisps do not destroy trees - they harmoniously gather essence"
+    },
+
+    "construction": {
+        "enabled": true,
+        "speed_multiplier": 1.0,
+        "can_repair": true,
+        "repair_rate": 6.0,
+        "sacrificial_construction": true,
+        "sacrificial_note": "Wisps sacrifice themselves to create Ancients and major structures"
+    },
+
+    "detection": {
+        "enabled": true,
+        "detection_radius": 12.0,
+        "detects_invisible": true,
+        "detects_burrowed": false
+    },
+
+    "abilities": [
+        {
+            "id": "ability_gather_wisp",
+            "name": "Gather",
+            "description": "Harmoniously gather resources from nature without destroying it",
+            "auto_cast": true
+        },
+        {
+            "id": "ability_build_wisp",
+            "name": "Build",
+            "description": "Create living structures. Major buildings require the wisp to merge with nature.",
+            "hotkey": "B"
+        },
+        {
+            "id": "ability_repair_wisp",
+            "name": "Renew",
+            "description": "Restore health to living buildings and allied mechanical units",
+            "hotkey": "R",
+            "cost_per_hp": {"gold": 0.25, "wood": 0.25}
+        },
+        {
+            "id": "ability_detonate_wisp",
+            "name": "Detonate",
+            "description": "Sacrifice the Wisp to dispel all magic in an area and burn mana from enemies",
+            "hotkey": "D",
+            "effects": [
+                {"type": "dispel", "radius": 8.0},
+                {"type": "mana_burn", "value": 150, "radius": 8.0},
+                {"type": "damage", "value": 250, "target": "summoned", "radius": 8.0},
+                {"type": "kill_self", "value": true}
+            ]
+        },
+        {
+            "id": "ability_spirit_link",
+            "name": "Spirit Link",
+            "description": "Link to a Moon Well to restore mana instantly",
+            "hotkey": "L",
+            "cooldown": 30.0,
+            "range": 15.0,
+            "target_type": "fairy_moon_well",
+            "effects": [
+                {"type": "restore_mana", "value": 100, "source": "moon_well"}
+            ]
+        }
+    ],
+
+    "night_bonus": {
+        "moveSpeed": 0.30,
+        "manaRegen": 0.50,
+        "detection_radius": 4.0
+    },
+
+    "production": {
+        "building": "fairy_tree_of_life",
+        "cost": {
+            "gold": 60,
+            "food": 1
+        },
+        "build_time": 12.0,
+        "population_cost": 1,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/fairy_wisp.bt",
+        "profile": "passive",
+        "flee_threshold": 0.0,
+        "auto_gather": true,
+        "patrol_if_idle": true,
+        "priority_resources": ["wood", "gold", "mana"]
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/wisp/idle.anim", "loop": true},
+        "fly": {"path": "animations/fairies/wisp/fly.anim", "loop": true},
+        "gather": {"path": "animations/fairies/wisp/gather.anim", "loop": true},
+        "build": {"path": "animations/fairies/wisp/build.anim", "loop": true},
+        "detonate": {"path": "animations/fairies/wisp/detonate.anim", "loop": false},
+        "death": {"path": "animations/fairies/wisp/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/wisp/select_1.wav", "sounds/fairies/wisp/select_2.wav"],
+        "acknowledge": ["sounds/fairies/wisp/ack_1.wav", "sounds/fairies/wisp/ack_2.wav"],
+        "gather": "sounds/fairies/wisp/gather.wav",
+        "detonate": "sounds/fairies/wisp/detonate.wav",
+        "death": "sounds/fairies/wisp/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/wisp.png",
+        "icon": "textures/races/fairies/icons/wisp.png",
+        "hotkey": "W"
+    }
+}

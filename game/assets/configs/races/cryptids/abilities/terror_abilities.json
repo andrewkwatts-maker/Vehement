@@ -1,0 +1,166 @@
+{
+  "category": "terror",
+  "race": "cryptids",
+  "description": "Abilities that cause fear and terror in enemies",
+
+  "abilities": {
+    "fear_inducing_attack": {
+      "id": "fear_inducing_attack",
+      "name": "Fear-Inducing Attack",
+      "type": "passive",
+      "description": "Attacks have a chance to cause fear",
+      "mechanics": {
+        "procChance": 0.15,
+        "addsFearStacks": 1
+      },
+      "levels": [
+        {"procChance": 0.15, "fearStacks": 1},
+        {"procChance": 0.20, "fearStacks": 1},
+        {"procChance": 0.25, "fearStacks": 2}
+      ],
+      "icon": "textures/icons/abilities/fear_inducing_attack.png"
+    },
+    "terrifying_scream": {
+      "id": "terrifying_scream",
+      "name": "Terrifying Scream",
+      "type": "active",
+      "targetType": "area",
+      "description": "Release a scream that causes enemies to flee in terror",
+      "mechanics": {
+        "areaOfEffect": true,
+        "causesFlee": true,
+        "reducesArmor": true
+      },
+      "levels": [
+        {"manaCost": 75, "cooldown": 25, "radius": 300, "fearDuration": 3, "armorReduction": 2},
+        {"manaCost": 75, "cooldown": 22, "radius": 350, "fearDuration": 4, "armorReduction": 3},
+        {"manaCost": 75, "cooldown": 20, "radius": 400, "fearDuration": 5, "armorReduction": 4}
+      ],
+      "icon": "textures/icons/abilities/terrifying_scream.png",
+      "effects": {
+        "cast": "effects/terrifying_scream.vfx"
+      },
+      "sound": "audio/abilities/terrifying_scream.ogg"
+    },
+    "paralyzing_gaze": {
+      "id": "paralyzing_gaze",
+      "name": "Paralyzing Gaze",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Lock eyes with a target, stunning them with terror",
+      "mechanics": {
+        "channeled": false,
+        "stuns": true,
+        "amplifyDamage": true
+      },
+      "levels": [
+        {"manaCost": 75, "cooldown": 18, "stunDuration": 2, "damageAmp": 0.15, "range": 400},
+        {"manaCost": 75, "cooldown": 16, "stunDuration": 2.5, "damageAmp": 0.20, "range": 450},
+        {"manaCost": 75, "cooldown": 14, "stunDuration": 3, "damageAmp": 0.25, "range": 500}
+      ],
+      "icon": "textures/icons/abilities/paralyzing_gaze.png",
+      "effects": {
+        "gaze": "effects/paralyzing_gaze.vfx"
+      },
+      "sound": "audio/abilities/paralyzing_gaze.ogg"
+    },
+    "creeping_dread": {
+      "id": "creeping_dread",
+      "name": "Creeping Dread",
+      "type": "passive",
+      "description": "Nearby enemies slowly accumulate fear stacks",
+      "mechanics": {
+        "aura": true,
+        "stacksOverTime": true,
+        "panicAtMax": true
+      },
+      "levels": [
+        {"radius": 250, "fearStacksPerSecond": 0.15, "maxStacks": 5},
+        {"radius": 300, "fearStacksPerSecond": 0.20, "maxStacks": 5},
+        {"radius": 350, "fearStacksPerSecond": 0.25, "maxStacks": 5}
+      ],
+      "icon": "textures/icons/abilities/creeping_dread.png",
+      "effects": {
+        "aura": "effects/creeping_dread.vfx"
+      }
+    },
+    "terror_incarnate": {
+      "id": "terror_incarnate",
+      "name": "Terror Incarnate",
+      "type": "passive",
+      "description": "Deal bonus damage to feared enemies",
+      "mechanics": {
+        "bonusDamageCondition": "feared"
+      },
+      "levels": [
+        {"bonusDamage": 0.25},
+        {"bonusDamage": 0.40},
+        {"bonusDamage": 0.50}
+      ],
+      "icon": "textures/icons/abilities/terror_incarnate.png"
+    },
+    "fear_aura": {
+      "id": "fear_aura",
+      "name": "Fear Aura",
+      "type": "passive",
+      "description": "Reduces enemy effectiveness in an area",
+      "mechanics": {
+        "aura": true,
+        "debuffs": ["damage_reduction", "move_speed_reduction"]
+      },
+      "levels": [
+        {"radius": 400, "damageReduction": 0.10, "moveSpeedReduction": 0.10},
+        {"radius": 450, "damageReduction": 0.15, "moveSpeedReduction": 0.15},
+        {"radius": 500, "damageReduction": 0.20, "moveSpeedReduction": 0.20}
+      ],
+      "icon": "textures/icons/abilities/fear_aura.png",
+      "effects": {
+        "aura": "effects/fear_aura.vfx"
+      }
+    },
+    "nightmare_strike": {
+      "id": "nightmare_strike",
+      "name": "Nightmare Strike",
+      "type": "active",
+      "targetType": "unit",
+      "description": "A devastating attack that deals bonus damage and fears the target",
+      "mechanics": {
+        "bonusDamage": true,
+        "causesFear": true,
+        "bleed": true
+      },
+      "levels": [
+        {"manaCost": 50, "cooldown": 12, "damage": 60, "bleedDPS": 10, "bleedDuration": 5, "range": 128},
+        {"manaCost": 50, "cooldown": 10, "damage": 100, "bleedDPS": 15, "bleedDuration": 6, "range": 128},
+        {"manaCost": 50, "cooldown": 8, "damage": 140, "bleedDPS": 20, "bleedDuration": 7, "range": 128}
+      ],
+      "icon": "textures/icons/abilities/nightmare_strike.png",
+      "effects": {
+        "strike": "effects/nightmare_strike.vfx"
+      },
+      "sound": "audio/abilities/nightmare_strike.ogg"
+    },
+    "mind_shatter": {
+      "id": "mind_shatter",
+      "name": "Mind Shatter",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Attacks the mind directly, dealing damage based on fear stacks",
+      "mechanics": {
+        "consumesFearStacks": true,
+        "damagePerStack": true,
+        "stuns": true
+      },
+      "levels": [
+        {"manaCost": 100, "cooldown": 16, "baseDamage": 75, "damagePerStack": 30, "stunPerStack": 0.3, "range": 500},
+        {"manaCost": 100, "cooldown": 14, "baseDamage": 125, "damagePerStack": 45, "stunPerStack": 0.3, "range": 550},
+        {"manaCost": 100, "cooldown": 12, "baseDamage": 175, "damagePerStack": 60, "stunPerStack": 0.3, "range": 600}
+      ],
+      "icon": "textures/icons/abilities/mind_shatter.png",
+      "effects": {
+        "shatter": "effects/mind_shatter.vfx"
+      },
+      "sound": "audio/abilities/mind_shatter.ogg"
+    }
+  }
+}

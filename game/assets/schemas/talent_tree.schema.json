@@ -1,0 +1,299 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "talent_tree.schema.json",
+  "title": "Talent Tree",
+  "description": "Schema for talent tree definitions",
+  "type": "object",
+  "required": ["id", "name", "nodes"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the talent tree",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the talent tree",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the talent tree"
+    },
+    "raceId": {
+      "type": "string",
+      "description": "ID of the race this tree belongs to"
+    },
+    "maxPoints": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 50,
+      "description": "Maximum talent points that can be spent"
+    },
+    "nodes": {
+      "type": "array",
+      "description": "List of talent nodes in the tree",
+      "items": {
+        "$ref": "#/definitions/talentNode"
+      }
+    },
+    "branches": {
+      "type": "array",
+      "description": "Named branches in the tree",
+      "items": {
+        "$ref": "#/definitions/talentBranch"
+      }
+    },
+    "ageGates": {
+      "type": "array",
+      "description": "Age-based restrictions",
+      "items": {
+        "$ref": "#/definitions/ageGate"
+      }
+    },
+    "connections": {
+      "type": "array",
+      "description": "Visual connections between nodes",
+      "items": {
+        "$ref": "#/definitions/connection"
+      }
+    }
+  },
+  "definitions": {
+    "talentNode": {
+      "type": "object",
+      "required": ["id", "name", "category"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the node",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the talent"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon path or identifier"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the talent",
+          "enum": ["military", "economy", "magic", "technology", "special"]
+        },
+        "tier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7,
+          "default": 1,
+          "description": "Tier level (corresponds to ages)"
+        },
+        "pointCost": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 1,
+          "description": "Cost in talent points"
+        },
+        "maxLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 1,
+          "description": "Maximum times this talent can be taken"
+        },
+        "requiredAge": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "default": 0,
+          "description": "Minimum age required to unlock (0-6)"
+        },
+        "position": {
+          "type": "object",
+          "description": "Grid position in the tree editor",
+          "properties": {
+            "x": { "type": "integer" },
+            "y": { "type": "integer" }
+          }
+        },
+        "branchId": {
+          "type": "string",
+          "description": "ID of the branch this node belongs to"
+        },
+        "prerequisites": {
+          "type": "array",
+          "description": "IDs of nodes that must be unlocked first",
+          "items": { "type": "string" }
+        },
+        "exclusiveWith": {
+          "type": "array",
+          "description": "IDs of nodes that cannot be taken with this one",
+          "items": { "type": "string" }
+        },
+        "synergies": {
+          "type": "array",
+          "description": "IDs of nodes that provide bonus effects",
+          "items": { "type": "string" }
+        },
+        "modifiers": {
+          "type": "array",
+          "description": "Stat modifiers granted by this talent",
+          "items": {
+            "$ref": "#/definitions/modifier"
+          }
+        },
+        "unlocks": {
+          "type": "array",
+          "description": "Things unlocked by this talent",
+          "items": {
+            "$ref": "#/definitions/unlock"
+          }
+        }
+      }
+    },
+    "modifier": {
+      "type": "object",
+      "required": ["stat", "value"],
+      "properties": {
+        "stat": {
+          "type": "string",
+          "description": "The stat being modified"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["flat", "percent", "multiply"],
+          "default": "flat",
+          "description": "How the modifier is applied"
+        },
+        "value": {
+          "type": "number",
+          "description": "The modifier value"
+        },
+        "perLevel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether value scales with level"
+        },
+        "target": {
+          "type": "string",
+          "description": "What the modifier applies to (all, infantry, etc.)"
+        }
+      }
+    },
+    "unlock": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["unit", "building", "spell", "ability", "tech", "upgrade"],
+          "description": "Type of thing being unlocked"
+        },
+        "id": {
+          "type": "string",
+          "description": "ID of the thing being unlocked"
+        }
+      }
+    },
+    "talentBranch": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the branch"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the branch"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the branch focus"
+        },
+        "color": {
+          "type": "string",
+          "description": "Color for visual representation",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon for the branch"
+        },
+        "nodeIds": {
+          "type": "array",
+          "description": "IDs of nodes in this branch",
+          "items": { "type": "string" }
+        },
+        "bonusThreshold": {
+          "type": "integer",
+          "description": "Points needed for branch bonus"
+        },
+        "bonusModifiers": {
+          "type": "array",
+          "description": "Bonuses for investing in this branch",
+          "items": {
+            "$ref": "#/definitions/modifier"
+          }
+        }
+      }
+    },
+    "ageGate": {
+      "type": "object",
+      "required": ["age"],
+      "properties": {
+        "age": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Age number (0-6)"
+        },
+        "nodeIds": {
+          "type": "array",
+          "description": "Nodes unlocked at this age",
+          "items": { "type": "string" }
+        },
+        "bonusPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Bonus talent points granted at this age"
+        },
+        "requiredTalents": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Minimum talents that must be learned"
+        }
+      }
+    },
+    "connection": {
+      "type": "object",
+      "required": ["fromNodeId", "toNodeId"],
+      "properties": {
+        "fromNodeId": {
+          "type": "string",
+          "description": "Source node ID"
+        },
+        "toNodeId": {
+          "type": "string",
+          "description": "Target node ID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["prerequisite", "synergy", "exclusive"],
+          "default": "prerequisite"
+        }
+      }
+    }
+  }
+}

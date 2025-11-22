@@ -1,0 +1,140 @@
+{
+    "id": "human_mage_tower",
+    "type": "building",
+    "race": "humans",
+    "name": "Mage Tower",
+    "description": "Arcane academy where mages and spellbreakers are trained. Research powerful magic upgrades here.",
+
+    "tags": ["magic", "production", "research"],
+
+    "tier": 2,
+    "age_requirement": 4,
+
+    "model": {
+        "path": "models/races/humans/buildings/mage_tower.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/mage_tower_diffuse.png",
+        "normal": "textures/races/humans/buildings/mage_tower_normal.png",
+        "emissive": "textures/races/humans/buildings/mage_tower_emissive.png"
+    },
+
+    "footprint": {
+        "size": [3, 3],
+        "entrances": [[1, 0]],
+        "visualSize": [8.0, 15.0, 8.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 350,
+            "wood": 150,
+            "stone": 100
+        },
+        "time": 75.0
+    },
+
+    "stats": {
+        "maxHealth": 900,
+        "armor": 5,
+        "magicResist": 30
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "human_mage",
+            "cost": {"gold": 280, "food": 3},
+            "time": 40.0,
+            "maxQueue": 4
+        },
+        {
+            "type": "unit",
+            "output": "human_spellbreaker",
+            "cost": {"gold": 320, "food": 3},
+            "time": 38.0,
+            "maxQueue": 4,
+            "prerequisites": ["upgrade_spellbreaker_training"]
+        },
+        {
+            "type": "unit",
+            "output": "human_archmage_unit",
+            "cost": {"gold": 480, "food": 4},
+            "time": 65.0,
+            "maxQueue": 2,
+            "prerequisites": ["human_castle", "upgrade_archmage_training"]
+        }
+    ],
+
+    "researches": [
+        {
+            "id": "upgrade_spellbreaker_training",
+            "name": "Spellbreaker Training",
+            "description": "Allows training of Spellbreakers",
+            "cost": {"gold": 200, "wood": 75},
+            "time": 55.0
+        },
+        {
+            "id": "upgrade_archmage_training",
+            "name": "Archmage Training",
+            "description": "Allows training of Archmages",
+            "cost": {"gold": 400, "wood": 150},
+            "time": 90.0,
+            "prerequisites": ["human_castle"]
+        },
+        {
+            "id": "upgrade_arcane_brilliance",
+            "name": "Arcane Brilliance",
+            "description": "Enables Arcane Brilliance ability for Mages",
+            "cost": {"gold": 200, "wood": 50},
+            "time": 60.0
+        },
+        {
+            "id": "upgrade_null_zone",
+            "name": "Arcane Null Zone",
+            "description": "Enables Arcane Null Zone ability for Spellbreakers",
+            "cost": {"gold": 250, "wood": 75},
+            "time": 70.0,
+            "prerequisites": ["upgrade_spellbreaker_training"]
+        },
+        {
+            "id": "upgrade_spell_power",
+            "name": "Improved Spell Power",
+            "description": "+20% spell damage for all casters",
+            "cost": {"gold": 300, "wood": 100},
+            "time": 80.0,
+            "effects": [{"stat": "spell_power", "value": 0.20, "scope": "caster"}]
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "ability_reveal_area",
+            "name": "Reveal Area",
+            "description": "Reveal a target area of the map for 15 seconds",
+            "hotkey": "R",
+            "cooldown": 90.0,
+            "mana_cost": 100,
+            "range": 50.0,
+            "reveal_radius": 12.0,
+            "reveal_duration": 15.0
+        }
+    ],
+
+    "visionRange": 12.0,
+
+    "requirements": {
+        "buildings": ["human_keep"]
+    },
+
+    "unique": true,
+    "maxCount": 2,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/mage_tower.png",
+        "icon": "textures/races/humans/icons/buildings/mage_tower.png",
+        "hotkey": "M"
+    }
+}

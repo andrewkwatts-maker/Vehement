@@ -1,0 +1,153 @@
+{
+  "id": "probe",
+  "name": "Probe",
+  "display_name": "Observer Probe",
+  "description": "A cloaked reconnaissance drone that provides detection and vision. Observers are essential for revealing hidden enemies and scouting enemy positions without being detected.",
+  "race": "aliens",
+  "tier": 1,
+  "unit_type": "scout",
+  "classification": ["mechanical", "hover", "detector", "cloaked"],
+
+  "stats": {
+    "health": 40,
+    "health_regen": 0,
+    "shield": 20,
+    "shield_regen": 0.4,
+    "shield_regen_delay": 10.0,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 2.82,
+    "acceleration": 1000,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": false,
+    "attack_damage": 0,
+    "attack_speed": 0,
+    "attack_range": 0,
+    "attack_type": "none",
+    "damage_type": "none",
+    "targets": []
+  },
+
+  "production": {
+    "build_time": 25,
+    "warp_time": 0,
+    "supply_cost": 1,
+    "resource_cost": {
+      "minerals": 25,
+      "vespene": 75
+    },
+    "power_cost": 0,
+    "produced_at": "robotics_facility",
+    "requirements": [],
+    "hotkey": "O"
+  },
+
+  "abilities": [
+    {
+      "id": "permanent_cloak",
+      "name": "Permanent Cloak",
+      "description": "The Observer is permanently cloaked and invisible to enemies without detection.",
+      "type": "passive",
+      "energy_cost": 0
+    },
+    {
+      "id": "detector",
+      "name": "Detector",
+      "description": "Reveals cloaked, burrowed, and hallucinated units within detection range.",
+      "type": "passive",
+      "detection_range": 11
+    },
+    {
+      "id": "surveillance_mode",
+      "name": "Surveillance Mode",
+      "description": "Toggles between normal mode and surveillance mode. Surveillance mode reduces speed but increases sight and detection range.",
+      "type": "toggle",
+      "cooldown": 0,
+      "speed_reduction": 0.5,
+      "sight_bonus": 3,
+      "detection_bonus": 3,
+      "requires_upgrade": "gravitic_boosters",
+      "unlocked_default": false,
+      "hotkey": "E"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "gravitic_boosters",
+      "name": "Gravitic Boosters",
+      "description": "Increases Observer movement speed and enables Surveillance Mode",
+      "researched_at": "robotics_facility",
+      "cost": {
+        "minerals": 100,
+        "vespene": 100
+      },
+      "research_time": 80,
+      "effects": {
+        "speed_bonus": 1.31
+      }
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_hover": true,
+    "is_flying": true,
+    "is_light": true,
+    "is_detector": true,
+    "is_cloaked": true,
+    "cloak_type": "permanent",
+    "cargo_size": 1
+  },
+
+  "sight": {
+    "vision_range": 11,
+    "detection_range": 11,
+    "can_detect_cloaked": true,
+    "can_detect_burrowed": true
+  },
+
+  "selection": {
+    "priority": 5,
+    "selection_radius": 0.5,
+    "target_radius": 0.375
+  },
+
+  "visuals": {
+    "model": "models/aliens/probe.fbx",
+    "texture": "textures/aliens/probe.png",
+    "icon": "icons/aliens/probe.png",
+    "wireframe": "wireframes/aliens/probe.png",
+    "portrait": "portraits/aliens/probe.png",
+    "scale": 0.75,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "death": "anim_death"
+    },
+    "effects": {
+      "cloak": "fx_cloak_shimmer",
+      "detection": "fx_detection_pulse",
+      "hover": "fx_hover_glow"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/probe_ready.ogg",
+    "selected": ["audio/aliens/probe_select1.ogg"],
+    "command": ["audio/aliens/probe_command1.ogg"],
+    "death": "audio/aliens/probe_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "scout",
+    "priority_targets": [],
+    "flee_when_attacked": true,
+    "micro_level": "medium",
+    "patrol_priority": "high",
+    "stay_with_army": true
+  }
+}

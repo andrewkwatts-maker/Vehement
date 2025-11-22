@@ -1,0 +1,155 @@
+{
+  "id": "warp_prism",
+  "name": "Warp Prism",
+  "display_name": "Warp Prism",
+  "description": "A versatile flying transport that can switch between transport mode and power mode. In power mode, the Warp Prism projects a power field that allows buildings to function and enables unit warping.",
+  "race": "aliens",
+  "tier": 2,
+  "unit_type": "transport",
+  "classification": ["mechanical", "flying", "transport", "support"],
+
+  "stats": {
+    "health": 80,
+    "health_regen": 0,
+    "shield": 100,
+    "shield_regen": 2.0,
+    "shield_regen_delay": 10.0,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 4.13,
+    "move_speed_phased": 2.5,
+    "acceleration": 2.5,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": false
+  },
+
+  "production": {
+    "build_time": 50,
+    "warp_time": 0,
+    "supply_cost": 2,
+    "resource_cost": {
+      "minerals": 250,
+      "vespene": 0
+    },
+    "power_cost": 0,
+    "produced_at": "robotics_facility",
+    "requirements": [],
+    "hotkey": "W"
+  },
+
+  "abilities": [
+    {
+      "id": "transport_mode",
+      "name": "Transport Mode",
+      "description": "Default mode allowing the Warp Prism to transport up to 8 cargo space of units.",
+      "type": "mode",
+      "cargo_capacity": 8,
+      "load_range": 5,
+      "is_default": true,
+      "hotkey": "T"
+    },
+    {
+      "id": "phasing_mode",
+      "name": "Phasing Mode",
+      "description": "Deploy to project a power field. While phased, the Warp Prism moves slowly but provides power and allows warp-in of units.",
+      "type": "mode",
+      "power_radius": 4.0,
+      "power_provided": 4,
+      "warp_enabled": true,
+      "transform_time": 1.25,
+      "hotkey": "E"
+    },
+    {
+      "id": "pickup_all",
+      "name": "Mass Pickup",
+      "description": "Picks up all friendly units in range that can fit in cargo.",
+      "type": "active",
+      "cooldown": 0.5,
+      "range": 5,
+      "requires_upgrade": "gravitic_drive",
+      "unlocked_default": false,
+      "hotkey": "G"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "gravitic_drive",
+      "name": "Gravitic Drive",
+      "description": "Increases Warp Prism movement speed and enables Mass Pickup",
+      "researched_at": "robotics_facility",
+      "cost": {
+        "minerals": 100,
+        "vespene": 100
+      },
+      "research_time": 80,
+      "effects": {
+        "speed_bonus": 1.52
+      }
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_flying": true,
+    "is_armored": true,
+    "is_transport": true,
+    "cargo_capacity": 8,
+    "can_provide_power": true
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 15,
+    "selection_radius": 1.5,
+    "target_radius": 1.0
+  },
+
+  "visuals": {
+    "model": "models/aliens/warp_prism.fbx",
+    "texture": "textures/aliens/warp_prism.png",
+    "icon": "icons/aliens/warp_prism.png",
+    "wireframe": "wireframes/aliens/warp_prism.png",
+    "portrait": "portraits/aliens/warp_prism.png",
+    "scale": 1.2,
+    "animations": {
+      "idle_transport": "anim_idle_transport",
+      "idle_phased": "anim_idle_phased",
+      "move": "anim_move",
+      "transform": "anim_transform",
+      "load": "anim_load",
+      "unload": "anim_unload",
+      "death": "anim_death"
+    },
+    "effects": {
+      "power_field": "fx_power_field",
+      "warp_beam": "fx_warp_beam",
+      "transform": "fx_transform"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/warp_prism_ready.ogg",
+    "selected": ["audio/aliens/warp_prism_select1.ogg"],
+    "command": ["audio/aliens/warp_prism_command1.ogg"],
+    "transform": "audio/aliens/warp_prism_transform.ogg",
+    "death": "audio/aliens/warp_prism_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "support",
+    "priority_targets": [],
+    "flee_when_attacked": true,
+    "micro_level": "high",
+    "stay_with_army": true,
+    "use_for_harassment": true
+  }
+}

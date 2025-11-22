@@ -1,0 +1,365 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "mission.schema.json",
+  "title": "Mission Definition",
+  "description": "Defines a campaign mission",
+  "type": "object",
+  "required": ["id", "title", "mapFile", "objectives"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^mission_[a-z0-9_]+$",
+      "description": "Unique mission identifier"
+    },
+    "title": {
+      "$ref": "common.schema.json#/definitions/localizedString"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString"
+    },
+    "missionNumber": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "mapFile": {
+      "type": "string",
+      "description": "Path to map file"
+    },
+    "mapName": {
+      "type": "string"
+    },
+    "playerStartPosition": {
+      "type": "string",
+      "description": "Spawn location ID"
+    },
+    "objectives": {
+      "type": "array",
+      "items": { "$ref": "objective.schema.json" },
+      "minItems": 1
+    },
+    "primaryObjectives": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "IDs of primary objectives"
+    },
+    "secondaryObjectives": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "bonusObjectives": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "victoryCondition": {
+      "type": "string",
+      "enum": ["all_primary", "any_primary", "survival", "eliminate_all", "custom"],
+      "default": "all_primary"
+    },
+    "defeatCondition": {
+      "type": "string",
+      "enum": ["hero_killed", "base_destroyed", "all_units_lost", "time_expired", "objective_failed", "custom"],
+      "default": "objective_failed"
+    },
+    "customVictoryScript": { "type": "string" },
+    "customDefeatScript": { "type": "string" },
+    "timeLimit": {
+      "type": "number",
+      "description": "Time limit in seconds (-1 for none)"
+    },
+    "parTime": {
+      "type": "number",
+      "description": "Target completion time for bonus"
+    },
+    "showTimer": {
+      "type": "boolean",
+      "default": false
+    },
+    "startingResources": {
+      "$ref": "#/definitions/resources"
+    },
+    "unitRestrictions": {
+      "$ref": "#/definitions/unitRestrictions"
+    },
+    "buildingRestrictions": {
+      "$ref": "#/definitions/buildingRestrictions"
+    },
+    "techRestrictions": {
+      "$ref": "#/definitions/techRestrictions"
+    },
+    "briefing": {
+      "$ref": "#/definitions/missionBriefing"
+    },
+    "debriefing": {
+      "$ref": "#/definitions/missionDebriefing"
+    },
+    "aiPlayers": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/aiPlayer" }
+    },
+    "rewards": {
+      "$ref": "#/definitions/missionRewards"
+    },
+    "cinematics": {
+      "$ref": "#/definitions/missionCinematics"
+    },
+    "scripts": {
+      "$ref": "#/definitions/missionScripts"
+    },
+    "audio": {
+      "$ref": "#/definitions/missionAudio"
+    },
+    "ui": {
+      "$ref": "#/definitions/missionUI"
+    },
+    "unlockRequirements": {
+      "$ref": "#/definitions/missionUnlock"
+    }
+  },
+
+  "definitions": {
+    "resources": {
+      "type": "object",
+      "properties": {
+        "gold": { "type": "integer", "default": 500 },
+        "wood": { "type": "integer", "default": 200 },
+        "stone": { "type": "integer", "default": 100 },
+        "metal": { "type": "integer", "default": 50 },
+        "food": { "type": "integer", "default": 100 },
+        "supply": { "type": "integer", "default": 10 },
+        "maxSupply": { "type": "integer", "default": 100 }
+      }
+    },
+
+    "unitRestrictions": {
+      "type": "object",
+      "properties": {
+        "availableUnits": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "disabledUnits": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "startingUnits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unitType": { "type": "string" },
+              "count": { "type": "integer" },
+              "position": { "type": "string" }
+            }
+          }
+        },
+        "unitLimits": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "allowAllUnits": { "type": "boolean", "default": true }
+      }
+    },
+
+    "buildingRestrictions": {
+      "type": "object",
+      "properties": {
+        "availableBuildings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "disabledBuildings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "startingBuildings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "buildingType": { "type": "string" },
+              "position": { "type": "string" }
+            }
+          }
+        },
+        "buildingLimits": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "allowAllBuildings": { "type": "boolean", "default": true }
+      }
+    },
+
+    "techRestrictions": {
+      "type": "object",
+      "properties": {
+        "availableTech": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "disabledTech": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "preresearchedTech": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "allowAllTech": { "type": "boolean", "default": true }
+      }
+    },
+
+    "missionBriefing": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "storyText": { "type": "string" },
+        "objectiveSummary": { "type": "string" },
+        "tips": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "mapPreviewImage": { "type": "string" },
+        "briefingVoiceover": { "type": "string" },
+        "briefingMusic": { "type": "string" },
+        "intelReports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "text": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "missionDebriefing": {
+      "type": "object",
+      "properties": {
+        "victoryTitle": { "type": "string" },
+        "victoryText": { "type": "string" },
+        "defeatTitle": { "type": "string" },
+        "defeatText": { "type": "string" },
+        "victoryVoiceover": { "type": "string" },
+        "defeatVoiceover": { "type": "string" },
+        "nextMissionTeaser": { "type": "string" }
+      }
+    },
+
+    "aiPlayer": {
+      "type": "object",
+      "properties": {
+        "aiId": { "type": "string" },
+        "faction": { "type": "string" },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "normal", "hard", "brutal"]
+        },
+        "personality": { "type": "string" },
+        "handicap": { "type": "integer" },
+        "startingPosition": { "type": "string" },
+        "resources": { "$ref": "#/definitions/resources" },
+        "isAlly": { "type": "boolean", "default": false },
+        "canBeDefeated": { "type": "boolean", "default": true },
+        "defeatTrigger": { "type": "string" }
+      }
+    },
+
+    "missionRewards": {
+      "type": "object",
+      "properties": {
+        "experienceBase": { "type": "integer", "default": 100 },
+        "experiencePerObjective": { "type": "integer", "default": 25 },
+        "goldBonus": { "type": "integer", "default": 0 },
+        "unlockedMissions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedUnits": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedBuildings": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "unlockedHeroes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "items": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "storyFlags": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" }
+        },
+        "achievement": { "type": "string" }
+      }
+    },
+
+    "missionCinematics": {
+      "type": "object",
+      "properties": {
+        "introCinematic": { "type": "string" },
+        "outroCinematic": { "type": "string" },
+        "defeatCinematic": { "type": "string" },
+        "inMissionCinematics": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "missionScripts": {
+      "type": "object",
+      "properties": {
+        "initScript": { "type": "string" },
+        "updateScript": { "type": "string" },
+        "victoryScript": { "type": "string" },
+        "defeatScript": { "type": "string" }
+      }
+    },
+
+    "missionAudio": {
+      "type": "object",
+      "properties": {
+        "ambientMusic": { "type": "string" },
+        "combatMusic": { "type": "string" },
+        "victoryMusic": { "type": "string" },
+        "defeatMusic": { "type": "string" }
+      }
+    },
+
+    "missionUI": {
+      "type": "object",
+      "properties": {
+        "thumbnailImage": { "type": "string" },
+        "loadingScreenImage": { "type": "string" },
+        "loadingScreenTip": { "type": "string" },
+        "showMinimap": { "type": "boolean", "default": true },
+        "allowSave": { "type": "boolean", "default": true },
+        "allowPause": { "type": "boolean", "default": true }
+      }
+    },
+
+    "missionUnlock": {
+      "type": "object",
+      "properties": {
+        "prerequisiteMissions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requiredFlags": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" }
+        },
+        "requiredCompletions": { "type": "integer", "default": 0 }
+      }
+    }
+  }
+}

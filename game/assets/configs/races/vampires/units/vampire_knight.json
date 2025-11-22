@@ -1,0 +1,203 @@
+{
+  "id": "vampire_knight",
+  "name": "Vampire Knight",
+  "race": "vampires",
+  "tier": 2,
+  "type": "cavalry",
+  "role": ["heavy_melee", "tank", "charge"],
+
+  "description": "Armored vampire warriors mounted on nightmarish steeds. Their mounts can transform into bat swarms for mobility.",
+  "lore": "The Knights of the Blood Court were once mortal champions who accepted the dark gift in exchange for eternal service. They ride Nightmare steeds - horses corrupted by vampire blood into tireless undead chargers.",
+
+  "stats": {
+    "health": 650,
+    "healthRegen": 1.0,
+    "mana": 100,
+    "manaRegen": 0.5,
+    "armor": 4,
+    "armorType": "heavy",
+    "moveSpeed": 340,
+    "turnRate": 0.5,
+    "collisionSize": 48,
+    "selectionScale": 1.3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 22,
+      "variance": 4,
+      "type": "normal"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.4,
+    "acquisitionRange": 500,
+    "aggroRange": 400,
+    "lifeSteal": 0.20,
+    "chargeBonus": {
+      "enabled": true,
+      "bonusDamage": 15,
+      "chargeDistance": 300
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "armorBonus": 2,
+      "lifeStealBonus": 0.1
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "armorPenalty": 1
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "mounted_charge",
+      "name": "Mounted Charge",
+      "type": "passive",
+      "description": "Deals 15 bonus damage when attacking after moving at least 300 units",
+      "effects": {
+        "bonusDamage": 15,
+        "minimumDistance": 300
+      },
+      "icon": "icons/abilities/mounted_charge.png"
+    },
+    {
+      "id": "nightmare_transform",
+      "name": "Nightmare Transform",
+      "type": "active",
+      "targetType": "self",
+      "description": "Transform mount into a swarm of bats, gaining flying movement for 8 seconds",
+      "cooldown": 30,
+      "manaCost": 50,
+      "bloodCost": 10,
+      "effects": {
+        "duration": 8.0,
+        "becomesFlying": true,
+        "speedBonus": 0.3,
+        "cannotAttack": false,
+        "reducedArmor": 2
+      },
+      "hotkey": "T",
+      "icon": "icons/abilities/nightmare_transform.png"
+    },
+    {
+      "id": "blood_lance",
+      "name": "Blood Lance",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Thrust with a lance of crystallized blood, dealing damage and healing self",
+      "cooldown": 15,
+      "manaCost": 40,
+      "effects": {
+        "damage": 80,
+        "healPercent": 0.5,
+        "range": 200
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/blood_lance.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "stable_of_nightmares",
+    "buildTime": 35,
+    "cost": {
+      "gold": 280,
+      "lumber": 60,
+      "blood": 20
+    },
+    "foodCost": 4,
+    "prerequisites": {
+      "buildings": ["stable_of_nightmares", "blood_castle"],
+      "technologies": [],
+      "age": "noble"
+    },
+    "hotkey": "K"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "crimson_weapons"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "night_armor"
+    },
+    "special": ["improved_charge", "extended_transform", "blood_lance_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/vampire_knight/ready.ogg",
+    "select": ["audio/units/vampire_knight/select1.ogg", "audio/units/vampire_knight/select2.ogg"],
+    "move": ["audio/units/vampire_knight/move1.ogg", "audio/units/vampire_knight/move2.ogg"],
+    "attack": ["audio/units/vampire_knight/attack1.ogg", "audio/units/vampire_knight/attack2.ogg"],
+    "death": "audio/units/vampire_knight/death.ogg",
+    "transform": "audio/units/vampire_knight/transform.ogg",
+    "charge": "audio/units/vampire_knight/charge.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/vampire_knight.glb",
+    "texture": "textures/units/vampires/vampire_knight.png",
+    "portrait": "textures/portraits/vampire_knight.png",
+    "icon": "textures/icons/vampire_knight.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "knight_idle",
+      "walk": "knight_walk",
+      "run": "knight_run",
+      "attack": "knight_attack",
+      "death": "knight_death",
+      "transform": "knight_transform",
+      "fly": "knight_fly"
+    },
+    "effects": {
+      "spawn": "effects/vampire_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "transform": "effects/bat_transform.vfx",
+      "charge": "effects/charge_trail.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.1,
+    "preferredTargets": ["ranged", "caster", "siege"],
+    "useChargeOnEngagement": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isMounted": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 35,
+    "experience": 45,
+    "blood": 0
+  },
+
+  "pointValue": 4,
+  "supplyProvided": 0,
+  "supplyUsed": 4
+}

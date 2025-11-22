@@ -1,0 +1,153 @@
+{
+  "id": "sentinel",
+  "name": "Sentinel",
+  "display_name": "Sentinel",
+  "description": "Heavy infantry equipped with reinforced plasma shields and hardened armor. Sentinels serve as the bulwark of Collective forces, absorbing punishment that would destroy lesser warriors while maintaining suppressive fire.",
+  "race": "aliens",
+  "tier": 2,
+  "unit_type": "infantry",
+  "classification": ["biological", "psionic", "armored", "ranged"],
+
+  "stats": {
+    "health": 125,
+    "health_regen": 0,
+    "shield": 125,
+    "shield_regen": 2.5,
+    "shield_regen_delay": 8.0,
+    "armor": 2,
+    "shield_armor": 1,
+    "move_speed": 2.75,
+    "acceleration": 999,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 18,
+    "attack_bonus_damage": 0,
+    "attack_speed": 1.65,
+    "attack_range": 5,
+    "attack_type": "ranged",
+    "damage_type": "normal",
+    "targets": ["ground"],
+    "projectile": {
+      "speed": 15,
+      "model": "fx_plasma_bolt"
+    },
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  "production": {
+    "build_time": 45,
+    "warp_time": 35,
+    "supply_cost": 3,
+    "resource_cost": {
+      "minerals": 175,
+      "vespene": 75
+    },
+    "power_cost": 0,
+    "produced_at": "gateway",
+    "warp_at": "warp_gate",
+    "requirements": ["cybernetics_bay"],
+    "hotkey": "N"
+  },
+
+  "abilities": [
+    {
+      "id": "guardian_shell",
+      "name": "Guardian Shell",
+      "description": "Activates an energy barrier that absorbs 100 damage but immobilizes the Sentinel for the duration.",
+      "type": "active",
+      "cooldown": 30.0,
+      "duration": 4.0,
+      "damage_absorbed": 100,
+      "hotkey": "G"
+    },
+    {
+      "id": "resonating_shields",
+      "name": "Resonating Shields",
+      "description": "When shields are broken, releases a psionic pulse that damages nearby enemies.",
+      "type": "passive",
+      "pulse_damage": 30,
+      "pulse_radius": 2.0,
+      "requires_upgrade": "resonating_shields_upgrade",
+      "unlocked_default": false
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "resonating_shields_upgrade",
+      "name": "Resonating Shields",
+      "description": "Sentinel shields release a damage pulse when broken",
+      "researched_at": "cybernetics_bay",
+      "cost": {
+        "minerals": 150,
+        "vespene": 150
+      },
+      "research_time": 110
+    }
+  ],
+
+  "attributes": {
+    "is_biological": true,
+    "is_psionic": true,
+    "is_armored": true,
+    "is_light": false,
+    "is_massive": false,
+    "cargo_size": 2,
+    "can_be_warped": true
+  },
+
+  "sight": {
+    "vision_range": 9,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 20,
+    "selection_radius": 0.8,
+    "target_radius": 0.625
+  },
+
+  "visuals": {
+    "model": "models/aliens/sentinel.fbx",
+    "texture": "textures/aliens/sentinel.png",
+    "icon": "icons/aliens/sentinel.png",
+    "wireframe": "wireframes/aliens/sentinel.png",
+    "portrait": "portraits/aliens/sentinel.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "guardian_shell": "anim_shell",
+      "death": "anim_death"
+    },
+    "effects": {
+      "guardian_shell": "fx_guardian_shell",
+      "resonating_pulse": "fx_resonating_pulse",
+      "shields": "fx_heavy_shield"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/sentinel_ready.ogg",
+    "selected": ["audio/aliens/sentinel_select1.ogg", "audio/aliens/sentinel_select2.ogg"],
+    "command": ["audio/aliens/sentinel_command1.ogg", "audio/aliens/sentinel_command2.ogg"],
+    "attack": "audio/aliens/sentinel_attack.ogg",
+    "death": "audio/aliens/sentinel_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "tank",
+    "priority_targets": [],
+    "flee_when_attacked": false,
+    "micro_level": "medium",
+    "preferred_formation": "front",
+    "protect_units": ["psi_adept", "stalker"]
+  }
+}

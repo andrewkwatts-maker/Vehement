@@ -1,0 +1,173 @@
+{
+    "id": "fairy_trickster",
+    "type": "hero",
+    "race": "fairies",
+    "name": "Trickster",
+    "title": "Master of Illusions",
+    "class": "illusionist",
+    "primary_attribute": "agility",
+    "description": "A mischievous fae who has mastered the art of illusion. The Trickster creates copies of himself and allies, confuses enemies, and can turn invisible at will.",
+    "lore": "Puck the Trickster is the most infamous jester of the Fae Court. What appears as playful mischief often masks deadly intent. None can tell which Puck is real until it's too late.",
+
+    "base_stats": {
+        "health": 480,
+        "mana": 450,
+        "damage": 35,
+        "armor": 4,
+        "magic_resist": 30,
+        "move_speed": 5.8,
+        "turn_rate": 0.8,
+        "attack_range": 1.5,
+        "attack_speed": 1.3,
+        "health_regen": 1.8,
+        "mana_regen": 3.5,
+        "strength": 18,
+        "agility": 32,
+        "intelligence": 22,
+        "day_vision": 16,
+        "night_vision": 18
+    },
+
+    "stat_growth": {
+        "health_per_level": 50,
+        "mana_per_level": 45,
+        "damage_per_level": 3.2,
+        "armor_per_level": 0.35,
+        "strength_per_level": 1.8,
+        "agility_per_level": 3.5,
+        "intelligence_per_level": 2.2,
+        "health_regen_per_level": 0.15,
+        "mana_regen_per_level": 0.25
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_mirror_image_hero",
+            "name": "Mirror Image",
+            "description": "Create illusory copies of the Trickster that deal reduced damage but can confuse enemies.",
+            "max_level": 4,
+            "hotkey": "Q",
+            "cooldown": [20, 18, 16, 14],
+            "mana_cost": [70, 80, 90, 100],
+            "illusion_count": [2, 2, 3, 3],
+            "illusion_duration": [30, 40, 50, 60],
+            "effects": [
+                {"type": "create_illusions", "count": [2, 2, 3, 3], "duration": [30, 40, 50, 60]},
+                {"type": "illusion_damage_dealt", "value": [0.20, 0.25, 0.30, 0.35]},
+                {"type": "illusion_damage_taken", "value": [3.0, 2.5, 2.0, 1.75]},
+                {"type": "dispel_on_cast", "target": "self"}
+            ]
+        },
+        {
+            "slot": 2,
+            "id": "ability_confusion_hero",
+            "name": "Confusion",
+            "description": "Confuse enemies in an area, causing them to attack random targets including allies.",
+            "max_level": 4,
+            "hotkey": "W",
+            "cooldown": [25, 22, 19, 16],
+            "mana_cost": [100, 110, 120, 130],
+            "range": 12.0,
+            "radius": [4, 5, 6, 7],
+            "duration": [5, 6, 7, 8],
+            "effects": [
+                {"type": "confusion", "value": true},
+                {"type": "attack_random", "include_allies": true}
+            ]
+        },
+        {
+            "slot": 3,
+            "id": "ability_invisibility_hero",
+            "name": "Vanish",
+            "description": "Turn invisible and gain bonus movement speed. Attacking breaks invisibility with bonus damage.",
+            "max_level": 4,
+            "hotkey": "E",
+            "cooldown": [18, 16, 14, 12],
+            "mana_cost": [50, 50, 50, 50],
+            "duration": [20, 30, 40, 50],
+            "effects": [
+                {"type": "invisibility", "value": true},
+                {"type": "move_speed_bonus", "value": [0.15, 0.20, 0.25, 0.30]},
+                {"type": "stealth_attack_bonus", "value": [1.25, 1.50, 1.75, 2.00]}
+            ]
+        },
+        {
+            "slot": 4,
+            "id": "ability_mass_illusion_hero",
+            "name": "Mass Illusion",
+            "description": "Create illusory copies of all nearby friendly units, sowing chaos among enemies.",
+            "ultimate": true,
+            "unlock_level": 6,
+            "max_level": 3,
+            "hotkey": "R",
+            "cooldown": [100, 85, 70],
+            "mana_cost": [175, 225, 275],
+            "radius": [12, 15, 18],
+            "effects": [
+                {"type": "create_illusions_of_all", "count_per_unit": [1, 1, 2], "duration": [30, 40, 50]},
+                {"type": "illusion_damage_dealt", "value": [0.25, 0.30, 0.35]},
+                {"type": "illusion_damage_taken", "value": [2.5, 2.0, 1.75]}
+            ]
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_mirror_critical", "talent_mirror_permanent"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_confusion_fear", "talent_confusion_damage"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_vanish_phase", "talent_vanish_stun"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_mass_illusion_army", "talent_mass_illusion_real_damage"]}
+    ],
+
+    "passive": {
+        "id": "passive_evasion_trickster",
+        "name": "Elusive",
+        "description": "The Trickster has a chance to evade attacks",
+        "evasion_chance": 0.20
+    },
+
+    "night_bonus": {
+        "evasion": 0.15,
+        "moveSpeed": 0.20,
+        "illusion_damage": 0.25,
+        "stealth_bonus": 0.30
+    },
+
+    "visuals": {
+        "model": "models/races/fairies/heroes/trickster.obj",
+        "skeleton": "models/races/fairies/heroes/trickster_skeleton.skl",
+        "portrait": "textures/races/fairies/portraits/trickster.png",
+        "icon": "textures/races/fairies/icons/trickster.png",
+        "minimap_icon": "textures/minimap/trickster.png",
+        "animation_set": "animations/fairies/heroes/trickster",
+        "scale": 0.95,
+        "attack_effect": "effects/fae_blade.fx",
+        "cast_effect": "effects/illusion_cast.fx",
+        "death_effect": "effects/hero_death_nature.fx",
+        "respawn_effect": "effects/trickster_respawn.fx"
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/heroes/trickster/select_1.wav", "sounds/fairies/heroes/trickster/select_2.wav"],
+        "move": ["sounds/fairies/heroes/trickster/move_1.wav", "sounds/fairies/heroes/trickster/move_2.wav"],
+        "attack": "sounds/fairies/heroes/trickster/attack.wav",
+        "ability_q": "sounds/abilities/mirror_image.wav",
+        "ability_w": "sounds/abilities/confusion.wav",
+        "ability_e": "sounds/abilities/vanish.wav",
+        "ability_r": "sounds/abilities/mass_illusion.wav",
+        "death": "sounds/fairies/heroes/trickster/death.wav",
+        "respawn": "sounds/fairies/heroes/trickster/respawn.wav"
+    },
+
+    "tags": ["melee", "agility", "escape", "disabler", "illusion"],
+
+    "properties": {
+        "attack_type": "melee",
+        "complexity": 3,
+        "roles": ["escape", "disabler", "carry"],
+        "summon_building": "fairy_altar_of_elders",
+        "summon_cost": {"gold": 500},
+        "respawn_time_base": 50,
+        "respawn_time_per_level": 4
+    }
+}

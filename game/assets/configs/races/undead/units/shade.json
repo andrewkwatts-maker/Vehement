@@ -1,0 +1,185 @@
+{
+  "id": "shade",
+  "name": "Shade",
+  "race": "undead",
+  "tier": 2,
+  "type": "scout",
+  "role": ["scout", "detector", "spy"],
+
+  "description": "Invisible spectral scouts that cannot attack but excel at reconnaissance and detecting hidden enemies.",
+  "lore": "The tormented souls of the damned, shades drift silently through the world of the living. Though they cannot harm the living directly, their keen senses pierce all concealment.",
+
+  "stats": {
+    "health": 125,
+    "healthRegen": 0.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 0,
+    "armorType": "unarmored",
+    "moveSpeed": 350,
+    "turnRate": 1.0,
+    "collisionSize": 24,
+    "selectionScale": 0.8
+  },
+
+  "combat": {
+    "canAttack": false,
+    "attackDamage": {
+      "base": 0,
+      "variance": 0,
+      "type": "none"
+    },
+    "attackSpeed": 0,
+    "attackRange": 0,
+    "attackType": "none",
+    "targets": []
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassUnits": true,
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "permanent_invisibility",
+      "name": "Permanent Invisibility",
+      "type": "passive",
+      "description": "The Shade is permanently invisible unless revealed by detection abilities",
+      "effects": {
+        "invisible": true,
+        "fadeTime": 0,
+        "breakOnAttack": false
+      },
+      "icon": "icons/abilities/permanent_invisibility.png"
+    },
+    {
+      "id": "true_sight",
+      "name": "True Sight",
+      "type": "passive",
+      "description": "Reveals invisible units within range",
+      "effects": {
+        "detectionRadius": 700,
+        "revealsInvisible": true,
+        "revealsBurrowed": true
+      },
+      "icon": "icons/abilities/true_sight.png"
+    },
+    {
+      "id": "spirit_walk",
+      "name": "Spirit Walk",
+      "type": "active",
+      "requiresResearch": "spirit_walk_upgrade",
+      "description": "Briefly become invulnerable and increase movement speed",
+      "cooldown": 30.0,
+      "manaCost": 0,
+      "effects": {
+        "invulnerable": true,
+        "moveSpeedBonus": 100,
+        "duration": 5.0
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/spirit_walk.png"
+    }
+  ],
+
+  "vision": {
+    "dayRange": 1400,
+    "nightRange": 1200,
+    "shareVision": true
+  },
+
+  "production": {
+    "producedAt": "sacrificial_pit",
+    "buildTime": 15,
+    "cost": {
+      "gold": 75,
+      "lumber": 0,
+      "corpses": 0
+    },
+    "foodCost": 1,
+    "prerequisites": {
+      "buildings": ["sacrificial_pit"],
+      "technologies": [],
+      "age": "crypt"
+    },
+    "hotkey": "S"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 0,
+      "maxLevel": 0,
+      "researchId": null
+    },
+    "armor": {
+      "perLevel": 0,
+      "maxLevel": 0,
+      "researchId": null
+    },
+    "special": ["spirit_walk_upgrade", "shade_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/shade/ready.ogg",
+    "select": ["audio/units/shade/select1.ogg", "audio/units/shade/select2.ogg"],
+    "move": ["audio/units/shade/move1.ogg", "audio/units/shade/move2.ogg"],
+    "death": "audio/units/shade/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/shade.glb",
+    "texture": "textures/units/undead/shade.png",
+    "portrait": "textures/portraits/shade.png",
+    "icon": "textures/icons/shade.png",
+    "scale": 0.9,
+    "opacity": 0.4,
+    "animations": {
+      "idle": "shade_idle",
+      "walk": "shade_float",
+      "death": "shade_death"
+    },
+    "effects": {
+      "spawn": "effects/spectral_spawn.vfx",
+      "death": "effects/shade_dissipate.vfx",
+      "detected": "effects/revealed.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 0,
+    "priority": "very_low",
+    "behavior": "scout",
+    "fleeThreshold": 0.5,
+    "preferredTargets": [],
+    "scoutBehavior": true,
+    "avoidCombat": true,
+    "prioritizeDetection": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isInvisible": true,
+    "isDetector": true,
+    "cannotAttack": true,
+    "isEthereal": true
+  },
+
+  "bounty": {
+    "gold": 8,
+    "experience": 10
+  },
+
+  "pointValue": 0.5,
+  "supplyProvided": 0,
+  "supplyUsed": 1
+}

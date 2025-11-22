@@ -244,17 +244,25 @@
         "model": {
           "$ref": "common.schema.json#/definitions/assetPath"
         },
+        "skeleton": {
+          "type": "string",
+          "description": "Skeleton definition ID for this unit"
+        },
+        "animationController": {
+          "type": "string",
+          "description": "Animation controller/state machine ID"
+        },
+        "animationSet": {
+          "$ref": "#/definitions/animationSetConfig",
+          "description": "Animation set mapping states to clips"
+        },
         "animations": {
-          "type": "object",
-          "properties": {
-            "idle": { "type": "string" },
-            "walk": { "type": "string" },
-            "run": { "type": "string" },
-            "attack": { "type": "string" },
-            "death": { "type": "string" },
-            "hit": { "type": "string" },
-            "special": { "type": "string" }
-          }
+          "$ref": "#/definitions/animationMappings",
+          "description": "Direct animation clip mappings (legacy support)"
+        },
+        "blendTree": {
+          "type": "string",
+          "description": "Locomotion blend tree ID"
         },
         "scale": {
           "type": "number",
@@ -274,6 +282,203 @@
             "offset": { "$ref": "common.schema.json#/definitions/vector3" },
             "color": { "$ref": "common.schema.json#/definitions/color" }
           }
+        }
+      }
+    },
+
+    "animationSetConfig": {
+      "type": "object",
+      "description": "Maps animation states to clip configurations",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Animation set identifier"
+        },
+        "clips": {
+          "type": "object",
+          "description": "State name to animation clip mapping",
+          "additionalProperties": {
+            "$ref": "#/definitions/animationClipRef"
+          }
+        },
+        "locomotion": {
+          "$ref": "#/definitions/locomotionConfig",
+          "description": "Locomotion blend configuration"
+        },
+        "combatOverrides": {
+          "$ref": "#/definitions/combatAnimationOverrides",
+          "description": "Combat-specific animation overrides"
+        }
+      }
+    },
+
+    "animationClipRef": {
+      "type": "object",
+      "description": "Reference to an animation clip with playback settings",
+      "properties": {
+        "clip": {
+          "type": "string",
+          "description": "Animation clip ID (e.g., anim_idle, anim_walk)"
+        },
+        "file": {
+          "type": "string",
+          "description": "Direct file path to animation (alternative to clip ID)"
+        },
+        "speed": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Playback speed multiplier"
+        },
+        "loop": {
+          "type": "boolean",
+          "description": "Override clip's loop setting"
+        },
+        "blendIn": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Blend-in duration in seconds"
+        },
+        "blendOut": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Blend-out duration in seconds"
+        },
+        "mirror": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mirror the animation"
+        },
+        "layer": {
+          "type": "integer",
+          "default": 0,
+          "description": "Animation layer for blending"
+        },
+        "mask": {
+          "type": "string",
+          "description": "Bone mask ID for partial body animations"
+        },
+        "rootMotion": {
+          "type": "boolean",
+          "description": "Override root motion setting"
+        }
+      }
+    },
+
+    "animationMappings": {
+      "type": "object",
+      "description": "Standard animation state mappings",
+      "properties": {
+        "idle": { "$ref": "#/definitions/animationClipRef" },
+        "idleVariants": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationClipRef" },
+          "description": "Random idle variations"
+        },
+        "walk": { "$ref": "#/definitions/animationClipRef" },
+        "walkBackward": { "$ref": "#/definitions/animationClipRef" },
+        "walkLeft": { "$ref": "#/definitions/animationClipRef" },
+        "walkRight": { "$ref": "#/definitions/animationClipRef" },
+        "run": { "$ref": "#/definitions/animationClipRef" },
+        "sprint": { "$ref": "#/definitions/animationClipRef" },
+        "jump": { "$ref": "#/definitions/animationClipRef" },
+        "jumpLand": { "$ref": "#/definitions/animationClipRef" },
+        "fall": { "$ref": "#/definitions/animationClipRef" },
+        "attackMelee": { "$ref": "#/definitions/animationClipRef" },
+        "attackMeleeCombo": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationClipRef" },
+          "description": "Melee combo sequence"
+        },
+        "attackRanged": { "$ref": "#/definitions/animationClipRef" },
+        "attackSpecial": { "$ref": "#/definitions/animationClipRef" },
+        "castSpell": { "$ref": "#/definitions/animationClipRef" },
+        "block": { "$ref": "#/definitions/animationClipRef" },
+        "parry": { "$ref": "#/definitions/animationClipRef" },
+        "dodge": { "$ref": "#/definitions/animationClipRef" },
+        "hit": { "$ref": "#/definitions/animationClipRef" },
+        "hitVariants": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationClipRef" }
+        },
+        "stagger": { "$ref": "#/definitions/animationClipRef" },
+        "knockdown": { "$ref": "#/definitions/animationClipRef" },
+        "getUp": { "$ref": "#/definitions/animationClipRef" },
+        "death": { "$ref": "#/definitions/animationClipRef" },
+        "deathVariants": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/animationClipRef" }
+        },
+        "spawn": { "$ref": "#/definitions/animationClipRef" },
+        "interact": { "$ref": "#/definitions/animationClipRef" },
+        "emotes": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/animationClipRef" },
+          "description": "Named emote animations"
+        },
+        "additionalClips": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/animationClipRef" },
+          "description": "Custom named animations"
+        }
+      }
+    },
+
+    "locomotionConfig": {
+      "type": "object",
+      "description": "Locomotion blend configuration",
+      "properties": {
+        "type": {
+          "enum": ["simple", "blendTree1D", "blendTree2D", "strafe"],
+          "default": "simple",
+          "description": "Locomotion blending mode"
+        },
+        "blendTree": {
+          "type": "string",
+          "description": "Reference to blend tree configuration"
+        },
+        "speedThresholds": {
+          "type": "object",
+          "properties": {
+            "walk": { "type": "number", "default": 0.1 },
+            "run": { "type": "number", "default": 3.0 },
+            "sprint": { "type": "number", "default": 6.0 }
+          }
+        },
+        "turnAnimation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable turn-in-place animations"
+        },
+        "footIK": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable foot IK for terrain adaptation"
+        }
+      }
+    },
+
+    "combatAnimationOverrides": {
+      "type": "object",
+      "description": "Combat state animation overrides",
+      "properties": {
+        "weaponType": {
+          "type": "object",
+          "description": "Animations per weapon type",
+          "additionalProperties": {
+            "$ref": "#/definitions/animationMappings"
+          }
+        },
+        "stanceOverrides": {
+          "type": "object",
+          "description": "Animations per combat stance",
+          "additionalProperties": {
+            "$ref": "#/definitions/animationMappings"
+          }
+        },
+        "upperBodyLayer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play combat anims on upper body layer"
         }
       }
     },

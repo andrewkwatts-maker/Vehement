@@ -1,0 +1,120 @@
+{
+    "id": "human_blacksmith",
+    "type": "building",
+    "race": "humans",
+    "name": "Blacksmith",
+    "description": "Forge for weapons and armor. Research upgrades to improve all military units.",
+
+    "tags": ["economy", "research", "upgrade"],
+
+    "tier": 1,
+    "age_requirement": 2,
+
+    "model": {
+        "path": "models/races/humans/buildings/blacksmith.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/blacksmith_diffuse.png",
+        "normal": "textures/races/humans/buildings/blacksmith_normal.png"
+    },
+
+    "footprint": {
+        "size": [3, 2],
+        "entrances": [[1, 0]],
+        "visualSize": [7.0, 5.0, 5.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 200,
+            "wood": 100
+        },
+        "time": 50.0
+    },
+
+    "stats": {
+        "maxHealth": 800,
+        "armor": 8,
+        "magicResist": 5
+    },
+
+    "researches": [
+        {
+            "id": "upgrade_iron_forged_swords",
+            "name": "Iron Forged Swords",
+            "description": "+3 attack damage for melee units",
+            "cost": {"gold": 150, "wood": 50},
+            "time": 60.0,
+            "effects": [{"stat": "attackDamage", "value": 3, "scope": "melee", "type": "flat"}]
+        },
+        {
+            "id": "upgrade_steel_forged_swords",
+            "name": "Steel Forged Swords",
+            "description": "+3 attack damage for melee units",
+            "cost": {"gold": 250, "wood": 75},
+            "time": 75.0,
+            "prerequisites": ["upgrade_iron_forged_swords"],
+            "effects": [{"stat": "attackDamage", "value": 3, "scope": "melee", "type": "flat"}]
+        },
+        {
+            "id": "upgrade_mithril_forged_swords",
+            "name": "Mithril Forged Swords",
+            "description": "+4 attack damage for melee units",
+            "cost": {"gold": 400, "wood": 100},
+            "time": 90.0,
+            "prerequisites": ["upgrade_steel_forged_swords", "human_castle"],
+            "effects": [{"stat": "attackDamage", "value": 4, "scope": "melee", "type": "flat"}]
+        },
+        {
+            "id": "upgrade_iron_plating",
+            "name": "Iron Plating",
+            "description": "+2 armor for all units",
+            "cost": {"gold": 150, "wood": 75},
+            "time": 60.0,
+            "effects": [{"stat": "armor", "value": 2, "scope": "all_units", "type": "flat"}]
+        },
+        {
+            "id": "upgrade_steel_plating",
+            "name": "Steel Plating",
+            "description": "+2 armor for all units",
+            "cost": {"gold": 250, "wood": 100},
+            "time": 75.0,
+            "prerequisites": ["upgrade_iron_plating"],
+            "effects": [{"stat": "armor", "value": 2, "scope": "all_units", "type": "flat"}]
+        },
+        {
+            "id": "upgrade_mithril_plating",
+            "name": "Mithril Plating",
+            "description": "+3 armor for all units",
+            "cost": {"gold": 400, "wood": 150},
+            "time": 90.0,
+            "prerequisites": ["upgrade_steel_plating", "human_castle"],
+            "effects": [{"stat": "armor", "value": 3, "scope": "all_units", "type": "flat"}]
+        },
+        {
+            "id": "upgrade_improved_ranged",
+            "name": "Improved Bows",
+            "description": "+2 attack damage for ranged units",
+            "cost": {"gold": 175, "wood": 100},
+            "time": 65.0,
+            "effects": [{"stat": "attackDamage", "value": 2, "scope": "ranged", "type": "flat"}]
+        }
+    ],
+
+    "visionRange": 8.0,
+
+    "requirements": {
+        "buildings": ["human_town_hall"]
+    },
+
+    "unique": true,
+    "maxCount": 1,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/blacksmith.png",
+        "icon": "textures/races/humans/icons/buildings/blacksmith.png",
+        "hotkey": "F"
+    }
+}

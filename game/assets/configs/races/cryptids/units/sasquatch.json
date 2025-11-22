@@ -1,0 +1,216 @@
+{
+  "id": "sasquatch",
+  "name": "Sasquatch",
+  "race": "cryptids",
+  "tier": 3,
+  "type": "heavy_melee",
+  "role": ["tank", "siege", "crowd_control"],
+
+  "description": "The legendary Bigfoot - a towering, powerful primate that can withstand tremendous punishment and hurl boulders at distant enemies.",
+  "lore": "For centuries, humans have glimpsed these massive creatures in the wilderness. Incredibly strong yet surprisingly intelligent, the Sasquatch are the muscle of the Hidden Ones, capable of tearing through fortifications with their bare hands.",
+
+  "stats": {
+    "health": 1200,
+    "healthRegen": 3.0,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 6,
+    "armorType": "heavy",
+    "moveSpeed": 260,
+    "turnRate": 0.5,
+    "collisionSize": 48,
+    "selectionScale": 1.4
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 40,
+      "variance": 8,
+      "type": "siege"
+    },
+    "attackSpeed": 1.8,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.6,
+    "backswing": 0.6,
+    "acquisitionRange": 500,
+    "aggroRange": 400,
+    "cleave": 0.4,
+    "buildingBonus": 2.0
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "rock_throw",
+      "name": "Rock Throw",
+      "type": "active",
+      "targetType": "point",
+      "description": "Hurls a massive boulder at a target area, dealing damage and stunning enemies",
+      "cooldown": 15.0,
+      "manaCost": 0,
+      "range": 700,
+      "effects": {
+        "damage": 100,
+        "radius": 150,
+        "stunDuration": 1.5,
+        "buildingDamage": 200
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/rock_throw.png"
+    },
+    {
+      "id": "ground_pound",
+      "name": "Ground Pound",
+      "type": "active",
+      "targetType": "none",
+      "description": "Slams the ground, damaging and slowing nearby enemies",
+      "cooldown": 12.0,
+      "manaCost": 0,
+      "effects": {
+        "radius": 300,
+        "damage": 60,
+        "slowPercent": 0.5,
+        "slowDuration": 4.0
+      },
+      "hotkey": "G",
+      "icon": "icons/abilities/ground_pound.png"
+    },
+    {
+      "id": "intimidating_roar",
+      "name": "Intimidating Roar",
+      "type": "active",
+      "targetType": "none",
+      "description": "Releases a terrifying roar that causes nearby enemies to flee",
+      "cooldown": 30.0,
+      "manaCost": 0,
+      "effects": {
+        "radius": 400,
+        "fearDuration": 3.0,
+        "armorReduction": 3
+      },
+      "hotkey": "I",
+      "icon": "icons/abilities/intimidating_roar.png"
+    },
+    {
+      "id": "thick_fur",
+      "name": "Thick Fur",
+      "type": "passive",
+      "description": "Reduces damage from ranged attacks and provides cold resistance",
+      "effects": {
+        "rangedDamageReduction": 0.2,
+        "coldResistance": 0.5
+      },
+      "icon": "icons/abilities/thick_fur.png"
+    },
+    {
+      "id": "siege_fists",
+      "name": "Siege Fists",
+      "type": "passive",
+      "description": "Deals double damage to buildings",
+      "effects": {
+        "buildingDamageMultiplier": 2.0
+      },
+      "icon": "icons/abilities/siege_fists.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "breeding_pit",
+    "buildTime": 50,
+    "cost": {
+      "gold": 350,
+      "lumber": 60,
+      "essence": 35
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["breeding_pit", "nexus_of_fear"],
+      "technologies": [],
+      "age": "myth"
+    },
+    "hotkey": "S"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 4,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["hardened_knuckles", "mountain_strength", "primordial_might"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/sasquatch/ready.ogg",
+    "select": ["audio/units/sasquatch/select1.ogg", "audio/units/sasquatch/select2.ogg"],
+    "move": ["audio/units/sasquatch/move1.ogg", "audio/units/sasquatch/move2.ogg"],
+    "attack": ["audio/units/sasquatch/attack1.ogg", "audio/units/sasquatch/attack2.ogg"],
+    "death": "audio/units/sasquatch/death.ogg",
+    "roar": "audio/units/sasquatch/roar.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/sasquatch.glb",
+    "texture": "textures/units/cryptids/sasquatch.png",
+    "portrait": "textures/portraits/sasquatch.png",
+    "icon": "textures/icons/sasquatch.png",
+    "scale": 1.4,
+    "animations": {
+      "idle": "sasquatch_idle",
+      "walk": "sasquatch_walk",
+      "attack": "sasquatch_attack",
+      "death": "sasquatch_death",
+      "throw": "sasquatch_throw",
+      "pound": "sasquatch_pound",
+      "roar": "sasquatch_roar"
+    },
+    "effects": {
+      "spawn": "effects/sasquatch_spawn.vfx",
+      "death": "effects/sasquatch_death.vfx",
+      "rock_impact": "effects/rock_impact.vfx",
+      "ground_pound": "effects/ground_pound.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 7,
+    "priority": "high",
+    "behavior": "siege_tank",
+    "fleeThreshold": 0.15,
+    "preferredTargets": ["building", "siege", "tank"],
+    "useRoarDefensively": true,
+    "prioritizeBuildings": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": true,
+    "leavesCorpse": true,
+    "isBeast": true,
+    "isHeavy": true,
+    "causesFear": true,
+    "siegeDamage": true
+  },
+
+  "bounty": {
+    "gold": 55,
+    "experience": 75
+  },
+
+  "pointValue": 5,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

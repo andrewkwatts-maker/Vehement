@@ -1,0 +1,204 @@
+{
+  "id": "bone_colossus",
+  "name": "Bone Colossus",
+  "race": "undead",
+  "tier": 4,
+  "type": "siege",
+  "role": ["siege", "tank", "anti_building"],
+
+  "description": "Massive skeletal constructs built from the bones of giants. These towering siege engines crush buildings and units alike.",
+  "lore": "Assembled from the bones of ancient titans and behemoths, Bone Colossi are walking siege engines. Their thunderous footsteps shake the earth and their fists can topple the mightiest fortifications.",
+
+  "stats": {
+    "health": 2200,
+    "healthRegen": 2.0,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 6,
+    "armorType": "fortified",
+    "moveSpeed": 190,
+    "turnRate": 0.3,
+    "collisionSize": 128,
+    "selectionScale": 2.5
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 95,
+      "variance": 20,
+      "type": "siege",
+      "bonusVsBuildings": 1.0
+    },
+    "attackSpeed": 2.5,
+    "attackRange": 200,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.8,
+    "backswing": 0.6,
+    "acquisitionRange": 400,
+    "aggroRange": 350,
+    "cleave": {
+      "enabled": true,
+      "angle": 180,
+      "distance": 200,
+      "damagePercent": 0.5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "bone_stomp",
+      "name": "Bone Stomp",
+      "type": "active",
+      "targetType": "none",
+      "description": "Slams the ground, dealing damage and stunning nearby enemies",
+      "cooldown": 20.0,
+      "manaCost": 0,
+      "effects": {
+        "damage": 100,
+        "radius": 300,
+        "stunDuration": 2.0,
+        "knockbackDistance": 100
+      },
+      "hotkey": "T",
+      "icon": "icons/abilities/bone_stomp.png"
+    },
+    {
+      "id": "hurl_boulder",
+      "name": "Hurl Boulder",
+      "type": "active",
+      "targetType": "point",
+      "description": "Throws a massive bone projectile at long range",
+      "cooldown": 15.0,
+      "manaCost": 0,
+      "range": 1200,
+      "effects": {
+        "damage": 200,
+        "splashRadius": 150,
+        "bonusVsBuildings": 1.0
+      },
+      "hotkey": "B",
+      "icon": "icons/abilities/hurl_boulder.png"
+    },
+    {
+      "id": "skeletal_resilience",
+      "name": "Skeletal Resilience",
+      "type": "passive",
+      "description": "Regenerates health faster when below 50% HP",
+      "effects": {
+        "healthRegenBonus": 10,
+        "threshold": 0.5
+      },
+      "icon": "icons/abilities/skeletal_resilience.png"
+    },
+    {
+      "id": "crushing_blow",
+      "name": "Crushing Blow",
+      "type": "passive",
+      "requiresResearch": "crushing_blow_upgrade",
+      "description": "Attacks have a chance to deal critical damage to buildings",
+      "effects": {
+        "critChance": 0.2,
+        "critMultiplier": 2.0,
+        "onlyVsBuildings": true
+      }
+    }
+  ],
+
+  "production": {
+    "producedAt": "boneyard",
+    "buildTime": 75,
+    "cost": {
+      "gold": 450,
+      "lumber": 150,
+      "corpses": 4
+    },
+    "foodCost": 8,
+    "prerequisites": {
+      "buildings": ["boneyard", "black_citadel"],
+      "technologies": ["bone_colossus_training"],
+      "age": "apocalypse"
+    },
+    "hotkey": "C"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 8,
+      "maxLevel": 3,
+      "researchId": "creature_attack"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "creature_carapace"
+    },
+    "special": ["crushing_blow_upgrade", "colossus_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/bone_colossus/ready.ogg",
+    "select": ["audio/units/bone_colossus/select1.ogg", "audio/units/bone_colossus/select2.ogg"],
+    "move": ["audio/units/bone_colossus/move1.ogg", "audio/units/bone_colossus/move2.ogg"],
+    "attack": ["audio/units/bone_colossus/attack1.ogg", "audio/units/bone_colossus/attack2.ogg"],
+    "death": "audio/units/bone_colossus/death.ogg",
+    "stomp": "audio/units/bone_colossus/stomp.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/bone_colossus.glb",
+    "texture": "textures/units/undead/bone_colossus.png",
+    "portrait": "textures/portraits/bone_colossus.png",
+    "icon": "textures/icons/bone_colossus.png",
+    "scale": 2.5,
+    "animations": {
+      "idle": "bone_colossus_idle",
+      "walk": "bone_colossus_walk",
+      "attack": "bone_colossus_attack",
+      "death": "bone_colossus_death",
+      "stomp": "bone_colossus_stomp",
+      "throw": "bone_colossus_throw"
+    },
+    "effects": {
+      "spawn": "effects/bone_construct.vfx",
+      "death": "effects/colossus_collapse.vfx",
+      "stomp": "effects/bone_stomp.vfx",
+      "footstep": "effects/heavy_footstep.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 9,
+    "priority": "very_high",
+    "behavior": "siege",
+    "fleeThreshold": 0,
+    "preferredTargets": ["building", "fortification", "tower"],
+    "useStomp": true,
+    "stompWhenSurrounded": true,
+    "attackBuildingsPreference": 0.8
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isSiege": true,
+    "isElite": true,
+    "hasCleave": true,
+    "isGiant": true
+  },
+
+  "bounty": {
+    "gold": 80,
+    "experience": 120
+  },
+
+  "pointValue": 7,
+  "supplyProvided": 0,
+  "supplyUsed": 8
+}

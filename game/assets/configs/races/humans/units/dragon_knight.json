@@ -1,0 +1,209 @@
+{
+    "id": "human_dragon_knight",
+    "type": "unit",
+    "race": "humans",
+    "name": "Dragon Knight",
+    "description": "Legendary warriors who have formed an unbreakable bond with dragons. Together they dominate the skies and rain destruction upon their enemies.",
+
+    "tags": ["military", "flying", "melee", "ranged", "tier4", "heavy", "elite", "dragon"],
+
+    "tier": 4,
+    "age_requirement": 7,
+
+    "model": {
+        "path": "models/races/humans/units/dragon_knight.obj",
+        "scale": [1.2, 1.2, 1.2],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/dragon_knight_diffuse.png",
+        "normal": "textures/races/humans/units/dragon_knight_normal.png",
+        "specular": "textures/races/humans/units/dragon_knight_specular.png",
+        "emissive": "textures/races/humans/units/dragon_knight_emissive.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 1.0,
+                "height": 3.0,
+                "offset": [0.0, 1.5, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 800.0,
+        "layer": "air_unit"
+    },
+
+    "stats": {
+        "health": 1500,
+        "maxHealth": 1500,
+        "healthRegen": 3.0,
+        "armor": 12,
+        "magicResist": 30,
+        "moveSpeed": 8.5,
+        "turnRate": 150.0,
+        "flight_height": 12.0
+    },
+
+    "movement": {
+        "type": "flying",
+        "fly_height": 12.0,
+        "can_land": true,
+        "landing_speed_multiplier": 0.5,
+        "ignore_terrain": true,
+        "ignore_walls": true
+    },
+
+    "combat": {
+        "attackDamage": 55,
+        "attackSpeed": 1.6,
+        "attackRange": 3.0,
+        "damageType": "normal",
+        "armorType": "heavy",
+        "attackType": "melee",
+        "critChance": 0.18,
+        "critMultiplier": 2.0,
+        "can_attack_air": true,
+        "can_attack_ground": true,
+        "splash_damage": 0.40,
+        "splash_radius": 3.0
+    },
+
+    "breath_attack": {
+        "enabled": true,
+        "damage": 80,
+        "range": 8.0,
+        "cone_angle": 60,
+        "damage_type": "fire",
+        "dot_damage": 20,
+        "dot_duration": 4.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_dragon_breath",
+            "name": "Dragon Breath",
+            "description": "Unleash a cone of fire dealing 80 damage plus 20 damage per second for 4 seconds",
+            "hotkey": "Q",
+            "cooldown": 15.0,
+            "range": 8.0,
+            "cone_angle": 60,
+            "damage": 80,
+            "dot_damage": 20,
+            "dot_duration": 4.0,
+            "damage_type": "fire"
+        },
+        {
+            "id": "ability_wing_buffet",
+            "name": "Wing Buffet",
+            "description": "Create a powerful gust that knocks back enemies and stuns them for 2 seconds",
+            "hotkey": "W",
+            "cooldown": 20.0,
+            "radius": 6.0,
+            "knockback": 5.0,
+            "stun_duration": 2.0
+        },
+        {
+            "id": "ability_dive_bomb",
+            "name": "Dive Bomb",
+            "description": "Dive from the sky dealing 200 damage to all enemies in the impact area",
+            "hotkey": "E",
+            "cooldown": 25.0,
+            "range": 25.0,
+            "impact_radius": 4.0,
+            "damage": 200,
+            "stun_duration": 1.5,
+            "requires_flight": true
+        },
+        {
+            "id": "ability_dragons_fury",
+            "name": "Dragon's Fury",
+            "description": "Enter a furious state, gaining 50% attack speed and fire immunity for 10 seconds",
+            "hotkey": "R",
+            "cooldown": 90.0,
+            "duration": 10.0,
+            "effects": [
+                {"stat": "attackSpeed", "value": 0.50, "type": "percent"},
+                {"type": "immunity", "damage_type": "fire"}
+            ]
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_dragon_knight_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 10
+        },
+        {
+            "id": "upgrade_dragon_knight_armor",
+            "stat": "armor",
+            "bonus_per_level": 4
+        },
+        {
+            "id": "upgrade_dragon_knight_breath",
+            "stat": "breath_damage",
+            "bonus_per_level": 20
+        }
+    ],
+
+    "production": {
+        "building": "human_gryphon_aviary",
+        "cost": {
+            "gold": 650,
+            "food": 7
+        },
+        "build_time": 75.0,
+        "population_cost": 5,
+        "prerequisites": ["human_castle", "upgrade_dragon_taming"],
+        "max_count": 3
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/dragon.bt",
+        "profile": "aggressive",
+        "aggroRange": 16.0,
+        "leashRange": 40.0,
+        "priority_targets": ["siege", "building", "grouped_units"],
+        "use_breath_attack": true,
+        "use_dive_bomb": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/dragon_knight/idle.anim", "loop": true},
+        "fly": {"path": "animations/humans/dragon_knight/fly.anim", "loop": true},
+        "glide": {"path": "animations/humans/dragon_knight/glide.anim", "loop": true},
+        "attack": {"path": "animations/humans/dragon_knight/attack.anim", "loop": false, "events": [[0.4, "deal_damage"]]},
+        "breath": {"path": "animations/humans/dragon_knight/breath.anim", "loop": false},
+        "dive": {"path": "animations/humans/dragon_knight/dive.anim", "loop": false},
+        "buffet": {"path": "animations/humans/dragon_knight/buffet.anim", "loop": false},
+        "land": {"path": "animations/humans/dragon_knight/land.anim", "loop": false},
+        "takeoff": {"path": "animations/humans/dragon_knight/takeoff.anim", "loop": false},
+        "death": {"path": "animations/humans/dragon_knight/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/dragon_knight/select_1.wav", "sounds/humans/dragon_knight/select_2.wav"],
+        "acknowledge": ["sounds/humans/dragon_knight/ack_1.wav", "sounds/humans/dragon_knight/ack_2.wav"],
+        "attack": "sounds/dragon_bite.wav",
+        "breath": "sounds/dragon_breath.wav",
+        "roar": "sounds/dragon_roar.wav",
+        "wing_flap": "sounds/dragon_wing_flap.wav",
+        "death": "sounds/humans/dragon_knight/death.wav"
+    },
+
+    "effects": {
+        "fire_breath": "effects/dragon_fire_breath.fx",
+        "fury_aura": "effects/dragon_fury.fx",
+        "impact": "effects/dragon_impact.fx"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/dragon_knight.png",
+        "icon": "textures/races/humans/icons/dragon_knight.png",
+        "hotkey": "D"
+    }
+}

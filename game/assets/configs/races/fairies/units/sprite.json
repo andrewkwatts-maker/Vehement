@@ -1,0 +1,160 @@
+{
+    "id": "fairy_sprite",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Sprite",
+    "description": "Swift ranged attackers that hurl bolts of concentrated nature energy. Sprites can slow enemies with their venomous attacks.",
+
+    "tags": ["military", "ranged", "tier1", "light", "nature"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/fairies/units/sprite.obj",
+        "scale": [0.7, 0.7, 0.7],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/sprite_diffuse.png",
+        "normal": "textures/races/fairies/units/sprite_normal.png",
+        "emissive": "textures/races/fairies/units/sprite_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.2,
+                "height": 0.8,
+                "offset": [0.0, 0.4, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 15.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 180,
+        "maxHealth": 180,
+        "healthRegen": 0.4,
+        "mana": 100,
+        "maxMana": 100,
+        "manaRegen": 1.5,
+        "armor": 0,
+        "magicResist": 10,
+        "moveSpeed": 5.8,
+        "turnRate": 400.0
+    },
+
+    "combat": {
+        "attackDamage": 12,
+        "attackSpeed": 1.2,
+        "attackRange": 10.0,
+        "damageType": "magic",
+        "armorType": "light",
+        "attackType": "ranged",
+        "projectile": "nature_bolt",
+        "projectile_speed": 18.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_nature_bolt",
+            "name": "Nature Bolt",
+            "description": "Basic ranged attack with nature magic",
+            "passive": true
+        },
+        {
+            "id": "ability_slow_poison",
+            "name": "Slow Poison",
+            "description": "Attacks apply a slowing poison to enemies",
+            "passive": true,
+            "effects": [
+                {"type": "slow", "value": 0.15, "duration": 3.0},
+                {"type": "dot", "damage": 3, "duration": 5.0, "damage_type": "poison"}
+            ],
+            "requires_upgrade": "upgrade_slow_poison"
+        },
+        {
+            "id": "ability_faerie_fire",
+            "name": "Faerie Fire",
+            "description": "Mark an enemy, reducing their armor and revealing them",
+            "hotkey": "F",
+            "cooldown": 10.0,
+            "mana_cost": 35,
+            "range": 12.0,
+            "duration": 15.0,
+            "effects": [
+                {"type": "armor_reduction", "value": 4},
+                {"type": "reveal", "value": true},
+                {"type": "remove_invisibility", "value": true}
+            ],
+            "auto_cast": true
+        }
+    ],
+
+    "night_bonus": {
+        "attackDamage": 0.25,
+        "attackRange": 1.0,
+        "moveSpeed": 0.20
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_sprite_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 3
+        },
+        {
+            "id": "upgrade_sprite_armor",
+            "stat": "armor",
+            "bonus_per_level": 1
+        }
+    ],
+
+    "production": {
+        "building": "fairy_ancient_of_war",
+        "cost": {
+            "gold": 100,
+            "wood": 25,
+            "food": 2
+        },
+        "build_time": 18.0,
+        "population_cost": 1,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/ranged.bt",
+        "profile": "skirmisher",
+        "aggroRange": 10.0,
+        "leashRange": 20.0,
+        "flee_threshold": 0.2,
+        "kite_distance": 8.0
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/sprite/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/sprite/walk.anim", "loop": true},
+        "run": {"path": "animations/fairies/sprite/run.anim", "loop": true},
+        "attack": {"path": "animations/fairies/sprite/attack.anim", "loop": false},
+        "cast": {"path": "animations/fairies/sprite/cast.anim", "loop": false},
+        "death": {"path": "animations/fairies/sprite/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/sprite/select_1.wav", "sounds/fairies/sprite/select_2.wav"],
+        "acknowledge": ["sounds/fairies/sprite/ack_1.wav", "sounds/fairies/sprite/ack_2.wav"],
+        "attack": "sounds/fairies/sprite/attack.wav",
+        "death": "sounds/fairies/sprite/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/sprite.png",
+        "icon": "textures/races/fairies/icons/sprite.png",
+        "hotkey": "S"
+    }
+}

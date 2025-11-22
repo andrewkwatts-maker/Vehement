@@ -1,0 +1,139 @@
+{
+  "id": "drone",
+  "name": "Drone",
+  "display_name": "Harvester Drone",
+  "description": "An autonomous hover bot designed for resource collection and construction. Drones are the backbone of the Collective economy, tirelessly gathering minerals and vespene to fuel the war machine.",
+  "race": "aliens",
+  "tier": 1,
+  "unit_type": "worker",
+  "classification": ["mechanical", "hover", "worker"],
+
+  "stats": {
+    "health": 40,
+    "health_regen": 0,
+    "shield": 20,
+    "shield_regen": 0.4,
+    "shield_regen_delay": 10.0,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 3.94,
+    "acceleration": 1000,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": false,
+    "attack_damage": 5,
+    "attack_speed": 1.5,
+    "attack_range": 0.1,
+    "attack_type": "normal",
+    "damage_type": "normal",
+    "targets": ["ground"]
+  },
+
+  "production": {
+    "build_time": 17,
+    "warp_time": 0,
+    "supply_cost": 1,
+    "resource_cost": {
+      "minerals": 50,
+      "vespene": 0
+    },
+    "power_cost": 0,
+    "produced_at": "nexus",
+    "requirements": [],
+    "hotkey": "D"
+  },
+
+  "abilities": [
+    {
+      "id": "gather",
+      "name": "Gather",
+      "description": "Collect resources from mineral fields or vespene geysers",
+      "type": "autocast",
+      "cooldown": 0,
+      "range": 0.1,
+      "cargo_capacity": 5
+    },
+    {
+      "id": "return_cargo",
+      "name": "Return Cargo",
+      "description": "Return gathered resources to the nearest Nexus or Assimilator",
+      "type": "autocast",
+      "cooldown": 0
+    },
+    {
+      "id": "build_structure",
+      "name": "Build Structure",
+      "description": "Warp in a structure at the target location. The drone phases into the warp field and is consumed.",
+      "type": "active",
+      "cooldown": 0,
+      "is_consumed": true
+    }
+  ],
+
+  "attributes": {
+    "is_worker": true,
+    "can_build": true,
+    "can_gather": true,
+    "is_mechanical": true,
+    "is_hover": true,
+    "is_light": true,
+    "cargo_size": 1,
+    "build_power": 1.0,
+    "gather_rate": {
+      "minerals": 0.9,
+      "vespene": 0.85
+    }
+  },
+
+  "sight": {
+    "vision_range": 8,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 10,
+    "selection_radius": 0.8125,
+    "target_radius": 0.5
+  },
+
+  "visuals": {
+    "model": "models/aliens/drone.fbx",
+    "texture": "textures/aliens/drone.png",
+    "icon": "icons/aliens/drone.png",
+    "wireframe": "wireframes/aliens/drone.png",
+    "portrait": "portraits/aliens/drone.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "gather": "anim_gather",
+      "build": "anim_build",
+      "death": "anim_death"
+    },
+    "effects": {
+      "hover": "fx_drone_hover",
+      "gather": "fx_gather_beam",
+      "build": "fx_warp_in"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/drone_ready.ogg",
+    "selected": ["audio/aliens/drone_select1.ogg", "audio/aliens/drone_select2.ogg"],
+    "command": ["audio/aliens/drone_command1.ogg", "audio/aliens/drone_command2.ogg"],
+    "attack": "audio/aliens/drone_attack.ogg",
+    "death": "audio/aliens/drone_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "economy",
+    "priority_targets": [],
+    "flee_when_attacked": true,
+    "auto_repair": false,
+    "optimal_per_mineral_patch": 2,
+    "optimal_per_gas_geyser": 3
+  }
+}

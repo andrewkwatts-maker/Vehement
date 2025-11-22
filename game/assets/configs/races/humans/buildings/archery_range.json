@@ -1,0 +1,101 @@
+{
+    "id": "human_archery_range",
+    "type": "building",
+    "race": "humans",
+    "name": "Archery Range",
+    "description": "Training grounds for ranged units. Archers and crossbowmen hone their skills here.",
+
+    "tags": ["military", "production", "ranged"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/humans/buildings/archery_range.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/archery_range_diffuse.png",
+        "normal": "textures/races/humans/buildings/archery_range_normal.png"
+    },
+
+    "footprint": {
+        "size": [3, 3],
+        "entrances": [[1, 0]],
+        "visualSize": [8.0, 5.0, 8.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 180,
+            "wood": 180
+        },
+        "time": 55.0
+    },
+
+    "stats": {
+        "maxHealth": 1000,
+        "armor": 8,
+        "magicResist": 5
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "human_archer",
+            "cost": {"gold": 130, "wood": 20, "food": 2},
+            "time": 22.0,
+            "maxQueue": 5
+        },
+        {
+            "type": "unit",
+            "output": "human_crossbowman",
+            "cost": {"gold": 220, "wood": 35, "food": 2},
+            "time": 30.0,
+            "maxQueue": 5,
+            "prerequisites": ["upgrade_crossbow_tech"]
+        }
+    ],
+
+    "researches": [
+        {
+            "id": "upgrade_flaming_arrows",
+            "name": "Flaming Arrows",
+            "description": "Enables Flaming Arrows ability for Archers",
+            "cost": {"gold": 150, "wood": 100},
+            "time": 50.0
+        },
+        {
+            "id": "upgrade_crossbow_tech",
+            "name": "Crossbow Technology",
+            "description": "Allows training of Crossbowmen",
+            "cost": {"gold": 200, "wood": 150},
+            "time": 60.0,
+            "prerequisites": ["human_blacksmith"]
+        },
+        {
+            "id": "upgrade_ranger_training",
+            "name": "Ranger Training",
+            "description": "+15% ranged attack damage",
+            "cost": {"gold": 250, "wood": 100},
+            "time": 75.0,
+            "effects": [{"stat": "attackDamage", "value": 0.15, "scope": "ranged"}]
+        }
+    ],
+
+    "visionRange": 10.0,
+
+    "requirements": {
+        "buildings": ["human_town_hall"]
+    },
+
+    "unique": false,
+    "maxCount": 3,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/archery_range.png",
+        "icon": "textures/races/humans/icons/buildings/archery_range.png",
+        "hotkey": "A"
+    }
+}

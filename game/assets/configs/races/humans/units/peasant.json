@@ -1,0 +1,153 @@
+{
+    "id": "human_peasant",
+    "type": "unit",
+    "race": "humans",
+    "name": "Peasant",
+    "description": "The backbone of Valorheim's economy. Peasants gather resources, construct buildings, and can be called to arms in times of need.",
+
+    "tags": ["worker", "civilian", "gatherer", "builder", "tier1"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/humans/units/peasant.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/peasant_diffuse.png",
+        "normal": "textures/races/humans/units/peasant_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.25,
+                "height": 1.6,
+                "offset": [0.0, 0.8, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 70.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 40,
+        "maxHealth": 40,
+        "healthRegen": 0.25,
+        "armor": 0,
+        "magicResist": 0,
+        "moveSpeed": 4.5,
+        "turnRate": 360.0
+    },
+
+    "combat": {
+        "attackDamage": 5,
+        "attackSpeed": 1.0,
+        "attackRange": 1.0,
+        "damageType": "normal",
+        "armorType": "unarmored",
+        "attackType": "melee"
+    },
+
+    "gathering": {
+        "enabled": true,
+        "rates": {
+            "gold": 10,
+            "wood": 12,
+            "stone": 8,
+            "food": 10
+        },
+        "carry_capacity": {
+            "gold": 10,
+            "wood": 15,
+            "stone": 10,
+            "food": 12
+        }
+    },
+
+    "construction": {
+        "enabled": true,
+        "speed_multiplier": 1.0,
+        "can_repair": true,
+        "repair_rate": 5.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_gather",
+            "name": "Gather",
+            "description": "Harvest resources from resource nodes",
+            "auto_cast": true
+        },
+        {
+            "id": "ability_build",
+            "name": "Build",
+            "description": "Construct buildings for the kingdom",
+            "hotkey": "B"
+        },
+        {
+            "id": "ability_repair",
+            "name": "Repair",
+            "description": "Repair damaged buildings and siege weapons",
+            "hotkey": "R",
+            "cost_per_hp": {"gold": 0.5, "wood": 0.25}
+        },
+        {
+            "id": "ability_call_to_arms",
+            "name": "Call to Arms",
+            "description": "Transform into Militia when Town Bell rings",
+            "passive": true,
+            "transforms_to": "human_militia",
+            "duration": 60.0
+        }
+    ],
+
+    "production": {
+        "building": "human_town_hall",
+        "cost": {
+            "gold": 75,
+            "food": 1
+        },
+        "build_time": 15.0,
+        "population_cost": 1,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/worker.bt",
+        "profile": "passive",
+        "flee_threshold": 0.3,
+        "auto_gather": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/peasant/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/peasant/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/peasant/run.anim", "loop": true},
+        "gather_gold": {"path": "animations/humans/peasant/mine.anim", "loop": true},
+        "gather_wood": {"path": "animations/humans/peasant/chop.anim", "loop": true},
+        "gather_food": {"path": "animations/humans/peasant/harvest.anim", "loop": true},
+        "build": {"path": "animations/humans/peasant/build.anim", "loop": true},
+        "attack": {"path": "animations/humans/peasant/attack.anim", "loop": false},
+        "death": {"path": "animations/humans/peasant/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/peasant/select_1.wav", "sounds/humans/peasant/select_2.wav"],
+        "acknowledge": ["sounds/humans/peasant/ack_1.wav", "sounds/humans/peasant/ack_2.wav", "sounds/humans/peasant/ack_3.wav"],
+        "attack": "sounds/humans/peasant/attack.wav",
+        "death": "sounds/humans/peasant/death.wav",
+        "work": "sounds/humans/peasant/work.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/peasant.png",
+        "icon": "textures/races/humans/icons/peasant.png",
+        "hotkey": "P"
+    }
+}

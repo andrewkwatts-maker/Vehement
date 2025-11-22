@@ -1,0 +1,107 @@
+{
+    "id": "human_town_hall",
+    "type": "building",
+    "race": "humans",
+    "name": "Town Hall",
+    "description": "The center of any human settlement. Trains peasants and stores resources. Can be upgraded to Keep and Castle.",
+
+    "tags": ["main", "production", "resource_depot", "tier1"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/humans/buildings/town_hall.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/town_hall_diffuse.png",
+        "normal": "textures/races/humans/buildings/town_hall_normal.png"
+    },
+
+    "footprint": {
+        "size": [4, 4],
+        "entrances": [[2, 0]],
+        "visualSize": [10.0, 8.0, 10.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 400,
+            "wood": 150
+        },
+        "time": 120.0,
+        "stages": [
+            {"name": "foundation", "progress": [0, 33]},
+            {"name": "structure", "progress": [33, 66]},
+            {"name": "complete", "progress": [66, 100]}
+        ]
+    },
+
+    "stats": {
+        "maxHealth": 1500,
+        "armor": 5,
+        "magicResist": 5
+    },
+
+    "resource_depot": {
+        "enabled": true,
+        "accepted_resources": ["gold", "wood", "stone", "food"]
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "human_peasant",
+            "cost": {"gold": 75, "food": 1},
+            "time": 15.0,
+            "maxQueue": 5
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "ability_town_bell",
+            "name": "Town Bell",
+            "description": "Ring the bell to transform all peasants into militia for 60 seconds",
+            "hotkey": "B",
+            "cooldown": 180.0,
+            "duration": 60.0,
+            "affects": "human_peasant",
+            "transforms_to": "human_militia"
+        }
+    ],
+
+    "upgrades_to": "human_keep",
+
+    "garrison": {
+        "capacity": 8,
+        "fire_positions": 4,
+        "garrison_attack": {
+            "damage": 10,
+            "range": 12.0,
+            "attack_speed": 1.0
+        }
+    },
+
+    "aura": {
+        "id": "aura_town_center",
+        "radius": 20.0,
+        "effects": [
+            {"stat": "gather_rate", "value": 0.10, "scope": "peasant"}
+        ]
+    },
+
+    "visionRange": 14.0,
+
+    "unique": false,
+    "maxCount": 3,
+    "starting_building": true,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/town_hall.png",
+        "icon": "textures/races/humans/icons/buildings/town_hall.png",
+        "hotkey": "H"
+    }
+}

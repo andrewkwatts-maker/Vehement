@@ -1,0 +1,244 @@
+{
+    "id": "naga_deep_one",
+    "type": "unit",
+    "name": "Deep One",
+    "description": "Twisted assassins from the lightless depths. These stealthy killers strike from the shadows, applying deadly neurotoxins that paralyze their victims.",
+    "race": "naga",
+    "tier": 2,
+    "class": "assassin",
+
+    "tags": ["military", "assassin", "melee", "tier2", "amphibious", "stealth", "venomous"],
+
+    "model": {
+        "path": "models/races/naga/units/deep_one.obj",
+        "scale": [0.95, 0.95, 0.95],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/deep_one_diffuse.png",
+        "normal": "textures/races/naga/units/deep_one_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.35,
+                "height": 1.7,
+                "offset": [0.0, 0.85, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 90.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 6.5,
+        "turnRate": 360.0,
+        "acceleration": 18.0,
+        "deceleration": 22.0,
+        "canSwim": true,
+        "swimSpeed": 8.0,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.0,
+            "forest": 1.1,
+            "water": 1.4,
+            "deep_water": 1.5,
+            "desert": 0.7
+        }
+    },
+
+    "combat": {
+        "health": 280,
+        "maxHealth": 280,
+        "armor": 2,
+        "magicResist": 2,
+        "attackDamage": 32,
+        "attackSpeed": 1.3,
+        "attackRange": 1.2,
+        "critChance": 0.25,
+        "critMultiplier": 2.5,
+        "physicalDamage": true,
+        "damageType": "pierce",
+        "armorType": "light"
+    },
+
+    "combat_bonuses": {
+        "from_stealth": {
+            "damage_bonus": 1.0,
+            "crit_chance_bonus": 0.5
+        },
+        "near_water": {
+            "radius": 10,
+            "crit_damage_bonus": 0.3
+        },
+        "in_water": {
+            "health_regen": 4.0,
+            "permanent_invisibility": true
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "neurotoxin",
+            "name": "Neurotoxin",
+            "description": "Attacks apply a potent neurotoxin that deals 8 damage per second and slows by 30% for 6 seconds.",
+            "effect": {
+                "type": "dot",
+                "damage_per_tick": 8,
+                "duration": 6,
+                "tick_interval": 1.0,
+                "slow": 0.3
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and becomes invisible while submerged."
+        },
+        {
+            "id": "shadow_meld",
+            "name": "Shadow Meld",
+            "description": "Becomes invisible after standing still for 3 seconds. First attack from invisibility deals double damage.",
+            "effect": {
+                "type": "stealth",
+                "activation_delay": 3.0,
+                "first_attack_bonus": 2.0
+            }
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "shadowstrike",
+            "name": "Shadowstrike",
+            "description": "Teleports behind target and strikes, dealing 150% damage and applying a stacking slow.",
+            "icon": "icons/abilities/naga/shadowstrike.png",
+            "cooldown": 14.0,
+            "manaCost": 0,
+            "range": 10.0,
+            "targetType": "enemy_unit",
+            "effects": [
+                {"type": "teleport_behind"},
+                {"type": "damage", "multiplier": 1.5},
+                {"type": "slow", "value": 0.2, "duration": 4.0, "stacks": true}
+            ],
+            "castAnimation": "strike",
+            "castSound": "sounds/abilities/shadowstrike.wav"
+        },
+        {
+            "id": "vanish",
+            "name": "Vanish",
+            "description": "Instantly becomes invisible and gains 40% movement speed for 5 seconds. Removes all slows.",
+            "icon": "icons/abilities/naga/vanish.png",
+            "cooldown": 22.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 5.0,
+            "effects": [
+                {"type": "invisibility"},
+                {"type": "speed_bonus", "value": 0.4},
+                {"type": "cleanse", "types": ["slow"]}
+            ],
+            "castAnimation": "vanish",
+            "castSound": "sounds/abilities/vanish.wav"
+        },
+        {
+            "id": "paralyzing_strike",
+            "name": "Paralyzing Strike",
+            "description": "Next attack stuns the target for 2 seconds and deals 50 bonus damage.",
+            "icon": "icons/abilities/naga/paralyzing_strike.png",
+            "cooldown": 18.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "effects": [
+                {"type": "next_attack_modifier"},
+                {"type": "stun", "duration": 2.0},
+                {"type": "bonus_damage", "amount": 50}
+            ],
+            "castAnimation": "empower",
+            "castSound": "sounds/abilities/paralyzing_strike.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/deep_one/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/deep_one/slither.anim", "speed": 1.0, "loop": true},
+        "run": {"path": "animations/naga/deep_one/slither_fast.anim", "speed": 1.1, "loop": true},
+        "swim": {"path": "animations/naga/deep_one/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/deep_one/stab.anim",
+            "loop": false,
+            "events": [[0.2, "deal_damage"]]
+        },
+        "strike": {"path": "animations/naga/deep_one/shadowstrike.anim", "loop": false},
+        "vanish": {"path": "animations/naga/deep_one/vanish.anim", "loop": false},
+        "empower": {"path": "animations/naga/deep_one/empower.anim", "loop": false},
+        "stealth_idle": {"path": "animations/naga/deep_one/stealth_idle.anim", "loop": true},
+        "death": {"path": "animations/naga/deep_one/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/stealth_1.wav", "sounds/footsteps/stealth_2.wav"],
+            "volume": 0.2
+        },
+        "attack": "sounds/combat/dagger_stab.wav",
+        "death": {"paths": ["sounds/death/deep_one_death.wav"], "volume": 0.7},
+        "select": "sounds/voice/naga/deep_one_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/deep_one_ack_1.wav",
+                "sounds/voice/naga/deep_one_whisper.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_deep_one.bt",
+        "profile": "assassin",
+        "aggroRange": 12.0,
+        "leashRange": 25.0,
+        "preferWater": true,
+        "targetPriority": ["caster", "ranged", "support"],
+        "useAbilitiesFromStealth": true
+    },
+
+    "production": {
+        "building": "naga_coral_barracks",
+        "time": 30.0,
+        "cost": {
+            "gold": 200,
+            "coral": 80,
+            "pearls": 45
+        },
+        "requirements": {
+            "age": "age_reef",
+            "techs": ["naga_shadow_arts"],
+            "buildings": ["naga_temple_of_tides"]
+        }
+    },
+
+    "properties": {
+        "populationCost": 2,
+        "supplyUpkeep": 2,
+        "squadSize": 1,
+        "experienceValue": 45,
+        "bountyGold": 40
+    },
+
+    "upgrades": {
+        "damage": ["naga_coral_weapons_1", "naga_coral_weapons_2", "naga_coral_weapons_3"],
+        "special": ["naga_enhanced_venom", "naga_shadow_mastery"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/deep_one/on_spawn.py",
+        "on_death": "scripts/units/naga/deep_one/on_death.py",
+        "on_stealth_break": "scripts/units/naga/deep_one/on_stealth_break.py"
+    }
+}

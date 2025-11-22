@@ -1,0 +1,679 @@
+{
+  "version": "1.0",
+  "description": "Standard built-in game modes",
+  "modes": [
+    {
+      "id": "melee",
+      "name": "Melee",
+      "description": "Classic competitive mode. Defeat all enemy players by destroying their buildings and units.",
+      "category": "standard",
+      "icon": "icons/modes/melee.png",
+      "thumbnail": "thumbnails/modes/melee.png",
+      "minPlayers": 2,
+      "maxPlayers": 8,
+      "suggestedPlayers": "2-4",
+      "estimatedDuration": "15-45 minutes",
+      "isRanked": true,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "elimination",
+            "description": "Destroy all enemy buildings",
+            "teamBased": true
+          }
+        ],
+        "defeatConditions": [
+          {
+            "type": "all_buildings_destroyed",
+            "description": "All your buildings are destroyed"
+          }
+        ],
+        "teamSettings": {
+          "teamsEnabled": true,
+          "allowTeamChange": false,
+          "sharedVision": true,
+          "sharedControl": false,
+          "fixedTeams": true
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 500,
+          "lumber": 150,
+          "food": 10,
+          "foodCap": 100
+        },
+        "upkeep": {
+          "enabled": true,
+          "lowThreshold": 40,
+          "highThreshold": 80
+        }
+      },
+      "units": {
+        "heroCap": 3,
+        "heroSettings": {
+          "enabled": true,
+          "startingLevel": 1,
+          "maxLevel": 10,
+          "reviveEnabled": true
+        }
+      },
+      "mapSettings": {
+        "fogOfWar": "full",
+        "neutralHostile": true,
+        "dayNightCycle": {
+          "enabled": true,
+          "dayDuration": 480,
+          "nightDuration": 480
+        }
+      }
+    },
+    {
+      "id": "free_for_all",
+      "name": "Free For All",
+      "description": "Every player for themselves. Last player standing wins.",
+      "category": "standard",
+      "icon": "icons/modes/ffa.png",
+      "thumbnail": "thumbnails/modes/ffa.png",
+      "minPlayers": 3,
+      "maxPlayers": 12,
+      "suggestedPlayers": "4-8",
+      "estimatedDuration": "20-60 minutes",
+      "isRanked": true,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "elimination",
+            "description": "Be the last player standing",
+            "teamBased": false
+          }
+        ],
+        "defeatConditions": [
+          {
+            "type": "all_buildings_destroyed",
+            "description": "All your buildings are destroyed"
+          }
+        ],
+        "teamSettings": {
+          "teamsEnabled": false,
+          "sharedVision": false
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 500,
+          "lumber": 150,
+          "food": 10,
+          "foodCap": 100
+        }
+      },
+      "mapSettings": {
+        "fogOfWar": "full",
+        "neutralHostile": true
+      }
+    },
+    {
+      "id": "capture_the_flag",
+      "name": "Capture the Flag",
+      "description": "Capture the enemy flag and return it to your base. First team to 3 captures wins.",
+      "category": "standard",
+      "icon": "icons/modes/ctf.png",
+      "thumbnail": "thumbnails/modes/ctf.png",
+      "minPlayers": 4,
+      "maxPlayers": 16,
+      "suggestedPlayers": "4v4",
+      "estimatedDuration": "20-40 minutes",
+      "isRanked": true,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "capture_flag",
+            "description": "Capture the enemy flag 3 times",
+            "parameters": {
+              "capturesNeeded": 3
+            },
+            "teamBased": true
+          }
+        ],
+        "defeatConditions": [
+          {
+            "type": "score_below",
+            "description": "Enemy team reaches 3 captures first"
+          }
+        ],
+        "scoring": {
+          "enabled": true,
+          "targetScore": 3,
+          "scoreEvents": [
+            {
+              "event": "capture_flag",
+              "points": 1
+            }
+          ]
+        },
+        "teamSettings": {
+          "teamsEnabled": true,
+          "teamCount": 2,
+          "sharedVision": true,
+          "fixedTeams": true
+        },
+        "respawning": {
+          "enabled": true,
+          "respawnTime": 10,
+          "respawnLocation": "start"
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 1000,
+          "lumber": 500,
+          "food": 50,
+          "foodCap": 100
+        }
+      },
+      "mapSettings": {
+        "fogOfWar": "explored",
+        "neutralHostile": false
+      }
+    },
+    {
+      "id": "king_of_the_hill",
+      "name": "King of the Hill",
+      "description": "Control the central point to earn points. First team to 100 points wins.",
+      "category": "standard",
+      "icon": "icons/modes/koth.png",
+      "thumbnail": "thumbnails/modes/koth.png",
+      "minPlayers": 4,
+      "maxPlayers": 12,
+      "suggestedPlayers": "3v3",
+      "estimatedDuration": "15-30 minutes",
+      "isRanked": true,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "score_limit",
+            "description": "Reach 100 points",
+            "parameters": {
+              "targetScore": 100
+            },
+            "teamBased": true
+          }
+        ],
+        "scoring": {
+          "enabled": true,
+          "targetScore": 100,
+          "scoreEvents": [
+            {
+              "event": "hold_point",
+              "points": 1,
+              "parameters": {
+                "interval": 5
+              }
+            }
+          ]
+        },
+        "teamSettings": {
+          "teamsEnabled": true,
+          "teamCount": 2,
+          "sharedVision": true
+        },
+        "respawning": {
+          "enabled": true,
+          "respawnTime": 15,
+          "respawnLocation": "start"
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 2000,
+          "lumber": 1000,
+          "food": 50,
+          "foodCap": 100
+        }
+      },
+      "ui": {
+        "showScore": true,
+        "showTimer": false
+      }
+    },
+    {
+      "id": "survival",
+      "name": "Survival",
+      "description": "Defend your base against waves of enemies. Survive all waves to win.",
+      "category": "casual",
+      "icon": "icons/modes/survival.png",
+      "thumbnail": "thumbnails/modes/survival.png",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "suggestedPlayers": "1-4 (co-op)",
+      "estimatedDuration": "30-60 minutes",
+      "isRanked": false,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "survive_waves",
+            "description": "Survive all enemy waves",
+            "parameters": {
+              "totalWaves": 30
+            }
+          }
+        ],
+        "defeatConditions": [
+          {
+            "type": "base_destroyed",
+            "description": "Your main building is destroyed"
+          }
+        ],
+        "teamSettings": {
+          "teamsEnabled": true,
+          "sharedVision": true,
+          "sharedControl": true,
+          "sharedResources": true
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 1000,
+          "lumber": 500,
+          "food": 20,
+          "foodCap": 100
+        },
+        "incomeRate": {
+          "enabled": true,
+          "goldPerMinute": 50,
+          "interval": 60
+        }
+      },
+      "events": [
+        {
+          "id": "wave_spawn",
+          "name": "Enemy Wave",
+          "trigger": {
+            "type": "interval",
+            "interval": 60
+          },
+          "announcement": {
+            "message": "Enemy wave incoming!",
+            "sound": "sounds/ui/wave_warning.wav",
+            "duration": 3
+          },
+          "recurring": true
+        }
+      ],
+      "ui": {
+        "showTimer": true,
+        "showObjectives": true
+      }
+    },
+    {
+      "id": "tower_defense",
+      "name": "Tower Defense",
+      "description": "Build towers to stop enemy waves from reaching your base.",
+      "category": "casual",
+      "icon": "icons/modes/td.png",
+      "thumbnail": "thumbnails/modes/td.png",
+      "minPlayers": 1,
+      "maxPlayers": 4,
+      "suggestedPlayers": "1-2",
+      "estimatedDuration": "30-45 minutes",
+      "isRanked": false,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "survive_waves",
+            "description": "Survive all enemy waves",
+            "parameters": {
+              "totalWaves": 40
+            }
+          }
+        ],
+        "defeatConditions": [
+          {
+            "type": "custom",
+            "description": "Too many enemies reach the end",
+            "parameters": {
+              "livesLost": 20
+            }
+          }
+        ],
+        "teamSettings": {
+          "teamsEnabled": true,
+          "sharedVision": true,
+          "sharedResources": true
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 200,
+          "lumber": 0,
+          "food": 0,
+          "foodCap": 0
+        },
+        "resourcesEnabled": {
+          "gold": true,
+          "lumber": false,
+          "food": false
+        }
+      },
+      "units": {
+        "bannedUnits": ["all_mobile_units"],
+        "allowedBuildings": ["tower_*"]
+      },
+      "specialRules": [
+        {
+          "id": "no_unit_training",
+          "name": "No Unit Training",
+          "description": "Players cannot train units, only build towers",
+          "enabled": true
+        },
+        {
+          "id": "gold_on_kill",
+          "name": "Bounty System",
+          "description": "Earn gold for each enemy killed",
+          "enabled": true,
+          "parameters": {
+            "baseGold": 5
+          }
+        }
+      ],
+      "ui": {
+        "showTimer": true,
+        "showObjectives": true
+      }
+    },
+    {
+      "id": "regicide",
+      "name": "Regicide",
+      "description": "Protect your King while trying to kill the enemy King. If your King dies, you lose.",
+      "category": "standard",
+      "icon": "icons/modes/regicide.png",
+      "thumbnail": "thumbnails/modes/regicide.png",
+      "minPlayers": 2,
+      "maxPlayers": 8,
+      "suggestedPlayers": "2-4",
+      "estimatedDuration": "15-35 minutes",
+      "isRanked": true,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "destroy_target",
+            "description": "Kill the enemy King",
+            "parameters": {
+              "targetType": "king_unit"
+            },
+            "teamBased": true
+          }
+        ],
+        "defeatConditions": [
+          {
+            "type": "hero_dies",
+            "description": "Your King is killed",
+            "parameters": {
+              "heroType": "king_unit"
+            }
+          }
+        ],
+        "teamSettings": {
+          "teamsEnabled": true,
+          "sharedVision": true
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 500,
+          "lumber": 150,
+          "food": 10,
+          "foodCap": 100
+        }
+      },
+      "units": {
+        "startingUnits": [
+          {
+            "unitTypeId": "king_unit",
+            "count": 1,
+            "level": 1
+          }
+        ],
+        "heroSettings": {
+          "enabled": true,
+          "reviveEnabled": false
+        }
+      },
+      "specialRules": [
+        {
+          "id": "king_reveal",
+          "name": "King Ping",
+          "description": "King location is revealed every 60 seconds",
+          "enabled": true,
+          "parameters": {
+            "interval": 60,
+            "duration": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "deathmatch",
+      "name": "Deathmatch",
+      "description": "Start with massive resources and full tech. Pure combat focus.",
+      "category": "casual",
+      "icon": "icons/modes/deathmatch.png",
+      "thumbnail": "thumbnails/modes/deathmatch.png",
+      "minPlayers": 2,
+      "maxPlayers": 8,
+      "suggestedPlayers": "2-4",
+      "estimatedDuration": "10-30 minutes",
+      "isRanked": false,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "elimination",
+            "description": "Destroy all enemy forces",
+            "teamBased": true
+          }
+        ],
+        "defeatConditions": [
+          {
+            "type": "all_buildings_destroyed",
+            "description": "All your buildings are destroyed"
+          }
+        ],
+        "teamSettings": {
+          "teamsEnabled": true,
+          "sharedVision": true
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 50000,
+          "lumber": 50000,
+          "food": 10,
+          "foodCap": 200
+        },
+        "upkeep": {
+          "enabled": false
+        }
+      },
+      "units": {
+        "heroSettings": {
+          "enabled": true,
+          "startingLevel": 5,
+          "maxLevel": 10,
+          "reviveEnabled": true,
+          "reviveCostMultiplier": 0.0,
+          "reviveTimeMultiplier": 0.5
+        },
+        "statMultipliers": {
+          "trainTime": 0.5,
+          "buildTime": 0.5
+        }
+      },
+      "tech": {
+        "startingTech": ["all"],
+        "researchTimeMultiplier": 0.0
+      },
+      "mapSettings": {
+        "fogOfWar": "explored"
+      }
+    },
+    {
+      "id": "conquest",
+      "name": "Conquest",
+      "description": "Capture and hold strategic points across the map to earn victory points.",
+      "category": "competitive",
+      "icon": "icons/modes/conquest.png",
+      "thumbnail": "thumbnails/modes/conquest.png",
+      "minPlayers": 4,
+      "maxPlayers": 16,
+      "suggestedPlayers": "4v4 or 8v8",
+      "estimatedDuration": "30-60 minutes",
+      "isRanked": true,
+      "rules": {
+        "victoryConditions": [
+          {
+            "type": "score_limit",
+            "description": "Reach 500 victory points",
+            "parameters": {
+              "targetScore": 500
+            },
+            "teamBased": true
+          },
+          {
+            "type": "elimination",
+            "description": "Eliminate all enemies",
+            "teamBased": true
+          }
+        ],
+        "scoring": {
+          "enabled": true,
+          "targetScore": 500,
+          "scoreEvents": [
+            {
+              "event": "hold_point",
+              "points": 1,
+              "parameters": {
+                "interval": 10
+              }
+            },
+            {
+              "event": "capture_point",
+              "points": 25
+            }
+          ]
+        },
+        "teamSettings": {
+          "teamsEnabled": true,
+          "teamCount": 2,
+          "sharedVision": true
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 750,
+          "lumber": 250,
+          "food": 10,
+          "foodCap": 100
+        },
+        "incomeRate": {
+          "enabled": true,
+          "goldPerMinute": 25,
+          "interval": 60
+        }
+      },
+      "specialRules": [
+        {
+          "id": "capture_points",
+          "name": "Control Points",
+          "description": "Map has 5 capturable strategic points",
+          "enabled": true,
+          "parameters": {
+            "pointCount": 5,
+            "captureTime": 30
+          }
+        }
+      ],
+      "ui": {
+        "showScore": true,
+        "showObjectives": true
+      }
+    },
+    {
+      "id": "sandbox",
+      "name": "Sandbox",
+      "description": "No rules, unlimited resources. Perfect for testing and experimentation.",
+      "category": "casual",
+      "icon": "icons/modes/sandbox.png",
+      "thumbnail": "thumbnails/modes/sandbox.png",
+      "minPlayers": 1,
+      "maxPlayers": 8,
+      "suggestedPlayers": "Any",
+      "estimatedDuration": "Unlimited",
+      "isRanked": false,
+      "rules": {
+        "victoryConditions": [],
+        "defeatConditions": [],
+        "teamSettings": {
+          "teamsEnabled": true,
+          "allowTeamChange": true,
+          "sharedVision": true,
+          "sharedControl": true
+        }
+      },
+      "economy": {
+        "startingResources": {
+          "gold": 999999,
+          "lumber": 999999,
+          "food": 0,
+          "foodCap": 999
+        },
+        "upkeep": {
+          "enabled": false
+        }
+      },
+      "units": {
+        "unitCap": -1,
+        "heroCap": -1,
+        "heroSettings": {
+          "enabled": true,
+          "startingLevel": 1,
+          "maxLevel": 100,
+          "experienceRate": 10.0,
+          "reviveEnabled": true,
+          "reviveCostMultiplier": 0.0,
+          "reviveTimeMultiplier": 0.0
+        },
+        "statMultipliers": {
+          "buildTime": 0.01,
+          "trainTime": 0.01
+        }
+      },
+      "tech": {
+        "startingTech": ["all"],
+        "researchTimeMultiplier": 0.0
+      },
+      "mapSettings": {
+        "fogOfWar": "none",
+        "neutralHostile": false,
+        "creepRespawn": {
+          "enabled": true,
+          "delay": 10
+        }
+      },
+      "specialRules": [
+        {
+          "id": "instant_build",
+          "name": "Instant Build",
+          "description": "Buildings and units are created instantly",
+          "enabled": true
+        },
+        {
+          "id": "invulnerable_option",
+          "name": "Invulnerability Toggle",
+          "description": "Toggle unit invulnerability",
+          "enabled": true,
+          "configurable": true
+        }
+      ]
+    }
+  ]
+}

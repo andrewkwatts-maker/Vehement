@@ -1,0 +1,204 @@
+{
+  "id": "meat_wagon",
+  "name": "Meat Wagon",
+  "race": "undead",
+  "tier": 2,
+  "type": "siege",
+  "role": ["siege", "corpse_collector", "artillery"],
+
+  "description": "Gruesome siege engines that hurl diseased corpses at enemy buildings and collect fallen bodies for the Scourge's necromancers.",
+  "lore": "These horrific war machines serve dual purposes - their catapults launch rotting flesh that spreads plague, while their storage compartments collect corpses from the battlefield.",
+
+  "stats": {
+    "health": 380,
+    "healthRegen": 0.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 2,
+    "armorType": "fortified",
+    "moveSpeed": 190,
+    "turnRate": 0.3,
+    "collisionSize": 72,
+    "selectionScale": 1.5
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 77,
+      "variance": 15,
+      "type": "siege",
+      "bonusVsBuildings": 0.5
+    },
+    "attackSpeed": 3.0,
+    "attackRange": 1000,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/corpse_pile.glb",
+      "speed": 500,
+      "arc": 0.6,
+      "splashRadius": 150,
+      "fullSplashRadius": 50
+    },
+    "targets": ["ground"],
+    "damagePoint": 1.0,
+    "backswing": 0.5,
+    "acquisitionRange": 1100,
+    "aggroRange": 1000,
+    "minimumRange": 200
+  },
+
+  "abilities": [
+    {
+      "id": "get_corpse",
+      "name": "Get Corpse",
+      "type": "active",
+      "targetType": "corpse",
+      "description": "Pick up a nearby corpse and store it in the wagon",
+      "cooldown": 0,
+      "manaCost": 0,
+      "range": 200,
+      "effects": {
+        "storesCorpse": true,
+        "maxCorpses": 8
+      },
+      "hotkey": "G",
+      "icon": "icons/abilities/get_corpse.png"
+    },
+    {
+      "id": "drop_corpse",
+      "name": "Drop Corpse",
+      "type": "active",
+      "targetType": "point",
+      "description": "Drop a stored corpse at the target location",
+      "cooldown": 0,
+      "manaCost": 0,
+      "range": 300,
+      "effects": {
+        "dropsCorpse": true
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/drop_corpse.png"
+    },
+    {
+      "id": "exhume_corpses",
+      "name": "Exhume Corpses",
+      "type": "passive",
+      "requiresResearch": "exhume_corpses_upgrade",
+      "description": "Slowly generates corpses over time",
+      "effects": {
+        "corpseGenerationRate": 30.0,
+        "requiresGrounded": true
+      }
+    },
+    {
+      "id": "disease_cloud",
+      "name": "Disease Cloud",
+      "type": "passive",
+      "requiresResearch": "disease_cloud_upgrade",
+      "description": "Attacks leave a cloud of disease that damages enemies over time",
+      "effects": {
+        "cloudDuration": 6.0,
+        "cloudRadius": 150,
+        "damagePerSecond": 3
+      }
+    }
+  ],
+
+  "corpseStorage": {
+    "enabled": true,
+    "maxCorpses": 8,
+    "autoCollect": true,
+    "autoCollectRadius": 300,
+    "canDropCorpses": true
+  },
+
+  "production": {
+    "producedAt": "slaughterhouse",
+    "buildTime": 36,
+    "cost": {
+      "gold": 230,
+      "lumber": 50,
+      "corpses": 0
+    },
+    "foodCost": 4,
+    "prerequisites": {
+      "buildings": ["slaughterhouse"],
+      "technologies": [],
+      "age": "plague"
+    },
+    "hotkey": "M"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 15,
+      "maxLevel": 3,
+      "researchId": "creature_attack"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "creature_carapace"
+    },
+    "special": ["exhume_corpses_upgrade", "disease_cloud_upgrade"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/meat_wagon/ready.ogg",
+    "select": ["audio/units/meat_wagon/select1.ogg", "audio/units/meat_wagon/select2.ogg"],
+    "move": ["audio/units/meat_wagon/move1.ogg", "audio/units/meat_wagon/move2.ogg"],
+    "attack": ["audio/units/meat_wagon/attack1.ogg", "audio/units/meat_wagon/attack2.ogg"],
+    "death": "audio/units/meat_wagon/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/meat_wagon.glb",
+    "texture": "textures/units/undead/meat_wagon.png",
+    "portrait": "textures/portraits/meat_wagon.png",
+    "icon": "textures/icons/meat_wagon.png",
+    "scale": 1.5,
+    "animations": {
+      "idle": "meat_wagon_idle",
+      "walk": "meat_wagon_roll",
+      "attack": "meat_wagon_launch",
+      "death": "meat_wagon_death"
+    },
+    "effects": {
+      "spawn": "effects/undead_spawn.vfx",
+      "death": "effects/wagon_explosion.vfx",
+      "projectileImpact": "effects/corpse_splatter.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 4,
+    "priority": "medium",
+    "behavior": "siege",
+    "fleeThreshold": 0.2,
+    "preferredTargets": ["building", "tower", "fortification"],
+    "maintainDistance": true,
+    "autoCollectCorpses": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isSiege": true,
+    "isMechanical": true
+  },
+
+  "bounty": {
+    "gold": 30,
+    "experience": 45
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 4
+}

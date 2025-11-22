@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign - Conquest of Realms</title>
+    <link rel="stylesheet" href="../../css/ui_base.css">
+    <link rel="stylesheet" href="../../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../../css/ui_animations.css">
+    <link rel="stylesheet" href="../../css/menu_theme.css">
+</head>
+<body>
+    <div id="campaign-menu" class="menu-container">
+        <!-- Background -->
+        <div class="parallax-container">
+            <div class="parallax-layer layer-back" id="campaign-bg"></div>
+            <div class="parallax-overlay"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="campaign-content">
+            <!-- Header -->
+            <div class="campaign-header">
+                <button class="menu-btn menu-btn-sm" onclick="CampaignMenu.back()">
+                    &larr; Back to Menu
+                </button>
+                <h1 class="campaign-title">Campaign</h1>
+                <div class="campaign-header-spacer"></div>
+            </div>
+
+            <!-- Race Selection Carousel -->
+            <div class="race-selection-section">
+                <h2 class="section-title">Choose Your Race</h2>
+                <div class="race-carousel-container">
+                    <button class="carousel-btn carousel-prev" onclick="CampaignMenu.prevRace()">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                        </svg>
+                    </button>
+                    <div class="race-carousel menu-scrollable" id="race-carousel">
+                        <!-- Race cards populated dynamically -->
+                    </div>
+                    <button class="carousel-btn carousel-next" onclick="CampaignMenu.nextRace()">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Campaign Content -->
+            <div class="campaign-main-content">
+                <!-- Left: Race Info & Chapters -->
+                <div class="campaign-left-panel">
+                    <!-- Selected Race Info -->
+                    <div class="menu-panel selected-race-panel" id="selected-race-panel">
+                        <div class="selected-race-header">
+                            <div class="selected-race-icon" id="selected-race-icon">
+                                <img src="" alt="Race Icon">
+                            </div>
+                            <div class="selected-race-info">
+                                <h2 id="selected-race-name">Select a Race</h2>
+                                <p id="selected-race-lore" class="race-lore">
+                                    Choose a race above to see their campaign story and chapters.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="race-traits" id="race-traits">
+                            <!-- Race traits populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Campaign Chapters -->
+                    <div class="menu-panel chapters-panel">
+                        <div class="menu-panel-header">
+                            <h3 class="menu-panel-title">Campaign Chapters</h3>
+                            <span class="chapter-progress" id="chapter-progress">0/0 Completed</span>
+                        </div>
+                        <div class="chapters-list menu-scrollable" id="chapters-list">
+                            <!-- Chapters populated dynamically -->
+                            <div class="chapter-item locked">
+                                <div class="chapter-number">-</div>
+                                <div class="chapter-info">
+                                    <div class="chapter-name">Select a race first</div>
+                                    <div class="chapter-description">Choose your faction to begin the campaign</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Chapter Details & Actions -->
+                <div class="campaign-right-panel">
+                    <!-- Chapter Preview -->
+                    <div class="menu-panel chapter-preview-panel" id="chapter-preview">
+                        <div class="chapter-preview-image" id="chapter-preview-img">
+                            <div class="chapter-preview-overlay">
+                                <span class="preview-text">Select a chapter</span>
+                            </div>
+                        </div>
+                        <div class="chapter-preview-info">
+                            <h3 id="preview-chapter-name">No Chapter Selected</h3>
+                            <p id="preview-chapter-description">
+                                Select a chapter from the list to view details and start playing.
+                            </p>
+                            <div class="chapter-objectives" id="chapter-objectives">
+                                <!-- Objectives populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty Selection -->
+                    <div class="menu-panel difficulty-panel">
+                        <h3 class="menu-panel-title">Difficulty</h3>
+                        <div class="difficulty-selector" id="difficulty-selector">
+                            <div class="difficulty-option easy" data-difficulty="easy" onclick="CampaignMenu.selectDifficulty('easy')">
+                                <div class="difficulty-name">Easy</div>
+                                <div class="difficulty-desc">For beginners</div>
+                            </div>
+                            <div class="difficulty-option normal selected" data-difficulty="normal" onclick="CampaignMenu.selectDifficulty('normal')">
+                                <div class="difficulty-name">Normal</div>
+                                <div class="difficulty-desc">Balanced challenge</div>
+                            </div>
+                            <div class="difficulty-option hard" data-difficulty="hard" onclick="CampaignMenu.selectDifficulty('hard')">
+                                <div class="difficulty-name">Hard</div>
+                                <div class="difficulty-desc">For veterans</div>
+                            </div>
+                            <div class="difficulty-option brutal" data-difficulty="brutal" onclick="CampaignMenu.selectDifficulty('brutal')">
+                                <div class="difficulty-name">Brutal</div>
+                                <div class="difficulty-desc">No mercy</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="campaign-actions">
+                        <button class="menu-btn" id="btn-continue" onclick="CampaignMenu.continueCampaign()" disabled>
+                            Continue Campaign
+                        </button>
+                        <button class="menu-btn menu-btn-primary" id="btn-start" onclick="CampaignMenu.startChapter()" disabled>
+                            Start Chapter
+                        </button>
+                        <button class="menu-btn menu-btn-sm" id="btn-cinematic" onclick="CampaignMenu.watchCinematic()" style="display: none;">
+                            Watch Cinematic
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/ui_core.js"></script>
+    <script src="../../js/menu_core.js"></script>
+    <script>
+        /**
+         * Campaign Menu Controller
+         */
+        const CampaignMenu = {
+            _races: [],
+            _selectedRace: null,
+            _selectedChapter: null,
+            _selectedDifficulty: 'normal',
+            _campaignProgress: {},
+
+            /**
+             * Initialize campaign menu
+             */
+            init: function() {
+                console.log('Campaign Menu initialized');
+                MenuCore.init();
+
+                // Load races and progress
+                this.loadRaces();
+                this.loadProgress();
+            },
+
+            /**
+             * Load available races
+             */
+            loadRaces: function() {
+                // Default races (would be loaded from backend)
+                this._races = [
+                    {
+                        id: 'humans',
+                        name: 'Human Alliance',
+                        icon: '../../images/races/humans.png',
+                        description: 'Masters of versatility and diplomacy',
+                        lore: 'The Human Alliance stands as a beacon of hope in a world torn by conflict. United under the banner of the High King, they combine superior tactics with unwavering courage.',
+                        traits: ['Versatile units', 'Strong economy', 'Defensive bonuses'],
+                        progress: 45,
+                        locked: false,
+                        chapters: this.getHumanChapters()
+                    },
+                    {
+                        id: 'orcs',
+                        name: 'Orcish Horde',
+                        icon: '../../images/races/orcs.png',
+                        description: 'Brutal warriors seeking glory',
+                        lore: 'From the harsh wastelands, the Orcish Horde emerges with unstoppable fury. Their Warchief leads them in a crusade to conquer all who stand in their path.',
+                        traits: ['Powerful melee', 'Rage mechanics', 'War machines'],
+                        progress: 30,
+                        locked: false,
+                        chapters: this.getOrcChapters()
+                    },
+                    {
+                        id: 'elves',
+                        name: 'Elven Dominion',
+                        icon: '../../images/races/elves.png',
+                        description: 'Ancient magic wielders',
+                        lore: 'The immortal Elves protect the ancient forests with powerful magic. Their arrows fly true, and their spells reshape reality itself.',
+                        traits: ['Powerful magic', 'Ranged supremacy', 'Forest bonuses'],
+                        progress: 20,
+                        locked: false,
+                        chapters: this.getElvenChapters()
+                    },
+                    {
+                        id: 'undead',
+                        name: 'Undead Legion',
+                        icon: '../../images/races/undead.png',
+                        description: 'Death is only the beginning',
+                        lore: 'The Undead Legion rises from the grave, commanded by the Lich King. They consume the living to swell their endless ranks.',
+                        traits: ['Raise dead units', 'Fear aura', 'Disease spread'],
+                        progress: 0,
+                        locked: false,
+                        chapters: this.getUndeadChapters()
+                    },
+                    {
+                        id: 'dwarves',
+                        name: 'Dwarven Clans',
+                        icon: '../../images/races/dwarves.png',
+                        description: 'Masters of forge and stone',
+                        lore: 'Deep in their mountain fortresses, the Dwarves craft legendary weapons and armor. Their cannons shake the earth, and their warriors never retreat.',
+                        traits: ['Superior armor', 'Artillery focus', 'Mining bonuses'],
+                        progress: 0,
+                        locked: false,
+                        chapters: this.getDwarvenChapters()
+                    },
+                    {
+                        id: 'demons',
+                        name: 'Burning Legion',
+                        icon: '../../images/races/demons.png',
+                        description: 'Chaos incarnate from the void',
+                        lore: 'From the twisted realms beyond, the Burning Legion pours forth to consume all worlds. Their dark masters seek nothing less than total annihilation.',
+                        traits: ['Summoning', 'Chaos damage', 'Corruption'],
+                        progress: 0,
+                        locked: true,
+                        lockReason: 'Complete Human Campaign'
+                    },
+                    {
+                        id: 'shadowborn',
+                        name: 'The Shadowborn',
+                        icon: '../../images/races/shadowborn.png',
+                        description: 'Masters of shadow and deception',
+                        lore: 'Born from darkness itself, the Shadowborn manipulate the very fabric of reality. They strike from the shadows, leaving only silence.',
+                        traits: ['Stealth units', 'Assassination', 'Shadow magic'],
+                        progress: 0,
+                        locked: true,
+                        lockReason: 'Complete All Campaigns'
+                    }
+                ];
+
+                this.renderRaces();
+            },
+
+            /**
+             * Generate chapter data for each race
+             */
+            getHumanChapters: function() {
+                return [
+                    { id: 1, name: 'The Kingdom Falls', description: 'Defend the capital from the sudden invasion.', completed: true, hasCinematic: true },
+                    { id: 2, name: 'Exodus', description: 'Lead the survivors to safety across hostile lands.', completed: true, hasCinematic: true },
+                    { id: 3, name: 'New Alliances', description: 'Forge bonds with the Elven scouts.', completed: false, hasCinematic: false },
+                    { id: 4, name: 'The Mountain Pass', description: 'Clear the path through Dwarven territory.', completed: false, locked: true },
+                    { id: 5, name: 'Siege of Ironhold', description: 'Liberate the Dwarven fortress.', completed: false, locked: true },
+                    { id: 6, name: 'The Dark Forest', description: 'Uncover the source of corruption.', completed: false, locked: true },
+                    { id: 7, name: 'Final Stand', description: 'Rally all forces for the ultimate battle.', completed: false, locked: true, hasCinematic: true }
+                ];
+            },
+
+            getOrcChapters: function() {
+                return [
+                    { id: 1, name: 'Blood and Iron', description: 'Unite the scattered clans under one banner.', completed: true, hasCinematic: true },
+                    { id: 2, name: 'The Great Hunt', description: 'Prove your worth in the sacred hunt.', completed: false, hasCinematic: false },
+                    { id: 3, name: 'Warpath', description: 'March on the human frontier.', completed: false, locked: true },
+                    { id: 4, name: 'Ancestral Grounds', description: 'Reclaim the sacred burial sites.', completed: false, locked: true },
+                    { id: 5, name: 'The Siege', description: 'Break through the human defenses.', completed: false, locked: true },
+                    { id: 6, name: 'Honor Bound', description: 'Face the ultimate test of leadership.', completed: false, locked: true, hasCinematic: true }
+                ];
+            },
+
+            getElvenChapters: function() {
+                return [
+                    { id: 1, name: 'Whispers of the Forest', description: 'Investigate the corruption spreading through the woods.', completed: true, hasCinematic: true },
+                    { id: 2, name: 'Ancient Guardians', description: 'Awaken the tree spirits for aid.', completed: false, hasCinematic: false },
+                    { id: 3, name: 'Moonlit Assault', description: 'Strike the enemy camp under cover of darkness.', completed: false, locked: true },
+                    { id: 4, name: 'The High Council', description: 'Convince the elders to join the war.', completed: false, locked: true },
+                    { id: 5, name: 'Starfall', description: 'Channel the power of the stars.', completed: false, locked: true, hasCinematic: true }
+                ];
+            },
+
+            getUndeadChapters: function() {
+                return [
+                    { id: 1, name: 'Awakening', description: 'Rise from the grave and gather your first followers.', completed: false, hasCinematic: true },
+                    { id: 2, name: 'The Graveyard Shift', description: 'Expand your army from the fallen.', completed: false, locked: true },
+                    { id: 3, name: 'Plague Bearer', description: 'Spread the curse to the living.', completed: false, locked: true },
+                    { id: 4, name: 'The Lich Rises', description: 'Achieve ultimate dark power.', completed: false, locked: true, hasCinematic: true }
+                ];
+            },
+
+            getDwarvenChapters: function() {
+                return [
+                    { id: 1, name: 'Deep Delving', description: 'Explore the ancient mines.', completed: false, hasCinematic: true },
+                    { id: 2, name: 'Forge Master', description: 'Craft the legendary weapons.', completed: false, locked: true },
+                    { id: 3, name: 'Mountain Defense', description: 'Protect the homeland from invasion.', completed: false, locked: true },
+                    { id: 4, name: 'Thunder of Cannons', description: 'Unleash the full might of Dwarven artillery.', completed: false, locked: true, hasCinematic: true }
+                ];
+            },
+
+            /**
+             * Load campaign progress from backend
+             */
+            loadProgress: function() {
+                MenuCore.Backend.getCampaignProgress().then(progress => {
+                    if (progress) {
+                        this._campaignProgress = progress;
+                        this.updateProgressDisplay();
+                    }
+                }).catch(err => {
+                    console.log('Could not load campaign progress:', err);
+                });
+            },
+
+            /**
+             * Render race cards
+             */
+            renderRaces: function() {
+                const carousel = document.getElementById('race-carousel');
+                carousel.innerHTML = '';
+
+                this._races.forEach(race => {
+                    const card = document.createElement('div');
+                    card.className = 'race-card' + (race.locked ? ' locked' : '');
+                    card.dataset.raceId = race.id;
+
+                    card.innerHTML = `
+                        <div class="race-icon">
+                            <img src="${race.icon}" alt="${race.name}" onerror="this.style.display='none'">
+                        </div>
+                        <div class="race-name">${race.name}</div>
+                        <div class="race-description">${race.description}</div>
+                        ${race.locked ? `<div class="race-lock-reason">${race.lockReason}</div>` : `
+                            <div class="race-progress">
+                                <div class="menu-progress">
+                                    <div class="menu-progress-fill" style="width: ${race.progress}%"></div>
+                                    <span class="menu-progress-text">${race.progress}%</span>
+                                </div>
+                            </div>
+                        `}
+                        ${race.locked ? '<div class="race-lock-icon">🔒</div>' : ''}
+                    `;
+
+                    if (!race.locked) {
+                        card.addEventListener('click', () => this.selectRace(race.id));
+                    }
+
+                    carousel.appendChild(card);
+                });
+            },
+
+            /**
+             * Select a race
+             */
+            selectRace: function(raceId) {
+                const race = this._races.find(r => r.id === raceId);
+                if (!race || race.locked) return;
+
+                this._selectedRace = race;
+                this._selectedChapter = null;
+
+                // Update UI
+                document.querySelectorAll('.race-card').forEach(c => c.classList.remove('selected'));
+                document.querySelector(`.race-card[data-race-id="${raceId}"]`).classList.add('selected');
+
+                // Update selected race panel
+                document.getElementById('selected-race-name').textContent = race.name;
+                document.getElementById('selected-race-lore').textContent = race.lore;
+
+                const iconImg = document.querySelector('#selected-race-icon img');
+                iconImg.src = race.icon;
+
+                // Update traits
+                const traitsEl = document.getElementById('race-traits');
+                traitsEl.innerHTML = race.traits.map(trait => `
+                    <div class="race-trait">
+                        <span class="trait-icon">✦</span>
+                        <span class="trait-text">${trait}</span>
+                    </div>
+                `).join('');
+
+                // Update chapters
+                this.renderChapters(race.chapters);
+
+                // Update continue button
+                const continueBtn = document.getElementById('btn-continue');
+                const firstIncomplete = race.chapters.find(c => !c.completed && !c.locked);
+                continueBtn.disabled = !firstIncomplete;
+
+                MenuCore.Audio.playSound('race_select');
+                Engine.call('Campaign.onRaceSelect', { raceId: raceId });
+            },
+
+            /**
+             * Render chapter list
+             */
+            renderChapters: function(chapters) {
+                const list = document.getElementById('chapters-list');
+                list.innerHTML = '';
+
+                const completed = chapters.filter(c => c.completed).length;
+                document.getElementById('chapter-progress').textContent = `${completed}/${chapters.length} Completed`;
+
+                chapters.forEach(chapter => {
+                    const item = document.createElement('div');
+                    item.className = 'chapter-item';
+                    if (chapter.completed) item.classList.add('completed');
+                    if (chapter.locked) item.classList.add('locked');
+                    item.dataset.chapterId = chapter.id;
+
+                    item.innerHTML = `
+                        <div class="chapter-number">${chapter.id}</div>
+                        <div class="chapter-info">
+                            <div class="chapter-name">${chapter.name}</div>
+                            <div class="chapter-description">${chapter.description}</div>
+                        </div>
+                        <div class="chapter-status">
+                            ${chapter.completed ? '<span class="status-complete">✓</span>' : ''}
+                            ${chapter.locked ? '<span class="status-locked">🔒</span>' : ''}
+                            ${chapter.hasCinematic ? '<span class="status-cinematic">🎬</span>' : ''}
+                        </div>
+                    `;
+
+                    if (!chapter.locked) {
+                        item.addEventListener('click', () => this.selectChapter(chapter));
+                    }
+
+                    list.appendChild(item);
+                });
+
+                MenuCore.Animations.staggerIn(list, '.chapter-item', 50);
+            },
+
+            /**
+             * Select a chapter
+             */
+            selectChapter: function(chapter) {
+                this._selectedChapter = chapter;
+
+                // Update UI
+                document.querySelectorAll('.chapter-item').forEach(c => c.classList.remove('selected'));
+                document.querySelector(`.chapter-item[data-chapter-id="${chapter.id}"]`).classList.add('selected');
+
+                // Update preview
+                document.getElementById('preview-chapter-name').textContent = `Chapter ${chapter.id}: ${chapter.name}`;
+                document.getElementById('preview-chapter-description').textContent = chapter.description;
+
+                // Update objectives (mock data)
+                const objectives = document.getElementById('chapter-objectives');
+                objectives.innerHTML = `
+                    <h4>Objectives:</h4>
+                    <ul>
+                        <li>Primary: Complete the main objective</li>
+                        <li>Secondary: Find the hidden artifact</li>
+                        <li>Bonus: Finish within time limit</li>
+                    </ul>
+                `;
+
+                // Update buttons
+                document.getElementById('btn-start').disabled = false;
+                document.getElementById('btn-cinematic').style.display = chapter.hasCinematic ? 'block' : 'none';
+
+                MenuCore.Audio.playSound('chapter_select');
+            },
+
+            /**
+             * Carousel navigation
+             */
+            prevRace: function() {
+                const carousel = document.getElementById('race-carousel');
+                carousel.scrollBy({ left: -220, behavior: 'smooth' });
+            },
+
+            nextRace: function() {
+                const carousel = document.getElementById('race-carousel');
+                carousel.scrollBy({ left: 220, behavior: 'smooth' });
+            },
+
+            /**
+             * Select difficulty
+             */
+            selectDifficulty: function(difficulty) {
+                this._selectedDifficulty = difficulty;
+
+                document.querySelectorAll('.difficulty-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                document.querySelector(`.difficulty-option[data-difficulty="${difficulty}"]`).classList.add('selected');
+
+                MenuCore.Audio.playSound('button_click');
+            },
+
+            /**
+             * Continue campaign (start next incomplete chapter)
+             */
+            continueCampaign: function() {
+                if (!this._selectedRace) return;
+
+                const nextChapter = this._selectedRace.chapters.find(c => !c.completed && !c.locked);
+                if (nextChapter) {
+                    this.selectChapter(nextChapter);
+                    this.startChapter();
+                }
+            },
+
+            /**
+             * Start selected chapter
+             */
+            startChapter: function() {
+                if (!this._selectedRace || !this._selectedChapter) return;
+
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Campaign.startMission', {
+                    raceId: this._selectedRace.id,
+                    chapterId: this._selectedChapter.id,
+                    difficulty: this._selectedDifficulty
+                });
+            },
+
+            /**
+             * Watch chapter cinematic
+             */
+            watchCinematic: function() {
+                if (!this._selectedChapter || !this._selectedChapter.hasCinematic) return;
+
+                Engine.call('Campaign.playCinematic', {
+                    raceId: this._selectedRace.id,
+                    chapterId: this._selectedChapter.id
+                });
+            },
+
+            /**
+             * Update progress display
+             */
+            updateProgressDisplay: function() {
+                // Update race progress from backend data
+                this._races.forEach(race => {
+                    if (this._campaignProgress[race.id]) {
+                        race.progress = this._campaignProgress[race.id].progress;
+                    }
+                });
+                this.renderRaces();
+            },
+
+            /**
+             * Back to main menu
+             */
+            back: function() {
+                MenuCore.Audio.playSound('button_click');
+                Engine.call('Menu.navigate', { page: 'main' });
+            }
+        };
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', () => CampaignMenu.init());
+        window.CampaignMenu = CampaignMenu;
+    </script>
+
+    <style>
+        /* Campaign Menu Specific Styles */
+        .campaign-content {
+            position: relative;
+            z-index: var(--menu-z-content);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: var(--menu-spacing-lg);
+        }
+
+        .campaign-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--menu-spacing-lg);
+        }
+
+        .campaign-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-xxl);
+            color: var(--menu-gold-light);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .campaign-header-spacer {
+            width: 120px;
+        }
+
+        .section-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-lg);
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-md);
+            text-align: center;
+        }
+
+        /* Race Carousel */
+        .race-carousel-container {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-md);
+            margin-bottom: var(--menu-spacing-xl);
+        }
+
+        .carousel-btn {
+            width: 48px;
+            height: 48px;
+            background: rgba(30, 25, 40, 0.8);
+            border: 2px solid var(--menu-gold-dark);
+            color: var(--menu-gold);
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--menu-transition-fast);
+        }
+
+        .carousel-btn:hover {
+            background: var(--menu-gold-dark);
+            color: var(--menu-text-primary);
+        }
+
+        .race-carousel {
+            display: flex;
+            gap: var(--menu-spacing-lg);
+            overflow-x: auto;
+            padding: var(--menu-spacing-md) 0;
+            scroll-snap-type: x mandatory;
+            flex: 1;
+        }
+
+        .race-card {
+            flex: 0 0 180px;
+            padding: var(--menu-spacing-lg);
+            background: var(--menu-bg-panel);
+            border: 2px solid transparent;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--menu-transition-normal);
+            scroll-snap-align: center;
+            position: relative;
+        }
+
+        .race-card:hover:not(.locked) {
+            border-color: rgba(212, 168, 75, 0.5);
+            transform: translateY(-5px);
+        }
+
+        .race-card.selected {
+            border-color: var(--menu-gold);
+            box-shadow: 0 0 30px rgba(212, 168, 75, 0.3);
+        }
+
+        .race-card.locked {
+            opacity: 0.6;
+            filter: grayscale(0.3);
+            cursor: not-allowed;
+        }
+
+        .race-lock-reason {
+            font-size: var(--menu-font-size-xs);
+            color: var(--menu-red);
+            margin-top: var(--menu-spacing-sm);
+        }
+
+        .race-lock-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+        }
+
+        /* Main Content Layout */
+        .campaign-main-content {
+            display: flex;
+            gap: var(--menu-spacing-xl);
+            flex: 1;
+        }
+
+        .campaign-left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-lg);
+        }
+
+        .campaign-right-panel {
+            flex: 0 0 400px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-lg);
+        }
+
+        /* Selected Race Panel */
+        .selected-race-panel {
+            border-radius: var(--menu-radius-md);
+        }
+
+        .selected-race-header {
+            display: flex;
+            gap: var(--menu-spacing-lg);
+            margin-bottom: var(--menu-spacing-md);
+        }
+
+        .selected-race-icon {
+            width: 100px;
+            height: 100px;
+            border: 2px solid var(--menu-gold-dark);
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .selected-race-icon img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+        }
+
+        .selected-race-info h2 {
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-sm);
+        }
+
+        .race-lore {
+            color: var(--menu-text-secondary);
+            line-height: 1.5;
+        }
+
+        .race-traits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .race-trait {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-xs);
+            padding: var(--menu-spacing-xs) var(--menu-spacing-sm);
+            background: rgba(212, 168, 75, 0.1);
+            border: 1px solid var(--menu-gold-dark);
+            border-radius: var(--menu-radius-sm);
+        }
+
+        .trait-icon {
+            color: var(--menu-gold);
+        }
+
+        /* Chapters Panel */
+        .chapters-panel {
+            flex: 1;
+            border-radius: var(--menu-radius-md);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chapter-progress {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-gold-light);
+        }
+
+        .chapters-list {
+            flex: 1;
+            max-height: 300px;
+        }
+
+        .chapter-item {
+            display: flex;
+            align-items: center;
+            padding: var(--menu-spacing-md);
+            border-bottom: 1px solid rgba(212, 168, 75, 0.1);
+            cursor: pointer;
+            transition: background var(--menu-transition-fast);
+        }
+
+        .chapter-item:hover:not(.locked) {
+            background: rgba(212, 168, 75, 0.1);
+        }
+
+        .chapter-item.selected {
+            background: rgba(212, 168, 75, 0.2);
+            border-left: 3px solid var(--menu-gold);
+        }
+
+        .chapter-item.completed {
+            opacity: 0.8;
+        }
+
+        .chapter-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chapter-number {
+            width: 36px;
+            height: 36px;
+            background: var(--menu-gold-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: var(--menu-spacing-md);
+        }
+
+        .chapter-info {
+            flex: 1;
+        }
+
+        .chapter-name {
+            font-weight: 600;
+            color: var(--menu-text-primary);
+        }
+
+        .chapter-description {
+            font-size: var(--menu-font-size-sm);
+            color: var(--menu-text-secondary);
+        }
+
+        .chapter-status {
+            display: flex;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .status-complete {
+            color: var(--menu-green);
+        }
+
+        .status-locked {
+            font-size: 14px;
+        }
+
+        .status-cinematic {
+            font-size: 14px;
+        }
+
+        /* Chapter Preview */
+        .chapter-preview-panel {
+            border-radius: var(--menu-radius-md);
+            overflow: hidden;
+        }
+
+        .chapter-preview-image {
+            height: 180px;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chapter-preview-overlay {
+            padding: var(--menu-spacing-lg);
+        }
+
+        .preview-text {
+            color: var(--menu-text-secondary);
+        }
+
+        .chapter-preview-info {
+            padding: var(--menu-spacing-md);
+        }
+
+        .chapter-preview-info h3 {
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-sm);
+        }
+
+        .chapter-objectives {
+            margin-top: var(--menu-spacing-md);
+        }
+
+        .chapter-objectives h4 {
+            color: var(--menu-gold);
+            margin-bottom: var(--menu-spacing-sm);
+        }
+
+        .chapter-objectives ul {
+            list-style: none;
+            padding-left: var(--menu-spacing-md);
+        }
+
+        .chapter-objectives li {
+            color: var(--menu-text-secondary);
+            margin-bottom: var(--menu-spacing-xs);
+        }
+
+        .chapter-objectives li::before {
+            content: '• ';
+            color: var(--menu-gold);
+        }
+
+        /* Difficulty Panel */
+        .difficulty-panel {
+            border-radius: var(--menu-radius-md);
+            padding: var(--menu-spacing-md);
+        }
+
+        /* Campaign Actions */
+        .campaign-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-sm);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .campaign-main-content {
+                flex-direction: column;
+            }
+
+            .campaign-right-panel {
+                flex: none;
+            }
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,107 @@
+{
+    "id": "naga_altar_of_depths",
+    "type": "building",
+    "name": "Altar of the Depths",
+    "description": "Sacred structure where Naga heroes are summoned from the abyssal void. Can revive fallen heroes.",
+    "race": "naga",
+    "tier": 1,
+    "category": "heroes",
+
+    "tags": ["heroes", "production", "revival", "tier1"],
+
+    "model": {
+        "path": "models/races/naga/buildings/altar_of_depths.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/altar_of_depths_diffuse.png",
+        "normal": "textures/races/naga/buildings/altar_of_depths_normal.png",
+        "emissive": "textures/races/naga/buildings/altar_of_depths_glow.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [4, 4],
+        "entrances": [[2, 0]],
+        "visualSize": [8.0, 12.0, 8.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 250,
+            "coral": 150,
+            "pearls": 50
+        },
+        "time": 65.0,
+        "builder_required": true
+    },
+
+    "stats": {
+        "maxHealth": 1000,
+        "armor": 6,
+        "magicResist": 8
+    },
+
+    "hero_production": [
+        {
+            "output": "naga_sea_empress",
+            "time": 55.0,
+            "cost": {"gold": 500, "coral": 100},
+            "requirements": {"age": "age_shallow"}
+        },
+        {
+            "output": "naga_deep_oracle",
+            "time": 55.0,
+            "cost": {"gold": 500, "pearls": 100},
+            "requirements": {"age": "age_shallow"}
+        },
+        {
+            "output": "naga_tidehunter",
+            "time": 55.0,
+            "cost": {"gold": 500, "coral": 80, "pearls": 20},
+            "requirements": {"age": "age_shallow"}
+        },
+        {
+            "output": "naga_siren_queen",
+            "time": 55.0,
+            "cost": {"gold": 500, "pearls": 80, "abyssal_essence": 20},
+            "requirements": {"age": "age_shallow"}
+        }
+    ],
+
+    "revival": {
+        "enabled": true,
+        "cost_multiplier": 0.5,
+        "time_per_level": 5.0,
+        "base_time": 30.0
+    },
+
+    "water_bonus": {
+        "near_water_radius": 6,
+        "hero_regen_bonus": 3.0,
+        "revival_speed_bonus": 0.2
+    },
+
+    "aura": {
+        "name": "Blessing of the Depths",
+        "radius": 15.0,
+        "effects": [
+            {"stat": "experience_gain", "type": "percent", "value": 10, "targets": "friendly_heroes"}
+        ]
+    },
+
+    "requirements": {
+        "buildings": ["naga_spawning_pool"]
+    },
+
+    "unique": true,
+    "maxCount": 1,
+
+    "visionRange": 10.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/altar_of_depths/on_complete.py",
+        "on_hero_revive": "scripts/buildings/naga/altar_of_depths/on_revive.py"
+    }
+}

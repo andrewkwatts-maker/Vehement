@@ -1,0 +1,184 @@
+{
+    "id": "human_archmage",
+    "type": "hero",
+    "race": "humans",
+    "name": "Archmage",
+    "title": "Master of the Arcane",
+    "class": "mage",
+    "primary_attribute": "intelligence",
+    "description": "A supreme wielder of arcane magic who commands the elements themselves. The Archmage devastates enemies with powerful spells while empowering allies with magical might.",
+    "lore": "Grandmaster Thalion spent three centuries mastering the arcane arts before ascending to the rank of Archmage. His mastery over fire, ice, and the fundamental forces of magic is unmatched in all the realms.",
+
+    "base_stats": {
+        "health": 450,
+        "mana": 500,
+        "damage": 26,
+        "armor": 1,
+        "magic_resist": 40,
+        "move_speed": 4.8,
+        "turn_rate": 0.5,
+        "attack_range": 12.0,
+        "attack_speed": 2.0,
+        "health_regen": 1.2,
+        "mana_regen": 4.0,
+        "strength": 14,
+        "agility": 16,
+        "intelligence": 32,
+        "day_vision": 18,
+        "night_vision": 10
+    },
+
+    "stat_growth": {
+        "health_per_level": 40,
+        "mana_per_level": 60,
+        "damage_per_level": 2.5,
+        "armor_per_level": 0.15,
+        "strength_per_level": 1.4,
+        "agility_per_level": 1.3,
+        "intelligence_per_level": 4.0,
+        "health_regen_per_level": 0.1,
+        "mana_regen_per_level": 0.3
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_fireball_hero",
+            "name": "Fireball",
+            "description": "Hurl a massive ball of fire that explodes on impact, dealing heavy damage in an area and igniting enemies.",
+            "max_level": 4,
+            "hotkey": "Q",
+            "cooldown": [10, 9, 8, 7],
+            "mana_cost": [80, 90, 100, 110],
+            "range": 16.0,
+            "radius": [3.5, 4, 4.5, 5],
+            "damage": [150, 225, 300, 375],
+            "dot_damage": [20, 30, 40, 50],
+            "dot_duration": 4.0,
+            "damage_type": "fire",
+            "projectile_speed": 20.0
+        },
+        {
+            "slot": 2,
+            "id": "ability_blizzard_hero",
+            "name": "Blizzard",
+            "description": "Summon waves of freezing ice that damage and slow all enemies in the target area.",
+            "max_level": 4,
+            "hotkey": "W",
+            "cooldown": [25, 23, 21, 19],
+            "mana_cost": [130, 150, 170, 190],
+            "range": 20.0,
+            "radius": [6, 7, 8, 9],
+            "duration": 8.0,
+            "waves": 8,
+            "damage_per_wave": [50, 70, 90, 110],
+            "slow_percent": [0.30, 0.40, 0.50, 0.60],
+            "slow_duration": 2.0,
+            "damage_type": "frost",
+            "channeled": true
+        },
+        {
+            "slot": 3,
+            "id": "ability_polymorph_hero",
+            "name": "Polymorph",
+            "description": "Transform an enemy unit into a helpless sheep, disabling them completely.",
+            "max_level": 4,
+            "hotkey": "E",
+            "cooldown": [18, 16, 14, 12],
+            "mana_cost": [90, 100, 110, 120],
+            "range": 14.0,
+            "duration": [10, 15, 20, 25],
+            "target_type": "enemy_unit",
+            "excludes": ["hero", "massive", "mechanical", "boss"],
+            "hero_duration_multiplier": 0.2,
+            "dispellable": true
+        },
+        {
+            "slot": 4,
+            "id": "ability_mass_teleport",
+            "name": "Mass Teleport",
+            "description": "Teleport the Archmage and all nearby allied units to a target friendly building.",
+            "ultimate": true,
+            "unlock_level": 6,
+            "max_level": 3,
+            "hotkey": "R",
+            "cooldown": [90, 75, 60],
+            "mana_cost": [150, 200, 250],
+            "gather_radius": [10, 12, 14],
+            "max_units": [12, 18, 24],
+            "cast_time": [3.0, 2.5, 2.0],
+            "target_type": "friendly_building",
+            "channeled": true,
+            "can_be_interrupted": true
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_fireball_split", "talent_fireball_stun"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_blizzard_freeze", "talent_blizzard_armor_reduction"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_polymorph_aoe", "talent_polymorph_damage"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_teleport_instant", "talent_teleport_combat_ready"]}
+    ],
+
+    "passive": {
+        "id": "passive_arcane_mastery",
+        "name": "Arcane Mastery",
+        "description": "All spell damage is increased by 15% and spell cooldowns are reduced by 10%",
+        "spell_damage_bonus": 0.15,
+        "cooldown_reduction": 0.10
+    },
+
+    "aura": {
+        "id": "aura_brilliance_hero",
+        "name": "Brilliance Aura",
+        "description": "Nearby friendly units regenerate mana faster",
+        "radius": 14.0,
+        "effects": [
+            {"stat": "manaRegen", "value": 1.50, "type": "flat"}
+        ]
+    },
+
+    "visuals": {
+        "model": "models/races/humans/heroes/archmage.obj",
+        "skeleton": "models/races/humans/heroes/archmage_skeleton.skl",
+        "portrait": "textures/races/humans/portraits/archmage.png",
+        "icon": "textures/races/humans/icons/archmage.png",
+        "minimap_icon": "textures/minimap/archmage.png",
+        "animation_set": "animations/humans/heroes/archmage",
+        "scale": 1.0,
+        "attack_effect": "effects/arcane_bolt.fx",
+        "cast_effect": "effects/archmage_cast.fx",
+        "death_effect": "effects/hero_death_magic.fx",
+        "respawn_effect": "effects/magic_respawn.fx"
+    },
+
+    "events": {
+        "on_spawn": "scripts/heroes/archmage/on_spawn.py",
+        "on_level_up": "scripts/heroes/archmage/on_level_up.py",
+        "on_ability_learn": "scripts/heroes/archmage/on_ability_learn.py"
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/heroes/archmage/select_1.wav", "sounds/humans/heroes/archmage/select_2.wav"],
+        "move": ["sounds/humans/heroes/archmage/move_1.wav", "sounds/humans/heroes/archmage/move_2.wav"],
+        "attack": "sounds/humans/heroes/archmage/attack.wav",
+        "ability_q": "sounds/abilities/fireball_hero.wav",
+        "ability_w": "sounds/abilities/blizzard_hero.wav",
+        "ability_e": "sounds/abilities/polymorph.wav",
+        "ability_r": "sounds/abilities/mass_teleport.wav",
+        "death": "sounds/humans/heroes/archmage/death.wav",
+        "respawn": "sounds/humans/heroes/archmage/respawn.wav"
+    },
+
+    "tags": ["ranged", "intelligence", "caster", "nuker", "disabler", "escape"],
+
+    "properties": {
+        "attack_type": "ranged",
+        "complexity": 3,
+        "roles": ["nuker", "disabler", "support"],
+        "summon_building": "human_altar_of_kings",
+        "summon_cost": {"gold": 500},
+        "respawn_time_base": 50,
+        "respawn_time_per_level": 4
+    }
+}

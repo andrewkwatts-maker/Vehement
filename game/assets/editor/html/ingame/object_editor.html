@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Editor - Vehement</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --accent: #e94560;
+            --accent-hover: #ff6b6b;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --border: #333;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 48px 1fr 32px;
+            height: 100vh;
+        }
+
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .tool-btn.primary { background: var(--accent); color: white; }
+        .tool-btn svg { width: 16px; height: 16px; }
+
+        .toolbar-separator {
+            width: 1px; height: 24px;
+            background: var(--border); margin: 0 8px;
+        }
+
+        /* Object List Panel */
+        .object-list-panel {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-bar {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-bar input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .filter-bar input:focus { outline: none; border-color: var(--accent); }
+
+        .category-tabs {
+            display: flex;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .category-tab {
+            flex: 1;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .category-tab:hover { color: var(--text-primary); }
+        .category-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .object-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .object-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .object-item:hover { background: var(--bg-tertiary); }
+        .object-item.selected { background: var(--accent); }
+
+        .object-icon {
+            width: 32px; height: 32px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .object-info { flex: 1; }
+        .object-name { font-size: 13px; font-weight: 500; }
+        .object-type { font-size: 11px; color: var(--text-secondary); }
+
+        .object-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: var(--warning);
+            color: #000;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-viewport {
+            flex: 1;
+            background: #0a0a0f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .preview-placeholder {
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .preview-controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+        }
+
+        .preview-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .preview-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+        .preview-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* Properties Panel */
+        .properties-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .properties-tabs {
+            display: flex;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .prop-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .prop-tab:hover { color: var(--text-primary); }
+        .prop-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .properties-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .property-section {
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 100px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .property-value {
+            flex: 1;
+        }
+
+        .property-value input,
+        .property-value select {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .property-value input:focus,
+        .property-value select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+        }
+
+        .stat-name { flex: 1; font-size: 12px; }
+        .stat-base { width: 60px; text-align: center; font-size: 12px; color: var(--text-secondary); }
+        .stat-mod { width: 60px; text-align: center; font-size: 12px; }
+        .stat-mod.positive { color: var(--success); }
+        .stat-mod.negative { color: var(--error); }
+        .stat-final { width: 60px; text-align: center; font-size: 12px; font-weight: 600; }
+
+        .stat-input {
+            width: 60px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px;
+            color: var(--text-primary);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Ability Grid */
+        .ability-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .ability-slot {
+            aspect-ratio: 1;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .ability-slot:hover { border-color: var(--accent); }
+        .ability-slot.filled { background: var(--bg-tertiary); }
+
+        .ability-slot .hotkey {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 10px;
+            color: var(--warning);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .status-item {
+            padding: 0 12px;
+            border-right: 1px solid var(--border);
+        }
+
+        .status-item:last-child { border-right: none; margin-left: auto; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <button class="tool-btn primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                New Object
+            </button>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                Duplicate
+            </button>
+            <div class="toolbar-separator"></div>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Import
+            </button>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17,8 12,3 7,8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Export
+            </button>
+            <div class="toolbar-separator"></div>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1,4 1,10 7,10"/>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+                Revert
+            </button>
+            <div style="flex:1;"></div>
+            <button class="tool-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17,21 17,13 7,13 7,21"/>
+                </svg>
+                Save
+            </button>
+        </div>
+
+        <div class="object-list-panel">
+            <div class="panel-header">Objects</div>
+            <div class="filter-bar">
+                <input type="text" placeholder="Search objects...">
+            </div>
+            <div class="category-tabs">
+                <div class="category-tab active">Units</div>
+                <div class="category-tab">Buildings</div>
+                <div class="category-tab">Items</div>
+                <div class="category-tab">Abilities</div>
+            </div>
+            <div class="object-list">
+                <div class="object-item selected">
+                    <div class="object-icon" style="background: #4a7c23;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
+                        </svg>
+                    </div>
+                    <div class="object-info">
+                        <div class="object-name">Footman</div>
+                        <div class="object-type">Human Infantry</div>
+                    </div>
+                </div>
+                <div class="object-item">
+                    <div class="object-icon" style="background: #4169e1;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
+                        </svg>
+                    </div>
+                    <div class="object-info">
+                        <div class="object-name">Knight</div>
+                        <div class="object-type">Human Cavalry</div>
+                    </div>
+                    <span class="object-badge">Modified</span>
+                </div>
+                <div class="object-item">
+                    <div class="object-icon" style="background: #ffd700;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                            <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>
+                        </svg>
+                    </div>
+                    <div class="object-info">
+                        <div class="object-name">Archmage</div>
+                        <div class="object-type">Human Hero</div>
+                    </div>
+                </div>
+                <div class="object-item">
+                    <div class="object-icon" style="background: #dc143c;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
+                        </svg>
+                    </div>
+                    <div class="object-info">
+                        <div class="object-name">Grunt</div>
+                        <div class="object-type">Orc Infantry</div>
+                    </div>
+                </div>
+                <div class="object-item">
+                    <div class="object-icon" style="background: #8b4513;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
+                        </svg>
+                    </div>
+                    <div class="object-info">
+                        <div class="object-name">Peasant</div>
+                        <div class="object-type">Human Worker</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-panel">
+            <div class="preview-viewport">
+                <div class="preview-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/>
+                    </svg>
+                    <p>Footman</p>
+                    <p style="font-size:12px;">Level 1 Human Infantry</p>
+                </div>
+            </div>
+            <div class="preview-controls">
+                <button class="preview-btn active">Idle</button>
+                <button class="preview-btn">Walk</button>
+                <button class="preview-btn">Attack</button>
+                <button class="preview-btn">Death</button>
+            </div>
+        </div>
+
+        <div class="properties-panel">
+            <div class="properties-tabs">
+                <div class="prop-tab active">Stats</div>
+                <div class="prop-tab">Abilities</div>
+                <div class="prop-tab">Visual</div>
+                <div class="prop-tab">Sound</div>
+            </div>
+            <div class="properties-content">
+                <div class="property-section">
+                    <div class="section-title">Basic Info</div>
+                    <div class="property-row">
+                        <div class="property-label">Name</div>
+                        <div class="property-value"><input type="text" value="Footman"></div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Description</div>
+                        <div class="property-value"><input type="text" value="Human Infantry"></div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Cost (Gold)</div>
+                        <div class="property-value"><input type="number" value="135"></div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Build Time</div>
+                        <div class="property-value"><input type="number" value="20"></div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Supply</div>
+                        <div class="property-value"><input type="number" value="2"></div>
+                    </div>
+                </div>
+
+                <div class="property-section">
+                    <div class="section-title">Combat Stats</div>
+                    <div style="display:flex; gap:4px; font-size:10px; color:var(--text-secondary); margin-bottom:8px; padding:0 8px;">
+                        <span style="flex:1;">Stat</span>
+                        <span style="width:60px; text-align:center;">Base</span>
+                        <span style="width:60px; text-align:center;">Mod</span>
+                        <span style="width:60px; text-align:center;">Final</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Health</span>
+                        <span class="stat-base">420</span>
+                        <input class="stat-input" type="number" value="0">
+                        <span class="stat-final">420</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Mana</span>
+                        <span class="stat-base">0</span>
+                        <input class="stat-input" type="number" value="0">
+                        <span class="stat-final">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Attack Damage</span>
+                        <span class="stat-base">12</span>
+                        <input class="stat-input" type="number" value="3">
+                        <span class="stat-final" style="color:var(--success);">15</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Attack Speed</span>
+                        <span class="stat-base">1.35</span>
+                        <input class="stat-input" type="number" value="0" step="0.1">
+                        <span class="stat-final">1.35</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Armor</span>
+                        <span class="stat-base">2</span>
+                        <input class="stat-input" type="number" value="1">
+                        <span class="stat-final" style="color:var(--success);">3</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-name">Move Speed</span>
+                        <span class="stat-base">270</span>
+                        <input class="stat-input" type="number" value="0">
+                        <span class="stat-final">270</span>
+                    </div>
+                </div>
+
+                <div class="property-section">
+                    <div class="section-title">Abilities (4)</div>
+                    <div class="ability-grid">
+                        <div class="ability-slot filled">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            <span class="hotkey">D</span>
+                        </div>
+                        <div class="ability-slot">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </div>
+                        <div class="ability-slot">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </div>
+                        <div class="ability-slot">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="property-section">
+                    <div class="section-title">Classification</div>
+                    <div class="property-row">
+                        <div class="property-label">Armor Type</div>
+                        <div class="property-value">
+                            <select>
+                                <option>Light</option>
+                                <option selected>Medium</option>
+                                <option>Heavy</option>
+                                <option>Fortified</option>
+                                <option>Hero</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Attack Type</div>
+                        <div class="property-value">
+                            <select>
+                                <option selected>Normal</option>
+                                <option>Pierce</option>
+                                <option>Siege</option>
+                                <option>Magic</option>
+                                <option>Chaos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="property-row">
+                        <div class="property-label">Unit Type</div>
+                        <div class="property-value">
+                            <select>
+                                <option selected>Ground</option>
+                                <option>Air</option>
+                                <option>Amphibious</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">Objects: 147</div>
+            <div class="status-item">Modified: 3</div>
+            <div class="status-item">Category: Units</div>
+            <div class="status-item">ID: unit_footman</div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.category-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.prop-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.prop-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.object-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.object-item').forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
+            });
+        });
+
+        document.querySelectorAll('.preview-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.preview-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Calculate final stats
+        document.querySelectorAll('.stat-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const row = e.target.closest('.stat-row');
+                const base = parseFloat(row.querySelector('.stat-base').textContent);
+                const mod = parseFloat(e.target.value) || 0;
+                const final = row.querySelector('.stat-final');
+                final.textContent = (base + mod).toString();
+                final.style.color = mod > 0 ? 'var(--success)' : mod < 0 ? 'var(--error)' : '';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+{
+    "id": "human_catapult",
+    "type": "unit",
+    "race": "humans",
+    "name": "Catapult",
+    "description": "A powerful siege engine that hurls massive boulders across great distances. Devastating against buildings and clustered units.",
+
+    "tags": ["military", "siege", "ranged", "tier3", "heavy", "artillery"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/humans/units/catapult.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/catapult_diffuse.png",
+        "normal": "textures/races/humans/units/catapult_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [2.0, 1.5, 2.0],
+                "offset": [0.0, 1.5, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 1500.0,
+        "layer": "siege"
+    },
+
+    "stats": {
+        "health": 500,
+        "maxHealth": 500,
+        "healthRegen": 0.0,
+        "armor": 5,
+        "magicResist": 5,
+        "moveSpeed": 2.0,
+        "turnRate": 60.0
+    },
+
+    "combat": {
+        "attackDamage": 90,
+        "attackSpeed": 4.0,
+        "attackRange": 28.0,
+        "minAttackRange": 8.0,
+        "damageType": "siege",
+        "armorType": "fortified",
+        "attackType": "ranged",
+        "splash_damage": 0.75,
+        "splash_radius": 4.0,
+        "projectile_id": "boulder",
+        "bonus_vs_tags": ["building"],
+        "bonus_damage_multiplier": 2.5
+    },
+
+    "projectile": {
+        "id": "boulder",
+        "model": "models/projectiles/boulder.obj",
+        "speed": 18.0,
+        "lifetime": 5.0,
+        "gravity": 1.5,
+        "arc_height": 15.0,
+        "trailEffect": "effects/boulder_trail.fx",
+        "impactEffect": "effects/boulder_impact.fx"
+    },
+
+    "setup": {
+        "required": true,
+        "setup_time": 2.5,
+        "packup_time": 2.0,
+        "can_attack_while_moving": false
+    },
+
+    "abilities": [
+        {
+            "id": "ability_flaming_boulder",
+            "name": "Flaming Boulder",
+            "description": "Launch a boulder coated in pitch that ignites on impact, dealing fire damage over time",
+            "hotkey": "Q",
+            "cooldown": 30.0,
+            "effects": [
+                {"type": "dot", "damage": 25, "duration": 5.0, "damage_type": "fire"},
+                {"type": "splash_dot", "radius": 3.0}
+            ],
+            "required_upgrade": "upgrade_flaming_ammunition"
+        },
+        {
+            "id": "ability_barrage",
+            "name": "Barrage",
+            "description": "Fire 3 shots in rapid succession at the target area",
+            "hotkey": "W",
+            "cooldown": 45.0,
+            "shots": 3,
+            "shot_delay": 1.0,
+            "damage_per_shot": 60,
+            "radius": 5.0
+        },
+        {
+            "id": "ability_deploy",
+            "name": "Deploy",
+            "description": "Set up the catapult for increased range",
+            "hotkey": "D",
+            "toggle": true,
+            "setup_time": 2.5,
+            "effects": [
+                {"stat": "attackRange", "value": 6, "type": "flat"},
+                {"stat": "move_speed", "value": -1.0, "type": "percent"}
+            ]
+        }
+    ],
+
+    "vulnerabilities": {
+        "fire_damage": 1.5,
+        "melee_damage": 1.25
+    },
+
+    "production": {
+        "building": "human_siege_workshop",
+        "cost": {
+            "gold": 350,
+            "wood": 200
+        },
+        "build_time": 60.0,
+        "population_cost": 4,
+        "prerequisites": ["upgrade_siege_engineering"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/artillery.bt",
+        "profile": "siege",
+        "aggroRange": 25.0,
+        "leashRange": 35.0,
+        "priority_targets": ["building", "wall", "tower", "grouped_units"],
+        "maintain_distance": true,
+        "min_engagement_range": 10.0
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/catapult/idle.anim", "loop": true},
+        "move": {"path": "animations/humans/catapult/move.anim", "loop": true},
+        "setup": {"path": "animations/humans/catapult/setup.anim", "loop": false},
+        "packup": {"path": "animations/humans/catapult/packup.anim", "loop": false},
+        "attack": {"path": "animations/humans/catapult/fire.anim", "loop": false, "events": [[0.6, "fire_projectile"]]},
+        "death": {"path": "animations/humans/catapult/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": "sounds/humans/catapult/select.wav",
+        "acknowledge": "sounds/humans/catapult/ack.wav",
+        "attack": "sounds/catapult_fire.wav",
+        "impact": "sounds/boulder_impact.wav",
+        "setup": "sounds/siege_setup.wav",
+        "move": "sounds/wheels_rolling.wav",
+        "death": "sounds/wood_destruction.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/catapult.png",
+        "icon": "textures/races/humans/icons/catapult.png",
+        "hotkey": "C"
+    }
+}

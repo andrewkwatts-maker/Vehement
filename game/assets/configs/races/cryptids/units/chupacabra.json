@@ -1,0 +1,186 @@
+{
+  "id": "chupacabra",
+  "name": "Chupacabra",
+  "race": "cryptids",
+  "tier": 1,
+  "type": "beast",
+  "role": ["fast_attack", "harasser", "life_drain"],
+
+  "description": "A swift, reptilian predator that drains the life force of its victims. The goat-sucker of legend is all too real.",
+  "lore": "First reported in Puerto Rico, these creatures have spread across the Americas. They hunt livestock and the unwary, leaving behind desiccated corpses drained of all vitality.",
+
+  "stats": {
+    "health": 280,
+    "healthRegen": 1.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 1,
+    "armorType": "light",
+    "moveSpeed": 350,
+    "turnRate": 0.9,
+    "collisionSize": 28,
+    "selectionScale": 0.95
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 14,
+      "variance": 4,
+      "type": "piercing"
+    },
+    "attackSpeed": 1.2,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.3,
+    "backswing": 0.4,
+    "acquisitionRange": 600,
+    "aggroRange": 500,
+    "lifeSteal": 0.25
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "blood_drain",
+      "name": "Blood Drain",
+      "type": "passive",
+      "description": "Attacks restore 25% of damage dealt as health",
+      "effects": {
+        "lifeStealPercent": 0.25
+      },
+      "icon": "icons/abilities/blood_drain.png"
+    },
+    {
+      "id": "pounce",
+      "name": "Pounce",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Leaps at a target, dealing bonus damage and briefly stunning",
+      "cooldown": 12.0,
+      "manaCost": 0,
+      "range": 400,
+      "effects": {
+        "bonusDamage": 30,
+        "stunDuration": 0.5,
+        "closesDistance": true
+      },
+      "hotkey": "P",
+      "icon": "icons/abilities/pounce.png"
+    },
+    {
+      "id": "taste_blood",
+      "name": "Taste Blood",
+      "type": "passive",
+      "description": "Gains attack speed when attacking injured targets",
+      "effects": {
+        "attackSpeedBonus": 0.3,
+        "triggerThreshold": 0.5
+      },
+      "icon": "icons/abilities/taste_blood.png"
+    },
+    {
+      "id": "evasion",
+      "name": "Evasion",
+      "type": "passive",
+      "description": "Has a chance to dodge incoming attacks",
+      "effects": {
+        "dodgeChance": 0.15
+      },
+      "icon": "icons/abilities/evasion.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "den",
+    "buildTime": 18,
+    "cost": {
+      "gold": 110,
+      "lumber": 10,
+      "essence": 5
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["den"],
+      "technologies": [],
+      "age": "whisper"
+    },
+    "hotkey": "C"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["enhanced_blood_drain", "pack_hunter", "night_stalker"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/chupacabra/ready.ogg",
+    "select": ["audio/units/chupacabra/select1.ogg", "audio/units/chupacabra/select2.ogg"],
+    "move": ["audio/units/chupacabra/move1.ogg", "audio/units/chupacabra/move2.ogg"],
+    "attack": ["audio/units/chupacabra/attack1.ogg", "audio/units/chupacabra/attack2.ogg"],
+    "death": "audio/units/chupacabra/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/chupacabra.glb",
+    "texture": "textures/units/cryptids/chupacabra.png",
+    "portrait": "textures/portraits/chupacabra.png",
+    "icon": "textures/icons/chupacabra.png",
+    "scale": 0.95,
+    "animations": {
+      "idle": "chupacabra_idle",
+      "walk": "chupacabra_run",
+      "attack": "chupacabra_attack",
+      "death": "chupacabra_death",
+      "pounce": "chupacabra_pounce"
+    },
+    "effects": {
+      "spawn": "effects/beast_spawn.vfx",
+      "death": "effects/chupacabra_death.vfx",
+      "lifesteal": "effects/blood_drain.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 3,
+    "priority": "medium",
+    "behavior": "hit_and_run",
+    "fleeThreshold": 0.25,
+    "preferredTargets": ["injured", "isolated", "worker"],
+    "usePounceToCatch": true,
+    "retreatWhenHealthy": false
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": true,
+    "leavesCorpse": true,
+    "isBeast": true,
+    "nightBonus": true,
+    "hasLifesteal": true
+  },
+
+  "bounty": {
+    "gold": 15,
+    "experience": 20
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

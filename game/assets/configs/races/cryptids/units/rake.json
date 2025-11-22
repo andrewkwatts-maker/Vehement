@@ -1,0 +1,217 @@
+{
+  "id": "rake",
+  "name": "Rake",
+  "race": "cryptids",
+  "tier": 3,
+  "type": "assassin",
+  "role": ["assassin", "terror", "stealth"],
+
+  "description": "A gaunt, pale humanoid with hollow eyes and razor-sharp claws. The Rake lurks in the darkness, paralyzing victims with fear before striking.",
+  "lore": "First documented in internet creepypasta, the Rake has since become terrifyingly real. It appears at bedsides in the night, watches from corners, and leaves its victims scarred in body and mind alike.",
+
+  "stats": {
+    "health": 400,
+    "healthRegen": 2.5,
+    "mana": 200,
+    "manaRegen": 1.0,
+    "armor": 2,
+    "armorType": "light",
+    "moveSpeed": 340,
+    "turnRate": 1.0,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 35,
+      "variance": 8,
+      "type": "piercing"
+    },
+    "attackSpeed": 1.2,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.2,
+    "backswing": 0.3,
+    "acquisitionRange": 500,
+    "aggroRange": 350,
+    "criticalChance": 0.2,
+    "criticalMultiplier": 2.5
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "permanent_invisibility",
+      "name": "Shadow Lurk",
+      "type": "passive",
+      "description": "Becomes invisible when standing still for 3 seconds",
+      "effects": {
+        "fadeTime": 3.0,
+        "movementBreaksInvisibility": true,
+        "attackBreaksInvisibility": true,
+        "fadeDuration": 1.0
+      },
+      "icon": "icons/abilities/shadow_lurk.png"
+    },
+    {
+      "id": "paralyzing_gaze",
+      "name": "Paralyzing Gaze",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Locks eyes with a target, stunning them with terror",
+      "cooldown": 18.0,
+      "manaCost": 75,
+      "range": 400,
+      "effects": {
+        "stunDuration": 3.0,
+        "damageAmplification": 0.2,
+        "channeled": true,
+        "breakOnDamage": false
+      },
+      "hotkey": "G",
+      "icon": "icons/abilities/paralyzing_gaze.png"
+    },
+    {
+      "id": "nightmare_slash",
+      "name": "Nightmare Slash",
+      "type": "active",
+      "targetType": "unit",
+      "description": "A devastating attack that deals massive damage and causes bleeding",
+      "cooldown": 12.0,
+      "manaCost": 50,
+      "range": 128,
+      "effects": {
+        "damage": 80,
+        "bleedDamagePerSecond": 15,
+        "bleedDuration": 6.0,
+        "fearOnCrit": true
+      },
+      "hotkey": "N",
+      "icon": "icons/abilities/nightmare_slash.png"
+    },
+    {
+      "id": "terror_incarnate",
+      "name": "Terror Incarnate",
+      "type": "passive",
+      "description": "Attacks against feared targets deal bonus damage",
+      "effects": {
+        "bonusDamageVsFeared": 0.5
+      },
+      "icon": "icons/abilities/terror_incarnate.png"
+    },
+    {
+      "id": "creeping_dread",
+      "name": "Creeping Dread",
+      "type": "passive",
+      "description": "Nearby enemies slowly accumulate fear stacks",
+      "effects": {
+        "radius": 300,
+        "fearStackPerSecond": 0.2,
+        "maxStacks": 5,
+        "panicAtMaxStacks": true
+      },
+      "icon": "icons/abilities/creeping_dread.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "dark_hollow",
+    "buildTime": 40,
+    "cost": {
+      "gold": 280,
+      "lumber": 40,
+      "essence": 40
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["dark_hollow", "nexus_of_fear"],
+      "technologies": ["terror_mastery"],
+      "age": "myth"
+    },
+    "hotkey": "R"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["enhanced_stealth", "deeper_terror", "soul_rend"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/rake/ready.ogg",
+    "select": ["audio/units/rake/select1.ogg", "audio/units/rake/select2.ogg"],
+    "move": ["audio/units/rake/move1.ogg", "audio/units/rake/move2.ogg"],
+    "attack": ["audio/units/rake/attack1.ogg", "audio/units/rake/attack2.ogg"],
+    "death": "audio/units/rake/death.ogg",
+    "gaze": "audio/units/rake/gaze.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/rake.glb",
+    "texture": "textures/units/cryptids/rake.png",
+    "portrait": "textures/portraits/rake.png",
+    "icon": "textures/icons/rake.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "rake_idle",
+      "walk": "rake_creep",
+      "attack": "rake_attack",
+      "death": "rake_death",
+      "gaze": "rake_gaze",
+      "lurk": "rake_lurk"
+    },
+    "effects": {
+      "spawn": "effects/rake_spawn.vfx",
+      "death": "effects/rake_death.vfx",
+      "gaze": "effects/paralyzing_gaze.vfx",
+      "slash": "effects/nightmare_slash.vfx",
+      "stealth": "effects/shadow_lurk.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 6,
+    "priority": "high",
+    "behavior": "assassin",
+    "fleeThreshold": 0.3,
+    "preferredTargets": ["caster", "support", "isolated"],
+    "useStealthToApproach": true,
+    "gazeBeforeAttack": true,
+    "targetLowHealth": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "hasInvisibility": true,
+    "causesFear": true,
+    "nightBonus": true,
+    "canCrit": true
+  },
+
+  "bounty": {
+    "gold": 42,
+    "experience": 55
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

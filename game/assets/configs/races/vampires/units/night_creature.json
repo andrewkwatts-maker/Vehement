@@ -1,0 +1,193 @@
+{
+  "id": "night_creature",
+  "name": "Night Creature",
+  "race": "vampires",
+  "tier": 1,
+  "type": "swarm",
+  "role": ["harassment", "anti_air", "swarm"],
+
+  "description": "A swirling mass of vampire bats that attacks as a single entity. Weak individually but dangerous in numbers.",
+  "lore": "Night Creatures are not true vampires but supernatural bat swarms bound together by dark magic. They serve as the eyes and claws of the Blood Court, swarming over enemies in a frenzy of teeth and wings.",
+
+  "stats": {
+    "health": 200,
+    "healthRegen": 1.0,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 0,
+    "armorType": "light",
+    "moveSpeed": 320,
+    "turnRate": 1.0,
+    "collisionSize": 24,
+    "selectionScale": 0.8,
+    "isFlying": true
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 8,
+      "variance": 2,
+      "type": "piercing"
+    },
+    "attackSpeed": 0.8,
+    "attackRange": 90,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.2,
+    "backswing": 0.2,
+    "acquisitionRange": 500,
+    "aggroRange": 400,
+    "lifeSteal": 0.10
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "healthRegenBonus": 2.0,
+      "attackSpeedBonus": 0.2
+    },
+    "day": {
+      "damagePenalty": 0.5,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 5,
+      "mustLand": false
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "swarm_attack",
+      "name": "Swarm Attack",
+      "type": "passive",
+      "description": "Attacks multiple enemies at once, dealing reduced damage to each",
+      "effects": {
+        "maxTargets": 3,
+        "damagePerTarget": 0.5
+      },
+      "icon": "icons/abilities/swarm_attack.png"
+    },
+    {
+      "id": "disperse",
+      "name": "Disperse",
+      "type": "active",
+      "targetType": "self",
+      "description": "Scatter into individual bats, becoming untargetable for 2 seconds but unable to attack",
+      "cooldown": 20,
+      "effects": {
+        "duration": 2.0,
+        "invulnerable": true,
+        "cannotAttack": true,
+        "speedBonus": 1.5
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/disperse.png"
+    },
+    {
+      "id": "consume_corpse",
+      "name": "Consume Corpse",
+      "type": "active",
+      "targetType": "corpse",
+      "description": "Consume a corpse to restore health",
+      "cooldown": 0,
+      "effects": {
+        "healPercent": 0.5,
+        "destroysCorpse": true
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/consume_corpse.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bat_roost",
+    "buildTime": 15,
+    "cost": {
+      "gold": 100,
+      "lumber": 0,
+      "blood": 5
+    },
+    "foodCost": 1,
+    "prerequisites": {
+      "buildings": ["bat_roost"],
+      "technologies": [],
+      "age": "fledgling"
+    },
+    "hotkey": "N"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "razor_fangs"
+    },
+    "armor": {
+      "perLevel": 0,
+      "maxLevel": 0,
+      "researchId": null
+    },
+    "special": ["larger_swarm", "vampiric_swarm"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/night_creature/ready.ogg",
+    "select": ["audio/units/night_creature/select1.ogg", "audio/units/night_creature/select2.ogg"],
+    "move": ["audio/units/night_creature/move1.ogg"],
+    "attack": ["audio/units/night_creature/attack1.ogg", "audio/units/night_creature/attack2.ogg"],
+    "death": "audio/units/night_creature/death.ogg",
+    "disperse": "audio/units/night_creature/disperse.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/night_creature.glb",
+    "texture": "textures/units/vampires/night_creature.png",
+    "portrait": "textures/portraits/night_creature.png",
+    "icon": "textures/icons/night_creature.png",
+    "scale": 0.8,
+    "animations": {
+      "idle": "swarm_idle",
+      "fly": "swarm_fly",
+      "attack": "swarm_attack",
+      "death": "swarm_death",
+      "disperse": "swarm_disperse"
+    },
+    "effects": {
+      "spawn": "effects/bat_spawn.vfx",
+      "death": "effects/bat_death.vfx",
+      "disperse": "effects/bat_disperse.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 2,
+    "priority": "low",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.25,
+    "preferredTargets": ["worker", "air", "ranged"],
+    "avoidAntiAir": true,
+    "harassBehavior": true
+  },
+
+  "flags": {
+    "isVampire": false,
+    "isUndead": true,
+    "isFlying": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 12,
+    "experience": 15,
+    "blood": 0
+  },
+
+  "pointValue": 1,
+  "supplyProvided": 0,
+  "supplyUsed": 1
+}

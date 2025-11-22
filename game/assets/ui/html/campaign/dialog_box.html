@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dialog Box</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <style>
+        .dialog-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            pointer-events: none;
+        }
+
+        .dialog-container.hidden {
+            display: none;
+        }
+
+        .portrait-area {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: -60px;
+            z-index: 1;
+        }
+
+        .portrait-frame {
+            width: 150px;
+            height: 180px;
+            background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
+            border: 3px solid #555;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .portrait-frame.active {
+            opacity: 1;
+            transform: translateY(0);
+            border-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .portrait-frame.left {
+            margin-left: 50px;
+        }
+
+        .portrait-frame.right {
+            margin-right: 50px;
+        }
+
+        .portrait-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .dialog-box {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 20px 30px;
+            pointer-events: auto;
+            position: relative;
+        }
+
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .speaker-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+            padding: 5px 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        .speaker-title {
+            font-size: 12px;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        .dialog-text {
+            font-size: 18px;
+            line-height: 1.7;
+            color: #eee;
+            min-height: 60px;
+        }
+
+        .dialog-text .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 20px;
+            background: #FFD700;
+            margin-left: 2px;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .continue-indicator {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            font-size: 12px;
+            color: #888;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .dialog-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+
+        .dialog-choice {
+            padding: 12px 20px;
+            background: rgba(50, 50, 50, 0.5);
+            border: 1px solid #555;
+            border-radius: 5px;
+            color: #ccc;
+            font-size: 15px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .dialog-choice:hover {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #FFD700;
+            color: #fff;
+        }
+
+        .dialog-choice:hover .choice-number {
+            color: #FFD700;
+        }
+
+        .dialog-choice.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .dialog-choice.visited {
+            color: #888;
+        }
+
+        .dialog-choice.visited::after {
+            content: '(visited)';
+            margin-left: auto;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .choice-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            background: rgba(100, 100, 100, 0.5);
+            border-radius: 3px;
+            margin-right: 12px;
+            font-size: 13px;
+            color: #888;
+            transition: all 0.2s;
+        }
+
+        .dialog-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .control-btn {
+            width: 30px;
+            height: 30px;
+            background: rgba(100, 100, 100, 0.3);
+            border: 1px solid #555;
+            border-radius: 3px;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(150, 150, 150, 0.4);
+            color: #aaa;
+        }
+
+        .control-btn.active {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+
+        /* History panel */
+        .history-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            max-height: 500px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #555;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+
+        .history-panel.visible {
+            display: flex;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #444;
+        }
+
+        .history-title {
+            font-size: 16px;
+            color: #FFD700;
+        }
+
+        .history-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .history-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+        }
+
+        .history-entry {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .history-speaker {
+            color: #FFD700;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .history-text {
+            color: #ccc;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="dialog-container" id="dialog-container">
+        <div class="portrait-area">
+            <div class="portrait-frame left" id="portrait-left">
+                <img class="portrait-image" src="" alt="" id="portrait-left-img">
+            </div>
+            <div class="portrait-frame right" id="portrait-right">
+                <img class="portrait-image" src="" alt="" id="portrait-right-img">
+            </div>
+        </div>
+
+        <div class="dialog-box" id="dialog-box" onclick="DialogBox.advance()">
+            <div class="dialog-controls">
+                <button class="control-btn" onclick="event.stopPropagation(); DialogBox.skip()" title="Skip">&#9654;&#9654;</button>
+                <button class="control-btn" id="btn-auto" onclick="event.stopPropagation(); DialogBox.toggleAuto()" title="Auto">A</button>
+                <button class="control-btn" onclick="event.stopPropagation(); DialogBox.showHistory()" title="History">&#128196;</button>
+            </div>
+
+            <div class="dialog-header">
+                <span class="speaker-name" id="speaker-name"></span>
+                <span class="speaker-title" id="speaker-title"></span>
+            </div>
+
+            <div class="dialog-text" id="dialog-text">
+                <span id="text-content"></span>
+                <span class="cursor" id="cursor"></span>
+            </div>
+
+            <div class="continue-indicator" id="continue-indicator" style="display: none;">
+                Click to continue &#9660;
+            </div>
+
+            <div class="dialog-choices" id="dialog-choices" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <div class="history-panel" id="history-panel">
+        <div class="history-header">
+            <span class="history-title">Dialog History</span>
+            <button class="history-close" onclick="DialogBox.hideHistory()">&#10005;</button>
+        </div>
+        <div class="history-content" id="history-content"></div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const DialogBox = {
+            isTyping: false,
+            autoMode: false,
+            fullText: '',
+            displayedText: '',
+            charIndex: 0,
+            typingSpeed: 40,
+            history: [],
+
+            init: function() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' || e.code === 'Enter') {
+                        this.advance();
+                    } else if (e.code === 'Escape') {
+                        this.skip();
+                    }
+                });
+            },
+
+            show: function() {
+                document.getElementById('dialog-container').classList.remove('hidden');
+            },
+
+            hide: function() {
+                document.getElementById('dialog-container').classList.add('hidden');
+            },
+
+            setDialog: function(data) {
+                document.getElementById('speaker-name').textContent = data.speakerName || '';
+                document.getElementById('speaker-title').textContent = data.speakerTitle || '';
+
+                this.fullText = data.text || '';
+                this.displayedText = '';
+                this.charIndex = 0;
+                this.isTyping = true;
+
+                document.getElementById('text-content').textContent = '';
+                document.getElementById('cursor').style.display = 'inline-block';
+                document.getElementById('continue-indicator').style.display = 'none';
+
+                this.updatePortrait(data.portrait, data.portraitPosition || 'left');
+                this.startTyping();
+            },
+
+            updatePortrait: function(portraitPath, position) {
+                const leftFrame = document.getElementById('portrait-left');
+                const rightFrame = document.getElementById('portrait-right');
+                const leftImg = document.getElementById('portrait-left-img');
+                const rightImg = document.getElementById('portrait-right-img');
+
+                leftFrame.classList.remove('active');
+                rightFrame.classList.remove('active');
+
+                if (portraitPath) {
+                    if (position === 'left') {
+                        leftImg.src = portraitPath;
+                        leftFrame.classList.add('active');
+                    } else {
+                        rightImg.src = portraitPath;
+                        rightFrame.classList.add('active');
+                    }
+                }
+            },
+
+            startTyping: function() {
+                const typeNext = () => {
+                    if (!this.isTyping) return;
+
+                    if (this.charIndex < this.fullText.length) {
+                        this.displayedText += this.fullText[this.charIndex];
+                        this.charIndex++;
+                        document.getElementById('text-content').textContent = this.displayedText;
+                        setTimeout(typeNext, 1000 / this.typingSpeed);
+                    } else {
+                        this.completeTyping();
+                    }
+                };
+
+                typeNext();
+            },
+
+            completeTyping: function() {
+                this.isTyping = false;
+                this.displayedText = this.fullText;
+                document.getElementById('text-content').textContent = this.fullText;
+                document.getElementById('cursor').style.display = 'none';
+                document.getElementById('continue-indicator').style.display = 'block';
+
+                if (this.autoMode) {
+                    setTimeout(() => this.advance(), 2000);
+                }
+            },
+
+            advance: function() {
+                if (this.isTyping) {
+                    this.completeTyping();
+                } else {
+                    const choices = document.getElementById('dialog-choices');
+                    if (choices.style.display === 'none' || choices.children.length === 0) {
+                        Engine.call('DialogSystem.advance', {});
+                    }
+                }
+            },
+
+            skip: function() {
+                Engine.call('DialogSystem.skip', {});
+            },
+
+            toggleAuto: function() {
+                this.autoMode = !this.autoMode;
+                document.getElementById('btn-auto').classList.toggle('active', this.autoMode);
+            },
+
+            setChoices: function(data) {
+                const container = document.getElementById('dialog-choices');
+                const choices = data.choices || [];
+
+                if (choices.length === 0) {
+                    container.style.display = 'none';
+                    return;
+                }
+
+                container.style.display = 'flex';
+                container.innerHTML = choices.map((choice, index) => `
+                    <button class="dialog-choice ${!choice.enabled ? 'disabled' : ''} ${choice.visited ? 'visited' : ''}"
+                            onclick="DialogBox.selectChoice('${choice.id}', ${index})"
+                            ${!choice.enabled ? 'disabled' : ''}>
+                        <span class="choice-number">${index + 1}</span>
+                        ${choice.text}
+                    </button>
+                `).join('');
+            },
+
+            selectChoice: function(id, index) {
+                Engine.call('DialogSystem.selectChoice', { id: id, index: index });
+            },
+
+            addToHistory: function(data) {
+                this.history.push({ speaker: data.speaker, text: data.text });
+                this.renderHistory();
+            },
+
+            renderHistory: function() {
+                const content = document.getElementById('history-content');
+                content.innerHTML = this.history.map(entry => `
+                    <div class="history-entry">
+                        <span class="history-speaker">${entry.speaker}:</span>
+                        <span class="history-text">${entry.text}</span>
+                    </div>
+                `).join('');
+                content.scrollTop = content.scrollHeight;
+            },
+
+            showHistory: function() {
+                document.getElementById('history-panel').classList.add('visible');
+            },
+
+            hideHistory: function() {
+                document.getElementById('history-panel').classList.remove('visible');
+            },
+
+            clearHistory: function() {
+                this.history = [];
+                this.renderHistory();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => DialogBox.init());
+        window.DialogBox = DialogBox;
+    </script>
+</body>
+</html>

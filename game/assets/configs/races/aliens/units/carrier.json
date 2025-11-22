@@ -1,0 +1,173 @@
+{
+  "id": "carrier",
+  "name": "Carrier",
+  "display_name": "Carrier",
+  "description": "A massive capital ship that serves as a mobile fighter platform. The Carrier launches autonomous interceptors that swarm enemy targets. With a full complement of interceptors, Carriers become nearly unstoppable forces of destruction.",
+  "race": "aliens",
+  "tier": 4,
+  "unit_type": "capital",
+  "classification": ["mechanical", "flying", "massive", "armored"],
+
+  "stats": {
+    "health": 250,
+    "health_regen": 0,
+    "shield": 150,
+    "shield_regen": 3.0,
+    "shield_regen_delay": 10.0,
+    "armor": 2,
+    "shield_armor": 0,
+    "move_speed": 2.62,
+    "acceleration": 1.3125,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_via_interceptors": true,
+    "interceptor_damage": 5,
+    "interceptor_attacks": 2,
+    "interceptor_speed": 10.5,
+    "interceptor_leash_range": 14,
+    "attack_range": 8,
+    "attack_type": "interceptors",
+    "damage_type": "normal",
+    "targets": ["ground", "air"]
+  },
+
+  "production": {
+    "build_time": 86,
+    "warp_time": 0,
+    "supply_cost": 6,
+    "resource_cost": {
+      "minerals": 350,
+      "vespene": 250
+    },
+    "power_cost": 0,
+    "produced_at": "stargate",
+    "requirements": ["mothership_beacon"],
+    "hotkey": "C"
+  },
+
+  "abilities": [
+    {
+      "id": "build_interceptor",
+      "name": "Build Interceptor",
+      "description": "Builds an interceptor for 15 minerals. Maximum 8 interceptors.",
+      "type": "active",
+      "cooldown": 0.36,
+      "resource_cost": {
+        "minerals": 15
+      },
+      "max_interceptors": 8,
+      "build_time": 6,
+      "autocast": true,
+      "hotkey": "I"
+    },
+    {
+      "id": "release_interceptors",
+      "name": "Release Interceptors",
+      "description": "Releases all interceptors to attack the target. Interceptors will return when the target is destroyed.",
+      "type": "active",
+      "cooldown": 0,
+      "hotkey": "R"
+    },
+    {
+      "id": "graviton_catapult",
+      "name": "Graviton Catapult",
+      "description": "Interceptors launch instantly from the Carrier rather than flying out gradually.",
+      "type": "passive",
+      "requires_upgrade": "graviton_catapult_upgrade",
+      "unlocked_default": false
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "graviton_catapult_upgrade",
+      "name": "Graviton Catapult",
+      "description": "Interceptors launch instantly from Carriers",
+      "researched_at": "stargate",
+      "cost": {
+        "minerals": 150,
+        "vespene": 150
+      },
+      "research_time": 80
+    }
+  ],
+
+  "interceptors": {
+    "stats": {
+      "health": 40,
+      "shield": 40,
+      "armor": 0,
+      "damage": 5,
+      "attacks": 2,
+      "attack_speed": 2.14,
+      "speed": 10.5
+    },
+    "build_cost": {
+      "minerals": 15
+    },
+    "build_time": 6,
+    "max_count": 8,
+    "starting_count": 0
+  },
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_flying": true,
+    "is_armored": true,
+    "is_massive": true,
+    "cargo_size": 0,
+    "has_hangar": true
+  },
+
+  "sight": {
+    "vision_range": 12,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 28,
+    "selection_radius": 2.0,
+    "target_radius": 1.5
+  },
+
+  "visuals": {
+    "model": "models/aliens/carrier.fbx",
+    "texture": "textures/aliens/carrier.png",
+    "icon": "icons/aliens/carrier.png",
+    "wireframe": "wireframes/aliens/carrier.png",
+    "portrait": "portraits/aliens/carrier.png",
+    "scale": 2.5,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "launch": "anim_launch",
+      "death": "anim_death"
+    },
+    "effects": {
+      "hangar_bay": "fx_hangar_bay",
+      "interceptor_launch": "fx_interceptor_launch",
+      "engines": "fx_carrier_engines"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/carrier_ready.ogg",
+    "selected": ["audio/aliens/carrier_select1.ogg"],
+    "command": ["audio/aliens/carrier_command1.ogg"],
+    "launch": "audio/aliens/carrier_launch.ogg",
+    "death": "audio/aliens/carrier_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "siege",
+    "priority_targets": ["ground", "building"],
+    "flee_when_attacked": true,
+    "micro_level": "medium",
+    "preferred_formation": "back",
+    "maintain_interceptor_count": true
+  }
+}

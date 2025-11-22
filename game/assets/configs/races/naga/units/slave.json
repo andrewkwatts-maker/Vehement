@@ -1,0 +1,227 @@
+{
+    "id": "naga_slave",
+    "type": "unit",
+    "name": "Mur'gul Slave",
+    "description": "A subjugated murloc variant forced to serve the Naga empire. These amphibious workers gather resources, construct buildings, and repair structures.",
+    "race": "naga",
+    "tier": 0,
+    "class": "worker",
+
+    "tags": ["civilian", "worker", "tier0", "amphibious", "builder", "gatherer"],
+
+    "model": {
+        "path": "models/races/naga/units/murgul_slave.obj",
+        "scale": [0.9, 0.9, 0.9],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/murgul_slave_diffuse.png",
+        "normal": "textures/races/naga/units/murgul_slave_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.3,
+                "height": 1.2,
+                "offset": [0.0, 0.6, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 50.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building"]
+    },
+
+    "movement": {
+        "speed": 5.0,
+        "turnRate": 360.0,
+        "acceleration": 15.0,
+        "deceleration": 20.0,
+        "canSwim": true,
+        "swimSpeed": 6.0,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.2,
+            "forest": 0.8,
+            "water": 1.3,
+            "deep_water": 1.2,
+            "desert": 0.7
+        }
+    },
+
+    "combat": {
+        "health": 180,
+        "maxHealth": 180,
+        "armor": 0,
+        "magicResist": 0,
+        "attackDamage": 6,
+        "attackSpeed": 2.0,
+        "attackRange": 1.2,
+        "physicalDamage": true,
+        "damageType": "blunt",
+        "armorType": "unarmored"
+    },
+
+    "combat_bonuses": {
+        "in_water": {
+            "health_regen": 2.0
+        }
+    },
+
+    "gathering": {
+        "gold": {
+            "rate": 10,
+            "capacity": 20,
+            "return_building": ["naga_spawning_pool", "naga_temple_of_tides", "naga_palace_of_waves"]
+        },
+        "coral": {
+            "rate": 12,
+            "capacity": 25,
+            "return_building": ["naga_spawning_pool", "naga_temple_of_tides", "naga_palace_of_waves"],
+            "water_bonus": 1.5
+        },
+        "pearls": {
+            "rate": 6,
+            "capacity": 10,
+            "return_building": ["naga_spawning_pool", "naga_temple_of_tides", "naga_palace_of_waves"],
+            "requires_water": true
+        }
+    },
+
+    "construction": {
+        "speed": 1.0,
+        "can_build": [
+            "naga_spawning_pool",
+            "naga_temple_of_tides",
+            "naga_palace_of_waves",
+            "naga_coral_barracks",
+            "naga_siren_shrine",
+            "naga_beast_den",
+            "naga_tide_pools",
+            "naga_altar_of_depths",
+            "naga_serpent_ward",
+            "naga_tidal_gate",
+            "naga_coral_wall",
+            "naga_hatchery",
+            "naga_leviathan_pit"
+        ],
+        "repair_rate": 15.0,
+        "repair_cost_percent": 0.35
+    },
+
+    "passive_abilities": [
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and gathers coral faster near water."
+        },
+        {
+            "id": "aquatic_harvesting",
+            "name": "Aquatic Harvesting",
+            "description": "Gathers coral 50% faster when the resource is in or adjacent to water."
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "submerge",
+            "name": "Submerge",
+            "description": "Dives underwater, becoming invisible but unable to act for 10 seconds. Can only be used in water.",
+            "icon": "icons/abilities/naga/submerge.png",
+            "cooldown": 30.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 10.0,
+            "requirements": {
+                "in_water": true
+            },
+            "effects": [
+                {"type": "invisibility"},
+                {"type": "untargetable"},
+                {"type": "cannot_act"}
+            ],
+            "castAnimation": "dive",
+            "castSound": "sounds/abilities/submerge.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/murgul/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/murgul/walk.anim", "speed": 1.0, "loop": true},
+        "run": {"path": "animations/naga/murgul/run.anim", "speed": 1.1, "loop": true},
+        "swim": {"path": "animations/naga/murgul/swim.anim", "loop": true},
+        "gather": {"path": "animations/naga/murgul/gather.anim", "loop": true},
+        "build": {"path": "animations/naga/murgul/build.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/murgul/attack.anim",
+            "loop": false,
+            "events": [[0.3, "deal_damage"]]
+        },
+        "dive": {"path": "animations/naga/murgul/dive.anim", "loop": false},
+        "death": {"path": "animations/naga/murgul/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/murloc_1.wav", "sounds/footsteps/murloc_2.wav"],
+            "volume": 0.4
+        },
+        "attack": "sounds/combat/pick_hit.wav",
+        "gather": "sounds/gather/coral_harvest.wav",
+        "build": "sounds/build/coral_construct.wav",
+        "death": {"paths": ["sounds/death/murloc_death.wav"], "volume": 0.8},
+        "select": "sounds/voice/naga/murgul_select.wav",
+        "acknowledge": {
+            "paths": [
+                "sounds/voice/naga/murgul_ack_1.wav",
+                "sounds/voice/naga/murgul_ack_2.wav",
+                "sounds/voice/naga/murgul_mrgl.wav"
+            ]
+        }
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/worker.bt",
+        "profile": "passive",
+        "aggroRange": 0,
+        "fleeRange": 10.0,
+        "autoGather": true,
+        "preferWater": true
+    },
+
+    "production": {
+        "building": "naga_spawning_pool",
+        "time": 12.0,
+        "cost": {
+            "gold": 50,
+            "coral": 0
+        },
+        "requirements": {
+            "age": "age_shallow",
+            "techs": []
+        }
+    },
+
+    "properties": {
+        "populationCost": 1,
+        "supplyUpkeep": 0,
+        "squadSize": 1,
+        "experienceValue": 10,
+        "bountyGold": 10,
+        "isWorker": true
+    },
+
+    "upgrades": {
+        "gathering": ["naga_improved_harvesting", "naga_pearl_diving"],
+        "defense": ["naga_slave_armor"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/murgul/on_spawn.py",
+        "on_death": "scripts/units/naga/murgul/on_death.py",
+        "on_gather_complete": "scripts/units/naga/murgul/on_gather.py"
+    }
+}

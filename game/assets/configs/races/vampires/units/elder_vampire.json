@@ -1,0 +1,231 @@
+{
+  "id": "elder_vampire",
+  "name": "Elder Vampire",
+  "race": "vampires",
+  "tier": 3,
+  "type": "elite_melee",
+  "role": ["elite", "tank", "damage", "multi_life"],
+
+  "description": "Ancient vampires who have survived for millennia. They possess multiple lives, returning from the grave twice before final death.",
+  "lore": "Elder Vampires have walked the night for countless centuries, accumulating power and cunning. Their dark souls are so firmly anchored to the mortal plane that death itself struggles to claim them permanently.",
+
+  "stats": {
+    "health": 900,
+    "healthRegen": 2.5,
+    "mana": 200,
+    "manaRegen": 1.0,
+    "armor": 5,
+    "armorType": "heavy",
+    "moveSpeed": 300,
+    "turnRate": 0.6,
+    "collisionSize": 36,
+    "selectionScale": 1.15
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 32,
+      "variance": 5,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.4,
+    "attackRange": 100,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.35,
+    "acquisitionRange": 600,
+    "aggroRange": 500,
+    "lifeSteal": 0.30,
+    "criticalStrike": {
+      "enabled": true,
+      "chance": 0.15,
+      "multiplier": 2.0
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "armorBonus": 3,
+      "lifeStealBonus": 0.15,
+      "healthRegenBonus": 3.0
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 5,
+      "lifeStealPenalty": 0.1
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "undying",
+      "name": "Undying",
+      "type": "passive",
+      "description": "Upon death, resurrect with 50% health after 3 seconds. Can occur twice per life.",
+      "effects": {
+        "lives": 2,
+        "resurrectDelay": 3.0,
+        "resurrectHealth": 0.5,
+        "invulnerableWhileResurrecting": true
+      },
+      "icon": "icons/abilities/undying.png"
+    },
+    {
+      "id": "vampiric_might",
+      "name": "Vampiric Might",
+      "type": "active",
+      "targetType": "self",
+      "description": "Greatly increase attack damage and life steal for a duration",
+      "cooldown": 45,
+      "manaCost": 100,
+      "bloodCost": 25,
+      "effects": {
+        "duration": 12.0,
+        "damageBonus": 0.5,
+        "lifeStealBonus": 0.2,
+        "attackSpeedBonus": 0.25
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/vampiric_might.png"
+    },
+    {
+      "id": "blood_drain",
+      "name": "Blood Drain",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Channel to drain life from a target, dealing damage and healing self",
+      "cooldown": 15,
+      "manaCost": 75,
+      "effects": {
+        "damagePerSecond": 50,
+        "healPercent": 1.0,
+        "duration": 5.0,
+        "channeled": true,
+        "range": 400
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/blood_drain.png"
+    },
+    {
+      "id": "transform_bat",
+      "name": "Bat Form",
+      "type": "active",
+      "targetType": "self",
+      "description": "Transform into a swarm of bats, gaining flight and speed but reduced combat ability",
+      "cooldown": 20,
+      "manaCost": 50,
+      "bloodCost": 15,
+      "effects": {
+        "becomesFlying": true,
+        "speedBonus": 0.5,
+        "damagePenalty": 0.5,
+        "armorPenalty": 3,
+        "canToggle": true
+      },
+      "hotkey": "T",
+      "icon": "icons/abilities/bat_form.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "blood_pit",
+    "buildTime": 50,
+    "cost": {
+      "gold": 400,
+      "lumber": 80,
+      "blood": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["blood_pit", "citadel_of_night"],
+      "technologies": [],
+      "age": "count"
+    },
+    "hotkey": "E"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 4,
+      "maxLevel": 3,
+      "researchId": "elder_weapons"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "elder_armor"
+    },
+    "special": ["third_life", "improved_vampiric_might", "instant_bat_form"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/elder_vampire/ready.ogg",
+    "select": ["audio/units/elder_vampire/select1.ogg", "audio/units/elder_vampire/select2.ogg", "audio/units/elder_vampire/select3.ogg"],
+    "move": ["audio/units/elder_vampire/move1.ogg", "audio/units/elder_vampire/move2.ogg"],
+    "attack": ["audio/units/elder_vampire/attack1.ogg", "audio/units/elder_vampire/attack2.ogg"],
+    "death": "audio/units/elder_vampire/death.ogg",
+    "resurrect": "audio/units/elder_vampire/resurrect.ogg",
+    "transform": "audio/units/elder_vampire/transform.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/elder_vampire.glb",
+    "texture": "textures/units/vampires/elder_vampire.png",
+    "portrait": "textures/portraits/elder_vampire.png",
+    "icon": "textures/icons/elder_vampire.png",
+    "scale": 1.15,
+    "animations": {
+      "idle": "elder_idle",
+      "walk": "elder_walk",
+      "attack": "elder_attack",
+      "death": "elder_death",
+      "resurrect": "elder_resurrect",
+      "batForm": "elder_bat",
+      "drain": "elder_drain"
+    },
+    "effects": {
+      "spawn": "effects/elder_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "resurrect": "effects/vampire_resurrect.vfx",
+      "batForm": "effects/bat_transform.vfx",
+      "bloodDrain": "effects/blood_drain.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 8,
+    "priority": "very_high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.0,
+    "preferredTargets": ["hero", "caster", "ranged"],
+    "useMightAggressively": true,
+    "useUndyingToTank": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isElite": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": true,
+    "hasMultipleLives": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 55,
+    "experience": 75,
+    "blood": 0
+  },
+
+  "pointValue": 5,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

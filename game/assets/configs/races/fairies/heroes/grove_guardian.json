@@ -1,0 +1,184 @@
+{
+    "id": "fairy_grove_guardian",
+    "type": "hero",
+    "race": "fairies",
+    "name": "Grove Guardian",
+    "title": "Protector of the Sacred Groves",
+    "class": "guardian",
+    "primary_attribute": "strength",
+    "description": "An ancient tree spirit who serves as the ultimate defender of the forest. The Grove Guardian summons treants, heals allies with rejuvenation magic, and can call down nature's wrath on enemies.",
+    "lore": "Oakenward was once a mortal druid who merged with the World Tree to become its eternal guardian. Now more tree than fae, his bark is impenetrable and his roots reach through the very earth.",
+
+    "base_stats": {
+        "health": 700,
+        "mana": 400,
+        "damage": 40,
+        "armor": 5,
+        "magic_resist": 25,
+        "move_speed": 4.2,
+        "turn_rate": 0.4,
+        "attack_range": 2.5,
+        "attack_speed": 2.2,
+        "health_regen": 3.0,
+        "mana_regen": 2.5,
+        "strength": 35,
+        "agility": 14,
+        "intelligence": 20,
+        "day_vision": 14,
+        "night_vision": 14
+    },
+
+    "stat_growth": {
+        "health_per_level": 75,
+        "mana_per_level": 40,
+        "damage_per_level": 3.5,
+        "armor_per_level": 0.4,
+        "strength_per_level": 3.8,
+        "agility_per_level": 1.2,
+        "intelligence_per_level": 2.0,
+        "health_regen_per_level": 0.3,
+        "mana_regen_per_level": 0.2
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_natures_call",
+            "name": "Nature's Call",
+            "description": "Summon treant warriors from nearby trees to fight for the Grove Guardian.",
+            "max_level": 4,
+            "hotkey": "Q",
+            "cooldown": [35, 30, 25, 20],
+            "mana_cost": [80, 100, 120, 140],
+            "range": 12.0,
+            "radius": 8.0,
+            "treant_count": [2, 2, 3, 3],
+            "treant_duration": [45, 50, 55, 60],
+            "effects": [
+                {"type": "summon_treants", "count": [2, 2, 3, 3]},
+                {"type": "treant_health_bonus", "value": [0, 0.15, 0.30, 0.45]},
+                {"type": "treant_damage_bonus", "value": [0, 0.10, 0.20, 0.30]}
+            ]
+        },
+        {
+            "slot": 2,
+            "id": "ability_barkskin_hero",
+            "name": "Barkskin",
+            "description": "Coat a target ally in protective bark, greatly increasing their armor.",
+            "max_level": 4,
+            "hotkey": "W",
+            "cooldown": [20, 18, 16, 14],
+            "mana_cost": [50, 55, 60, 65],
+            "range": 10.0,
+            "duration": [15, 20, 25, 30],
+            "effects": [
+                {"type": "armor_bonus", "value": [6, 8, 10, 12]},
+                {"type": "thorns", "value": [10, 15, 20, 25]}
+            ]
+        },
+        {
+            "slot": 3,
+            "id": "ability_rejuvenation_hero",
+            "name": "Rejuvenation",
+            "description": "Restore health to a friendly unit over time.",
+            "max_level": 4,
+            "hotkey": "E",
+            "cooldown": [8, 7, 6, 5],
+            "mana_cost": [40, 50, 60, 70],
+            "range": 12.0,
+            "duration": 12.0,
+            "effects": [
+                {"type": "heal_over_time", "total_heal": [150, 225, 300, 375]}
+            ],
+            "auto_cast": true
+        },
+        {
+            "slot": 4,
+            "id": "ability_wrath_of_nature",
+            "name": "Wrath of Nature",
+            "description": "Channel the fury of nature to damage enemies and create living barriers around the Grove Guardian.",
+            "ultimate": true,
+            "unlock_level": 6,
+            "max_level": 3,
+            "hotkey": "R",
+            "cooldown": [100, 90, 80],
+            "mana_cost": [175, 225, 275],
+            "radius": [10, 12, 14],
+            "duration": 8.0,
+            "effects": [
+                {"type": "damage_per_second", "value": [40, 60, 80], "scope": "enemies_in_radius"},
+                {"type": "root", "duration": [2, 3, 4], "on_entry": true},
+                {"type": "armor_bonus_self", "value": [8, 12, 16]},
+                {"type": "spawn_barrier_trees", "count": [4, 6, 8]}
+            ]
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_treants_entangle", "talent_treants_siege"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_barkskin_aoe", "talent_barkskin_regen"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_rejuvenation_burst", "talent_rejuvenation_mana"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_wrath_treant_army", "talent_wrath_earthquake"]}
+    ],
+
+    "passive": {
+        "id": "passive_fortified_bark",
+        "name": "Fortified Bark",
+        "description": "The Grove Guardian takes reduced damage from all sources",
+        "damage_reduction": 0.10
+    },
+
+    "aura": {
+        "id": "aura_natures_protection",
+        "name": "Nature's Protection",
+        "description": "Nearby friendly units regenerate health faster",
+        "radius": 12.0,
+        "effects": [
+            {"stat": "healthRegen", "value": 2.0, "type": "flat"}
+        ]
+    },
+
+    "night_bonus": {
+        "healthRegen": 0.50,
+        "armor": 3,
+        "heal_effectiveness": 0.25
+    },
+
+    "visuals": {
+        "model": "models/races/fairies/heroes/grove_guardian.obj",
+        "skeleton": "models/races/fairies/heroes/grove_guardian_skeleton.skl",
+        "portrait": "textures/races/fairies/portraits/grove_guardian.png",
+        "icon": "textures/races/fairies/icons/grove_guardian.png",
+        "minimap_icon": "textures/minimap/grove_guardian.png",
+        "animation_set": "animations/fairies/heroes/grove_guardian",
+        "scale": 1.4,
+        "attack_effect": "effects/tree_slam.fx",
+        "cast_effect": "effects/nature_cast.fx",
+        "death_effect": "effects/hero_death_nature.fx",
+        "respawn_effect": "effects/guardian_respawn.fx"
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/heroes/grove_guardian/select_1.wav"],
+        "move": ["sounds/fairies/heroes/grove_guardian/move_1.wav"],
+        "attack": "sounds/fairies/heroes/grove_guardian/attack.wav",
+        "ability_q": "sounds/abilities/natures_call.wav",
+        "ability_w": "sounds/abilities/barkskin.wav",
+        "ability_e": "sounds/abilities/rejuvenation.wav",
+        "ability_r": "sounds/abilities/wrath_of_nature.wav",
+        "death": "sounds/fairies/heroes/grove_guardian/death.wav",
+        "respawn": "sounds/fairies/heroes/grove_guardian/respawn.wav"
+    },
+
+    "tags": ["melee", "strength", "tank", "summoner", "healer"],
+
+    "properties": {
+        "attack_type": "melee",
+        "complexity": 2,
+        "roles": ["tank", "summoner", "support"],
+        "summon_building": "fairy_altar_of_elders",
+        "summon_cost": {"gold": 500},
+        "respawn_time_base": 50,
+        "respawn_time_per_level": 4
+    }
+}

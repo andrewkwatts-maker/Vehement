@@ -1,0 +1,234 @@
+{
+  "id": "mothman_prophet",
+  "name": "Mothman Prophet",
+  "race": "cryptids",
+  "type": "hero",
+  "class": "caster_support",
+  "role": ["prophecy", "debuffer", "disaster"],
+
+  "title": "Herald of Doom",
+  "description": "A greater Mothman that has mastered the art of prophecy. Can foresee and cause disasters, weakening enemies with visions of their demise.",
+  "lore": "Some Mothmen transcend their role as mere harbingers and become prophets of doom. They do not merely foresee catastrophe - they can invoke it. Their presence on the battlefield is an omen of defeat for their enemies.",
+
+  "baseStats": {
+    "health": 500,
+    "healthRegen": 1.5,
+    "mana": 400,
+    "manaRegen": 2.5,
+    "armor": 2,
+    "armorType": "hero",
+    "moveSpeed": 300,
+    "turnRate": 0.9,
+    "collisionSize": 40,
+    "selectionScale": 1.3
+  },
+
+  "statsPerLevel": {
+    "health": 80,
+    "healthRegen": 0.2,
+    "mana": 50,
+    "manaRegen": 0.2,
+    "armor": 0.2,
+    "damage": 2
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 20,
+      "variance": 6,
+      "diceSides": 8,
+      "diceCount": 2,
+      "type": "magic"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 600,
+    "attackType": "ranged",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.6,
+    "primaryAttribute": "intelligence"
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 16,
+      "perLevel": 1.8
+    },
+    "agility": {
+      "base": 18,
+      "perLevel": 1.6
+    },
+    "intelligence": {
+      "base": 26,
+      "perLevel": 3.2
+    }
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 200,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "prophecy",
+      "name": "Prophecy",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "Q",
+      "description": "Marks an enemy with a prophecy of death; if they don't heal above threshold, they die",
+      "levels": [
+        {"manaCost": 100, "cooldown": 25, "threshold": 0.15, "duration": 10, "range": 700},
+        {"manaCost": 100, "cooldown": 23, "threshold": 0.20, "duration": 12, "range": 750},
+        {"manaCost": 100, "cooldown": 21, "threshold": 0.25, "duration": 14, "range": 800}
+      ],
+      "effects": {
+        "executesAtThreshold": true,
+        "visibleToTarget": true,
+        "canBeDispelled": true
+      },
+      "icon": "icons/abilities/prophecy.png"
+    },
+    {
+      "id": "disaster_sight",
+      "name": "Disaster Sight",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "W",
+      "description": "Reveals an area and curses all enemies within, reducing their damage and armor",
+      "levels": [
+        {"manaCost": 80, "cooldown": 20, "radius": 400, "damageReduction": 0.15, "armorReduction": 3, "duration": 12, "range": 1000},
+        {"manaCost": 80, "cooldown": 18, "radius": 450, "damageReduction": 0.20, "armorReduction": 4, "duration": 14, "range": 1200},
+        {"manaCost": 80, "cooldown": 16, "radius": 500, "damageReduction": 0.25, "armorReduction": 5, "duration": 16, "range": 1400}
+      ],
+      "effects": {
+        "revealsArea": true,
+        "revealsInvisible": true
+      },
+      "icon": "icons/abilities/disaster_sight.png"
+    },
+    {
+      "id": "wing_dust_prophet",
+      "name": "Wing Dust",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "E",
+      "description": "Releases prophetic scales that cause enemies to see visions, slowing and confusing them",
+      "levels": [
+        {"manaCost": 90, "cooldown": 18, "radius": 350, "slowPercent": 0.30, "confusionDuration": 3, "duration": 8},
+        {"manaCost": 90, "cooldown": 16, "radius": 400, "slowPercent": 0.40, "confusionDuration": 4, "duration": 10},
+        {"manaCost": 90, "cooldown": 14, "radius": 450, "slowPercent": 0.50, "confusionDuration": 5, "duration": 12}
+      ],
+      "effects": {
+        "blindChance": 0.25,
+        "attackAlliesChance": 0.20
+      },
+      "icon": "icons/abilities/wing_dust_prophet.png"
+    },
+    {
+      "id": "calamity_call",
+      "name": "Calamity",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "R",
+      "ultimate": true,
+      "description": "Calls down a prophesied disaster at a target location, devastating everything within",
+      "levels": [
+        {"manaCost": 200, "cooldown": 150, "delay": 3.0, "radius": 500, "damage": 400, "buildingDamage": 600, "stunDuration": 2.5, "range": 1500}
+      ],
+      "effects": {
+        "fearDuration": 4.0,
+        "destroysTreesAndDebris": true,
+        "leavesRuinedTerrain": true
+      },
+      "icon": "icons/abilities/calamity_call.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bone_shrine",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "essence": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["bone_shrine"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "M"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/mothman_prophet/ready.ogg",
+    "select": ["audio/heroes/mothman_prophet/select1.ogg", "audio/heroes/mothman_prophet/select2.ogg", "audio/heroes/mothman_prophet/select3.ogg"],
+    "move": ["audio/heroes/mothman_prophet/move1.ogg", "audio/heroes/mothman_prophet/move2.ogg"],
+    "attack": ["audio/heroes/mothman_prophet/attack1.ogg"],
+    "death": "audio/heroes/mothman_prophet/death.ogg",
+    "pissed": ["audio/heroes/mothman_prophet/pissed1.ogg", "audio/heroes/mothman_prophet/pissed2.ogg"],
+    "prophecy": "audio/heroes/mothman_prophet/prophecy.ogg",
+    "calamity": "audio/heroes/mothman_prophet/calamity.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/mothman_prophet.glb",
+    "texture": "textures/heroes/mothman_prophet.png",
+    "portrait": "textures/portraits/mothman_prophet_hero.png",
+    "icon": "textures/icons/mothman_prophet_hero.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "prophet_hover",
+      "walk": "prophet_fly",
+      "attack": "prophet_attack",
+      "death": "prophet_death",
+      "cast": "prophet_cast"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/prophet_death.vfx",
+      "prophecy": "effects/doom_prophecy.vfx",
+      "calamity": "effects/calamity.vfx",
+      "ambient": "effects/prophet_aura.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "backline_caster",
+    "useProphecyOnLowHealth": true,
+    "useDisasterSightForVision": true,
+    "calamityOnBuildings": true,
+    "maintainDistance": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isFlying": true,
+    "isCaster": true,
+    "causesFear": true,
+    "nightBonus": true,
+    "canUseItems": true,
+    "canGainExperience": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

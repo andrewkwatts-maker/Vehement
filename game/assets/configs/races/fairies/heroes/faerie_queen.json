@@ -1,0 +1,189 @@
+{
+    "id": "fairy_faerie_queen",
+    "type": "hero",
+    "race": "fairies",
+    "name": "Faerie Queen",
+    "title": "Sovereign of the Fae Court",
+    "class": "enchantress",
+    "primary_attribute": "intelligence",
+    "description": "The immortal ruler of all Fae. The Faerie Queen commands devastating enchantments, can charm enemies to her side, and inspires her subjects with her ethereal presence.",
+    "lore": "Queen Titania has ruled the Fae Court since time immemorial. Her beauty is matched only by her power, and her anger by her mercy. With a whisper she can turn armies against themselves, with a glance she can bless or curse entire kingdoms.",
+
+    "base_stats": {
+        "health": 500,
+        "mana": 600,
+        "damage": 28,
+        "armor": 2,
+        "magic_resist": 45,
+        "move_speed": 5.2,
+        "turn_rate": 0.6,
+        "attack_range": 10.0,
+        "attack_speed": 1.8,
+        "health_regen": 1.5,
+        "mana_regen": 5.0,
+        "strength": 16,
+        "agility": 20,
+        "intelligence": 35,
+        "day_vision": 18,
+        "night_vision": 18
+    },
+
+    "stat_growth": {
+        "health_per_level": 45,
+        "mana_per_level": 70,
+        "damage_per_level": 2.5,
+        "armor_per_level": 0.2,
+        "strength_per_level": 1.6,
+        "agility_per_level": 2.0,
+        "intelligence_per_level": 4.2,
+        "health_regen_per_level": 0.15,
+        "mana_regen_per_level": 0.4
+    },
+
+    "abilities": [
+        {
+            "slot": 1,
+            "id": "ability_charm_hero",
+            "name": "Enthrall",
+            "description": "Charm an enemy unit to fight for the Fae Court. Charmed units deal reduced damage.",
+            "max_level": 4,
+            "hotkey": "Q",
+            "cooldown": [30, 26, 22, 18],
+            "mana_cost": [100, 110, 120, 130],
+            "range": 12.0,
+            "duration": [20, 30, 40, 50],
+            "target_type": "enemy_unit",
+            "excludes": ["hero", "massive", "mechanical"],
+            "hero_duration_multiplier": 0.15,
+            "effects": [
+                {"type": "mind_control", "value": true},
+                {"type": "damage_reduction", "value": [0.60, 0.50, 0.40, 0.30]}
+            ]
+        },
+        {
+            "slot": 2,
+            "id": "ability_blink_hero",
+            "name": "Royal Blink",
+            "description": "Teleport to a target location, leaving behind a blinding flash that dazes enemies.",
+            "max_level": 4,
+            "hotkey": "W",
+            "cooldown": [12, 10, 8, 6],
+            "mana_cost": [50, 50, 50, 50],
+            "range": [10, 12, 14, 16],
+            "effects": [
+                {"type": "teleport", "value": true},
+                {"type": "daze", "radius": 4.0, "duration": [1.5, 2.0, 2.5, 3.0], "at_origin": true}
+            ]
+        },
+        {
+            "slot": 3,
+            "id": "ability_faerie_fire_hero",
+            "name": "Faerie Fire",
+            "description": "Mark enemies in an area, reducing their armor and revealing them even if invisible.",
+            "max_level": 4,
+            "hotkey": "E",
+            "cooldown": [15, 14, 13, 12],
+            "mana_cost": [60, 70, 80, 90],
+            "range": 14.0,
+            "radius": [4, 5, 6, 7],
+            "duration": [20, 25, 30, 35],
+            "effects": [
+                {"type": "armor_reduction", "value": [3, 4, 5, 6]},
+                {"type": "reveal", "value": true},
+                {"type": "remove_invisibility", "value": true}
+            ]
+        },
+        {
+            "slot": 4,
+            "id": "ability_tranquility_hero",
+            "name": "Tranquility",
+            "description": "Channel the essence of nature to heal all nearby allied units.",
+            "ultimate": true,
+            "unlock_level": 6,
+            "max_level": 3,
+            "hotkey": "R",
+            "cooldown": [120, 100, 80],
+            "mana_cost": [200, 250, 300],
+            "radius": [15, 18, 21],
+            "duration": 12.0,
+            "channeled": true,
+            "can_be_interrupted": true,
+            "effects": [
+                {"type": "heal_per_second", "value": [30, 45, 60], "scope": "allies_in_radius"},
+                {"type": "mana_regen_bonus", "value": [5, 8, 11], "scope": "allies_in_radius"}
+            ]
+        }
+    ],
+
+    "talents": [
+        {"tier": 1, "unlock_level": 10, "choices": ["talent_charm_two_targets", "talent_charm_hero_duration"]},
+        {"tier": 2, "unlock_level": 15, "choices": ["talent_blink_invisibility", "talent_blink_damage"]},
+        {"tier": 3, "unlock_level": 20, "choices": ["talent_faerie_fire_silence", "talent_faerie_fire_damage"]},
+        {"tier": 4, "unlock_level": 25, "choices": ["talent_tranquility_invulnerable", "talent_tranquility_resurrect"]}
+    ],
+
+    "passive": {
+        "id": "passive_royal_presence",
+        "name": "Royal Presence",
+        "description": "The Queen's presence inspires nearby allied units, granting them bonus damage and movement speed",
+        "radius": 12.0,
+        "effects": [
+            {"stat": "attackDamage", "value": 0.10, "type": "percent"},
+            {"stat": "moveSpeed", "value": 0.08, "type": "percent"}
+        ]
+    },
+
+    "aura": {
+        "id": "aura_fae_blessing",
+        "name": "Fae Blessing",
+        "description": "Nearby friendly units gain increased mana regeneration",
+        "radius": 14.0,
+        "effects": [
+            {"stat": "manaRegen", "value": 2.0, "type": "flat"}
+        ]
+    },
+
+    "night_bonus": {
+        "all_stats": 0.15,
+        "ability_duration": 0.25,
+        "charm_effectiveness": 0.20
+    },
+
+    "visuals": {
+        "model": "models/races/fairies/heroes/faerie_queen.obj",
+        "skeleton": "models/races/fairies/heroes/faerie_queen_skeleton.skl",
+        "portrait": "textures/races/fairies/portraits/faerie_queen.png",
+        "icon": "textures/races/fairies/icons/faerie_queen.png",
+        "minimap_icon": "textures/minimap/faerie_queen.png",
+        "animation_set": "animations/fairies/heroes/faerie_queen",
+        "scale": 1.1,
+        "attack_effect": "effects/fae_bolt.fx",
+        "cast_effect": "effects/faerie_queen_cast.fx",
+        "death_effect": "effects/hero_death_nature.fx",
+        "respawn_effect": "effects/fae_respawn.fx"
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/heroes/faerie_queen/select_1.wav", "sounds/fairies/heroes/faerie_queen/select_2.wav"],
+        "move": ["sounds/fairies/heroes/faerie_queen/move_1.wav", "sounds/fairies/heroes/faerie_queen/move_2.wav"],
+        "attack": "sounds/fairies/heroes/faerie_queen/attack.wav",
+        "ability_q": "sounds/abilities/charm.wav",
+        "ability_w": "sounds/abilities/blink.wav",
+        "ability_e": "sounds/abilities/faerie_fire.wav",
+        "ability_r": "sounds/abilities/tranquility.wav",
+        "death": "sounds/fairies/heroes/faerie_queen/death.wav",
+        "respawn": "sounds/fairies/heroes/faerie_queen/respawn.wav"
+    },
+
+    "tags": ["ranged", "intelligence", "support", "disabler", "healer"],
+
+    "properties": {
+        "attack_type": "ranged",
+        "complexity": 2,
+        "roles": ["support", "disabler", "healer"],
+        "summon_building": "fairy_altar_of_elders",
+        "summon_cost": {"gold": 500},
+        "respawn_time_base": 50,
+        "respawn_time_per_level": 4
+    }
+}

@@ -1,0 +1,198 @@
+{
+    "id": "fairy_moonkin",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Moonkin",
+    "description": "Owl-bear druids blessed by the moon. Moonkin are heavy spellcasters who channel devastating lunar and stellar magic.",
+
+    "tags": ["military", "caster", "tier3", "heavy", "lunar", "damage"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/fairies/units/moonkin.obj",
+        "scale": [1.3, 1.3, 1.3],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/moonkin_diffuse.png",
+        "normal": "textures/races/fairies/units/moonkin_normal.png",
+        "emissive": "textures/races/fairies/units/moonkin_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.5,
+                "height": 2.4,
+                "offset": [0.0, 1.2, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 180.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 550,
+        "maxHealth": 550,
+        "healthRegen": 0.75,
+        "mana": 600,
+        "maxMana": 600,
+        "manaRegen": 2.5,
+        "armor": 4,
+        "magicResist": 25,
+        "moveSpeed": 4.2,
+        "turnRate": 250.0
+    },
+
+    "combat": {
+        "attackDamage": 35,
+        "attackSpeed": 2.0,
+        "attackRange": 11.0,
+        "damageType": "magic",
+        "armorType": "medium",
+        "attackType": "ranged",
+        "projectile": "lunar_bolt",
+        "projectile_speed": 18.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_moonfire",
+            "name": "Moonfire",
+            "description": "Blast an enemy with lunar energy, dealing instant and periodic damage",
+            "hotkey": "Q",
+            "cooldown": 6.0,
+            "mana_cost": 45,
+            "range": 12.0,
+            "effects": [
+                {"type": "damage", "value": 80, "damage_type": "magic"},
+                {"type": "dot", "damage": 60, "duration": 8.0, "damage_type": "magic"}
+            ],
+            "auto_cast": true
+        },
+        {
+            "id": "ability_starfall_unit",
+            "name": "Starfall",
+            "description": "Call down stars from the heavens to damage enemies in a large area",
+            "hotkey": "W",
+            "cooldown": 45.0,
+            "mana_cost": 150,
+            "range": 16.0,
+            "radius": 8.0,
+            "duration": 10.0,
+            "effects": [
+                {"type": "damage_per_wave", "value": 35, "waves": 10, "damage_type": "magic"},
+                {"type": "slow", "value": 0.20, "duration": 2.0}
+            ]
+        },
+        {
+            "id": "ability_lunar_blessing",
+            "name": "Moonkin Aura",
+            "description": "Increase spell damage of nearby allies",
+            "passive": true,
+            "radius": 12.0,
+            "effects": [
+                {"stat": "spell_power", "value": 0.10, "scope": "allies_in_radius"}
+            ]
+        },
+        {
+            "id": "ability_eclipse",
+            "name": "Eclipse",
+            "description": "Enter a state of enhanced power, alternating between Solar and Lunar damage bonuses",
+            "hotkey": "E",
+            "cooldown": 60.0,
+            "duration": 20.0,
+            "effects": [
+                {"type": "cycle", "states": ["solar", "lunar"], "cycle_time": 5.0},
+                {"type": "solar_damage_bonus", "value": 0.50},
+                {"type": "lunar_damage_bonus", "value": 0.50}
+            ]
+        },
+        {
+            "id": "ability_typhoon",
+            "name": "Typhoon",
+            "description": "Create a wave of wind that knocks back and damages enemies",
+            "hotkey": "R",
+            "cooldown": 25.0,
+            "mana_cost": 100,
+            "range": 10.0,
+            "cone_angle": 90,
+            "effects": [
+                {"type": "damage", "value": 100, "damage_type": "magic"},
+                {"type": "knockback", "distance": 6.0},
+                {"type": "daze", "duration": 3.0}
+            ]
+        }
+    ],
+
+    "night_bonus": {
+        "spell_power": 0.35,
+        "manaRegen": 0.50,
+        "moonfire_damage": 0.25
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_moonkin_magic",
+            "stat": "spell_power",
+            "bonus_per_level": 0.12
+        },
+        {
+            "id": "upgrade_bark_hide",
+            "stat": "health",
+            "bonus_per_level": 75
+        }
+    ],
+
+    "production": {
+        "building": "fairy_ancient_of_lore",
+        "cost": {
+            "gold": 290,
+            "wood": 70,
+            "food": 4
+        },
+        "build_time": 45.0,
+        "population_cost": 3,
+        "prerequisites": ["fairy_tree_of_eternity"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/artillery_caster.bt",
+        "profile": "aggressive",
+        "aggroRange": 14.0,
+        "leashRange": 25.0,
+        "cast_priority": ["ability_starfall_unit", "ability_moonfire", "ability_typhoon"],
+        "use_eclipse": true,
+        "typhoon_threshold": 3
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/moonkin/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/moonkin/walk.anim", "loop": true},
+        "attack": {"path": "animations/fairies/moonkin/attack.anim", "loop": false},
+        "cast": {"path": "animations/fairies/moonkin/cast.anim", "loop": false},
+        "starfall": {"path": "animations/fairies/moonkin/starfall.anim", "loop": false},
+        "typhoon": {"path": "animations/fairies/moonkin/typhoon.anim", "loop": false},
+        "death": {"path": "animations/fairies/moonkin/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/moonkin/select_1.wav", "sounds/fairies/moonkin/select_2.wav"],
+        "acknowledge": ["sounds/fairies/moonkin/ack_1.wav", "sounds/fairies/moonkin/ack_2.wav"],
+        "attack": "sounds/fairies/moonkin/attack.wav",
+        "starfall": "sounds/fairies/moonkin/starfall.wav",
+        "typhoon": "sounds/fairies/moonkin/typhoon.wav",
+        "death": "sounds/fairies/moonkin/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/moonkin.png",
+        "icon": "textures/races/fairies/icons/moonkin.png",
+        "hotkey": "O"
+    }
+}

@@ -1,0 +1,467 @@
+{
+  "version": "1.0",
+  "description": "Trigger condition definitions for the editor",
+  "categories": [
+    {
+      "id": "boolean",
+      "name": "Boolean Logic",
+      "icon": "logic_icon"
+    },
+    {
+      "id": "comparison",
+      "name": "Comparisons",
+      "icon": "compare_icon"
+    },
+    {
+      "id": "unit",
+      "name": "Unit Conditions",
+      "icon": "unit_icon"
+    },
+    {
+      "id": "player",
+      "name": "Player Conditions",
+      "icon": "player_icon"
+    },
+    {
+      "id": "game",
+      "name": "Game State",
+      "icon": "game_icon"
+    }
+  ],
+  "conditions": [
+    {
+      "id": "and",
+      "category": "boolean",
+      "name": "And",
+      "description": "All conditions must be true",
+      "parameters": [],
+      "hasChildren": true
+    },
+    {
+      "id": "or",
+      "category": "boolean",
+      "name": "Or",
+      "description": "At least one condition must be true",
+      "parameters": [],
+      "hasChildren": true
+    },
+    {
+      "id": "not",
+      "category": "boolean",
+      "name": "Not",
+      "description": "Negates a condition",
+      "parameters": [],
+      "hasChildren": true,
+      "maxChildren": 1
+    },
+    {
+      "id": "comparison",
+      "category": "comparison",
+      "name": "Compare Values",
+      "description": "Compare two values",
+      "parameters": [
+        {
+          "name": "leftValue",
+          "type": "any",
+          "description": "Left side value"
+        },
+        {
+          "name": "operator",
+          "type": "string",
+          "enum": ["==", "!=", "<", "<=", ">", ">="],
+          "default": "=="
+        },
+        {
+          "name": "rightValue",
+          "type": "any",
+          "description": "Right side value"
+        }
+      ]
+    },
+    {
+      "id": "variable_comparison",
+      "category": "comparison",
+      "name": "Compare Variable",
+      "description": "Compare a variable to a value",
+      "parameters": [
+        {
+          "name": "variable",
+          "type": "variable",
+          "description": "Variable to check"
+        },
+        {
+          "name": "operator",
+          "type": "string",
+          "enum": ["==", "!=", "<", "<=", ">", ">="],
+          "default": "=="
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "description": "Value to compare against"
+        }
+      ]
+    },
+    {
+      "id": "unit_is_type",
+      "category": "unit",
+      "name": "Unit Is Type",
+      "description": "Check if a unit is a specific type",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        },
+        {
+          "name": "unitType",
+          "type": "unittype",
+          "description": "Type to check for"
+        }
+      ]
+    },
+    {
+      "id": "unit_is_alive",
+      "category": "unit",
+      "name": "Unit Is Alive",
+      "description": "Check if a unit is alive",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        }
+      ]
+    },
+    {
+      "id": "unit_has_buff",
+      "category": "unit",
+      "name": "Unit Has Buff",
+      "description": "Check if a unit has a specific buff/debuff",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        },
+        {
+          "name": "buffType",
+          "type": "string",
+          "description": "Buff type ID"
+        }
+      ]
+    },
+    {
+      "id": "unit_in_region",
+      "category": "unit",
+      "name": "Unit In Region",
+      "description": "Check if a unit is in a specific region",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        },
+        {
+          "name": "region",
+          "type": "region",
+          "description": "Region to check"
+        }
+      ]
+    },
+    {
+      "id": "unit_in_range",
+      "category": "unit",
+      "name": "Unit In Range",
+      "description": "Check if a unit is within range of a point",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        },
+        {
+          "name": "point",
+          "type": "location",
+          "description": "Center point"
+        },
+        {
+          "name": "range",
+          "type": "real",
+          "description": "Distance"
+        }
+      ]
+    },
+    {
+      "id": "unit_has_ability",
+      "category": "unit",
+      "name": "Unit Has Ability",
+      "description": "Check if a unit has a specific ability",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        },
+        {
+          "name": "ability",
+          "type": "ability",
+          "description": "Ability to check for"
+        }
+      ]
+    },
+    {
+      "id": "unit_is_hero",
+      "category": "unit",
+      "name": "Unit Is Hero",
+      "description": "Check if a unit is a hero unit",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        }
+      ]
+    },
+    {
+      "id": "unit_hp_percentage",
+      "category": "unit",
+      "name": "Unit HP Percentage",
+      "description": "Check a unit's health percentage",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        },
+        {
+          "name": "operator",
+          "type": "string",
+          "enum": ["==", "!=", "<", "<=", ">", ">="],
+          "default": "<="
+        },
+        {
+          "name": "percentage",
+          "type": "real",
+          "description": "HP percentage (0-100)"
+        }
+      ]
+    },
+    {
+      "id": "unit_mana_percentage",
+      "category": "unit",
+      "name": "Unit Mana Percentage",
+      "description": "Check a unit's mana percentage",
+      "parameters": [
+        {
+          "name": "unit",
+          "type": "unit",
+          "description": "Unit to check"
+        },
+        {
+          "name": "operator",
+          "type": "string",
+          "enum": ["==", "!=", "<", "<=", ">", ">="],
+          "default": "<="
+        },
+        {
+          "name": "percentage",
+          "type": "real",
+          "description": "Mana percentage (0-100)"
+        }
+      ]
+    },
+    {
+      "id": "player_has_unit",
+      "category": "player",
+      "name": "Player Has Unit",
+      "description": "Check if a player has units of a type",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Player to check"
+        },
+        {
+          "name": "unitType",
+          "type": "unittype",
+          "description": "Unit type to check for"
+        },
+        {
+          "name": "count",
+          "type": "integer",
+          "description": "Minimum count",
+          "default": 1
+        }
+      ]
+    },
+    {
+      "id": "player_has_building",
+      "category": "player",
+      "name": "Player Has Building",
+      "description": "Check if a player has buildings of a type",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Player to check"
+        },
+        {
+          "name": "buildingType",
+          "type": "unittype",
+          "description": "Building type to check for"
+        },
+        {
+          "name": "count",
+          "type": "integer",
+          "description": "Minimum count",
+          "default": 1
+        }
+      ]
+    },
+    {
+      "id": "player_has_resource",
+      "category": "player",
+      "name": "Player Resource Amount",
+      "description": "Check a player's resource amount",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Player to check"
+        },
+        {
+          "name": "resourceType",
+          "type": "string",
+          "enum": ["gold", "lumber", "food"],
+          "default": "gold"
+        },
+        {
+          "name": "operator",
+          "type": "string",
+          "enum": ["==", "!=", "<", "<=", ">", ">="],
+          "default": ">="
+        },
+        {
+          "name": "amount",
+          "type": "integer",
+          "description": "Resource amount"
+        }
+      ]
+    },
+    {
+      "id": "player_is_ally",
+      "category": "player",
+      "name": "Player Is Ally",
+      "description": "Check if two players are allies",
+      "parameters": [
+        {
+          "name": "player1",
+          "type": "player",
+          "description": "First player"
+        },
+        {
+          "name": "player2",
+          "type": "player",
+          "description": "Second player"
+        }
+      ]
+    },
+    {
+      "id": "player_is_enemy",
+      "category": "player",
+      "name": "Player Is Enemy",
+      "description": "Check if two players are enemies",
+      "parameters": [
+        {
+          "name": "player1",
+          "type": "player",
+          "description": "First player"
+        },
+        {
+          "name": "player2",
+          "type": "player",
+          "description": "Second player"
+        }
+      ]
+    },
+    {
+      "id": "player_has_tech",
+      "category": "player",
+      "name": "Player Has Technology",
+      "description": "Check if a player has researched a technology",
+      "parameters": [
+        {
+          "name": "player",
+          "type": "player",
+          "description": "Player to check"
+        },
+        {
+          "name": "techId",
+          "type": "string",
+          "description": "Technology ID"
+        }
+      ]
+    },
+    {
+      "id": "random_chance",
+      "category": "game",
+      "name": "Random Chance",
+      "description": "Random chance to succeed",
+      "parameters": [
+        {
+          "name": "percentage",
+          "type": "real",
+          "description": "Chance percentage (0-100)",
+          "default": 50.0
+        }
+      ]
+    },
+    {
+      "id": "game_time_check",
+      "category": "game",
+      "name": "Game Time Check",
+      "description": "Check current game time",
+      "parameters": [
+        {
+          "name": "operator",
+          "type": "string",
+          "enum": ["==", "!=", "<", "<=", ">", ">="],
+          "default": ">="
+        },
+        {
+          "name": "time",
+          "type": "real",
+          "description": "Time in seconds"
+        }
+      ]
+    },
+    {
+      "id": "is_day_time",
+      "category": "game",
+      "name": "Is Day Time",
+      "description": "Check if it's currently day time",
+      "parameters": []
+    },
+    {
+      "id": "is_night_time",
+      "category": "game",
+      "name": "Is Night Time",
+      "description": "Check if it's currently night time",
+      "parameters": []
+    },
+    {
+      "id": "custom",
+      "category": "game",
+      "name": "Custom Condition",
+      "description": "User-defined custom condition",
+      "parameters": [
+        {
+          "name": "script",
+          "type": "string",
+          "description": "Custom script/expression"
+        }
+      ]
+    }
+  ]
+}

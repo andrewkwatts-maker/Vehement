@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Timeline Editor</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #4488ff;
+            --accent-secondary: #44ff88;
+            --accent-warning: #ffaa44;
+            --accent-danger: #ff4444;
+            --border-color: #404060;
+            --playhead-color: #ff4444;
+            --keyframe-color: #ffaa44;
+            --keyframe-selected: #ffffff;
+            --track-odd: #252535;
+            --track-even: #2a2a3e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .timeline-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toolbar-btn.play {
+            background: var(--accent-secondary);
+            padding: 5px 15px;
+        }
+
+        .toolbar-btn.play:hover {
+            background: #55ff99;
+        }
+
+        .time-display {
+            font-family: monospace;
+            font-size: 14px;
+            background: var(--bg-tertiary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .zoom-slider {
+            width: 100px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Track List */
+        .track-list {
+            width: 200px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .track-list-header {
+            height: 30px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .track-list-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .track-item {
+            height: 28px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .track-item:nth-child(odd) {
+            background: var(--track-odd);
+        }
+
+        .track-item:nth-child(even) {
+            background: var(--track-even);
+        }
+
+        .track-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .track-item.selected {
+            background: var(--accent-primary);
+        }
+
+        .track-expand {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        .track-visibility {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+
+        .track-visibility:hover {
+            opacity: 1;
+        }
+
+        .track-lock {
+            width: 16px;
+            height: 16px;
+            margin-left: auto;
+            opacity: 0.4;
+            cursor: pointer;
+        }
+
+        .track-lock:hover {
+            opacity: 1;
+        }
+
+        .track-lock.locked {
+            opacity: 1;
+            color: var(--accent-warning);
+        }
+
+        /* Timeline Area */
+        .timeline-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Time Ruler */
+        .time-ruler {
+            height: 30px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .time-ruler canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Keyframe Area */
+        .keyframe-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .keyframe-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Playhead */
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--playhead-color);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: -6px;
+            width: 14px;
+            height: 14px;
+            background: var(--playhead-color);
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+        }
+
+        /* Event Markers */
+        .event-marker {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: var(--accent-secondary);
+            cursor: pointer;
+        }
+
+        .event-marker::before {
+            content: attr(data-name);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            white-space: nowrap;
+            background: var(--accent-secondary);
+            color: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
+        /* Selection Box */
+        .selection-box {
+            position: absolute;
+            border: 1px solid var(--accent-primary);
+            background: rgba(68, 136, 255, 0.2);
+            pointer-events: none;
+            display: none;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 0;
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .context-menu-item:hover {
+            background: var(--accent-primary);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        /* Bottom Panel */
+        .bottom-panel {
+            height: 150px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+        }
+
+        .panel-tab {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .property-label {
+            width: 80px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .property-input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="firstFrameBtn" title="First Frame">|<</button>
+            <button class="toolbar-btn" id="prevKeyBtn" title="Previous Keyframe"><|</button>
+            <button class="toolbar-btn" id="prevFrameBtn" title="Previous Frame"><</button>
+            <button class="toolbar-btn play" id="playBtn" title="Play/Pause">Play</button>
+            <button class="toolbar-btn" id="nextFrameBtn" title="Next Frame">></button>
+            <button class="toolbar-btn" id="nextKeyBtn" title="Next Keyframe">|></button>
+            <button class="toolbar-btn" id="lastFrameBtn" title="Last Frame">>|</button>
+        </div>
+        <div class="toolbar-group">
+            <span class="time-display" id="timeDisplay">0:00.000</span>
+            <span style="font-size:11px;color:var(--text-secondary);">/ </span>
+            <span class="time-display" id="durationDisplay">0:05.000</span>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="loopBtn" title="Toggle Loop">Loop</button>
+            <select class="property-input" id="loopMode" style="width:100px;">
+                <option>Once</option>
+                <option selected>Loop</option>
+                <option>Ping Pong</option>
+            </select>
+        </div>
+        <div class="toolbar-group">
+            <span style="font-size:11px;color:var(--text-secondary);">Zoom:</span>
+            <input type="range" class="zoom-slider" id="zoomSlider" min="10" max="200" value="100">
+            <span id="zoomPercent" style="font-size:11px;width:40px;">100%</span>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="addKeyBtn" title="Add Keyframe">+ Key</button>
+            <button class="toolbar-btn" id="addEventBtn" title="Add Event">+ Event</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="snapBtn" title="Toggle Snapping">Snap</button>
+            <select class="property-input" id="snapMode" style="width:80px;">
+                <option>Off</option>
+                <option selected>Frame</option>
+                <option>Beat</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="timeline-container">
+        <div class="main-content">
+            <!-- Track List -->
+            <div class="track-list">
+                <div class="track-list-header">
+                    <span>Tracks</span>
+                </div>
+                <div class="track-list-content" id="trackList">
+                    <!-- Tracks populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Timeline Area -->
+            <div class="timeline-area">
+                <div class="time-ruler">
+                    <canvas id="rulerCanvas"></canvas>
+                </div>
+                <div class="keyframe-area" id="keyframeArea">
+                    <canvas id="keyframeCanvas"></canvas>
+                    <div class="playhead" id="playhead"></div>
+                    <div class="selection-box" id="selectionBox"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel -->
+        <div class="bottom-panel">
+            <div style="flex:1;display:flex;flex-direction:column;">
+                <div class="panel-tab">
+                    <button class="tab-btn active">Keyframe</button>
+                    <button class="tab-btn">Events</button>
+                    <button class="tab-btn">Curves</button>
+                    <button class="tab-btn">Audio</button>
+                </div>
+                <div class="panel-content">
+                    <div class="property-row">
+                        <span class="property-label">Time</span>
+                        <input type="number" class="property-input" id="keyTime" value="0" step="0.001">
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Interpolation</span>
+                        <select class="property-input" id="keyInterp">
+                            <option>Linear</option>
+                            <option>Bezier</option>
+                            <option>Step</option>
+                            <option>Hermite</option>
+                            <option>Catmull-Rom</option>
+                        </select>
+                    </div>
+                    <div class="property-row">
+                        <span class="property-label">Easing</span>
+                        <select class="property-input" id="keyEasing">
+                            <option>None</option>
+                            <option>Ease In</option>
+                            <option>Ease Out</option>
+                            <option>Ease In Out</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="addKey">Add Keyframe</div>
+        <div class="context-menu-item" data-action="addEvent">Add Event</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="deleteKey">Delete Keyframe</div>
+        <div class="context-menu-item" data-action="duplicateKey">Duplicate Keyframe</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="copy">Copy</div>
+        <div class="context-menu-item" data-action="paste">Paste</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="setMarker">Set Marker</div>
+    </div>
+
+    <script>
+        class AnimationTimelineEditor {
+            constructor() {
+                this.currentTime = 0;
+                this.duration = 5.0;
+                this.isPlaying = false;
+                this.loopMode = 'loop';
+                this.zoom = 100;
+                this.scrollOffset = 0;
+                this.pixelsPerSecond = 100;
+                this.selectedTrack = null;
+                this.selectedKeyframes = [];
+                this.tracks = [];
+                this.events = [];
+                this.isDragging = false;
+                this.isSelecting = false;
+                this.selectionStart = { x: 0, y: 0 };
+
+                this.init();
+            }
+
+            init() {
+                this.initTracks();
+                this.initCanvases();
+                this.initEventListeners();
+                this.render();
+            }
+
+            initTracks() {
+                this.tracks = [
+                    { name: 'Root', expanded: true, visible: true, locked: false, keyframes: [
+                        { time: 0, selected: false },
+                        { time: 1.5, selected: false },
+                        { time: 3.0, selected: false }
+                    ]},
+                    { name: '  Spine', expanded: false, visible: true, locked: false, keyframes: [
+                        { time: 0, selected: false },
+                        { time: 2.5, selected: false }
+                    ]},
+                    { name: '    Head', expanded: false, visible: true, locked: false, keyframes: [
+                        { time: 0.5, selected: false },
+                        { time: 1.0, selected: false },
+                        { time: 2.0, selected: false }
+                    ]},
+                    { name: '  LeftArm', expanded: false, visible: true, locked: false, keyframes: [
+                        { time: 0, selected: false },
+                        { time: 1.2, selected: false },
+                        { time: 2.4, selected: false },
+                        { time: 4.0, selected: false }
+                    ]},
+                    { name: '    LeftHand', expanded: false, visible: true, locked: false, keyframes: [] },
+                    { name: '  RightArm', expanded: false, visible: true, locked: false, keyframes: [
+                        { time: 0.3, selected: false },
+                        { time: 1.5, selected: false }
+                    ]},
+                    { name: '    RightHand', expanded: false, visible: true, locked: false, keyframes: [] },
+                    { name: '  LeftLeg', expanded: false, visible: true, locked: false, keyframes: [
+                        { time: 0, selected: false },
+                        { time: 0.8, selected: false },
+                        { time: 1.6, selected: false }
+                    ]},
+                    { name: '  RightLeg', expanded: false, visible: true, locked: false, keyframes: [
+                        { time: 0.4, selected: false },
+                        { time: 1.2, selected: false },
+                        { time: 2.0, selected: false }
+                    ]}
+                ];
+
+                this.events = [
+                    { time: 1.0, name: 'FootstepL', color: '#44ff88' },
+                    { time: 2.0, name: 'FootstepR', color: '#44ff88' },
+                    { time: 3.5, name: 'Impact', color: '#ff8844' }
+                ];
+
+                this.renderTrackList();
+            }
+
+            renderTrackList() {
+                const trackList = document.getElementById('trackList');
+                trackList.innerHTML = '';
+
+                this.tracks.forEach((track, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'track-item' + (this.selectedTrack === index ? ' selected' : '');
+                    item.innerHTML = `
+                        <span class="track-expand">${track.expanded ? 'v' : '>'}</span>
+                        <svg class="track-visibility" viewBox="0 0 24 24" fill="currentColor" style="opacity:${track.visible ? 0.8 : 0.3}">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7 17 9.24 17 12 14.76 17 12 17Z"/>
+                        </svg>
+                        <span>${track.name}</span>
+                        <svg class="track-lock ${track.locked ? 'locked' : ''}" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="${track.locked
+                                ? 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z'
+                                : 'M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z'}"/>
+                        </svg>
+                    `;
+                    item.addEventListener('click', () => {
+                        this.selectedTrack = index;
+                        this.renderTrackList();
+                    });
+                    trackList.appendChild(item);
+                });
+            }
+
+            initCanvases() {
+                this.rulerCanvas = document.getElementById('rulerCanvas');
+                this.keyframeCanvas = document.getElementById('keyframeCanvas');
+                this.rulerCtx = this.rulerCanvas.getContext('2d');
+                this.keyframeCtx = this.keyframeCanvas.getContext('2d');
+
+                this.resizeCanvases();
+                window.addEventListener('resize', () => this.resizeCanvases());
+            }
+
+            resizeCanvases() {
+                const ruler = this.rulerCanvas.parentElement;
+                const area = this.keyframeCanvas.parentElement;
+
+                this.rulerCanvas.width = ruler.clientWidth;
+                this.rulerCanvas.height = ruler.clientHeight;
+
+                this.keyframeCanvas.width = area.clientWidth;
+                this.keyframeCanvas.height = area.clientHeight;
+
+                this.render();
+            }
+
+            initEventListeners() {
+                // Playback controls
+                document.getElementById('playBtn').addEventListener('click', () => this.togglePlay());
+                document.getElementById('firstFrameBtn').addEventListener('click', () => this.setTime(0));
+                document.getElementById('lastFrameBtn').addEventListener('click', () => this.setTime(this.duration));
+                document.getElementById('prevFrameBtn').addEventListener('click', () => this.stepFrame(-1));
+                document.getElementById('nextFrameBtn').addEventListener('click', () => this.stepFrame(1));
+                document.getElementById('prevKeyBtn').addEventListener('click', () => this.gotoNearestKeyframe(-1));
+                document.getElementById('nextKeyBtn').addEventListener('click', () => this.gotoNearestKeyframe(1));
+
+                // Zoom
+                document.getElementById('zoomSlider').addEventListener('input', (e) => {
+                    this.zoom = parseInt(e.target.value);
+                    this.pixelsPerSecond = this.zoom;
+                    document.getElementById('zoomPercent').textContent = this.zoom + '%';
+                    this.render();
+                });
+
+                // Loop mode
+                document.getElementById('loopMode').addEventListener('change', (e) => {
+                    this.loopMode = e.target.value.toLowerCase().replace(' ', '');
+                });
+
+                // Canvas interactions
+                const keyframeArea = document.getElementById('keyframeArea');
+                keyframeArea.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                keyframeArea.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                keyframeArea.addEventListener('mouseup', (e) => this.onMouseUp(e));
+                keyframeArea.addEventListener('contextmenu', (e) => this.onContextMenu(e));
+                keyframeArea.addEventListener('wheel', (e) => this.onWheel(e));
+
+                // Time ruler click
+                this.rulerCanvas.addEventListener('click', (e) => {
+                    const rect = this.rulerCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left + this.scrollOffset;
+                    const time = x / this.pixelsPerSecond;
+                    this.setTime(Math.max(0, Math.min(this.duration, time)));
+                });
+
+                // Context menu
+                document.getElementById('contextMenu').addEventListener('click', (e) => {
+                    const action = e.target.dataset.action;
+                    if (action) this.handleContextAction(action);
+                    this.hideContextMenu();
+                });
+
+                document.addEventListener('click', () => this.hideContextMenu());
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+
+                    switch (e.key) {
+                        case ' ': e.preventDefault(); this.togglePlay(); break;
+                        case 'Home': this.setTime(0); break;
+                        case 'End': this.setTime(this.duration); break;
+                        case 'ArrowLeft': this.stepFrame(-1); break;
+                        case 'ArrowRight': this.stepFrame(1); break;
+                        case 'Delete': this.deleteSelectedKeyframes(); break;
+                        case 'k': case 'K': this.addKeyframeAtCurrentTime(); break;
+                    }
+                });
+
+                // Animation loop
+                this.lastFrameTime = 0;
+                requestAnimationFrame((t) => this.animationLoop(t));
+            }
+
+            animationLoop(timestamp) {
+                if (this.isPlaying) {
+                    const deltaTime = (timestamp - this.lastFrameTime) / 1000;
+                    this.currentTime += deltaTime;
+
+                    if (this.currentTime >= this.duration) {
+                        if (this.loopMode === 'loop') {
+                            this.currentTime = 0;
+                        } else if (this.loopMode === 'pingpong') {
+                            // Handle ping pong
+                        } else {
+                            this.currentTime = this.duration;
+                            this.isPlaying = false;
+                            document.getElementById('playBtn').textContent = 'Play';
+                        }
+                    }
+
+                    this.updateTimeDisplay();
+                    this.updatePlayhead();
+                }
+                this.lastFrameTime = timestamp;
+                requestAnimationFrame((t) => this.animationLoop(t));
+            }
+
+            togglePlay() {
+                this.isPlaying = !this.isPlaying;
+                document.getElementById('playBtn').textContent = this.isPlaying ? 'Pause' : 'Play';
+            }
+
+            setTime(time) {
+                this.currentTime = Math.max(0, Math.min(this.duration, time));
+                this.updateTimeDisplay();
+                this.updatePlayhead();
+            }
+
+            stepFrame(direction) {
+                const frameTime = 1 / 30; // 30 FPS
+                this.setTime(this.currentTime + direction * frameTime);
+            }
+
+            gotoNearestKeyframe(direction) {
+                let nearestTime = direction > 0 ? this.duration : 0;
+                let found = false;
+
+                this.tracks.forEach(track => {
+                    track.keyframes.forEach(kf => {
+                        if (direction > 0 && kf.time > this.currentTime + 0.001) {
+                            if (!found || kf.time < nearestTime) {
+                                nearestTime = kf.time;
+                                found = true;
+                            }
+                        } else if (direction < 0 && kf.time < this.currentTime - 0.001) {
+                            if (!found || kf.time > nearestTime) {
+                                nearestTime = kf.time;
+                                found = true;
+                            }
+                        }
+                    });
+                });
+
+                this.setTime(nearestTime);
+            }
+
+            updateTimeDisplay() {
+                const minutes = Math.floor(this.currentTime / 60);
+                const seconds = this.currentTime % 60;
+                document.getElementById('timeDisplay').textContent =
+                    `${minutes}:${seconds.toFixed(3).padStart(6, '0')}`;
+            }
+
+            updatePlayhead() {
+                const playhead = document.getElementById('playhead');
+                const x = this.currentTime * this.pixelsPerSecond - this.scrollOffset;
+                playhead.style.left = `${x}px`;
+            }
+
+            render() {
+                this.renderRuler();
+                this.renderKeyframes();
+                this.updatePlayhead();
+            }
+
+            renderRuler() {
+                const ctx = this.rulerCtx;
+                const width = this.rulerCanvas.width;
+                const height = this.rulerCanvas.height;
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = '#363650';
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw time markers
+                ctx.fillStyle = '#a0a0b0';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+
+                const minorInterval = 0.1;
+                const majorInterval = 1.0;
+                const start = Math.floor(this.scrollOffset / this.pixelsPerSecond / minorInterval) * minorInterval;
+                const end = start + width / this.pixelsPerSecond + minorInterval;
+
+                for (let t = start; t <= end; t += minorInterval) {
+                    if (t < 0) continue;
+                    const x = t * this.pixelsPerSecond - this.scrollOffset;
+
+                    const isMajor = Math.abs(t % majorInterval) < 0.001;
+
+                    ctx.beginPath();
+                    ctx.moveTo(x, height);
+                    ctx.lineTo(x, isMajor ? height - 15 : height - 8);
+                    ctx.strokeStyle = isMajor ? '#a0a0b0' : '#606070';
+                    ctx.stroke();
+
+                    if (isMajor) {
+                        ctx.fillText(t.toFixed(1) + 's', x, 12);
+                    }
+                }
+
+                // Draw event markers
+                this.events.forEach(event => {
+                    const x = event.time * this.pixelsPerSecond - this.scrollOffset;
+                    ctx.fillStyle = event.color;
+                    ctx.beginPath();
+                    ctx.moveTo(x, height - 5);
+                    ctx.lineTo(x - 4, height);
+                    ctx.lineTo(x + 4, height);
+                    ctx.fill();
+                });
+            }
+
+            renderKeyframes() {
+                const ctx = this.keyframeCtx;
+                const width = this.keyframeCanvas.width;
+                const height = this.keyframeCanvas.height;
+                const trackHeight = 28;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // Draw track backgrounds
+                this.tracks.forEach((track, i) => {
+                    const y = i * trackHeight;
+                    ctx.fillStyle = i % 2 === 0 ? '#252535' : '#2a2a3e';
+                    ctx.fillRect(0, y, width, trackHeight);
+                });
+
+                // Draw grid lines
+                ctx.strokeStyle = '#303050';
+                const interval = 1.0;
+                for (let t = 0; t <= this.duration; t += interval) {
+                    const x = t * this.pixelsPerSecond - this.scrollOffset;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                }
+
+                // Draw keyframes
+                this.tracks.forEach((track, i) => {
+                    const y = i * trackHeight + trackHeight / 2;
+
+                    track.keyframes.forEach(kf => {
+                        const x = kf.time * this.pixelsPerSecond - this.scrollOffset;
+
+                        ctx.save();
+                        ctx.translate(x, y);
+                        ctx.rotate(Math.PI / 4);
+
+                        ctx.fillStyle = kf.selected ? '#ffffff' : '#ffaa44';
+                        ctx.fillRect(-5, -5, 10, 10);
+
+                        if (kf.selected) {
+                            ctx.strokeStyle = '#4488ff';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(-5, -5, 10, 10);
+                        }
+
+                        ctx.restore();
+                    });
+                });
+
+                // Draw event markers
+                this.events.forEach(event => {
+                    const x = event.time * this.pixelsPerSecond - this.scrollOffset;
+                    ctx.strokeStyle = event.color;
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                });
+            }
+
+            onMouseDown(e) {
+                const rect = this.keyframeCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (e.button === 0) { // Left click
+                    const hit = this.hitTestKeyframe(x, y);
+                    if (hit) {
+                        if (!e.shiftKey && !hit.keyframe.selected) {
+                            this.clearSelection();
+                        }
+                        hit.keyframe.selected = true;
+                        this.isDragging = true;
+                        this.dragStartX = x;
+                        this.dragStartTime = hit.keyframe.time;
+                    } else {
+                        if (!e.shiftKey) {
+                            this.clearSelection();
+                        }
+                        this.isSelecting = true;
+                        this.selectionStart = { x, y };
+                    }
+                    this.render();
+                }
+            }
+
+            onMouseMove(e) {
+                const rect = this.keyframeCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (this.isDragging) {
+                    const deltaTime = (x - this.dragStartX) / this.pixelsPerSecond;
+                    this.tracks.forEach(track => {
+                        track.keyframes.forEach(kf => {
+                            if (kf.selected) {
+                                kf.time = Math.max(0, Math.min(this.duration, kf.time + deltaTime));
+                            }
+                        });
+                    });
+                    this.dragStartX = x;
+                    this.render();
+                }
+
+                if (this.isSelecting) {
+                    const box = document.getElementById('selectionBox');
+                    box.style.display = 'block';
+                    box.style.left = Math.min(x, this.selectionStart.x) + 'px';
+                    box.style.top = Math.min(y, this.selectionStart.y) + 'px';
+                    box.style.width = Math.abs(x - this.selectionStart.x) + 'px';
+                    box.style.height = Math.abs(y - this.selectionStart.y) + 'px';
+                }
+            }
+
+            onMouseUp(e) {
+                if (this.isSelecting) {
+                    const rect = this.keyframeCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    this.selectInRect(
+                        Math.min(x, this.selectionStart.x),
+                        Math.min(y, this.selectionStart.y),
+                        Math.abs(x - this.selectionStart.x),
+                        Math.abs(y - this.selectionStart.y)
+                    );
+                }
+
+                this.isDragging = false;
+                this.isSelecting = false;
+                document.getElementById('selectionBox').style.display = 'none';
+                this.render();
+            }
+
+            onContextMenu(e) {
+                e.preventDefault();
+                const menu = document.getElementById('contextMenu');
+                menu.style.display = 'block';
+                menu.style.left = e.clientX + 'px';
+                menu.style.top = e.clientY + 'px';
+            }
+
+            hideContextMenu() {
+                document.getElementById('contextMenu').style.display = 'none';
+            }
+
+            onWheel(e) {
+                e.preventDefault();
+                if (e.ctrlKey) {
+                    // Zoom
+                    const delta = e.deltaY > 0 ? -10 : 10;
+                    this.zoom = Math.max(10, Math.min(200, this.zoom + delta));
+                    this.pixelsPerSecond = this.zoom;
+                    document.getElementById('zoomSlider').value = this.zoom;
+                    document.getElementById('zoomPercent').textContent = this.zoom + '%';
+                } else {
+                    // Scroll
+                    this.scrollOffset += e.deltaX;
+                    this.scrollOffset = Math.max(0, this.scrollOffset);
+                }
+                this.render();
+            }
+
+            hitTestKeyframe(x, y) {
+                const trackHeight = 28;
+                const trackIndex = Math.floor(y / trackHeight);
+
+                if (trackIndex >= 0 && trackIndex < this.tracks.length) {
+                    const track = this.tracks[trackIndex];
+                    for (const kf of track.keyframes) {
+                        const kfX = kf.time * this.pixelsPerSecond - this.scrollOffset;
+                        if (Math.abs(x - kfX) < 8) {
+                            return { track, keyframe: kf };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            clearSelection() {
+                this.tracks.forEach(track => {
+                    track.keyframes.forEach(kf => kf.selected = false);
+                });
+            }
+
+            selectInRect(rx, ry, rw, rh) {
+                const trackHeight = 28;
+                this.tracks.forEach((track, i) => {
+                    const trackY = i * trackHeight + trackHeight / 2;
+                    if (trackY >= ry && trackY <= ry + rh) {
+                        track.keyframes.forEach(kf => {
+                            const x = kf.time * this.pixelsPerSecond - this.scrollOffset;
+                            if (x >= rx && x <= rx + rw) {
+                                kf.selected = true;
+                            }
+                        });
+                    }
+                });
+            }
+
+            handleContextAction(action) {
+                switch (action) {
+                    case 'addKey':
+                        this.addKeyframeAtCurrentTime();
+                        break;
+                    case 'deleteKey':
+                        this.deleteSelectedKeyframes();
+                        break;
+                    case 'duplicateKey':
+                        this.duplicateSelectedKeyframes();
+                        break;
+                }
+            }
+
+            addKeyframeAtCurrentTime() {
+                if (this.selectedTrack !== null) {
+                    this.tracks[this.selectedTrack].keyframes.push({
+                        time: this.currentTime,
+                        selected: false
+                    });
+                    this.render();
+                }
+            }
+
+            deleteSelectedKeyframes() {
+                this.tracks.forEach(track => {
+                    track.keyframes = track.keyframes.filter(kf => !kf.selected);
+                });
+                this.render();
+            }
+
+            duplicateSelectedKeyframes() {
+                this.tracks.forEach(track => {
+                    const selected = track.keyframes.filter(kf => kf.selected);
+                    selected.forEach(kf => {
+                        track.keyframes.push({
+                            time: kf.time + 0.1,
+                            selected: false
+                        });
+                    });
+                });
+                this.render();
+            }
+        }
+
+        // Initialize editor
+        const editor = new AnimationTimelineEditor();
+
+        // Native bridge
+        window.TimelineEditor = {
+            setDuration: (d) => {
+                editor.duration = d;
+                document.getElementById('durationDisplay').textContent =
+                    `${Math.floor(d/60)}:${(d%60).toFixed(3).padStart(6, '0')}`;
+                editor.render();
+            },
+            setTime: (t) => editor.setTime(t),
+            getTime: () => editor.currentTime,
+            loadAnimation: (data) => {
+                editor.tracks = data.tracks || [];
+                editor.events = data.events || [];
+                editor.duration = data.duration || 5.0;
+                editor.renderTrackList();
+                editor.render();
+            },
+            getAnimationData: () => ({
+                tracks: editor.tracks,
+                events: editor.events,
+                duration: editor.duration
+            })
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+{
+  "id": "nosferatu",
+  "name": "Nosferatu",
+  "race": "vampires",
+  "tier": 2,
+  "type": "melee",
+  "role": ["tank", "terror", "frontline"],
+
+  "description": "Monstrous ancient vampires whose bodies have twisted into inhuman forms. They inspire terror in enemies and are incredibly resilient.",
+  "lore": "Nosferatu are vampires who embraced their monstrous nature rather than hiding behind a human facade. Their bodies have warped over millennia into hulking predators, and their mere presence causes lesser beings to flee in terror.",
+
+  "stats": {
+    "health": 750,
+    "healthRegen": 2.0,
+    "mana": 100,
+    "manaRegen": 0.5,
+    "armor": 3,
+    "armorType": "heavy",
+    "moveSpeed": 250,
+    "turnRate": 0.5,
+    "collisionSize": 40,
+    "selectionScale": 1.2
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 26,
+      "variance": 5,
+      "type": "normal"
+    },
+    "attackSpeed": 1.6,
+    "attackRange": 100,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.45,
+    "backswing": 0.45,
+    "acquisitionRange": 500,
+    "aggroRange": 400,
+    "lifeSteal": 0.25,
+    "cleave": {
+      "enabled": true,
+      "percent": 0.3,
+      "radius": 150
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "healthRegenBonus": 3.0,
+      "terrorRadiusBonus": 100
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 8,
+      "healthRegenPenalty": 1.5
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "terror_aura",
+      "name": "Terror Aura",
+      "type": "passive",
+      "description": "Nearby enemies have reduced attack damage and may flee in terror",
+      "effects": {
+        "radius": 350,
+        "damageReduction": 0.15,
+        "fearChance": 0.1,
+        "fearDuration": 3.0
+      },
+      "icon": "icons/abilities/terror_aura.png"
+    },
+    {
+      "id": "savage_bite",
+      "name": "Savage Bite",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Brutally bite a target, dealing massive damage and healing for the full amount",
+      "cooldown": 12,
+      "manaCost": 50,
+      "effects": {
+        "damage": 120,
+        "healPercent": 1.0,
+        "range": 128
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/savage_bite.png"
+    },
+    {
+      "id": "horrifying_screech",
+      "name": "Horrifying Screech",
+      "type": "active",
+      "targetType": "area",
+      "description": "Let out a terrifying screech that fears all nearby enemies",
+      "cooldown": 30,
+      "manaCost": 75,
+      "bloodCost": 15,
+      "effects": {
+        "radius": 400,
+        "fearDuration": 4.0,
+        "damageReduction": 0.25,
+        "duration": 6.0
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/horrifying_screech.png"
+    },
+    {
+      "id": "plague_carrier",
+      "name": "Plague Carrier",
+      "type": "passive_upgrade",
+      "requiresResearch": "plague_blood",
+      "description": "Attacks spread a wasting disease that deals damage over time",
+      "effects": {
+        "diseaseChance": 0.25,
+        "diseaseDamage": 5,
+        "diseaseDuration": 10.0
+      },
+      "icon": "icons/abilities/plague_carrier.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "blood_pit",
+    "buildTime": 38,
+    "cost": {
+      "gold": 260,
+      "lumber": 30,
+      "blood": 30
+    },
+    "foodCost": 4,
+    "prerequisites": {
+      "buildings": ["blood_pit", "blood_castle"],
+      "technologies": [],
+      "age": "noble"
+    },
+    "hotkey": "N"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "crimson_claws"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "unholy_constitution"
+    },
+    "special": ["plague_blood", "enhanced_terror", "regenerative_blood"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/nosferatu/ready.ogg",
+    "select": ["audio/units/nosferatu/select1.ogg", "audio/units/nosferatu/select2.ogg"],
+    "move": ["audio/units/nosferatu/move1.ogg", "audio/units/nosferatu/move2.ogg"],
+    "attack": ["audio/units/nosferatu/attack1.ogg", "audio/units/nosferatu/attack2.ogg"],
+    "death": "audio/units/nosferatu/death.ogg",
+    "screech": "audio/units/nosferatu/screech.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/nosferatu.glb",
+    "texture": "textures/units/vampires/nosferatu.png",
+    "portrait": "textures/portraits/nosferatu.png",
+    "icon": "textures/icons/nosferatu.png",
+    "scale": 1.2,
+    "animations": {
+      "idle": "nosferatu_idle",
+      "walk": "nosferatu_walk",
+      "attack": "nosferatu_attack",
+      "death": "nosferatu_death",
+      "bite": "nosferatu_bite",
+      "screech": "nosferatu_screech"
+    },
+    "effects": {
+      "spawn": "effects/nosferatu_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "terrorAura": "effects/terror_aura.vfx",
+      "screech": "effects/screech_wave.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 6,
+    "priority": "high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.05,
+    "preferredTargets": ["melee", "tank"],
+    "useTerrorTactically": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isMonstrous": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "causesTerror": true
+  },
+
+  "bounty": {
+    "gold": 38,
+    "experience": 50,
+    "blood": 0
+  },
+
+  "pointValue": 4,
+  "supplyProvided": 0,
+  "supplyUsed": 4
+}

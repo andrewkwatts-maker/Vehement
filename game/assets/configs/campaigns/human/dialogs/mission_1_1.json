@@ -1,0 +1,162 @@
+{
+  "$schema": "../../../../../schemas/dialog.schema.json",
+  "id": "dialog_human_m1_1_briefing",
+  "title": "Thornwall Briefing",
+  "participants": ["commander_aldric", "sergeant_bran", "scout_elena"],
+  "canSkip": false,
+  "pauseGame": true,
+
+  "characters": [
+    {
+      "id": "commander_aldric",
+      "name": "Commander Aldric",
+      "title": "Defender of Thornwall",
+      "portraits": {
+        "neutral": "portraits/aldric_neutral.png",
+        "angry": "portraits/aldric_angry.png",
+        "determined": "portraits/aldric_determined.png",
+        "worried": "portraits/aldric_worried.png"
+      },
+      "defaultPortrait": "portraits/aldric_neutral.png",
+      "faction": "human_alliance",
+      "textColor": "#4169E1"
+    },
+    {
+      "id": "sergeant_bran",
+      "name": "Sergeant Bran",
+      "title": "Garrison Veteran",
+      "portraits": {
+        "neutral": "portraits/bran_neutral.png",
+        "grim": "portraits/bran_grim.png"
+      },
+      "defaultPortrait": "portraits/bran_neutral.png",
+      "faction": "human_alliance",
+      "textColor": "#8B4513"
+    },
+    {
+      "id": "scout_elena",
+      "name": "Scout Elena",
+      "title": "Border Ranger",
+      "portraits": {
+        "neutral": "portraits/elena_neutral.png",
+        "urgent": "portraits/elena_urgent.png",
+        "fearful": "portraits/elena_fearful.png"
+      },
+      "defaultPortrait": "portraits/elena_neutral.png",
+      "faction": "human_alliance",
+      "textColor": "#228B22"
+    }
+  ],
+
+  "nodes": [
+    {
+      "id": "node_start",
+      "characterId": "scout_elena",
+      "text": "Commander! The scouts have returned. The news... it's worse than we feared.",
+      "emotion": "urgent",
+      "nextNodeId": "node_report",
+      "portraitPosition": "left"
+    },
+    {
+      "id": "node_report",
+      "characterId": "commander_aldric",
+      "text": "Speak, Elena. What did you see?",
+      "emotion": "neutral",
+      "nextNodeId": "node_enemy_count",
+      "portraitPosition": "right"
+    },
+    {
+      "id": "node_enemy_count",
+      "characterId": "scout_elena",
+      "text": "Thousands of them, Commander. The dead from the border villages, the fallen from the garrison outposts... all risen. They march as one, and Thornwall lies directly in their path.",
+      "emotion": "fearful",
+      "nextNodeId": "node_bran_reaction",
+      "portraitPosition": "left"
+    },
+    {
+      "id": "node_bran_reaction",
+      "characterId": "sergeant_bran",
+      "text": "Thousands? By the ancestors... we have maybe fifty men capable of holding a sword. The walls haven't been properly maintained in years.",
+      "emotion": "grim",
+      "nextNodeId": "node_aldric_choice",
+      "portraitPosition": "right"
+    },
+    {
+      "id": "node_aldric_choice",
+      "characterId": "commander_aldric",
+      "text": "Then we have work to do. I need options, Sergeant.",
+      "emotion": "determined",
+      "choices": [
+        {
+          "id": "choice_defend",
+          "text": "We fortify and hold. Every minute we buy gives the kingdom time to respond.",
+          "nextNodeId": "node_defend_response"
+        },
+        {
+          "id": "choice_evacuate",
+          "text": "We evacuate the civilians and fall back to Stonebridge.",
+          "nextNodeId": "node_evacuate_response"
+        },
+        {
+          "id": "choice_attack",
+          "text": "We strike first. A preemptive attack might disrupt their advance.",
+          "nextNodeId": "node_attack_response"
+        }
+      ],
+      "portraitPosition": "left"
+    },
+    {
+      "id": "node_defend_response",
+      "characterId": "sergeant_bran",
+      "text": "Aye, Commander. We can conscript the villagers, shore up the walls. It'll be bloody, but we can hold.",
+      "emotion": "neutral",
+      "nextNodeId": "node_final_orders",
+      "portraitPosition": "right",
+      "onEnterScript": "set_flag('strategy_defend', true)"
+    },
+    {
+      "id": "node_evacuate_response",
+      "characterId": "sergeant_bran",
+      "text": "The roads are likely already cut off, Commander. And if we abandon Thornwall, there's nothing between the dead and the heartland.",
+      "emotion": "grim",
+      "nextNodeId": "node_aldric_reconsider",
+      "portraitPosition": "right"
+    },
+    {
+      "id": "node_aldric_reconsider",
+      "characterId": "commander_aldric",
+      "text": "You're right. We stand and fight. There is no retreat.",
+      "emotion": "determined",
+      "nextNodeId": "node_final_orders",
+      "portraitPosition": "left",
+      "onEnterScript": "set_flag('strategy_defend', true)"
+    },
+    {
+      "id": "node_attack_response",
+      "characterId": "scout_elena",
+      "text": "Commander, with respect - we'd be slaughtered. The undead don't tire, don't fear, don't break. A frontal assault would be suicide.",
+      "emotion": "urgent",
+      "nextNodeId": "node_aldric_reconsider",
+      "portraitPosition": "left"
+    },
+    {
+      "id": "node_final_orders",
+      "characterId": "commander_aldric",
+      "text": "Then let's get to work. Bran, conscript every able body. Elena, I need you to ride for the capital - they must know what's coming.",
+      "emotion": "determined",
+      "nextNodeId": "node_for_alliance",
+      "portraitPosition": "left"
+    },
+    {
+      "id": "node_for_alliance",
+      "characterId": "sergeant_bran",
+      "text": "For the Alliance, Commander. We'll hold this keep or die trying.",
+      "emotion": "neutral",
+      "portraitPosition": "right",
+      "autoAdvance": true,
+      "autoAdvanceDelay": 2
+    }
+  ],
+
+  "startNodeId": "node_start"
+}

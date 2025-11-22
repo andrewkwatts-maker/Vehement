@@ -1,0 +1,262 @@
+{
+    "id": "naga_ancient_hydra",
+    "type": "unit",
+    "name": "Ancient Hydra",
+    "description": "A primordial serpent of immense power with up to seven heads. This legendary beast has terrorized the seas for millennia, its venom capable of slaying the mightiest warriors.",
+    "race": "naga",
+    "tier": 4,
+    "class": "elite_beast",
+
+    "tags": ["military", "beast", "melee", "tier4", "amphibious", "multi_head", "legendary", "regeneration"],
+
+    "model": {
+        "path": "models/races/naga/units/ancient_hydra.obj",
+        "scale": [2.2, 2.2, 2.2],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/ancient_hydra_diffuse.png",
+        "normal": "textures/races/naga/units/ancient_hydra_normal.png",
+        "specular": "textures/races/naga/units/ancient_hydra_spec.png",
+        "emissive": "textures/races/naga/units/ancient_hydra_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [2.5, 2.0, 3.5],
+                "offset": [0.0, 2.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 900.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 4.2,
+        "turnRate": 140.0,
+        "acceleration": 8.0,
+        "deceleration": 12.0,
+        "canSwim": true,
+        "swimSpeed": 6.0,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.0,
+            "forest": 0.5,
+            "water": 1.5,
+            "deep_water": 1.6,
+            "desert": 0.3
+        }
+    },
+
+    "combat": {
+        "health": 2200,
+        "maxHealth": 2200,
+        "armor": 8,
+        "magicResist": 5,
+        "attackDamage": 28,
+        "attackSpeed": 1.0,
+        "attackRange": 3.5,
+        "critChance": 0.12,
+        "critMultiplier": 2.0,
+        "physicalDamage": true,
+        "damageType": "pierce",
+        "armorType": "heavy",
+        "multiAttack": {
+            "count": 5,
+            "targets": "same_or_different",
+            "per_head": true
+        }
+    },
+
+    "heads": {
+        "count": 5,
+        "max_count": 7,
+        "damage_per_head": 28,
+        "regenerate_time": 20.0,
+        "head_health": 350,
+        "two_heads_per_lost": true
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "damage_bonus": 0.2,
+            "health_regen_bonus": 8.0
+        },
+        "in_water": {
+            "health_regen": 25.0,
+            "head_regen_time_reduction": 0.6,
+            "multiattack_bonus": 2
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "legendary_regeneration",
+            "name": "Legendary Regeneration",
+            "description": "Regenerates 1% max health per second. When a head is severed, two grow back after 20 seconds up to 7 total.",
+            "effect": {
+                "type": "regeneration",
+                "percent_per_second": 1.0,
+                "head_regen_bonus": true,
+                "max_heads": 7
+            }
+        },
+        {
+            "id": "multi_headed_assault",
+            "name": "Multi-Headed Assault",
+            "description": "Each head attacks independently. Can attack up to 7 targets simultaneously at max heads.",
+            "effect": {
+                "type": "multi_attack",
+                "max_attacks": 7
+            }
+        },
+        {
+            "id": "primordial_venom",
+            "name": "Primordial Venom",
+            "description": "Each bite applies ancient venom: 12 damage per second for 8 seconds, reducing healing by 50%.",
+            "effect": {
+                "type": "dot",
+                "damage_per_tick": 12,
+                "duration": 8,
+                "healing_reduction": 0.5,
+                "per_head": true,
+                "stacks": true
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and regenerates vastly faster in water."
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "primal_fury",
+            "name": "Primal Fury",
+            "description": "Enters a berserker rage, all heads attack 75% faster and each attack has 30% lifesteal for 10 seconds.",
+            "icon": "icons/abilities/naga/primal_fury.png",
+            "cooldown": 45.0,
+            "manaCost": 0,
+            "targetType": "self",
+            "duration": 10.0,
+            "effects": [
+                {"type": "attack_speed_bonus", "value": 0.75},
+                {"type": "lifesteal", "value": 0.3}
+            ],
+            "castAnimation": "rage",
+            "castSound": "sounds/abilities/primal_fury.wav"
+        },
+        {
+            "id": "venomous_nova",
+            "name": "Venomous Nova",
+            "description": "All heads spray venom simultaneously, dealing 200 damage and applying max venom stacks to all enemies in range.",
+            "icon": "icons/abilities/naga/venomous_nova.png",
+            "cooldown": 35.0,
+            "manaCost": 0,
+            "radius": 8.0,
+            "targetType": "self_aoe",
+            "effects": [
+                {"type": "damage", "amount": 200, "damage_type": "poison"},
+                {"type": "apply_venom", "stacks": 7, "duration": 8}
+            ],
+            "castAnimation": "venom_spray",
+            "castSound": "sounds/abilities/venomous_nova.wav"
+        },
+        {
+            "id": "devour",
+            "name": "Devour",
+            "description": "One head swallows a medium or smaller enemy whole, instantly killing non-heroes or dealing 500 damage to heroes.",
+            "icon": "icons/abilities/naga/devour.png",
+            "cooldown": 60.0,
+            "manaCost": 0,
+            "range": 3.0,
+            "targetType": "enemy_unit",
+            "target_size": ["small", "medium"],
+            "effects": [
+                {"type": "instant_kill", "non_heroes": true},
+                {"type": "damage", "amount": 500, "heroes_only": true},
+                {"type": "heal_self", "percent_of_target_hp": 0.5}
+            ],
+            "castAnimation": "devour",
+            "castSound": "sounds/abilities/devour.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/ancient_hydra/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/ancient_hydra/walk.anim", "speed": 1.0, "loop": true},
+        "swim": {"path": "animations/naga/ancient_hydra/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/ancient_hydra/multi_bite.anim",
+            "loop": false,
+            "events": [[0.15, "head_1"], [0.25, "head_2"], [0.35, "head_3"], [0.45, "head_4"], [0.55, "head_5"]]
+        },
+        "rage": {"path": "animations/naga/ancient_hydra/rage.anim", "loop": false},
+        "venom_spray": {"path": "animations/naga/ancient_hydra/venom_spray.anim", "loop": false},
+        "devour": {"path": "animations/naga/ancient_hydra/devour.anim", "loop": false},
+        "death": {"path": "animations/naga/ancient_hydra/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/massive_beast_1.wav", "sounds/footsteps/massive_beast_2.wav"],
+            "volume": 0.9
+        },
+        "attack": {
+            "paths": ["sounds/combat/hydra_bite_1.wav", "sounds/combat/hydra_bite_2.wav"],
+            "volume": 1.0
+        },
+        "death": {"paths": ["sounds/death/ancient_hydra_death.wav"], "volume": 1.0},
+        "select": "sounds/voice/naga/ancient_hydra_roar.wav",
+        "acknowledge": {"paths": ["sounds/voice/naga/ancient_hydra_screech.wav"]}
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_ancient_hydra.bt",
+        "profile": "legendary_beast",
+        "aggroRange": 16.0,
+        "leashRange": 30.0,
+        "preferWater": true,
+        "targetMultiple": true,
+        "fearless": true
+    },
+
+    "production": {
+        "building": "naga_beast_den",
+        "time": 90.0,
+        "cost": {
+            "gold": 800,
+            "coral": 450,
+            "pearls": 150,
+            "abyssal_essence": 200
+        },
+        "requirements": {
+            "age": "age_primordial",
+            "techs": ["naga_primordial_beasts"],
+            "buildings": ["naga_palace_of_waves"]
+        },
+        "limit": 2
+    },
+
+    "properties": {
+        "populationCost": 8,
+        "supplyUpkeep": 7,
+        "squadSize": 1,
+        "experienceValue": 250,
+        "bountyGold": 200,
+        "isLegendary": true
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/ancient_hydra/on_spawn.py",
+        "on_death": "scripts/units/naga/ancient_hydra/on_death.py",
+        "on_head_regrow": "scripts/units/naga/ancient_hydra/on_head_regrow.py"
+    }
+}

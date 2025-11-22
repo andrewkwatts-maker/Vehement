@@ -1,0 +1,280 @@
+{
+  "id": "skinwalker_elder",
+  "name": "Skinwalker Elder",
+  "race": "cryptids",
+  "tier": 3,
+  "type": "shapeshifter",
+  "role": ["shapeshifter", "multi_form", "versatile"],
+
+  "description": "A master of transformation who has perfected the ancient arts. The Elder can shift between human, wolf, bear, and bird forms, each with unique abilities.",
+  "lore": "Those who walk the path of the skin for centuries eventually transcend mortal limitations. An Elder Skinwalker carries the essence of countless creatures within, able to become whatever the situation demands.",
+
+  "stats": {
+    "health": 550,
+    "healthRegen": 2.0,
+    "mana": 350,
+    "manaRegen": 1.5,
+    "armor": 3,
+    "armorType": "medium",
+    "moveSpeed": 300,
+    "turnRate": 0.8,
+    "collisionSize": 36,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 25,
+      "variance": 5,
+      "type": "normal"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "acquisitionRange": 500,
+    "aggroRange": 400
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "wolf_form",
+      "name": "Wolf Form",
+      "type": "active",
+      "targetType": "none",
+      "description": "Transforms into a swift wolf with increased speed and attack damage",
+      "cooldown": 5.0,
+      "manaCost": 30,
+      "essenceCost": 15,
+      "effects": {
+        "newForm": "wolf",
+        "moveSpeedBonus": 100,
+        "attackDamageBonus": 15,
+        "attackSpeedBonus": 0.3,
+        "healthBonus": 0,
+        "armorBonus": -1,
+        "newAbilities": ["pack_hunt", "hamstring_bite"]
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/wolf_form_elder.png"
+    },
+    {
+      "id": "bear_form",
+      "name": "Bear Form",
+      "type": "active",
+      "targetType": "none",
+      "description": "Transforms into a powerful bear with increased health and armor",
+      "cooldown": 5.0,
+      "manaCost": 30,
+      "essenceCost": 15,
+      "effects": {
+        "newForm": "bear",
+        "moveSpeedBonus": -30,
+        "attackDamageBonus": 20,
+        "attackSpeedBonus": -0.2,
+        "healthBonus": 400,
+        "armorBonus": 4,
+        "newAbilities": ["maul", "roar"]
+      },
+      "hotkey": "B",
+      "icon": "icons/abilities/bear_form.png"
+    },
+    {
+      "id": "crow_form",
+      "name": "Crow Form",
+      "type": "active",
+      "targetType": "none",
+      "description": "Transforms into a crow, gaining flight and scouting abilities",
+      "cooldown": 5.0,
+      "manaCost": 30,
+      "essenceCost": 15,
+      "effects": {
+        "newForm": "crow",
+        "moveSpeedBonus": 80,
+        "attackDamageBonus": -15,
+        "flightEnabled": true,
+        "healthBonus": -200,
+        "armorBonus": -2,
+        "newAbilities": ["true_sight", "dive_attack"],
+        "detectionRange": 800
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/crow_form.png"
+    },
+    {
+      "id": "human_form",
+      "name": "Human Form",
+      "type": "active",
+      "targetType": "none",
+      "description": "Returns to humanoid form, restoring base stats and spellcasting",
+      "cooldown": 5.0,
+      "manaCost": 0,
+      "essenceCost": 0,
+      "effects": {
+        "newForm": "human",
+        "restoresBaseStats": true,
+        "newAbilities": ["terrifying_visage", "essence_drain"]
+      },
+      "hotkey": "H",
+      "icon": "icons/abilities/human_form.png"
+    },
+    {
+      "id": "terrifying_visage",
+      "name": "Terrifying Visage",
+      "type": "active",
+      "targetType": "none",
+      "requiresForm": "human",
+      "description": "Briefly reveals true form, causing fear in nearby enemies",
+      "cooldown": 25.0,
+      "manaCost": 75,
+      "effects": {
+        "radius": 350,
+        "fearDuration": 3.0,
+        "damageReduction": 0.2
+      },
+      "hotkey": "T",
+      "icon": "icons/abilities/terrifying_visage.png"
+    },
+    {
+      "id": "essence_drain",
+      "name": "Essence Drain",
+      "type": "active",
+      "targetType": "unit",
+      "requiresForm": "human",
+      "description": "Drains essence from a target enemy, dealing damage and restoring mana",
+      "cooldown": 15.0,
+      "manaCost": 50,
+      "range": 500,
+      "effects": {
+        "damage": 80,
+        "manaRestored": 60,
+        "essenceGained": 10
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/essence_drain.png"
+    }
+  ],
+
+  "forms": {
+    "human": {
+      "model": "models/units/cryptids/skinwalker_elder.glb",
+      "attackType": "melee",
+      "movementType": "ground"
+    },
+    "wolf": {
+      "model": "models/units/cryptids/skinwalker_wolf.glb",
+      "attackType": "melee",
+      "movementType": "ground"
+    },
+    "bear": {
+      "model": "models/units/cryptids/skinwalker_bear.glb",
+      "attackType": "melee",
+      "movementType": "ground"
+    },
+    "crow": {
+      "model": "models/units/cryptids/skinwalker_crow.glb",
+      "attackType": "ranged",
+      "movementType": "flying",
+      "flyHeight": 150
+    }
+  },
+
+  "production": {
+    "producedAt": "ritual_circle",
+    "buildTime": 45,
+    "cost": {
+      "gold": 300,
+      "lumber": 50,
+      "essence": 45
+    },
+    "foodCost": 4,
+    "prerequisites": {
+      "buildings": ["ritual_circle", "nexus_of_fear"],
+      "technologies": ["elder_transformation"],
+      "age": "myth"
+    },
+    "hotkey": "E"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["serpent_form", "nightmare_form", "instant_shift"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/skinwalker_elder/ready.ogg",
+    "select": ["audio/units/skinwalker_elder/select1.ogg", "audio/units/skinwalker_elder/select2.ogg"],
+    "move": ["audio/units/skinwalker_elder/move1.ogg", "audio/units/skinwalker_elder/move2.ogg"],
+    "attack": ["audio/units/skinwalker_elder/attack1.ogg"],
+    "death": "audio/units/skinwalker_elder/death.ogg",
+    "transform": "audio/units/skinwalker_elder/transform.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/skinwalker_elder.glb",
+    "texture": "textures/units/cryptids/skinwalker_elder.png",
+    "portrait": "textures/portraits/skinwalker_elder.png",
+    "icon": "textures/icons/skinwalker_elder.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "elder_idle",
+      "walk": "elder_walk",
+      "attack": "elder_attack",
+      "death": "elder_death",
+      "transform": "elder_transform"
+    },
+    "effects": {
+      "spawn": "effects/elder_spawn.vfx",
+      "death": "effects/elder_death.vfx",
+      "transform": "effects/elder_transform.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 6,
+    "priority": "high",
+    "behavior": "adaptive",
+    "fleeThreshold": 0.2,
+    "preferredTargets": ["caster", "support"],
+    "useWolfForChase": true,
+    "useBearForTanking": true,
+    "useCrowForScouting": true,
+    "adaptFormToSituation": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": true,
+    "leavesCorpse": true,
+    "canTransform": true,
+    "multiForm": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 45,
+    "experience": 60
+  },
+
+  "pointValue": 4,
+  "supplyProvided": 0,
+  "supplyUsed": 4
+}

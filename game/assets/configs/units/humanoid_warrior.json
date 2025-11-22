@@ -1,0 +1,177 @@
+{
+  "$schema": "../schemas/unit.schema.json",
+  "id": "unit_humanoid_warrior",
+  "name": { "en": "Humanoid Warrior" },
+  "description": { "en": "A standard humanoid warrior with full animation support" },
+  "type": "npc",
+  "subtype": "warrior",
+
+  "stats": {
+    "health": { "base": 100, "perLevel": 10 },
+    "maxHealth": { "base": 100, "perLevel": 10 },
+    "armor": { "base": 10, "perLevel": 2 },
+    "damage": { "base": 15, "perLevel": 3 },
+    "attackSpeed": { "base": 1.0 },
+    "moveSpeed": { "base": 3.5 },
+    "detectionRange": { "base": 15 },
+    "attackRange": { "base": 2 },
+    "experience": 50
+  },
+
+  "combat": {
+    "attackType": "melee",
+    "damageType": "physical",
+    "attackRange": 2,
+    "attackCooldown": { "seconds": 1.5 },
+    "canCritical": true,
+    "criticalChance": { "percent": 10 },
+    "criticalMultiplier": 2
+  },
+
+  "ai": {
+    "behavior": "aggressive",
+    "aggroRange": 12,
+    "leashRange": 30,
+    "targetPriority": "nearest"
+  },
+
+  "movement": {
+    "type": "walk",
+    "speed": 3.5,
+    "acceleration": 10,
+    "turnSpeed": 360,
+    "canJump": true,
+    "jumpHeight": 1.5
+  },
+
+  "visuals": {
+    "model": "models/characters/humanoid_warrior.fbx",
+    "skeleton": "humanoid_standard",
+    "animationController": "ctrl_humanoid_combat",
+    "blendTree": "bt_humanoid_locomotion",
+
+    "animations": {
+      "idle": {
+        "clip": "anim_idle",
+        "speed": 1.0,
+        "blendIn": 0.25,
+        "blendOut": 0.25
+      },
+      "idleVariants": [
+        { "clip": "anim_idle_look_around", "speed": 1.0 },
+        { "clip": "anim_idle_scratch", "speed": 1.0 }
+      ],
+      "walk": {
+        "clip": "anim_walk",
+        "speed": 1.0,
+        "rootMotion": true
+      },
+      "run": {
+        "clip": "anim_run",
+        "speed": 1.0,
+        "rootMotion": true
+      },
+      "attackMelee": {
+        "clip": "anim_attack_melee",
+        "speed": 1.2,
+        "blendIn": 0.1,
+        "blendOut": 0.2
+      },
+      "attackMeleeCombo": [
+        { "clip": "anim_attack_melee", "speed": 1.0 },
+        { "clip": "anim_attack_melee_2", "speed": 1.1 },
+        { "clip": "anim_attack_melee_3", "speed": 1.2 }
+      ],
+      "block": {
+        "clip": "anim_block",
+        "loop": true,
+        "blendIn": 0.1
+      },
+      "hit": {
+        "clip": "anim_hit_front",
+        "blendIn": 0.05,
+        "layer": 1,
+        "mask": "upper_body"
+      },
+      "hitVariants": [
+        { "clip": "anim_hit_front", "blendIn": 0.05 },
+        { "clip": "anim_hit_left", "blendIn": 0.05 },
+        { "clip": "anim_hit_right", "blendIn": 0.05 }
+      ],
+      "death": {
+        "clip": "anim_death",
+        "blendIn": 0.1,
+        "blendOut": 0,
+        "rootMotion": true
+      },
+      "deathVariants": [
+        { "clip": "anim_death" },
+        { "clip": "anim_death_backward" },
+        { "clip": "anim_death_forward" }
+      ],
+      "spawn": {
+        "clip": "anim_spawn",
+        "speed": 1.0
+      },
+      "emotes": {
+        "wave": { "clip": "anim_emote_wave" },
+        "taunt": { "clip": "anim_emote_taunt" },
+        "victory": { "clip": "anim_emote_victory" }
+      }
+    },
+
+    "animationSet": {
+      "id": "animset_warrior",
+      "locomotion": {
+        "type": "blendTree1D",
+        "blendTree": "bt_humanoid_locomotion",
+        "speedThresholds": {
+          "walk": 0.1,
+          "run": 3.0,
+          "sprint": 6.0
+        },
+        "turnAnimation": true,
+        "footIK": true
+      },
+      "combatOverrides": {
+        "weaponType": {
+          "sword": {
+            "attackMelee": { "clip": "anim_sword_attack" },
+            "idle": { "clip": "anim_idle_sword" }
+          },
+          "axe": {
+            "attackMelee": { "clip": "anim_axe_attack" },
+            "idle": { "clip": "anim_idle_axe" }
+          }
+        },
+        "upperBodyLayer": true
+      }
+    },
+
+    "scale": 1.0,
+    "shadow": true,
+    "healthBar": {
+      "show": true,
+      "offset": [0, 2.2, 0]
+    }
+  },
+
+  "audio": {
+    "spawn": "sounds/npc/warrior_spawn.wav",
+    "aggro": "sounds/npc/warrior_aggro.wav",
+    "attack": "sounds/npc/warrior_attack.wav",
+    "hurt": "sounds/npc/warrior_hurt.wav",
+    "death": "sounds/npc/warrior_death.wav",
+    "footsteps": "sounds/footsteps/armor_footsteps.wav"
+  },
+
+  "loot": {
+    "table": "loot_humanoid_warrior",
+    "guaranteedDrops": [
+      { "type": "experience", "amount": { "min": 40, "max": 60 } }
+    ],
+    "dropChance": { "percent": 75 }
+  },
+
+  "tags": ["humanoid", "warrior", "melee", "armored"]
+}

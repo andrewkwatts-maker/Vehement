@@ -1,0 +1,172 @@
+{
+  "id": "vampire_spawn",
+  "name": "Vampire Spawn",
+  "race": "vampires",
+  "tier": 1,
+  "type": "melee",
+  "role": ["melee_dps", "sustain", "frontline"],
+
+  "description": "Newly turned vampires hungry for blood. They attack with savage claws and fangs, healing themselves with each strike.",
+  "lore": "Spawn are vampires who have not yet mastered their powers. Driven by insatiable hunger, they fight with feral intensity, draining the life from their victims to sustain their undead existence.",
+
+  "stats": {
+    "health": 400,
+    "healthRegen": 0.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 1,
+    "armorType": "medium",
+    "moveSpeed": 290,
+    "turnRate": 0.6,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 14,
+      "variance": 3,
+      "type": "normal"
+    },
+    "attackSpeed": 1.2,
+    "attackRange": 90,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.35,
+    "backswing": 0.3,
+    "acquisitionRange": 500,
+    "aggroRange": 400,
+    "lifeSteal": 0.20
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "armorBonus": 1,
+      "speedBonus": 30,
+      "lifeStealBonus": 0.1
+    },
+    "day": {
+      "damagePenalty": 0.25,
+      "armorPenalty": 0,
+      "speedPenalty": 20,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 3
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "vampiric_bite",
+      "name": "Vampiric Bite",
+      "type": "passive",
+      "description": "Attacks heal for 20% of damage dealt",
+      "effects": {
+        "lifeStealPercent": 0.20
+      },
+      "icon": "icons/abilities/vampiric_bite.png"
+    },
+    {
+      "id": "blood_frenzy",
+      "name": "Blood Frenzy",
+      "type": "passive_upgrade",
+      "requiresResearch": "blood_frenzy_upgrade",
+      "description": "Increases attack speed by 25% when below 50% health",
+      "effects": {
+        "healthThreshold": 0.5,
+        "attackSpeedBonus": 0.25
+      },
+      "icon": "icons/abilities/blood_frenzy.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "blood_pit",
+    "buildTime": 20,
+    "cost": {
+      "gold": 140,
+      "lumber": 0,
+      "blood": 10
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["blood_pit"],
+      "technologies": [],
+      "age": "fledgling"
+    },
+    "hotkey": "S"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "crimson_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "shadow_hide"
+    },
+    "special": ["blood_frenzy_upgrade", "enhanced_life_steal"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/vampire_spawn/ready.ogg",
+    "select": ["audio/units/vampire_spawn/select1.ogg", "audio/units/vampire_spawn/select2.ogg"],
+    "move": ["audio/units/vampire_spawn/move1.ogg", "audio/units/vampire_spawn/move2.ogg"],
+    "attack": ["audio/units/vampire_spawn/attack1.ogg", "audio/units/vampire_spawn/attack2.ogg"],
+    "death": "audio/units/vampire_spawn/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/vampire_spawn.glb",
+    "texture": "textures/units/vampires/vampire_spawn.png",
+    "portrait": "textures/portraits/vampire_spawn.png",
+    "icon": "textures/icons/vampire_spawn.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "spawn_idle",
+      "walk": "spawn_walk",
+      "attack": "spawn_attack",
+      "death": "spawn_death",
+      "feed": "spawn_feed"
+    },
+    "effects": {
+      "spawn": "effects/vampire_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "lifeSteal": "effects/life_drain.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 3,
+    "priority": "medium",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.15,
+    "preferredTargets": ["worker", "ranged", "caster"],
+    "avoidSunlight": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 18,
+    "experience": 25,
+    "blood": 0
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

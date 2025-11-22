@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #world-map-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #map-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #map-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* Controls Panel */
+        #controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.9);
+            border: 1px solid #3a3a5a;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 200px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #8a8aaa;
+            text-transform: uppercase;
+        }
+
+        .control-btn {
+            background: #2a2a4a;
+            border: 1px solid #4a4a6a;
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 2px;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #3a3a5a;
+            border-color: #6a6a8a;
+        }
+
+        .control-btn.active {
+            background: #4a4a8a;
+            border-color: #6a6aaa;
+        }
+
+        /* Search Bar */
+        #search-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 240px;
+        }
+
+        #search-input {
+            width: 300px;
+            padding: 12px 16px;
+            background: rgba(20, 20, 40, 0.9);
+            border: 1px solid #3a3a5a;
+            border-radius: 20px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        #search-input:focus {
+            outline: none;
+            border-color: #6a6aaa;
+        }
+
+        #search-results {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(20, 20, 40, 0.95);
+            border: 1px solid #3a3a5a;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .search-result-item:hover {
+            background: #2a2a4a;
+        }
+
+        /* Legend */
+        #legend-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(20, 20, 40, 0.9);
+            border: 1px solid #3a3a5a;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 180px;
+        }
+
+        .legend-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #a0a0c0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+
+        /* Minimap */
+        #minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: rgba(20, 20, 40, 0.9);
+            border: 2px solid #3a3a5a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #minimap-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #minimap-viewport {
+            position: absolute;
+            border: 2px solid #ff6a6a;
+            pointer-events: none;
+        }
+
+        /* Region Info Popup */
+        #region-popup {
+            position: absolute;
+            background: rgba(20, 20, 40, 0.95);
+            border: 1px solid #4a4a6a;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 250px;
+            display: none;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .popup-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #a0c0ff;
+        }
+
+        .popup-info {
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .popup-info span {
+            color: #8a8aaa;
+        }
+
+        /* Faction Colors */
+        .faction-0 { background: #ff4444; }
+        .faction-1 { background: #44ff44; }
+        .faction-2 { background: #4444ff; }
+        .faction-3 { background: #ffff44; }
+        .faction-neutral { background: #888888; }
+
+        /* Portal Lines */
+        .portal-line {
+            stroke: #6a6aff;
+            stroke-width: 2;
+            stroke-dasharray: 10, 5;
+            animation: dash 1s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -15;
+            }
+        }
+
+        /* Zoom Controls */
+        #zoom-controls {
+            position: absolute;
+            bottom: 200px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(20, 20, 40, 0.9);
+            border: 1px solid #3a3a5a;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-btn:hover {
+            background: #3a3a5a;
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #3a3a5a;
+            border-top-color: #6a6aff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Filter Panel */
+        #filter-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.9);
+            border: 1px solid #3a3a5a;
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .filter-row input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .filter-row input[type="range"] {
+            width: 100px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="world-map-container">
+        <canvas id="map-canvas"></canvas>
+
+        <!-- Search -->
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Search regions, portals...">
+            <div id="search-results"></div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls-panel">
+            <div class="control-group">
+                <label>View Mode</label>
+                <button class="control-btn active" data-mode="political">Political</button>
+                <button class="control-btn" data-mode="terrain">Terrain</button>
+                <button class="control-btn" data-mode="faction">Factions</button>
+            </div>
+            <div class="control-group">
+                <label>Display</label>
+                <button class="control-btn active" data-toggle="portals">Portals</button>
+                <button class="control-btn active" data-toggle="players">Players</button>
+                <button class="control-btn" data-toggle="resources">Resources</button>
+            </div>
+            <div class="control-group">
+                <button class="control-btn" id="filter-btn">Filters</button>
+                <button class="control-btn" id="fullscreen-btn">Fullscreen</button>
+            </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div id="filter-panel">
+            <div class="filter-row">
+                <input type="checkbox" id="filter-discovered" checked>
+                <label for="filter-discovered">Discovered Only</label>
+            </div>
+            <div class="filter-row">
+                <label>Danger Level:</label>
+                <input type="range" id="danger-min" min="1" max="10" value="1">
+                <span id="danger-range">1-10</span>
+                <input type="range" id="danger-max" min="1" max="10" value="10">
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" id="filter-portals" checked>
+                <label for="filter-portals">Show Portals</label>
+            </div>
+        </div>
+
+        <!-- Zoom Controls -->
+        <div id="zoom-controls">
+            <button class="zoom-btn" id="zoom-in">+</button>
+            <button class="zoom-btn" id="zoom-out">-</button>
+            <button class="zoom-btn" id="zoom-reset">R</button>
+        </div>
+
+        <!-- Legend -->
+        <div id="legend-panel">
+            <div class="legend-title">Legend</div>
+            <div class="legend-item">
+                <div class="legend-color faction-0"></div>
+                <span>Empire</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color faction-1"></div>
+                <span>Alliance</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color faction-2"></div>
+                <span>Federation</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color faction-neutral"></div>
+                <span>Neutral</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff6aff;"></div>
+                <span>Portal</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #6aff6a;"></div>
+                <span>You</span>
+            </div>
+        </div>
+
+        <!-- Minimap -->
+        <div id="minimap">
+            <canvas id="minimap-canvas"></canvas>
+            <div id="minimap-viewport"></div>
+        </div>
+
+        <!-- Region Popup -->
+        <div id="region-popup">
+            <div class="popup-title" id="popup-name">Region Name</div>
+            <div class="popup-info"><span>Biome:</span> <span id="popup-biome">Forest</span></div>
+            <div class="popup-info"><span>Danger:</span> <span id="popup-danger">3</span>/10</div>
+            <div class="popup-info"><span>Control:</span> <span id="popup-faction">Neutral</span></div>
+            <div class="popup-info"><span>Players:</span> <span id="popup-players">0</span></div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading-overlay">
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <script>
+        // World Map Application
+        class WorldMapApp {
+            constructor() {
+                this.canvas = document.getElementById('map-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.minimapCanvas = document.getElementById('minimap-canvas');
+                this.minimapCtx = this.minimapCanvas.getContext('2d');
+
+                this.regions = [];
+                this.portals = [];
+                this.players = [];
+                this.markers = [];
+
+                this.viewState = {
+                    center: { lat: 0, lon: 0 },
+                    zoom: 1,
+                    mode: 'political'
+                };
+
+                this.selectedRegion = null;
+                this.hoveredRegion = null;
+                this.isDragging = false;
+                this.lastMousePos = { x: 0, y: 0 };
+
+                this.displayOptions = {
+                    portals: true,
+                    players: true,
+                    resources: false,
+                    labels: true
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.loadMapData();
+            }
+
+            setupCanvas() {
+                const resize = () => {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                    this.minimapCanvas.width = 200;
+                    this.minimapCanvas.height = 150;
+                    this.render();
+                };
+                window.addEventListener('resize', resize);
+                resize();
+            }
+
+            setupEventListeners() {
+                // Mouse events
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.canvas.addEventListener('mouseup', () => this.onMouseUp());
+                this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
+                this.canvas.addEventListener('click', (e) => this.onClick(e));
+
+                // Controls
+                document.querySelectorAll('[data-mode]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.viewState.mode = btn.dataset.mode;
+                        this.render();
+                    });
+                });
+
+                document.querySelectorAll('[data-toggle]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        btn.classList.toggle('active');
+                        this.displayOptions[btn.dataset.toggle] = btn.classList.contains('active');
+                        this.render();
+                    });
+                });
+
+                // Zoom
+                document.getElementById('zoom-in').addEventListener('click', () => this.zoomIn());
+                document.getElementById('zoom-out').addEventListener('click', () => this.zoomOut());
+                document.getElementById('zoom-reset').addEventListener('click', () => this.resetView());
+
+                // Search
+                document.getElementById('search-input').addEventListener('input', (e) => this.onSearch(e.target.value));
+
+                // Filters
+                document.getElementById('filter-btn').addEventListener('click', () => {
+                    const panel = document.getElementById('filter-panel');
+                    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                });
+            }
+
+            async loadMapData() {
+                // In real implementation, this would call the game engine
+                // For now, simulate with sample data
+                setTimeout(() => {
+                    this.regions = this.generateSampleRegions();
+                    this.portals = this.generateSamplePortals();
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    this.render();
+                }, 1000);
+            }
+
+            generateSampleRegions() {
+                // Sample regions for demonstration
+                return [
+                    { id: 'na_california', name: 'California', lat: 36.7783, lon: -119.4179, biome: 'temperate', danger: 3, faction: 1 },
+                    { id: 'na_texas', name: 'Texas', lat: 31.9686, lon: -99.9018, biome: 'plains', danger: 4, faction: 0 },
+                    { id: 'eu_france', name: 'France', lat: 46.2276, lon: 2.2137, biome: 'temperate', danger: 2, faction: 2 },
+                    { id: 'eu_germany', name: 'Germany', lat: 51.1657, lon: 10.4515, biome: 'forest', danger: 3, faction: 1 },
+                    { id: 'asia_japan', name: 'Japan', lat: 36.2048, lon: 138.2529, biome: 'mountain', danger: 5, faction: 2 }
+                ];
+            }
+
+            generateSamplePortals() {
+                return [
+                    { id: 'p1', sourceRegion: 'na_california', targetRegion: 'eu_france', active: true },
+                    { id: 'p2', sourceRegion: 'eu_germany', targetRegion: 'asia_japan', active: true }
+                ];
+            }
+
+            render() {
+                this.ctx.fillStyle = '#0a0a1a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw grid
+                this.drawGrid();
+
+                // Draw regions
+                this.regions.forEach(region => this.drawRegion(region));
+
+                // Draw portal lines
+                if (this.displayOptions.portals) {
+                    this.portals.forEach(portal => this.drawPortalLine(portal));
+                }
+
+                // Draw markers
+                this.markers.forEach(marker => this.drawMarker(marker));
+
+                // Update minimap
+                this.renderMinimap();
+            }
+
+            drawGrid() {
+                this.ctx.strokeStyle = '#1a1a3a';
+                this.ctx.lineWidth = 1;
+
+                for (let i = 0; i < this.canvas.width; i += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i, 0);
+                    this.ctx.lineTo(i, this.canvas.height);
+                    this.ctx.stroke();
+                }
+
+                for (let i = 0; i < this.canvas.height; i += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, i);
+                    this.ctx.lineTo(this.canvas.width, i);
+                    this.ctx.stroke();
+                }
+            }
+
+            drawRegion(region) {
+                const pos = this.geoToScreen(region.lat, region.lon);
+                const radius = 30 * this.viewState.zoom;
+
+                // Faction color
+                const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44'];
+                const color = region.faction >= 0 ? colors[region.faction % 4] : '#888888';
+
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = color + '40';
+                this.ctx.fill();
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+
+                // Label
+                if (this.displayOptions.labels) {
+                    this.ctx.fillStyle = '#e0e0e0';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(region.name, pos.x, pos.y + radius + 15);
+                }
+            }
+
+            drawPortalLine(portal) {
+                const source = this.regions.find(r => r.id === portal.sourceRegion);
+                const target = this.regions.find(r => r.id === portal.targetRegion);
+                if (!source || !target) return;
+
+                const start = this.geoToScreen(source.lat, source.lon);
+                const end = this.geoToScreen(target.lat, target.lon);
+
+                this.ctx.strokeStyle = portal.active ? '#6a6aff' : '#3a3a5a';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([10, 5]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(start.x, start.y);
+                this.ctx.lineTo(end.x, end.y);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+
+            drawMarker(marker) {
+                const pos = this.geoToScreen(marker.lat, marker.lon);
+                this.ctx.fillStyle = marker.color || '#ffffff';
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            renderMinimap() {
+                this.minimapCtx.fillStyle = '#1a1a2a';
+                this.minimapCtx.fillRect(0, 0, 200, 150);
+
+                this.regions.forEach(region => {
+                    const x = (region.lon + 180) / 360 * 200;
+                    const y = (90 - region.lat) / 180 * 150;
+                    const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44'];
+                    this.minimapCtx.fillStyle = region.faction >= 0 ? colors[region.faction % 4] : '#888888';
+                    this.minimapCtx.beginPath();
+                    this.minimapCtx.arc(x, y, 3, 0, Math.PI * 2);
+                    this.minimapCtx.fill();
+                });
+            }
+
+            geoToScreen(lat, lon) {
+                const x = (lon - this.viewState.center.lon) * 10 * this.viewState.zoom + this.canvas.width / 2;
+                const y = (this.viewState.center.lat - lat) * 10 * this.viewState.zoom + this.canvas.height / 2;
+                return { x, y };
+            }
+
+            screenToGeo(x, y) {
+                const lon = (x - this.canvas.width / 2) / (10 * this.viewState.zoom) + this.viewState.center.lon;
+                const lat = this.viewState.center.lat - (y - this.canvas.height / 2) / (10 * this.viewState.zoom);
+                return { lat, lon };
+            }
+
+            onMouseDown(e) {
+                this.isDragging = true;
+                this.lastMousePos = { x: e.clientX, y: e.clientY };
+            }
+
+            onMouseMove(e) {
+                if (this.isDragging) {
+                    const dx = e.clientX - this.lastMousePos.x;
+                    const dy = e.clientY - this.lastMousePos.y;
+                    this.viewState.center.lon -= dx / (10 * this.viewState.zoom);
+                    this.viewState.center.lat += dy / (10 * this.viewState.zoom);
+                    this.lastMousePos = { x: e.clientX, y: e.clientY };
+                    this.render();
+                }
+
+                // Update hover
+                this.updateHover(e.clientX, e.clientY);
+            }
+
+            onMouseUp() {
+                this.isDragging = false;
+            }
+
+            onWheel(e) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                this.viewState.zoom = Math.max(0.5, Math.min(20, this.viewState.zoom * delta));
+                this.render();
+            }
+
+            onClick(e) {
+                const geo = this.screenToGeo(e.clientX, e.clientY);
+                const clicked = this.findRegionAt(e.clientX, e.clientY);
+                if (clicked) {
+                    this.selectRegion(clicked);
+                }
+            }
+
+            findRegionAt(x, y) {
+                for (const region of this.regions) {
+                    const pos = this.geoToScreen(region.lat, region.lon);
+                    const dist = Math.sqrt((pos.x - x) ** 2 + (pos.y - y) ** 2);
+                    if (dist < 30 * this.viewState.zoom) {
+                        return region;
+                    }
+                }
+                return null;
+            }
+
+            updateHover(x, y) {
+                const region = this.findRegionAt(x, y);
+                const popup = document.getElementById('region-popup');
+
+                if (region) {
+                    document.getElementById('popup-name').textContent = region.name;
+                    document.getElementById('popup-biome').textContent = region.biome;
+                    document.getElementById('popup-danger').textContent = region.danger;
+                    document.getElementById('popup-faction').textContent = region.faction >= 0 ? `Faction ${region.faction}` : 'Neutral';
+                    popup.style.display = 'block';
+                    popup.style.left = (x + 20) + 'px';
+                    popup.style.top = (y - 50) + 'px';
+                } else {
+                    popup.style.display = 'none';
+                }
+            }
+
+            selectRegion(region) {
+                this.selectedRegion = region;
+                // Send to game engine
+                if (window.gameEngine) {
+                    window.gameEngine.selectRegion(region.id);
+                }
+            }
+
+            zoomIn() {
+                this.viewState.zoom = Math.min(20, this.viewState.zoom * 1.2);
+                this.render();
+            }
+
+            zoomOut() {
+                this.viewState.zoom = Math.max(0.5, this.viewState.zoom / 1.2);
+                this.render();
+            }
+
+            resetView() {
+                this.viewState = { center: { lat: 0, lon: 0 }, zoom: 1, mode: 'political' };
+                this.render();
+            }
+
+            onSearch(query) {
+                const results = document.getElementById('search-results');
+                if (!query) {
+                    results.style.display = 'none';
+                    return;
+                }
+
+                const matches = this.regions.filter(r =>
+                    r.name.toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (matches.length > 0) {
+                    results.innerHTML = matches.map(r =>
+                        `<div class="search-result-item" data-id="${r.id}">${r.name}</div>`
+                    ).join('');
+                    results.style.display = 'block';
+
+                    results.querySelectorAll('.search-result-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            const region = this.regions.find(r => r.id === item.dataset.id);
+                            if (region) {
+                                this.viewState.center = { lat: region.lat, lon: region.lon };
+                                this.viewState.zoom = 5;
+                                this.selectRegion(region);
+                                this.render();
+                            }
+                            results.style.display = 'none';
+                        });
+                    });
+                } else {
+                    results.style.display = 'none';
+                }
+            }
+
+            // API for game engine communication
+            setMapData(data) {
+                if (data.regions) this.regions = data.regions;
+                if (data.portals) this.portals = data.portals;
+                if (data.players) this.players = data.players;
+                if (data.markers) this.markers = data.markers;
+                this.render();
+            }
+
+            focusOnRegion(regionId) {
+                const region = this.regions.find(r => r.id === regionId);
+                if (region) {
+                    this.viewState.center = { lat: region.lat, lon: region.lon };
+                    this.viewState.zoom = 5;
+                    this.render();
+                }
+            }
+        }
+
+        // Initialize
+        const app = new WorldMapApp();
+
+        // Expose to game engine
+        window.worldMap = app;
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+{
+  "id": "wendigo_alpha",
+  "name": "Wendigo Alpha",
+  "race": "cryptids",
+  "type": "hero",
+  "class": "warrior",
+  "role": ["tank", "berserker", "fear"],
+
+  "title": "The Eternal Hunger",
+  "description": "The greatest of the Wendigos, an apex predator that has consumed countless victims. Grows stronger with each kill and terrifies all who face it.",
+  "lore": "Among the Wendigos, dominance is determined by consumption. The Alpha has devoured more than any other - entire villages, rival predators, even other Wendigos. Its hunger is legend, and its power is without equal among its kind.",
+
+  "baseStats": {
+    "health": 750,
+    "healthRegen": 3.0,
+    "mana": 200,
+    "manaRegen": 0.75,
+    "armor": 5,
+    "armorType": "hero",
+    "moveSpeed": 300,
+    "turnRate": 0.7,
+    "collisionSize": 44,
+    "selectionScale": 1.4
+  },
+
+  "statsPerLevel": {
+    "health": 125,
+    "healthRegen": 0.4,
+    "mana": 25,
+    "manaRegen": 0.1,
+    "armor": 0.4,
+    "damage": 4
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 32,
+      "variance": 8,
+      "diceSides": 8,
+      "diceCount": 2,
+      "type": "normal"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 150,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.45,
+    "backswing": 0.5,
+    "primaryAttribute": "strength",
+    "cleave": 0.35
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 28,
+      "perLevel": 3.4
+    },
+    "agility": {
+      "base": 18,
+      "perLevel": 1.8
+    },
+    "intelligence": {
+      "base": 14,
+      "perLevel": 1.4
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "ravenous_charge",
+      "name": "Ravenous Charge",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "Q",
+      "description": "Charges at an enemy, dealing damage and stunning all enemies in the path",
+      "levels": [
+        {"manaCost": 75, "cooldown": 14, "damage": 100, "stunDuration": 1.0, "pathWidth": 150, "range": 600},
+        {"manaCost": 75, "cooldown": 12, "damage": 175, "stunDuration": 1.5, "pathWidth": 175, "range": 700},
+        {"manaCost": 75, "cooldown": 10, "damage": 250, "stunDuration": 2.0, "pathWidth": 200, "range": 800}
+      ],
+      "effects": {
+        "cannotBeStopped": true,
+        "damagesToAllInPath": true
+      },
+      "icon": "icons/abilities/ravenous_charge.png"
+    },
+    {
+      "id": "consume_hero",
+      "name": "Consume",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "W",
+      "description": "Devours a non-hero unit, instantly killing it and gaining permanent stats",
+      "levels": [
+        {"manaCost": 50, "cooldown": 20, "maxTargetHP": 400, "permanentStrength": 1, "healPercent": 0.3},
+        {"manaCost": 50, "cooldown": 18, "maxTargetHP": 550, "permanentStrength": 1, "healPercent": 0.4},
+        {"manaCost": 50, "cooldown": 16, "maxTargetHP": 700, "permanentStrength": 2, "healPercent": 0.5}
+      ],
+      "effects": {
+        "instantKill": true,
+        "cannotTargetHeroes": true,
+        "strengthStackable": true,
+        "maxStacks": 30
+      },
+      "icon": "icons/abilities/consume_hero.png"
+    },
+    {
+      "id": "ice_wind",
+      "name": "Ice Wind",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "E",
+      "description": "Releases a freezing wind that damages and slows enemies in a cone",
+      "levels": [
+        {"manaCost": 80, "cooldown": 15, "damage": 100, "slowPercent": 0.30, "slowDuration": 4, "coneLength": 500, "coneWidth": 300},
+        {"manaCost": 80, "cooldown": 13, "damage": 175, "slowPercent": 0.40, "slowDuration": 5, "coneLength": 550, "coneWidth": 350},
+        {"manaCost": 80, "cooldown": 11, "damage": 250, "slowPercent": 0.50, "slowDuration": 6, "coneLength": 600, "coneWidth": 400}
+      ],
+      "effects": {
+        "damageType": "cold",
+        "attackSpeedSlow": 0.25
+      },
+      "icon": "icons/abilities/ice_wind.png"
+    },
+    {
+      "id": "eternal_hunger_ultimate",
+      "name": "Eternal Hunger",
+      "type": "active",
+      "targetType": "none",
+      "hotkey": "R",
+      "ultimate": true,
+      "description": "Enters a state of uncontrollable hunger, gaining massive stats but losing control",
+      "levels": [
+        {"manaCost": 150, "cooldown": 100, "duration": 20, "damageBonus": 50, "attackSpeedBonus": 0.75, "armorBonus": 8, "moveSpeedBonus": 50, "lifeSteal": 0.40}
+      ],
+      "effects": {
+        "autoAttacksNearest": true,
+        "cannotBeControlled": true,
+        "fearImmune": true,
+        "stunImmune": true,
+        "slowImmune": true,
+        "healsOnKill": 200
+      },
+      "icon": "icons/abilities/eternal_hunger_ultimate.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bone_shrine",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "essence": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["bone_shrine"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "W"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/wendigo_alpha/ready.ogg",
+    "select": ["audio/heroes/wendigo_alpha/select1.ogg", "audio/heroes/wendigo_alpha/select2.ogg", "audio/heroes/wendigo_alpha/select3.ogg"],
+    "move": ["audio/heroes/wendigo_alpha/move1.ogg", "audio/heroes/wendigo_alpha/move2.ogg"],
+    "attack": ["audio/heroes/wendigo_alpha/attack1.ogg", "audio/heroes/wendigo_alpha/attack2.ogg"],
+    "death": "audio/heroes/wendigo_alpha/death.ogg",
+    "pissed": ["audio/heroes/wendigo_alpha/pissed1.ogg", "audio/heroes/wendigo_alpha/pissed2.ogg"],
+    "consume": "audio/heroes/wendigo_alpha/consume.ogg",
+    "hunger": "audio/heroes/wendigo_alpha/hunger.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/wendigo_alpha.glb",
+    "texture": "textures/heroes/wendigo_alpha.png",
+    "portrait": "textures/portraits/wendigo_alpha_hero.png",
+    "icon": "textures/icons/wendigo_alpha_hero.png",
+    "scale": 1.4,
+    "animations": {
+      "idle": "alpha_idle",
+      "walk": "alpha_walk",
+      "attack": "alpha_attack",
+      "death": "alpha_death",
+      "charge": "alpha_charge",
+      "consume": "alpha_consume",
+      "hunger": "alpha_hunger"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/alpha_death.vfx",
+      "charge": "effects/ravenous_charge.vfx",
+      "consume": "effects/consume.vfx",
+      "hunger": "effects/eternal_hunger.vfx",
+      "cold_aura": "effects/freezing_aura.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "frontline_tank",
+    "consumeForStats": true,
+    "chargeToInitiate": true,
+    "useHungerWhenLowHealth": true,
+    "prioritizeSquishy": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isBeast": true,
+    "canConsume": true,
+    "causesFear": true,
+    "fearImmune": true,
+    "nightBonus": true,
+    "canUseItems": true,
+    "canGainExperience": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

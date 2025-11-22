@@ -1,0 +1,250 @@
+{
+  "id": "dreadlord",
+  "name": "Dreadlord",
+  "race": "undead",
+  "type": "hero",
+  "class": "demon_lord",
+  "role": ["melee_dps", "crowd_control", "sustain"],
+
+  "title": "Demon Vampire Lord",
+  "description": "A demonic infiltrator who sustains himself through vampiric attacks and commands powerful crowd control abilities.",
+  "lore": "The Dreadlords are cunning vampiric demons who once served the Burning Legion. Now allied with the Scourge, they command dark powers that can disable entire armies while draining the life from their victims.",
+
+  "baseStats": {
+    "health": 600,
+    "healthRegen": 2.00,
+    "mana": 285,
+    "manaRegen": 1.15,
+    "armor": 4,
+    "armorType": "hero",
+    "moveSpeed": 300,
+    "turnRate": 0.6,
+    "collisionSize": 40,
+    "selectionScale": 1.3
+  },
+
+  "statsPerLevel": {
+    "health": 85,
+    "healthRegen": 0.3,
+    "mana": 40,
+    "manaRegen": 0.15,
+    "armor": 0.3,
+    "damage": 3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 24,
+      "variance": 4,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.6,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.46,
+    "backswing": 0.54,
+    "primaryAttribute": "strength"
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 22,
+      "perLevel": 2.6
+    },
+    "agility": {
+      "base": 17,
+      "perLevel": 1.8
+    },
+    "intelligence": {
+      "base": 18,
+      "perLevel": 2.2
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "carrion_swarm",
+      "name": "Carrion Swarm",
+      "type": "active",
+      "targetType": "direction",
+      "hotkey": "C",
+      "description": "Sends a swarm of bats that damage enemies in a line",
+      "levels": [
+        {"manaCost": 110, "cooldown": 10, "damage": 75, "width": 100, "distance": 700, "maxDamage": 300},
+        {"manaCost": 120, "cooldown": 10, "damage": 125, "width": 100, "distance": 700, "maxDamage": 500},
+        {"manaCost": 130, "cooldown": 10, "damage": 200, "width": 100, "distance": 700, "maxDamage": 800}
+      ],
+      "effects": {
+        "damageType": "magic",
+        "pierces": true,
+        "maxTargetDamage": true
+      },
+      "icon": "icons/abilities/carrion_swarm.png"
+    },
+    {
+      "id": "sleep",
+      "name": "Sleep",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "E",
+      "description": "Puts a target enemy unit to sleep, rendering it unable to move or attack. Sleeping units awaken when attacked.",
+      "levels": [
+        {"manaCost": 100, "cooldown": 6, "duration": 20, "durationHero": 5, "range": 800},
+        {"manaCost": 100, "cooldown": 6, "duration": 40, "durationHero": 10, "range": 800},
+        {"manaCost": 100, "cooldown": 6, "duration": 60, "durationHero": 15, "range": 800}
+      ],
+      "effects": {
+        "stuns": true,
+        "breaksOnDamage": true,
+        "affectsHeroes": true
+      },
+      "icon": "icons/abilities/sleep.png"
+    },
+    {
+      "id": "vampiric_aura",
+      "name": "Vampiric Aura",
+      "type": "passive",
+      "hotkey": "V",
+      "description": "Nearby friendly melee units gain a percentage of their attack as life",
+      "levels": [
+        {"lifestealPercent": 0.15, "radius": 900},
+        {"lifestealPercent": 0.30, "radius": 900},
+        {"lifestealPercent": 0.45, "radius": 900}
+      ],
+      "effects": {
+        "affectsMeleeOnly": true,
+        "affectsAllies": true,
+        "affectsHero": true
+      },
+      "icon": "icons/abilities/vampiric_aura.png"
+    },
+    {
+      "id": "inferno",
+      "name": "Inferno",
+      "type": "active",
+      "targetType": "point",
+      "hotkey": "N",
+      "ultimate": true,
+      "description": "Calls an Infernal down from the sky, stunning and damaging nearby enemies. The Infernal then fights for the Dreadlord.",
+      "levels": [
+        {"manaCost": 175, "cooldown": 180, "impactDamage": 50, "stunDuration": 4, "stunRadius": 250, "infernoHealth": 1500, "infernoDamage": 46, "infernoArmor": 6, "duration": 180, "range": 900}
+      ],
+      "effects": {
+        "summons": "infernal",
+        "impactStun": true,
+        "permanentImmolation": true,
+        "immolationDPS": 15,
+        "immolationRadius": 200
+      },
+      "icon": "icons/abilities/inferno.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "sacrificial_pit",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "corpses": 0
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["sacrificial_pit"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "E"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/dreadlord/ready.ogg",
+    "select": [
+      "audio/heroes/dreadlord/select1.ogg",
+      "audio/heroes/dreadlord/select2.ogg",
+      "audio/heroes/dreadlord/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/dreadlord/move1.ogg",
+      "audio/heroes/dreadlord/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/dreadlord/attack1.ogg",
+      "audio/heroes/dreadlord/attack2.ogg"
+    ],
+    "death": "audio/heroes/dreadlord/death.ogg",
+    "pissed": [
+      "audio/heroes/dreadlord/pissed1.ogg",
+      "audio/heroes/dreadlord/pissed2.ogg",
+      "audio/heroes/dreadlord/pissed3.ogg",
+      "audio/heroes/dreadlord/pissed4.ogg"
+    ],
+    "carrionSwarm": "audio/heroes/dreadlord/carrion_swarm.ogg",
+    "sleep": "audio/heroes/dreadlord/sleep.ogg",
+    "inferno": "audio/heroes/dreadlord/inferno.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/dreadlord.glb",
+    "texture": "textures/heroes/dreadlord.png",
+    "portrait": "textures/portraits/dreadlord.png",
+    "icon": "textures/icons/dreadlord.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "dreadlord_idle",
+      "walk": "dreadlord_walk",
+      "attack": "dreadlord_attack",
+      "death": "dreadlord_death",
+      "cast": "dreadlord_cast"
+    },
+    "effects": {
+      "spawn": "effects/demon_spawn.vfx",
+      "death": "effects/dreadlord_death.vfx",
+      "carrionSwarm": "effects/carrion_swarm.vfx",
+      "sleep": "effects/sleep.vfx",
+      "vampiricAura": "effects/vampiric_aura.vfx",
+      "inferno": "effects/inferno.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "frontline",
+    "useCarrionSwarmOnGroups": true,
+    "sleepTargets": ["caster", "hero"],
+    "infernoTiming": "fight_start",
+    "engageAggressive": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isUndead": true,
+    "isDemon": true,
+    "vulnerableToHoly": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "affectedByBlight": true,
+    "canUseItems": true,
+    "canGainExperience": true,
+    "hasLifesteal": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

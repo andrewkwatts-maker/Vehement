@@ -1,0 +1,193 @@
+{
+    "id": "fairy_pixie",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Pixie",
+    "description": "Tiny winged fae that serve as scouts and workers. Pixies can phase through obstacles and are nearly invisible to enemies.",
+
+    "tags": ["worker", "scout", "flying", "tier1", "tiny", "stealth"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/fairies/units/pixie.obj",
+        "scale": [0.5, 0.5, 0.5],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/pixie_diffuse.png",
+        "normal": "textures/races/fairies/units/pixie_normal.png",
+        "emissive": "textures/races/fairies/units/pixie_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "sphere",
+                "radius": 0.15,
+                "offset": [0.0, 0.3, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 2.0,
+        "layer": "flying_unit"
+    },
+
+    "stats": {
+        "health": 120,
+        "maxHealth": 120,
+        "healthRegen": 0.5,
+        "mana": 50,
+        "maxMana": 50,
+        "manaRegen": 1.0,
+        "armor": 0,
+        "magicResist": 15,
+        "moveSpeed": 6.5,
+        "turnRate": 720.0
+    },
+
+    "combat": {
+        "attackDamage": 8,
+        "attackSpeed": 1.5,
+        "attackRange": 4.0,
+        "damageType": "magic",
+        "armorType": "unarmored",
+        "attackType": "ranged",
+        "projectile": "fairy_dust_bolt"
+    },
+
+    "flying": {
+        "enabled": true,
+        "flight_height": 3.0,
+        "can_hover": true,
+        "air_superiority": false
+    },
+
+    "gathering": {
+        "enabled": true,
+        "rates": {
+            "gold": 8,
+            "wood": 10,
+            "stone": 5,
+            "food": 8,
+            "mana": 15
+        },
+        "carry_capacity": {
+            "gold": 8,
+            "wood": 10,
+            "stone": 6,
+            "food": 8
+        }
+    },
+
+    "construction": {
+        "enabled": true,
+        "speed_multiplier": 0.8,
+        "can_repair": true,
+        "repair_rate": 4.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_gather",
+            "name": "Gather",
+            "description": "Harvest resources from resource nodes",
+            "auto_cast": true
+        },
+        {
+            "id": "ability_build",
+            "name": "Build",
+            "description": "Construct living buildings for the Fae Court",
+            "hotkey": "B"
+        },
+        {
+            "id": "ability_phase_shift",
+            "name": "Phase Shift",
+            "description": "Become ethereal for 3 seconds, avoiding all damage but unable to attack",
+            "hotkey": "E",
+            "cooldown": 15.0,
+            "mana_cost": 25,
+            "duration": 3.0,
+            "effects": [
+                {"type": "ethereal", "value": true},
+                {"type": "invulnerable", "value": true},
+                {"type": "disarm", "value": true}
+            ]
+        },
+        {
+            "id": "ability_detonate",
+            "name": "Detonate",
+            "description": "Sacrifice the Pixie to dispel magic and deal damage to summons in an area",
+            "hotkey": "D",
+            "effects": [
+                {"type": "dispel", "radius": 6.0},
+                {"type": "damage", "value": 200, "target": "summoned"},
+                {"type": "kill_self", "value": true}
+            ]
+        },
+        {
+            "id": "ability_renew",
+            "name": "Renew",
+            "description": "Cast a healing spell on a friendly unit",
+            "hotkey": "R",
+            "cooldown": 8.0,
+            "mana_cost": 20,
+            "range": 8.0,
+            "effects": [
+                {"type": "heal_over_time", "value": 50, "duration": 10.0}
+            ],
+            "auto_cast": true
+        }
+    ],
+
+    "night_bonus": {
+        "attackDamage": 0.25,
+        "moveSpeed": 0.20,
+        "visibility": -0.50
+    },
+
+    "production": {
+        "building": "fairy_tree_of_life",
+        "cost": {
+            "gold": 60,
+            "food": 1
+        },
+        "build_time": 14.0,
+        "population_cost": 1,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/fairy_worker.bt",
+        "profile": "passive",
+        "flee_threshold": 0.5,
+        "auto_gather": true,
+        "use_phase_shift": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/pixie/idle.anim", "loop": true},
+        "fly": {"path": "animations/fairies/pixie/fly.anim", "loop": true},
+        "gather": {"path": "animations/fairies/pixie/gather.anim", "loop": true},
+        "build": {"path": "animations/fairies/pixie/build.anim", "loop": true},
+        "attack": {"path": "animations/fairies/pixie/attack.anim", "loop": false},
+        "phase": {"path": "animations/fairies/pixie/phase.anim", "loop": true},
+        "death": {"path": "animations/fairies/pixie/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/pixie/select_1.wav", "sounds/fairies/pixie/select_2.wav"],
+        "acknowledge": ["sounds/fairies/pixie/ack_1.wav", "sounds/fairies/pixie/ack_2.wav"],
+        "attack": "sounds/fairies/pixie/attack.wav",
+        "death": "sounds/fairies/pixie/death.wav",
+        "phase": "sounds/fairies/pixie/phase.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/pixie.png",
+        "icon": "textures/races/fairies/icons/pixie.png",
+        "hotkey": "P"
+    }
+}

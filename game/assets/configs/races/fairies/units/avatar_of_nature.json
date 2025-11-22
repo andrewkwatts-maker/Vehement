@@ -1,0 +1,190 @@
+{
+    "id": "fairy_avatar_of_nature",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Avatar of Nature",
+    "description": "A colossal elemental giant formed from the essence of the forest itself. The Avatar channels devastating nature magic and is nearly unstoppable.",
+
+    "tags": ["military", "melee", "tier4", "massive", "elemental", "legendary"],
+
+    "tier": 4,
+    "age_requirement": 7,
+
+    "model": {
+        "path": "models/races/fairies/units/avatar_of_nature.obj",
+        "scale": [2.5, 2.5, 2.5],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/avatar_of_nature_diffuse.png",
+        "normal": "textures/races/fairies/units/avatar_of_nature_normal.png",
+        "emissive": "textures/races/fairies/units/avatar_of_nature_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 1.5,
+                "height": 6.0,
+                "offset": [0.0, 3.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 3500.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 2200,
+        "maxHealth": 2200,
+        "healthRegen": 5.0,
+        "mana": 500,
+        "maxMana": 500,
+        "manaRegen": 3.0,
+        "armor": 10,
+        "magicResist": 35,
+        "moveSpeed": 3.5,
+        "turnRate": 120.0
+    },
+
+    "combat": {
+        "attackDamage": 65,
+        "attackSpeed": 2.8,
+        "attackRange": 3.5,
+        "damageType": "chaos",
+        "armorType": "divine",
+        "attackType": "melee",
+        "splash_damage": 0.50,
+        "splash_radius": 4.0
+    },
+
+    "abilities": [
+        {
+            "id": "ability_earthquake",
+            "name": "Earthquake",
+            "description": "Slam the ground, creating devastating tremors that damage and slow all nearby enemies",
+            "hotkey": "Q",
+            "cooldown": 25.0,
+            "mana_cost": 100,
+            "radius": 8.0,
+            "duration": 5.0,
+            "effects": [
+                {"type": "damage_per_second", "value": 50},
+                {"type": "slow", "value": 0.50},
+                {"type": "interrupt_channels", "value": true}
+            ]
+        },
+        {
+            "id": "ability_force_of_nature_avatar",
+            "name": "Army of the Forest",
+            "description": "Convert all nearby trees into Treant warriors",
+            "hotkey": "W",
+            "cooldown": 90.0,
+            "mana_cost": 200,
+            "radius": 20.0,
+            "effects": [
+                {"type": "convert_all_trees_to_treants", "max_treants": 8},
+                {"type": "treant_duration", "value": 90.0}
+            ]
+        },
+        {
+            "id": "ability_natures_blessing_avatar",
+            "name": "Nature's Embrace",
+            "description": "Heal all friendly units in a large area over time",
+            "hotkey": "E",
+            "cooldown": 60.0,
+            "mana_cost": 150,
+            "radius": 15.0,
+            "duration": 10.0,
+            "effects": [
+                {"type": "heal_per_second", "value": 40, "scope": "allies_in_radius"},
+                {"type": "cleanse_debuffs", "value": true}
+            ]
+        },
+        {
+            "id": "ability_elemental_form",
+            "name": "Elemental Form",
+            "description": "Transform into pure elemental energy, becoming invulnerable but unable to attack",
+            "hotkey": "R",
+            "cooldown": 120.0,
+            "duration": 8.0,
+            "effects": [
+                {"type": "invulnerable", "value": true},
+                {"type": "disarm", "value": true},
+                {"type": "move_speed_bonus", "value": 0.50},
+                {"type": "aura_damage", "value": 30, "radius": 5.0}
+            ]
+        },
+        {
+            "id": "ability_nature_aura",
+            "name": "Nature's Presence",
+            "description": "Nearby friendly units regenerate health and deal bonus nature damage",
+            "passive": true,
+            "radius": 15.0,
+            "effects": [
+                {"stat": "healthRegen", "value": 3.0, "scope": "allies_in_radius"},
+                {"stat": "bonus_nature_damage", "value": 10, "scope": "allies_in_radius"}
+            ]
+        }
+    ],
+
+    "resistances": {
+        "stun_resistance": 0.75,
+        "slow_resistance": 0.50,
+        "knockback_immunity": true
+    },
+
+    "night_bonus": {
+        "attackDamage": 0.25,
+        "healthRegen": 1.0,
+        "spell_power": 0.20
+    },
+
+    "production": {
+        "building": "fairy_tree_of_eternity",
+        "cost": {
+            "gold": 600,
+            "wood": 300,
+            "food": 10
+        },
+        "build_time": 90.0,
+        "population_cost": 8,
+        "prerequisites": ["upgrade_avatar_awakening"],
+        "limit": 1
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/avatar.bt",
+        "profile": "aggressive",
+        "aggroRange": 15.0,
+        "leashRange": 35.0,
+        "priority_targets": ["hero", "heavy", "building"],
+        "use_earthquake_on_clusters": true,
+        "earthquake_cluster_threshold": 3
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/avatar_of_nature/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/avatar_of_nature/walk.anim", "loop": true},
+        "attack": {"path": "animations/fairies/avatar_of_nature/attack.anim", "loop": false},
+        "earthquake": {"path": "animations/fairies/avatar_of_nature/earthquake.anim", "loop": false},
+        "elemental": {"path": "animations/fairies/avatar_of_nature/elemental.anim", "loop": true},
+        "death": {"path": "animations/fairies/avatar_of_nature/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/avatar_of_nature/select_1.wav"],
+        "acknowledge": ["sounds/fairies/avatar_of_nature/ack_1.wav"],
+        "attack": "sounds/fairies/avatar_of_nature/attack.wav",
+        "earthquake": "sounds/fairies/avatar_of_nature/earthquake.wav",
+        "death": "sounds/fairies/avatar_of_nature/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/avatar_of_nature.png",
+        "icon": "textures/races/fairies/icons/avatar_of_nature.png",
+        "hotkey": "V"
+    }
+}

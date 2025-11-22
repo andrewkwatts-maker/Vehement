@@ -1,0 +1,126 @@
+{
+  "$schema": "../../schemas/animation_clip.schema.json",
+  "id": "anim_attack_melee",
+  "name": "Melee Attack",
+  "description": "Basic melee attack swing animation",
+  "version": "1.0",
+  "duration": 0.8,
+  "frameRate": 30,
+  "looping": false,
+  "playbackSpeed": 1.0,
+  "skeleton": "humanoid_standard",
+
+  "bones": {
+    "Root": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "position": [0, 0, 0], "rotation": [0, 0, 0, 1] },
+        { "time": 0.2, "position": [0, 0, -0.1], "rotation": [0, -0.1, 0, 0.995] },
+        { "time": 0.4, "position": [0, 0, 0.2], "rotation": [0, 0.15, 0, 0.9887] },
+        { "time": 0.8, "position": [0, 0, 0], "rotation": [0, 0, 0, 1] }
+      ]
+    },
+    "Spine": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "rotation": [0, 0, 0, 1] },
+        { "time": 0.2, "rotation": [0, -0.15, 0, 0.9887] },
+        { "time": 0.35, "rotation": [-0.05, 0.25, -0.05, 0.9659] },
+        { "time": 0.5, "rotation": [0, 0.1, 0, 0.995] },
+        { "time": 0.8, "rotation": [0, 0, 0, 1] }
+      ]
+    },
+    "Spine1": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "rotation": [0, 0, 0, 1] },
+        { "time": 0.2, "rotation": [0, -0.1, 0, 0.995] },
+        { "time": 0.35, "rotation": [-0.05, 0.2, -0.05, 0.9772] },
+        { "time": 0.5, "rotation": [0, 0.08, 0, 0.9968] },
+        { "time": 0.8, "rotation": [0, 0, 0, 1] }
+      ]
+    },
+    "RightShoulder": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "rotation": [0, 0, -0.05, 0.9987] },
+        { "time": 0.2, "rotation": [-0.2, -0.3, -0.15, 0.9223] },
+        { "time": 0.35, "rotation": [0.15, 0.4, 0.1, 0.8984] },
+        { "time": 0.8, "rotation": [0, 0, -0.05, 0.9987] }
+      ]
+    },
+    "RightArm": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "rotation": [0.05, 0, -0.1, 0.9937] },
+        { "time": 0.2, "rotation": [-0.5, -0.3, -0.4, 0.6928] },
+        { "time": 0.35, "rotation": [0.3, 0.5, 0.2, 0.7874] },
+        { "time": 0.5, "rotation": [0.2, 0.3, 0.1, 0.9274] },
+        { "time": 0.8, "rotation": [0.05, 0, -0.1, 0.9937] }
+      ]
+    },
+    "RightForeArm": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "rotation": [0, 0, 0, 1] },
+        { "time": 0.2, "rotation": [-0.6, 0, 0, 0.8] },
+        { "time": 0.35, "rotation": [-0.2, 0, 0, 0.9798] },
+        { "time": 0.8, "rotation": [0, 0, 0, 1] }
+      ]
+    },
+    "RightHand": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "rotation": [0, 0, 0, 1] },
+        { "time": 0.2, "rotation": [0.1, 0.15, 0.1, 0.9772] },
+        { "time": 0.35, "rotation": [-0.1, -0.1, -0.05, 0.9862] },
+        { "time": 0.8, "rotation": [0, 0, 0, 1] }
+      ]
+    },
+    "LeftArm": {
+      "enabled": true,
+      "interpolation": "bezier",
+      "keyframes": [
+        { "time": 0.0, "rotation": [0.05, 0, 0.1, 0.9937] },
+        { "time": 0.2, "rotation": [0.15, 0.1, 0.2, 0.9592] },
+        { "time": 0.35, "rotation": [0.1, -0.05, 0.15, 0.9825] },
+        { "time": 0.8, "rotation": [0.05, 0, 0.1, 0.9937] }
+      ]
+    }
+  },
+
+  "events": [
+    { "name": "AttackStart", "time": 0.0, "function": "OnAttackStart" },
+    { "name": "WeaponTrailOn", "time": 0.25, "function": "SetWeaponTrail", "intParameter": 1 },
+    { "name": "HitFrame", "time": 0.35, "function": "OnAttackHit", "parameter": "melee" },
+    { "name": "Swoosh", "time": 0.3, "function": "PlaySound", "parameter": "swoosh_medium" },
+    { "name": "WeaponTrailOff", "time": 0.5, "function": "SetWeaponTrail", "intParameter": 0 },
+    { "name": "AttackEnd", "time": 0.8, "function": "OnAttackEnd" }
+  ],
+
+  "rootMotion": {
+    "enabled": true,
+    "extractPosition": { "x": false, "y": false, "z": true },
+    "extractRotation": { "x": false, "y": true, "z": false },
+    "rootBone": "Root",
+    "lockY": true
+  },
+
+  "blending": {
+    "blendInTime": 0.1,
+    "blendOutTime": 0.2,
+    "blendMode": "override"
+  },
+
+  "metadata": {
+    "author": "Animation Team",
+    "tags": ["combat", "attack", "melee", "one_shot"]
+  }
+}

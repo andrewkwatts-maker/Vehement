@@ -1,0 +1,181 @@
+{
+    "id": "human_spellbreaker",
+    "type": "unit",
+    "race": "humans",
+    "name": "Spellbreaker",
+    "description": "Elite warriors trained specifically to counter magic. Their enchanted armor reflects spells while their runeblade disrupts enemy casters.",
+
+    "tags": ["military", "infantry", "melee", "tier3", "heavy", "anti_magic"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/humans/units/spellbreaker.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/spellbreaker_diffuse.png",
+        "normal": "textures/races/humans/units/spellbreaker_normal.png",
+        "specular": "textures/races/humans/units/spellbreaker_specular.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.35,
+                "height": 1.85,
+                "offset": [0.0, 0.925, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 90.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 500,
+        "maxHealth": 500,
+        "healthRegen": 0.75,
+        "mana": 200,
+        "maxMana": 200,
+        "manaRegen": 1.0,
+        "armor": 4,
+        "magicResist": 50,
+        "moveSpeed": 5.0,
+        "turnRate": 300.0
+    },
+
+    "combat": {
+        "attackDamage": 20,
+        "attackSpeed": 1.3,
+        "attackRange": 1.5,
+        "damageType": "magic",
+        "armorType": "heavy",
+        "attackType": "melee",
+        "critChance": 0.10,
+        "critMultiplier": 1.75,
+        "bonus_vs_tags": ["caster", "summoned"],
+        "bonus_damage": 20,
+        "mana_burn_on_hit": 15
+    },
+
+    "passive": {
+        "id": "passive_spell_immunity",
+        "name": "Spell Shield",
+        "description": "50% chance to reflect targeted spells back at the caster",
+        "spell_reflect_chance": 0.50
+    },
+
+    "abilities": [
+        {
+            "id": "ability_spell_steal",
+            "name": "Spell Steal",
+            "description": "Steal a positive buff from an enemy unit and apply it to the Spellbreaker",
+            "hotkey": "Q",
+            "cooldown": 10.0,
+            "mana_cost": 50,
+            "range": 8.0,
+            "target_type": "enemy_unit"
+        },
+        {
+            "id": "ability_feedback",
+            "name": "Feedback",
+            "description": "Toggle: Each attack burns 20 mana and deals bonus damage equal to mana burned",
+            "hotkey": "W",
+            "toggle": true,
+            "mana_burn": 20,
+            "bonus_damage_per_mana": 1.0,
+            "auto_cast": true
+        },
+        {
+            "id": "ability_control_magic",
+            "name": "Control Magic",
+            "description": "Take control of an enemy summoned unit permanently",
+            "hotkey": "E",
+            "cooldown": 30.0,
+            "mana_cost": 100,
+            "range": 10.0,
+            "target_type": "summoned_unit"
+        },
+        {
+            "id": "ability_arcane_null_zone",
+            "name": "Arcane Null Zone",
+            "description": "Create a zone where enemies cannot cast spells for 8 seconds",
+            "hotkey": "R",
+            "cooldown": 60.0,
+            "mana_cost": 150,
+            "range": 12.0,
+            "radius": 6.0,
+            "duration": 8.0,
+            "required_upgrade": "upgrade_null_zone"
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_spellbreaker_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 4
+        },
+        {
+            "id": "upgrade_spellbreaker_resist",
+            "stat": "magicResist",
+            "bonus_per_level": 10
+        }
+    ],
+
+    "production": {
+        "building": "human_mage_tower",
+        "cost": {
+            "gold": 320,
+            "food": 3
+        },
+        "build_time": 38.0,
+        "population_cost": 2,
+        "prerequisites": ["upgrade_spellbreaker_training"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/spellbreaker.bt",
+        "profile": "anti_caster",
+        "aggroRange": 12.0,
+        "leashRange": 20.0,
+        "priority_targets": ["caster", "hero", "summoned"],
+        "use_spell_steal": true
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/spellbreaker/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/spellbreaker/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/spellbreaker/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/spellbreaker/attack.anim", "loop": false, "events": [[0.4, "deal_damage"]]},
+        "spell_steal": {"path": "animations/humans/spellbreaker/spell_steal.anim", "loop": false},
+        "control": {"path": "animations/humans/spellbreaker/control.anim", "loop": false},
+        "death": {"path": "animations/humans/spellbreaker/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/spellbreaker/select_1.wav", "sounds/humans/spellbreaker/select_2.wav"],
+        "acknowledge": ["sounds/humans/spellbreaker/ack_1.wav", "sounds/humans/spellbreaker/ack_2.wav"],
+        "attack": "sounds/runic_blade.wav",
+        "spell_steal": "sounds/spell_steal.wav",
+        "spell_reflect": "sounds/spell_reflect.wav",
+        "death": "sounds/humans/spellbreaker/death.wav"
+    },
+
+    "effects": {
+        "spell_reflect": "effects/spell_reflect.fx",
+        "mana_burn": "effects/mana_burn.fx",
+        "null_zone": "effects/null_zone.fx"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/spellbreaker.png",
+        "icon": "textures/races/humans/icons/spellbreaker.png",
+        "hotkey": "B"
+    }
+}

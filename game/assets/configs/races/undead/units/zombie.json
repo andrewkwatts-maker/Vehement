@@ -1,0 +1,172 @@
+{
+  "id": "zombie",
+  "name": "Zombie",
+  "race": "undead",
+  "tier": 1,
+  "type": "melee",
+  "role": ["tank", "meat_shield", "plague_carrier"],
+
+  "description": "Slow, shambling undead that absorb tremendous damage while spreading disease to nearby enemies. They serve as the rotting bulwark of the Scourge's front line.",
+  "lore": "The freshly dead, risen with their flesh still clinging to bone. Zombies are slow and mindless, but their decaying bodies carry the plague of undeath, infecting all they touch.",
+
+  "stats": {
+    "health": 480,
+    "healthRegen": 0.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 2,
+    "armorType": "heavy",
+    "moveSpeed": 180,
+    "turnRate": 0.4,
+    "collisionSize": 36,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 8,
+      "variance": 2,
+      "type": "normal"
+    },
+    "attackSpeed": 1.8,
+    "attackRange": 100,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.6,
+    "backswing": 0.5,
+    "acquisitionRange": 400,
+    "aggroRange": 350
+  },
+
+  "abilities": [
+    {
+      "id": "plague_carrier",
+      "name": "Plague Carrier",
+      "type": "passive",
+      "description": "Passively spreads disease to nearby enemies, dealing damage over time",
+      "effects": {
+        "auraRadius": 200,
+        "damagePerSecond": 2,
+        "duration": 10,
+        "stackable": false,
+        "affectsBuildings": false
+      },
+      "icon": "icons/abilities/plague_carrier.png"
+    },
+    {
+      "id": "disease_cloud",
+      "name": "Disease Cloud",
+      "type": "passive",
+      "requiresResearch": "disease_cloud_upgrade",
+      "description": "Upon death, releases a cloud of disease that damages enemies",
+      "effects": {
+        "cloudRadius": 250,
+        "damagePerSecond": 5,
+        "cloudDuration": 8.0
+      }
+    },
+    {
+      "id": "corpse_explosion_target",
+      "name": "Corpse Explosion Target",
+      "type": "passive",
+      "description": "Can be targeted by Corpse Explosion for enhanced effect due to bloated body",
+      "effects": {
+        "explosionDamageMultiplier": 1.5
+      }
+    }
+  ],
+
+  "production": {
+    "producedAt": "crypt",
+    "buildTime": 20,
+    "cost": {
+      "gold": 100,
+      "lumber": 0,
+      "corpses": 0
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["crypt"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "Z",
+    "canBeRaisedFrom": {
+      "corpse": true,
+      "corpseCost": 1,
+      "raiseTime": 3.0
+    }
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["disease_cloud_upgrade", "bloated_corpse"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/zombie/ready.ogg",
+    "select": ["audio/units/zombie/select1.ogg", "audio/units/zombie/select2.ogg"],
+    "move": ["audio/units/zombie/move1.ogg", "audio/units/zombie/move2.ogg"],
+    "attack": ["audio/units/zombie/attack1.ogg", "audio/units/zombie/attack2.ogg"],
+    "death": "audio/units/zombie/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/zombie.glb",
+    "texture": "textures/units/undead/zombie.png",
+    "portrait": "textures/portraits/zombie.png",
+    "icon": "textures/icons/zombie.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "zombie_idle",
+      "walk": "zombie_shamble",
+      "attack": "zombie_attack",
+      "death": "zombie_death"
+    },
+    "effects": {
+      "spawn": "effects/undead_spawn.vfx",
+      "death": "effects/disease_burst.vfx",
+      "plagueAura": "effects/plague_aura.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 2,
+    "priority": "low",
+    "behavior": "aggressive",
+    "fleeThreshold": 0,
+    "preferredTargets": ["worker", "melee"],
+    "frontLineUnit": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "plagueSpreader": true,
+    "slowMovement": true
+  },
+
+  "bounty": {
+    "gold": 12,
+    "experience": 18
+  },
+
+  "pointValue": 1,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

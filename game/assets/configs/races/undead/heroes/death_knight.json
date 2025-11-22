@@ -1,0 +1,243 @@
+{
+  "id": "death_knight",
+  "name": "Death Knight",
+  "race": "undead",
+  "type": "hero",
+  "class": "warrior_caster",
+  "role": ["tank", "support", "aura"],
+
+  "title": "Champion of the Scourge",
+  "description": "A powerful warrior-mage hybrid who excels at both dealing and absorbing damage. The Death Knight empowers nearby undead with unholy strength.",
+  "lore": "Once noble paladins who fell to darkness, Death Knights are the champions of the Scourge. Wielding runeblades empowered by death itself, they lead armies of the damned into battle.",
+
+  "baseStats": {
+    "health": 625,
+    "healthRegen": 1.75,
+    "mana": 255,
+    "manaRegen": 0.85,
+    "armor": 4,
+    "armorType": "hero",
+    "moveSpeed": 320,
+    "turnRate": 0.6,
+    "collisionSize": 36,
+    "selectionScale": 1.2
+  },
+
+  "statsPerLevel": {
+    "health": 100,
+    "healthRegen": 0.25,
+    "mana": 35,
+    "manaRegen": 0.1,
+    "armor": 0.3,
+    "damage": 3
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 26,
+      "variance": 4,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.7,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.45,
+    "backswing": 0.4,
+    "primaryAttribute": "strength"
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 23,
+      "perLevel": 2.9
+    },
+    "agility": {
+      "base": 15,
+      "perLevel": 1.5
+    },
+    "intelligence": {
+      "base": 17,
+      "perLevel": 1.7
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "death_coil",
+      "name": "Death Coil",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "C",
+      "description": "Hurls a bolt of dark energy that damages enemies or heals friendly undead units",
+      "levels": [
+        {"manaCost": 75, "cooldown": 6, "damage": 100, "heal": 200, "range": 800},
+        {"manaCost": 75, "cooldown": 6, "damage": 200, "heal": 400, "range": 800},
+        {"manaCost": 75, "cooldown": 6, "damage": 300, "heal": 600, "range": 800}
+      ],
+      "effects": {
+        "damageType": "magic",
+        "healUndead": true,
+        "damageEnemy": true
+      },
+      "icon": "icons/abilities/death_coil.png"
+    },
+    {
+      "id": "unholy_aura",
+      "name": "Unholy Aura",
+      "type": "passive",
+      "hotkey": "U",
+      "description": "Increases movement speed and health regeneration of nearby friendly units",
+      "levels": [
+        {"moveSpeedBonus": 0.10, "healthRegenBonus": 0.5, "radius": 900},
+        {"moveSpeedBonus": 0.20, "healthRegenBonus": 1.0, "radius": 900},
+        {"moveSpeedBonus": 0.30, "healthRegenBonus": 1.5, "radius": 900}
+      ],
+      "effects": {
+        "affectsAllies": true,
+        "affectsHero": true
+      },
+      "icon": "icons/abilities/unholy_aura.png"
+    },
+    {
+      "id": "death_pact",
+      "name": "Death Pact",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "E",
+      "description": "Sacrifices a friendly undead unit to heal the Death Knight",
+      "levels": [
+        {"manaCost": 50, "cooldown": 45, "healPercent": 1.0, "range": 350},
+        {"manaCost": 50, "cooldown": 45, "healPercent": 1.5, "range": 350},
+        {"manaCost": 50, "cooldown": 45, "healPercent": 2.0, "range": 350}
+      ],
+      "effects": {
+        "killsTarget": true,
+        "targetMustBeUndead": true,
+        "healBasedOnTargetHP": true
+      },
+      "icon": "icons/abilities/death_pact.png"
+    },
+    {
+      "id": "animate_dead",
+      "name": "Animate Dead",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "D",
+      "ultimate": true,
+      "description": "Raises 6 dead units from nearby corpses to fight for the Scourge",
+      "levels": [
+        {"manaCost": 175, "cooldown": 240, "summonCount": 6, "duration": 40, "radius": 900}
+      ],
+      "effects": {
+        "raisesCorpses": true,
+        "invulnerableSummons": true,
+        "preservesAbilities": false
+      },
+      "icon": "icons/abilities/animate_dead.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "sacrificial_pit",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "corpses": 0
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["sacrificial_pit"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "D"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/death_knight/ready.ogg",
+    "select": [
+      "audio/heroes/death_knight/select1.ogg",
+      "audio/heroes/death_knight/select2.ogg",
+      "audio/heroes/death_knight/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/death_knight/move1.ogg",
+      "audio/heroes/death_knight/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/death_knight/attack1.ogg",
+      "audio/heroes/death_knight/attack2.ogg"
+    ],
+    "death": "audio/heroes/death_knight/death.ogg",
+    "pissed": [
+      "audio/heroes/death_knight/pissed1.ogg",
+      "audio/heroes/death_knight/pissed2.ogg",
+      "audio/heroes/death_knight/pissed3.ogg",
+      "audio/heroes/death_knight/pissed4.ogg"
+    ],
+    "deathCoil": "audio/heroes/death_knight/death_coil.ogg",
+    "animateDead": "audio/heroes/death_knight/animate_dead.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/death_knight.glb",
+    "texture": "textures/heroes/death_knight.png",
+    "portrait": "textures/portraits/death_knight_hero.png",
+    "icon": "textures/icons/death_knight_hero.png",
+    "scale": 1.2,
+    "animations": {
+      "idle": "dk_hero_idle",
+      "walk": "dk_hero_walk",
+      "attack": "dk_hero_attack",
+      "death": "dk_hero_death",
+      "cast": "dk_hero_cast"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/hero_death.vfx",
+      "deathCoil": "effects/death_coil.vfx",
+      "unholyAura": "effects/unholy_aura.vfx",
+      "animateDead": "effects/animate_dead.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "frontline",
+    "healPriority": "self",
+    "useDeathCoilOffensively": true,
+    "deathPactThreshold": 0.3,
+    "animateDeadTiming": "late_fight"
+  },
+
+  "flags": {
+    "isHero": true,
+    "isUndead": true,
+    "vulnerableToHoly": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "affectedByBlight": true,
+    "canUseItems": true,
+    "canGainExperience": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

@@ -1,0 +1,88 @@
+{
+    "id": "naga_spawning_pool",
+    "type": "building",
+    "name": "Spawning Pool",
+    "description": "The central structure of any Naga settlement. Produces workers and serves as the primary resource drop-off point.",
+    "race": "naga",
+    "tier": 1,
+    "category": "main",
+
+    "tags": ["main", "production", "resource_drop", "tier1"],
+
+    "model": {
+        "path": "models/races/naga/buildings/spawning_pool.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/spawning_pool_diffuse.png",
+        "normal": "textures/races/naga/buildings/spawning_pool_normal.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [5, 5],
+        "entrances": [[2, 0], [2, 4]],
+        "visualSize": [10.0, 8.0, 10.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 400,
+            "coral": 0
+        },
+        "time": 90.0,
+        "builder_required": true,
+        "stages": [
+            {"name": "foundation", "model": "models/races/naga/buildings/spawning_pool_stage1.obj", "progressStart": 0, "progressEnd": 33},
+            {"name": "structure", "model": "models/races/naga/buildings/spawning_pool_stage2.obj", "progressStart": 33, "progressEnd": 66},
+            {"name": "complete", "model": "models/races/naga/buildings/spawning_pool.obj", "progressStart": 66, "progressEnd": 100}
+        ]
+    },
+
+    "stats": {
+        "maxHealth": 1500,
+        "armor": 5,
+        "magicResist": 5
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "naga_slave",
+            "amount": 1,
+            "time": 12.0,
+            "cost": {"gold": 50},
+            "maxQueue": 8
+        }
+    ],
+
+    "resource_drop": {
+        "accepts": ["gold", "coral", "pearls"],
+        "bonus_near_water": 1.15
+    },
+
+    "provides": {
+        "population": 15,
+        "coral_generation": 2
+    },
+
+    "upgrades_to": {
+        "building": "naga_temple_of_tides",
+        "cost": {"gold": 350, "coral": 200},
+        "time": 80.0,
+        "requirements": {"age": "age_reef"}
+    },
+
+    "water_bonus": {
+        "near_water_radius": 8,
+        "health_bonus": 200,
+        "regen_bonus": 5.0
+    },
+
+    "visionRange": 10.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/spawning_pool/on_complete.py"
+    }
+}

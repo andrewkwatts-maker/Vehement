@@ -1,0 +1,117 @@
+{
+    "id": "human_stable",
+    "type": "building",
+    "race": "humans",
+    "name": "Stable",
+    "description": "Breeding and training facility for cavalry. Scouts, Knights, and Paladins are trained here.",
+
+    "tags": ["military", "production", "cavalry"],
+
+    "tier": 1,
+    "age_requirement": 2,
+
+    "model": {
+        "path": "models/races/humans/buildings/stable.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/stable_diffuse.png",
+        "normal": "textures/races/humans/buildings/stable_normal.png"
+    },
+
+    "footprint": {
+        "size": [4, 3],
+        "entrances": [[2, 0]],
+        "visualSize": [10.0, 6.0, 8.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 250,
+            "wood": 200
+        },
+        "time": 65.0
+    },
+
+    "stats": {
+        "maxHealth": 1100,
+        "armor": 8,
+        "magicResist": 5
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "human_scout",
+            "cost": {"gold": 100, "food": 3},
+            "time": 20.0,
+            "maxQueue": 4
+        },
+        {
+            "type": "unit",
+            "output": "human_knight",
+            "cost": {"gold": 350, "food": 5},
+            "time": 40.0,
+            "maxQueue": 4,
+            "prerequisites": ["human_blacksmith", "upgrade_cavalry_training"]
+        },
+        {
+            "type": "unit",
+            "output": "human_paladin",
+            "cost": {"gold": 550, "food": 6},
+            "time": 55.0,
+            "maxQueue": 3,
+            "prerequisites": ["human_church", "upgrade_paladin_training"]
+        }
+    ],
+
+    "researches": [
+        {
+            "id": "upgrade_cavalry_training",
+            "name": "Cavalry Training",
+            "description": "Allows training of Knights",
+            "cost": {"gold": 200, "wood": 100},
+            "time": 60.0,
+            "prerequisites": ["human_blacksmith"]
+        },
+        {
+            "id": "upgrade_paladin_training",
+            "name": "Paladin Training",
+            "description": "Allows training of Paladins",
+            "cost": {"gold": 350, "wood": 150},
+            "time": 90.0,
+            "prerequisites": ["human_church", "human_keep"]
+        },
+        {
+            "id": "upgrade_trample",
+            "name": "Trample",
+            "description": "Knights deal damage to all units they ride through during charge",
+            "cost": {"gold": 200, "wood": 75},
+            "time": 55.0
+        },
+        {
+            "id": "upgrade_horse_barding",
+            "name": "Horse Barding",
+            "description": "+100 health for all cavalry units",
+            "cost": {"gold": 300, "wood": 100},
+            "time": 75.0,
+            "effects": [{"stat": "health", "value": 100, "scope": "cavalry"}]
+        }
+    ],
+
+    "visionRange": 10.0,
+
+    "requirements": {
+        "buildings": ["human_town_hall"]
+    },
+
+    "unique": false,
+    "maxCount": 3,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/stable.png",
+        "icon": "textures/races/humans/icons/buildings/stable.png",
+        "hotkey": "S"
+    }
+}

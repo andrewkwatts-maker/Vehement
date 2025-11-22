@@ -1,0 +1,304 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vehement.game/schemas/trigger.schema.json",
+  "title": "Vehement Trigger System",
+  "description": "Schema for WC3-style trigger definitions",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Trigger system version",
+      "default": "1.0"
+    },
+    "variables": {
+      "type": "array",
+      "description": "Global variables",
+      "items": { "$ref": "#/definitions/variable" }
+    },
+    "triggers": {
+      "type": "array",
+      "description": "Trigger definitions",
+      "items": { "$ref": "#/definitions/trigger" }
+    },
+    "groups": {
+      "type": "array",
+      "description": "Trigger organization groups",
+      "items": { "$ref": "#/definitions/triggerGroup" }
+    },
+    "customFunctions": {
+      "type": "array",
+      "description": "User-defined functions",
+      "items": { "$ref": "#/definitions/customFunction" }
+    }
+  },
+  "definitions": {
+    "variable": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable name",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["boolean", "integer", "real", "string", "unit", "player", "location", "region", "timer", "group", "force", "ability", "item", "destructible", "effect"],
+          "description": "Variable type"
+        },
+        "isArray": {
+          "type": "boolean",
+          "default": false
+        },
+        "arraySize": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "initialValue": {
+          "description": "Initial value (type depends on variable type)"
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["global", "local"],
+          "default": "global"
+        }
+      }
+    },
+    "trigger": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique trigger ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Trigger display name"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Trigger description/comment"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "initiallyOn": {
+          "type": "boolean",
+          "default": true
+        },
+        "runOnMapInit": {
+          "type": "boolean",
+          "default": false
+        },
+        "parentGroupId": {
+          "type": "integer",
+          "description": "Parent group ID for organization"
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/triggerEvent" }
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/triggerCondition" }
+        },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/triggerAction" }
+        },
+        "localVariables": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/variable" }
+        }
+      }
+    },
+    "triggerEvent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "map_init",
+            "timer_expires",
+            "periodic_event",
+            "unit_enters_region",
+            "unit_leaves_region",
+            "unit_dies",
+            "unit_spawns",
+            "unit_attacked",
+            "unit_acquires_item",
+            "unit_uses_ability",
+            "unit_finishes_ability",
+            "unit_starts_construction",
+            "unit_finishes_construction",
+            "unit_trained",
+            "unit_upgraded",
+            "player_leaves",
+            "player_chat",
+            "player_selects_unit",
+            "player_issues_order",
+            "resource_gathered",
+            "research_complete",
+            "game_loaded",
+            "custom"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "triggerCondition": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "comparison",
+            "and",
+            "or",
+            "not",
+            "unit_is_type",
+            "unit_is_alive",
+            "unit_has_buff",
+            "unit_in_region",
+            "player_has_unit",
+            "player_has_building",
+            "player_has_resource",
+            "player_is_ally",
+            "player_is_enemy",
+            "variable_comparison",
+            "random_chance",
+            "custom"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "negated": {
+          "type": "boolean",
+          "default": false
+        },
+        "children": {
+          "type": "array",
+          "description": "Child conditions for and/or/not",
+          "items": { "$ref": "#/definitions/triggerCondition" }
+        }
+      }
+    },
+    "triggerAction": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "wait",
+            "set_variable",
+            "create_unit",
+            "remove_unit",
+            "kill_unit",
+            "move_unit",
+            "order_unit",
+            "modify_unit_stat",
+            "add_ability",
+            "remove_ability",
+            "apply_buff",
+            "remove_buff",
+            "play_animation",
+            "add_resource",
+            "set_resource",
+            "create_effect",
+            "play_sound",
+            "display_text",
+            "display_dialog",
+            "pan_camera",
+            "lock_camera",
+            "create_timer",
+            "start_timer",
+            "pause_timer",
+            "enable_trigger",
+            "disable_trigger",
+            "run_trigger",
+            "set_player_alliance",
+            "victory",
+            "defeat",
+            "set_game_speed",
+            "pause_game",
+            "if_then_else",
+            "loop",
+            "for_each_unit",
+            "for_each_player",
+            "break",
+            "return",
+            "call_function",
+            "custom"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "children": {
+          "type": "array",
+          "description": "Child actions for control structures",
+          "items": { "$ref": "#/definitions/triggerAction" }
+        },
+        "elseActions": {
+          "type": "array",
+          "description": "Else branch for if_then_else",
+          "items": { "$ref": "#/definitions/triggerAction" }
+        }
+      }
+    },
+    "triggerGroup": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "expanded": { "type": "boolean", "default": true },
+        "parentGroupId": { "type": "integer" },
+        "triggerIds": {
+          "type": "array",
+          "items": { "type": "integer" }
+        }
+      }
+    },
+    "customFunction": {
+      "type": "object",
+      "required": ["name", "returnType"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+        },
+        "description": { "type": "string" },
+        "returnType": {
+          "type": "string",
+          "enum": ["nothing", "boolean", "integer", "real", "string", "unit", "player", "location", "region"]
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string" }
+            }
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/triggerAction" }
+        }
+      }
+    }
+  }
+}

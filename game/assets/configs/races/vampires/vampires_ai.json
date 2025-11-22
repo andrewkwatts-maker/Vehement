@@ -1,0 +1,275 @@
+{
+  "race": "vampires",
+  "aiProfile": "elite_nightstalker",
+
+  "generalBehavior": {
+    "aggression": 0.7,
+    "expansion": 0.5,
+    "techFocus": 0.7,
+    "economyFocus": 0.6,
+    "armyComposition": "elite",
+    "heroImportance": 0.9,
+    "riskTolerance": 0.6,
+    "adaptability": 0.8
+  },
+
+  "dayNightStrategy": {
+    "preferNightAttacks": true,
+    "avoidDaylightCombat": true,
+    "nightAggressionBoost": 0.4,
+    "dayDefensiveMode": true,
+    "useNightForRaids": true,
+    "waitForNightForPush": true,
+    "twilightPrepareTime": true,
+    "dayEconomyFocus": true,
+    "nightMilitaryFocus": true
+  },
+
+  "resourcePriorities": {
+    "gold": 1.0,
+    "lumber": 0.7,
+    "blood": 0.9,
+    "souls": 0.6,
+    "bloodGenerationFocus": true,
+    "prioritizeKillsForBlood": true
+  },
+
+  "buildOrder": {
+    "opening": {
+      "priority": ["crypt_palace", "blood_pit", "thrall", "thrall", "thrall", "thrall", "vampire_spawn", "vampire_spawn", "dark_obelisk", "blood_fountain"],
+      "timing": "fast_military"
+    },
+    "earlygame": {
+      "priority": ["blood_pit", "bat_roost", "coffin_vault", "dark_obelisk"],
+      "targetUnitCount": 15,
+      "heroTiming": "early"
+    },
+    "midgame": {
+      "priority": ["blood_castle", "cathedral_of_shadow", "stable_of_nightmares", "torture_chamber"],
+      "techPriorities": ["enhanced_life_steal", "blood_frenzy_upgrade"],
+      "unitFocus": ["vampire_knight", "blood_mage", "shadow_dancer"]
+    },
+    "lategame": {
+      "priority": ["citadel_of_night", "altar_of_darkness"],
+      "techPriorities": ["awaken_ancients", "dragon_binding", "eternal_night"],
+      "unitFocus": ["elder_vampire", "blood_dragon", "ancient_one"]
+    }
+  },
+
+  "armyComposition": {
+    "earlyGame": {
+      "vampire_spawn": 0.5,
+      "blood_seeker": 0.3,
+      "night_creature": 0.2
+    },
+    "midGame": {
+      "vampire_spawn": 0.2,
+      "vampire_knight": 0.25,
+      "blood_mage": 0.15,
+      "shadow_dancer": 0.15,
+      "nosferatu": 0.15,
+      "gargoyle_servant": 0.1
+    },
+    "lateGame": {
+      "elder_vampire": 0.2,
+      "vampire_knight": 0.15,
+      "blood_countess": 0.15,
+      "nightmare": 0.15,
+      "blood_dragon": 0.1,
+      "ancient_one": 0.1,
+      "vampire_lord": 0.15
+    }
+  },
+
+  "tactics": {
+    "preferredTactics": [
+      "night_raid",
+      "hit_and_sustain",
+      "assassination",
+      "domination",
+      "terror_assault"
+    ],
+
+    "nightRaid": {
+      "description": "Attack during night for maximum effectiveness",
+      "triggerCondition": "is_night",
+      "unitPreference": ["shadow_dancer", "blood_seeker", "vampire_knight"],
+      "targetPriority": ["worker", "resource_building", "production_building"],
+      "retreatCondition": "dawn_approaching",
+      "aggressionLevel": 0.9
+    },
+
+    "hitAndSustain": {
+      "description": "Use life steal to sustain through extended fights",
+      "triggerCondition": "army_has_life_steal",
+      "behavior": "sustained_engagement",
+      "retreatThreshold": 0.2,
+      "healingPriority": true,
+      "focusFire": true
+    },
+
+    "assassination": {
+      "description": "Use stealth units to eliminate high-value targets",
+      "unitPreference": ["shadow_dancer", "shadow_lord"],
+      "targetPriority": ["hero", "caster", "siege"],
+      "useStealthApproach": true,
+      "disengageAfterKill": true
+    },
+
+    "dominationPush": {
+      "description": "Use domination to bolster army before push",
+      "prePushDomination": true,
+      "dominationTargets": ["elite", "heavy_melee"],
+      "waitForDominationCap": 0.5
+    },
+
+    "terrorAssault": {
+      "description": "Lead with terror units to break enemy morale",
+      "leadUnits": ["nosferatu", "nosferatu_elder", "abyssal_horror"],
+      "followUp": ["vampire_knight", "elder_vampire"],
+      "exploitFear": true
+    }
+  },
+
+  "heroUsage": {
+    "vampire_count": {
+      "role": "frontline_leader",
+      "useTransformTactically": true,
+      "dominateHighValueTargets": true,
+      "leadCharges": true,
+      "retreatThreshold": 0.25
+    },
+    "blood_queen": {
+      "role": "backline_support",
+      "prioritizeCharming": true,
+      "summonThrallsForPush": true,
+      "crimsonNightOnTeamfight": true,
+      "stayProtected": true
+    },
+    "shadow_lord": {
+      "role": "assassin",
+      "targetEnemyHeroes": true,
+      "targetEnemyCasters": true,
+      "useShadowStepAggressively": true,
+      "escapeWhenLow": true
+    },
+    "nosferatu_elder": {
+      "role": "tank_disabler",
+      "leadFrontline": true,
+      "terrorScreamOnEngagement": true,
+      "swarmFormToInitiate": true,
+      "absorbDamage": true
+    }
+  },
+
+  "counterStrategies": {
+    "vsHoly": {
+      "avoidHolyUnits": true,
+      "prioritizeKillingHealers": true,
+      "useRangedUnits": true,
+      "nightAttacksOnly": true
+    },
+    "vsFire": {
+      "spreadFormation": true,
+      "avoidAOE": true,
+      "focusFireMages": true
+    },
+    "vsSwarm": {
+      "useAOEAbilities": true,
+      "cleaveFocus": true,
+      "terrorTactics": true
+    },
+    "vsElite": {
+      "dominateElites": true,
+      "focusWithAssassins": true,
+      "sustainedEngagement": true
+    }
+  },
+
+  "economyManagement": {
+    "thrallCount": {
+      "early": 6,
+      "mid": 10,
+      "late": 12
+    },
+    "thrallProtection": true,
+    "bloodSacrificeThreshold": 0.3,
+    "bloodFountainPlacement": "base_perimeter",
+    "prioritizeBloodGeneration": true
+  },
+
+  "defensivePlay": {
+    "towerPlacement": "chokepoints",
+    "garrisonDuringDay": true,
+    "useGargoylesForPatrol": true,
+    "retreatToBloodFountains": true,
+    "coffinVaultProtection": "high"
+  },
+
+  "expansionBehavior": {
+    "expansionTiming": "after_night_raid",
+    "defendExpansions": true,
+    "expansionPriority": 0.5,
+    "secureDuringDay": true
+  },
+
+  "microManagement": {
+    "lifeStealPrioritization": true,
+    "transformationTiming": "tactical",
+    "focusFireWounded": true,
+    "retreatAndHeal": true,
+    "stealthAmbushSetup": true,
+    "dominationTargeting": "highest_value"
+  },
+
+  "difficultyScaling": {
+    "easy": {
+      "reactionTime": 2.0,
+      "microIntensity": 0.3,
+      "nightAttackChance": 0.5,
+      "dominationUsage": 0.3
+    },
+    "medium": {
+      "reactionTime": 1.0,
+      "microIntensity": 0.6,
+      "nightAttackChance": 0.8,
+      "dominationUsage": 0.6
+    },
+    "hard": {
+      "reactionTime": 0.5,
+      "microIntensity": 0.85,
+      "nightAttackChance": 0.95,
+      "dominationUsage": 0.85
+    },
+    "brutal": {
+      "reactionTime": 0.25,
+      "microIntensity": 1.0,
+      "nightAttackChance": 1.0,
+      "dominationUsage": 1.0,
+      "perfectLifeStealMicro": true
+    }
+  },
+
+  "personalityVariants": {
+    "aggressive_raider": {
+      "aggression": 0.9,
+      "nightRaidFrequency": "high",
+      "earlyPressure": true
+    },
+    "patient_dominator": {
+      "aggression": 0.5,
+      "dominationFocus": true,
+      "lateGamePush": true
+    },
+    "terror_master": {
+      "terrorUnitPriority": true,
+      "psychologicalWarfare": true,
+      "fearTactics": true
+    },
+    "blood_mage_focused": {
+      "casterHeavyArmy": true,
+      "bloodMagicPriority": true,
+      "supportPlaystyle": true
+    }
+  }
+}

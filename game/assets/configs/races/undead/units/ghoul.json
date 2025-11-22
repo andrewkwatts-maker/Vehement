@@ -1,0 +1,169 @@
+{
+  "id": "ghoul",
+  "name": "Ghoul",
+  "race": "undead",
+  "tier": 1,
+  "type": "melee",
+  "role": ["gatherer", "melee_dps", "corpse_consumer"],
+
+  "description": "Savage undead creatures that serve as the primary workforce and front-line fighters of the Scourge. Ghouls can harvest lumber and feast on corpses to regenerate health.",
+  "lore": "Once living beings, ghouls are the most common foot soldiers of the Scourge. Their ravenous hunger drives them to consume the flesh of the fallen, healing their wounds and fueling their endless aggression.",
+
+  "stats": {
+    "health": 340,
+    "healthRegen": 0.25,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 0,
+    "armorType": "medium",
+    "moveSpeed": 270,
+    "turnRate": 0.6,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 12,
+      "variance": 3,
+      "type": "normal"
+    },
+    "attackSpeed": 1.3,
+    "attackRange": 90,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.39,
+    "backswing": 0.36,
+    "acquisitionRange": 500,
+    "aggroRange": 400
+  },
+
+  "abilities": [
+    {
+      "id": "cannibalize",
+      "name": "Cannibalize",
+      "type": "active",
+      "targetType": "corpse",
+      "description": "Consume a nearby corpse to rapidly regenerate health",
+      "cooldown": 0,
+      "manaCost": 0,
+      "effects": {
+        "healthPerSecond": 10,
+        "duration": 10.0,
+        "channeled": true,
+        "destroysCorpse": true
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/cannibalize.png"
+    },
+    {
+      "id": "ghoul_frenzy",
+      "name": "Ghoul Frenzy",
+      "type": "passive_upgrade",
+      "requiresResearch": "ghoul_frenzy_upgrade",
+      "description": "Increases attack speed and movement speed",
+      "effects": {
+        "attackSpeedBonus": 0.25,
+        "moveSpeedBonus": 30
+      }
+    }
+  ],
+
+  "gathering": {
+    "canGatherLumber": true,
+    "lumberCapacity": 20,
+    "lumberPerTrip": 20,
+    "gatherSpeed": 1.0,
+    "canGatherGold": false,
+    "canGatherCorpses": true
+  },
+
+  "production": {
+    "producedAt": "crypt",
+    "buildTime": 18,
+    "cost": {
+      "gold": 120,
+      "lumber": 0,
+      "corpses": 0
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["crypt"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "G"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["ghoul_frenzy_upgrade"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/ghoul/ready.ogg",
+    "select": ["audio/units/ghoul/select1.ogg", "audio/units/ghoul/select2.ogg"],
+    "move": ["audio/units/ghoul/move1.ogg", "audio/units/ghoul/move2.ogg"],
+    "attack": ["audio/units/ghoul/attack1.ogg", "audio/units/ghoul/attack2.ogg"],
+    "death": "audio/units/ghoul/death.ogg",
+    "cannibalize": "audio/units/ghoul/cannibalize.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/ghoul.glb",
+    "texture": "textures/units/undead/ghoul.png",
+    "portrait": "textures/portraits/ghoul.png",
+    "icon": "textures/icons/ghoul.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "ghoul_idle",
+      "walk": "ghoul_walk",
+      "attack": "ghoul_attack",
+      "death": "ghoul_death",
+      "gather": "ghoul_gather",
+      "cannibalize": "ghoul_cannibalize"
+    },
+    "effects": {
+      "spawn": "effects/undead_spawn.vfx",
+      "death": "effects/undead_death.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 2,
+    "priority": "low",
+    "behavior": "aggressive",
+    "fleeThreshold": 0,
+    "preferredTargets": ["worker", "ranged"],
+    "autoCannibalizeThreshold": 0.5
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true
+  },
+
+  "bounty": {
+    "gold": 15,
+    "experience": 20
+  },
+
+  "pointValue": 1,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

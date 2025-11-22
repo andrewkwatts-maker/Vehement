@@ -1,0 +1,197 @@
+{
+  "id": "jersey_devil",
+  "name": "Jersey Devil",
+  "race": "cryptids",
+  "tier": 2,
+  "type": "flying",
+  "role": ["harasser", "flying", "terror"],
+
+  "description": "A winged, hooved monstrosity that swoops from the sky to terrorize its prey. Its bloodcurdling screams cause panic in all who hear them.",
+  "lore": "Born of a curse in the Pine Barrens of New Jersey, the Jersey Devil has haunted those dark forests for centuries. Now its kin spread terror across the land, their demonic silhouettes striking fear into mortal hearts.",
+
+  "stats": {
+    "health": 420,
+    "healthRegen": 1.0,
+    "mana": 150,
+    "manaRegen": 0.75,
+    "armor": 2,
+    "armorType": "medium",
+    "moveSpeed": 340,
+    "turnRate": 0.9,
+    "collisionSize": 36,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 20,
+      "variance": 4,
+      "type": "normal"
+    },
+    "attackSpeed": 1.4,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.35,
+    "backswing": 0.45,
+    "acquisitionRange": 600,
+    "aggroRange": 500
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 200,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "blood_curdling_scream",
+      "name": "Blood-Curdling Scream",
+      "type": "active",
+      "targetType": "area",
+      "description": "Releases a terrifying scream that causes nearby enemies to flee in panic",
+      "cooldown": 25.0,
+      "manaCost": 75,
+      "effects": {
+        "radius": 350,
+        "fearDuration": 4.0,
+        "damageReduction": 0.25
+      },
+      "hotkey": "S",
+      "icon": "icons/abilities/blood_curdling_scream.png"
+    },
+    {
+      "id": "dive_bomb",
+      "name": "Dive Bomb",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Dives at a ground target, dealing heavy damage and knocking back nearby enemies",
+      "cooldown": 15.0,
+      "manaCost": 50,
+      "range": 600,
+      "effects": {
+        "damage": 60,
+        "knockbackRadius": 150,
+        "knockbackDistance": 100,
+        "stunDuration": 0.5
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/dive_bomb.png"
+    },
+    {
+      "id": "swooping_strike",
+      "name": "Swooping Strike",
+      "type": "passive",
+      "description": "First attack after moving deals bonus damage",
+      "effects": {
+        "bonusDamage": 15,
+        "movementThreshold": 300
+      },
+      "icon": "icons/abilities/swooping_strike.png"
+    },
+    {
+      "id": "cursed_presence",
+      "name": "Cursed Presence",
+      "type": "passive",
+      "description": "Enemies near the Jersey Devil have reduced healing received",
+      "effects": {
+        "radius": 300,
+        "healingReduction": 0.3
+      },
+      "icon": "icons/abilities/cursed_presence.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "dark_hollow",
+    "buildTime": 28,
+    "cost": {
+      "gold": 180,
+      "lumber": 35,
+      "essence": 20
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["dark_hollow", "sacred_ground"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "J"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["enhanced_screech", "cursed_wings", "devil_dive"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/jersey_devil/ready.ogg",
+    "select": ["audio/units/jersey_devil/select1.ogg", "audio/units/jersey_devil/select2.ogg"],
+    "move": ["audio/units/jersey_devil/move1.ogg", "audio/units/jersey_devil/move2.ogg"],
+    "attack": ["audio/units/jersey_devil/attack1.ogg", "audio/units/jersey_devil/attack2.ogg"],
+    "death": "audio/units/jersey_devil/death.ogg",
+    "scream": "audio/units/jersey_devil/scream.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/jersey_devil.glb",
+    "texture": "textures/units/cryptids/jersey_devil.png",
+    "portrait": "textures/portraits/jersey_devil.png",
+    "icon": "textures/icons/jersey_devil.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "jersey_devil_hover",
+      "walk": "jersey_devil_fly",
+      "attack": "jersey_devil_attack",
+      "death": "jersey_devil_death",
+      "dive": "jersey_devil_dive",
+      "scream": "jersey_devil_scream"
+    },
+    "effects": {
+      "spawn": "effects/devil_spawn.vfx",
+      "death": "effects/jersey_devil_death.vfx",
+      "scream": "effects/terror_scream.vfx",
+      "dive": "effects/dive_bomb.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "high",
+    "behavior": "harasser",
+    "fleeThreshold": 0.25,
+    "preferredTargets": ["ranged", "caster", "worker"],
+    "useScreamInGroups": true,
+    "diveBombPriority": "isolated"
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "isFlying": true,
+    "causesFear": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 28,
+    "experience": 40
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

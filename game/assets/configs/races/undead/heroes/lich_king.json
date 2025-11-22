@@ -1,0 +1,249 @@
+{
+  "id": "lich_king",
+  "name": "Lich",
+  "race": "undead",
+  "type": "hero",
+  "class": "frost_mage",
+  "role": ["nuker", "area_damage", "control"],
+
+  "title": "Master of the Cold Dark",
+  "description": "A devastating frost mage who controls the battlefield with powerful area spells. The Lich can decimate entire armies with frost magic.",
+  "lore": "Ancient sorcerers who traded their humanity for eternal life, Liches are the supreme casters of the Scourge. Their mastery of frost magic can freeze entire battlefields solid.",
+
+  "baseStats": {
+    "health": 475,
+    "healthRegen": 1.15,
+    "mana": 450,
+    "manaRegen": 1.85,
+    "armor": 2,
+    "armorType": "hero",
+    "moveSpeed": 290,
+    "turnRate": 0.6,
+    "collisionSize": 36,
+    "selectionScale": 1.1
+  },
+
+  "statsPerLevel": {
+    "health": 60,
+    "healthRegen": 0.15,
+    "mana": 55,
+    "manaRegen": 0.2,
+    "armor": 0.2,
+    "damage": 2
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 21,
+      "variance": 6,
+      "diceSides": 6,
+      "diceCount": 2,
+      "type": "magic"
+    },
+    "attackSpeed": 1.9,
+    "attackRange": 600,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/frost_bolt_hero.glb",
+      "speed": 1100,
+      "arc": 0
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "primaryAttribute": "intelligence"
+  },
+
+  "attributes": {
+    "strength": {
+      "base": 15,
+      "perLevel": 1.8
+    },
+    "agility": {
+      "base": 14,
+      "perLevel": 1.4
+    },
+    "intelligence": {
+      "base": 25,
+      "perLevel": 3.0
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "frost_nova",
+      "name": "Frost Nova",
+      "type": "active",
+      "targetType": "area_self",
+      "hotkey": "N",
+      "description": "Blasts enemy units around the Lich with a wave of damaging frost that slows movement and attack rate",
+      "levels": [
+        {"manaCost": 125, "cooldown": 8, "damage": 100, "slowPercent": 0.25, "duration": 4, "radius": 200},
+        {"manaCost": 125, "cooldown": 8, "damage": 200, "slowPercent": 0.40, "duration": 6, "radius": 200},
+        {"manaCost": 125, "cooldown": 8, "damage": 300, "slowPercent": 0.55, "duration": 8, "radius": 200}
+      ],
+      "effects": {
+        "damageType": "magic",
+        "slowsAttackSpeed": true,
+        "slowsMovement": true
+      },
+      "icon": "icons/abilities/frost_nova_hero.png"
+    },
+    {
+      "id": "frost_armor",
+      "name": "Frost Armor",
+      "type": "active",
+      "targetType": "unit",
+      "autocast": true,
+      "hotkey": "F",
+      "description": "Creates a shield of frost around a target, increasing armor and slowing melee attackers",
+      "levels": [
+        {"manaCost": 40, "cooldown": 2, "armorBonus": 3, "slowPercent": 0.25, "duration": 45, "range": 800},
+        {"manaCost": 40, "cooldown": 2, "armorBonus": 5, "slowPercent": 0.40, "duration": 45, "range": 800},
+        {"manaCost": 40, "cooldown": 2, "armorBonus": 7, "slowPercent": 0.55, "duration": 45, "range": 800}
+      ],
+      "effects": {
+        "slowsMeleeAttackers": true,
+        "slowDuration": 5
+      },
+      "icon": "icons/abilities/frost_armor_hero.png"
+    },
+    {
+      "id": "dark_ritual",
+      "name": "Dark Ritual",
+      "type": "active",
+      "targetType": "unit",
+      "hotkey": "R",
+      "description": "Sacrifices a friendly undead unit to convert its hit points into mana for the Lich",
+      "levels": [
+        {"manaCost": 0, "cooldown": 15, "conversionRate": 0.33, "range": 350},
+        {"manaCost": 0, "cooldown": 15, "conversionRate": 0.66, "range": 350},
+        {"manaCost": 0, "cooldown": 15, "conversionRate": 1.00, "range": 350}
+      ],
+      "effects": {
+        "killsTarget": true,
+        "targetMustBeUndead": true,
+        "convertsHPToMana": true
+      },
+      "icon": "icons/abilities/dark_ritual_hero.png"
+    },
+    {
+      "id": "death_and_decay",
+      "name": "Death and Decay",
+      "type": "active",
+      "targetType": "area",
+      "hotkey": "D",
+      "ultimate": true,
+      "description": "Damages everything in its area of effect, including buildings. Deals percentage-based damage",
+      "levels": [
+        {"manaCost": 250, "cooldown": 150, "damagePercent": 0.04, "duration": 35, "radius": 300, "range": 800}
+      ],
+      "effects": {
+        "channeled": true,
+        "affectsBuildings": true,
+        "percentDamage": true
+      },
+      "icon": "icons/abilities/death_and_decay_hero.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "sacrificial_pit",
+    "buildTime": 55,
+    "cost": {
+      "gold": 500,
+      "lumber": 100,
+      "corpses": 0
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["sacrificial_pit"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "L"
+  },
+
+  "sounds": {
+    "ready": "audio/heroes/lich/ready.ogg",
+    "select": [
+      "audio/heroes/lich/select1.ogg",
+      "audio/heroes/lich/select2.ogg",
+      "audio/heroes/lich/select3.ogg"
+    ],
+    "move": [
+      "audio/heroes/lich/move1.ogg",
+      "audio/heroes/lich/move2.ogg"
+    ],
+    "attack": [
+      "audio/heroes/lich/attack1.ogg"
+    ],
+    "death": "audio/heroes/lich/death.ogg",
+    "pissed": [
+      "audio/heroes/lich/pissed1.ogg",
+      "audio/heroes/lich/pissed2.ogg",
+      "audio/heroes/lich/pissed3.ogg"
+    ],
+    "frostNova": "audio/heroes/lich/frost_nova.ogg",
+    "deathAndDecay": "audio/heroes/lich/death_and_decay.ogg"
+  },
+
+  "visuals": {
+    "model": "models/heroes/lich_hero.glb",
+    "texture": "textures/heroes/lich_hero.png",
+    "portrait": "textures/portraits/lich_hero.png",
+    "icon": "textures/icons/lich_hero.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "lich_hero_idle",
+      "walk": "lich_hero_float",
+      "attack": "lich_hero_attack",
+      "death": "lich_hero_death",
+      "cast": "lich_hero_cast",
+      "channel": "lich_hero_channel"
+    },
+    "effects": {
+      "spawn": "effects/hero_spawn.vfx",
+      "death": "effects/lich_hero_death.vfx",
+      "frostNova": "effects/frost_nova_hero.vfx",
+      "deathAndDecay": "effects/death_and_decay.vfx"
+    }
+  },
+
+  "ai": {
+    "combatRole": "backline",
+    "useFrostNovaOnGroups": true,
+    "darkRitualThreshold": 0.2,
+    "deathAndDecayOnBuildings": true,
+    "maintainDistance": true
+  },
+
+  "flags": {
+    "isHero": true,
+    "isUndead": true,
+    "vulnerableToHoly": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "affectedByBlight": true,
+    "canUseItems": true,
+    "canGainExperience": true,
+    "isCaster": true
+  },
+
+  "itemSlots": 6,
+  "maxLevel": 10,
+  "reviveTime": {
+    "base": 55,
+    "perLevel": 5
+  },
+  "reviveCost": {
+    "goldPerLevel": 100
+  },
+
+  "bounty": {
+    "goldBase": 100,
+    "goldPerLevel": 20,
+    "experienceBase": 100,
+    "experiencePerLevel": 25
+  }
+}

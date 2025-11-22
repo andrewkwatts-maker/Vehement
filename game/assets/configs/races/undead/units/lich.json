@@ -1,0 +1,216 @@
+{
+  "id": "lich",
+  "name": "Lich",
+  "race": "undead",
+  "tier": 4,
+  "type": "caster",
+  "role": ["caster", "nuker", "area_damage"],
+
+  "description": "Powerful undead sorcerers who wield devastating frost and death magic. Liches are among the most feared units in the Scourge army.",
+  "lore": "Former archmages who traded their souls for immortality, Liches are masters of frost and necromantic magic. Their phylacteries hold the secret to their undying existence.",
+
+  "stats": {
+    "health": 450,
+    "healthRegen": 0.5,
+    "mana": 500,
+    "manaRegen": 1.5,
+    "armor": 1,
+    "armorType": "unarmored",
+    "moveSpeed": 250,
+    "turnRate": 0.6,
+    "collisionSize": 36,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 24,
+      "variance": 4,
+      "type": "magic"
+    },
+    "attackSpeed": 1.8,
+    "attackRange": 600,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/frost_bolt.glb",
+      "speed": 1000,
+      "arc": 0
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "acquisitionRange": 650,
+    "aggroRange": 600
+  },
+
+  "abilities": [
+    {
+      "id": "frost_nova",
+      "name": "Frost Nova",
+      "type": "active",
+      "targetType": "area",
+      "autocast": false,
+      "description": "Blasts enemy units around the Lich with a wave of frost that deals damage and slows",
+      "cooldown": 8.0,
+      "manaCost": 125,
+      "effects": {
+        "damage": 100,
+        "radius": 200,
+        "slowPercent": 0.5,
+        "slowDuration": 4.0
+      },
+      "hotkey": "N",
+      "icon": "icons/abilities/frost_nova.png"
+    },
+    {
+      "id": "dark_ritual",
+      "name": "Dark Ritual",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Sacrifices a friendly undead unit to convert its remaining health into mana",
+      "cooldown": 15.0,
+      "manaCost": 0,
+      "range": 400,
+      "effects": {
+        "manaConversion": 2.0,
+        "killsTarget": true,
+        "targetMustBeUndead": true
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/dark_ritual.png"
+    },
+    {
+      "id": "death_and_decay",
+      "name": "Death and Decay",
+      "type": "active",
+      "targetType": "area",
+      "requiresResearch": "death_and_decay_upgrade",
+      "description": "Damages everything in target area over time, including buildings",
+      "cooldown": 30.0,
+      "manaCost": 200,
+      "range": 700,
+      "effects": {
+        "radius": 300,
+        "damagePercent": 0.04,
+        "duration": 35.0,
+        "channeled": true,
+        "affectsBuildings": true
+      },
+      "hotkey": "D",
+      "icon": "icons/abilities/death_and_decay.png"
+    },
+    {
+      "id": "frost_armor",
+      "name": "Frost Armor",
+      "type": "active",
+      "targetType": "unit",
+      "autocast": true,
+      "description": "Creates a shield of frost that increases armor and slows attackers",
+      "cooldown": 2.0,
+      "manaCost": 40,
+      "range": 600,
+      "effects": {
+        "armorBonus": 5,
+        "attackerSlow": 0.3,
+        "attackerSlowDuration": 3.0,
+        "duration": 45.0
+      },
+      "hotkey": "F",
+      "icon": "icons/abilities/frost_armor.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "temple_of_the_damned",
+    "buildTime": 50,
+    "cost": {
+      "gold": 325,
+      "lumber": 75,
+      "corpses": 0
+    },
+    "foodCost": 4,
+    "prerequisites": {
+      "buildings": ["temple_of_the_damned", "black_citadel"],
+      "technologies": ["lich_training"],
+      "age": "damnation"
+    },
+    "hotkey": "L"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["death_and_decay_upgrade", "lich_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/lich/ready.ogg",
+    "select": ["audio/units/lich/select1.ogg", "audio/units/lich/select2.ogg"],
+    "move": ["audio/units/lich/move1.ogg", "audio/units/lich/move2.ogg"],
+    "attack": ["audio/units/lich/attack1.ogg"],
+    "death": "audio/units/lich/death.ogg",
+    "frostNova": "audio/units/lich/frost_nova.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/lich.glb",
+    "texture": "textures/units/undead/lich.png",
+    "portrait": "textures/portraits/lich.png",
+    "icon": "textures/icons/lich.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "lich_idle",
+      "walk": "lich_float",
+      "attack": "lich_attack",
+      "death": "lich_death",
+      "cast": "lich_cast"
+    },
+    "effects": {
+      "spawn": "effects/lich_spawn.vfx",
+      "death": "effects/lich_death.vfx",
+      "frostNova": "effects/frost_nova.vfx",
+      "darkRitual": "effects/dark_ritual.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 8,
+    "priority": "very_high",
+    "behavior": "aggressive_caster",
+    "fleeThreshold": 0.25,
+    "preferredTargets": ["cluster", "hero"],
+    "maintainDistance": true,
+    "useFrostNovaOnGroups": true,
+    "sacrificeThreshold": 0.3
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "isCaster": true,
+    "isElite": true
+  },
+
+  "bounty": {
+    "gold": 50,
+    "experience": 80
+  },
+
+  "pointValue": 4,
+  "supplyProvided": 0,
+  "supplyUsed": 4
+}

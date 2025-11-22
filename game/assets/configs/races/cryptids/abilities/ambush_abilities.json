@@ -1,0 +1,184 @@
+{
+  "category": "ambush",
+  "race": "cryptids",
+  "description": "Abilities related to stealth, ambush, and surprise attacks",
+
+  "abilities": {
+    "ambush": {
+      "id": "ambush",
+      "name": "Ambush",
+      "type": "passive",
+      "description": "First attack from stealth deals bonus damage",
+      "mechanics": {
+        "bonusDamageFromStealth": true,
+        "appliesOnFirstAttack": true
+      },
+      "levels": [
+        {"bonusDamage": 0.50},
+        {"bonusDamage": 0.75},
+        {"bonusDamage": 1.00}
+      ],
+      "icon": "textures/icons/abilities/ambush.png"
+    },
+    "shadow_lurk": {
+      "id": "shadow_lurk",
+      "name": "Shadow Lurk",
+      "type": "passive",
+      "description": "Becomes invisible when standing still",
+      "mechanics": {
+        "passiveInvisibility": true,
+        "requiresStationary": true,
+        "fadeTime": true
+      },
+      "levels": [
+        {"fadeTime": 4.0},
+        {"fadeTime": 3.0},
+        {"fadeTime": 2.0}
+      ],
+      "icon": "textures/icons/abilities/shadow_lurk.png",
+      "effects": {
+        "fade": "effects/shadow_lurk.vfx"
+      }
+    },
+    "shadow_meld": {
+      "id": "shadow_meld",
+      "name": "Shadow Meld",
+      "type": "active",
+      "targetType": "self",
+      "description": "Become invisible and gain bonus damage on next attack",
+      "mechanics": {
+        "grantsInvisibility": true,
+        "canMove": true,
+        "bonusDamageOnBreak": true
+      },
+      "levels": [
+        {"manaCost": 60, "cooldown": 18, "fadeTime": 1.0, "bonusDamage": 80},
+        {"manaCost": 60, "cooldown": 15, "fadeTime": 0.75, "bonusDamage": 140},
+        {"manaCost": 60, "cooldown": 12, "fadeTime": 0.5, "bonusDamage": 200}
+      ],
+      "icon": "textures/icons/abilities/shadow_meld.png",
+      "effects": {
+        "meld": "effects/shadow_meld.vfx"
+      },
+      "sound": "audio/abilities/shadow_meld.ogg"
+    },
+    "burrow": {
+      "id": "burrow",
+      "name": "Burrow",
+      "type": "active",
+      "targetType": "self",
+      "description": "Burrow underground, becoming invisible and regenerating health",
+      "mechanics": {
+        "grantsInvisibility": true,
+        "immobile": true,
+        "healthRegen": true
+      },
+      "levels": [
+        {"manaCost": 25, "cooldown": 15, "healthRegenBonus": 5}
+      ],
+      "icon": "textures/icons/abilities/burrow.png",
+      "effects": {
+        "burrow_in": "effects/burrow_in.vfx",
+        "burrow_out": "effects/burrow_out.vfx"
+      },
+      "sound": "audio/abilities/burrow.ogg"
+    },
+    "ambush_strike": {
+      "id": "ambush_strike",
+      "name": "Ambush Strike",
+      "type": "passive",
+      "description": "First attack from burrow deals double damage and stuns",
+      "mechanics": {
+        "bonusDamageFromBurrow": true,
+        "stuns": true
+      },
+      "levels": [
+        {"damageMultiplier": 2.0, "stunDuration": 1.0}
+      ],
+      "icon": "textures/icons/abilities/ambush_strike.png",
+      "effects": {
+        "strike": "effects/ambush_strike.vfx"
+      }
+    },
+    "pounce": {
+      "id": "pounce",
+      "name": "Pounce",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Leap at a target, dealing damage and briefly stunning",
+      "mechanics": {
+        "leapToTarget": true,
+        "bonusDamage": true,
+        "stuns": true
+      },
+      "levels": [
+        {"manaCost": 0, "cooldown": 12, "damage": 30, "stunDuration": 0.5, "range": 400},
+        {"manaCost": 0, "cooldown": 10, "damage": 45, "stunDuration": 0.75, "range": 450},
+        {"manaCost": 0, "cooldown": 8, "damage": 60, "stunDuration": 1.0, "range": 500}
+      ],
+      "icon": "textures/icons/abilities/pounce.png",
+      "effects": {
+        "pounce": "effects/pounce.vfx"
+      },
+      "sound": "audio/abilities/pounce.ogg"
+    },
+    "wall_climb": {
+      "id": "wall_climb",
+      "name": "Wall Climb",
+      "type": "passive",
+      "description": "Can move over cliffs and vertical surfaces",
+      "mechanics": {
+        "ignoresTerrainHeight": true,
+        "canClimbCliffs": true
+      },
+      "levels": [
+        {}
+      ],
+      "icon": "textures/icons/abilities/wall_climb.png"
+    },
+    "dive_bomb": {
+      "id": "dive_bomb",
+      "name": "Dive Bomb",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Dive at a ground target, dealing damage and knocking back enemies",
+      "mechanics": {
+        "diveFromAir": true,
+        "areaEffect": true,
+        "knockback": true
+      },
+      "levels": [
+        {"manaCost": 50, "cooldown": 15, "damage": 60, "knockbackRadius": 150, "range": 600},
+        {"manaCost": 50, "cooldown": 13, "damage": 90, "knockbackRadius": 175, "range": 650},
+        {"manaCost": 50, "cooldown": 11, "damage": 120, "knockbackRadius": 200, "range": 700}
+      ],
+      "icon": "textures/icons/abilities/dive_bomb.png",
+      "effects": {
+        "dive": "effects/dive_bomb.vfx"
+      },
+      "sound": "audio/abilities/dive_bomb.ogg"
+    },
+    "nightmare_walk": {
+      "id": "nightmare_walk",
+      "name": "Nightmare Walk",
+      "type": "active",
+      "targetType": "ground",
+      "description": "Teleport through the realm of nightmares",
+      "mechanics": {
+        "teleport": true,
+        "invulnerableDuring": true,
+        "fearsOnArrival": true,
+        "leavesTrail": true
+      },
+      "levels": [
+        {"manaCost": 175, "cooldown": 90, "range": 2000, "fearRadius": 450, "fearDuration": 4}
+      ],
+      "icon": "textures/icons/abilities/nightmare_walk.png",
+      "effects": {
+        "teleport": "effects/nightmare_walk.vfx",
+        "trail": "effects/nightmare_trail.vfx"
+      },
+      "sound": "audio/abilities/nightmare_walk.ogg"
+    }
+  }
+}

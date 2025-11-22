@@ -1,0 +1,162 @@
+{
+  "id": "skeleton",
+  "name": "Skeleton Warrior",
+  "race": "undead",
+  "tier": 1,
+  "type": "ranged",
+  "role": ["ranged_dps", "expendable", "summonable"],
+
+  "description": "Skeletal archers that rain death upon enemies from afar. Though fragile, they are easily raised from the dead and can be summoned in large numbers.",
+  "lore": "The bones of fallen warriors, animated by dark magic to serve the Scourge eternally. What they lack in durability, they make up for in endless numbers.",
+
+  "stats": {
+    "health": 180,
+    "healthRegen": 0.0,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 0,
+    "armorType": "light",
+    "moveSpeed": 230,
+    "turnRate": 0.5,
+    "collisionSize": 24,
+    "selectionScale": 0.9
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 9,
+      "variance": 2,
+      "type": "piercing"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 450,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/bone_arrow.glb",
+      "speed": 900,
+      "arc": 0.1
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.4,
+    "acquisitionRange": 500,
+    "aggroRange": 450
+  },
+
+  "abilities": [
+    {
+      "id": "bone_armor",
+      "name": "Bone Armor",
+      "type": "passive_upgrade",
+      "requiresResearch": "bone_armor_upgrade",
+      "description": "Grants bonus armor from reinforced bone plating",
+      "effects": {
+        "armorBonus": 2
+      }
+    },
+    {
+      "id": "skeleton_mastery",
+      "name": "Skeleton Mastery",
+      "type": "passive_upgrade",
+      "requiresResearch": "skeleton_mastery",
+      "description": "Increases skeleton health and damage",
+      "effects": {
+        "healthBonus": 50,
+        "damageBonus": 3
+      }
+    }
+  ],
+
+  "production": {
+    "producedAt": "graveyard",
+    "buildTime": 12,
+    "cost": {
+      "gold": 85,
+      "lumber": 0,
+      "corpses": 0
+    },
+    "foodCost": 1,
+    "prerequisites": {
+      "buildings": ["graveyard"],
+      "technologies": [],
+      "age": "grave"
+    },
+    "hotkey": "S",
+    "canBeRaisedFrom": {
+      "corpse": true,
+      "corpseCost": 1,
+      "raiseTime": 2.0
+    }
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_strength"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "unholy_armor"
+    },
+    "special": ["bone_armor_upgrade", "skeleton_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/skeleton/ready.ogg",
+    "select": ["audio/units/skeleton/select1.ogg", "audio/units/skeleton/select2.ogg"],
+    "move": ["audio/units/skeleton/move1.ogg", "audio/units/skeleton/move2.ogg"],
+    "attack": ["audio/units/skeleton/attack1.ogg", "audio/units/skeleton/attack2.ogg"],
+    "death": "audio/units/skeleton/death.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/undead/skeleton.glb",
+    "texture": "textures/units/undead/skeleton.png",
+    "portrait": "textures/portraits/skeleton.png",
+    "icon": "textures/icons/skeleton.png",
+    "scale": 0.9,
+    "animations": {
+      "idle": "skeleton_idle",
+      "walk": "skeleton_walk",
+      "attack": "skeleton_attack",
+      "death": "skeleton_death"
+    },
+    "effects": {
+      "spawn": "effects/bone_rise.vfx",
+      "death": "effects/bone_scatter.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 1,
+    "priority": "very_low",
+    "behavior": "defensive",
+    "fleeThreshold": 0,
+    "preferredTargets": ["air", "ranged"],
+    "maintainDistance": true
+  },
+
+  "flags": {
+    "isUndead": true,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByBlight": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true,
+    "vulnerableToHoly": true,
+    "summonable": true,
+    "expendable": true
+  },
+
+  "bounty": {
+    "gold": 8,
+    "experience": 12
+  },
+
+  "pointValue": 0.5,
+  "supplyProvided": 0,
+  "supplyUsed": 1
+}

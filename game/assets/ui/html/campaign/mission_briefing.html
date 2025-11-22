@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mission Briefing</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+    <style>
+        .briefing-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a1a0a 100%);
+        }
+
+        .briefing-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            border-right: 1px solid #333;
+        }
+
+        .briefing-right {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .mission-header {
+            margin-bottom: 20px;
+        }
+
+        .mission-title {
+            font-size: 28px;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .mission-subtitle {
+            font-size: 16px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .map-preview {
+            width: 100%;
+            height: 300px;
+            background: #111;
+            border: 2px solid #444;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .map-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .map-name {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-top: -15px;
+            margin-bottom: 15px;
+        }
+
+        .briefing-text-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .briefing-text {
+            font-size: 16px;
+            color: #ccc;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .panel-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .panel-tab {
+            flex: 1;
+            padding: 10px;
+            background: rgba(50, 50, 50, 0.5);
+            border: 1px solid #444;
+            color: #888;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .panel-tab:hover {
+            border-color: #666;
+            color: #aaa;
+        }
+
+        .panel-tab.active {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+
+        .panel-content {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .objective-item {
+            padding: 12px;
+            border-left: 3px solid;
+            margin-bottom: 10px;
+            background: rgba(50, 50, 50, 0.3);
+        }
+
+        .objective-item.primary {
+            border-color: #FFD700;
+        }
+
+        .objective-item.secondary {
+            border-color: #2196F3;
+        }
+
+        .objective-item.bonus {
+            border-color: #9C27B0;
+        }
+
+        .objective-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .objective-desc {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .objective-type {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .tip-item {
+            padding: 10px;
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid #2196F3;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tip-text {
+            font-size: 13px;
+            color: #90CAF9;
+        }
+
+        .tip-category {
+            font-size: 10px;
+            color: #2196F3;
+            margin-top: 5px;
+        }
+
+        .intel-item {
+            padding: 10px;
+            background: rgba(100, 100, 100, 0.2);
+            border: 1px solid #555;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .intel-item.new::before {
+            content: 'NEW';
+            font-size: 10px;
+            background: #f44336;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+
+        .intel-title {
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .intel-text {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .difficulty-section {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .difficulty-label {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            padding: 10px 5px;
+            background: rgba(50, 50, 50, 0.5);
+            border: 2px solid #444;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .difficulty-btn:hover {
+            border-color: #666;
+        }
+
+        .difficulty-btn.selected {
+            border-color: #FFD700;
+            color: #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .difficulty-btn[data-level="0"] { --color: #4CAF50; }
+        .difficulty-btn[data-level="1"] { --color: #FFC107; }
+        .difficulty-btn[data-level="2"] { --color: #FF9800; }
+        .difficulty-btn[data-level="3"] { --color: #f44336; }
+
+        .difficulty-btn.selected[data-level="0"] { border-color: #4CAF50; color: #4CAF50; }
+        .difficulty-btn.selected[data-level="1"] { border-color: #FFC107; color: #FFC107; }
+        .difficulty-btn.selected[data-level="2"] { border-color: #FF9800; color: #FF9800; }
+        .difficulty-btn.selected[data-level="3"] { border-color: #f44336; color: #f44336; }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .action-btn.start {
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .action-btn.start:hover {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .action-btn.back {
+            border-color: #666;
+            color: #888;
+        }
+
+        .action-btn.back:hover {
+            border-color: #888;
+            color: #aaa;
+        }
+
+        .time-estimate {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="briefing-container" id="briefing-container">
+        <div class="briefing-left">
+            <div class="mission-header">
+                <h1 class="mission-title" id="mission-title">Mission Title</h1>
+                <p class="mission-subtitle" id="mission-subtitle">Subtitle</p>
+            </div>
+
+            <div class="map-preview" id="map-preview">
+                <img src="" alt="Map Preview" id="map-image">
+            </div>
+            <div class="map-name" id="map-name">Map Name</div>
+
+            <div class="briefing-text-container">
+                <div class="briefing-text" id="briefing-text">
+                    Loading mission briefing...
+                </div>
+            </div>
+        </div>
+
+        <div class="briefing-right">
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-panel="objectives" onclick="Briefing.showPanel('objectives')">Objectives</button>
+                <button class="panel-tab" data-panel="tips" onclick="Briefing.showPanel('tips')">Tips</button>
+                <button class="panel-tab" data-panel="intel" onclick="Briefing.showPanel('intel')">Intel</button>
+            </div>
+
+            <div class="panel-content" id="panel-content">
+                <!-- Content populated by JavaScript -->
+            </div>
+
+            <div class="difficulty-section">
+                <div class="difficulty-label">Select Difficulty:</div>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-level="0" onclick="Briefing.setDifficulty(0)">Story</button>
+                    <button class="difficulty-btn selected" data-level="1" onclick="Briefing.setDifficulty(1)">Normal</button>
+                    <button class="difficulty-btn" data-level="2" onclick="Briefing.setDifficulty(2)">Hard</button>
+                    <button class="difficulty-btn" data-level="3" onclick="Briefing.setDifficulty(3)">Brutal</button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn back" onclick="Briefing.back()">Back</button>
+                <button class="action-btn start" onclick="Briefing.startMission()">Start Mission</button>
+            </div>
+
+            <div class="time-estimate" id="time-estimate">
+                Estimated time: ~30 minutes
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const Briefing = {
+            data: null,
+            selectedDifficulty: 1,
+            activePanel: 'objectives',
+
+            init: function() {
+                this.showPanel('objectives');
+            },
+
+            setBriefingData: function(data) {
+                this.data = data;
+                this.render();
+            },
+
+            render: function() {
+                if (!this.data) return;
+
+                document.getElementById('mission-title').textContent = this.data.missionTitle || '';
+                document.getElementById('mission-subtitle').textContent = this.data.missionSubtitle || '';
+                document.getElementById('briefing-text').textContent = this.data.storyText || '';
+                document.getElementById('map-name').textContent = this.data.mapName || '';
+
+                const mapImg = document.getElementById('map-image');
+                if (this.data.mapPreviewImage) {
+                    mapImg.src = this.data.mapPreviewImage;
+                    mapImg.style.display = 'block';
+                } else {
+                    mapImg.style.display = 'none';
+                }
+
+                document.getElementById('time-estimate').textContent =
+                    'Estimated time: ~' + (this.data.estimatedTime || 30) + ' minutes';
+
+                this.renderPanel();
+            },
+
+            showPanel: function(panelId) {
+                this.activePanel = panelId;
+
+                document.querySelectorAll('.panel-tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.panel === panelId);
+                });
+
+                this.renderPanel();
+            },
+
+            renderPanel: function() {
+                const content = document.getElementById('panel-content');
+                if (!this.data) return;
+
+                switch (this.activePanel) {
+                    case 'objectives':
+                        content.innerHTML = this.renderObjectives();
+                        break;
+                    case 'tips':
+                        content.innerHTML = this.renderTips();
+                        break;
+                    case 'intel':
+                        content.innerHTML = this.renderIntel();
+                        break;
+                }
+            },
+
+            renderObjectives: function() {
+                if (!this.data.objectives || this.data.objectives.length === 0) {
+                    return '<div style="color: #666; text-align: center;">No objectives available</div>';
+                }
+
+                return this.data.objectives.map(obj => `
+                    <div class="objective-item ${obj.isPrimary ? 'primary' : 'secondary'}">
+                        <div class="objective-title">${obj.title}</div>
+                        <div class="objective-desc">${obj.description}</div>
+                        <div class="objective-type">${obj.isPrimary ? 'Primary Objective' : 'Secondary Objective'}</div>
+                    </div>
+                `).join('');
+            },
+
+            renderTips: function() {
+                if (!this.data.tips || this.data.tips.length === 0) {
+                    return '<div style="color: #666; text-align: center;">No tips available</div>';
+                }
+
+                return this.data.tips.map(tip => `
+                    <div class="tip-item">
+                        <div class="tip-text">${tip.text}</div>
+                        ${tip.category ? '<div class="tip-category">' + tip.category + '</div>' : ''}
+                    </div>
+                `).join('');
+            },
+
+            renderIntel: function() {
+                if (!this.data.intelReports || this.data.intelReports.length === 0) {
+                    return '<div style="color: #666; text-align: center;">No intel reports available</div>';
+                }
+
+                return this.data.intelReports.map(intel => `
+                    <div class="intel-item ${intel.isNew ? 'new' : ''}">
+                        <div class="intel-title">${intel.title}</div>
+                        <div class="intel-text">${intel.text}</div>
+                    </div>
+                `).join('');
+            },
+
+            setDifficulty: function(level) {
+                this.selectedDifficulty = level;
+
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.classList.toggle('selected', parseInt(btn.dataset.level) === level);
+                });
+
+                Engine.call('BriefingUI.setDifficulty', { difficulty: level });
+            },
+
+            startMission: function() {
+                Engine.call('BriefingUI.startMission', { difficulty: this.selectedDifficulty });
+            },
+
+            back: function() {
+                Engine.call('BriefingUI.back', {});
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => Briefing.init());
+        window.Briefing = Briefing;
+    </script>
+</body>
+</html>

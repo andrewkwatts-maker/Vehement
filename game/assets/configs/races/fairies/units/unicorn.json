@@ -1,0 +1,191 @@
+{
+    "id": "fairy_unicorn",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Unicorn",
+    "description": "Magnificent creatures of pure magic. Unicorns serve as swift cavalry healers, their horns capable of both mending wounds and purifying corruption.",
+
+    "tags": ["military", "cavalry", "tier3", "healer", "support", "magic"],
+
+    "tier": 3,
+    "age_requirement": 4,
+
+    "model": {
+        "path": "models/races/fairies/units/unicorn.obj",
+        "scale": [1.1, 1.1, 1.1],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/unicorn_diffuse.png",
+        "normal": "textures/races/fairies/units/unicorn_normal.png",
+        "emissive": "textures/races/fairies/units/unicorn_glow.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.5,
+                "height": 2.0,
+                "offset": [0.0, 1.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 350.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 600,
+        "maxHealth": 600,
+        "healthRegen": 1.5,
+        "mana": 400,
+        "maxMana": 400,
+        "manaRegen": 2.5,
+        "armor": 3,
+        "magicResist": 40,
+        "moveSpeed": 7.5,
+        "turnRate": 280.0
+    },
+
+    "combat": {
+        "attackDamage": 32,
+        "attackSpeed": 1.8,
+        "attackRange": 1.5,
+        "damageType": "magic",
+        "armorType": "medium",
+        "attackType": "melee"
+    },
+
+    "abilities": [
+        {
+            "id": "ability_healing_touch",
+            "name": "Healing Touch",
+            "description": "Touch an ally with the horn to restore a large amount of health",
+            "hotkey": "H",
+            "cooldown": 8.0,
+            "mana_cost": 60,
+            "range": 3.0,
+            "effects": [
+                {"type": "heal", "value": 200}
+            ],
+            "auto_cast": true
+        },
+        {
+            "id": "ability_purification",
+            "name": "Purification",
+            "description": "Remove all negative effects and debuffs from a friendly unit",
+            "hotkey": "P",
+            "cooldown": 15.0,
+            "mana_cost": 75,
+            "range": 6.0,
+            "effects": [
+                {"type": "dispel", "target": "friendly", "removes": "debuffs"},
+                {"type": "cure_poison", "value": true},
+                {"type": "cure_disease", "value": true},
+                {"type": "heal", "value": 50}
+            ]
+        },
+        {
+            "id": "ability_horn_charge",
+            "name": "Horn Charge",
+            "description": "Charge at an enemy, impaling them with the magic horn",
+            "hotkey": "C",
+            "cooldown": 12.0,
+            "range": 15.0,
+            "min_range": 4.0,
+            "effects": [
+                {"type": "damage_multiplier", "value": 2.5},
+                {"type": "stun", "duration": 1.5},
+                {"type": "armor_pierce", "value": 0.50}
+            ]
+        },
+        {
+            "id": "ability_aura_of_purity",
+            "name": "Aura of Purity",
+            "description": "Nearby allies are immune to poison and disease",
+            "passive": true,
+            "radius": 10.0,
+            "effects": [
+                {"type": "immunity", "value": ["poison", "disease"]}
+            ]
+        }
+    ],
+
+    "charge": {
+        "enabled": true,
+        "min_distance": 4.0,
+        "damage_multiplier": 2.5,
+        "stun_duration": 1.5,
+        "speed_bonus": 0.50,
+        "cooldown": 12.0
+    },
+
+    "night_bonus": {
+        "manaRegen": 0.50,
+        "heal_effectiveness": 0.30,
+        "moveSpeed": 0.15
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_unicorn_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 4
+        },
+        {
+            "id": "upgrade_moonstone_armor",
+            "stat": "armor",
+            "bonus_per_level": 2
+        }
+    ],
+
+    "production": {
+        "building": "fairy_chimera_roost",
+        "cost": {
+            "gold": 280,
+            "wood": 60,
+            "food": 4
+        },
+        "build_time": 42.0,
+        "population_cost": 3,
+        "prerequisites": ["fairy_tree_of_ages"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/cavalry_healer.bt",
+        "profile": "support",
+        "aggroRange": 10.0,
+        "leashRange": 25.0,
+        "heal_threshold": 0.5,
+        "purify_priority": ["hero", "caster"],
+        "use_charge": true,
+        "charge_distance_min": 6.0
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/unicorn/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/unicorn/walk.anim", "loop": true},
+        "run": {"path": "animations/fairies/unicorn/run.anim", "loop": true},
+        "attack": {"path": "animations/fairies/unicorn/attack.anim", "loop": false},
+        "charge": {"path": "animations/fairies/unicorn/charge.anim", "loop": false},
+        "heal": {"path": "animations/fairies/unicorn/heal.anim", "loop": false},
+        "death": {"path": "animations/fairies/unicorn/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/unicorn/select_1.wav", "sounds/fairies/unicorn/select_2.wav"],
+        "acknowledge": ["sounds/fairies/unicorn/ack_1.wav", "sounds/fairies/unicorn/ack_2.wav"],
+        "attack": "sounds/fairies/unicorn/attack.wav",
+        "charge": "sounds/fairies/unicorn/charge.wav",
+        "heal": "sounds/fairies/unicorn/heal.wav",
+        "death": "sounds/fairies/unicorn/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/unicorn.png",
+        "icon": "textures/races/fairies/icons/unicorn.png",
+        "hotkey": "U"
+    }
+}

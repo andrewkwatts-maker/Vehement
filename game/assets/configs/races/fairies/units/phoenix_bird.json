@@ -1,0 +1,194 @@
+{
+    "id": "fairy_phoenix_bird",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Phoenix",
+    "description": "Legendary firebirds reborn from their own ashes. When slain, a Phoenix will resurrect as a Phoenix Egg that can hatch into a new Phoenix.",
+
+    "tags": ["military", "flying", "tier3", "fire", "immortal", "siege"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/fairies/units/phoenix_bird.obj",
+        "scale": [1.2, 1.2, 1.2],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/phoenix_bird_diffuse.png",
+        "normal": "textures/races/fairies/units/phoenix_bird_normal.png",
+        "emissive": "textures/races/fairies/units/phoenix_bird_fire.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.6,
+                "height": 1.5,
+                "offset": [0.0, 2.0, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 200.0,
+        "layer": "flying_unit"
+    },
+
+    "stats": {
+        "health": 650,
+        "maxHealth": 650,
+        "healthRegen": 0.0,
+        "mana": 200,
+        "maxMana": 200,
+        "manaRegen": 0.75,
+        "armor": 2,
+        "magicResist": 30,
+        "moveSpeed": 6.5,
+        "turnRate": 250.0
+    },
+
+    "combat": {
+        "attackDamage": 38,
+        "attackSpeed": 1.5,
+        "attackRange": 6.0,
+        "damageType": "magic",
+        "armorType": "light",
+        "attackType": "ranged",
+        "projectile": "phoenix_fire",
+        "projectile_speed": 20.0,
+        "splash_damage": 0.20,
+        "splash_radius": 2.0
+    },
+
+    "flying": {
+        "enabled": true,
+        "flight_height": 5.0,
+        "can_hover": true,
+        "air_superiority": true
+    },
+
+    "abilities": [
+        {
+            "id": "ability_rebirth",
+            "name": "Rebirth",
+            "description": "When the Phoenix dies, it becomes a Phoenix Egg that can hatch into a new Phoenix",
+            "passive": true,
+            "effects": [
+                {"type": "on_death_transform", "target": "fairy_phoenix_egg"},
+                {"type": "cooldown", "value": 180.0}
+            ],
+            "cooldown_between_rebirths": 180.0
+        },
+        {
+            "id": "ability_fire_aura",
+            "name": "Fire Aura",
+            "description": "Burns nearby enemies with sacred fire",
+            "passive": true,
+            "radius": 4.0,
+            "effects": [
+                {"type": "damage_per_second", "value": 10, "damage_type": "fire"}
+            ]
+        },
+        {
+            "id": "ability_sunfire",
+            "name": "Sunfire",
+            "description": "Launch a massive fireball that explodes on impact",
+            "hotkey": "F",
+            "cooldown": 15.0,
+            "mana_cost": 75,
+            "range": 14.0,
+            "radius": 4.0,
+            "effects": [
+                {"type": "damage", "value": 150, "damage_type": "fire"},
+                {"type": "dot", "damage": 30, "duration": 5.0, "damage_type": "fire"}
+            ]
+        },
+        {
+            "id": "ability_dive_bomb",
+            "name": "Dive Bomb",
+            "description": "Dive into enemies, dealing massive fire damage in an area but sacrificing the Phoenix",
+            "hotkey": "D",
+            "range": 20.0,
+            "radius": 5.0,
+            "effects": [
+                {"type": "damage", "value": 400, "damage_type": "fire"},
+                {"type": "kill_self", "value": true},
+                {"type": "triggers_rebirth", "value": true}
+            ]
+        }
+    ],
+
+    "rebirth": {
+        "enabled": true,
+        "egg_unit": "fairy_phoenix_egg",
+        "egg_health": 200,
+        "hatch_time": 30.0,
+        "rebirth_cooldown": 180.0
+    },
+
+    "night_bonus": {
+        "attackDamage": 0.15,
+        "fire_aura_damage": 0.25
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_phoenix_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 5
+        },
+        {
+            "id": "upgrade_moonstone_armor",
+            "stat": "armor",
+            "bonus_per_level": 1
+        }
+    ],
+
+    "production": {
+        "building": "fairy_chimera_roost",
+        "cost": {
+            "gold": 350,
+            "wood": 80,
+            "food": 5
+        },
+        "build_time": 50.0,
+        "population_cost": 4,
+        "prerequisites": ["fairy_tree_of_eternity"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/phoenix.bt",
+        "profile": "aggressive",
+        "aggroRange": 14.0,
+        "leashRange": 30.0,
+        "priority_targets": ["building", "siege", "caster"],
+        "use_dive_bomb": false,
+        "dive_bomb_threshold": 0.15
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/phoenix_bird/idle.anim", "loop": true},
+        "fly": {"path": "animations/fairies/phoenix_bird/fly.anim", "loop": true},
+        "attack": {"path": "animations/fairies/phoenix_bird/attack.anim", "loop": false},
+        "sunfire": {"path": "animations/fairies/phoenix_bird/sunfire.anim", "loop": false},
+        "dive": {"path": "animations/fairies/phoenix_bird/dive.anim", "loop": false},
+        "death": {"path": "animations/fairies/phoenix_bird/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/phoenix_bird/select_1.wav", "sounds/fairies/phoenix_bird/select_2.wav"],
+        "acknowledge": ["sounds/fairies/phoenix_bird/ack_1.wav", "sounds/fairies/phoenix_bird/ack_2.wav"],
+        "attack": "sounds/fairies/phoenix_bird/attack.wav",
+        "sunfire": "sounds/fairies/phoenix_bird/sunfire.wav",
+        "rebirth": "sounds/fairies/phoenix_bird/rebirth.wav",
+        "death": "sounds/fairies/phoenix_bird/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/phoenix_bird.png",
+        "icon": "textures/races/fairies/icons/phoenix_bird.png",
+        "hotkey": "X"
+    }
+}

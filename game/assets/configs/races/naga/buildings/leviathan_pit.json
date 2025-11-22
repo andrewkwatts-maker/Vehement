@@ -1,0 +1,135 @@
+{
+    "id": "naga_leviathan_pit",
+    "type": "building",
+    "name": "Leviathan Pit",
+    "description": "A massive underwater chasm where the mightiest sea creatures are bred. Produces siege beasts including the legendary Kraken.",
+    "race": "naga",
+    "tier": 3,
+    "category": "military",
+
+    "tags": ["military", "production", "siege", "legendary", "tier3"],
+
+    "model": {
+        "path": "models/races/naga/buildings/leviathan_pit.obj",
+        "scale": [1.2, 1.2, 1.2]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/buildings/leviathan_pit_diffuse.png",
+        "normal": "textures/races/naga/buildings/leviathan_pit_normal.png",
+        "emissive": "textures/races/naga/buildings/leviathan_pit_glow.png"
+    },
+
+    "footprint": {
+        "gridType": "rect",
+        "size": [6, 6],
+        "entrances": [[3, 0]],
+        "visualSize": [12.0, 8.0, 12.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 450,
+            "coral": 300,
+            "pearls": 100,
+            "abyssal_essence": 50
+        },
+        "time": 90.0,
+        "builder_required": true,
+        "placement_requirements": {
+            "near_water": true,
+            "water_radius": 6
+        }
+    },
+
+    "stats": {
+        "maxHealth": 2000,
+        "armor": 10,
+        "magicResist": 8
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "naga_kraken_spawn",
+            "time": 45.0,
+            "cost": {"gold": 350, "coral": 200, "abyssal_essence": 50},
+            "maxQueue": 3,
+            "requirements": {"age": "age_abyss", "techs": ["naga_kraken_pact"]}
+        },
+        {
+            "type": "unit",
+            "output": "naga_dragon_turtle",
+            "time": 60.0,
+            "cost": {"gold": 480, "coral": 280, "abyssal_essence": 80},
+            "maxQueue": 2,
+            "requirements": {"age": "age_abyss", "techs": ["naga_siege_beasts"]}
+        },
+        {
+            "type": "unit",
+            "output": "naga_kraken",
+            "time": 150.0,
+            "cost": {"gold": 1500, "coral": 800, "pearls": 400, "abyssal_essence": 500},
+            "maxQueue": 1,
+            "requirements": {"age": "age_eternal", "techs": ["naga_kraken_awakening"]}
+        }
+    ],
+
+    "research": [
+        {
+            "id": "naga_kraken_pact",
+            "name": "Kraken Pact",
+            "cost": {"gold": 300, "abyssal_essence": 100},
+            "time": 70.0
+        },
+        {
+            "id": "naga_siege_beasts",
+            "name": "Siege Beast Training",
+            "cost": {"gold": 350, "coral": 200, "abyssal_essence": 75},
+            "time": 80.0
+        },
+        {
+            "id": "naga_kraken_awakening",
+            "name": "Kraken Awakening",
+            "description": "Unlocks the legendary Kraken unit",
+            "cost": {"gold": 800, "pearls": 300, "abyssal_essence": 300},
+            "time": 150.0,
+            "requirements": {"techs": ["naga_kraken_pact"]}
+        },
+        {
+            "id": "naga_siege_training",
+            "name": "Advanced Siege Training",
+            "description": "Increases siege unit damage to buildings by 25%",
+            "cost": {"gold": 250, "coral": 150},
+            "time": 60.0
+        }
+    ],
+
+    "water_bonus": {
+        "near_water_radius": 8,
+        "production_speed_bonus": 0.15,
+        "kraken_damage_bonus": 0.1
+    },
+
+    "aura": {
+        "name": "Abyssal Depths",
+        "radius": 15.0,
+        "effects": [
+            {"stat": "health_regen", "type": "flat", "value": 3.0, "targets": "friendly_siege_units"}
+        ]
+    },
+
+    "requirements": {
+        "buildings": ["naga_palace_of_waves"],
+        "age": "age_abyss"
+    },
+
+    "unique": true,
+    "maxCount": 1,
+
+    "visionRange": 12.0,
+
+    "scripts": {
+        "on_construct_complete": "scripts/buildings/naga/leviathan_pit/on_complete.py"
+    }
+}

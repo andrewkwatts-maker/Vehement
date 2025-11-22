@@ -1,0 +1,201 @@
+{
+  "id": "wendigo",
+  "name": "Wendigo",
+  "race": "cryptids",
+  "tier": 2,
+  "type": "beast",
+  "role": ["melee", "tank", "cannibal"],
+
+  "description": "A gaunt, antlered horror driven by insatiable hunger. The Wendigo grows stronger with each kill, consuming the essence of its victims.",
+  "lore": "Born from the forbidden act of cannibalism in the frozen wilderness, Wendigos are cursed beings of eternal hunger. They were once human, but their consumption of human flesh transformed them into something far worse.",
+
+  "stats": {
+    "health": 600,
+    "healthRegen": 1.5,
+    "mana": 0,
+    "manaRegen": 0,
+    "armor": 3,
+    "armorType": "medium",
+    "moveSpeed": 290,
+    "turnRate": 0.7,
+    "collisionSize": 40,
+    "selectionScale": 1.2
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 28,
+      "variance": 6,
+      "type": "normal"
+    },
+    "attackSpeed": 1.6,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.5,
+    "backswing": 0.5,
+    "acquisitionRange": 500,
+    "aggroRange": 600,
+    "cleave": 0.3
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "consume",
+      "name": "Consume",
+      "type": "active",
+      "targetType": "corpse",
+      "description": "Devours a corpse to heal and permanently gain stats",
+      "cooldown": 10.0,
+      "manaCost": 0,
+      "range": 128,
+      "effects": {
+        "healPercent": 0.3,
+        "permanentHealthBonus": 10,
+        "permanentDamageBonus": 1,
+        "maxStacks": 20
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/consume.png"
+    },
+    {
+      "id": "ravenous_frenzy",
+      "name": "Ravenous Frenzy",
+      "type": "active",
+      "targetType": "none",
+      "description": "Enters a bloodthirsty state, gaining attack speed but losing armor",
+      "cooldown": 30.0,
+      "manaCost": 0,
+      "effects": {
+        "duration": 15.0,
+        "attackSpeedBonus": 0.5,
+        "armorPenalty": 3,
+        "moveSpeedBonus": 30
+      },
+      "hotkey": "F",
+      "icon": "icons/abilities/ravenous_frenzy.png"
+    },
+    {
+      "id": "freezing_aura",
+      "name": "Freezing Aura",
+      "type": "passive",
+      "description": "Nearby enemies are slowed by the wendigo's supernatural cold",
+      "effects": {
+        "radius": 300,
+        "moveSpeedSlow": 0.15,
+        "attackSpeedSlow": 0.1
+      },
+      "icon": "icons/abilities/freezing_aura.png"
+    },
+    {
+      "id": "hunger_grows",
+      "name": "Hunger Grows",
+      "type": "passive",
+      "description": "Gains 10% bonus damage and health for each kill, stacking up to 5 times per battle",
+      "effects": {
+        "bonusPerKill": 0.10,
+        "maxStacks": 5,
+        "resetOnCombatEnd": true
+      },
+      "icon": "icons/abilities/hunger_grows.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "breeding_pit",
+    "buildTime": 35,
+    "cost": {
+      "gold": 220,
+      "lumber": 40,
+      "essence": 25
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["breeding_pit", "sacred_ground"],
+      "technologies": [],
+      "age": "legend"
+    },
+    "hotkey": "W"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["insatiable_hunger", "winter_spirit", "cannibal_strength"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/wendigo/ready.ogg",
+    "select": ["audio/units/wendigo/select1.ogg", "audio/units/wendigo/select2.ogg"],
+    "move": ["audio/units/wendigo/move1.ogg", "audio/units/wendigo/move2.ogg"],
+    "attack": ["audio/units/wendigo/attack1.ogg", "audio/units/wendigo/attack2.ogg"],
+    "death": "audio/units/wendigo/death.ogg",
+    "consume": "audio/units/wendigo/consume.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/wendigo.glb",
+    "texture": "textures/units/cryptids/wendigo.png",
+    "portrait": "textures/portraits/wendigo.png",
+    "icon": "textures/icons/wendigo.png",
+    "scale": 1.2,
+    "animations": {
+      "idle": "wendigo_idle",
+      "walk": "wendigo_walk",
+      "attack": "wendigo_attack",
+      "death": "wendigo_death",
+      "consume": "wendigo_consume",
+      "frenzy": "wendigo_frenzy"
+    },
+    "effects": {
+      "spawn": "effects/wendigo_spawn.vfx",
+      "death": "effects/wendigo_death.vfx",
+      "consume": "effects/consume.vfx",
+      "cold_aura": "effects/freezing_aura.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 6,
+    "priority": "high",
+    "behavior": "berserker",
+    "fleeThreshold": 0.15,
+    "preferredTargets": ["injured", "isolated"],
+    "prioritizeCorpseConsumption": true,
+    "useFrenzyWhenEngaged": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": true,
+    "leavesCorpse": true,
+    "isBeast": true,
+    "canConsume": true,
+    "nightBonus": true,
+    "fearImmune": true
+  },
+
+  "bounty": {
+    "gold": 35,
+    "experience": 50
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

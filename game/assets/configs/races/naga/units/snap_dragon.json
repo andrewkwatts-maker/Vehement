@@ -1,0 +1,189 @@
+{
+    "id": "naga_snap_dragon",
+    "type": "unit",
+    "name": "Snap Dragon",
+    "description": "A fierce aquatic beast with powerful jaws and a venomous bite. These creatures are bred by the Naga as mounts and war beasts.",
+    "race": "naga",
+    "tier": 1,
+    "class": "beast",
+
+    "tags": ["military", "beast", "melee", "tier1", "amphibious", "venomous", "fast"],
+
+    "model": {
+        "path": "models/races/naga/units/snap_dragon.obj",
+        "scale": [1.2, 1.2, 1.2],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/naga/units/snap_dragon_diffuse.png",
+        "normal": "textures/races/naga/units/snap_dragon_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "box",
+                "halfExtents": [0.8, 0.5, 1.5],
+                "offset": [0.0, 0.5, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 200.0,
+        "layer": "unit",
+        "mask": ["terrain", "unit", "building", "projectile"]
+    },
+
+    "movement": {
+        "speed": 7.0,
+        "turnRate": 280.0,
+        "acceleration": 18.0,
+        "deceleration": 22.0,
+        "canSwim": true,
+        "swimSpeed": 9.0,
+        "amphibious": true,
+        "terrainModifiers": {
+            "road": 1.0,
+            "forest": 0.7,
+            "water": 1.5,
+            "deep_water": 1.6,
+            "desert": 0.5
+        }
+    },
+
+    "combat": {
+        "health": 280,
+        "maxHealth": 280,
+        "armor": 2,
+        "magicResist": 0,
+        "attackDamage": 16,
+        "attackSpeed": 1.2,
+        "attackRange": 1.5,
+        "critChance": 0.12,
+        "critMultiplier": 2.0,
+        "physicalDamage": true,
+        "damageType": "pierce",
+        "armorType": "light"
+    },
+
+    "combat_bonuses": {
+        "near_water": {
+            "radius": 10,
+            "attack_speed_bonus": 0.15
+        },
+        "in_water": {
+            "health_regen": 4.0,
+            "speed_bonus": 0.2
+        }
+    },
+
+    "passive_abilities": [
+        {
+            "id": "venomous_bite",
+            "name": "Venomous Bite",
+            "description": "Attacks apply potent venom dealing 6 damage per second for 5 seconds.",
+            "effect": {
+                "type": "dot",
+                "damage_per_tick": 6,
+                "duration": 5,
+                "tick_interval": 1.0
+            }
+        },
+        {
+            "id": "amphibious",
+            "name": "Amphibious",
+            "description": "Can traverse water terrain freely and moves faster in water."
+        },
+        {
+            "id": "predator",
+            "name": "Predator",
+            "description": "Deals 25% bonus damage to light armored targets."
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "lunge",
+            "name": "Lunge",
+            "description": "Leaps at a target, dealing 150% damage and stunning for 1 second.",
+            "icon": "icons/abilities/naga/lunge.png",
+            "cooldown": 14.0,
+            "manaCost": 0,
+            "range": 8.0,
+            "targetType": "enemy_unit",
+            "effects": [
+                {"type": "damage", "multiplier": 1.5},
+                {"type": "stun", "duration": 1.0},
+                {"type": "dash_to_target"}
+            ],
+            "castAnimation": "lunge",
+            "castSound": "sounds/abilities/snap_dragon_lunge.wav"
+        }
+    ],
+
+    "animations": {
+        "idle": {"path": "animations/naga/snap_dragon/idle.anim", "loop": true},
+        "walk": {"path": "animations/naga/snap_dragon/walk.anim", "speed": 1.0, "loop": true},
+        "run": {"path": "animations/naga/snap_dragon/run.anim", "speed": 1.2, "loop": true},
+        "swim": {"path": "animations/naga/snap_dragon/swim.anim", "loop": true},
+        "attack": {
+            "path": "animations/naga/snap_dragon/bite.anim",
+            "loop": false,
+            "events": [[0.25, "deal_damage"]]
+        },
+        "lunge": {"path": "animations/naga/snap_dragon/lunge.anim", "loop": false},
+        "death": {"path": "animations/naga/snap_dragon/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "footstep": {
+            "paths": ["sounds/footsteps/beast_step_1.wav", "sounds/footsteps/beast_step_2.wav"],
+            "volume": 0.6
+        },
+        "attack": "sounds/combat/snap_bite.wav",
+        "death": {"paths": ["sounds/death/beast_death_1.wav"], "volume": 0.9},
+        "hurt": {"paths": ["sounds/hurt/beast_hurt_1.wav"], "volume": 0.7},
+        "select": "sounds/voice/naga/snap_dragon_select.wav",
+        "acknowledge": {"paths": ["sounds/voice/naga/snap_dragon_growl.wav"]}
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/naga_snap_dragon.bt",
+        "profile": "aggressive",
+        "aggroRange": 14.0,
+        "leashRange": 30.0,
+        "preferWater": true,
+        "huntLowHealth": true
+    },
+
+    "production": {
+        "building": "naga_beast_den",
+        "time": 16.0,
+        "cost": {
+            "gold": 90,
+            "coral": 40
+        },
+        "requirements": {
+            "age": "age_shallow",
+            "techs": []
+        }
+    },
+
+    "properties": {
+        "populationCost": 2,
+        "supplyUpkeep": 1,
+        "squadSize": 1,
+        "experienceValue": 22,
+        "bountyGold": 18
+    },
+
+    "upgrades": {
+        "damage": ["naga_beast_fangs_1", "naga_beast_fangs_2"],
+        "special": ["naga_enhanced_venom"]
+    },
+
+    "scripts": {
+        "on_spawn": "scripts/units/naga/snap_dragon/on_spawn.py",
+        "on_death": "scripts/units/naga/snap_dragon/on_death.py"
+    }
+}

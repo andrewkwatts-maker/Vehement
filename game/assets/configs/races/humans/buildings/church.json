@@ -1,0 +1,118 @@
+{
+    "id": "human_church",
+    "type": "building",
+    "race": "humans",
+    "name": "Church",
+    "description": "Holy sanctuary where priests are trained and divine blessings are researched. Provides passive healing to nearby units.",
+
+    "tags": ["magic", "production", "support", "healing"],
+
+    "tier": 2,
+    "age_requirement": 3,
+
+    "model": {
+        "path": "models/races/humans/buildings/church.obj",
+        "scale": [1.0, 1.0, 1.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/buildings/church_diffuse.png",
+        "normal": "textures/races/humans/buildings/church_normal.png"
+    },
+
+    "footprint": {
+        "size": [3, 4],
+        "entrances": [[1, 0]],
+        "visualSize": [8.0, 12.0, 10.0]
+    },
+
+    "construction": {
+        "cost": {
+            "gold": 300,
+            "wood": 150,
+            "stone": 100
+        },
+        "time": 70.0
+    },
+
+    "stats": {
+        "maxHealth": 1000,
+        "armor": 8,
+        "magicResist": 20
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "human_priest",
+            "cost": {"gold": 180, "food": 2},
+            "time": 32.0,
+            "maxQueue": 4
+        }
+    ],
+
+    "researches": [
+        {
+            "id": "upgrade_inner_fire",
+            "name": "Inner Fire",
+            "description": "Enables Inner Fire buff for Priests",
+            "cost": {"gold": 150, "wood": 50},
+            "time": 45.0
+        },
+        {
+            "id": "upgrade_devotion_aura",
+            "name": "Devotion Aura",
+            "description": "Enables Devotion Aura for Priests",
+            "cost": {"gold": 200, "wood": 75},
+            "time": 60.0
+        },
+        {
+            "id": "upgrade_priest_slow",
+            "name": "Slow",
+            "description": "Enables Slow ability for Priests",
+            "cost": {"gold": 175, "wood": 50},
+            "time": 55.0
+        },
+        {
+            "id": "upgrade_paladin_resurrection",
+            "name": "Resurrection",
+            "description": "Paladins gain the ability to resurrect fallen units",
+            "cost": {"gold": 400, "wood": 150},
+            "time": 100.0,
+            "prerequisites": ["human_castle"]
+        },
+        {
+            "id": "upgrade_holy_might",
+            "name": "Holy Might",
+            "description": "+25% healing effectiveness for all holy units",
+            "cost": {"gold": 250, "wood": 100},
+            "time": 75.0,
+            "effects": [{"stat": "heal_effectiveness", "value": 0.25, "scope": "holy"}]
+        }
+    ],
+
+    "aura": {
+        "id": "aura_sanctuary",
+        "name": "Sanctuary",
+        "description": "Nearby friendly units slowly regenerate health",
+        "radius": 15.0,
+        "effects": [
+            {"stat": "healthRegen", "value": 1.5, "type": "flat"}
+        ]
+    },
+
+    "visionRange": 10.0,
+
+    "requirements": {
+        "buildings": ["human_keep"]
+    },
+
+    "unique": true,
+    "maxCount": 2,
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/buildings/church.png",
+        "icon": "textures/races/humans/icons/buildings/church.png",
+        "hotkey": "C"
+    }
+}

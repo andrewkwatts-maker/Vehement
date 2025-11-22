@@ -1,0 +1,209 @@
+{
+    "id": "human_archmage_unit",
+    "type": "unit",
+    "race": "humans",
+    "name": "Archmage",
+    "description": "Masters of the arcane arts who have spent decades perfecting their craft. Their devastating spells can reshape the battlefield in an instant.",
+
+    "tags": ["military", "caster", "ranged", "tier4", "light", "magic", "elite"],
+
+    "tier": 4,
+    "age_requirement": 7,
+
+    "model": {
+        "path": "models/races/humans/units/archmage_unit.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/humans/units/archmage_unit_diffuse.png",
+        "normal": "textures/races/humans/units/archmage_unit_normal.png",
+        "emissive": "textures/races/humans/units/archmage_unit_emissive.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.3,
+                "height": 1.8,
+                "offset": [0.0, 0.9, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 70.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 380,
+        "maxHealth": 380,
+        "healthRegen": 0.75,
+        "mana": 600,
+        "maxMana": 600,
+        "manaRegen": 4.0,
+        "armor": 2,
+        "magicResist": 45,
+        "moveSpeed": 4.2,
+        "turnRate": 320.0
+    },
+
+    "combat": {
+        "attackDamage": 28,
+        "attackSpeed": 2.0,
+        "attackRange": 12.0,
+        "damageType": "magic",
+        "armorType": "light",
+        "attackType": "ranged",
+        "spell_power": 180,
+        "projectile_id": "arcane_missile"
+    },
+
+    "projectile": {
+        "id": "arcane_missile",
+        "model": "models/projectiles/arcane_missile.obj",
+        "speed": 30.0,
+        "lifetime": 3.0,
+        "gravity": 0.0,
+        "trailEffect": "effects/arcane_missile_trail.fx",
+        "impactEffect": "effects/arcane_missile_impact.fx"
+    },
+
+    "aura": {
+        "id": "aura_brilliance",
+        "name": "Brilliance Aura",
+        "description": "Nearby friendly units regenerate mana 75% faster",
+        "radius": 14.0,
+        "effects": [
+            {"stat": "manaRegen", "value": 0.75, "type": "percent"}
+        ]
+    },
+
+    "abilities": [
+        {
+            "id": "ability_meteor_shower",
+            "name": "Meteor Shower",
+            "description": "Call down a barrage of meteors dealing 300 total damage over 4 seconds",
+            "hotkey": "Q",
+            "cooldown": 25.0,
+            "mana_cost": 150,
+            "range": 20.0,
+            "radius": 6.0,
+            "duration": 4.0,
+            "damage_total": 300,
+            "waves": 8,
+            "damage_type": "fire"
+        },
+        {
+            "id": "ability_chain_lightning",
+            "name": "Chain Lightning",
+            "description": "Release lightning that jumps between up to 6 enemies, dealing 80 damage per jump",
+            "hotkey": "W",
+            "cooldown": 12.0,
+            "mana_cost": 100,
+            "range": 14.0,
+            "damage": 80,
+            "bounces": 6,
+            "bounce_range": 8.0,
+            "damage_reduction_per_bounce": 0.0,
+            "damage_type": "lightning"
+        },
+        {
+            "id": "ability_time_stop",
+            "name": "Time Stop",
+            "description": "Freeze all enemy units in an area for 4 seconds",
+            "hotkey": "E",
+            "cooldown": 45.0,
+            "mana_cost": 200,
+            "range": 16.0,
+            "radius": 5.0,
+            "duration": 4.0,
+            "effects": [
+                {"type": "stun", "duration": 4.0},
+                {"type": "invulnerable_during", "value": true}
+            ]
+        },
+        {
+            "id": "ability_arcane_explosion",
+            "name": "Arcane Explosion",
+            "description": "Release a massive wave of arcane energy dealing 200 damage to all nearby enemies",
+            "hotkey": "R",
+            "cooldown": 30.0,
+            "mana_cost": 180,
+            "radius": 8.0,
+            "damage": 200,
+            "knockback": 3.0,
+            "damage_type": "arcane"
+        }
+    ],
+
+    "upgrades": [
+        {
+            "id": "upgrade_archmage_spell_power",
+            "stat": "spell_power",
+            "bonus_per_level": 25
+        },
+        {
+            "id": "upgrade_archmage_mana",
+            "stat": "maxMana",
+            "bonus_per_level": 100
+        }
+    ],
+
+    "production": {
+        "building": "human_mage_tower",
+        "cost": {
+            "gold": 480,
+            "food": 4
+        },
+        "build_time": 65.0,
+        "population_cost": 4,
+        "prerequisites": ["human_castle", "upgrade_archmage_training"],
+        "max_count": 4
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/elite_caster.bt",
+        "profile": "caster",
+        "aggroRange": 12.0,
+        "leashRange": 20.0,
+        "preferred_distance": 14.0,
+        "mana_conservation_threshold": 0.15,
+        "priority_abilities": ["ability_meteor_shower", "ability_chain_lightning"]
+    },
+
+    "animations": {
+        "idle": {"path": "animations/humans/archmage_unit/idle.anim", "loop": true},
+        "walk": {"path": "animations/humans/archmage_unit/walk.anim", "loop": true},
+        "run": {"path": "animations/humans/archmage_unit/run.anim", "loop": true},
+        "attack": {"path": "animations/humans/archmage_unit/attack.anim", "loop": false, "events": [[0.5, "fire_projectile"]]},
+        "cast_meteor": {"path": "animations/humans/archmage_unit/cast_meteor.anim", "loop": false},
+        "cast_lightning": {"path": "animations/humans/archmage_unit/cast_lightning.anim", "loop": false},
+        "cast_time_stop": {"path": "animations/humans/archmage_unit/cast_time_stop.anim", "loop": false},
+        "cast_explosion": {"path": "animations/humans/archmage_unit/cast_explosion.anim", "loop": false},
+        "death": {"path": "animations/humans/archmage_unit/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/humans/archmage_unit/select_1.wav", "sounds/humans/archmage_unit/select_2.wav"],
+        "acknowledge": ["sounds/humans/archmage_unit/ack_1.wav", "sounds/humans/archmage_unit/ack_2.wav"],
+        "attack": "sounds/arcane_missile.wav",
+        "meteor": "sounds/meteor_shower.wav",
+        "lightning": "sounds/chain_lightning.wav",
+        "time_stop": "sounds/time_stop.wav",
+        "explosion": "sounds/arcane_explosion.wav",
+        "death": "sounds/humans/archmage_unit/death.wav"
+    },
+
+    "effects": {
+        "brilliance_aura": "effects/brilliance_aura.fx",
+        "cast_effect": "effects/archmage_cast.fx"
+    },
+
+    "ui": {
+        "portrait": "textures/races/humans/portraits/archmage_unit.png",
+        "icon": "textures/races/humans/icons/archmage_unit.png",
+        "hotkey": "A"
+    }
+}

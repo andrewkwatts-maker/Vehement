@@ -1,0 +1,271 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vehement.game/schemas/custom_map.schema.json",
+  "title": "Vehement Custom Map",
+  "description": "Schema for Vehement custom map files",
+  "type": "object",
+  "required": ["metadata", "terrain"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Map metadata and info",
+      "required": ["name", "size"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name of the map",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "description": {
+          "type": "string",
+          "description": "Map description",
+          "maxLength": 2000
+        },
+        "author": {
+          "type": "string",
+          "description": "Author name"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Author's unique ID (for workshop)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Map version (semver format)",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "default": "1.0.0"
+        },
+        "created": {
+          "type": "integer",
+          "description": "Unix timestamp of creation"
+        },
+        "modified": {
+          "type": "integer",
+          "description": "Unix timestamp of last modification"
+        },
+        "thumbnail": {
+          "type": "string",
+          "description": "Path to thumbnail image"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Categorization tags",
+          "items": {
+            "type": "string"
+          }
+        },
+        "minPlayers": {
+          "type": "integer",
+          "description": "Minimum number of players",
+          "minimum": 1,
+          "maximum": 24,
+          "default": 2
+        },
+        "maxPlayers": {
+          "type": "integer",
+          "description": "Maximum number of players",
+          "minimum": 1,
+          "maximum": 24,
+          "default": 8
+        },
+        "suggestedPlayers": {
+          "type": "string",
+          "description": "Suggested player configuration (e.g., '2v2', '4 FFA')"
+        },
+        "tileset": {
+          "type": "string",
+          "description": "Tileset/biome ID",
+          "enum": ["grassland", "desert", "snow", "volcanic", "swamp", "urban", "custom"]
+        },
+        "size": {
+          "type": "array",
+          "description": "Map dimensions [width, height]",
+          "items": {
+            "type": "integer",
+            "minimum": 32,
+            "maximum": 512
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "terrain": {
+      "type": "object",
+      "description": "Terrain data",
+      "properties": {
+        "heightmap": {
+          "type": "string",
+          "description": "Base64-encoded heightmap data"
+        },
+        "textureMap": {
+          "type": "string",
+          "description": "Base64-encoded texture indices"
+        },
+        "waterLevel": {
+          "type": "number",
+          "description": "Global water level height",
+          "default": 0
+        },
+        "cliffs": {
+          "type": "array",
+          "description": "Cliff data",
+          "items": {
+            "type": "object",
+            "properties": {
+              "position": { "$ref": "#/definitions/vec3" },
+              "type": { "type": "string" },
+              "height": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "description": "Placed objects (units, buildings, doodads)",
+      "items": {
+        "$ref": "#/definitions/placedObject"
+      }
+    },
+    "regions": {
+      "type": "array",
+      "description": "Named regions for triggers",
+      "items": {
+        "$ref": "#/definitions/region"
+      }
+    },
+    "triggerZones": {
+      "type": "array",
+      "description": "Trigger zones for events",
+      "items": {
+        "$ref": "#/definitions/triggerZone"
+      }
+    },
+    "startLocations": {
+      "type": "array",
+      "description": "Player start locations",
+      "items": {
+        "$ref": "#/definitions/startLocation"
+      }
+    },
+    "camera": {
+      "type": "object",
+      "description": "Camera bounds and settings",
+      "properties": {
+        "min": { "$ref": "#/definitions/vec2" },
+        "max": { "$ref": "#/definitions/vec2" },
+        "minZoom": { "type": "number", "default": 0.5 },
+        "maxZoom": { "type": "number", "default": 2.0 }
+      }
+    },
+    "triggerScript": {
+      "type": "string",
+      "description": "Embedded trigger script or path to external file"
+    }
+  },
+  "definitions": {
+    "vec2": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "vec3": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "vec4": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "placedObject": {
+      "type": "object",
+      "required": ["id", "typeId", "position"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique object ID within map"
+        },
+        "typeId": {
+          "type": "string",
+          "description": "Object type identifier"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["unit", "building", "doodad", "item", "special"],
+          "default": "doodad"
+        },
+        "position": { "$ref": "#/definitions/vec3" },
+        "rotation": {
+          "$ref": "#/definitions/vec3",
+          "default": [0, 0, 0]
+        },
+        "scale": {
+          "$ref": "#/definitions/vec3",
+          "default": [1, 1, 1]
+        },
+        "playerId": {
+          "type": "integer",
+          "description": "Owning player ID (-1 for neutral)",
+          "default": -1
+        },
+        "variation": {
+          "type": "integer",
+          "description": "Visual variation index",
+          "default": 0
+        },
+        "properties": {
+          "type": "object",
+          "description": "Custom key-value properties",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "region": {
+      "type": "object",
+      "required": ["id", "name", "center"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "center": { "$ref": "#/definitions/vec3" },
+        "size": { "$ref": "#/definitions/vec3" },
+        "color": { "$ref": "#/definitions/vec4" },
+        "isRect": { "type": "boolean", "default": true },
+        "radius": { "type": "number" }
+      }
+    },
+    "triggerZone": {
+      "type": "object",
+      "required": ["id", "name", "position"],
+      "properties": {
+        "id": { "type": "integer" },
+        "name": { "type": "string" },
+        "position": { "$ref": "#/definitions/vec3" },
+        "radius": { "type": "number", "default": 10 },
+        "isCircle": { "type": "boolean", "default": true },
+        "rectSize": { "$ref": "#/definitions/vec2" },
+        "linkedTriggers": {
+          "type": "array",
+          "items": { "type": "integer" }
+        }
+      }
+    },
+    "startLocation": {
+      "type": "object",
+      "required": ["playerId", "position"],
+      "properties": {
+        "playerId": { "type": "integer" },
+        "position": { "$ref": "#/definitions/vec3" },
+        "facing": { "type": "number", "default": 0 },
+        "race": { "type": "string" },
+        "goldMine": { "type": "integer", "default": -1 }
+      }
+    }
+  }
+}

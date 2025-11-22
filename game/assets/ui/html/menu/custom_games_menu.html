@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Games - Conquest of Realms</title>
+    <link rel="stylesheet" href="../../css/ui_base.css">
+    <link rel="stylesheet" href="../../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../../css/ui_animations.css">
+    <link rel="stylesheet" href="../../css/menu_theme.css">
+</head>
+<body>
+    <div id="custom-games-menu" class="menu-container">
+        <div class="parallax-container">
+            <div class="parallax-layer layer-back"></div>
+            <div class="parallax-overlay"></div>
+        </div>
+
+        <div class="custom-games-content">
+            <!-- Header -->
+            <div class="cg-header">
+                <button class="menu-btn menu-btn-sm" onclick="CustomGamesMenu.back()">&larr; Back</button>
+                <h1 class="cg-title">Custom Games</h1>
+                <button class="menu-btn menu-btn-primary menu-btn-sm" onclick="CustomGamesMenu.hostGame()">
+                    + Host New Game
+                </button>
+            </div>
+
+            <div class="cg-layout">
+                <!-- Filters Sidebar -->
+                <div class="cg-filters menu-panel">
+                    <h3>Filters</h3>
+                    <div class="filter-group">
+                        <label>Game Mode</label>
+                        <select class="menu-select" id="filter-mode" onchange="CustomGamesMenu.applyFilters()">
+                            <option value="">All Modes</option>
+                            <option value="melee">Melee</option>
+                            <option value="coop">Co-op vs AI</option>
+                            <option value="custom">Custom Scenario</option>
+                            <option value="survival">Survival</option>
+                            <option value="tower_defense">Tower Defense</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Map Size</label>
+                        <select class="menu-select" id="filter-size" onchange="CustomGamesMenu.applyFilters()">
+                            <option value="">Any Size</option>
+                            <option value="small">Small (2-4 players)</option>
+                            <option value="medium">Medium (4-6 players)</option>
+                            <option value="large">Large (6-8 players)</option>
+                            <option value="massive">Massive (8+ players)</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select class="menu-select" id="filter-status" onchange="CustomGamesMenu.applyFilters()">
+                            <option value="waiting">Waiting for Players</option>
+                            <option value="starting">Starting Soon</option>
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="menu-checkbox">
+                            <input type="checkbox" id="filter-password" onchange="CustomGamesMenu.applyFilters()">
+                            <span class="menu-checkbox-box"></span>
+                            <span class="menu-checkbox-label">Hide Password Protected</span>
+                        </label>
+                    </div>
+                    <button class="menu-btn menu-btn-sm" onclick="CustomGamesMenu.refreshList()">Refresh</button>
+                </div>
+
+                <!-- Games List -->
+                <div class="cg-games-list">
+                    <div class="games-list-header">
+                        <span class="col-name" onclick="CustomGamesMenu.sortBy('name')">Game Name</span>
+                        <span class="col-host" onclick="CustomGamesMenu.sortBy('host')">Host</span>
+                        <span class="col-map" onclick="CustomGamesMenu.sortBy('map')">Map</span>
+                        <span class="col-mode" onclick="CustomGamesMenu.sortBy('mode')">Mode</span>
+                        <span class="col-players" onclick="CustomGamesMenu.sortBy('players')">Players</span>
+                        <span class="col-status">Status</span>
+                    </div>
+                    <div class="games-list menu-scrollable" id="games-list">
+                        <!-- Games populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Game Details Panel -->
+                <div class="cg-details menu-panel" id="game-details-panel">
+                    <h3>Game Details</h3>
+                    <div id="game-details-content">
+                        <p class="empty-state">Select a game to view details</p>
+                    </div>
+                    <div class="cg-actions" id="game-actions" style="display: none;">
+                        <input type="password" class="menu-input" id="game-password" placeholder="Password (if required)" style="display: none;">
+                        <button class="menu-btn menu-btn-primary" id="btn-join" onclick="CustomGamesMenu.joinGame()">Join Game</button>
+                        <button class="menu-btn menu-btn-sm" onclick="CustomGamesMenu.spectateGame()">Spectate</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Games -->
+            <div class="cg-recent menu-panel">
+                <h3>Recent Games</h3>
+                <div class="recent-games-list" id="recent-games">
+                    <!-- Recent games populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Host Game Modal -->
+        <div id="host-modal" class="menu-modal-overlay" style="display: none;">
+            <div class="menu-panel menu-panel-ornate host-modal-content">
+                <div class="menu-panel-header">
+                    <h3 class="menu-panel-title">Host New Game</h3>
+                    <button class="menu-panel-close" onclick="CustomGamesMenu.closeHostModal()">&times;</button>
+                </div>
+                <div class="host-form">
+                    <div class="form-row">
+                        <label>Game Name</label>
+                        <input type="text" class="menu-input" id="host-name" placeholder="My Awesome Game" maxlength="40">
+                    </div>
+                    <div class="form-row">
+                        <label>Map</label>
+                        <select class="menu-select" id="host-map">
+                            <option value="random">Random</option>
+                            <option value="contested_valley">Contested Valley</option>
+                            <option value="twin_rivers">Twin Rivers</option>
+                            <option value="highland_fortress">Highland Fortress</option>
+                            <option value="desert_storm">Desert Storm</option>
+                            <option value="frozen_throne">Frozen Throne</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Game Mode</label>
+                        <select class="menu-select" id="host-mode">
+                            <option value="melee">Melee</option>
+                            <option value="coop">Co-op vs AI</option>
+                            <option value="survival">Survival</option>
+                            <option value="tower_defense">Tower Defense</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Max Players</label>
+                        <select class="menu-select" id="host-players">
+                            <option value="2">2 Players</option>
+                            <option value="4">4 Players</option>
+                            <option value="6" selected>6 Players</option>
+                            <option value="8">8 Players</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Password (Optional)</label>
+                        <input type="password" class="menu-input" id="host-password" placeholder="Leave empty for public">
+                    </div>
+                    <div class="form-row">
+                        <label class="menu-checkbox">
+                            <input type="checkbox" id="host-allow-spectators" checked>
+                            <span class="menu-checkbox-box"></span>
+                            <span class="menu-checkbox-label">Allow Spectators</span>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button class="menu-btn menu-btn-sm" onclick="CustomGamesMenu.closeHostModal()">Cancel</button>
+                        <button class="menu-btn menu-btn-primary" onclick="CustomGamesMenu.createGame()">Create Game</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/ui_core.js"></script>
+    <script src="../../js/menu_core.js"></script>
+    <script>
+        const CustomGamesMenu = {
+            _games: [],
+            _selectedGame: null,
+            _sortField: 'players',
+            _sortAsc: false,
+
+            init: function() {
+                MenuCore.init();
+                this.refreshList();
+                this.loadRecentGames();
+            },
+
+            refreshList: function() {
+                Engine.call('CustomGames.getList', this.getFilters(), (games) => {
+                    this._games = games || this.getMockGames();
+                    this.renderGamesList();
+                });
+            },
+
+            getMockGames: function() {
+                return [
+                    { id: 1, name: "Pros Only 1v1", host: "Champion", map: "Contested Valley", mode: "Melee", players: "1/2", maxPlayers: 2, status: "waiting", hasPassword: false },
+                    { id: 2, name: "Casual Fun Game", host: "FriendlyGuy", map: "Twin Rivers", mode: "Melee", players: "3/6", maxPlayers: 6, status: "waiting", hasPassword: false },
+                    { id: 3, name: "Co-op Nightmare", host: "TeamPlayer", map: "Highland Fortress", mode: "Co-op vs AI", players: "2/4", maxPlayers: 4, status: "waiting", hasPassword: true },
+                    { id: 4, name: "Survival Challenge", host: "Survivor99", map: "Desert Storm", mode: "Survival", players: "5/8", maxPlayers: 8, status: "starting", hasPassword: false },
+                    { id: 5, name: "Tower Defense Masters", host: "Builder", map: "Frozen Throne", mode: "Tower Defense", players: "4/4", maxPlayers: 4, status: "starting", hasPassword: false }
+                ];
+            },
+
+            getFilters: function() {
+                return {
+                    mode: document.getElementById('filter-mode').value,
+                    size: document.getElementById('filter-size').value,
+                    status: document.getElementById('filter-status').value,
+                    hidePassword: document.getElementById('filter-password').checked
+                };
+            },
+
+            applyFilters: function() {
+                this.refreshList();
+            },
+
+            renderGamesList: function() {
+                const list = document.getElementById('games-list');
+                list.innerHTML = '';
+
+                let filtered = [...this._games];
+                const filters = this.getFilters();
+
+                if (filters.mode) filtered = filtered.filter(g => g.mode.toLowerCase().includes(filters.mode));
+                if (filters.status) filtered = filtered.filter(g => g.status === filters.status);
+                if (filters.hidePassword) filtered = filtered.filter(g => !g.hasPassword);
+
+                // Sort
+                filtered.sort((a, b) => {
+                    let valA = a[this._sortField];
+                    let valB = b[this._sortField];
+                    if (typeof valA === 'string') valA = valA.toLowerCase();
+                    if (typeof valB === 'string') valB = valB.toLowerCase();
+                    return this._sortAsc ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+                });
+
+                filtered.forEach(game => {
+                    const row = document.createElement('div');
+                    row.className = 'game-row' + (game.status === 'starting' ? ' starting' : '');
+                    row.dataset.gameId = game.id;
+                    row.innerHTML = `
+                        <span class="col-name">${game.hasPassword ? '🔒 ' : ''}${game.name}</span>
+                        <span class="col-host">${game.host}</span>
+                        <span class="col-map">${game.map}</span>
+                        <span class="col-mode">${game.mode}</span>
+                        <span class="col-players">${game.players}</span>
+                        <span class="col-status status-${game.status}">${game.status === 'waiting' ? 'Waiting' : 'Starting'}</span>
+                    `;
+                    row.onclick = () => this.selectGame(game);
+                    list.appendChild(row);
+                });
+
+                if (filtered.length === 0) {
+                    list.innerHTML = '<div class="empty-state">No games found matching your filters</div>';
+                }
+            },
+
+            selectGame: function(game) {
+                this._selectedGame = game;
+                document.querySelectorAll('.game-row').forEach(r => r.classList.remove('selected'));
+                document.querySelector(`.game-row[data-game-id="${game.id}"]`)?.classList.add('selected');
+
+                document.getElementById('game-details-content').innerHTML = `
+                    <div class="detail-item"><strong>Name:</strong> ${game.name}</div>
+                    <div class="detail-item"><strong>Host:</strong> ${game.host}</div>
+                    <div class="detail-item"><strong>Map:</strong> ${game.map}</div>
+                    <div class="detail-item"><strong>Mode:</strong> ${game.mode}</div>
+                    <div class="detail-item"><strong>Players:</strong> ${game.players}</div>
+                    <div class="detail-item"><strong>Status:</strong> ${game.status}</div>
+                    ${game.hasPassword ? '<div class="detail-item password-required">🔒 Password Required</div>' : ''}
+                `;
+
+                document.getElementById('game-actions').style.display = 'flex';
+                document.getElementById('game-password').style.display = game.hasPassword ? 'block' : 'none';
+            },
+
+            sortBy: function(field) {
+                if (this._sortField === field) {
+                    this._sortAsc = !this._sortAsc;
+                } else {
+                    this._sortField = field;
+                    this._sortAsc = true;
+                }
+                this.renderGamesList();
+            },
+
+            joinGame: function() {
+                if (!this._selectedGame) return;
+                const password = document.getElementById('game-password').value;
+                Engine.call('CustomGames.join', { gameId: this._selectedGame.id, password: password });
+            },
+
+            spectateGame: function() {
+                if (!this._selectedGame) return;
+                Engine.call('CustomGames.spectate', { gameId: this._selectedGame.id });
+            },
+
+            hostGame: function() {
+                document.getElementById('host-modal').style.display = 'flex';
+            },
+
+            closeHostModal: function() {
+                document.getElementById('host-modal').style.display = 'none';
+            },
+
+            createGame: function() {
+                const settings = {
+                    name: document.getElementById('host-name').value || 'New Game',
+                    map: document.getElementById('host-map').value,
+                    mode: document.getElementById('host-mode').value,
+                    maxPlayers: parseInt(document.getElementById('host-players').value),
+                    password: document.getElementById('host-password').value,
+                    allowSpectators: document.getElementById('host-allow-spectators').checked
+                };
+                Engine.call('CustomGames.create', settings);
+                this.closeHostModal();
+            },
+
+            loadRecentGames: function() {
+                const recentList = document.getElementById('recent-games');
+                const recent = [
+                    { name: "Last Night's Epic", map: "Twin Rivers", result: "Victory", date: "2 hours ago" },
+                    { name: "Quick Match", map: "Highland Fortress", result: "Defeat", date: "Yesterday" }
+                ];
+
+                recentList.innerHTML = recent.map(g => `
+                    <div class="recent-game-item">
+                        <div class="recent-game-name">${g.name}</div>
+                        <div class="recent-game-info">${g.map} - <span class="result-${g.result.toLowerCase()}">${g.result}</span></div>
+                        <div class="recent-game-date">${g.date}</div>
+                    </div>
+                `).join('');
+            },
+
+            back: function() {
+                Engine.call('Menu.navigate', { page: 'main' });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => CustomGamesMenu.init());
+        window.CustomGamesMenu = CustomGamesMenu;
+    </script>
+
+    <style>
+        .custom-games-content {
+            position: relative;
+            z-index: var(--menu-z-content);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: var(--menu-spacing-lg);
+            gap: var(--menu-spacing-lg);
+        }
+
+        .cg-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cg-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-xxl);
+            color: var(--menu-gold-light);
+        }
+
+        .cg-layout {
+            display: flex;
+            gap: var(--menu-spacing-lg);
+            flex: 1;
+        }
+
+        .cg-filters {
+            width: 250px;
+            border-radius: var(--menu-radius-md);
+        }
+
+        .filter-group {
+            margin-bottom: var(--menu-spacing-md);
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: var(--menu-spacing-xs);
+            color: var(--menu-text-secondary);
+        }
+
+        .cg-games-list {
+            flex: 1;
+        }
+
+        .games-list-header, .game-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 0.8fr 0.8fr;
+            gap: var(--menu-spacing-md);
+            padding: var(--menu-spacing-md);
+        }
+
+        .games-list-header {
+            background: rgba(212, 168, 75, 0.2);
+            font-weight: 600;
+            color: var(--menu-gold-light);
+            cursor: pointer;
+        }
+
+        .games-list {
+            max-height: 500px;
+            background: rgba(20, 18, 28, 0.8);
+        }
+
+        .game-row {
+            border-bottom: 1px solid rgba(212, 168, 75, 0.1);
+            cursor: pointer;
+            transition: background var(--menu-transition-fast);
+        }
+
+        .game-row:hover { background: rgba(45, 40, 60, 0.9); }
+        .game-row.selected { background: rgba(212, 168, 75, 0.2); border-left: 3px solid var(--menu-gold); }
+        .game-row.starting { animation: pulse-bg 2s ease-in-out infinite; }
+
+        @keyframes pulse-bg {
+            0%, 100% { background: rgba(25, 22, 35, 0.8); }
+            50% { background: rgba(212, 168, 75, 0.15); }
+        }
+
+        .status-waiting { color: var(--menu-green); }
+        .status-starting { color: var(--menu-gold); }
+
+        .cg-details {
+            width: 300px;
+            border-radius: var(--menu-radius-md);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-item { margin-bottom: var(--menu-spacing-sm); }
+        .password-required { color: var(--menu-gold); margin-top: var(--menu-spacing-md); }
+
+        .cg-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-sm);
+            margin-top: auto;
+        }
+
+        .cg-recent {
+            border-radius: var(--menu-radius-md);
+        }
+
+        .recent-games-list {
+            display: flex;
+            gap: var(--menu-spacing-md);
+        }
+
+        .recent-game-item {
+            padding: var(--menu-spacing-md);
+            background: rgba(25, 22, 35, 0.8);
+            border: 1px solid rgba(212, 168, 75, 0.2);
+            flex: 1;
+        }
+
+        .recent-game-name { font-weight: 600; color: var(--menu-text-primary); }
+        .recent-game-info { font-size: var(--menu-font-size-sm); color: var(--menu-text-secondary); }
+        .recent-game-date { font-size: var(--menu-font-size-xs); color: var(--menu-text-disabled); }
+        .result-victory { color: var(--menu-green); }
+        .result-defeat { color: var(--menu-red); }
+
+        .host-modal-content { width: 500px; }
+        .host-form { padding: var(--menu-spacing-md); }
+        .form-row { margin-bottom: var(--menu-spacing-md); }
+        .form-row label { display: block; margin-bottom: var(--menu-spacing-xs); color: var(--menu-text-secondary); }
+        .form-actions { display: flex; gap: var(--menu-spacing-md); justify-content: flex-end; margin-top: var(--menu-spacing-lg); }
+        .empty-state { padding: var(--menu-spacing-xl); text-align: center; color: var(--menu-text-secondary); }
+    </style>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Campaign Select</title>
+    <link rel="stylesheet" href="../css/ui_base.css">
+    <link rel="stylesheet" href="../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../css/ui_animations.css">
+    <style>
+        .campaign-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
+            overflow: hidden;
+        }
+
+        .campaign-header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .campaign-title {
+            font-size: 32px;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .back-button {
+            background: rgba(100, 100, 100, 0.3);
+            border: 1px solid #666;
+            padding: 10px 20px;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: rgba(150, 150, 150, 0.4);
+            border-color: #888;
+        }
+
+        .carousel-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 0 100px;
+        }
+
+        .carousel-arrow {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            border-radius: 50%;
+            color: #FFD700;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .carousel-arrow:hover {
+            background: rgba(255, 215, 0, 0.4);
+            transform: scale(1.1);
+        }
+
+        .carousel-arrow.left { left: 20px; }
+        .carousel-arrow.right { right: 20px; }
+
+        .carousel-track {
+            display: flex;
+            gap: 40px;
+            transition: transform 0.5s ease-out;
+        }
+
+        .campaign-card {
+            width: 350px;
+            height: 500px;
+            background: rgba(30, 30, 50, 0.9);
+            border: 2px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .campaign-card:hover {
+            transform: translateY(-10px);
+            border-color: #FFD700;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .campaign-card.active {
+            border-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .campaign-card.locked {
+            filter: grayscale(0.8);
+            opacity: 0.6;
+        }
+
+        .campaign-card.locked:hover {
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .campaign-banner {
+            width: 100%;
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .campaign-banner::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(transparent, rgba(30, 30, 50, 1));
+        }
+
+        .race-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #FFD700;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .lock-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: #888;
+        }
+
+        .campaign-info {
+            padding: 20px;
+        }
+
+        .campaign-name {
+            font-size: 24px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .campaign-desc {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.5;
+            height: 80px;
+            overflow: hidden;
+        }
+
+        .campaign-progress {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(100, 100, 100, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.5s;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .campaign-status {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-badge.completed {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+        }
+
+        .status-badge.in-progress {
+            background: rgba(255, 152, 0, 0.3);
+            color: #FF9800;
+        }
+
+        .status-badge.new {
+            background: rgba(33, 150, 243, 0.3);
+            color: #2196F3;
+        }
+
+        .campaign-footer {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .action-button {
+            padding: 15px 40px;
+            font-size: 18px;
+            border: 2px solid;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .action-button.primary {
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+
+        .action-button.primary:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .action-button.secondary {
+            border-color: #666;
+            color: #aaa;
+        }
+
+        .action-button.secondary:hover {
+            border-color: #888;
+            color: #fff;
+        }
+
+        .dots-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div class="campaign-container" id="campaign-container">
+        <div class="campaign-header">
+            <h1 class="campaign-title">Select Campaign</h1>
+            <button class="back-button" onclick="CampaignSelect.back()">Back to Menu</button>
+        </div>
+
+        <div class="carousel-container">
+            <button class="carousel-arrow left" onclick="CampaignSelect.prev()">&#9664;</button>
+
+            <div class="carousel-track" id="carousel-track">
+                <!-- Campaign cards populated dynamically -->
+            </div>
+
+            <button class="carousel-arrow right" onclick="CampaignSelect.next()">&#9654;</button>
+        </div>
+
+        <div class="dots-indicator" id="dots-indicator"></div>
+
+        <div class="campaign-footer">
+            <button class="action-button secondary" onclick="CampaignSelect.continueCampaign()" id="btn-continue" style="display: none;">
+                Continue
+            </button>
+            <button class="action-button primary" onclick="CampaignSelect.startCampaign()" id="btn-start">
+                Start Campaign
+            </button>
+        </div>
+    </div>
+
+    <script src="../js/ui_core.js"></script>
+    <script>
+        const CampaignSelect = {
+            campaigns: [],
+            currentIndex: 0,
+
+            init: function() {
+                // Initialize with placeholder data
+                this.campaigns = [];
+                this.render();
+            },
+
+            setCampaigns: function(data) {
+                this.campaigns = data.campaigns || [];
+                this.currentIndex = data.selectedIndex || 0;
+                this.render();
+            },
+
+            render: function() {
+                const track = document.getElementById('carousel-track');
+                const dots = document.getElementById('dots-indicator');
+
+                track.innerHTML = '';
+                dots.innerHTML = '';
+
+                this.campaigns.forEach((campaign, index) => {
+                    const card = this.createCard(campaign, index);
+                    track.appendChild(card);
+
+                    const dot = document.createElement('div');
+                    dot.className = 'dot' + (index === this.currentIndex ? ' active' : '');
+                    dot.onclick = () => this.goTo(index);
+                    dots.appendChild(dot);
+                });
+
+                this.updateCarousel();
+                this.updateButtons();
+            },
+
+            createCard: function(campaign, index) {
+                const card = document.createElement('div');
+                card.className = 'campaign-card' +
+                    (index === this.currentIndex ? ' active' : '') +
+                    (campaign.isLocked ? ' locked' : '');
+                card.onclick = () => campaign.isLocked ? null : this.select(index);
+
+                card.innerHTML = `
+                    <div class="campaign-banner" style="background-image: url('${campaign.bannerImage || ''}')">
+                        <img class="race-icon" src="${campaign.thumbnailImage || ''}" alt="${campaign.raceId}">
+                        ${campaign.isLocked ? '<div class="lock-icon">&#128274;</div>' : ''}
+                    </div>
+                    <div class="campaign-info">
+                        <div class="campaign-name">${campaign.title}</div>
+                        <div class="campaign-desc">${campaign.description}</div>
+                        <div class="campaign-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${campaign.completionPercent}%"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span>${campaign.chaptersCompleted}/${campaign.chaptersTotal} Chapters</span>
+                                <span>${Math.round(campaign.completionPercent)}%</span>
+                            </div>
+                        </div>
+                        <div class="campaign-status">
+                            ${campaign.isCompleted ? '<span class="status-badge completed">Completed</span>' : ''}
+                            ${campaign.completionPercent > 0 && !campaign.isCompleted ? '<span class="status-badge in-progress">In Progress</span>' : ''}
+                            ${campaign.completionPercent === 0 && !campaign.isLocked ? '<span class="status-badge new">New</span>' : ''}
+                        </div>
+                    </div>
+                `;
+
+                return card;
+            },
+
+            select: function(index) {
+                this.currentIndex = index;
+                this.render();
+                Engine.call('CampaignUI.selectCampaign', { id: this.campaigns[index].id });
+            },
+
+            goTo: function(index) {
+                this.currentIndex = index;
+                this.render();
+            },
+
+            next: function() {
+                if (this.campaigns.length === 0) return;
+                this.currentIndex = (this.currentIndex + 1) % this.campaigns.length;
+                this.render();
+            },
+
+            prev: function() {
+                if (this.campaigns.length === 0) return;
+                this.currentIndex = (this.currentIndex - 1 + this.campaigns.length) % this.campaigns.length;
+                this.render();
+            },
+
+            updateCarousel: function() {
+                const track = document.getElementById('carousel-track');
+                const offset = -this.currentIndex * 390; // card width + gap
+                track.style.transform = `translateX(${offset}px)`;
+            },
+
+            updateButtons: function() {
+                const campaign = this.campaigns[this.currentIndex];
+                const continueBtn = document.getElementById('btn-continue');
+                const startBtn = document.getElementById('btn-start');
+
+                if (campaign && campaign.completionPercent > 0 && !campaign.isCompleted) {
+                    continueBtn.style.display = 'block';
+                    startBtn.textContent = 'Restart';
+                } else {
+                    continueBtn.style.display = 'none';
+                    startBtn.textContent = 'Start Campaign';
+                }
+            },
+
+            startCampaign: function() {
+                const campaign = this.campaigns[this.currentIndex];
+                if (campaign && !campaign.isLocked) {
+                    Engine.call('CampaignUI.startCampaign', { id: campaign.id });
+                }
+            },
+
+            continueCampaign: function() {
+                const campaign = this.campaigns[this.currentIndex];
+                if (campaign) {
+                    Engine.call('CampaignUI.continueCampaign', { id: campaign.id });
+                }
+            },
+
+            back: function() {
+                Engine.call('CampaignUI.back', {});
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => CampaignSelect.init());
+        window.CampaignSelect = CampaignSelect;
+    </script>
+</body>
+</html>

@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Browser</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #2a2a3e;
+            --bg-tertiary: #363650;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #4488ff;
+            --accent-secondary: #44ff88;
+            --accent-warning: #ffaa44;
+            --accent-danger: #ff4444;
+            --border-color: #404060;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .browser-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent-primary);
+        }
+
+        .search-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            width: 200px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .path-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb-item {
+            padding: 2px 6px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .breadcrumb-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .breadcrumb-separator {
+            color: var(--border-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Folder Tree */
+        .folder-tree {
+            width: 200px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tree-header {
+            padding: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tree-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .folder-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            border-radius: 3px;
+            margin: 1px 0;
+        }
+
+        .folder-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .folder-item.selected {
+            background: var(--accent-primary);
+        }
+
+        .folder-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            fill: var(--accent-warning);
+        }
+
+        .folder-expand {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        .folder-children {
+            margin-left: 16px;
+        }
+
+        /* File List */
+        .file-list-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .file-list-header {
+            padding: 8px 10px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 2px;
+        }
+
+        .view-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .view-btn:first-child {
+            border-radius: 3px 0 0 3px;
+        }
+
+        .view-btn:last-child {
+            border-radius: 0 3px 3px 0;
+        }
+
+        .view-btn.active {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        .file-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-left: auto;
+        }
+
+        /* Grid View */
+        .file-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            align-content: start;
+        }
+
+        .file-grid.list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* File Card */
+        .file-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.1s;
+        }
+
+        .file-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+        }
+
+        .file-card.selected {
+            border-color: var(--accent-warning);
+            border-width: 2px;
+        }
+
+        .file-card.folder {
+            background: var(--bg-tertiary);
+        }
+
+        .file-thumbnail {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #1a1a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .file-thumbnail-icon {
+            width: 48px;
+            height: 48px;
+            fill: var(--accent-primary);
+        }
+
+        .file-card.folder .file-thumbnail-icon {
+            fill: var(--accent-warning);
+        }
+
+        .file-duration {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .file-info {
+            padding: 8px;
+        }
+
+        .file-name {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* List View Style */
+        .file-grid.list-view .file-card {
+            display: flex;
+            align-items: center;
+            border-radius: 4px;
+        }
+
+        .file-grid.list-view .file-thumbnail {
+            width: 80px;
+            height: 45px;
+            aspect-ratio: auto;
+            flex-shrink: 0;
+        }
+
+        .file-grid.list-view .file-thumbnail-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .file-grid.list-view .file-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .file-grid.list-view .file-name {
+            margin-bottom: 0;
+            width: 200px;
+        }
+
+        .file-grid.list-view .file-meta {
+            flex: 1;
+            display: flex;
+            gap: 30px;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            padding: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .preview-viewport {
+            height: 200px;
+            background: #1a1a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .preview-placeholder {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .preview-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-btn {
+            width: 28px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.7);
+            border: none;
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .preview-timeline {
+            flex: 1;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .preview-progress {
+            height: 100%;
+            background: var(--accent-primary);
+            border-radius: 2px;
+            width: 0%;
+        }
+
+        .preview-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .preview-section {
+            margin-bottom: 15px;
+        }
+
+        .preview-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .preview-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .preview-label {
+            width: 80px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .preview-value {
+            flex: 1;
+            font-size: 11px;
+        }
+
+        /* Bone List */
+        .bone-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        .bone-item {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 3px;
+        }
+
+        .bone-item:hover {
+            background: var(--bg-primary);
+        }
+
+        /* Event List */
+        .event-list {
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+
+        .event-time {
+            width: 50px;
+            color: var(--accent-primary);
+            font-family: monospace;
+        }
+
+        .event-name {
+            flex: 1;
+        }
+
+        .preview-actions {
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .action-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .action-btn.primary {
+            background: var(--accent-primary);
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 0;
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .context-menu-item:hover {
+            background: var(--accent-primary);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="backBtn" title="Back">< Back</button>
+                <button class="toolbar-btn" id="upBtn" title="Up">Up</button>
+                <button class="toolbar-btn" id="refreshBtn" title="Refresh">Refresh</button>
+            </div>
+            <div class="toolbar-group">
+                <div class="path-breadcrumb" id="pathBreadcrumb">
+                    <span class="breadcrumb-item" data-path="/">animations</span>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item" data-path="/characters">characters</span>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-item" data-path="/characters/human">human</span>
+                </div>
+            </div>
+            <div class="toolbar-group">
+                <input type="text" class="search-input" placeholder="Search animations..." id="searchInput">
+            </div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="newFolderBtn">New Folder</button>
+                <button class="toolbar-btn" id="importBtn">Import</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Folder Tree -->
+            <div class="folder-tree">
+                <div class="tree-header">Folders</div>
+                <div class="tree-content" id="folderTree">
+                    <!-- Folder tree populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div class="file-list-container">
+                <div class="file-list-header">
+                    <div class="view-toggle">
+                        <button class="view-btn active" id="gridViewBtn">Grid</button>
+                        <button class="view-btn" id="listViewBtn">List</button>
+                    </div>
+                    <select class="toolbar-btn" id="filterSelect" style="padding:4px 8px;">
+                        <option>All Types</option>
+                        <option>Animation Clips</option>
+                        <option>Animation Sets</option>
+                        <option>Blend Trees</option>
+                    </select>
+                    <span class="file-count" id="fileCount">8 items</span>
+                </div>
+                <div class="file-grid" id="fileGrid">
+                    <!-- Files populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="preview-panel">
+                <div class="preview-header">Preview</div>
+                <div class="preview-viewport">
+                    <span class="preview-placeholder" id="previewPlaceholder">Select an animation</span>
+                    <div class="preview-controls" style="display:none;" id="previewControls">
+                        <button class="preview-btn" id="playPauseBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </button>
+                        <div class="preview-timeline" id="previewTimeline">
+                            <div class="preview-progress" id="previewProgress"></div>
+                        </div>
+                        <span class="preview-time" id="previewTime">0:00 / 0:00</span>
+                    </div>
+                </div>
+                <div class="preview-content" id="previewContent">
+                    <div class="preview-section">
+                        <div class="preview-section-title">Information</div>
+                        <div class="preview-row">
+                            <span class="preview-label">Name</span>
+                            <span class="preview-value" id="animName">-</span>
+                        </div>
+                        <div class="preview-row">
+                            <span class="preview-label">Duration</span>
+                            <span class="preview-value" id="animDuration">-</span>
+                        </div>
+                        <div class="preview-row">
+                            <span class="preview-label">Frame Rate</span>
+                            <span class="preview-value" id="animFPS">-</span>
+                        </div>
+                        <div class="preview-row">
+                            <span class="preview-label">Loop</span>
+                            <span class="preview-value" id="animLoop">-</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <div class="preview-section-title">Bones (<span id="boneCountLabel">0</span>)</div>
+                        <div class="bone-list" id="boneList">
+                            <!-- Bones populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <div class="preview-section-title">Events (<span id="eventCountLabel">0</span>)</div>
+                        <div class="event-list" id="eventList">
+                            <!-- Events populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-actions">
+                    <button class="action-btn primary" id="openBtn">Open in Editor</button>
+                    <button class="action-btn" id="duplicateBtn">Duplicate</button>
+                    <button class="action-btn" id="exportBtn">Export...</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="open">Open</div>
+        <div class="context-menu-item" data-action="preview">Preview</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="duplicate">Duplicate</div>
+        <div class="context-menu-item" data-action="rename">Rename</div>
+        <div class="context-menu-item" data-action="move">Move to...</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="export">Export...</div>
+        <div class="context-menu-item" data-action="delete">Delete</div>
+    </div>
+
+    <script>
+        class AnimationBrowser {
+            constructor() {
+                this.currentPath = '/animations/characters/human';
+                this.files = [];
+                this.folders = [];
+                this.selectedFile = null;
+                this.viewMode = 'grid';
+                this.searchQuery = '';
+                this.isPlaying = false;
+                this.currentTime = 0;
+
+                this.init();
+            }
+
+            init() {
+                this.initSampleData();
+                this.initEventListeners();
+                this.renderFolderTree();
+                this.renderFiles();
+            }
+
+            initSampleData() {
+                this.folderStructure = {
+                    name: 'animations',
+                    path: '/animations',
+                    children: [
+                        {
+                            name: 'characters',
+                            path: '/animations/characters',
+                            children: [
+                                { name: 'human', path: '/animations/characters/human', children: [] },
+                                { name: 'orc', path: '/animations/characters/orc', children: [] },
+                                { name: 'elf', path: '/animations/characters/elf', children: [] }
+                            ]
+                        },
+                        {
+                            name: 'creatures',
+                            path: '/animations/creatures',
+                            children: [
+                                { name: 'dragon', path: '/animations/creatures/dragon', children: [] },
+                                { name: 'wolf', path: '/animations/creatures/wolf', children: [] }
+                            ]
+                        },
+                        {
+                            name: 'shared',
+                            path: '/animations/shared',
+                            children: []
+                        }
+                    ]
+                };
+
+                this.files = [
+                    { name: 'idle.anim.json', type: 'animation', duration: 2.0, fps: 30, loop: true, bones: 45, events: [{ time: 1.0, name: 'Breathe' }] },
+                    { name: 'walk.anim.json', type: 'animation', duration: 1.0, fps: 30, loop: true, bones: 45, events: [{ time: 0.25, name: 'FootstepL' }, { time: 0.75, name: 'FootstepR' }] },
+                    { name: 'run.anim.json', type: 'animation', duration: 0.6, fps: 30, loop: true, bones: 45, events: [{ time: 0.15, name: 'FootstepL' }, { time: 0.45, name: 'FootstepR' }] },
+                    { name: 'attack_melee.anim.json', type: 'animation', duration: 0.8, fps: 30, loop: false, bones: 45, events: [{ time: 0.4, name: 'HitFrame' }, { time: 0.5, name: 'Swoosh' }] },
+                    { name: 'attack_ranged.anim.json', type: 'animation', duration: 1.2, fps: 30, loop: false, bones: 45, events: [{ time: 0.6, name: 'Release' }] },
+                    { name: 'death.anim.json', type: 'animation', duration: 2.5, fps: 30, loop: false, bones: 45, events: [{ time: 2.0, name: 'Impact' }] },
+                    { name: 'locomotion.blendtree.json', type: 'blendtree', duration: 0, fps: 0, loop: true, bones: 0, events: [] },
+                    { name: 'combat.animset.json', type: 'animset', duration: 0, fps: 0, loop: false, bones: 0, events: [] }
+                ];
+            }
+
+            initEventListeners() {
+                // View toggle
+                document.getElementById('gridViewBtn').addEventListener('click', () => {
+                    this.viewMode = 'grid';
+                    document.getElementById('gridViewBtn').classList.add('active');
+                    document.getElementById('listViewBtn').classList.remove('active');
+                    document.getElementById('fileGrid').classList.remove('list-view');
+                });
+
+                document.getElementById('listViewBtn').addEventListener('click', () => {
+                    this.viewMode = 'list';
+                    document.getElementById('listViewBtn').classList.add('active');
+                    document.getElementById('gridViewBtn').classList.remove('active');
+                    document.getElementById('fileGrid').classList.add('list-view');
+                });
+
+                // Search
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchQuery = e.target.value.toLowerCase();
+                    this.renderFiles();
+                });
+
+                // Navigation
+                document.getElementById('backBtn').addEventListener('click', () => this.goBack());
+                document.getElementById('upBtn').addEventListener('click', () => this.goUp());
+
+                // Preview controls
+                document.getElementById('playPauseBtn').addEventListener('click', () => this.togglePlay());
+
+                // Actions
+                document.getElementById('openBtn').addEventListener('click', () => this.openFile());
+                document.getElementById('duplicateBtn').addEventListener('click', () => this.duplicateFile());
+
+                // Context menu
+                document.addEventListener('click', () => this.hideContextMenu());
+                document.getElementById('contextMenu').addEventListener('click', (e) => {
+                    const action = e.target.dataset.action;
+                    if (action) this.handleContextAction(action);
+                });
+
+                // Breadcrumb
+                document.querySelectorAll('.breadcrumb-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        this.navigateTo(item.dataset.path);
+                    });
+                });
+            }
+
+            renderFolderTree() {
+                const container = document.getElementById('folderTree');
+                container.innerHTML = '';
+
+                const renderFolder = (folder, depth = 0) => {
+                    const item = document.createElement('div');
+                    item.className = 'folder-item' + (this.currentPath === folder.path ? ' selected' : '');
+                    item.style.paddingLeft = `${8 + depth * 16}px`;
+                    item.innerHTML = `
+                        <span class="folder-expand">${folder.children.length > 0 ? '>' : ''}</span>
+                        <svg class="folder-icon" viewBox="0 0 24 24">
+                            <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                        </svg>
+                        <span>${folder.name}</span>
+                    `;
+                    item.addEventListener('click', () => this.navigateTo(folder.path));
+                    container.appendChild(item);
+
+                    folder.children.forEach(child => renderFolder(child, depth + 1));
+                };
+
+                renderFolder(this.folderStructure);
+            }
+
+            renderFiles() {
+                const container = document.getElementById('fileGrid');
+                container.innerHTML = '';
+
+                let filteredFiles = this.files;
+
+                if (this.searchQuery) {
+                    filteredFiles = filteredFiles.filter(f =>
+                        f.name.toLowerCase().includes(this.searchQuery)
+                    );
+                }
+
+                document.getElementById('fileCount').textContent = `${filteredFiles.length} items`;
+
+                filteredFiles.forEach(file => {
+                    const card = document.createElement('div');
+                    card.className = 'file-card' + (this.selectedFile === file ? ' selected' : '');
+
+                    const icon = this.getFileIcon(file.type);
+                    const durationStr = file.duration > 0 ? this.formatDuration(file.duration) : '';
+
+                    card.innerHTML = `
+                        <div class="file-thumbnail">
+                            <svg class="file-thumbnail-icon" viewBox="0 0 24 24">
+                                ${icon}
+                            </svg>
+                            ${durationStr ? `<span class="file-duration">${durationStr}</span>` : ''}
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-meta">
+                                <span>${file.type}</span>
+                                ${file.bones > 0 ? `<span>${file.bones} bones</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+
+                    card.addEventListener('click', () => this.selectFile(file));
+                    card.addEventListener('dblclick', () => this.openFile());
+                    card.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        this.selectFile(file);
+                        this.showContextMenu(e.clientX, e.clientY);
+                    });
+
+                    container.appendChild(card);
+                });
+            }
+
+            getFileIcon(type) {
+                switch (type) {
+                    case 'animation':
+                        return '<path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"/>';
+                    case 'blendtree':
+                        return '<path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 4a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 10c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>';
+                    case 'animset':
+                        return '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H5v-2h7v2zm5-4H5v-2h12v2zm0-4H5V7h12v2z"/>';
+                    default:
+                        return '<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>';
+                }
+            }
+
+            formatDuration(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = (seconds % 60).toFixed(1);
+                return mins > 0 ? `${mins}:${secs.padStart(4, '0')}` : `${secs}s`;
+            }
+
+            selectFile(file) {
+                this.selectedFile = file;
+                this.renderFiles();
+                this.updatePreview();
+            }
+
+            updatePreview() {
+                const file = this.selectedFile;
+
+                if (!file || file.type !== 'animation') {
+                    document.getElementById('previewPlaceholder').style.display = 'block';
+                    document.getElementById('previewControls').style.display = 'none';
+                    document.getElementById('animName').textContent = file ? file.name : '-';
+                    document.getElementById('animDuration').textContent = '-';
+                    document.getElementById('animFPS').textContent = '-';
+                    document.getElementById('animLoop').textContent = '-';
+                    document.getElementById('boneCountLabel').textContent = '0';
+                    document.getElementById('eventCountLabel').textContent = '0';
+                    document.getElementById('boneList').innerHTML = '';
+                    document.getElementById('eventList').innerHTML = '';
+                    return;
+                }
+
+                document.getElementById('previewPlaceholder').style.display = 'none';
+                document.getElementById('previewControls').style.display = 'flex';
+
+                document.getElementById('animName').textContent = file.name;
+                document.getElementById('animDuration').textContent = this.formatDuration(file.duration);
+                document.getElementById('animFPS').textContent = file.fps + ' fps';
+                document.getElementById('animLoop').textContent = file.loop ? 'Yes' : 'No';
+
+                // Bones
+                document.getElementById('boneCountLabel').textContent = file.bones;
+                const boneList = document.getElementById('boneList');
+                boneList.innerHTML = '';
+                const sampleBones = ['Root', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand'];
+                sampleBones.forEach(bone => {
+                    const item = document.createElement('div');
+                    item.className = 'bone-item';
+                    item.textContent = bone;
+                    boneList.appendChild(item);
+                });
+
+                // Events
+                document.getElementById('eventCountLabel').textContent = file.events.length;
+                const eventList = document.getElementById('eventList');
+                eventList.innerHTML = '';
+                file.events.forEach(event => {
+                    const item = document.createElement('div');
+                    item.className = 'event-item';
+                    item.innerHTML = `
+                        <span class="event-time">${event.time.toFixed(2)}s</span>
+                        <span class="event-name">${event.name}</span>
+                    `;
+                    eventList.appendChild(item);
+                });
+
+                // Reset playback
+                this.currentTime = 0;
+                this.isPlaying = false;
+                this.updatePlaybackUI();
+            }
+
+            togglePlay() {
+                this.isPlaying = !this.isPlaying;
+                this.updatePlaybackUI();
+
+                if (this.isPlaying) {
+                    this.playAnimation();
+                }
+            }
+
+            playAnimation() {
+                if (!this.isPlaying || !this.selectedFile) return;
+
+                const file = this.selectedFile;
+                this.currentTime += 1 / 60;
+
+                if (this.currentTime >= file.duration) {
+                    if (file.loop) {
+                        this.currentTime = 0;
+                    } else {
+                        this.currentTime = file.duration;
+                        this.isPlaying = false;
+                    }
+                }
+
+                this.updatePlaybackUI();
+
+                if (this.isPlaying) {
+                    requestAnimationFrame(() => this.playAnimation());
+                }
+            }
+
+            updatePlaybackUI() {
+                const file = this.selectedFile;
+                if (!file || file.type !== 'animation') return;
+
+                const progress = (this.currentTime / file.duration) * 100;
+                document.getElementById('previewProgress').style.width = progress + '%';
+
+                const current = this.formatDuration(this.currentTime);
+                const total = this.formatDuration(file.duration);
+                document.getElementById('previewTime').textContent = `${current} / ${total}`;
+
+                const playBtn = document.getElementById('playPauseBtn');
+                playBtn.innerHTML = this.isPlaying
+                    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+                    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+            }
+
+            navigateTo(path) {
+                this.currentPath = path;
+                this.renderFolderTree();
+                this.updateBreadcrumb();
+                // In real implementation, would load files from this path
+            }
+
+            goBack() {
+                // History navigation
+            }
+
+            goUp() {
+                const parts = this.currentPath.split('/').filter(p => p);
+                if (parts.length > 1) {
+                    parts.pop();
+                    this.navigateTo('/' + parts.join('/'));
+                }
+            }
+
+            updateBreadcrumb() {
+                const container = document.getElementById('pathBreadcrumb');
+                const parts = this.currentPath.split('/').filter(p => p);
+                let currentPath = '';
+
+                container.innerHTML = parts.map((part, i) => {
+                    currentPath += '/' + part;
+                    const separator = i < parts.length - 1 ? '<span class="breadcrumb-separator">/</span>' : '';
+                    return `<span class="breadcrumb-item" data-path="${currentPath}">${part}</span>${separator}`;
+                }).join('');
+
+                container.querySelectorAll('.breadcrumb-item').forEach(item => {
+                    item.addEventListener('click', () => this.navigateTo(item.dataset.path));
+                });
+            }
+
+            showContextMenu(x, y) {
+                const menu = document.getElementById('contextMenu');
+                menu.style.display = 'block';
+                menu.style.left = x + 'px';
+                menu.style.top = y + 'px';
+            }
+
+            hideContextMenu() {
+                document.getElementById('contextMenu').style.display = 'none';
+            }
+
+            handleContextAction(action) {
+                switch (action) {
+                    case 'open': this.openFile(); break;
+                    case 'duplicate': this.duplicateFile(); break;
+                    case 'delete': this.deleteFile(); break;
+                }
+                this.hideContextMenu();
+            }
+
+            openFile() {
+                if (!this.selectedFile) return;
+                console.log('Opening file:', this.selectedFile.name);
+                if (window.NativeBridge) {
+                    window.NativeBridge.openAnimation(this.currentPath + '/' + this.selectedFile.name);
+                }
+            }
+
+            duplicateFile() {
+                if (!this.selectedFile) return;
+                const newFile = { ...this.selectedFile };
+                newFile.name = this.selectedFile.name.replace('.anim.json', '_copy.anim.json');
+                this.files.push(newFile);
+                this.renderFiles();
+            }
+
+            deleteFile() {
+                if (!this.selectedFile) return;
+                if (confirm(`Delete "${this.selectedFile.name}"?`)) {
+                    const index = this.files.indexOf(this.selectedFile);
+                    if (index > -1) {
+                        this.files.splice(index, 1);
+                        this.selectedFile = null;
+                        this.renderFiles();
+                        this.updatePreview();
+                    }
+                }
+            }
+        }
+
+        // Initialize
+        const browser = new AnimationBrowser();
+
+        // Native bridge
+        window.AnimationBrowser = {
+            loadFiles: (path, files) => {
+                browser.currentPath = path;
+                browser.files = files;
+                browser.renderFiles();
+                browser.updateBreadcrumb();
+            },
+            getSelectedFile: () => browser.selectedFile ? browser.currentPath + '/' + browser.selectedFile.name : null,
+            refresh: () => {
+                // Request files from native code
+                if (window.NativeBridge) {
+                    window.NativeBridge.requestFiles(browser.currentPath);
+                }
+            }
+        };
+    </script>
+</body>
+</html>

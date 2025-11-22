@@ -1,0 +1,153 @@
+{
+  "id": "phoenix",
+  "name": "Phoenix",
+  "display_name": "Phoenix",
+  "description": "A swift air superiority fighter that excels at destroying enemy aircraft. The Phoenix can also use its graviton beam to lift ground units into the air, rendering them helpless.",
+  "race": "aliens",
+  "tier": 3,
+  "unit_type": "fighter",
+  "classification": ["mechanical", "flying", "light"],
+
+  "stats": {
+    "health": 120,
+    "health_regen": 0,
+    "shield": 60,
+    "shield_regen": 1.2,
+    "shield_regen_delay": 10.0,
+    "energy": 50,
+    "energy_max": 200,
+    "energy_regen": 0.7875,
+    "armor": 0,
+    "shield_armor": 0,
+    "move_speed": 5.95,
+    "acceleration": 3.0,
+    "turn_rate": 999
+  },
+
+  "combat": {
+    "can_attack": true,
+    "attack_damage": 5,
+    "attack_bonus_damage": 5,
+    "bonus_vs": ["light"],
+    "attacks_per_swing": 2,
+    "attack_speed": 0.79,
+    "attack_range": 5,
+    "attack_type": "ranged",
+    "damage_type": "normal",
+    "targets": ["air"],
+    "projectile": {
+      "speed": 25,
+      "model": "fx_ion_cannon"
+    }
+  },
+
+  "production": {
+    "build_time": 35,
+    "warp_time": 0,
+    "supply_cost": 2,
+    "resource_cost": {
+      "minerals": 150,
+      "vespene": 100
+    },
+    "power_cost": 0,
+    "produced_at": "stargate",
+    "requirements": [],
+    "hotkey": "X"
+  },
+
+  "abilities": [
+    {
+      "id": "graviton_beam",
+      "name": "Graviton Beam",
+      "description": "Lifts a target ground unit into the air for 7 seconds. While lifted, the unit cannot move, attack, or use abilities, but can still be attacked.",
+      "type": "active",
+      "cooldown": 0,
+      "energy_cost": 50,
+      "duration": 7.0,
+      "range": 4,
+      "valid_targets": ["ground", "not_massive"],
+      "channeled": true,
+      "hotkey": "G"
+    },
+    {
+      "id": "anion_pulse_crystals",
+      "name": "Anion Pulse Crystals",
+      "description": "Increases Phoenix attack range.",
+      "type": "passive",
+      "range_bonus": 2,
+      "requires_upgrade": "anion_pulse_crystals_upgrade",
+      "unlocked_default": false
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "anion_pulse_crystals_upgrade",
+      "name": "Anion Pulse Crystals",
+      "description": "Increases Phoenix attack range by 2",
+      "researched_at": "stargate",
+      "cost": {
+        "minerals": 150,
+        "vespene": 150
+      },
+      "research_time": 90
+    }
+  ],
+
+  "attributes": {
+    "is_mechanical": true,
+    "is_flying": true,
+    "is_light": true,
+    "cargo_size": 2
+  },
+
+  "sight": {
+    "vision_range": 10,
+    "detection_range": 0,
+    "can_detect_cloaked": false
+  },
+
+  "selection": {
+    "priority": 20,
+    "selection_radius": 1.0,
+    "target_radius": 0.75
+  },
+
+  "visuals": {
+    "model": "models/aliens/phoenix.fbx",
+    "texture": "textures/aliens/phoenix.png",
+    "icon": "icons/aliens/phoenix.png",
+    "wireframe": "wireframes/aliens/phoenix.png",
+    "portrait": "portraits/aliens/phoenix.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "anim_idle",
+      "move": "anim_move",
+      "attack": "anim_attack",
+      "graviton_beam": "anim_graviton",
+      "death": "anim_death"
+    },
+    "effects": {
+      "attack": "fx_ion_cannon",
+      "graviton_beam": "fx_graviton_beam",
+      "engine_trail": "fx_phoenix_trail"
+    }
+  },
+
+  "audio": {
+    "ready": "audio/aliens/phoenix_ready.ogg",
+    "selected": ["audio/aliens/phoenix_select1.ogg"],
+    "command": ["audio/aliens/phoenix_command1.ogg"],
+    "attack": "audio/aliens/phoenix_attack.ogg",
+    "graviton": "audio/aliens/phoenix_graviton.ogg",
+    "death": "audio/aliens/phoenix_death.ogg"
+  },
+
+  "ai_hints": {
+    "role": "anti_air",
+    "priority_targets": ["air", "light"],
+    "flee_when_attacked": true,
+    "micro_level": "high",
+    "use_graviton_on": ["high_value", "caster"]
+  }
+}

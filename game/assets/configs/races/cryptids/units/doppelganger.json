@@ -1,0 +1,219 @@
+{
+  "id": "doppelganger",
+  "name": "Doppelganger",
+  "race": "cryptids",
+  "tier": 4,
+  "type": "legendary_infiltrator",
+  "role": ["perfect_copy", "infiltrator", "assassin"],
+
+  "description": "The ultimate shapeshifter - a Doppelganger can perfectly copy any enemy unit, including heroes, gaining all their abilities at full power.",
+  "lore": "While Mimics copy appearances, Doppelgangers copy souls. They are said to steal the very essence of their targets, becoming indistinguishable copies that can fool even the closest allies. Legends say that if you meet your Doppelganger, one of you must die.",
+
+  "stats": {
+    "health": 600,
+    "healthRegen": 2.0,
+    "mana": 400,
+    "manaRegen": 2.0,
+    "armor": 4,
+    "armorType": "medium",
+    "moveSpeed": 300,
+    "turnRate": 0.9,
+    "collisionSize": 36,
+    "selectionScale": 1.1
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 30,
+      "variance": 8,
+      "type": "normal"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.4,
+    "backswing": 0.5,
+    "acquisitionRange": 500,
+    "aggroRange": 400
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": false,
+    "canPassWater": false
+  },
+
+  "abilities": [
+    {
+      "id": "perfect_copy",
+      "name": "Perfect Copy",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Becomes an exact copy of any enemy unit, including heroes, gaining all their abilities",
+      "cooldown": 60.0,
+      "manaCost": 200,
+      "essenceCost": 75,
+      "range": 700,
+      "effects": {
+        "duration": 120.0,
+        "copiesAllAbilities": true,
+        "abilityEffectiveness": 1.0,
+        "copiesStats": true,
+        "statEffectiveness": 0.9,
+        "canCopyHeroes": true,
+        "maintainsLevel": false,
+        "appearsAsEnemy": true
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/perfect_copy.png"
+    },
+    {
+      "id": "identity_theft",
+      "name": "Identity Theft",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Steals the identity of a target, causing their allies to see them as an enemy briefly",
+      "cooldown": 45.0,
+      "manaCost": 150,
+      "range": 500,
+      "effects": {
+        "duration": 8.0,
+        "targetAppearsEnemy": true,
+        "causesFriendlyFire": true,
+        "doppelgangerAppearsTarget": true
+      },
+      "hotkey": "I",
+      "icon": "icons/abilities/identity_theft.png"
+    },
+    {
+      "id": "mirror_strike",
+      "name": "Mirror Strike",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Attacks the target with their own power, dealing damage based on their attack damage",
+      "cooldown": 15.0,
+      "manaCost": 75,
+      "range": 128,
+      "effects": {
+        "damageMultiplier": 2.0,
+        "usesTargetDamage": true,
+        "bonusVsOriginal": 0.5
+      },
+      "hotkey": "M",
+      "icon": "icons/abilities/mirror_strike.png"
+    },
+    {
+      "id": "essence_mirror",
+      "name": "Essence Mirror",
+      "type": "passive",
+      "description": "Returns a portion of ability damage back to the caster",
+      "effects": {
+        "reflectPercent": 0.25,
+        "maxReflect": 150
+      },
+      "icon": "icons/abilities/essence_mirror.png"
+    },
+    {
+      "id": "true_death",
+      "name": "True Death",
+      "type": "active",
+      "targetType": "unit",
+      "requiresState": "copied_target",
+      "description": "While copying a target, can instantly kill them if they're below 20% health",
+      "cooldown": 90.0,
+      "manaCost": 200,
+      "range": 400,
+      "effects": {
+        "executeThreshold": 0.2,
+        "damageIfAboveThreshold": 300,
+        "mustBeCopyingTarget": true
+      },
+      "hotkey": "T",
+      "icon": "icons/abilities/true_death.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "ritual_circle",
+    "buildTime": 65,
+    "cost": {
+      "gold": 450,
+      "lumber": 80,
+      "essence": 100,
+      "dread": 30
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["ritual_circle", "nexus_of_fear"],
+      "technologies": ["perfect_mimicry"],
+      "age": "nightmare"
+    },
+    "hotkey": "D"
+  },
+
+  "upgrades": {
+    "special": ["soul_theft", "perfect_synchronization", "existential_crisis"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/doppelganger/ready.ogg",
+    "select": ["audio/units/doppelganger/select1.ogg", "audio/units/doppelganger/select2.ogg"],
+    "move": ["audio/units/doppelganger/move1.ogg", "audio/units/doppelganger/move2.ogg"],
+    "attack": ["audio/units/doppelganger/attack1.ogg"],
+    "death": "audio/units/doppelganger/death.ogg",
+    "copy": "audio/units/doppelganger/copy.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/doppelganger.glb",
+    "texture": "textures/units/cryptids/doppelganger.png",
+    "portrait": "textures/portraits/doppelganger.png",
+    "icon": "textures/icons/doppelganger.png",
+    "scale": 1.1,
+    "animations": {
+      "idle": "doppelganger_idle",
+      "walk": "doppelganger_walk",
+      "attack": "doppelganger_attack",
+      "death": "doppelganger_death",
+      "transform": "doppelganger_transform"
+    },
+    "effects": {
+      "spawn": "effects/doppelganger_spawn.vfx",
+      "death": "effects/doppelganger_death.vfx",
+      "copy": "effects/perfect_copy.vfx",
+      "mirror": "effects/mirror_effect.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 8,
+    "priority": "critical",
+    "behavior": "perfect_infiltrator",
+    "fleeThreshold": 0.3,
+    "preferredTargets": ["hero", "high_value"],
+    "prioritizeCopyingHeroes": true,
+    "useIdentityTheftInGroups": true,
+    "executeLowHealthTargets": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "isLegendary": true,
+    "canCopyUnits": true,
+    "canCopyHeroes": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 75,
+    "experience": 100
+  },
+
+  "pointValue": 5,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

@@ -1,0 +1,227 @@
+{
+  "id": "blood_mage",
+  "name": "Blood Mage",
+  "race": "vampires",
+  "tier": 2,
+  "type": "caster",
+  "role": ["caster", "support", "damage"],
+
+  "description": "Vampires who have mastered the forbidden art of blood magic, wielding crimson spells that drain life and empower allies.",
+  "lore": "Blood Mages have spent centuries studying the mystical properties of blood. They can shape it into weapons, shields, and curses, turning the very essence of life into a tool of destruction.",
+
+  "stats": {
+    "health": 380,
+    "healthRegen": 0.75,
+    "mana": 300,
+    "manaRegen": 1.25,
+    "armor": 1,
+    "armorType": "light",
+    "moveSpeed": 270,
+    "turnRate": 0.6,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 16,
+      "variance": 3,
+      "type": "magic"
+    },
+    "attackSpeed": 1.8,
+    "attackRange": 550,
+    "attackType": "ranged",
+    "projectile": "blood_bolt",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.4,
+    "acquisitionRange": 600,
+    "aggroRange": 500,
+    "lifeSteal": 0.15
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "manaRegenBonus": 0.5,
+      "spellDamageBonus": 0.3
+    },
+    "day": {
+      "manaRegenPenalty": 0.25,
+      "spellDamagePenalty": 0.15
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "blood_bolt",
+      "name": "Blood Bolt",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Fire a bolt of condensed blood that damages and slows the target",
+      "cooldown": 4,
+      "manaCost": 40,
+      "effects": {
+        "damage": 75,
+        "slowPercent": 0.3,
+        "slowDuration": 3.0,
+        "range": 600,
+        "lifeSteal": 0.25
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/blood_bolt.png"
+    },
+    {
+      "id": "crimson_shield",
+      "name": "Crimson Shield",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Shield an ally with crystallized blood, absorbing damage",
+      "cooldown": 18,
+      "manaCost": 75,
+      "bloodCost": 15,
+      "effects": {
+        "shieldAmount": 200,
+        "duration": 10.0,
+        "reflectDamage": 0.1,
+        "range": 500
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/crimson_shield.png"
+    },
+    {
+      "id": "blood_curse",
+      "name": "Blood Curse",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Curse an enemy, causing them to take damage over time and heal nearby vampires",
+      "cooldown": 20,
+      "manaCost": 90,
+      "effects": {
+        "damagePerSecond": 15,
+        "duration": 8.0,
+        "healRadius": 300,
+        "healPercent": 0.5,
+        "range": 600
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/blood_curse.png"
+    },
+    {
+      "id": "sanguine_ritual",
+      "name": "Sanguine Ritual",
+      "type": "active",
+      "targetType": "area",
+      "requiresResearch": "sanguine_mastery",
+      "description": "Channel to create a blood pool that heals allies and damages enemies",
+      "cooldown": 45,
+      "manaCost": 150,
+      "bloodCost": 30,
+      "effects": {
+        "radius": 350,
+        "duration": 10.0,
+        "healPerSecond": 20,
+        "damagePerSecond": 15,
+        "channeled": true
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/sanguine_ritual.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "cathedral_of_shadow",
+    "buildTime": 40,
+    "cost": {
+      "gold": 220,
+      "lumber": 40,
+      "blood": 25
+    },
+    "foodCost": 3,
+    "prerequisites": {
+      "buildings": ["cathedral_of_shadow"],
+      "technologies": [],
+      "age": "noble"
+    },
+    "hotkey": "M"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "blood_mastery"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "shadow_hide"
+    },
+    "special": ["sanguine_mastery", "blood_amplification", "curse_mastery"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/blood_mage/ready.ogg",
+    "select": ["audio/units/blood_mage/select1.ogg", "audio/units/blood_mage/select2.ogg"],
+    "move": ["audio/units/blood_mage/move1.ogg"],
+    "attack": ["audio/units/blood_mage/attack1.ogg"],
+    "death": "audio/units/blood_mage/death.ogg",
+    "cast": "audio/units/blood_mage/cast.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/blood_mage.glb",
+    "texture": "textures/units/vampires/blood_mage.png",
+    "portrait": "textures/portraits/blood_mage.png",
+    "icon": "textures/icons/blood_mage.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "mage_idle",
+      "walk": "mage_walk",
+      "attack": "mage_attack",
+      "death": "mage_death",
+      "cast": "mage_cast",
+      "channel": "mage_channel"
+    },
+    "effects": {
+      "spawn": "effects/vampire_spawn.vfx",
+      "death": "effects/vampire_dust.vfx",
+      "bloodBolt": "effects/blood_bolt.vfx",
+      "crimsonShield": "effects/crimson_shield.vfx",
+      "bloodCurse": "effects/blood_curse.vfx",
+      "sanguineRitual": "effects/sanguine_ritual.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 5,
+    "priority": "high",
+    "behavior": "support",
+    "fleeThreshold": 0.3,
+    "preferredTargets": [],
+    "stayBehindMelee": true,
+    "prioritizeHealing": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isCaster": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 30,
+    "experience": 40,
+    "blood": 0
+  },
+
+  "pointValue": 3,
+  "supplyProvided": 0,
+  "supplyUsed": 3
+}

@@ -1,0 +1,222 @@
+{
+  "id": "thunderbird",
+  "name": "Thunderbird",
+  "race": "cryptids",
+  "tier": 3,
+  "type": "flying_heavy",
+  "role": ["air_superiority", "lightning", "siege"],
+
+  "description": "A massive avian creature wreathed in storm clouds. The Thunderbird commands lightning and thunder, devastating enemies from above.",
+  "lore": "Sacred to many Native American tribes, the Thunderbird is a creature of immense power. When it spreads its wings, storms follow. When it cries out, thunder echoes across the land. Now it fights alongside its cryptid kin.",
+
+  "stats": {
+    "health": 850,
+    "healthRegen": 1.5,
+    "mana": 300,
+    "manaRegen": 1.5,
+    "armor": 4,
+    "armorType": "heavy",
+    "moveSpeed": 300,
+    "turnRate": 0.6,
+    "collisionSize": 64,
+    "selectionScale": 1.5
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 45,
+      "variance": 10,
+      "type": "lightning"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 550,
+    "attackType": "ranged",
+    "projectile": {
+      "model": "models/projectiles/lightning_bolt.glb",
+      "speed": 1200,
+      "arc": 0,
+      "chainLightning": true,
+      "chainTargets": 2,
+      "chainDamageReduction": 0.3
+    },
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.7,
+    "acquisitionRange": 700,
+    "aggroRange": 600,
+    "splashDamage": {
+      "enabled": true,
+      "radius": 100,
+      "falloff": 0.5
+    }
+  },
+
+  "movement": {
+    "type": "flying",
+    "flyHeight": 300,
+    "canPassCliffs": true,
+    "canPassWater": true
+  },
+
+  "abilities": [
+    {
+      "id": "chain_lightning",
+      "name": "Chain Lightning",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Launches a bolt of lightning that jumps between multiple enemies",
+      "cooldown": 12.0,
+      "manaCost": 100,
+      "range": 700,
+      "effects": {
+        "initialDamage": 120,
+        "jumps": 5,
+        "damageReductionPerJump": 0.15,
+        "jumpRange": 400
+      },
+      "hotkey": "C",
+      "icon": "icons/abilities/chain_lightning.png"
+    },
+    {
+      "id": "storm_call",
+      "name": "Storm Call",
+      "type": "active",
+      "targetType": "area",
+      "description": "Summons a localized storm that damages enemies and slows their movement",
+      "cooldown": 35.0,
+      "manaCost": 150,
+      "range": 800,
+      "effects": {
+        "radius": 400,
+        "damagePerSecond": 30,
+        "duration": 10.0,
+        "slowPercent": 0.3
+      },
+      "hotkey": "S",
+      "icon": "icons/abilities/storm_call.png"
+    },
+    {
+      "id": "wing_buffet",
+      "name": "Wing Buffet",
+      "type": "active",
+      "targetType": "area",
+      "description": "Powerful wing beats knock back and damage nearby enemies",
+      "cooldown": 20.0,
+      "manaCost": 75,
+      "effects": {
+        "radius": 300,
+        "damage": 60,
+        "knockbackDistance": 200,
+        "stunDuration": 0.5
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/wing_buffet.png"
+    },
+    {
+      "id": "static_charge",
+      "name": "Static Charge",
+      "type": "passive",
+      "description": "Attacks build static charge on targets; at full charge, they take bonus damage",
+      "effects": {
+        "chargePerAttack": 1,
+        "maxCharge": 5,
+        "bonusDamageAtMax": 100,
+        "chargeDuration": 8.0
+      },
+      "icon": "icons/abilities/static_charge.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "nightmare_gate",
+    "buildTime": 55,
+    "cost": {
+      "gold": 380,
+      "lumber": 80,
+      "essence": 50
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["nightmare_gate", "nexus_of_fear"],
+      "technologies": ["thunderbird_summoning"],
+      "age": "myth"
+    },
+    "hotkey": "T"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 5,
+      "maxLevel": 3,
+      "researchId": "storm_fury"
+    },
+    "armor": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["empowered_lightning", "eternal_storm", "thundergod_aspect"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/thunderbird/ready.ogg",
+    "select": ["audio/units/thunderbird/select1.ogg", "audio/units/thunderbird/select2.ogg"],
+    "move": ["audio/units/thunderbird/move1.ogg", "audio/units/thunderbird/move2.ogg"],
+    "attack": ["audio/units/thunderbird/attack1.ogg", "audio/units/thunderbird/attack2.ogg"],
+    "death": "audio/units/thunderbird/death.ogg",
+    "lightning": "audio/units/thunderbird/lightning.ogg",
+    "storm": "audio/units/thunderbird/storm.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/thunderbird.glb",
+    "texture": "textures/units/cryptids/thunderbird.png",
+    "portrait": "textures/portraits/thunderbird.png",
+    "icon": "textures/icons/thunderbird.png",
+    "scale": 1.5,
+    "animations": {
+      "idle": "thunderbird_hover",
+      "walk": "thunderbird_fly",
+      "attack": "thunderbird_attack",
+      "death": "thunderbird_death",
+      "buffet": "thunderbird_buffet"
+    },
+    "effects": {
+      "spawn": "effects/thunderbird_spawn.vfx",
+      "death": "effects/thunderbird_death.vfx",
+      "lightning": "effects/chain_lightning.vfx",
+      "storm": "effects/storm_call.vfx",
+      "ambient_sparks": "effects/static_ambient.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 8,
+    "priority": "very_high",
+    "behavior": "siege_air",
+    "fleeThreshold": 0.2,
+    "preferredTargets": ["grouped", "building", "siege"],
+    "useChainLightningOnGroups": true,
+    "maintainDistance": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "isFlying": true,
+    "isHeavy": true,
+    "causesFear": true,
+    "lightningDamage": true
+  },
+
+  "bounty": {
+    "gold": 60,
+    "experience": 85
+  },
+
+  "pointValue": 5,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

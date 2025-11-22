@@ -1,0 +1,139 @@
+{
+    "id": "fairy_tree_of_eternity",
+    "type": "building",
+    "race": "fairies",
+    "name": "Tree of Eternity",
+    "description": "The ultimate evolution of the World Tree. This ancient being unlocks the most powerful units and abilities of the Fae Court.",
+
+    "tags": ["main", "production", "resource_depot", "living", "tier3"],
+
+    "tier": 3,
+    "age_requirement": 5,
+
+    "model": {
+        "path": "models/races/fairies/buildings/tree_of_eternity.obj",
+        "scale": [2.2, 2.2, 2.2]
+    },
+
+    "footprint": {
+        "size": [5, 5],
+        "entrances": [[2, 0]],
+        "visualSize": [18.0, 28.0, 18.0]
+    },
+
+    "construction": {
+        "upgrade_from": "fairy_tree_of_ages",
+        "cost": {
+            "gold": 450,
+            "wood": 200
+        },
+        "time": 150.0
+    },
+
+    "stats": {
+        "maxHealth": 2500,
+        "armor": 6,
+        "magicResist": 20,
+        "healthRegen": 5.0
+    },
+
+    "living_building": {
+        "enabled": true,
+        "regeneration": 5.0,
+        "can_uproot": true,
+        "uproot_speed": 1.0,
+        "rooted_armor_bonus": 5
+    },
+
+    "resource_depot": {
+        "enabled": true,
+        "accepted_resources": ["gold", "wood", "stone", "food", "mana"]
+    },
+
+    "production": [
+        {
+            "type": "unit",
+            "output": "fairy_wisp",
+            "cost": {"gold": 60, "food": 1},
+            "time": 12.0,
+            "maxQueue": 5
+        },
+        {
+            "type": "unit",
+            "output": "fairy_pixie",
+            "cost": {"gold": 60, "food": 1},
+            "time": 14.0,
+            "maxQueue": 5
+        },
+        {
+            "type": "unit",
+            "output": "fairy_ancient_of_war_unit",
+            "cost": {"gold": 450, "wood": 200, "food": 8},
+            "time": 70.0,
+            "maxQueue": 2
+        },
+        {
+            "type": "unit",
+            "output": "fairy_avatar_of_nature",
+            "cost": {"gold": 600, "wood": 300, "food": 10},
+            "time": 90.0,
+            "maxQueue": 1,
+            "prerequisites": ["upgrade_avatar_awakening"]
+        }
+    ],
+
+    "abilities": [
+        {
+            "id": "ability_entangle_gold",
+            "name": "Entangle Gold Mine",
+            "hotkey": "G",
+            "cooldown": 60.0,
+            "range": 15.0
+        },
+        {
+            "id": "ability_natures_blessing_max",
+            "name": "Nature's Blessing",
+            "description": "Heal all nearby friendly units for 500 HP and cleanse debuffs",
+            "hotkey": "N",
+            "cooldown": 35.0,
+            "mana_cost": 100,
+            "radius": 22.0,
+            "effects": [
+                {"type": "heal", "value": 500, "scope": "allies_in_radius"},
+                {"type": "cleanse", "value": true}
+            ]
+        },
+        {
+            "id": "ability_awaken_ancient",
+            "name": "Awaken Ancient",
+            "description": "Uproot and awaken one of the Ancient production buildings",
+            "hotkey": "A",
+            "cooldown": 180.0,
+            "mana_cost": 200,
+            "target": "ancient_building"
+        }
+    ],
+
+    "aura": {
+        "id": "aura_tree_of_eternity",
+        "radius": 22.0,
+        "effects": [
+            {"stat": "healthRegen", "value": 2.5, "scope": "allies"},
+            {"stat": "manaRegen", "value": 1.0, "scope": "allies"}
+        ]
+    },
+
+    "visionRange": 18.0,
+
+    "night_bonus": {
+        "healthRegen": 2.0,
+        "aura_radius": 8.0,
+        "manaRegen": 1.0
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/buildings/tree_of_eternity.png",
+        "icon": "textures/races/fairies/icons/buildings/tree_of_eternity.png",
+        "hotkey": "T"
+    }
+}

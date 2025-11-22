@@ -1,0 +1,208 @@
+{
+    "id": "naga_tidal_powers",
+    "race": "naga",
+    "name": "Naga Tidal Powers",
+    "school": "tidal",
+
+    "abilities": [
+        {
+            "id": "ability_tidal_power",
+            "name": "Tidal Power",
+            "type": "passive",
+            "description": "Units gain bonuses when near water.",
+            "icon": "icons/abilities/naga/tidal_power.png",
+            "aura": {
+                "trigger": "near_water",
+                "radius": 10,
+                "effects": [
+                    {"stat": "damage", "type": "percent", "value": 15},
+                    {"stat": "ability_power", "type": "percent", "value": 25}
+                ]
+            }
+        },
+        {
+            "id": "ability_water_regeneration",
+            "name": "Water Regeneration",
+            "type": "passive",
+            "description": "Naga units regenerate health while in water.",
+            "icon": "icons/abilities/naga/water_regen.png",
+            "effect": {
+                "trigger": "in_water",
+                "health_regen_percent": 2.0
+            }
+        },
+        {
+            "id": "ability_amphibious",
+            "name": "Amphibious",
+            "type": "passive",
+            "description": "Can move through water terrain freely.",
+            "icon": "icons/abilities/naga/amphibious.png",
+            "effect": {
+                "type": "terrain_traversal",
+                "water": true,
+                "deep_water": true,
+                "water_speed_bonus": 0.3
+            }
+        },
+        {
+            "id": "spell_tidal_surge",
+            "name": "Tidal Surge",
+            "type": "active",
+            "description": "Empowers summoned elementals with increased damage and attack speed.",
+            "icon": "icons/abilities/naga/tidal_surge.png",
+            "targeting": {
+                "mode": "self",
+                "affects": "owned_summons"
+            },
+            "timing": {
+                "cast_time": 0.3,
+                "cooldown": 35.0,
+                "duration": 12.0
+            },
+            "cost": {"mana": 70},
+            "effects": [
+                {"type": "buff_summons", "damage_bonus": 0.5, "attack_speed_bonus": 0.3}
+            ],
+            "visuals": {
+                "buff_effect": "effects/tidal_surge.fx"
+            },
+            "sounds": {
+                "cast": "sounds/abilities/tidal_surge.wav"
+            }
+        },
+        {
+            "id": "spell_call_of_depths",
+            "name": "Call of the Depths",
+            "type": "active",
+            "description": "Summons powerful greater water elementals.",
+            "icon": "icons/abilities/naga/call_depths.png",
+            "targeting": {
+                "mode": "ground",
+                "range": 10.0
+            },
+            "timing": {
+                "cast_time": 2.0,
+                "cooldown": 60.0
+            },
+            "cost": {"mana": 150},
+            "effects": [
+                {"type": "summon", "unit_id": "naga_greater_water_elemental", "count": 2, "duration": 30.0}
+            ],
+            "visuals": {
+                "summon_effect": "effects/depths_summon.fx"
+            },
+            "sounds": {
+                "cast": "sounds/abilities/call_depths.wav"
+            }
+        },
+        {
+            "id": "spell_maelstrom",
+            "name": "Maelstrom",
+            "type": "active",
+            "description": "Creates a devastating whirlpool that pulls and damages enemies.",
+            "icon": "icons/abilities/naga/maelstrom.png",
+            "targeting": {
+                "mode": "ground",
+                "range": 14.0,
+                "radius": 7.0
+            },
+            "timing": {
+                "cast_time": 1.0,
+                "cooldown": 40.0,
+                "duration": 8.0
+            },
+            "cost": {"mana": 150},
+            "effects": [
+                {"type": "pull_to_center", "strength": 4.0},
+                {"type": "damage_over_time", "damage_per_second": 50, "damage_type": "water"},
+                {"type": "slow", "value": 0.5}
+            ],
+            "visuals": {
+                "ground_effect": "effects/maelstrom.fx"
+            },
+            "sounds": {
+                "cast": "sounds/abilities/maelstrom.wav"
+            }
+        },
+        {
+            "id": "spell_wrath_of_ocean",
+            "name": "Wrath of the Ocean",
+            "type": "active",
+            "description": "Ultimate: Devastating global attack dealing heavy damage and stunning all enemies.",
+            "icon": "icons/abilities/naga/wrath_ocean.png",
+            "targeting": {
+                "mode": "global"
+            },
+            "timing": {
+                "cast_time": 3.0,
+                "cooldown": 120.0
+            },
+            "cost": {"mana": 0},
+            "effects": [
+                {"type": "damage", "amount": 400, "damage_type": "water"},
+                {"type": "stun", "duration": 3.0},
+                {"type": "knockback", "distance": 5.0}
+            ],
+            "visuals": {
+                "global_effect": "effects/wrath_ocean.fx"
+            },
+            "sounds": {
+                "cast": "sounds/abilities/wrath_ocean.wav"
+            }
+        },
+        {
+            "id": "ability_song_of_siren",
+            "name": "Song of the Siren",
+            "type": "active",
+            "description": "Puts nearby enemies to sleep.",
+            "icon": "icons/abilities/naga/song_siren.png",
+            "targeting": {
+                "mode": "instant",
+                "radius": 12.0
+            },
+            "timing": {
+                "cast_time": 0.5,
+                "cooldown": 26.0
+            },
+            "cost": {"mana": 120},
+            "effects": [
+                {"type": "sleep", "duration": 5.0},
+                {"type": "damage_amp_on_wake", "value": 0.25, "duration": 3.0}
+            ],
+            "visuals": {
+                "aura_effect": "effects/siren_song.fx"
+            },
+            "sounds": {
+                "cast": "sounds/abilities/siren_song.wav"
+            }
+        },
+        {
+            "id": "ability_mass_charm",
+            "name": "Mass Charm",
+            "type": "active",
+            "description": "Charms non-hero enemies to fight for you.",
+            "icon": "icons/abilities/naga/mass_charm.png",
+            "targeting": {
+                "mode": "ground",
+                "range": 12.0,
+                "radius": 9.0
+            },
+            "timing": {
+                "cast_time": 1.0,
+                "cooldown": 110.0
+            },
+            "cost": {"mana": 250},
+            "effects": [
+                {"type": "charm", "duration": 5.0, "non_heroes_only": true},
+                {"type": "hero_damage", "amount": 225},
+                {"type": "hero_slow", "value": 0.5, "duration": 3.0}
+            ],
+            "visuals": {
+                "area_effect": "effects/mass_charm.fx"
+            },
+            "sounds": {
+                "cast": "sounds/abilities/mass_charm.wav"
+            }
+        }
+    ]
+}

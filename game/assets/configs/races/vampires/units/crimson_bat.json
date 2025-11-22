@@ -1,0 +1,227 @@
+{
+  "id": "crimson_bat",
+  "name": "Crimson Bat",
+  "race": "vampires",
+  "tier": 3,
+  "type": "flying",
+  "role": ["flying", "heavy_air", "bomber"],
+
+  "description": "Massive vampire bats the size of horses, capable of carrying victims into the sky and dropping blood bombs on enemies.",
+  "lore": "Crimson Bats are ancient creatures that have fed on vampire blood for so long they have grown to monstrous proportions. They serve as flying siege weapons, swooping down to snatch victims or carpet-bombing enemies with crystallized blood.",
+
+  "stats": {
+    "health": 700,
+    "healthRegen": 2.0,
+    "mana": 100,
+    "manaRegen": 0.5,
+    "armor": 2,
+    "armorType": "medium",
+    "moveSpeed": 340,
+    "turnRate": 0.5,
+    "collisionSize": 48,
+    "selectionScale": 1.3,
+    "isFlying": true
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 35,
+      "variance": 6,
+      "type": "siege"
+    },
+    "attackSpeed": 2.0,
+    "attackRange": 100,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.5,
+    "backswing": 0.5,
+    "acquisitionRange": 600,
+    "aggroRange": 500,
+    "lifeSteal": 0.25,
+    "splashDamage": {
+      "enabled": true,
+      "fullRadius": 50,
+      "halfRadius": 100,
+      "quarterRadius": 150
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "speedBonus": 60,
+      "lifeStealBonus": 0.15
+    },
+    "day": {
+      "damagePenalty": 0.3,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 10,
+      "mustRoost": false
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "blood_bomb",
+      "name": "Blood Bomb",
+      "type": "active",
+      "targetType": "point",
+      "description": "Drop a crystallized blood bomb that explodes on impact, dealing area damage",
+      "cooldown": 12,
+      "manaCost": 50,
+      "bloodCost": 15,
+      "effects": {
+        "damage": 100,
+        "radius": 200,
+        "range": 700,
+        "bonusVsBuildings": 0.5
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/blood_bomb.png"
+    },
+    {
+      "id": "snatch",
+      "name": "Snatch",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Grab a small unit and carry it, dealing damage over time. Drop to deal fall damage.",
+      "cooldown": 30,
+      "manaCost": 75,
+      "effects": {
+        "damagePerSecond": 20,
+        "maxCarryDuration": 8.0,
+        "dropDamage": 150,
+        "targetSizeLimit": "medium",
+        "range": 200
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/snatch.png"
+    },
+    {
+      "id": "screech",
+      "name": "Screech",
+      "type": "active",
+      "targetType": "area",
+      "description": "Emit a disorienting screech that reduces enemy accuracy",
+      "cooldown": 20,
+      "manaCost": 40,
+      "effects": {
+        "radius": 400,
+        "missChance": 0.35,
+        "duration": 6.0
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/screech.png"
+    },
+    {
+      "id": "feast",
+      "name": "Feast",
+      "type": "passive",
+      "description": "Killing a unit restores 15% maximum health",
+      "effects": {
+        "healOnKill": 0.15
+      },
+      "icon": "icons/abilities/feast.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "bat_roost",
+    "buildTime": 50,
+    "cost": {
+      "gold": 350,
+      "lumber": 100,
+      "blood": 45
+    },
+    "foodCost": 5,
+    "prerequisites": {
+      "buildings": ["bat_roost", "citadel_of_night"],
+      "technologies": ["giant_bat_breeding"],
+      "age": "count"
+    },
+    "hotkey": "B"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 4,
+      "maxLevel": 3,
+      "researchId": "razor_fangs"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["improved_blood_bomb", "extended_snatch", "sonic_screech"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/crimson_bat/ready.ogg",
+    "select": ["audio/units/crimson_bat/select1.ogg", "audio/units/crimson_bat/select2.ogg"],
+    "move": ["audio/units/crimson_bat/move1.ogg"],
+    "attack": ["audio/units/crimson_bat/attack1.ogg", "audio/units/crimson_bat/attack2.ogg"],
+    "death": "audio/units/crimson_bat/death.ogg",
+    "screech": "audio/units/crimson_bat/screech.ogg",
+    "snatch": "audio/units/crimson_bat/snatch.ogg",
+    "bomb": "audio/units/crimson_bat/bomb.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/crimson_bat.glb",
+    "texture": "textures/units/vampires/crimson_bat.png",
+    "portrait": "textures/portraits/crimson_bat.png",
+    "icon": "textures/icons/crimson_bat.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "bat_idle",
+      "fly": "bat_fly",
+      "attack": "bat_attack",
+      "death": "bat_death",
+      "screech": "bat_screech",
+      "snatch": "bat_snatch",
+      "bomb": "bat_bomb"
+    },
+    "effects": {
+      "spawn": "effects/bat_spawn.vfx",
+      "death": "effects/bat_death.vfx",
+      "bloodBomb": "effects/blood_bomb.vfx",
+      "snatch": "effects/snatch.vfx",
+      "screech": "effects/screech_wave.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 7,
+    "priority": "high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.1,
+    "preferredTargets": ["siege", "building", "worker"],
+    "useBombOnGroups": true,
+    "snatchHighValueTargets": true
+  },
+
+  "flags": {
+    "isVampire": false,
+    "isUndead": true,
+    "isBeast": true,
+    "isFlying": true,
+    "canBeRaised": false,
+    "leavesCorpse": true,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": false,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true
+  },
+
+  "bounty": {
+    "gold": 45,
+    "experience": 60,
+    "blood": 0
+  },
+
+  "pointValue": 5,
+  "supplyProvided": 0,
+  "supplyUsed": 5
+}

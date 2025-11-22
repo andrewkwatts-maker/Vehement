@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Travel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
+            color: #e0e0e0;
+        }
+
+        #portal-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #4a4a8a;
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(100, 100, 200, 0.3);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .dialog-header {
+            background: linear-gradient(90deg, #2a2a5a 0%, #3a3a6a 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #4a4a8a;
+        }
+
+        .portal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #a0c0ff;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #8a8aaa;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #ff6a6a;
+        }
+
+        /* Content */
+        .dialog-content {
+            padding: 20px;
+        }
+
+        /* Destination Preview */
+        .destination-preview {
+            display: flex;
+            align-items: center;
+            background: rgba(40, 40, 80, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .destination-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #4a4a8a 0%, #6a6aaa 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .destination-info {
+            flex: 1;
+        }
+
+        .destination-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #a0c0ff;
+            margin-bottom: 5px;
+        }
+
+        .destination-details {
+            font-size: 12px;
+            color: #8a8aaa;
+        }
+
+        .destination-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Travel Time */
+        .travel-time {
+            text-align: center;
+            padding: 15px;
+            background: rgba(60, 60, 100, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .travel-time-label {
+            font-size: 12px;
+            color: #8a8aaa;
+            margin-bottom: 5px;
+        }
+
+        .travel-time-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #6aff6a;
+        }
+
+        /* Selection Tabs */
+        .selection-tabs {
+            display: flex;
+            border-bottom: 1px solid #3a3a5a;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: #8a8aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn:hover {
+            color: #a0a0c0;
+        }
+
+        .tab-btn.active {
+            color: #a0c0ff;
+            border-bottom-color: #6a6aff;
+        }
+
+        /* Unit Selection */
+        .unit-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .unit-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            background: rgba(40, 40, 80, 0.3);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .unit-item:hover {
+            background: rgba(60, 60, 100, 0.5);
+        }
+
+        .unit-item.selected {
+            background: rgba(80, 80, 140, 0.5);
+            border: 1px solid #6a6aff;
+        }
+
+        .unit-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .unit-checkbox {
+            margin-right: 10px;
+        }
+
+        .unit-icon {
+            width: 32px;
+            height: 32px;
+            background: #3a3a5a;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .unit-name {
+            flex: 1;
+        }
+
+        .unit-count {
+            color: #8a8aaa;
+        }
+
+        /* Resource Selection */
+        .resource-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(40, 40, 80, 0.3);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .resource-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .resource-name {
+            flex: 1;
+        }
+
+        .resource-input {
+            width: 100px;
+            padding: 8px;
+            background: #2a2a4a;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            color: #e0e0e0;
+            text-align: right;
+        }
+
+        .resource-max {
+            margin-left: 10px;
+            color: #8a8aaa;
+            font-size: 12px;
+        }
+
+        /* Cost Summary */
+        .cost-summary {
+            background: rgba(40, 40, 80, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cost-title {
+            font-size: 14px;
+            color: #8a8aaa;
+            margin-bottom: 10px;
+        }
+
+        .cost-items {
+            display: flex;
+            gap: 20px;
+        }
+
+        .cost-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cost-value {
+            color: #ffaa6a;
+            font-weight: bold;
+        }
+
+        /* Warnings */
+        .warnings {
+            background: rgba(255, 100, 100, 0.1);
+            border: 1px solid #ff6a6a;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .warning-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ff8a8a;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .warning-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Actions */
+        .dialog-actions {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            background: rgba(20, 20, 40, 0.5);
+            border-top: 1px solid #3a3a5a;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #4a6aff 0%, #6a8aff 100%);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: linear-gradient(135deg, #5a7aff 0%, #7a9aff 100%);
+        }
+
+        .action-btn.primary:disabled {
+            background: #3a3a5a;
+            color: #6a6a8a;
+            cursor: not-allowed;
+        }
+
+        .action-btn.secondary {
+            background: #3a3a5a;
+            color: #a0a0c0;
+        }
+
+        .action-btn.secondary:hover {
+            background: #4a4a6a;
+        }
+
+        /* Travel Progress */
+        .travel-progress {
+            display: none;
+        }
+
+        .travel-progress.active {
+            display: block;
+        }
+
+        .progress-bar-container {
+            background: #2a2a4a;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4a6aff 0%, #6aff6a 100%);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #8a8aaa;
+            font-size: 14px;
+        }
+
+        .travel-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .portal-effect {
+            width: 100px;
+            height: 100px;
+            border: 3px solid #6a6aff;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.7;
+            }
+        }
+
+        /* Encounter */
+        .encounter-panel {
+            background: rgba(100, 60, 60, 0.3);
+            border: 1px solid #ff6a6a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .encounter-title {
+            color: #ff8a8a;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .encounter-choices {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="portal-dialog">
+        <div class="dialog-header">
+            <span class="portal-title">Portal Travel</span>
+            <button class="close-btn" onclick="closeDialog()">&times;</button>
+        </div>
+
+        <div class="dialog-content">
+            <!-- Destination Preview -->
+            <div class="destination-preview">
+                <div class="destination-icon">🌀</div>
+                <div class="destination-info">
+                    <div class="destination-name" id="dest-name">Northern Wastes</div>
+                    <div class="destination-details" id="dest-details">Arctic Biome - Danger Level 6</div>
+                    <div class="destination-stats">
+                        <div class="stat-item">
+                            <span>👥</span>
+                            <span id="dest-players">12 players</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>⚔️</span>
+                            <span id="dest-faction">Empire Territory</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>🌤️</span>
+                            <span id="dest-weather">Blizzard</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Travel Time -->
+            <div class="travel-time">
+                <div class="travel-time-label">Estimated Travel Time</div>
+                <div class="travel-time-value" id="travel-time">2:30</div>
+            </div>
+
+            <!-- Selection Tabs -->
+            <div class="selection-tabs">
+                <button class="tab-btn active" data-tab="units">Units (<span id="unit-count">0</span>)</button>
+                <button class="tab-btn" data-tab="resources">Resources</button>
+            </div>
+
+            <!-- Unit Selection -->
+            <div class="tab-content" id="units-tab">
+                <div class="unit-list" id="unit-list">
+                    <div class="unit-item">
+                        <input type="checkbox" class="unit-checkbox">
+                        <div class="unit-icon"></div>
+                        <span class="unit-name">Infantry</span>
+                        <span class="unit-count">x25</span>
+                    </div>
+                    <div class="unit-item">
+                        <input type="checkbox" class="unit-checkbox">
+                        <div class="unit-icon"></div>
+                        <span class="unit-name">Cavalry</span>
+                        <span class="unit-count">x10</span>
+                    </div>
+                    <div class="unit-item selected">
+                        <input type="checkbox" class="unit-checkbox" checked>
+                        <div class="unit-icon"></div>
+                        <span class="unit-name">Hero: Commander</span>
+                        <span class="unit-count">x1</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn secondary" style="flex: 1" onclick="selectAllUnits()">Select All</button>
+                    <button class="action-btn secondary" style="flex: 1" onclick="deselectAllUnits()">Deselect All</button>
+                </div>
+            </div>
+
+            <!-- Resource Selection -->
+            <div class="tab-content" id="resources-tab" style="display: none;">
+                <div class="resource-item">
+                    <div class="resource-icon"></div>
+                    <span class="resource-name">Gold</span>
+                    <input type="number" class="resource-input" value="0" min="0" max="5000">
+                    <span class="resource-max">/ 5000</span>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-icon" style="background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);"></div>
+                    <span class="resource-name">Wood</span>
+                    <input type="number" class="resource-input" value="0" min="0" max="2000">
+                    <span class="resource-max">/ 2000</span>
+                </div>
+                <div class="resource-item">
+                    <div class="resource-icon" style="background: linear-gradient(135deg, #708090 0%, #a9a9a9 100%);"></div>
+                    <span class="resource-name">Stone</span>
+                    <input type="number" class="resource-input" value="0" min="0" max="1000">
+                    <span class="resource-max">/ 1000</span>
+                </div>
+            </div>
+
+            <!-- Cost Summary -->
+            <div class="cost-summary">
+                <div class="cost-title">Travel Cost</div>
+                <div class="cost-items">
+                    <div class="cost-item">
+                        <span>💰</span>
+                        <span class="cost-value" id="cost-gold">150</span>
+                        <span>Gold</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>🍖</span>
+                        <span class="cost-value" id="cost-supplies">50</span>
+                        <span>Supplies</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warnings -->
+            <div class="warnings" id="warnings" style="display: none;">
+                <div class="warning-item">
+                    <span>⚠️</span>
+                    <span>High danger zone - combat likely</span>
+                </div>
+                <div class="warning-item">
+                    <span>⚠️</span>
+                    <span>Enemy territory - increased costs</span>
+                </div>
+            </div>
+
+            <!-- Travel Progress (hidden by default) -->
+            <div class="travel-progress" id="travel-progress">
+                <div class="travel-animation">
+                    <div class="portal-effect"></div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">Entering portal...</div>
+            </div>
+        </div>
+
+        <div class="dialog-actions">
+            <button class="action-btn secondary" onclick="closeDialog()">Cancel</button>
+            <button class="action-btn primary" id="travel-btn" onclick="confirmTravel()">Travel Now</button>
+        </div>
+    </div>
+
+    <script>
+        class PortalTravelDialog {
+            constructor() {
+                this.selectedUnits = new Set();
+                this.resources = {};
+                this.isOpen = false;
+                this.portalId = null;
+                this.traveling = false;
+
+                this.init();
+            }
+
+            init() {
+                // Tab switching
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
+                });
+
+                // Unit selection
+                document.querySelectorAll('.unit-item').forEach(item => {
+                    item.addEventListener('click', () => this.toggleUnit(item));
+                });
+
+                // Resource inputs
+                document.querySelectorAll('.resource-input').forEach(input => {
+                    input.addEventListener('change', () => this.updateResources());
+                });
+            }
+
+            open(portalId, data) {
+                this.portalId = portalId;
+                this.isOpen = true;
+                document.getElementById('portal-dialog').style.display = 'block';
+
+                if (data) {
+                    this.setDestinationInfo(data);
+                }
+            }
+
+            close() {
+                this.isOpen = false;
+                this.traveling = false;
+                document.getElementById('portal-dialog').style.display = 'none';
+
+                if (window.gameEngine) {
+                    window.gameEngine.onPortalClosed();
+                }
+            }
+
+            setDestinationInfo(data) {
+                if (data.name) document.getElementById('dest-name').textContent = data.name;
+                if (data.details) document.getElementById('dest-details').textContent = data.details;
+                if (data.players) document.getElementById('dest-players').textContent = data.players + ' players';
+                if (data.faction) document.getElementById('dest-faction').textContent = data.faction;
+                if (data.weather) document.getElementById('dest-weather').textContent = data.weather;
+                if (data.travelTime) document.getElementById('travel-time').textContent = data.travelTime;
+                if (data.cost) {
+                    document.getElementById('cost-gold').textContent = data.cost.gold || 0;
+                    document.getElementById('cost-supplies').textContent = data.cost.supplies || 0;
+                }
+                if (data.warnings && data.warnings.length > 0) {
+                    document.getElementById('warnings').style.display = 'block';
+                }
+            }
+
+            switchTab(tab) {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.tab === tab);
+                });
+                document.getElementById('units-tab').style.display = tab === 'units' ? 'block' : 'none';
+                document.getElementById('resources-tab').style.display = tab === 'resources' ? 'block' : 'none';
+            }
+
+            toggleUnit(item) {
+                if (item.classList.contains('disabled')) return;
+
+                item.classList.toggle('selected');
+                const checkbox = item.querySelector('.unit-checkbox');
+                checkbox.checked = item.classList.contains('selected');
+
+                this.updateUnitCount();
+            }
+
+            selectAll() {
+                document.querySelectorAll('.unit-item:not(.disabled)').forEach(item => {
+                    item.classList.add('selected');
+                    item.querySelector('.unit-checkbox').checked = true;
+                });
+                this.updateUnitCount();
+            }
+
+            deselectAll() {
+                document.querySelectorAll('.unit-item').forEach(item => {
+                    item.classList.remove('selected');
+                    item.querySelector('.unit-checkbox').checked = false;
+                });
+                this.updateUnitCount();
+            }
+
+            updateUnitCount() {
+                const count = document.querySelectorAll('.unit-item.selected').length;
+                document.getElementById('unit-count').textContent = count;
+            }
+
+            updateResources() {
+                // Validate and update resource selection
+            }
+
+            confirmTravel() {
+                if (this.traveling) return;
+
+                this.traveling = true;
+                document.getElementById('travel-progress').classList.add('active');
+                document.getElementById('travel-btn').disabled = true;
+
+                // Simulate travel progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 2;
+                    document.getElementById('progress-bar').style.width = progress + '%';
+
+                    if (progress < 30) {
+                        document.getElementById('progress-text').textContent = 'Entering portal...';
+                    } else if (progress < 70) {
+                        document.getElementById('progress-text').textContent = 'Traveling through void...';
+                    } else {
+                        document.getElementById('progress-text').textContent = 'Arriving at destination...';
+                    }
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        this.onTravelComplete();
+                    }
+                }, 50);
+
+                // Notify game engine
+                if (window.gameEngine) {
+                    const selectedUnits = Array.from(document.querySelectorAll('.unit-item.selected'))
+                        .map(item => item.dataset.unitId);
+                    window.gameEngine.onTravelConfirmed(this.portalId, selectedUnits, this.resources);
+                }
+            }
+
+            onTravelComplete() {
+                document.getElementById('progress-text').textContent = 'Arrived!';
+                setTimeout(() => this.close(), 1000);
+            }
+
+            setProgress(progress) {
+                document.getElementById('progress-bar').style.width = progress + '%';
+            }
+        }
+
+        const dialog = new PortalTravelDialog();
+
+        // Global functions
+        function closeDialog() {
+            dialog.close();
+        }
+
+        function confirmTravel() {
+            dialog.confirmTravel();
+        }
+
+        function selectAllUnits() {
+            dialog.selectAll();
+        }
+
+        function deselectAllUnits() {
+            dialog.deselectAll();
+        }
+
+        // Expose to game engine
+        window.portalTravel = dialog;
+    </script>
+</body>
+</html>

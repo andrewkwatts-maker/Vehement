@@ -1,0 +1,166 @@
+{
+    "id": "fairy_thornling",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Thornling",
+    "description": "Animated plant creatures bristling with razor-sharp thorns. They form the front line of the Fae army and can regenerate health rapidly.",
+
+    "tags": ["military", "melee", "tier1", "plant", "regeneration"],
+
+    "tier": 1,
+    "age_requirement": 1,
+
+    "model": {
+        "path": "models/races/fairies/units/thornling.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/thornling_diffuse.png",
+        "normal": "textures/races/fairies/units/thornling_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.35,
+                "height": 1.4,
+                "offset": [0.0, 0.7, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 80.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 350,
+        "maxHealth": 350,
+        "healthRegen": 2.0,
+        "armor": 2,
+        "magicResist": 5,
+        "moveSpeed": 4.5,
+        "turnRate": 300.0
+    },
+
+    "combat": {
+        "attackDamage": 14,
+        "attackSpeed": 1.3,
+        "attackRange": 1.2,
+        "damageType": "normal",
+        "armorType": "medium",
+        "attackType": "melee"
+    },
+
+    "abilities": [
+        {
+            "id": "ability_thorn_shield",
+            "name": "Thorn Shield",
+            "description": "Return 20% of melee damage to attackers",
+            "passive": true,
+            "effects": [
+                {"type": "damage_return", "value": 0.20, "condition": "melee_attacker"}
+            ]
+        },
+        {
+            "id": "ability_root",
+            "name": "Root",
+            "description": "Plant roots in the ground, becoming immobile but gaining +50% health regen and +3 armor",
+            "hotkey": "R",
+            "toggle": true,
+            "effects": [
+                {"type": "immobilize", "value": true},
+                {"type": "health_regen_bonus", "value": 0.50},
+                {"type": "armor_bonus", "value": 3}
+            ]
+        },
+        {
+            "id": "ability_entangle",
+            "name": "Entangle",
+            "description": "Root an enemy in place for 4 seconds",
+            "hotkey": "E",
+            "cooldown": 20.0,
+            "range": 6.0,
+            "duration": 4.0,
+            "effects": [
+                {"type": "root", "value": true},
+                {"type": "dot", "damage": 10, "duration": 4.0}
+            ],
+            "requires_upgrade": "upgrade_entangle"
+        }
+    ],
+
+    "regeneration": {
+        "enabled": true,
+        "base_rate": 2.0,
+        "in_combat_rate": 0.5,
+        "near_tree_bonus": 3.0
+    },
+
+    "night_bonus": {
+        "healthRegen": 0.50,
+        "armor": 1
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_thornling_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 3
+        },
+        {
+            "id": "upgrade_thornling_armor",
+            "stat": "armor",
+            "bonus_per_level": 2
+        },
+        {
+            "id": "upgrade_bark_hide",
+            "stat": "health",
+            "bonus_per_level": 50
+        }
+    ],
+
+    "production": {
+        "building": "fairy_ancient_of_war",
+        "cost": {
+            "gold": 85,
+            "wood": 40,
+            "food": 2
+        },
+        "build_time": 20.0,
+        "population_cost": 2,
+        "prerequisites": []
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/melee_tank.bt",
+        "profile": "defensive",
+        "aggroRange": 8.0,
+        "leashRange": 20.0,
+        "use_root": true,
+        "root_health_threshold": 0.4
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/thornling/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/thornling/walk.anim", "loop": true},
+        "attack": {"path": "animations/fairies/thornling/attack.anim", "loop": false},
+        "root": {"path": "animations/fairies/thornling/root.anim", "loop": true},
+        "death": {"path": "animations/fairies/thornling/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/thornling/select_1.wav", "sounds/fairies/thornling/select_2.wav"],
+        "acknowledge": ["sounds/fairies/thornling/ack_1.wav", "sounds/fairies/thornling/ack_2.wav"],
+        "attack": "sounds/fairies/thornling/attack.wav",
+        "death": "sounds/fairies/thornling/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/thornling.png",
+        "icon": "textures/races/fairies/icons/thornling.png",
+        "hotkey": "T"
+    }
+}

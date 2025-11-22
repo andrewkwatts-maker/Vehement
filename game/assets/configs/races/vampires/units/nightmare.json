@@ -1,0 +1,223 @@
+{
+  "id": "nightmare",
+  "name": "Nightmare",
+  "race": "vampires",
+  "tier": 3,
+  "type": "ethereal_cavalry",
+  "role": ["cavalry", "ethereal", "magic_damage"],
+
+  "description": "Spectral horses ridden by vampire spirits, able to phase through enemies and deal magic damage.",
+  "lore": "Nightmares are the vengeful spirits of horses slain in vampire hunts, bound to ghostly vampire riders. They exist between worlds, able to become incorporeal at will and terrify the living with their haunting presence.",
+
+  "stats": {
+    "health": 600,
+    "healthRegen": 1.5,
+    "mana": 150,
+    "manaRegen": 1.0,
+    "armor": 2,
+    "armorType": "medium",
+    "moveSpeed": 370,
+    "turnRate": 0.6,
+    "collisionSize": 44,
+    "selectionScale": 1.25
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 28,
+      "variance": 5,
+      "type": "magic"
+    },
+    "attackSpeed": 1.5,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.35,
+    "backswing": 0.35,
+    "acquisitionRange": 500,
+    "aggroRange": 450,
+    "lifeSteal": 0.20,
+    "ignoresArmor": true
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.5,
+      "speedBonus": 40,
+      "etherealDuration": 2.0
+    },
+    "day": {
+      "damagePenalty": 0.3,
+      "etherealCooldownPenalty": 10
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "ethereal_form",
+      "name": "Ethereal Form",
+      "type": "active",
+      "targetType": "self",
+      "description": "Become ethereal, gaining magic immunity and ability to move through units, but taking extra magic damage",
+      "cooldown": 18,
+      "manaCost": 50,
+      "effects": {
+        "duration": 5.0,
+        "magicImmunity": false,
+        "physicalImmunity": true,
+        "magicDamageTaken": 1.4,
+        "canPassThroughUnits": true,
+        "cannotAttack": false
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/ethereal_form.png"
+    },
+    {
+      "id": "spectral_charge",
+      "name": "Spectral Charge",
+      "type": "active",
+      "targetType": "point",
+      "description": "Charge through enemies in a line, dealing damage and fearing them",
+      "cooldown": 25,
+      "manaCost": 75,
+      "effects": {
+        "damage": 100,
+        "range": 600,
+        "width": 150,
+        "fearDuration": 2.0,
+        "becomesEtherealDuring": true
+      },
+      "hotkey": "Q",
+      "icon": "icons/abilities/spectral_charge.png"
+    },
+    {
+      "id": "haunting_wail",
+      "name": "Haunting Wail",
+      "type": "active",
+      "targetType": "area",
+      "description": "Let out a terrifying wail that reduces enemy attack and move speed",
+      "cooldown": 30,
+      "manaCost": 60,
+      "effects": {
+        "radius": 400,
+        "attackSpeedReduction": 0.3,
+        "moveSpeedReduction": 0.3,
+        "duration": 8.0
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/haunting_wail.png"
+    },
+    {
+      "id": "death_ride",
+      "name": "Death Ride",
+      "type": "passive",
+      "description": "Gains 3% damage for each enemy killed, up to 30%. Resets on death.",
+      "effects": {
+        "damagePerKill": 0.03,
+        "maxBonus": 0.30,
+        "resetsOnDeath": true
+      },
+      "icon": "icons/abilities/death_ride.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "stable_of_nightmares",
+    "buildTime": 45,
+    "cost": {
+      "gold": 320,
+      "lumber": 50,
+      "blood": 40
+    },
+    "foodCost": 4,
+    "prerequisites": {
+      "buildings": ["stable_of_nightmares", "citadel_of_night"],
+      "technologies": [],
+      "age": "count"
+    },
+    "hotkey": "N"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "spectral_weapons"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "ethereal_fortitude"
+    },
+    "special": ["extended_ethereal", "improved_charge", "lingering_wail"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/nightmare/ready.ogg",
+    "select": ["audio/units/nightmare/select1.ogg", "audio/units/nightmare/select2.ogg"],
+    "move": ["audio/units/nightmare/move1.ogg", "audio/units/nightmare/move2.ogg"],
+    "attack": ["audio/units/nightmare/attack1.ogg", "audio/units/nightmare/attack2.ogg"],
+    "death": "audio/units/nightmare/death.ogg",
+    "ethereal": "audio/units/nightmare/ethereal.ogg",
+    "charge": "audio/units/nightmare/charge.ogg",
+    "wail": "audio/units/nightmare/wail.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/nightmare.glb",
+    "texture": "textures/units/vampires/nightmare.png",
+    "portrait": "textures/portraits/nightmare.png",
+    "icon": "textures/icons/nightmare.png",
+    "scale": 1.25,
+    "animations": {
+      "idle": "nightmare_idle",
+      "walk": "nightmare_walk",
+      "run": "nightmare_run",
+      "attack": "nightmare_attack",
+      "death": "nightmare_death",
+      "ethereal": "nightmare_ethereal",
+      "charge": "nightmare_charge"
+    },
+    "effects": {
+      "spawn": "effects/ghost_spawn.vfx",
+      "death": "effects/ghost_death.vfx",
+      "ethereal": "effects/ethereal_shimmer.vfx",
+      "charge": "effects/spectral_charge.vfx",
+      "wail": "effects/haunting_wail.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 6,
+    "priority": "high",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.1,
+    "preferredTargets": ["caster", "ranged", "siege"],
+    "useEtherealToEscape": true,
+    "useChargeToEngage": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isEthereal": false,
+    "isMounted": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": false
+  },
+
+  "bounty": {
+    "gold": 42,
+    "experience": 55,
+    "blood": 0
+  },
+
+  "pointValue": 4,
+  "supplyProvided": 0,
+  "supplyUsed": 4
+}

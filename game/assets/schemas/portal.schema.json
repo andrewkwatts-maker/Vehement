@@ -1,0 +1,493 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "portal.schema.json",
+  "title": "Portal Definition",
+  "description": "Defines a portal gate for inter-region travel",
+  "type": "object",
+  "required": ["id", "name", "sourceRegionId", "destinationRegionId"],
+
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^portal_[a-z_]+$",
+      "description": "Unique portal identifier"
+    },
+    "name": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Display name of the portal"
+    },
+    "description": {
+      "$ref": "common.schema.json#/definitions/localizedString",
+      "description": "Portal description and lore"
+    },
+    "sourceRegionId": {
+      "type": "string",
+      "description": "Region where this portal is located"
+    },
+    "destinationRegionId": {
+      "type": "string",
+      "description": "Region this portal leads to"
+    },
+    "position": {
+      "$ref": "#/definitions/gpsPosition",
+      "description": "GPS coordinates of the portal"
+    },
+    "destinationPosition": {
+      "$ref": "#/definitions/gpsPosition",
+      "description": "Exit position in destination region"
+    },
+    "portalType": {
+      "$ref": "#/definitions/portalType",
+      "description": "Type of portal"
+    },
+    "status": {
+      "$ref": "#/definitions/portalStatus",
+      "description": "Current portal status"
+    },
+    "bidirectional": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether travel works both ways"
+    },
+    "requirements": {
+      "$ref": "#/definitions/portalRequirements",
+      "description": "Requirements to use the portal"
+    },
+    "travel": {
+      "$ref": "#/definitions/travelConfig",
+      "description": "Travel settings"
+    },
+    "visuals": {
+      "$ref": "#/definitions/portalVisuals",
+      "description": "Visual appearance"
+    },
+    "schedule": {
+      "$ref": "#/definitions/portalSchedule",
+      "description": "Active time schedule"
+    },
+    "limits": {
+      "$ref": "#/definitions/portalLimits",
+      "description": "Usage limitations"
+    },
+    "owner": {
+      "$ref": "#/definitions/portalOwner",
+      "description": "Ownership information"
+    },
+    "linkedPortalId": {
+      "type": "string",
+      "description": "ID of the return portal (if bidirectional)"
+    },
+    "networkId": {
+      "type": "string",
+      "description": "Portal network this belongs to"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Searchable tags"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Custom metadata"
+    }
+  },
+
+  "definitions": {
+    "gpsPosition": {
+      "type": "object",
+      "required": ["lat", "lon"],
+      "properties": {
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "description": "Latitude"
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Longitude"
+        },
+        "altitude": {
+          "type": "number",
+          "default": 0,
+          "description": "Altitude in meters"
+        }
+      }
+    },
+    "portalType": {
+      "enum": [
+        "standard",
+        "major",
+        "hidden",
+        "faction",
+        "ancient",
+        "unstable",
+        "underwater",
+        "event",
+        "one_way",
+        "pvp",
+        "safe",
+        "boss",
+        "dungeon"
+      ],
+      "default": "standard"
+    },
+    "portalStatus": {
+      "enum": [
+        "active",
+        "inactive",
+        "charging",
+        "cooldown",
+        "damaged",
+        "locked",
+        "destroyed",
+        "hidden"
+      ],
+      "default": "active"
+    },
+    "portalRequirements": {
+      "type": "object",
+      "properties": {
+        "minLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 1,
+          "description": "Minimum player level"
+        },
+        "maxLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum player level (for scaled content)"
+        },
+        "questRequired": {
+          "type": "string",
+          "description": "Quest ID that must be completed"
+        },
+        "questActive": {
+          "type": "string",
+          "description": "Quest ID that must be active"
+        },
+        "itemRequired": {
+          "type": "string",
+          "description": "Item ID required in inventory"
+        },
+        "itemConsumed": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the required item is consumed"
+        },
+        "factionId": {
+          "type": "integer",
+          "description": "Required faction affiliation"
+        },
+        "factionReputation": {
+          "type": "integer",
+          "description": "Minimum faction reputation"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skillId": { "type": "string" },
+              "minLevel": { "type": "integer" }
+            }
+          },
+          "description": "Required skill levels"
+        },
+        "achievements": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required achievement IDs"
+        },
+        "groupSize": {
+          "type": "object",
+          "properties": {
+            "min": { "type": "integer", "default": 1 },
+            "max": { "type": "integer" }
+          },
+          "description": "Group size requirements"
+        },
+        "timeRestriction": {
+          "type": "object",
+          "properties": {
+            "realTimeOnly": { "type": "boolean" },
+            "gameTimeOnly": { "type": "boolean" },
+            "startHour": { "type": "integer" },
+            "endHour": { "type": "integer" },
+            "daysOfWeek": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "description": "Time-based restrictions"
+        }
+      }
+    },
+    "travelConfig": {
+      "type": "object",
+      "properties": {
+        "baseTravelTime": {
+          "type": "number",
+          "minimum": 0,
+          "default": 30.0,
+          "description": "Base travel time in seconds"
+        },
+        "distance": {
+          "type": "number",
+          "description": "Travel distance (affects time/cost)"
+        },
+        "cost": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Resource cost for travel"
+        },
+        "cooldown": {
+          "type": "number",
+          "default": 0,
+          "description": "Personal cooldown in seconds"
+        },
+        "globalCooldown": {
+          "type": "number",
+          "default": 0,
+          "description": "Global cooldown (all players)"
+        },
+        "encounterChance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.1,
+          "description": "Chance of travel encounter"
+        },
+        "encounterTypes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Possible encounter IDs"
+        },
+        "safeTravel": {
+          "type": "boolean",
+          "default": false,
+          "description": "No encounters or damage"
+        },
+        "armyTransfer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Can transfer army units"
+        },
+        "resourceTransfer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Can transfer resources"
+        },
+        "maxArmySize": {
+          "type": "integer",
+          "default": 50,
+          "description": "Maximum units per trip"
+        },
+        "maxResources": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Maximum resources per trip"
+        }
+      }
+    },
+    "portalVisuals": {
+      "type": "object",
+      "properties": {
+        "visualType": {
+          "enum": [
+            "energy_ring",
+            "grand_archway",
+            "invisible_until_found",
+            "faction_banner",
+            "runic_circle",
+            "chaotic_rift",
+            "water_vortex",
+            "seasonal_themed",
+            "fire_portal",
+            "ice_portal",
+            "nature_portal",
+            "shadow_portal",
+            "light_portal"
+          ],
+          "default": "energy_ring"
+        },
+        "primaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "default": "#00BFFF"
+        },
+        "secondaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 10,
+          "default": 1.0
+        },
+        "rotation": {
+          "type": "number",
+          "default": 0
+        },
+        "idleParticles": {
+          "type": "string",
+          "description": "Particle effect ID"
+        },
+        "activationParticles": {
+          "type": "string"
+        },
+        "travelParticles": {
+          "type": "string"
+        },
+        "idleSound": {
+          "type": "string"
+        },
+        "activationSound": {
+          "type": "string"
+        },
+        "travelSound": {
+          "type": "string"
+        },
+        "arrivalSound": {
+          "type": "string"
+        },
+        "modelPath": {
+          "type": "string",
+          "description": "Custom 3D model path"
+        },
+        "texturePath": {
+          "type": "string"
+        },
+        "animationSet": {
+          "type": "string"
+        },
+        "glowIntensity": {
+          "type": "number",
+          "default": 1.0
+        },
+        "pulseSpeed": {
+          "type": "number",
+          "default": 1.0
+        }
+      }
+    },
+    "portalSchedule": {
+      "type": "object",
+      "properties": {
+        "alwaysActive": {
+          "type": "boolean",
+          "default": true
+        },
+        "activePeriods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startHour": { "type": "integer", "minimum": 0, "maximum": 23 },
+              "endHour": { "type": "integer", "minimum": 0, "maximum": 23 },
+              "daysOfWeek": {
+                "type": "array",
+                "items": { "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] }
+              }
+            }
+          }
+        },
+        "eventOnly": {
+          "type": "boolean",
+          "default": false
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "seasonalAvailability": {
+          "type": "array",
+          "items": { "enum": ["spring", "summer", "autumn", "winter"] }
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "portalLimits": {
+      "type": "object",
+      "properties": {
+        "dailyUses": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Max uses per day per player (0 = unlimited)"
+        },
+        "weeklyUses": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalUses": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Max total uses before depletion"
+        },
+        "simultaneousTravelers": {
+          "type": "integer",
+          "default": 100,
+          "description": "Max concurrent travelers"
+        },
+        "queueSize": {
+          "type": "integer",
+          "default": 50,
+          "description": "Max queue length"
+        },
+        "vipBypass": {
+          "type": "boolean",
+          "default": false,
+          "description": "VIP players bypass limits"
+        }
+      }
+    },
+    "portalOwner": {
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Player or faction ID"
+        },
+        "ownerType": {
+          "enum": ["none", "player", "faction", "guild", "npc", "world"],
+          "default": "world"
+        },
+        "factionId": {
+          "type": "integer"
+        },
+        "capturable": {
+          "type": "boolean",
+          "default": false
+        },
+        "captureTime": {
+          "type": "number",
+          "default": 300
+        },
+        "defendersRequired": {
+          "type": "integer",
+          "default": 0
+        },
+        "ownerBenefits": {
+          "type": "object",
+          "properties": {
+            "freeTravelForOwner": { "type": "boolean" },
+            "taxRate": { "type": "number" },
+            "speedBonus": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}

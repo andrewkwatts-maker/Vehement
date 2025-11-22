@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Conquest of Realms</title>
+    <link rel="stylesheet" href="../../css/ui_base.css">
+    <link rel="stylesheet" href="../../css/ui_theme_dark.css">
+    <link rel="stylesheet" href="../../css/ui_animations.css">
+    <link rel="stylesheet" href="../../css/menu_theme.css">
+</head>
+<body>
+    <div id="settings-menu" class="menu-container">
+        <div class="parallax-container">
+            <div class="parallax-layer layer-back"></div>
+            <div class="parallax-overlay"></div>
+        </div>
+
+        <div class="settings-content">
+            <div class="settings-header">
+                <button class="menu-btn menu-btn-sm" onclick="SettingsMenu.back()">&larr; Back</button>
+                <h1 class="settings-title">Settings</h1>
+                <div class="settings-actions">
+                    <button class="menu-btn menu-btn-sm" onclick="SettingsMenu.resetToDefaults()">Reset to Defaults</button>
+                    <button class="menu-btn menu-btn-primary menu-btn-sm" onclick="SettingsMenu.applySettings()">Apply</button>
+                </div>
+            </div>
+
+            <div class="settings-layout">
+                <!-- Category Tabs -->
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-tab="graphics" onclick="SettingsMenu.switchTab('graphics')">
+                        <span class="tab-icon">🖥️</span> Graphics
+                    </button>
+                    <button class="settings-tab" data-tab="audio" onclick="SettingsMenu.switchTab('audio')">
+                        <span class="tab-icon">🔊</span> Audio
+                    </button>
+                    <button class="settings-tab" data-tab="controls" onclick="SettingsMenu.switchTab('controls')">
+                        <span class="tab-icon">🎮</span> Controls
+                    </button>
+                    <button class="settings-tab" data-tab="gameplay" onclick="SettingsMenu.switchTab('gameplay')">
+                        <span class="tab-icon">⚔️</span> Gameplay
+                    </button>
+                    <button class="settings-tab" data-tab="network" onclick="SettingsMenu.switchTab('network')">
+                        <span class="tab-icon">🌐</span> Network
+                    </button>
+                    <button class="settings-tab" data-tab="accessibility" onclick="SettingsMenu.switchTab('accessibility')">
+                        <span class="tab-icon">♿</span> Accessibility
+                    </button>
+                </div>
+
+                <!-- Settings Panels -->
+                <div class="settings-panels menu-scrollable">
+                    <!-- Graphics Settings -->
+                    <div class="settings-panel active" id="panel-graphics">
+                        <h2>Graphics Settings</h2>
+
+                        <div class="setting-group">
+                            <h3>Display</h3>
+                            <div class="setting-row">
+                                <label>Resolution</label>
+                                <select class="menu-select" id="setting-resolution">
+                                    <option value="1920x1080">1920 x 1080 (1080p)</option>
+                                    <option value="2560x1440">2560 x 1440 (1440p)</option>
+                                    <option value="3840x2160">3840 x 2160 (4K)</option>
+                                    <option value="1366x768">1366 x 768</option>
+                                    <option value="1280x720">1280 x 720 (720p)</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Display Mode</label>
+                                <select class="menu-select" id="setting-display-mode">
+                                    <option value="fullscreen">Fullscreen</option>
+                                    <option value="borderless">Borderless Windowed</option>
+                                    <option value="windowed">Windowed</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>VSync</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-vsync" checked>
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <label>Frame Rate Limit</label>
+                                <select class="menu-select" id="setting-fps-limit">
+                                    <option value="0">Unlimited</option>
+                                    <option value="30">30 FPS</option>
+                                    <option value="60" selected>60 FPS</option>
+                                    <option value="120">120 FPS</option>
+                                    <option value="144">144 FPS</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Quality Presets</h3>
+                            <div class="quality-presets">
+                                <button class="preset-btn" data-preset="low" onclick="SettingsMenu.applyPreset('low')">Low</button>
+                                <button class="preset-btn" data-preset="medium" onclick="SettingsMenu.applyPreset('medium')">Medium</button>
+                                <button class="preset-btn selected" data-preset="high" onclick="SettingsMenu.applyPreset('high')">High</button>
+                                <button class="preset-btn" data-preset="ultra" onclick="SettingsMenu.applyPreset('ultra')">Ultra</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Advanced Graphics</h3>
+                            <div class="setting-row">
+                                <label>Texture Quality</label>
+                                <select class="menu-select" id="setting-textures">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high" selected>High</option>
+                                    <option value="ultra">Ultra</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Shadow Quality</label>
+                                <select class="menu-select" id="setting-shadows">
+                                    <option value="off">Off</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high" selected>High</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Anti-Aliasing</label>
+                                <select class="menu-select" id="setting-aa">
+                                    <option value="off">Off</option>
+                                    <option value="fxaa">FXAA</option>
+                                    <option value="msaa2x">MSAA 2x</option>
+                                    <option value="msaa4x" selected>MSAA 4x</option>
+                                    <option value="msaa8x">MSAA 8x</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>View Distance</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-view-distance" min="25" max="100" value="75">
+                                    <span class="slider-value" id="view-distance-value">75%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Effects Quality</label>
+                                <select class="menu-select" id="setting-effects">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high" selected>High</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audio Settings -->
+                    <div class="settings-panel" id="panel-audio">
+                        <h2>Audio Settings</h2>
+
+                        <div class="setting-group">
+                            <h3>Volume</h3>
+                            <div class="setting-row">
+                                <label>Master Volume</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-master-volume" min="0" max="100" value="80">
+                                    <span class="slider-value" id="master-volume-value">80%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Music Volume</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-music-volume" min="0" max="100" value="70">
+                                    <span class="slider-value" id="music-volume-value">70%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Sound Effects</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-sfx-volume" min="0" max="100" value="80">
+                                    <span class="slider-value" id="sfx-volume-value">80%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Voice/Dialogue</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-voice-volume" min="0" max="100" value="100">
+                                    <span class="slider-value" id="voice-volume-value">100%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Ambient Sounds</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-ambient-volume" min="0" max="100" value="60">
+                                    <span class="slider-value" id="ambient-volume-value">60%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Audio Output</h3>
+                            <div class="setting-row">
+                                <label>Output Device</label>
+                                <select class="menu-select" id="setting-audio-device">
+                                    <option value="default">System Default</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Speaker Configuration</label>
+                                <select class="menu-select" id="setting-speaker-config">
+                                    <option value="stereo">Stereo</option>
+                                    <option value="5.1">5.1 Surround</option>
+                                    <option value="7.1">7.1 Surround</option>
+                                    <option value="headphones">Headphones</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Controls Settings -->
+                    <div class="settings-panel" id="panel-controls">
+                        <h2>Controls Settings</h2>
+
+                        <div class="setting-group">
+                            <h3>Mouse</h3>
+                            <div class="setting-row">
+                                <label>Mouse Sensitivity</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-mouse-sens" min="1" max="100" value="50">
+                                    <span class="slider-value" id="mouse-sens-value">50%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Invert Mouse Y</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-invert-y">
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <label>Edge Scroll Speed</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-edge-scroll" min="0" max="100" value="50">
+                                    <span class="slider-value" id="edge-scroll-value">50%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Key Bindings</h3>
+                            <div class="keybinds-list" id="keybinds-list">
+                                <!-- Key bindings populated dynamically -->
+                            </div>
+                            <button class="menu-btn menu-btn-sm" onclick="SettingsMenu.resetKeybinds()">Reset to Defaults</button>
+                        </div>
+                    </div>
+
+                    <!-- Gameplay Settings -->
+                    <div class="settings-panel" id="panel-gameplay">
+                        <h2>Gameplay Settings</h2>
+
+                        <div class="setting-group">
+                            <h3>Interface</h3>
+                            <div class="setting-row">
+                                <label>Minimap Position</label>
+                                <select class="menu-select" id="setting-minimap-pos">
+                                    <option value="bottom-left">Bottom Left</option>
+                                    <option value="bottom-right" selected>Bottom Right</option>
+                                    <option value="top-left">Top Left</option>
+                                    <option value="top-right">Top Right</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Minimap Size</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-minimap-size" min="50" max="150" value="100">
+                                    <span class="slider-value" id="minimap-size-value">100%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Show Health Bars</label>
+                                <select class="menu-select" id="setting-health-bars">
+                                    <option value="always">Always</option>
+                                    <option value="damaged" selected>When Damaged</option>
+                                    <option value="selected">When Selected</option>
+                                    <option value="never">Never</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Units</h3>
+                            <div class="setting-row">
+                                <label>Unit Voice Frequency</label>
+                                <select class="menu-select" id="setting-unit-voices">
+                                    <option value="all">All Responses</option>
+                                    <option value="reduced" selected>Reduced</option>
+                                    <option value="minimal">Minimal</option>
+                                    <option value="off">Off</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Auto-Attack</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-auto-attack" checked>
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <label>Smart Cast</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-smart-cast">
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Camera</h3>
+                            <div class="setting-row">
+                                <label>Camera Scroll Speed</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-scroll-speed" min="10" max="100" value="50">
+                                    <span class="slider-value" id="scroll-speed-value">50%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Zoom Speed</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-zoom-speed" min="10" max="100" value="50">
+                                    <span class="slider-value" id="zoom-speed-value">50%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Network Settings -->
+                    <div class="settings-panel" id="panel-network">
+                        <h2>Network Settings</h2>
+
+                        <div class="setting-group">
+                            <h3>Connection</h3>
+                            <div class="setting-row">
+                                <label>Preferred Server Region</label>
+                                <select class="menu-select" id="setting-region">
+                                    <option value="auto">Auto-detect</option>
+                                    <option value="na">North America</option>
+                                    <option value="eu">Europe</option>
+                                    <option value="asia">Asia Pacific</option>
+                                    <option value="sa">South America</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Network Quality</label>
+                                <select class="menu-select" id="setting-net-quality">
+                                    <option value="auto">Auto</option>
+                                    <option value="high">High Bandwidth</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low Bandwidth</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Bandwidth</h3>
+                            <div class="setting-row">
+                                <label>Upload Limit (KB/s)</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-upload-limit" min="64" max="1024" value="512">
+                                    <span class="slider-value" id="upload-limit-value">512 KB/s</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Show Ping Indicator</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-show-ping" checked>
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accessibility Settings -->
+                    <div class="settings-panel" id="panel-accessibility">
+                        <h2>Accessibility Settings</h2>
+
+                        <div class="setting-group">
+                            <h3>Visual</h3>
+                            <div class="setting-row">
+                                <label>Colorblind Mode</label>
+                                <select class="menu-select" id="setting-colorblind">
+                                    <option value="off">Off</option>
+                                    <option value="protanopia">Protanopia</option>
+                                    <option value="deuteranopia">Deuteranopia</option>
+                                    <option value="tritanopia">Tritanopia</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>UI Scale</label>
+                                <div class="slider-with-value">
+                                    <input type="range" class="menu-slider" id="setting-ui-scale" min="80" max="150" value="100">
+                                    <span class="slider-value" id="ui-scale-value">100%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>High Contrast Mode</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-high-contrast">
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <label>Reduce Motion</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-reduce-motion">
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Audio Cues</h3>
+                            <div class="setting-row">
+                                <label>Subtitles</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-subtitles" checked>
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <label>Subtitle Size</label>
+                                <select class="menu-select" id="setting-subtitle-size">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Visual Sound Indicators</label>
+                                <label class="menu-checkbox">
+                                    <input type="checkbox" id="setting-visual-sounds">
+                                    <span class="menu-checkbox-box"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/ui_core.js"></script>
+    <script src="../../js/menu_core.js"></script>
+    <script>
+        const SettingsMenu = {
+            _currentTab: 'graphics',
+            _settings: {},
+            _defaultSettings: {},
+            _keybinds: {},
+            _capturingKey: null,
+
+            init: function() {
+                MenuCore.init();
+                this.loadSettings();
+                this.loadKeybinds();
+                this.setupSliders();
+            },
+
+            loadSettings: function() {
+                Engine.call('Settings.load', {}, (settings) => {
+                    if (settings) {
+                        this._settings = settings;
+                        this.applySettingsToUI();
+                    }
+                });
+            },
+
+            loadKeybinds: function() {
+                const defaultBinds = {
+                    'select_all': { action: 'Select All Units', key: 'Ctrl+A' },
+                    'attack_move': { action: 'Attack Move', key: 'A' },
+                    'stop': { action: 'Stop', key: 'S' },
+                    'hold_position': { action: 'Hold Position', key: 'H' },
+                    'patrol': { action: 'Patrol', key: 'P' },
+                    'group_1': { action: 'Control Group 1', key: '1' },
+                    'group_2': { action: 'Control Group 2', key: '2' },
+                    'group_3': { action: 'Control Group 3', key: '3' },
+                    'ability_1': { action: 'Ability 1', key: 'Q' },
+                    'ability_2': { action: 'Ability 2', key: 'W' },
+                    'ability_3': { action: 'Ability 3', key: 'E' },
+                    'ability_4': { action: 'Ability 4', key: 'R' },
+                    'center_camera': { action: 'Center on Selection', key: 'Space' },
+                    'quick_save': { action: 'Quick Save', key: 'F5' },
+                    'quick_load': { action: 'Quick Load', key: 'F9' }
+                };
+
+                this._keybinds = defaultBinds;
+                this.renderKeybinds();
+            },
+
+            renderKeybinds: function() {
+                const list = document.getElementById('keybinds-list');
+                list.innerHTML = Object.entries(this._keybinds).map(([id, bind]) => `
+                    <div class="keybind-row">
+                        <span class="keybind-action">${bind.action}</span>
+                        <button class="keybind-button" data-bind-id="${id}" onclick="SettingsMenu.startKeyCapture('${id}')">
+                            ${bind.key}
+                        </button>
+                    </div>
+                `).join('');
+            },
+
+            startKeyCapture: function(bindId) {
+                if (this._capturingKey) return;
+
+                this._capturingKey = bindId;
+                const btn = document.querySelector(`[data-bind-id="${bindId}"]`);
+                btn.textContent = 'Press a key...';
+                btn.classList.add('capturing');
+
+                const handler = (e) => {
+                    e.preventDefault();
+                    let key = e.key;
+                    if (e.ctrlKey && key !== 'Control') key = 'Ctrl+' + key;
+                    if (e.shiftKey && key !== 'Shift') key = 'Shift+' + key;
+                    if (e.altKey && key !== 'Alt') key = 'Alt+' + key;
+
+                    this._keybinds[bindId].key = key;
+                    btn.textContent = key;
+                    btn.classList.remove('capturing');
+                    this._capturingKey = null;
+                    document.removeEventListener('keydown', handler);
+
+                    Engine.call('Settings.setKeybind', { action: bindId, key: key });
+                };
+
+                document.addEventListener('keydown', handler);
+            },
+
+            resetKeybinds: function() {
+                this.loadKeybinds();
+                Engine.call('Settings.resetKeybinds', {});
+            },
+
+            setupSliders: function() {
+                document.querySelectorAll('.menu-slider').forEach(slider => {
+                    const valueSpan = slider.parentElement.querySelector('.slider-value');
+                    if (valueSpan) {
+                        slider.addEventListener('input', () => {
+                            let value = slider.value;
+                            if (slider.id === 'setting-upload-limit') {
+                                valueSpan.textContent = value + ' KB/s';
+                            } else {
+                                valueSpan.textContent = value + '%';
+                            }
+                        });
+                    }
+                });
+            },
+
+            switchTab: function(tab) {
+                this._currentTab = tab;
+
+                document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector(`.settings-tab[data-tab="${tab}"]`).classList.add('active');
+
+                document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById(`panel-${tab}`).classList.add('active');
+
+                MenuCore.Audio.playSound('tab_switch');
+            },
+
+            applyPreset: function(preset) {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+                document.querySelector(`.preset-btn[data-preset="${preset}"]`).classList.add('selected');
+
+                const presets = {
+                    low: { textures: 'low', shadows: 'off', aa: 'off', effects: 'low', viewDistance: 25 },
+                    medium: { textures: 'medium', shadows: 'low', aa: 'fxaa', effects: 'medium', viewDistance: 50 },
+                    high: { textures: 'high', shadows: 'high', aa: 'msaa4x', effects: 'high', viewDistance: 75 },
+                    ultra: { textures: 'ultra', shadows: 'high', aa: 'msaa8x', effects: 'high', viewDistance: 100 }
+                };
+
+                const p = presets[preset];
+                document.getElementById('setting-textures').value = p.textures;
+                document.getElementById('setting-shadows').value = p.shadows;
+                document.getElementById('setting-aa').value = p.aa;
+                document.getElementById('setting-effects').value = p.effects;
+                document.getElementById('setting-view-distance').value = p.viewDistance;
+                document.getElementById('view-distance-value').textContent = p.viewDistance + '%';
+            },
+
+            applySettingsToUI: function() {
+                // Apply loaded settings to UI elements
+                Object.entries(this._settings).forEach(([key, value]) => {
+                    const el = document.getElementById(`setting-${key}`);
+                    if (el) {
+                        if (el.type === 'checkbox') {
+                            el.checked = value;
+                        } else if (el.type === 'range') {
+                            el.value = value;
+                            const span = el.parentElement.querySelector('.slider-value');
+                            if (span) span.textContent = value + (key === 'upload-limit' ? ' KB/s' : '%');
+                        } else {
+                            el.value = value;
+                        }
+                    }
+                });
+            },
+
+            gatherSettings: function() {
+                const settings = {};
+                document.querySelectorAll('[id^="setting-"]').forEach(el => {
+                    const key = el.id.replace('setting-', '');
+                    if (el.type === 'checkbox') {
+                        settings[key] = el.checked;
+                    } else if (el.type === 'range') {
+                        settings[key] = parseInt(el.value);
+                    } else {
+                        settings[key] = el.value;
+                    }
+                });
+                return settings;
+            },
+
+            applySettings: function() {
+                const settings = this.gatherSettings();
+                Engine.call('Settings.apply', settings);
+                MenuCore.Audio.playSound('button_click');
+
+                // Show confirmation
+                MenuCore.Components.showModal({
+                    title: 'Settings Applied',
+                    content: '<p>Your settings have been saved and applied.</p>',
+                    buttons: [{ text: 'OK', action: 'ok', primary: true }]
+                });
+            },
+
+            resetToDefaults: function() {
+                MenuCore.Components.showModal({
+                    title: 'Reset Settings',
+                    content: '<p>Are you sure you want to reset all settings to their default values?</p>',
+                    buttons: [
+                        { text: 'Cancel', action: 'cancel' },
+                        { text: 'Reset', action: 'reset', danger: true }
+                    ],
+                    onClose: (result) => {
+                        if (result === 'reset') {
+                            Engine.call('Settings.resetAll', {}, () => {
+                                this.loadSettings();
+                            });
+                        }
+                    }
+                });
+            },
+
+            back: function() {
+                Engine.call('Menu.navigate', { page: 'main' });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => SettingsMenu.init());
+        window.SettingsMenu = SettingsMenu;
+    </script>
+
+    <style>
+        .settings-content {
+            position: relative;
+            z-index: var(--menu-z-content);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: var(--menu-spacing-lg);
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--menu-spacing-lg);
+        }
+
+        .settings-title {
+            font-family: var(--menu-font-display);
+            font-size: var(--menu-font-size-xxl);
+            color: var(--menu-gold-light);
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: var(--menu-spacing-md);
+        }
+
+        .settings-layout {
+            display: flex;
+            gap: var(--menu-spacing-lg);
+            flex: 1;
+        }
+
+        .settings-tabs {
+            display: flex;
+            flex-direction: column;
+            gap: var(--menu-spacing-xs);
+            width: 200px;
+        }
+
+        .settings-tab {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-sm);
+            padding: var(--menu-spacing-md);
+            background: rgba(25, 22, 35, 0.8);
+            border: none;
+            border-left: 3px solid transparent;
+            color: var(--menu-text-secondary);
+            text-align: left;
+            cursor: pointer;
+            transition: all var(--menu-transition-fast);
+        }
+
+        .settings-tab:hover {
+            background: rgba(45, 40, 60, 0.9);
+            color: var(--menu-text-primary);
+        }
+
+        .settings-tab.active {
+            background: rgba(212, 168, 75, 0.15);
+            border-left-color: var(--menu-gold);
+            color: var(--menu-gold-light);
+        }
+
+        .tab-icon { font-size: 18px; }
+
+        .settings-panels {
+            flex: 1;
+            background: var(--menu-bg-panel);
+            border: 1px solid var(--menu-gold-dark);
+            padding: var(--menu-spacing-xl);
+            max-height: calc(100vh - 200px);
+        }
+
+        .settings-panel {
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+            animation: fade-in 0.3s ease-out;
+        }
+
+        .settings-panel h2 {
+            color: var(--menu-gold-light);
+            margin-bottom: var(--menu-spacing-lg);
+            padding-bottom: var(--menu-spacing-md);
+            border-bottom: 1px solid rgba(212, 168, 75, 0.3);
+        }
+
+        .setting-group {
+            margin-bottom: var(--menu-spacing-xl);
+        }
+
+        .setting-group h3 {
+            color: var(--menu-gold);
+            margin-bottom: var(--menu-spacing-md);
+            font-size: var(--menu-font-size-md);
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--menu-spacing-sm) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-row label {
+            color: var(--menu-text-primary);
+        }
+
+        .setting-row .menu-select {
+            width: 200px;
+        }
+
+        .slider-with-value {
+            display: flex;
+            align-items: center;
+            gap: var(--menu-spacing-md);
+            width: 250px;
+        }
+
+        .slider-with-value .menu-slider {
+            flex: 1;
+        }
+
+        .slider-with-value .slider-value {
+            min-width: 60px;
+            text-align: right;
+            color: var(--menu-gold-light);
+        }
+
+        .quality-presets {
+            display: flex;
+            gap: var(--menu-spacing-sm);
+        }
+
+        .preset-btn {
+            padding: var(--menu-spacing-md) var(--menu-spacing-lg);
+            background: rgba(25, 22, 35, 0.8);
+            border: 2px solid transparent;
+            color: var(--menu-text-primary);
+            cursor: pointer;
+            transition: all var(--menu-transition-fast);
+        }
+
+        .preset-btn:hover {
+            border-color: rgba(212, 168, 75, 0.5);
+        }
+
+        .preset-btn.selected {
+            border-color: var(--menu-gold);
+            background: rgba(212, 168, 75, 0.2);
+            color: var(--menu-gold-light);
+        }
+
+        .keybinds-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: var(--menu-spacing-md);
+        }
+
+        .keybind-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--menu-spacing-sm);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .keybind-action {
+            color: var(--menu-text-primary);
+        }
+
+        .keybind-button {
+            min-width: 120px;
+            padding: var(--menu-spacing-sm) var(--menu-spacing-md);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--menu-gold-dark);
+            color: var(--menu-gold-light);
+            cursor: pointer;
+            font-family: monospace;
+            transition: all var(--menu-transition-fast);
+        }
+
+        .keybind-button:hover {
+            border-color: var(--menu-gold);
+            background: rgba(212, 168, 75, 0.1);
+        }
+
+        .keybind-button.capturing {
+            background: var(--menu-gold);
+            color: #1a1510;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</body>
+</html>

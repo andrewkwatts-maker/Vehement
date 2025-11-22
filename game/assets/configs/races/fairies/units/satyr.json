@@ -1,0 +1,170 @@
+{
+    "id": "fairy_satyr",
+    "type": "unit",
+    "race": "fairies",
+    "name": "Satyr",
+    "description": "Fast and agile woodland warriors with cloven hooves. Satyrs excel at hit-and-run tactics and can inspire nearby allies with their war songs.",
+
+    "tags": ["military", "melee", "tier2", "fast", "raider"],
+
+    "tier": 2,
+    "age_requirement": 2,
+
+    "model": {
+        "path": "models/races/fairies/units/satyr.obj",
+        "scale": [1.0, 1.0, 1.0],
+        "offset": [0.0, 0.0, 0.0]
+    },
+
+    "textures": {
+        "diffuse": "textures/races/fairies/units/satyr_diffuse.png",
+        "normal": "textures/races/fairies/units/satyr_normal.png"
+    },
+
+    "collision": {
+        "shapes": [
+            {
+                "type": "capsule",
+                "radius": 0.35,
+                "height": 1.8,
+                "offset": [0.0, 0.9, 0.0]
+            }
+        ],
+        "body_type": "dynamic",
+        "mass": 90.0,
+        "layer": "unit"
+    },
+
+    "stats": {
+        "health": 480,
+        "maxHealth": 480,
+        "healthRegen": 0.8,
+        "armor": 3,
+        "magicResist": 10,
+        "moveSpeed": 6.8,
+        "turnRate": 380.0
+    },
+
+    "combat": {
+        "attackDamage": 24,
+        "attackSpeed": 1.1,
+        "attackRange": 1.5,
+        "damageType": "normal",
+        "armorType": "medium",
+        "attackType": "melee",
+        "critChance": 0.15,
+        "critMultiplier": 1.8
+    },
+
+    "abilities": [
+        {
+            "id": "ability_war_stomp_satyr",
+            "name": "War Stomp",
+            "description": "Stomp the ground, stunning and damaging nearby enemies",
+            "hotkey": "W",
+            "cooldown": 18.0,
+            "radius": 4.0,
+            "effects": [
+                {"type": "stun", "duration": 2.0},
+                {"type": "damage", "value": 50}
+            ]
+        },
+        {
+            "id": "ability_battle_roar",
+            "name": "Battle Roar",
+            "description": "Let out a fearsome roar that increases attack speed of nearby allies",
+            "hotkey": "R",
+            "cooldown": 30.0,
+            "duration": 12.0,
+            "radius": 10.0,
+            "effects": [
+                {"type": "attack_speed_bonus", "value": 0.25, "scope": "allies_in_radius"}
+            ]
+        },
+        {
+            "id": "ability_evasion_satyr",
+            "name": "Evasion",
+            "description": "Chance to dodge attacks",
+            "passive": true,
+            "effects": [
+                {"type": "evasion", "value": 0.20}
+            ]
+        },
+        {
+            "id": "ability_pillage",
+            "name": "Pillage",
+            "description": "Attacks against buildings steal gold for each hit",
+            "passive": true,
+            "effects": [
+                {"type": "gold_steal", "value": 3, "condition": "attacking_building"}
+            ],
+            "requires_upgrade": "upgrade_pillage"
+        }
+    ],
+
+    "night_bonus": {
+        "attackDamage": 0.25,
+        "moveSpeed": 0.20,
+        "critChance": 0.10
+    },
+
+    "upgrades": [
+        {
+            "id": "upgrade_satyr_weapons",
+            "stat": "attackDamage",
+            "bonus_per_level": 4
+        },
+        {
+            "id": "upgrade_moonstone_armor",
+            "stat": "armor",
+            "bonus_per_level": 2
+        }
+    ],
+
+    "production": {
+        "building": "fairy_ancient_of_war",
+        "cost": {
+            "gold": 165,
+            "wood": 30,
+            "food": 3
+        },
+        "build_time": 26.0,
+        "population_cost": 2,
+        "prerequisites": ["fairy_hunters_hall"]
+    },
+
+    "ai": {
+        "behaviorTree": "ai/behaviors/raider.bt",
+        "profile": "aggressive",
+        "aggroRange": 10.0,
+        "leashRange": 25.0,
+        "priority_targets": ["worker", "building"],
+        "use_hit_and_run": true,
+        "retreat_threshold": 0.25
+    },
+
+    "animations": {
+        "idle": {"path": "animations/fairies/satyr/idle.anim", "loop": true},
+        "walk": {"path": "animations/fairies/satyr/walk.anim", "loop": true},
+        "run": {"path": "animations/fairies/satyr/run.anim", "loop": true},
+        "attack": {"path": "animations/fairies/satyr/attack.anim", "loop": false},
+        "stomp": {"path": "animations/fairies/satyr/stomp.anim", "loop": false},
+        "roar": {"path": "animations/fairies/satyr/roar.anim", "loop": false},
+        "death": {"path": "animations/fairies/satyr/death.anim", "loop": false}
+    },
+
+    "sounds": {
+        "select": ["sounds/fairies/satyr/select_1.wav", "sounds/fairies/satyr/select_2.wav"],
+        "acknowledge": ["sounds/fairies/satyr/ack_1.wav", "sounds/fairies/satyr/ack_2.wav"],
+        "attack": "sounds/fairies/satyr/attack.wav",
+        "stomp": "sounds/fairies/satyr/stomp.wav",
+        "roar": "sounds/fairies/satyr/roar.wav",
+        "death": "sounds/fairies/satyr/death.wav"
+    },
+
+    "ui": {
+        "portrait": "textures/races/fairies/portraits/satyr.png",
+        "icon": "textures/races/fairies/icons/satyr.png",
+        "hotkey": "A"
+    }
+}

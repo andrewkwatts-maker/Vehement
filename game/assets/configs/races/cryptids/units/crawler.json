@@ -1,0 +1,213 @@
+{
+  "id": "crawler",
+  "name": "Crawler",
+  "race": "cryptids",
+  "tier": 2,
+  "type": "ambusher",
+  "role": ["ambush", "cave_dweller", "wall_climb"],
+
+  "description": "A pale, eyeless humanoid that dwells in caves and abandoned mines. Crawlers can scale any surface and strike from impossible angles.",
+  "lore": "Deep beneath the earth, in places where no light has ever reached, the Crawlers have evolved. They are the things that miners fear - the pale shapes glimpsed in the darkness before the lantern goes out forever.",
+
+  "stats": {
+    "health": 340,
+    "healthRegen": 1.5,
+    "mana": 100,
+    "manaRegen": 0.5,
+    "armor": 2,
+    "armorType": "medium",
+    "moveSpeed": 300,
+    "turnRate": 1.0,
+    "collisionSize": 32,
+    "selectionScale": 1.0
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 24,
+      "variance": 6,
+      "type": "piercing"
+    },
+    "attackSpeed": 1.4,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground"],
+    "damagePoint": 0.25,
+    "backswing": 0.35,
+    "acquisitionRange": 500,
+    "aggroRange": 350
+  },
+
+  "movement": {
+    "type": "ground",
+    "canPassCliffs": true,
+    "canPassWater": false,
+    "canClimbWalls": true
+  },
+
+  "abilities": [
+    {
+      "id": "wall_climb",
+      "name": "Wall Climb",
+      "type": "passive",
+      "description": "Can move over cliffs and scale vertical surfaces",
+      "effects": {
+        "ignoresTerrainHeight": true,
+        "cliffMovement": true
+      },
+      "icon": "icons/abilities/wall_climb.png"
+    },
+    {
+      "id": "burrow",
+      "name": "Burrow",
+      "type": "active",
+      "targetType": "none",
+      "description": "Burrows underground, becoming invisible and regenerating health",
+      "cooldown": 15.0,
+      "manaCost": 25,
+      "effects": {
+        "invisible": true,
+        "invulnerable": false,
+        "cannotMove": true,
+        "healthRegenBonus": 5.0,
+        "duration": -1
+      },
+      "hotkey": "B",
+      "icon": "icons/abilities/burrow.png"
+    },
+    {
+      "id": "ambush_strike",
+      "name": "Ambush Strike",
+      "type": "passive",
+      "description": "First attack from burrow or stealth deals double damage and stuns",
+      "effects": {
+        "damageMultiplier": 2.0,
+        "stunDuration": 1.0
+      },
+      "icon": "icons/abilities/ambush_strike.png"
+    },
+    {
+      "id": "echolocation",
+      "name": "Echolocation",
+      "type": "active",
+      "targetType": "none",
+      "description": "Reveals all units in a large area, including invisible ones",
+      "cooldown": 45.0,
+      "manaCost": 50,
+      "effects": {
+        "radius": 1000,
+        "duration": 6.0,
+        "revealsInvisible": true,
+        "revealsBurrowed": true
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/echolocation.png"
+    },
+    {
+      "id": "tremorsense",
+      "name": "Tremorsense",
+      "type": "passive",
+      "description": "Detects moving units within a radius, even through fog of war",
+      "effects": {
+        "detectionRadius": 600,
+        "detectsMovement": true,
+        "showsOnMinimap": true
+      },
+      "icon": "icons/abilities/tremorsense.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "breeding_pit",
+    "buildTime": 24,
+    "cost": {
+      "gold": 155,
+      "lumber": 20,
+      "essence": 20
+    },
+    "foodCost": 2,
+    "prerequisites": {
+      "buildings": ["breeding_pit"],
+      "technologies": [],
+      "age": "rumor"
+    },
+    "hotkey": "R"
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 2,
+      "maxLevel": 3,
+      "researchId": "primal_claws"
+    },
+    "armor": {
+      "perLevel": 1,
+      "maxLevel": 3,
+      "researchId": "thick_hide"
+    },
+    "special": ["enhanced_burrow", "silent_movement", "cave_adaptation"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/crawler/ready.ogg",
+    "select": ["audio/units/crawler/select1.ogg", "audio/units/crawler/select2.ogg"],
+    "move": ["audio/units/crawler/move1.ogg", "audio/units/crawler/move2.ogg"],
+    "attack": ["audio/units/crawler/attack1.ogg", "audio/units/crawler/attack2.ogg"],
+    "death": "audio/units/crawler/death.ogg",
+    "burrow": "audio/units/crawler/burrow.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/cryptids/crawler.glb",
+    "texture": "textures/units/cryptids/crawler.png",
+    "portrait": "textures/portraits/crawler.png",
+    "icon": "textures/icons/crawler.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "crawler_idle",
+      "walk": "crawler_crawl",
+      "attack": "crawler_attack",
+      "death": "crawler_death",
+      "burrow_in": "crawler_burrow_in",
+      "burrow_out": "crawler_burrow_out",
+      "climb": "crawler_climb"
+    },
+    "effects": {
+      "spawn": "effects/crawler_spawn.vfx",
+      "death": "effects/crawler_death.vfx",
+      "burrow": "effects/burrow.vfx",
+      "ambush": "effects/ambush_strike.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 4,
+    "priority": "medium",
+    "behavior": "ambusher",
+    "fleeThreshold": 0.3,
+    "preferredTargets": ["isolated", "worker", "caster"],
+    "useBurrowToAmbush": true,
+    "flankUsingCliffs": true
+  },
+
+  "flags": {
+    "isUndead": false,
+    "isWorker": false,
+    "canBeRaised": true,
+    "leavesCorpse": true,
+    "canBurrow": true,
+    "canClimb": true,
+    "hasDetection": true,
+    "blindImmunity": true,
+    "nightBonus": true
+  },
+
+  "bounty": {
+    "gold": 22,
+    "experience": 30
+  },
+
+  "pointValue": 2,
+  "supplyProvided": 0,
+  "supplyUsed": 2
+}

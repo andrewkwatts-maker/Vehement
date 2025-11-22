@@ -1,0 +1,249 @@
+{
+  "id": "ancient_one",
+  "name": "Ancient One",
+  "race": "vampires",
+  "tier": 4,
+  "type": "ultimate",
+  "role": ["ultimate", "commander", "devastator"],
+
+  "description": "Primordial vampires from the first age of darkness. Their mere presence weakens mortals and strengthens all vampires nearby.",
+  "lore": "Ancient Ones are vampires so old they have forgotten their mortal names. They were among the first to drink from the Crimson Wellspring, and their power has grown beyond measure over countless millennia. Entire armies have fallen to a single Ancient One.",
+
+  "stats": {
+    "health": 2000,
+    "healthRegen": 5.0,
+    "mana": 400,
+    "manaRegen": 2.0,
+    "armor": 8,
+    "armorType": "divine",
+    "moveSpeed": 290,
+    "turnRate": 0.5,
+    "collisionSize": 48,
+    "selectionScale": 1.5
+  },
+
+  "combat": {
+    "attackDamage": {
+      "base": 55,
+      "variance": 10,
+      "type": "chaos"
+    },
+    "attackSpeed": 1.6,
+    "attackRange": 128,
+    "attackType": "melee",
+    "targets": ["ground", "air"],
+    "damagePoint": 0.4,
+    "backswing": 0.4,
+    "acquisitionRange": 700,
+    "aggroRange": 600,
+    "lifeSteal": 0.35,
+    "cleave": {
+      "enabled": true,
+      "percent": 0.35,
+      "radius": 200
+    }
+  },
+
+  "dayNightModifiers": {
+    "night": {
+      "damageBonus": 0.75,
+      "armorBonus": 4,
+      "healthRegenBonus": 10.0,
+      "auraRadiusBonus": 200
+    },
+    "day": {
+      "damagePenalty": 0.35,
+      "armorPenalty": 2,
+      "takeSunDamage": true,
+      "sunDamagePerSecond": 15
+    }
+  },
+
+  "abilities": [
+    {
+      "id": "ancient_presence",
+      "name": "Ancient Presence",
+      "type": "passive",
+      "description": "Nearby vampires gain +25% damage and +15% life steal. Enemies have -20% attack damage.",
+      "effects": {
+        "allyRadius": 600,
+        "enemyRadius": 500,
+        "allyDamageBonus": 0.25,
+        "allyLifeStealBonus": 0.15,
+        "enemyDamageReduction": 0.20
+      },
+      "icon": "icons/abilities/ancient_presence.png"
+    },
+    {
+      "id": "blood_storm",
+      "name": "Blood Storm",
+      "type": "active",
+      "targetType": "area",
+      "description": "Unleash a devastating storm of blood that damages all enemies in a large area and heals allies",
+      "cooldown": 60,
+      "manaCost": 200,
+      "bloodCost": 75,
+      "effects": {
+        "radius": 500,
+        "damage": 300,
+        "healAmount": 200,
+        "duration": 8.0,
+        "waveCount": 4
+      },
+      "hotkey": "R",
+      "icon": "icons/abilities/blood_storm.png"
+    },
+    {
+      "id": "dominate_mind",
+      "name": "Dominate Mind",
+      "type": "active",
+      "targetType": "unit",
+      "description": "Permanently dominate an enemy unit, converting it to your side",
+      "cooldown": 120,
+      "manaCost": 250,
+      "bloodCost": 100,
+      "effects": {
+        "permanent": true,
+        "targetSizeLimit": "large",
+        "cannotTargetHeroes": true,
+        "range": 500
+      },
+      "hotkey": "E",
+      "icon": "icons/abilities/dominate_mind.png"
+    },
+    {
+      "id": "form_of_mist",
+      "name": "Form of Mist",
+      "type": "active",
+      "targetType": "self",
+      "description": "Transform into invulnerable mist, unable to attack but can move through units",
+      "cooldown": 90,
+      "manaCost": 100,
+      "effects": {
+        "duration": 8.0,
+        "invulnerable": true,
+        "cannotAttack": true,
+        "speedBonus": 0.5,
+        "canPassThroughUnits": true
+      },
+      "hotkey": "W",
+      "icon": "icons/abilities/form_of_mist.png"
+    },
+    {
+      "id": "eternal_hunger",
+      "name": "Eternal Hunger",
+      "type": "passive",
+      "description": "Cannot be reduced below 1 HP for 3 seconds after taking fatal damage. During this time, all attacks heal double.",
+      "effects": {
+        "undyingDuration": 3.0,
+        "doubleLifeSteal": true,
+        "cooldown": 180
+      },
+      "icon": "icons/abilities/eternal_hunger.png"
+    }
+  ],
+
+  "production": {
+    "producedAt": "altar_of_darkness",
+    "buildTime": 90,
+    "cost": {
+      "gold": 800,
+      "lumber": 200,
+      "blood": 150,
+      "souls": 25
+    },
+    "foodCost": 8,
+    "prerequisites": {
+      "buildings": ["altar_of_darkness", "citadel_of_night"],
+      "technologies": ["awaken_ancients"],
+      "age": "lord"
+    },
+    "hotkey": "A",
+    "maxActive": 2
+  },
+
+  "upgrades": {
+    "attack": {
+      "perLevel": 6,
+      "maxLevel": 3,
+      "researchId": "primordial_might"
+    },
+    "armor": {
+      "perLevel": 3,
+      "maxLevel": 3,
+      "researchId": "primordial_hide"
+    },
+    "special": ["extended_presence", "improved_domination", "true_immortality"]
+  },
+
+  "sounds": {
+    "ready": "audio/units/ancient_one/ready.ogg",
+    "select": ["audio/units/ancient_one/select1.ogg", "audio/units/ancient_one/select2.ogg", "audio/units/ancient_one/select3.ogg"],
+    "move": ["audio/units/ancient_one/move1.ogg", "audio/units/ancient_one/move2.ogg"],
+    "attack": ["audio/units/ancient_one/attack1.ogg", "audio/units/ancient_one/attack2.ogg"],
+    "death": "audio/units/ancient_one/death.ogg",
+    "bloodStorm": "audio/units/ancient_one/blood_storm.ogg",
+    "dominate": "audio/units/ancient_one/dominate.ogg"
+  },
+
+  "visuals": {
+    "model": "models/units/vampires/ancient_one.glb",
+    "texture": "textures/units/vampires/ancient_one.png",
+    "portrait": "textures/portraits/ancient_one.png",
+    "icon": "textures/icons/ancient_one.png",
+    "scale": 1.5,
+    "animations": {
+      "idle": "ancient_idle",
+      "walk": "ancient_walk",
+      "attack": "ancient_attack",
+      "death": "ancient_death",
+      "bloodStorm": "ancient_storm",
+      "mist": "ancient_mist",
+      "dominate": "ancient_dominate"
+    },
+    "effects": {
+      "spawn": "effects/ancient_spawn.vfx",
+      "death": "effects/ancient_death.vfx",
+      "presence": "effects/ancient_presence.vfx",
+      "bloodStorm": "effects/blood_storm.vfx",
+      "mist": "effects/mist_form.vfx",
+      "dominate": "effects/dominate_mind.vfx"
+    }
+  },
+
+  "ai": {
+    "threatLevel": 10,
+    "priority": "critical",
+    "behavior": "aggressive",
+    "fleeThreshold": 0.0,
+    "preferredTargets": ["hero", "elite", "caster"],
+    "useBloodStormOnGroups": true,
+    "dominateMostValuable": true
+  },
+
+  "flags": {
+    "isVampire": true,
+    "isUndead": true,
+    "isUltimate": true,
+    "isAncient": true,
+    "canBeRaised": false,
+    "leavesCorpse": false,
+    "affectedByDayNight": true,
+    "hasLifeSteal": true,
+    "canTransform": true,
+    "vulnerableToHoly": true,
+    "vulnerableToFire": true,
+    "immuneToPoison": true,
+    "immuneToDisease": true
+  },
+
+  "bounty": {
+    "gold": 150,
+    "experience": 200,
+    "blood": 0
+  },
+
+  "pointValue": 8,
+  "supplyProvided": 0,
+  "supplyUsed": 8
+}

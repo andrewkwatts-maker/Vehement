@@ -70,7 +70,7 @@ void OnWindowResize(GLFWwindow*, int w, int h) //AntTweak Menu
 
 bool Application::startup()
 {
-	appBasics->ScreenSize = vec2(1920, 1080);
+	appBasics->ScreenSize = vec2(1900, 1000);
 	OGL_Manager->SetNullFrameData(appBasics->ScreenSize);
 
 	int ErrorID = 0;
@@ -85,7 +85,7 @@ bool Application::startup()
 		return false;
 	}
 
-	appBasics->window = glfwCreateWindow((int)appBasics->ScreenSize.x, (int)appBasics->ScreenSize.y, "Window", nullptr, nullptr);
+	appBasics->window = glfwCreateWindow((int)appBasics->ScreenSize.x, (int)appBasics->ScreenSize.y, "ComputerGraphics", nullptr, nullptr);
 
 	if (appBasics->window == nullptr)
 	{

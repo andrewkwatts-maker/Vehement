@@ -47,7 +47,6 @@ public:
 	static void DeleteTempGeometry(UIVec4 TempID);
 	int AddCustomGeometry(vector<VertexBasicTextured> Vertexs, vector<unsigned int> Indexs);
 	int AddFullscreenQuadGeometry(float Depth,glm::vec2 ScreenSize);
-	int AddFullscreenQuadGeometryCam(float Depth, glm::vec2 ScreenSize);
 	int AddscreenQuadGeometry(float Depth, glm::vec2 Min,glm::vec2 Max, glm::vec2 ScreenSize);
 
 	void createFBXOpenGLBuffers(int FBX_ID);
@@ -55,10 +54,6 @@ public:
 	int AddShaders(char* VS_FILE, char* FS_FILE);
 	int AddShaders(char* VS_FILE, char* FS_FILE,char* GS_FILE);
 	int AddUpdateShader(char* VS_FILE, const char* Varyings[],int numberVaryings);
-
-	int AddShadersViaText(string VS, string FS);
-	void UpdateShaderViaText(string VS, string FS,int Program);
-
 	int AddTexture(char* TextureFile);
 	//int AddTexture(unsigned char* Data);
 	void ReloadShader(int ShaderID);

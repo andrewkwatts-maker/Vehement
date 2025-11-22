@@ -334,29 +334,6 @@ int GL_Manager::AddFullscreenQuadGeometry(float Depth, glm::vec2 ScreenSize)
 }
 
 
-int GL_Manager::AddFullscreenQuadGeometryCam(float Depth, glm::vec2 ScreenSize)
-{
-	vector<VertexBasicTextured> Points;
-	vector<unsigned int> Indexs;
-	glm::vec2 halfTexel = (1.0f / ScreenSize) *0.5f;
-	Points.push_back({ -1, -1, Depth, 1, halfTexel.x -1, halfTexel.y -1});
-	Points.push_back({ 1, 1, Depth, 1, 1 - halfTexel.x, 1 - halfTexel.y });
-	Points.push_back({ -1, 1, Depth, 1, halfTexel.x-1, 1 - halfTexel.y });
-	Points.push_back({ 1, -1, Depth, 1, 1 - halfTexel.x, halfTexel.y-1 });
-
-	Indexs.push_back(0);
-	Indexs.push_back(1);
-	Indexs.push_back(2);
-	Indexs.push_back(0);
-	Indexs.push_back(3);
-	Indexs.push_back(1);
-
-	return AddCustomGeometry(Points, Indexs);
-
-}
-
-
-
 
 void GL_Manager::DrawCustomGeometry(int Geometry_ID, glm::vec3 Location)
 {
@@ -416,7 +393,6 @@ void GL_Manager::BeginNewDrawTo(int FBO_ID, vec4 BackgroundColour) //used for cu
 	ClearFrameTarget(BackgroundColour);
 	Gizmos::clear();
 }
-
 void GL_Manager::EndDrawCall(glm::mat4 ProjectionView)
 {
 	Gizmos::draw(ProjectionView);
@@ -837,47 +813,6 @@ int GL_Manager::AddShaders(char* VS_FILE, char* FS_FILE, char* GS_FILE)
 
 
 	return ID;
-}
-
-int GL_Manager::AddShadersViaText(string VS, string FS)
-{
-	int ID = m_Programs.size();
-
-	//Vertex_Shader_Source.push_back(VS.c_str);
-	//Fragment_Shader_Source.push_back(VS.c_str);
-
-	const char* VS_C = VS.c_str();
-	const char* FS_C = FS.c_str();
-
-	VertexShaders.push_back(glCreateShader(GL_VERTEX_SHADER));
-	glShaderSource(VertexShaders[ID], 1, &VS_C, 0);
-	glCompileShader(VertexShaders[ID]);
-
-	FragmentShaders.push_back(glCreateShader(GL_FRAGMENT_SHADER));
-	glShaderSource(FragmentShaders[ID], 1, &FS_C, 0);
-	glCompileShader(FragmentShaders[ID]);
-
-	m_Programs.push_back(glCreateProgram());
-	glAttachShader(m_Programs[ID], VertexShaders[ID]);
-	glAttachShader(m_Programs[ID], FragmentShaders[ID]);
-	glLinkProgram(m_Programs[ID]);
-
-
-	return ID;
-}
-void GL_Manager::UpdateShaderViaText(string VS, string FS,int Program)
-{
-	const char* VS_C = VS.c_str();
-	const char* FS_C = FS.c_str();
-	glShaderSource(VertexShaders[Program], 1, &VS_C, 0);
-	glCompileShader(VertexShaders[Program]);
-
-	glShaderSource(FragmentShaders[Program], 1,&FS_C, 0);
-	glCompileShader(FragmentShaders[Program]);
-
-	glAttachShader(m_Programs[Program], VertexShaders[Program]);
-	glAttachShader(m_Programs[Program], FragmentShaders[Program]);
-	glLinkProgram(m_Programs[Program]);
 }
 
 int GL_Manager::AddUpdateShader(char* VS_FILE, const char* Varyings[], int numberVaryings)

@@ -108,7 +108,7 @@ vec3 Camera::GetPos()
 };
 vec3 Camera::GetDirVector()
 {
-	return glm::normalize(m_Facing);
+	return m_Facing;
 }
 
 mat4 Camera::GetWorldTransform()

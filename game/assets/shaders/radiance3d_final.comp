@@ -1,0 +1,241 @@
+#version 460 core
+/*
+ * 3D Radiance Cascades - Final Composition Shader
+ *
+ * This compute shader produces the final 3D radiance volume from merged
+ * cascade data. Extended for 3D to handle:
+ *
+ * 1. Direct light contributions in 3D space
+ * 2. Floor-based visibility for fog of war
+ * 3. Vertical light propagation and falloff
+ * 4. Per-floor radiance with smooth transitions
+ * 5. Volumetric ambient light
+ *
+ * Output format:
+ * - RGB: Final radiance/lighting color
+ * - A: Visibility factor (0 = not visible/fog of war, 1 = fully visible)
+ */
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+// Output: Final radiance volume
+layout(rgba16f, binding = 0) uniform writeonly image3D u_RadianceOutput;
+
+// Input: Finest cascade level (contains merged radiance data)
+layout(rgba16f, binding = 1) uniform readonly image3D u_CascadeFinest;
+
+// Input: Occlusion volume for wall/floor detection
+layout(r8, binding = 2) uniform readonly image3D u_Occlusion;
+
+// 3D Light data
+struct Light3D {
+    vec3 position;
+    float intensity;
+    vec3 color;
+    float radius;
+    int floorLevel;
+    int _pad1, _pad2, _pad3;
+};
+
+layout(std430, binding = 0) buffer LightBuffer {
+    int numLights;
+    int playerFloor;
+    int _pad2, _pad3;
+    Light3D lights[];
+};
+
+// Volume parameters
+uniform vec3 u_VolumeSize;          // Output volume size
+uniform vec3 u_OcclusionSize;       // Occlusion volume size
+
+// Player/visibility parameters
+uniform vec3 u_PlayerPosition;
+uniform float u_PlayerRadius;
+uniform bool u_HasPlayer;
+uniform int u_PlayerFloor;
+
+// Lighting parameters
+uniform float u_AmbientLight;       // Base ambient light level
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Sample occlusion volume
+ */
+float sampleOcclusion3D(vec3 worldPos) {
+    vec3 texCoord = worldPos / u_VolumeSize * u_OcclusionSize;
+    ivec3 ipos = ivec3(texCoord);
+
+    if (ipos.x < 0 || ipos.y < 0 || ipos.z < 0 ||
+        ipos.x >= int(u_OcclusionSize.x) ||
+        ipos.y >= int(u_OcclusionSize.y) ||
+        ipos.z >= int(u_OcclusionSize.z)) {
+        return 0.0;
+    }
+
+    return imageLoad(u_Occlusion, ipos).r;
+}
+
+/**
+ * Calculate direct light contribution in 3D
+ * For lights very close to a voxel, we add direct lighting
+ */
+vec3 calculateDirectLight3D(vec3 worldPos, int voxelFloor) {
+    vec3 direct = vec3(0.0);
+
+    for (int i = 0; i < numLights && i < 256; i++) {
+        Light3D light = lights[i];
+
+        vec3 toLight = light.position - worldPos;
+        float dist = length(toLight);
+
+        // Direct light only for very close voxels
+        float directRadius = light.radius * 0.15;
+        if (dist < directRadius) {
+            float attenuation = 1.0 - (dist / directRadius);
+            attenuation = attenuation * attenuation * attenuation;
+
+            // Floor-based falloff
+            float floorFalloff = 1.0;
+            int floorDiff = abs(voxelFloor - light.floorLevel);
+            if (floorDiff > 0) {
+                floorFalloff = pow(0.6, float(floorDiff));
+            }
+
+            direct += light.color * light.intensity * attenuation * 3.0 * floorFalloff;
+        }
+
+        // Subtle glow for full radius
+        if (dist < light.radius) {
+            float glowAttenuation = 1.0 - (dist / light.radius);
+            glowAttenuation = pow(glowAttenuation, 4.0);
+
+            float floorFalloff = 1.0;
+            int floorDiff = abs(voxelFloor - light.floorLevel);
+            if (floorDiff > 0) {
+                floorFalloff = pow(0.5, float(floorDiff));
+            }
+
+            direct += light.color * light.intensity * glowAttenuation * 0.3 * floorFalloff;
+        }
+    }
+
+    return direct;
+}
+
+/**
+ * Calculate player-based 3D visibility
+ */
+float calculatePlayerVisibility3D(vec3 worldPos, int voxelFloor) {
+    if (!u_HasPlayer) return 1.0;
+
+    vec3 toPlayer = u_PlayerPosition - worldPos;
+    float dist = length(toPlayer);
+
+    if (dist >= u_PlayerRadius) return 0.0;
+
+    // Smooth visibility falloff
+    float t = dist / u_PlayerRadius;
+    float visibility = 1.0 - t * t;
+
+    // Floor-based falloff
+    int floorDiff = abs(voxelFloor - u_PlayerFloor);
+    if (floorDiff > 0) {
+        // Can see 1 floor up/down with reduced visibility
+        if (floorDiff <= 2) {
+            visibility *= pow(0.4, float(floorDiff));
+        } else {
+            visibility = 0.0;
+        }
+    }
+
+    return visibility;
+}
+
+// ============================================================================
+// Tone Mapping
+// ============================================================================
+
+/**
+ * ACES filmic tone mapping
+ */
+vec3 tonemapACES(vec3 color) {
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((color * (a * color + b)) / (color * (c * color + d) + e), 0.0, 1.0);
+}
+
+/**
+ * Simple Reinhard tone mapping
+ */
+vec3 tonemapReinhard(vec3 color) {
+    return color / (color + vec3(1.0));
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+void main() {
+    ivec3 voxelCoord = ivec3(gl_GlobalInvocationID.xyz);
+
+    // Bounds check
+    if (voxelCoord.x >= int(u_VolumeSize.x) ||
+        voxelCoord.y >= int(u_VolumeSize.y) ||
+        voxelCoord.z >= int(u_VolumeSize.z)) {
+        return;
+    }
+
+    vec3 worldPos = vec3(voxelCoord) + 0.5;
+    int voxelFloor = voxelCoord.z;
+
+    // Check if voxel is inside a wall/floor
+    float occlusion = sampleOcclusion3D(worldPos);
+    if (occlusion > 0.5) {
+        // Inside solid - no light
+        imageStore(u_RadianceOutput, voxelCoord, vec4(0.0, 0.0, 0.0, 0.0));
+        return;
+    }
+
+    // Sample cascade radiance
+    vec4 cascadeValue = imageLoad(u_CascadeFinest, voxelCoord);
+    vec3 radiance = cascadeValue.rgb;
+    float cascadeVisibility = cascadeValue.a;
+
+    // Add direct light contributions
+    vec3 directLight = calculateDirectLight3D(worldPos, voxelFloor);
+    radiance += directLight;
+
+    // Calculate player visibility
+    float playerVisibility = calculatePlayerVisibility3D(worldPos, voxelFloor);
+
+    // Combine visibility sources
+    float finalVisibility = max(cascadeVisibility, playerVisibility);
+
+    // Add ambient light
+    vec3 ambient = vec3(u_AmbientLight);
+    radiance += ambient;
+
+    // Apply exposure
+    float exposure = 1.0;
+    radiance *= exposure;
+
+    // Tone mapping
+    radiance = tonemapACES(radiance);
+
+    // Gamma correction
+    float gamma = 2.2;
+    radiance = pow(radiance, vec3(1.0 / gamma));
+
+    // Clamp final values
+    radiance = clamp(radiance, 0.0, 1.0);
+    finalVisibility = clamp(finalVisibility, 0.0, 1.0);
+
+    // Output: RGB = lighting, A = visibility for fog of war
+    imageStore(u_RadianceOutput, voxelCoord, vec4(radiance, finalVisibility));
+}

@@ -71,6 +71,14 @@ set(VEHEMENT_CORE_HEADERS
     src/core/GameConfig.hpp
 )
 
+set(VEHEMENT_ASSET_SOURCES
+    src/assets/PlaceholderGenerator.cpp
+)
+
+set(VEHEMENT_ASSET_HEADERS
+    src/assets/PlaceholderGenerator.hpp
+)
+
 set(VEHEMENT_ENTITY_SOURCES
     # Placeholder for entity sources
 )
@@ -102,6 +110,8 @@ add_executable(vehement2
     src/main.cpp
     ${VEHEMENT_CORE_SOURCES}
     ${VEHEMENT_CORE_HEADERS}
+    ${VEHEMENT_ASSET_SOURCES}
+    ${VEHEMENT_ASSET_HEADERS}
     ${VEHEMENT_ENTITY_SOURCES}
     ${VEHEMENT_WORLD_SOURCES}
     ${VEHEMENT_COMBAT_SOURCES}
@@ -159,6 +169,7 @@ endif()
 # =============================================================================
 # Create symlink to Vehement2 assets or copy them
 set(VEHEMENT_ASSETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../Vehement2")
+set(VEHEMENT_GAME_ASSETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(VEHEMENT_ASSETS_DEST "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets")
 
 add_custom_command(TARGET vehement2 POST_BUILD
@@ -166,6 +177,8 @@ add_custom_command(TARGET vehement2 POST_BUILD
         "${VEHEMENT_ASSETS_SOURCE}" "${VEHEMENT_ASSETS_DEST}/vehement2"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/../assets" "${VEHEMENT_ASSETS_DEST}/engine"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${VEHEMENT_GAME_ASSETS_SOURCE}" "${VEHEMENT_ASSETS_DEST}/game"
     COMMENT "Copying game assets..."
 )
 

@@ -1,0 +1,229 @@
+#version 460 core
+/*
+ * 3D Radiance Cascades - Merge Shader
+ *
+ * This compute shader merges 3D cascade volumes from coarse to fine.
+ * Extended from 2D to handle:
+ *
+ * - Trilinear interpolation for smooth 3D blending
+ * - Vertical light propagation control
+ * - Floor-by-floor light contribution
+ *
+ * The merge process:
+ * 1. Start with the coarsest cascade (captures furthest light)
+ * 2. Trilinearly sample the coarse cascade at each fine voxel
+ * 3. Blend coarse contribution with fine level's local contribution
+ * 4. Repeat until we reach the finest level
+ */
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+// Current cascade level being updated (read/write)
+layout(rgba16f, binding = 0) uniform image3D u_CascadeCurrent;
+
+// Coarser cascade level to merge from (read only)
+layout(rgba16f, binding = 1) uniform readonly image3D u_CascadeCoarse;
+
+// Merge parameters
+uniform int u_CascadeLevel;         // Current level being processed
+uniform vec3 u_CurrentSize;         // Size of current cascade volume
+uniform vec3 u_CoarseSize;          // Size of coarser cascade volume
+uniform float u_MergeWeight;        // How much coarse cascade contributes (0-1)
+
+// 3D-specific parameters
+uniform float u_VerticalFalloff;    // Light falloff between floors
+
+// ============================================================================
+// 3D Sampling Functions
+// ============================================================================
+
+/**
+ * Trilinear interpolation from coarse cascade
+ * Ensures smooth transitions between cascade levels in 3D
+ */
+vec4 sampleTrilinear(vec3 uvw) {
+    // Convert to voxel coordinates
+    vec3 voxelCoord = uvw * u_CoarseSize - 0.5;
+    ivec3 base = ivec3(floor(voxelCoord));
+    vec3 frac = fract(voxelCoord);
+
+    // Clamp to valid range
+    base = clamp(base, ivec3(0), ivec3(u_CoarseSize) - 2);
+
+    // Sample 8 corners
+    vec4 c000 = imageLoad(u_CascadeCoarse, base);
+    vec4 c100 = imageLoad(u_CascadeCoarse, base + ivec3(1, 0, 0));
+    vec4 c010 = imageLoad(u_CascadeCoarse, base + ivec3(0, 1, 0));
+    vec4 c110 = imageLoad(u_CascadeCoarse, base + ivec3(1, 1, 0));
+    vec4 c001 = imageLoad(u_CascadeCoarse, base + ivec3(0, 0, 1));
+    vec4 c101 = imageLoad(u_CascadeCoarse, base + ivec3(1, 0, 1));
+    vec4 c011 = imageLoad(u_CascadeCoarse, base + ivec3(0, 1, 1));
+    vec4 c111 = imageLoad(u_CascadeCoarse, base + ivec3(1, 1, 1));
+
+    // Trilinear interpolation
+    vec4 c00 = mix(c000, c100, frac.x);
+    vec4 c10 = mix(c010, c110, frac.x);
+    vec4 c01 = mix(c001, c101, frac.x);
+    vec4 c11 = mix(c011, c111, frac.x);
+
+    vec4 c0 = mix(c00, c10, frac.y);
+    vec4 c1 = mix(c01, c11, frac.y);
+
+    return mix(c0, c1, frac.z);
+}
+
+/**
+ * Weighted trilinear sampling that respects floor boundaries
+ * Reduces light bleeding between floors
+ */
+vec4 sampleTrilinearFloorAware(vec3 uvw, int currentFloor) {
+    vec3 voxelCoord = uvw * u_CoarseSize - 0.5;
+    ivec3 base = ivec3(floor(voxelCoord));
+    vec3 frac = fract(voxelCoord);
+
+    base = clamp(base, ivec3(0), ivec3(u_CoarseSize) - 2);
+
+    // Sample with floor-aware weighting
+    vec4 result = vec4(0.0);
+    float totalWeight = 0.0;
+
+    for (int dz = 0; dz <= 1; dz++) {
+        for (int dy = 0; dy <= 1; dy++) {
+            for (int dx = 0; dx <= 1; dx++) {
+                ivec3 samplePos = base + ivec3(dx, dy, dz);
+                vec4 sample_val = imageLoad(u_CascadeCoarse, samplePos);
+
+                // Calculate trilinear weight
+                float wx = (dx == 0) ? (1.0 - frac.x) : frac.x;
+                float wy = (dy == 0) ? (1.0 - frac.y) : frac.y;
+                float wz = (dz == 0) ? (1.0 - frac.z) : frac.z;
+                float w = wx * wy * wz;
+
+                // Apply vertical falloff for samples from different floors
+                int sampleFloor = samplePos.z;
+                int floorDiff = abs(sampleFloor - currentFloor);
+                if (floorDiff > 0) {
+                    w *= pow(u_VerticalFalloff, float(floorDiff));
+                }
+
+                result += sample_val * w;
+                totalWeight += w;
+            }
+        }
+    }
+
+    if (totalWeight > 0.0) {
+        result /= totalWeight;
+    }
+
+    return result;
+}
+
+/**
+ * Weighted merge based on cascade properties
+ * Coarser cascades represent light from further away
+ */
+vec4 mergeRadiance3D(vec4 fine, vec4 coarse, float verticalWeight) {
+    // RGB: Add coarse contribution (light from far away)
+    vec3 mergedRadiance = fine.rgb + coarse.rgb * u_MergeWeight * verticalWeight;
+
+    // Alpha (visibility): Use maximum for fog of war
+    float mergedVisibility = max(fine.a, coarse.a * u_MergeWeight);
+
+    // Energy conservation - prevent excessive brightness
+    float maxComponent = max(max(mergedRadiance.r, mergedRadiance.g), mergedRadiance.b);
+    if (maxComponent > 2.0) {
+        mergedRadiance *= 2.0 / maxComponent;
+    }
+
+    return vec4(mergedRadiance, mergedVisibility);
+}
+
+/**
+ * Directional merge for 3D - samples in multiple directions
+ * More accurate but slower
+ */
+vec4 mergeDirectional3D(ivec3 voxelCoord, vec4 fine, int currentFloor) {
+    vec3 uvw = (vec3(voxelCoord) + 0.5) / u_CurrentSize;
+
+    // Sample in 6 cardinal directions + center
+    const int numSamples = 7;
+    vec3 offsets[7] = vec3[](
+        vec3(0.0, 0.0, 0.0),
+        vec3(1.0, 0.0, 0.0),
+        vec3(-1.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        vec3(0.0, -1.0, 0.0),
+        vec3(0.0, 0.0, 1.0),
+        vec3(0.0, 0.0, -1.0)
+    );
+
+    float spread = 0.5 / max(u_CoarseSize.x, max(u_CoarseSize.y, u_CoarseSize.z));
+
+    vec4 coarseAccum = vec4(0.0);
+    float totalWeight = 0.0;
+
+    for (int i = 0; i < numSamples; i++) {
+        vec3 sampleUVW = uvw + offsets[i] * spread;
+        sampleUVW = clamp(sampleUVW, vec3(0.0), vec3(1.0));
+
+        vec4 sample_val = sampleTrilinear(sampleUVW);
+
+        // Center sample gets higher weight
+        float w = (i == 0) ? 2.0 : 1.0;
+
+        coarseAccum += sample_val * w;
+        totalWeight += w;
+    }
+
+    if (totalWeight > 0.0) {
+        coarseAccum /= totalWeight;
+    }
+
+    return mergeRadiance3D(fine, coarseAccum, 1.0);
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+void main() {
+    ivec3 voxelCoord = ivec3(gl_GlobalInvocationID.xyz);
+
+    // Bounds check
+    if (voxelCoord.x >= int(u_CurrentSize.x) ||
+        voxelCoord.y >= int(u_CurrentSize.y) ||
+        voxelCoord.z >= int(u_CurrentSize.z)) {
+        return;
+    }
+
+    // Load current (fine) cascade value
+    vec4 currentValue = imageLoad(u_CascadeCurrent, voxelCoord);
+
+    // Calculate UVW coordinates for sampling coarse cascade
+    vec3 uvw = (vec3(voxelCoord) + 0.5) / u_CurrentSize;
+
+    // Current floor for vertical falloff calculation
+    int currentFloor = voxelCoord.z;
+
+    // Sample coarse cascade with trilinear interpolation
+    vec4 coarseValue = sampleTrilinearFloorAware(uvw, currentFloor);
+
+    // Calculate vertical weight based on cascade level
+    // Higher cascade levels have more vertical spread
+    float verticalWeight = 1.0;
+    if (u_CascadeLevel > 0) {
+        // Allow more vertical light at coarser levels
+        verticalWeight = mix(1.0, 0.8, float(u_CascadeLevel) / 4.0);
+    }
+
+    // Merge cascades
+    vec4 merged = mergeRadiance3D(currentValue, coarseValue, verticalWeight);
+
+    // Apply cascade-level specific adjustments
+    float cascadeInfluence = 1.0 / (1.0 + float(u_CascadeLevel) * 0.2);
+    merged.rgb *= cascadeInfluence + (1.0 - cascadeInfluence);
+
+    // Store merged result
+    imageStore(u_CascadeCurrent, voxelCoord, merged);
+}

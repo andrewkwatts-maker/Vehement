@@ -1,0 +1,355 @@
+#version 460 core
+/*
+ * 3D Radiance Cascades - Ray March Shader
+ *
+ * This compute shader performs 3D ray marching for radiance cascades.
+ * It extends the 2D algorithm to work in full 3D voxel space:
+ *
+ * - Rays are shot in a hemisphere of directions (not just 2D circle)
+ * - Occlusion is sampled from a 3D volume (walls, floors, ceilings)
+ * - Light sources have 3D positions and can be on different floors
+ * - Vertical light propagation can be controlled
+ *
+ * Based on the Radiance Cascades technique by Alexander Sannikov,
+ * extended for 3D voxel-based games.
+ */
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 4) in;
+
+// Output cascade volume (RGBA16F)
+// RGB = accumulated radiance, A = visibility
+layout(rgba16f, binding = 0) uniform image3D u_CascadeOutput;
+
+// Input occlusion volume (R8)
+// 255 = fully blocked, 0 = fully open
+layout(r8, binding = 1) uniform readonly image3D u_Occlusion;
+
+// 3D Light data structure
+struct Light3D {
+    vec3 position;      // World position (x, y, z)
+    float intensity;    // Intensity multiplier
+    vec3 color;         // RGB color (0-1 range)
+    float radius;       // Maximum light radius
+    int floorLevel;     // Which floor the light is on
+    int _pad1, _pad2, _pad3;
+};
+
+// Shader storage buffer for lights
+layout(std430, binding = 0) buffer LightBuffer {
+    int numLights;
+    int playerFloor;
+    int _pad2, _pad3;
+    Light3D lights[];
+};
+
+// Volume parameters
+uniform vec3 u_VolumeSize;          // Full volume size (x, y, z)
+uniform vec3 u_OcclusionSize;       // Occlusion volume size
+
+// Cascade parameters
+uniform int u_CascadeLevel;         // Current cascade level (0 = finest)
+uniform int u_NumRays;              // Number of rays per voxel
+uniform float u_IntervalStart;      // Start distance for ray interval
+uniform float u_IntervalEnd;        // End distance for ray interval
+uniform float u_BiasDistance;       // Bias to prevent self-occlusion
+
+// Player visibility parameters
+uniform vec3 u_PlayerPosition;
+uniform float u_PlayerRadius;
+uniform bool u_HasPlayer;
+uniform int u_PlayerFloor;
+
+// 3D-specific parameters
+uniform float u_ZScale;             // Z scale relative to X/Y (default 0.333)
+uniform bool u_EnableVerticalLight; // Allow light between floors
+uniform float u_VerticalFalloff;    // Light falloff between floors
+
+// Mathematical constants
+const float PI = 3.14159265359;
+const float TAU = 6.28318530718;
+
+// ============================================================================
+// 3D Direction Generation
+// ============================================================================
+
+/**
+ * Generate uniformly distributed directions on a sphere using Fibonacci spiral
+ * More efficient than random sampling for consistent coverage
+ */
+vec3 fibonacciSphereDirection(int index, int totalSamples) {
+    float goldenRatio = (1.0 + sqrt(5.0)) / 2.0;
+    float i = float(index) + 0.5;
+
+    float phi = TAU * i / goldenRatio;
+    float cosTheta = 1.0 - 2.0 * i / float(totalSamples);
+    float sinTheta = sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
+
+    return vec3(
+        cos(phi) * sinTheta,
+        sin(phi) * sinTheta,
+        cosTheta
+    );
+}
+
+/**
+ * Generate hemisphere directions (for surface lighting)
+ * Biased toward the up direction for floor-based games
+ */
+vec3 hemisphereDirection(int index, int totalSamples, vec3 normal) {
+    vec3 dir = fibonacciSphereDirection(index, totalSamples * 2);
+
+    // Flip if below hemisphere
+    if (dot(dir, normal) < 0.0) {
+        dir = -dir;
+    }
+
+    return dir;
+}
+
+// ============================================================================
+// 3D Occlusion Sampling
+// ============================================================================
+
+/**
+ * Sample occlusion volume with bounds checking
+ * Returns 1.0 if blocked, 0.0 if open
+ */
+float sampleOcclusion3D(vec3 pos) {
+    // Transform from world space to occlusion texture space
+    vec3 texCoord = pos / u_VolumeSize * u_OcclusionSize;
+    ivec3 ipos = ivec3(texCoord);
+
+    // Bounds check
+    if (ipos.x < 0 || ipos.y < 0 || ipos.z < 0 ||
+        ipos.x >= int(u_OcclusionSize.x) ||
+        ipos.y >= int(u_OcclusionSize.y) ||
+        ipos.z >= int(u_OcclusionSize.z)) {
+        return 0.0; // Out of bounds = not blocked
+    }
+
+    return imageLoad(u_Occlusion, ipos).r;
+}
+
+/**
+ * Sample occlusion with trilinear filtering for smoother shadows
+ */
+float sampleOcclusion3DSmooth(vec3 pos) {
+    vec3 texCoord = pos / u_VolumeSize * u_OcclusionSize;
+    vec3 f = fract(texCoord);
+    ivec3 base = ivec3(floor(texCoord));
+
+    // Clamp to valid range
+    base = clamp(base, ivec3(0), ivec3(u_OcclusionSize) - 2);
+
+    // 8-corner trilinear interpolation
+    float c000 = imageLoad(u_Occlusion, base).r;
+    float c100 = imageLoad(u_Occlusion, base + ivec3(1, 0, 0)).r;
+    float c010 = imageLoad(u_Occlusion, base + ivec3(0, 1, 0)).r;
+    float c110 = imageLoad(u_Occlusion, base + ivec3(1, 1, 0)).r;
+    float c001 = imageLoad(u_Occlusion, base + ivec3(0, 0, 1)).r;
+    float c101 = imageLoad(u_Occlusion, base + ivec3(1, 0, 1)).r;
+    float c011 = imageLoad(u_Occlusion, base + ivec3(0, 1, 1)).r;
+    float c111 = imageLoad(u_Occlusion, base + ivec3(1, 1, 1)).r;
+
+    float c00 = mix(c000, c100, f.x);
+    float c10 = mix(c010, c110, f.x);
+    float c01 = mix(c001, c101, f.x);
+    float c11 = mix(c011, c111, f.x);
+
+    float c0 = mix(c00, c10, f.y);
+    float c1 = mix(c01, c11, f.y);
+
+    return mix(c0, c1, f.z);
+}
+
+// ============================================================================
+// 3D Ray Marching
+// ============================================================================
+
+/**
+ * Ray march through the 3D occlusion volume
+ *
+ * @param origin Starting position in volume space
+ * @param direction Normalized ray direction
+ * @param startDist Starting distance along ray
+ * @param endDist Maximum distance to march
+ * @return vec2(visibility, hitDistance)
+ */
+vec2 rayMarch3D(vec3 origin, vec3 direction, float startDist, float endDist) {
+    // Adaptive step size based on cascade level
+    float stepSize = max(0.5, float(1 << u_CascadeLevel) * 0.5);
+
+    // Scale Z direction by zScale for correct aspect ratio
+    vec3 scaledDir = direction;
+    scaledDir.z *= u_ZScale;
+    scaledDir = normalize(scaledDir);
+
+    float dist = startDist + u_BiasDistance;
+    float visibility = 1.0;
+    float hitDistance = endDist;
+
+    // Soft shadow accumulation
+    float shadow = 0.0;
+    int numSteps = 0;
+    const int maxSteps = 128;
+
+    while (dist < endDist && numSteps < maxSteps) {
+        vec3 pos = origin + scaledDir * dist;
+
+        // Sample occlusion
+        float occlusion = sampleOcclusion3D(pos);
+
+        if (occlusion > 0.5) {
+            // Hit occluder - hard shadow
+            visibility = 0.0;
+            hitDistance = dist;
+            break;
+        } else if (occlusion > 0.0) {
+            // Partial occlusion - accumulate for soft shadows
+            shadow += occlusion * (1.0 - dist / endDist);
+        }
+
+        dist += stepSize;
+        numSteps++;
+    }
+
+    // Apply soft shadow factor
+    visibility *= max(0.0, 1.0 - shadow * 0.5);
+
+    return vec2(visibility, hitDistance);
+}
+
+// ============================================================================
+// 3D Light Sampling
+// ============================================================================
+
+/**
+ * Sample light contribution from a 3D light source
+ */
+vec3 sampleLight3DContribution(Light3D light, vec3 voxelPos, vec3 rayDir, float visibility) {
+    if (visibility <= 0.0) return vec3(0.0);
+
+    vec3 toLight = light.position - voxelPos;
+    float distToLight = length(toLight);
+
+    // Early out if outside light radius
+    if (distToLight >= light.radius) return vec3(0.0);
+
+    vec3 dirToLight = toLight / max(distToLight, 0.001);
+
+    // Check if ray direction points toward light
+    float alignment = dot(rayDir, dirToLight);
+    if (alignment <= 0.0) return vec3(0.0);
+
+    // Distance attenuation
+    float normalizedDist = distToLight / light.radius;
+    float attenuation = 1.0 - normalizedDist;
+    attenuation = attenuation * attenuation;
+
+    // Angular contribution
+    float angular = pow(alignment, 2.0);
+
+    // Vertical falloff (light dims between floors)
+    float verticalFalloff = 1.0;
+    if (u_EnableVerticalLight) {
+        int voxelFloor = int(voxelPos.z / (u_VolumeSize.z / float(int(u_OcclusionSize.z))));
+        int floorDiff = abs(voxelFloor - light.floorLevel);
+        if (floorDiff > 0) {
+            verticalFalloff = pow(u_VerticalFalloff, float(floorDiff));
+        }
+    }
+
+    return light.color * light.intensity * attenuation * angular * visibility * verticalFalloff;
+}
+
+/**
+ * Sample player visibility contribution in 3D
+ */
+float samplePlayerVisibility3D(vec3 voxelPos, vec3 rayDir, float visibility) {
+    if (!u_HasPlayer || visibility <= 0.0) return 0.0;
+
+    vec3 toPlayer = u_PlayerPosition - voxelPos;
+    float distToPlayer = length(toPlayer);
+
+    if (distToPlayer >= u_PlayerRadius) return 0.0;
+
+    vec3 dirToPlayer = toPlayer / max(distToPlayer, 0.001);
+    float alignment = dot(rayDir, dirToPlayer);
+
+    if (alignment <= 0.0) return 0.0;
+
+    float attenuation = 1.0 - (distToPlayer / u_PlayerRadius);
+    attenuation = attenuation * attenuation;
+    float angular = pow(alignment, 2.0);
+
+    // Floor-based falloff
+    float floorFalloff = 1.0;
+    int voxelFloor = int(voxelPos.z / (u_VolumeSize.z / float(int(u_OcclusionSize.z))));
+    int floorDiff = abs(voxelFloor - u_PlayerFloor);
+    if (floorDiff > 0) {
+        floorFalloff = pow(0.5, float(floorDiff));
+    }
+
+    return attenuation * angular * visibility * floorFalloff;
+}
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
+
+void main() {
+    ivec3 voxelCoord = ivec3(gl_GlobalInvocationID.xyz);
+    ivec3 cascadeSize = imageSize(u_CascadeOutput);
+
+    // Bounds check
+    if (voxelCoord.x >= cascadeSize.x || voxelCoord.y >= cascadeSize.y ||
+        voxelCoord.z >= cascadeSize.z) {
+        return;
+    }
+
+    // Calculate world position from cascade voxel
+    float scaleFactor = float(1 << u_CascadeLevel);
+    vec3 worldPos = (vec3(voxelCoord) + 0.5) * scaleFactor;
+
+    // Check if starting position is inside a wall
+    if (sampleOcclusion3D(worldPos) > 0.5) {
+        imageStore(u_CascadeOutput, voxelCoord, vec4(0.0));
+        return;
+    }
+
+    // Accumulate radiance from all ray directions
+    vec4 totalRadiance = vec4(0.0);
+    float totalWeight = 0.0;
+
+    for (int i = 0; i < u_NumRays; i++) {
+        // Generate 3D ray direction (full sphere for global illumination)
+        vec3 direction = fibonacciSphereDirection(i, u_NumRays);
+
+        // Ray march in this direction
+        vec2 marchResult = rayMarch3D(worldPos, direction, u_IntervalStart, u_IntervalEnd);
+        float visibility = marchResult.x;
+
+        // Gather light from all sources
+        vec3 radiance = vec3(0.0);
+
+        // Sample each light
+        for (int li = 0; li < numLights && li < 256; li++) {
+            radiance += sampleLight3DContribution(lights[li], worldPos, direction, visibility);
+        }
+
+        // Sample player visibility
+        float playerVis = samplePlayerVisibility3D(worldPos, direction, visibility);
+
+        totalRadiance.rgb += radiance;
+        totalRadiance.a += max(visibility * 0.5, playerVis);
+        totalWeight += 1.0;
+    }
+
+    // Normalize by number of rays
+    if (totalWeight > 0.0) {
+        totalRadiance /= totalWeight;
+    }
+
+    // Store result
+    imageStore(u_CascadeOutput, voxelCoord, totalRadiance);
+}

@@ -47,6 +47,7 @@ public:
         bool fullscreen = false;
         int samples = 4;
         bool vsync = true;
+        bool visible = true;
     };
 
     Window() noexcept = default;

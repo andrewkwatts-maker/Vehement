@@ -29,6 +29,7 @@ if(WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-DNOMINMAX)
     add_definitions(-DWIN32_LEAN_AND_MEAN)
+    add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
     set(NOVA_PLATFORM_SOURCES
         engine/platform/windows/WindowsPlatform.cpp
         engine/platform/windows/WindowsInput.cpp
@@ -402,6 +403,12 @@ add_library(nova3d STATIC
 
     # Graphics
     engine/graphics/Renderer.cpp
+    engine/graphics/OptimizedRenderer.cpp
+    engine/graphics/Batching.cpp
+    engine/graphics/Culler.cpp
+    engine/graphics/LODManager.cpp
+    engine/graphics/TextureAtlas.cpp
+    engine/graphics/RenderQueue.cpp
     engine/graphics/ShaderManager.cpp
     engine/graphics/Shader.cpp
     engine/graphics/Texture.cpp
@@ -410,6 +417,15 @@ add_library(nova3d STATIC
     engine/graphics/Material.cpp
     engine/graphics/Framebuffer.cpp
     engine/graphics/ModelLoader.cpp
+    engine/graphics/SDFRenderer.cpp
+    engine/graphics/RadianceCascade.cpp
+    engine/graphics/SpectralRenderer.cpp
+
+    # SDF System
+    engine/sdf/SDFModel.cpp
+    engine/sdf/SDFPrimitive.cpp
+    engine/sdf/SDFSerializer.cpp
+    engine/sdf/SDFAnimation.cpp
 
     # Debug Visualization (replaces AIE Gizmos)
     engine/graphics/debug/DebugDraw.cpp
@@ -456,6 +472,14 @@ add_library(nova3d STATIC
     # Utils
     engine/utils/FileSystem.cpp
     engine/utils/StringUtils.cpp
+    # Procedural Generation System
+    engine/procedural/ProcGenNodes.cpp
+    engine/procedural/ProcGenGraph.cpp
+    engine/procedural/WorldTemplate.cpp
+
+    # Asset Serialization System
+    engine/assets/JsonAssetSerializer.cpp
+
 
     # Platform-specific sources (populated by platform detection above)
     ${NOVA_PLATFORM_SOURCES}
@@ -661,3 +685,35 @@ if(NOVA_ENABLE_SCRIPTING)
     message(STATUS "  Python Version: ${Python3_VERSION}")
 endif()
 message(STATUS "")
+
+# RTS Demo with fantasy menu scene
+add_executable(nova_rts_demo
+    examples/RTSApplication.cpp
+    examples/MenuSceneMeshes.cpp
+    examples/SettingsMenu.cpp
+    examples/game_main.cpp
+)
+target_link_libraries(nova_rts_demo PRIVATE nova3d)
+
+# Copy assets
+add_custom_command(TARGET nova_rts_demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:nova_rts_demo>/assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/game/assets $<TARGET_FILE_DIR:nova_rts_demo>/game_assets
+)
+
+
+# Asset Icon Renderer Tool
+add_executable(asset_icon_renderer
+    tools/asset_icon_renderer.cpp
+)
+target_link_libraries(asset_icon_renderer PRIVATE nova3d)
+target_include_directories(asset_icon_renderer PRIVATE ${CMAKE_SOURCE_DIR})
+
+# Asset Icon Renderer with GI Pipeline
+add_executable(asset_icon_renderer_gi
+    tools/asset_icon_renderer_gi.cpp
+)
+target_link_libraries(asset_icon_renderer_gi PRIVATE nova3d)
+target_include_directories(asset_icon_renderer_gi PRIVATE ${CMAKE_SOURCE_DIR})

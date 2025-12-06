@@ -1,5 +1,7 @@
 #include "pathfinding/Graph.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
 #include "math/Random.hpp"
+#include <glm/gtx/norm.hpp>
 #include <algorithm>
 #include <limits>
 #include <cmath>

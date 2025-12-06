@@ -56,14 +56,15 @@ bool Engine::Initialize(const InitParams& params) {
     }
 
     // Initialize OpenGL loader
-    if (!gladLoadGL(glfwGetProcAddress)) {
+    int glVersion = gladLoadGL(glfwGetProcAddress);
+    if (!glVersion) {
         spdlog::critical("Failed to initialize GLAD");
         m_window.reset();
         glfwTerminate();
         return false;
     }
 
-    spdlog::info("OpenGL Version: {}.{}", GLVersion.major, GLVersion.minor);
+    spdlog::info("OpenGL Version: {}.{}", GLAD_VERSION_MAJOR(glVersion), GLAD_VERSION_MINOR(glVersion));
 
     // Safely get OpenGL strings with null checks
     if (const auto* renderer = glGetString(GL_RENDERER)) {
@@ -96,7 +97,12 @@ bool Engine::Initialize(const InitParams& params) {
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+        // Enable docking if available (requires docking branch of ImGui)
+        #ifdef IMGUI_HAS_DOCK
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+//                io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        #endif
 
         ImGui::StyleColorsDark();
 
@@ -188,17 +194,30 @@ void Engine::ProcessFrame(const ApplicationCallbacks& callbacks) {
             callbacks.onImGui();
         }
 
-        // Engine debug UI
+        // Engine debug UI - FPS in top right corner
         if (m_debugDrawEnabled) {
-            ImGui::Begin("Engine Stats");
-            ImGui::Text("FPS: %.1f", m_time->GetFPS());
-            ImGui::Text("Frame Time: %.3f ms", m_time->GetDeltaTime() * 1000.0f);
-            ImGui::Text("Total Time: %.2f s", m_time->GetTotalTime());
+            ImGuiIO& io = ImGui::GetIO();
+            ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 100, 10), ImGuiCond_Always);
+            ImGui::SetNextWindowBgAlpha(0.35f);
+            ImGui::Begin("FPS", nullptr,
+                ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoSavedSettings |
+                ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("FPS: %.0f", m_time->GetFPS());
             ImGui::End();
         }
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Update and render additional platform windows (required for docking branch)
+//        ImGuiIO& io = ImGui::GetIO();
+//        //        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+//            //            ImGui::UpdatePlatformWindows();
+//            //            ImGui::RenderPlatformWindowsDefault();
+//        }
     }
 
     m_renderer->EndFrame();

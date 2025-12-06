@@ -86,7 +86,7 @@ bool Window::Create(const CreateParams& params) {
 
     // Window hints
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, params.visible ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
 
 #ifdef NOVA_DEBUG

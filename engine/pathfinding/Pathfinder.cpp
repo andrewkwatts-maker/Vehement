@@ -1,5 +1,7 @@
 #include "pathfinding/Pathfinder.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
 #include "pathfinding/Graph.hpp"
+#include <glm/gtx/norm.hpp>
 #include <queue>
 #include <stack>
 #include <set>

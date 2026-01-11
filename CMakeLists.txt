@@ -406,6 +406,7 @@ add_library(nova3d STATIC
     engine/core/Time.cpp
     engine/core/Logger.cpp
     engine/core/JobSystem.cpp
+    engine/core/Profiler.cpp
 
     # Configuration
     engine/config/Config.cpp
@@ -511,6 +512,7 @@ add_library(nova3d STATIC
     engine/spatial/AABB.cpp
     engine/spatial/CollisionPrimitives.cpp
     engine/spatial/BVH.cpp
+    engine/spatial/SDFBVH.cpp
     engine/spatial/SpatialManager.cpp
     engine/spatial/SpatialIndex.cpp
     engine/spatial/SpatialHash3D.cpp
@@ -544,6 +546,7 @@ add_library(nova3d STATIC
     engine/terrain/SDFTerrain.cpp
     engine/terrain/TerrainSDFDemo.cpp
     engine/terrain/VoxelTerrain.cpp
+    engine/terrain/HeightmapIO.cpp
 
     # Import Pipeline
     engine/import/ModelImporter.cpp
@@ -821,6 +824,7 @@ if(NOVA_ENABLE_PHYSICS)
         engine/physics/PhysicsWorld.cpp
         engine/physics/Triggers.cpp
         engine/physics/BlackbodyRadiation.cpp
+        engine/physics/SDFCollision.cpp
     )
     message(STATUS "Physics System: ENABLED")
 else()
@@ -1044,3 +1048,26 @@ if(NOVA_ENABLE_UI)
         engine/editor/AssetThumbnailCache.cpp
     )
 endif()
+
+# Generic Asset Editor System (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/GenericAssetEditor.cpp
+    )
+endif()
+
+# Ray Picker System (Editor)
+target_sources(nova3d PRIVATE
+    engine/editor/RayPicker.cpp
+)
+
+# Transform Gizmo System (Editor)
+target_sources(nova3d PRIVATE
+    engine/editor/TransformGizmo.cpp
+)
+
+# Editor Command System (Undo/Redo)
+target_sources(nova3d PRIVATE
+    engine/editor/EditorCommand.cpp
+    engine/editor/CommandHistory.cpp
+)

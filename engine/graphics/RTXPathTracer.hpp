@@ -2,10 +2,17 @@
 
 /**
  * @file RTXPathTracer.hpp
- * @brief Hardware-accelerated path tracer using RTX ray tracing
+ * @brief Modern RTX-accelerated path tracer with SOLID architecture
  *
- * Uses DirectX Raytracing (DXR) or Vulkan Ray Tracing for maximum performance.
- * Achieves 3-5x speedup over compute shader path tracing.
+ * Complete rewrite implementing:
+ * - IRayTracingBackend interface for multiple API support (DXR 1.1, Vulkan RT, Compute fallback)
+ * - AccelerationStructureManager for BLAS/TLAS management
+ * - ShaderBindingTableBuilder for SBT construction
+ * - RayGenShader, MissShader, HitShader abstractions
+ * - Inline ray tracing for hybrid SDF/polygon rendering
+ * - Ray query integration for SDF evaluation
+ * - SVGF/NRD denoiser integration
+ * - Compute-based fallback for non-RTX hardware
  *
  * Target: <2ms per frame at 1080p (500+ FPS)
  */
@@ -23,6 +30,8 @@ class Camera;
 class SDFModel;
 class Texture;
 class Shader;
+class IRayTracingBackend;
+class DenoiserIntegration;
 
 /**
  * @brief Path tracing render settings
@@ -51,6 +60,10 @@ struct PathTracingSettings {
     // Performance
     float maxDistance = 1000.0f;
     bool enableDenoise = false;
+
+    // Ray query settings for hybrid rendering
+    bool enableInlineRayTracing = true;
+    bool enableRayQueryForSDF = true;
 };
 
 /**
@@ -75,15 +88,25 @@ struct PathTracerStats {
 };
 
 /**
- * @brief RTX-accelerated path tracer
+ * @brief RTX-accelerated path tracer with SOLID architecture
+ *
+ * Architecture:
+ * - Single Responsibility: Each backend handles one ray tracing API
+ * - Open/Closed: New backends can be added without modifying core
+ * - Liskov Substitution: All backends implement IRayTracingBackend
+ * - Interface Segregation: Separate interfaces for RT, denoising, AS management
+ * - Dependency Inversion: Core depends on abstractions, not concrete implementations
  *
  * Features:
- * - Hardware ray tracing using RTX cores
+ * - Hardware ray tracing using RTX cores (DXR 1.1 / Vulkan RT)
+ * - Compute shader fallback for non-RTX hardware
  * - Bottom-level and top-level acceleration structures
  * - Multi-bounce global illumination
  * - Real-time shadows and ambient occlusion
  * - Temporal accumulation for noise reduction
- * - Optional AI denoising
+ * - SVGF/NRD denoising integration
+ * - Inline ray tracing for hybrid SDF/polygon rendering
+ * - Ray query support for SDF evaluation
  */
 class RTXPathTracer {
 public:
@@ -100,6 +123,11 @@ public:
 
     /**
      * @brief Initialize RTX path tracer
+     *
+     * Automatically selects the best available backend:
+     * 1. Hardware RTX (DXR 1.1 / Vulkan RT) if available
+     * 2. Compute shader path tracing as fallback
+     *
      * @param width Render target width
      * @param height Render target height
      * @return true if initialization succeeded
@@ -107,11 +135,29 @@ public:
     bool Initialize(int width, int height);
 
     /**
-     * @brief Shutdown and cleanup
+     * @brief Shutdown and cleanup all resources
      */
     void Shutdown();
 
+    /**
+     * @brief Check if path tracer is initialized
+     */
     [[nodiscard]] bool IsInitialized() const { return m_initialized; }
+
+    /**
+     * @brief Check if using hardware ray tracing
+     */
+    [[nodiscard]] bool IsUsingHardwareRT() const;
+
+    /**
+     * @brief Check if inline ray tracing is supported
+     */
+    [[nodiscard]] bool SupportsInlineRayTracing() const;
+
+    /**
+     * @brief Get the active backend name
+     */
+    [[nodiscard]] const char* GetBackendName() const;
 
     // =========================================================================
     // Scene Management
@@ -119,6 +165,11 @@ public:
 
     /**
      * @brief Build acceleration structures from scene
+     *
+     * Creates BLAS for each model and TLAS for the scene.
+     * Automatically uses appropriate build settings based on
+     * hardware capabilities.
+     *
      * @param models SDF models to render
      * @param transforms Transform for each model
      */
@@ -127,6 +178,10 @@ public:
 
     /**
      * @brief Update scene (for dynamic objects)
+     *
+     * Performs fast TLAS update without rebuilding BLAS.
+     * Use when only transforms change, not geometry.
+     *
      * @param transforms New transforms for each model
      */
     void UpdateScene(const std::vector<glm::mat4>& transforms);
@@ -142,6 +197,13 @@ public:
 
     /**
      * @brief Render frame using hardware ray tracing
+     *
+     * Pipeline:
+     * 1. Update camera and settings uniforms
+     * 2. Dispatch ray tracing (hardware or compute)
+     * 3. Apply denoising if enabled
+     * 4. Return output texture
+     *
      * @param camera Camera to render from
      * @return Output texture with rendered image
      */
@@ -149,16 +211,29 @@ public:
 
     /**
      * @brief Render to specific framebuffer
+     *
+     * Renders and blits result to target framebuffer.
+     *
+     * @param camera Camera to render from
+     * @param framebuffer Target framebuffer (0 for default)
      */
     void RenderToFramebuffer(const Camera& camera, uint32_t framebuffer);
 
     /**
-     * @brief Reset accumulation (call when camera moves)
+     * @brief Reset temporal accumulation
+     *
+     * Call when camera moves or scene changes significantly.
+     * Also resets denoiser temporal history.
      */
     void ResetAccumulation();
 
     /**
      * @brief Resize render targets
+     *
+     * Recreates all render targets and resets accumulation.
+     *
+     * @param width New width
+     * @param height New height
      */
     void Resize(int width, int height);
 
@@ -173,6 +248,20 @@ public:
         m_settings = settings;
         ResetAccumulation();
     }
+
+    // =========================================================================
+    // Denoising
+    // =========================================================================
+
+    /**
+     * @brief Enable or disable denoising
+     */
+    void SetDenoiseEnabled(bool enabled);
+
+    /**
+     * @brief Check if denoising is enabled
+     */
+    [[nodiscard]] bool IsDenoiseEnabled() const;
 
     // =========================================================================
     // Statistics
@@ -225,10 +314,14 @@ private:
     int m_width = 1920;
     int m_height = 1080;
 
-    // RTX components
+    // Modern SOLID architecture components
+    std::unique_ptr<IRayTracingBackend> m_backend;
+    std::unique_ptr<DenoiserIntegration> m_denoiser;
+
+    // Legacy RTX components (for backward compatibility)
     std::unique_ptr<RTXAccelerationStructure> m_accelerationStructure;
 
-    // Ray tracing pipeline
+    // Ray tracing pipeline (legacy)
     uint32_t m_rtPipeline = 0;
     uint32_t m_rayGenShader = 0;
     uint32_t m_closestHitShader = 0;
@@ -262,7 +355,11 @@ private:
     uint32_t m_frameCount = 0;
     double m_speedupFactor = 3.5; // Typical speedup vs compute shader
 
-    // Cache
+    // Temporal data for motion vectors and TAA
+    glm::mat4 m_prevViewProjInverse{1.0f};
+    glm::vec2 m_prevJitter{0.0f};
+
+    // Cache for camera movement detection
     glm::vec3 m_lastCameraPos{0.0f};
     glm::vec3 m_lastCameraDir{0.0f};
 };

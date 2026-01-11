@@ -13,6 +13,7 @@ class Scene;
 class Shader;
 class Framebuffer;
 class Texture;
+class RadianceCascade;
 
 // ============================================================================
 // Material and Ray Structures
@@ -90,7 +91,16 @@ struct SDFPrimitive {
 // ============================================================================
 
 /**
- * @brief High-performance physically-based path tracer
+ * @brief High-performance physically-based path tracer for SDF-first engine
+ *
+ * Architecture (SOLID principles):
+ * - PathTracerConfig: Separate configuration data class
+ * - ISampler: Interface for pluggable sampling strategies
+ * - IIntegrator: Interface for path integration methods
+ * - RayGenerator: Separate ray generation system
+ * - SDFHitResolver: SDF raymarching and hit detection
+ * - MaterialShader: Material evaluation and scattering
+ * - AccumulationBuffer: Frame accumulation with temporal reprojection
  *
  * Features:
  * - Multiple bounce path tracing (diffuse, specular, refraction)
@@ -98,18 +108,26 @@ struct SDFPrimitive {
  * - Chromatic dispersion (wavelength-dependent IOR)
  * - Caustics rendering
  * - GPU compute shader acceleration
- * - ReSTIR importance resampling
+ * - ReSTIR importance resampling for 1SPP quality
  * - SVGF temporal denoising
- * - Support for both SDF and polygon geometry
+ * - RadianceCascade GI integration
+ * - Adaptive sampling based on variance
+ * - Temporal reprojection with motion vectors
+ * - Blue noise sampling for improved spatial distribution
+ * - Support for SDF geometry (primary) and polygons
+ *
+ * Performance Target: 145+ FPS at 1080p with GPU acceleration
  */
 class PathTracer {
 public:
     PathTracer();
     ~PathTracer();
 
-    // Non-copyable
+    // Non-copyable but movable
     PathTracer(const PathTracer&) = delete;
     PathTracer& operator=(const PathTracer&) = delete;
+    PathTracer(PathTracer&&) noexcept = default;
+    PathTracer& operator=(PathTracer&&) noexcept = default;
 
     // =========================================================================
     // Initialization
@@ -246,7 +264,19 @@ private:
 
     void ApplyReSTIR();     // Reservoir-based importance resampling
     void ApplyDenoising();  // SVGF temporal denoising
-    void ApplyToneMapping(); // Reinhard + gamma correction
+    void ApplyToneMapping(); // ACES filmic tone mapping
+
+    // Tone mapping helper
+    glm::vec3 ACESToneMap(const glm::vec3& color);
+
+    // =========================================================================
+    // RadianceCascade GI Integration
+    // =========================================================================
+
+    /**
+     * @brief Set radiance cascade for global illumination
+     */
+    void SetRadianceCascade(std::shared_ptr<RadianceCascade> cascade);
 
     // =========================================================================
     // Member Variables
@@ -295,11 +325,24 @@ private:
     std::uniform_real_distribution<float> m_dist{0.0f, 1.0f};
 
     bool m_initialized = false;
+
+    // =========================================================================
+    // Pimpl for internal implementation details
+    // =========================================================================
+
+    class Impl;
+    std::unique_ptr<Impl> m_impl;
 };
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/**
+ * @brief Convert wavelength (nm) to RGB color
+ * Uses CIE 1931 color matching approximation
+ */
+glm::vec3 WavelengthToRGB(float wavelength);
 
 /**
  * @brief Convert RGB wavelengths to spectral for dispersion

@@ -118,10 +118,13 @@ void PhysicsWorld::FixedStep() {
     // Store previous contacts for enter/exit detection
     m_previousContacts = m_activeContacts;
     m_activeContacts.clear();
+    m_contactInfoCache.clear();
 
     // Reset statistics
     m_stats.narrowPhaseTests = 0;
     m_stats.contactCount = 0;
+    m_stats.collisionEvents = 0;
+    m_stats.triggerEvents = 0;
 
     // Integration and collision
     IntegrateForces(dt);
@@ -136,7 +139,7 @@ void PhysicsWorld::FixedStep() {
     IntegrateVelocities(dt);
     UpdateSleepStates(dt);
 
-    // Fire collision callbacks
+    // Fire collision callbacks (legacy per-body callbacks)
     for (const auto& pair : m_activeContacts) {
         CollisionBody* bodyA = GetBody(pair.bodyA);
         CollisionBody* bodyB = GetBody(pair.bodyB);
@@ -157,7 +160,7 @@ void PhysicsWorld::FixedStep() {
         }
     }
 
-    // Fire exit callbacks
+    // Fire exit callbacks (legacy)
     for (const auto& pair : m_previousContacts) {
         if (m_activeContacts.find(pair) == m_activeContacts.end()) {
             CollisionBody* bodyA = GetBody(pair.bodyA);
@@ -175,6 +178,14 @@ void PhysicsWorld::FixedStep() {
             bodyB->RemoveContact(pair.bodyA);
         }
     }
+
+    // Dispatch events through the event system
+    if (m_eventsEnabled) {
+        DispatchCollisionEvents();
+    }
+
+    // Update physics time
+    m_physicsTime += dt;
 
     // Update stats
     m_stats.bodyCount = m_bodies.size();
@@ -275,6 +286,12 @@ void PhysicsWorld::NarrowPhase() {
 
             bodyA->AddContact(pair.bodyB);
             bodyB->AddContact(pair.bodyA);
+
+            // Cache contact info for event dispatch
+            if (m_eventsEnabled && !contact.points.empty()) {
+                uint64_t key = MakeContactKey(pair.bodyA, pair.bodyB);
+                m_contactInfoCache[key] = ConvertContactPoints(contact.points);
+            }
         }
     }
 }
@@ -1211,6 +1228,148 @@ void PhysicsWorld::DebugRender() {
         glm::vec3 contactPoint = (bodyA->GetPosition() + bodyB->GetPosition()) * 0.5f;
         m_debugDraw->AddPoint(contactPoint, 0.1f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
     }
+}
+
+// ============================================================================
+// Collision Event Dispatch
+// ============================================================================
+
+void PhysicsWorld::DispatchCollisionEvents() {
+    // Dispatch enter events for new contacts
+    for (const auto& pair : m_activeContacts) {
+        if (m_previousContacts.find(pair) != m_previousContacts.end()) {
+            continue;  // Not a new contact
+        }
+
+        CollisionBody* bodyA = GetBody(pair.bodyA);
+        CollisionBody* bodyB = GetBody(pair.bodyB);
+        if (!bodyA || !bodyB) continue;
+
+        // Check if this involves trigger shapes
+        bool isTrigger = false;
+        for (const auto& shape : bodyA->GetShapes()) {
+            if (shape.IsTrigger()) { isTrigger = true; break; }
+        }
+        if (!isTrigger) {
+            for (const auto& shape : bodyB->GetShapes()) {
+                if (shape.IsTrigger()) { isTrigger = true; break; }
+            }
+        }
+
+        if (isTrigger) {
+            // Trigger enter event
+            glm::vec3 overlapPoint = (bodyA->GetPosition() + bodyB->GetPosition()) * 0.5f;
+            m_eventDispatcher.DispatchTriggerEnter(bodyA, bodyB, overlapPoint, m_physicsTime);
+            ++m_stats.triggerEvents;
+        } else {
+            // Collision enter event
+            uint64_t key = MakeContactKey(pair.bodyA, pair.bodyB);
+            auto it = m_contactInfoCache.find(key);
+            std::vector<CollisionContact> contacts;
+            if (it != m_contactInfoCache.end()) {
+                contacts = it->second;
+            }
+            m_eventDispatcher.DispatchCollisionEnter(bodyA, bodyB, contacts, m_physicsTime);
+            ++m_stats.collisionEvents;
+        }
+    }
+
+    // Dispatch stay events for ongoing contacts
+    for (const auto& pair : m_activeContacts) {
+        if (m_previousContacts.find(pair) == m_previousContacts.end()) {
+            continue;  // New contact, already handled
+        }
+
+        CollisionBody* bodyA = GetBody(pair.bodyA);
+        CollisionBody* bodyB = GetBody(pair.bodyB);
+        if (!bodyA || !bodyB) continue;
+
+        // Check if this involves trigger shapes
+        bool isTrigger = false;
+        for (const auto& shape : bodyA->GetShapes()) {
+            if (shape.IsTrigger()) { isTrigger = true; break; }
+        }
+        if (!isTrigger) {
+            for (const auto& shape : bodyB->GetShapes()) {
+                if (shape.IsTrigger()) { isTrigger = true; break; }
+            }
+        }
+
+        if (isTrigger) {
+            // Trigger stay event
+            m_eventDispatcher.DispatchTriggerStay(bodyA, bodyB, m_physicsTime);
+            ++m_stats.triggerEvents;
+        } else {
+            // Collision stay event
+            uint64_t key = MakeContactKey(pair.bodyA, pair.bodyB);
+            auto it = m_contactInfoCache.find(key);
+            std::vector<CollisionContact> contacts;
+            if (it != m_contactInfoCache.end()) {
+                contacts = it->second;
+            }
+            m_eventDispatcher.DispatchCollisionStay(bodyA, bodyB, contacts, m_physicsTime);
+            ++m_stats.collisionEvents;
+        }
+    }
+
+    // Dispatch exit events for ended contacts
+    for (const auto& pair : m_previousContacts) {
+        if (m_activeContacts.find(pair) != m_activeContacts.end()) {
+            continue;  // Contact still active
+        }
+
+        CollisionBody* bodyA = GetBody(pair.bodyA);
+        CollisionBody* bodyB = GetBody(pair.bodyB);
+        if (!bodyA || !bodyB) continue;
+
+        // Check if this involves trigger shapes
+        bool isTrigger = false;
+        for (const auto& shape : bodyA->GetShapes()) {
+            if (shape.IsTrigger()) { isTrigger = true; break; }
+        }
+        if (!isTrigger) {
+            for (const auto& shape : bodyB->GetShapes()) {
+                if (shape.IsTrigger()) { isTrigger = true; break; }
+            }
+        }
+
+        if (isTrigger) {
+            // Trigger exit event
+            m_eventDispatcher.DispatchTriggerExit(bodyA, bodyB, m_physicsTime);
+            ++m_stats.triggerEvents;
+        } else {
+            // Collision exit event
+            m_eventDispatcher.DispatchCollisionExit(bodyA, bodyB, m_physicsTime);
+            ++m_stats.collisionEvents;
+        }
+    }
+}
+
+std::vector<CollisionContact> PhysicsWorld::ConvertContactPoints(
+    const std::vector<ContactPoint>& points) const
+{
+    std::vector<CollisionContact> contacts;
+    contacts.reserve(points.size());
+
+    for (const auto& cp : points) {
+        CollisionContact contact;
+        contact.point = cp.position;
+        contact.normal = cp.normal;
+        contact.penetrationDepth = cp.penetration;
+        contact.impulse = 0.0f;  // Impulse will be updated during resolution
+        contact.shapeIndexA = cp.shapeIndexA;
+        contact.shapeIndexB = cp.shapeIndexB;
+        contacts.push_back(contact);
+    }
+
+    return contacts;
+}
+
+uint64_t PhysicsWorld::MakeContactKey(CollisionBody::BodyId a, CollisionBody::BodyId b) const {
+    // Create a canonical key regardless of body order
+    auto minId = std::min(a, b);
+    auto maxId = std::max(a, b);
+    return (static_cast<uint64_t>(minId) << 32) | static_cast<uint64_t>(maxId);
 }
 
 } // namespace Nova

@@ -78,6 +78,94 @@ struct GizmoSnapping {
 };
 
 /**
+ * @brief Snap target types for object snapping
+ */
+enum class SnapTargetType : uint8_t {
+    None        = 0,
+    Vertex      = 1 << 0,           ///< Snap to mesh vertices
+    Edge        = 1 << 1,           ///< Snap to edge midpoints/closest points
+    Face        = 1 << 2,           ///< Snap to face centers
+    BoundingBox = 1 << 3,           ///< Snap to bounding box corners/centers
+    GridPoint   = 1 << 4,           ///< Snap to grid intersection points
+    All         = 0xFF              ///< Snap to all types
+};
+
+// Enable bitwise operations for SnapTargetType
+inline SnapTargetType operator|(SnapTargetType a, SnapTargetType b) {
+    return static_cast<SnapTargetType>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+}
+
+inline SnapTargetType operator&(SnapTargetType a, SnapTargetType b) {
+    return static_cast<SnapTargetType>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
+}
+
+inline bool HasSnapTarget(SnapTargetType flags, SnapTargetType check) {
+    return (static_cast<uint8_t>(flags) & static_cast<uint8_t>(check)) != 0;
+}
+
+/**
+ * @brief Result of a snap operation
+ */
+struct SnapResult {
+    glm::vec3 position{0.0f};           ///< Snapped world position
+    glm::vec3 normal{0.0f, 1.0f, 0.0f}; ///< Surface normal at snap point (if applicable)
+    SnapTargetType type = SnapTargetType::None; ///< Type of snap target hit
+    float distance = 0.0f;              ///< Distance from original position
+    bool didSnap = false;               ///< Whether snapping occurred
+
+    [[nodiscard]] bool IsValid() const { return didSnap; }
+};
+
+/**
+ * @brief World-space snapping configuration
+ */
+struct WorldSnapConfig {
+    // Grid snapping
+    bool gridSnapEnabled = false;           ///< Enable world-space grid snapping
+    float gridSize = 1.0f;                  ///< Primary grid cell size
+    int gridSubdivisions = 4;               ///< Number of subdivisions per cell
+    float snapDistance = 0.5f;              ///< Distance threshold for snapping
+
+    // Object snapping
+    bool objectSnapEnabled = false;         ///< Enable snap-to-object
+    SnapTargetType snapTargets = SnapTargetType::All; ///< Which snap targets to use
+    float objectSnapDistance = 0.3f;        ///< Distance threshold for object snapping
+    int maxSnapCandidates = 100;            ///< Maximum objects to consider for snapping
+
+    // Rotation snapping
+    bool worldAxisRotationSnap = false;     ///< Snap rotation to world axes
+    float worldRotationSnapAngle = 90.0f;   ///< World rotation snap angle (degrees)
+
+    // Scale snapping
+    bool roundScaleSnap = false;            ///< Snap scale to round values
+    float scaleSnapIncrement = 0.25f;       ///< Scale snap increment (e.g., 0.25, 0.5, 1.0)
+
+    // Visual settings
+    bool showGrid = false;                  ///< Display grid in viewport
+    bool showSnapIndicators = true;         ///< Show visual feedback when snapping
+    glm::vec4 gridColor{0.5f, 0.5f, 0.5f, 0.3f};       ///< Primary grid line color
+    glm::vec4 gridSubdivColor{0.4f, 0.4f, 0.4f, 0.15f}; ///< Subdivision grid color
+    glm::vec4 snapIndicatorColor{1.0f, 1.0f, 0.0f, 0.8f}; ///< Snap indicator color
+
+    // Override settings
+    bool ctrlOverridesSnap = true;          ///< Holding Ctrl disables snapping
+};
+
+/**
+ * @brief Snap target point for object snapping
+ */
+struct SnapPoint {
+    glm::vec3 position;
+    glm::vec3 normal;
+    SnapTargetType type;
+    uint64_t objectId = 0;              ///< ID of the object this snap point belongs to
+
+    SnapPoint() = default;
+    SnapPoint(const glm::vec3& pos, const glm::vec3& norm, SnapTargetType t, uint64_t id = 0)
+        : position(pos), normal(norm), type(t), objectId(id) {}
+};
+
+/**
  * @brief Individual handle component of a gizmo
  */
 struct GizmoHandle {
@@ -214,6 +302,186 @@ public:
      * @brief Enable or disable snapping
      */
     void SetSnapEnabled(bool enabled) { m_snapping.enabled = enabled; }
+
+    // =========================================================================
+    // World-Space Snapping
+    // =========================================================================
+
+    /**
+     * @brief Enable or disable world-space grid snapping
+     * @param enabled True to enable world-space grid snapping
+     */
+    void SetWorldSnapEnabled(bool enabled) { m_worldSnap.gridSnapEnabled = enabled; }
+
+    /**
+     * @brief Check if world-space snapping is enabled
+     */
+    [[nodiscard]] bool IsWorldSnapEnabled() const { return m_worldSnap.gridSnapEnabled; }
+
+    /**
+     * @brief Set the world grid size
+     * @param size Grid cell size in world units
+     */
+    void SetGridSize(float size) { m_worldSnap.gridSize = size; }
+
+    /**
+     * @brief Get the current grid size
+     */
+    [[nodiscard]] float GetGridSize() const { return m_worldSnap.gridSize; }
+
+    /**
+     * @brief Set the number of grid subdivisions
+     * @param subdivisions Number of subdivisions per grid cell
+     */
+    void SetGridSubdivisions(int subdivisions) { m_worldSnap.gridSubdivisions = subdivisions; }
+
+    /**
+     * @brief Get the number of grid subdivisions
+     */
+    [[nodiscard]] int GetGridSubdivisions() const { return m_worldSnap.gridSubdivisions; }
+
+    /**
+     * @brief Set the world snap configuration
+     */
+    void SetWorldSnapConfig(const WorldSnapConfig& config) { m_worldSnap = config; }
+
+    /**
+     * @brief Get the world snap configuration
+     */
+    [[nodiscard]] const WorldSnapConfig& GetWorldSnapConfig() const { return m_worldSnap; }
+
+    /**
+     * @brief Get mutable world snap configuration
+     */
+    [[nodiscard]] WorldSnapConfig& GetWorldSnapConfig() { return m_worldSnap; }
+
+    /**
+     * @brief Enable or disable object snapping
+     */
+    void SetObjectSnapEnabled(bool enabled) { m_worldSnap.objectSnapEnabled = enabled; }
+
+    /**
+     * @brief Check if object snapping is enabled
+     */
+    [[nodiscard]] bool IsObjectSnapEnabled() const { return m_worldSnap.objectSnapEnabled; }
+
+    /**
+     * @brief Set which snap target types to use
+     */
+    void SetSnapTargets(SnapTargetType targets) { m_worldSnap.snapTargets = targets; }
+
+    /**
+     * @brief Get current snap target types
+     */
+    [[nodiscard]] SnapTargetType GetSnapTargets() const { return m_worldSnap.snapTargets; }
+
+    /**
+     * @brief Enable or disable grid display
+     */
+    void SetGridVisible(bool visible) { m_worldSnap.showGrid = visible; }
+
+    /**
+     * @brief Check if grid is visible
+     */
+    [[nodiscard]] bool IsGridVisible() const { return m_worldSnap.showGrid; }
+
+    /**
+     * @brief Snap a position to the world grid
+     * @param position World-space position to snap
+     * @return Snapped position aligned to grid
+     */
+    [[nodiscard]] glm::vec3 SnapToGrid(const glm::vec3& position) const;
+
+    /**
+     * @brief Snap a position to the nearest grid intersection
+     * @param position World-space position
+     * @return Snapped position at grid intersection point
+     */
+    [[nodiscard]] glm::vec3 SnapToGridIntersection(const glm::vec3& position) const;
+
+    /**
+     * @brief Snap a position to nearby objects
+     * @param position World-space position to snap
+     * @param snapPoints Available snap points from scene objects
+     * @return Snap result with closest snap point
+     */
+    [[nodiscard]] SnapResult SnapToObject(const glm::vec3& position,
+                                          const std::vector<SnapPoint>& snapPoints) const;
+
+    /**
+     * @brief Find snap points from a mesh
+     * @param mesh The mesh to extract snap points from
+     * @param transform World transform of the mesh
+     * @param objectId Unique ID of the mesh object
+     * @param targets Which snap target types to extract
+     * @return Vector of snap points
+     */
+    [[nodiscard]] static std::vector<SnapPoint> GetMeshSnapPoints(
+        const Mesh& mesh,
+        const glm::mat4& transform,
+        uint64_t objectId,
+        SnapTargetType targets = SnapTargetType::All);
+
+    /**
+     * @brief Find snap points from a bounding box
+     * @param boundsMin AABB minimum corner
+     * @param boundsMax AABB maximum corner
+     * @param transform World transform
+     * @param objectId Unique ID of the object
+     * @return Vector of snap points (corners, edge midpoints, face centers)
+     */
+    [[nodiscard]] static std::vector<SnapPoint> GetBoundsSnapPoints(
+        const glm::vec3& boundsMin,
+        const glm::vec3& boundsMax,
+        const glm::mat4& transform,
+        uint64_t objectId);
+
+    /**
+     * @brief Snap rotation to world axes
+     * @param rotation Current rotation quaternion
+     * @return Rotation snapped to nearest world axis alignment
+     */
+    [[nodiscard]] glm::quat SnapRotationToWorldAxes(const glm::quat& rotation) const;
+
+    /**
+     * @brief Snap scale to round values
+     * @param scale Current scale vector
+     * @return Scale with values snapped to nearest increment
+     */
+    [[nodiscard]] glm::vec3 SnapScaleToRoundValues(const glm::vec3& scale) const;
+
+    /**
+     * @brief Render the world grid
+     * @param camera Active camera for view/projection
+     */
+    void RenderGrid(const Camera& camera);
+
+    /**
+     * @brief Render the world grid with explicit matrices
+     * @param view View matrix
+     * @param projection Projection matrix
+     * @param cameraPosition Camera world position
+     */
+    void RenderGrid(const glm::mat4& view, const glm::mat4& projection,
+                    const glm::vec3& cameraPosition);
+
+    /**
+     * @brief Render snap indicators at active snap points
+     * @param camera Active camera
+     * @param activeSnap Current snap result to visualize
+     */
+    void RenderSnapIndicator(const Camera& camera, const SnapResult& activeSnap);
+
+    /**
+     * @brief Set Ctrl key state for snap override
+     * @param pressed True if Ctrl is held down
+     */
+    void SetCtrlPressed(bool pressed) { m_ctrlPressed = pressed; }
+
+    /**
+     * @brief Check if snapping is currently active (considering overrides)
+     */
+    [[nodiscard]] bool IsSnappingActive() const;
 
     /**
      * @brief Set the screen-space size of the gizmo in pixels
@@ -424,6 +692,18 @@ private:
     float ApplyRotationSnap(float angleDegrees);
     glm::vec3 ApplyScaleSnap(const glm::vec3& scale);
 
+    // World-space snapping helpers
+    glm::vec3 ApplyWorldSnap(const glm::vec3& worldPosition);
+    float SnapToNearestGridLine(float value, float gridSize) const;
+    glm::vec3 FindClosestGridIntersection(const glm::vec3& position) const;
+
+    // Grid rendering helpers
+    void InitializeGridResources();
+    void DestroyGridResources();
+    void GenerateGridLines(std::vector<float>& vertices,
+                           const glm::vec3& cameraPos,
+                           float gridExtent) const;
+
     // Rendering helpers
     void RenderTranslateGizmo(const glm::mat4& view, const glm::mat4& projection, float scale);
     void RenderRotateGizmo(const glm::mat4& view, const glm::mat4& projection, float scale);
@@ -475,6 +755,7 @@ private:
 
     // Configuration
     GizmoSnapping m_snapping;
+    WorldSnapConfig m_worldSnap;
     float m_screenSize = 100.0f;     // Target screen size in pixels
     float m_baseScale = 1.0f;
     float m_handleLength = 1.0f;
@@ -482,6 +763,10 @@ private:
     float m_planeSize = 0.25f;
     float m_rotateRadius = 0.9f;
     float m_scaleBoxSize = 0.1f;
+
+    // World snap state
+    bool m_ctrlPressed = false;
+    SnapResult m_activeSnapResult;
 
     // Colors
     glm::vec4 m_xAxisColor{0.95f, 0.25f, 0.25f, 1.0f};  // Red
@@ -510,6 +795,19 @@ private:
     uint32_t m_lineVAO = 0;
     uint32_t m_lineVBO = 0;
     static constexpr size_t MAX_LINE_VERTICES = 1024;
+
+    // Grid rendering resources
+    uint32_t m_gridVAO = 0;
+    uint32_t m_gridVBO = 0;
+    size_t m_gridVertexCount = 0;
+    std::unique_ptr<Shader> m_gridShader;
+    static constexpr size_t MAX_GRID_VERTICES = 8192;
+    static constexpr float GRID_FADE_START = 20.0f;    // Distance at which grid starts fading
+    static constexpr float GRID_FADE_END = 100.0f;     // Distance at which grid fully fades
+
+    // Snap indicator resources
+    uint32_t m_snapIndicatorVAO = 0;
+    uint32_t m_snapIndicatorVBO = 0;
 
     // Callback
     TransformCallback m_onTransformChanged;

@@ -143,6 +143,33 @@ gtest_discover_tests(nova_game_tests
 )
 
 # =============================================================================
+# Graphics/GI Tests
+# =============================================================================
+
+set(GRAPHICS_TEST_SOURCES
+    test_main.cpp
+    graphics/test_radiance_cascade.cpp
+    graphics/test_spectral_renderer.cpp
+    graphics/test_path_tracer.cpp
+)
+
+add_executable(nova_graphics_tests ${GRAPHICS_TEST_SOURCES})
+target_link_libraries(nova_graphics_tests PRIVATE
+    test_common
+    GTest::gtest_main
+)
+target_compile_definitions(nova_graphics_tests PRIVATE
+    NOVA_TESTING
+    NOVA_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
+)
+
+gtest_discover_tests(nova_graphics_tests
+    PROPERTIES
+        LABELS "graphics;unit"
+        TIMEOUT 120
+)
+
+# =============================================================================
 # Integration Tests
 # =============================================================================
 
@@ -199,9 +226,17 @@ target_compile_definitions(nova_benchmarks PRIVATE
 # Run all tests
 add_custom_target(run_tests
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-    DEPENDS nova_unit_tests nova_game_tests nova_integration_tests
+    DEPENDS nova_unit_tests nova_game_tests nova_graphics_tests nova_integration_tests
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Running all tests"
+)
+
+# Run only graphics tests
+add_custom_target(run_graphics_tests
+    COMMAND ${CMAKE_CTEST_COMMAND} -L graphics --output-on-failure
+    DEPENDS nova_graphics_tests
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Running graphics/GI tests"
 )
 
 # Run only unit tests
@@ -254,5 +289,6 @@ endif()
 message(STATUS "Nova3D Test Suite configured")
 message(STATUS "  Unit tests:        nova_unit_tests")
 message(STATUS "  Game tests:        nova_game_tests")
+message(STATUS "  Graphics tests:    nova_graphics_tests")
 message(STATUS "  Integration tests: nova_integration_tests")
 message(STATUS "  Benchmarks:        nova_benchmarks")

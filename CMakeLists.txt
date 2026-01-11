@@ -440,6 +440,7 @@ add_library(nova3d STATIC
     engine/sdf/SDFPrimitive.cpp
     engine/sdf/SDFSerializer.cpp
     engine/sdf/SDFAnimation.cpp
+    engine/sdf/SDFCache.cpp
 
     # Debug Visualization (replaces AIE Gizmos)
     engine/graphics/debug/DebugDraw.cpp
@@ -821,6 +822,7 @@ if(NOVA_ENABLE_PHYSICS)
         engine/physics/CollisionShape.cpp
         engine/physics/CollisionBody.cpp
         engine/physics/CollisionConfig.cpp
+        engine/physics/CollisionEvents.cpp
         engine/physics/PhysicsWorld.cpp
         engine/physics/Triggers.cpp
         engine/physics/BlackbodyRadiation.cpp
@@ -1070,4 +1072,9 @@ target_sources(nova3d PRIVATE
 target_sources(nova3d PRIVATE
     engine/editor/EditorCommand.cpp
     engine/editor/CommandHistory.cpp
+)
+
+# Material Editor System (Multi-object editing)
+target_sources(nova3d PRIVATE
+    engine/editor/MaterialEditor.cpp
 )

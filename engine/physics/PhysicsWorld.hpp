@@ -2,6 +2,7 @@
 
 #include "CollisionBody.hpp"
 #include "CollisionShape.hpp"
+#include "CollisionEvents.hpp"
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
@@ -310,6 +311,64 @@ public:
     void DebugRender();
 
     // =========================================================================
+    // Collision Events
+    // =========================================================================
+
+    /**
+     * @brief Get the collision event dispatcher
+     * @return Reference to the event dispatcher
+     */
+    [[nodiscard]] CollisionEventDispatcher& GetEventDispatcher() { return m_eventDispatcher; }
+    [[nodiscard]] const CollisionEventDispatcher& GetEventDispatcher() const { return m_eventDispatcher; }
+
+    /**
+     * @brief Enable/disable event dispatch
+     * @param enabled True to dispatch events, false to suppress
+     */
+    void SetEventsEnabled(bool enabled) { m_eventsEnabled = enabled; }
+    [[nodiscard]] bool AreEventsEnabled() const { return m_eventsEnabled; }
+
+    /**
+     * @brief Register a global collision event listener (convenience method)
+     * @param callback Callback function
+     * @param filter Event filter
+     * @return Listener ID
+     */
+    [[nodiscard]] CollisionListenerId RegisterCollisionListener(
+        CollisionEventCallback callback,
+        const CollisionEventFilter& filter = CollisionEventFilter{}) {
+        return m_eventDispatcher.RegisterGlobalListener(std::move(callback), filter);
+    }
+
+    /**
+     * @brief Register a collision listener for a specific body (convenience method)
+     * @param bodyId Body to listen for
+     * @param callback Callback function
+     * @param filter Event filter
+     * @return Listener ID
+     */
+    [[nodiscard]] CollisionListenerId RegisterBodyCollisionListener(
+        CollisionBody::BodyId bodyId,
+        CollisionEventCallback callback,
+        const CollisionEventFilter& filter = CollisionEventFilter{}) {
+        return m_eventDispatcher.RegisterBodyListener(bodyId, std::move(callback), filter);
+    }
+
+    /**
+     * @brief Unregister a collision listener
+     */
+    void UnregisterCollisionListener(CollisionListenerId id) {
+        m_eventDispatcher.UnregisterGlobalListener(id);
+    }
+
+    /**
+     * @brief Unregister a body collision listener
+     */
+    void UnregisterBodyCollisionListener(CollisionListenerId id) {
+        m_eventDispatcher.UnregisterBodyListener(id);
+    }
+
+    // =========================================================================
     // Statistics
     // =========================================================================
 
@@ -319,6 +378,8 @@ public:
         size_t broadPhasePairs = 0;
         size_t narrowPhaseTests = 0;
         size_t contactCount = 0;
+        size_t collisionEvents = 0;  ///< Number of collision events dispatched
+        size_t triggerEvents = 0;    ///< Number of trigger events dispatched
         float stepTime = 0.0f;
     };
 
@@ -375,6 +436,11 @@ private:
     void ResolveContact(CollisionBody& bodyA, CollisionBody& bodyB,
                         const ContactPoint& contact, float dt);
 
+    // Event dispatch helpers
+    void DispatchCollisionEvents();
+    std::vector<CollisionContact> ConvertContactPoints(const std::vector<ContactPoint>& points) const;
+    uint64_t MakeContactKey(CollisionBody::BodyId a, CollisionBody::BodyId b) const;
+
     // Ray intersection helpers
     bool RaycastBody(
         const glm::vec3& origin, const glm::vec3& direction, float maxDistance,
@@ -408,6 +474,14 @@ private:
     // Debug
     bool m_debugDrawEnabled = false;
     DebugDraw* m_debugDraw = nullptr;
+
+    // Event system
+    CollisionEventDispatcher m_eventDispatcher;
+    bool m_eventsEnabled = true;
+    float m_physicsTime = 0.0f;  ///< Accumulated physics time for event timestamps
+
+    // Contact info cache for event generation
+    std::unordered_map<uint64_t, std::vector<CollisionContact>> m_contactInfoCache;
 
     // Statistics
     Stats m_stats;

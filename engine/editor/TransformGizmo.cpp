@@ -1486,4 +1486,563 @@ glm::vec3 TransformGizmo::ScreenToWorldRay(const Camera& camera, const glm::vec2
     return camera.ScreenToWorldRay(screenPos, screenSize);
 }
 
+// =============================================================================
+// World-Space Snapping Implementation
+// =============================================================================
+
+bool TransformGizmo::IsSnappingActive() const {
+    // If Ctrl is held and ctrlOverridesSnap is enabled, disable snapping
+    if (m_ctrlPressed && m_worldSnap.ctrlOverridesSnap) {
+        return false;
+    }
+    // Return true if any snapping mode is enabled
+    return m_snapping.enabled || m_worldSnap.gridSnapEnabled || m_worldSnap.objectSnapEnabled;
+}
+
+glm::vec3 TransformGizmo::SnapToGrid(const glm::vec3& position) const {
+    if (!m_worldSnap.gridSnapEnabled) {
+        return position;
+    }
+
+    float gridStep = m_worldSnap.gridSize;
+    if (m_worldSnap.gridSubdivisions > 1) {
+        gridStep /= static_cast<float>(m_worldSnap.gridSubdivisions);
+    }
+
+    return glm::vec3(
+        SnapToNearestGridLine(position.x, gridStep),
+        SnapToNearestGridLine(position.y, gridStep),
+        SnapToNearestGridLine(position.z, gridStep)
+    );
+}
+
+glm::vec3 TransformGizmo::SnapToGridIntersection(const glm::vec3& position) const {
+    return FindClosestGridIntersection(position);
+}
+
+float TransformGizmo::SnapToNearestGridLine(float value, float gridSize) const {
+    if (gridSize <= 0.0f) return value;
+    return std::round(value / gridSize) * gridSize;
+}
+
+glm::vec3 TransformGizmo::FindClosestGridIntersection(const glm::vec3& position) const {
+    float gridStep = m_worldSnap.gridSize;
+    if (m_worldSnap.gridSubdivisions > 1) {
+        gridStep /= static_cast<float>(m_worldSnap.gridSubdivisions);
+    }
+
+    // Find the nearest grid intersection point in all three axes
+    glm::vec3 snapped;
+    snapped.x = std::round(position.x / gridStep) * gridStep;
+    snapped.y = std::round(position.y / gridStep) * gridStep;
+    snapped.z = std::round(position.z / gridStep) * gridStep;
+
+    // Check if we're within snap distance
+    float distSq = glm::length(snapped - position);
+    if (distSq <= m_worldSnap.snapDistance) {
+        return snapped;
+    }
+
+    return position;
+}
+
+glm::vec3 TransformGizmo::ApplyWorldSnap(const glm::vec3& worldPosition) {
+    glm::vec3 result = worldPosition;
+
+    // Apply grid snapping first
+    if (m_worldSnap.gridSnapEnabled) {
+        result = SnapToGrid(result);
+    }
+
+    return result;
+}
+
+SnapResult TransformGizmo::SnapToObject(const glm::vec3& position,
+                                        const std::vector<SnapPoint>& snapPoints) const {
+    SnapResult result;
+    result.position = position;
+    result.didSnap = false;
+
+    if (!m_worldSnap.objectSnapEnabled || snapPoints.empty()) {
+        return result;
+    }
+
+    float closestDistSq = m_worldSnap.objectSnapDistance * m_worldSnap.objectSnapDistance;
+    const SnapPoint* closestPoint = nullptr;
+
+    for (const auto& point : snapPoints) {
+        // Check if this snap target type is enabled
+        if (!HasSnapTarget(m_worldSnap.snapTargets, point.type)) {
+            continue;
+        }
+
+        float distSq = glm::dot(point.position - position, point.position - position);
+        if (distSq < closestDistSq) {
+            closestDistSq = distSq;
+            closestPoint = &point;
+        }
+    }
+
+    if (closestPoint) {
+        result.position = closestPoint->position;
+        result.normal = closestPoint->normal;
+        result.type = closestPoint->type;
+        result.distance = std::sqrt(closestDistSq);
+        result.didSnap = true;
+    }
+
+    return result;
+}
+
+std::vector<SnapPoint> TransformGizmo::GetMeshSnapPoints(
+    const Mesh& mesh,
+    const glm::mat4& transform,
+    uint64_t objectId,
+    SnapTargetType targets) {
+
+    std::vector<SnapPoint> points;
+
+    // For a full implementation, we would need access to the mesh's vertex data
+    // Here we provide the bounding box points as a fallback
+    glm::vec3 boundsMin = mesh.GetBoundsMin();
+    glm::vec3 boundsMax = mesh.GetBoundsMax();
+
+    // Add bounding box snap points
+    if (HasSnapTarget(targets, SnapTargetType::BoundingBox)) {
+        auto bbPoints = GetBoundsSnapPoints(boundsMin, boundsMax, transform, objectId);
+        points.insert(points.end(), bbPoints.begin(), bbPoints.end());
+    }
+
+    // Add center point as a vertex snap target
+    if (HasSnapTarget(targets, SnapTargetType::Vertex)) {
+        glm::vec3 center = (boundsMin + boundsMax) * 0.5f;
+        glm::vec3 worldCenter = glm::vec3(transform * glm::vec4(center, 1.0f));
+        points.emplace_back(worldCenter, glm::vec3(0, 1, 0), SnapTargetType::Vertex, objectId);
+    }
+
+    return points;
+}
+
+std::vector<SnapPoint> TransformGizmo::GetBoundsSnapPoints(
+    const glm::vec3& boundsMin,
+    const glm::vec3& boundsMax,
+    const glm::mat4& transform,
+    uint64_t objectId) {
+
+    std::vector<SnapPoint> points;
+    points.reserve(27); // 8 corners + 12 edge midpoints + 6 face centers + 1 center
+
+    // Helper to transform a local point to world space
+    auto toWorld = [&transform](const glm::vec3& local) -> glm::vec3 {
+        return glm::vec3(transform * glm::vec4(local, 1.0f));
+    };
+
+    // 8 corner points
+    glm::vec3 corners[8] = {
+        {boundsMin.x, boundsMin.y, boundsMin.z},
+        {boundsMax.x, boundsMin.y, boundsMin.z},
+        {boundsMin.x, boundsMax.y, boundsMin.z},
+        {boundsMax.x, boundsMax.y, boundsMin.z},
+        {boundsMin.x, boundsMin.y, boundsMax.z},
+        {boundsMax.x, boundsMin.y, boundsMax.z},
+        {boundsMin.x, boundsMax.y, boundsMax.z},
+        {boundsMax.x, boundsMax.y, boundsMax.z}
+    };
+
+    for (const auto& corner : corners) {
+        points.emplace_back(toWorld(corner), glm::vec3(0, 1, 0), SnapTargetType::BoundingBox, objectId);
+    }
+
+    // 12 edge midpoints
+    glm::vec3 edgeMidpoints[12] = {
+        // Bottom face edges
+        {(boundsMin.x + boundsMax.x) * 0.5f, boundsMin.y, boundsMin.z},
+        {boundsMin.x, boundsMin.y, (boundsMin.z + boundsMax.z) * 0.5f},
+        {boundsMax.x, boundsMin.y, (boundsMin.z + boundsMax.z) * 0.5f},
+        {(boundsMin.x + boundsMax.x) * 0.5f, boundsMin.y, boundsMax.z},
+        // Top face edges
+        {(boundsMin.x + boundsMax.x) * 0.5f, boundsMax.y, boundsMin.z},
+        {boundsMin.x, boundsMax.y, (boundsMin.z + boundsMax.z) * 0.5f},
+        {boundsMax.x, boundsMax.y, (boundsMin.z + boundsMax.z) * 0.5f},
+        {(boundsMin.x + boundsMax.x) * 0.5f, boundsMax.y, boundsMax.z},
+        // Vertical edges
+        {boundsMin.x, (boundsMin.y + boundsMax.y) * 0.5f, boundsMin.z},
+        {boundsMax.x, (boundsMin.y + boundsMax.y) * 0.5f, boundsMin.z},
+        {boundsMin.x, (boundsMin.y + boundsMax.y) * 0.5f, boundsMax.z},
+        {boundsMax.x, (boundsMin.y + boundsMax.y) * 0.5f, boundsMax.z}
+    };
+
+    for (const auto& mid : edgeMidpoints) {
+        points.emplace_back(toWorld(mid), glm::vec3(0, 1, 0), SnapTargetType::Edge, objectId);
+    }
+
+    // 6 face centers
+    glm::vec3 faceCenters[6] = {
+        {(boundsMin.x + boundsMax.x) * 0.5f, boundsMin.y, (boundsMin.z + boundsMax.z) * 0.5f}, // Bottom
+        {(boundsMin.x + boundsMax.x) * 0.5f, boundsMax.y, (boundsMin.z + boundsMax.z) * 0.5f}, // Top
+        {boundsMin.x, (boundsMin.y + boundsMax.y) * 0.5f, (boundsMin.z + boundsMax.z) * 0.5f}, // Left
+        {boundsMax.x, (boundsMin.y + boundsMax.y) * 0.5f, (boundsMin.z + boundsMax.z) * 0.5f}, // Right
+        {(boundsMin.x + boundsMax.x) * 0.5f, (boundsMin.y + boundsMax.y) * 0.5f, boundsMin.z}, // Front
+        {(boundsMin.x + boundsMax.x) * 0.5f, (boundsMin.y + boundsMax.y) * 0.5f, boundsMax.z}  // Back
+    };
+
+    glm::vec3 faceNormals[6] = {
+        {0, -1, 0}, {0, 1, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 0, -1}, {0, 0, 1}
+    };
+
+    for (int i = 0; i < 6; ++i) {
+        glm::vec3 worldNormal = glm::normalize(glm::vec3(transform * glm::vec4(faceNormals[i], 0.0f)));
+        points.emplace_back(toWorld(faceCenters[i]), worldNormal, SnapTargetType::Face, objectId);
+    }
+
+    // Object center
+    glm::vec3 center = (boundsMin + boundsMax) * 0.5f;
+    points.emplace_back(toWorld(center), glm::vec3(0, 1, 0), SnapTargetType::BoundingBox, objectId);
+
+    return points;
+}
+
+glm::quat TransformGizmo::SnapRotationToWorldAxes(const glm::quat& rotation) const {
+    if (!m_worldSnap.worldAxisRotationSnap) {
+        return rotation;
+    }
+
+    // Convert quaternion to Euler angles
+    glm::vec3 euler = glm::degrees(glm::eulerAngles(rotation));
+
+    // Snap each axis to the configured angle
+    float snapAngle = m_worldSnap.worldRotationSnapAngle;
+    euler.x = std::round(euler.x / snapAngle) * snapAngle;
+    euler.y = std::round(euler.y / snapAngle) * snapAngle;
+    euler.z = std::round(euler.z / snapAngle) * snapAngle;
+
+    // Convert back to quaternion
+    return glm::quat(glm::radians(euler));
+}
+
+glm::vec3 TransformGizmo::SnapScaleToRoundValues(const glm::vec3& scale) const {
+    if (!m_worldSnap.roundScaleSnap) {
+        return scale;
+    }
+
+    float increment = m_worldSnap.scaleSnapIncrement;
+    if (increment <= 0.0f) {
+        return scale;
+    }
+
+    return glm::vec3(
+        std::round(scale.x / increment) * increment,
+        std::round(scale.y / increment) * increment,
+        std::round(scale.z / increment) * increment
+    );
+}
+
+// =============================================================================
+// Grid Rendering Implementation
+// =============================================================================
+
+static const char* s_gridVertexShader = R"(
+#version 330 core
+
+layout(location = 0) in vec3 a_Position;
+layout(location = 1) in vec4 a_Color;
+
+uniform mat4 u_VP;
+
+out vec4 v_Color;
+out vec3 v_WorldPos;
+
+void main() {
+    gl_Position = u_VP * vec4(a_Position, 1.0);
+    v_Color = a_Color;
+    v_WorldPos = a_Position;
+}
+)";
+
+static const char* s_gridFragmentShader = R"(
+#version 330 core
+
+in vec4 v_Color;
+in vec3 v_WorldPos;
+
+uniform vec3 u_CameraPos;
+uniform float u_FadeStart;
+uniform float u_FadeEnd;
+
+out vec4 FragColor;
+
+void main() {
+    // Calculate distance-based fade
+    float dist = length(v_WorldPos.xz - u_CameraPos.xz);
+    float fade = 1.0 - smoothstep(u_FadeStart, u_FadeEnd, dist);
+
+    FragColor = vec4(v_Color.rgb, v_Color.a * fade);
+
+    // Discard fully transparent pixels
+    if (FragColor.a < 0.01) {
+        discard;
+    }
+}
+)";
+
+void TransformGizmo::InitializeGridResources() {
+    if (m_gridVAO != 0) {
+        return; // Already initialized
+    }
+
+    // Create grid shader
+    m_gridShader = std::make_unique<Shader>();
+    if (!m_gridShader->LoadFromSource(s_gridVertexShader, s_gridFragmentShader)) {
+        m_gridShader.reset();
+        return;
+    }
+
+    // Create grid buffers
+    glGenVertexArrays(1, &m_gridVAO);
+    glGenBuffers(1, &m_gridVBO);
+
+    glBindVertexArray(m_gridVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_gridVBO);
+    glBufferData(GL_ARRAY_BUFFER, MAX_GRID_VERTICES * 7 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+
+    // Position (vec3)
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+
+    // Color (vec4)
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    glBindVertexArray(0);
+
+    // Create snap indicator buffers
+    glGenVertexArrays(1, &m_snapIndicatorVAO);
+    glGenBuffers(1, &m_snapIndicatorVBO);
+
+    glBindVertexArray(m_snapIndicatorVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_snapIndicatorVBO);
+    glBufferData(GL_ARRAY_BUFFER, 256 * 7 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    glBindVertexArray(0);
+}
+
+void TransformGizmo::DestroyGridResources() {
+    if (m_gridVAO) {
+        glDeleteVertexArrays(1, &m_gridVAO);
+        m_gridVAO = 0;
+    }
+    if (m_gridVBO) {
+        glDeleteBuffers(1, &m_gridVBO);
+        m_gridVBO = 0;
+    }
+    if (m_snapIndicatorVAO) {
+        glDeleteVertexArrays(1, &m_snapIndicatorVAO);
+        m_snapIndicatorVAO = 0;
+    }
+    if (m_snapIndicatorVBO) {
+        glDeleteBuffers(1, &m_snapIndicatorVBO);
+        m_snapIndicatorVBO = 0;
+    }
+    m_gridShader.reset();
+}
+
+void TransformGizmo::GenerateGridLines(std::vector<float>& vertices,
+                                        const glm::vec3& cameraPos,
+                                        float gridExtent) const {
+    vertices.clear();
+
+    float gridSize = m_worldSnap.gridSize;
+    int subdivisions = m_worldSnap.gridSubdivisions;
+    float subGridSize = gridSize / static_cast<float>(subdivisions);
+
+    // Calculate grid bounds centered on camera (snapped to grid)
+    float centerX = std::round(cameraPos.x / gridSize) * gridSize;
+    float centerZ = std::round(cameraPos.z / gridSize) * gridSize;
+
+    float minX = centerX - gridExtent;
+    float maxX = centerX + gridExtent;
+    float minZ = centerZ - gridExtent;
+    float maxZ = centerZ + gridExtent;
+
+    // Grid is drawn on Y=0 plane (can be modified to use m_position.y)
+    float gridY = 0.0f;
+
+    auto addLine = [&vertices](const glm::vec3& p1, const glm::vec3& p2, const glm::vec4& color) {
+        // Point 1
+        vertices.push_back(p1.x);
+        vertices.push_back(p1.y);
+        vertices.push_back(p1.z);
+        vertices.push_back(color.r);
+        vertices.push_back(color.g);
+        vertices.push_back(color.b);
+        vertices.push_back(color.a);
+
+        // Point 2
+        vertices.push_back(p2.x);
+        vertices.push_back(p2.y);
+        vertices.push_back(p2.z);
+        vertices.push_back(color.r);
+        vertices.push_back(color.g);
+        vertices.push_back(color.b);
+        vertices.push_back(color.a);
+    };
+
+    // Draw subdivision lines first (they'll be under main grid)
+    if (subdivisions > 1) {
+        for (float x = minX; x <= maxX; x += subGridSize) {
+            // Skip if this is a main grid line
+            if (std::abs(std::fmod(x, gridSize)) < 0.001f) continue;
+
+            addLine(glm::vec3(x, gridY, minZ), glm::vec3(x, gridY, maxZ), m_worldSnap.gridSubdivColor);
+        }
+
+        for (float z = minZ; z <= maxZ; z += subGridSize) {
+            // Skip if this is a main grid line
+            if (std::abs(std::fmod(z, gridSize)) < 0.001f) continue;
+
+            addLine(glm::vec3(minX, gridY, z), glm::vec3(maxX, gridY, z), m_worldSnap.gridSubdivColor);
+        }
+    }
+
+    // Draw main grid lines
+    for (float x = std::floor(minX / gridSize) * gridSize; x <= maxX; x += gridSize) {
+        glm::vec4 color = m_worldSnap.gridColor;
+        // Highlight the Y axis (X=0)
+        if (std::abs(x) < 0.001f) {
+            color = glm::vec4(0.2f, 0.2f, 0.8f, 0.6f); // Blue for Z axis direction
+        }
+        addLine(glm::vec3(x, gridY, minZ), glm::vec3(x, gridY, maxZ), color);
+    }
+
+    for (float z = std::floor(minZ / gridSize) * gridSize; z <= maxZ; z += gridSize) {
+        glm::vec4 color = m_worldSnap.gridColor;
+        // Highlight the X axis (Z=0)
+        if (std::abs(z) < 0.001f) {
+            color = glm::vec4(0.8f, 0.2f, 0.2f, 0.6f); // Red for X axis direction
+        }
+        addLine(glm::vec3(minX, gridY, z), glm::vec3(maxX, gridY, z), color);
+    }
+}
+
+void TransformGizmo::RenderGrid(const Camera& camera) {
+    RenderGrid(camera.GetView(), camera.GetProjection(), camera.GetPosition());
+}
+
+void TransformGizmo::RenderGrid(const glm::mat4& view, const glm::mat4& projection,
+                                const glm::vec3& cameraPosition) {
+    if (!m_worldSnap.showGrid) {
+        return;
+    }
+
+    // Initialize grid resources if needed
+    if (m_gridVAO == 0) {
+        InitializeGridResources();
+        if (m_gridVAO == 0) {
+            return; // Failed to initialize
+        }
+    }
+
+    // Generate grid lines based on camera position
+    std::vector<float> vertices;
+    float gridExtent = GRID_FADE_END * 1.5f; // Extend slightly beyond fade distance
+    GenerateGridLines(vertices, cameraPosition, gridExtent);
+
+    if (vertices.empty()) {
+        return;
+    }
+
+    m_gridVertexCount = vertices.size() / 7; // 7 floats per vertex
+
+    // Upload vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, m_gridVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+
+    // Setup render state
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glLineWidth(1.0f);
+
+    // Render grid
+    m_gridShader->Bind();
+    glm::mat4 vp = projection * view;
+    m_gridShader->SetMat4("u_VP", vp);
+    m_gridShader->SetVec3("u_CameraPos", cameraPosition);
+    m_gridShader->SetFloat("u_FadeStart", GRID_FADE_START);
+    m_gridShader->SetFloat("u_FadeEnd", GRID_FADE_END);
+
+    glBindVertexArray(m_gridVAO);
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(m_gridVertexCount));
+    glBindVertexArray(0);
+
+    // Restore state
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+}
+
+void TransformGizmo::RenderSnapIndicator(const Camera& camera, const SnapResult& activeSnap) {
+    if (!activeSnap.didSnap || !m_worldSnap.showSnapIndicators) {
+        return;
+    }
+
+    if (m_snapIndicatorVAO == 0) {
+        InitializeGridResources();
+        if (m_snapIndicatorVAO == 0) {
+            return;
+        }
+    }
+
+    // Create a small cross/diamond indicator at the snap point
+    std::vector<float> vertices;
+    float size = 0.1f;
+    glm::vec4 color = m_worldSnap.snapIndicatorColor;
+
+    glm::vec3 pos = activeSnap.position;
+
+    // Helper to add a line
+    auto addLine = [&vertices, &color](const glm::vec3& p1, const glm::vec3& p2) {
+        vertices.push_back(p1.x); vertices.push_back(p1.y); vertices.push_back(p1.z);
+        vertices.push_back(color.r); vertices.push_back(color.g); vertices.push_back(color.b); vertices.push_back(color.a);
+        vertices.push_back(p2.x); vertices.push_back(p2.y); vertices.push_back(p2.z);
+        vertices.push_back(color.r); vertices.push_back(color.g); vertices.push_back(color.b); vertices.push_back(color.a);
+    };
+
+    // Draw a 3D cross at snap point
+    addLine(pos + glm::vec3(-size, 0, 0), pos + glm::vec3(size, 0, 0));
+    addLine(pos + glm::vec3(0, -size, 0), pos + glm::vec3(0, size, 0));
+    addLine(pos + glm::vec3(0, 0, -size), pos + glm::vec3(0, 0, size));
+
+    // Draw a small diamond around the point
+    addLine(pos + glm::vec3(-size, 0, 0), pos + glm::vec3(0, size, 0));
+    addLine(pos + glm::vec3(0, size, 0), pos + glm::vec3(size, 0, 0));
+    addLine(pos + glm::vec3(size, 0, 0), pos + glm::vec3(0, -size, 0));
+    addLine(pos + glm::vec3(0, -size, 0), pos + glm::vec3(-size, 0, 0));
+
+    // Upload and render
+    glBindBuffer(GL_ARRAY_BUFFER, m_snapIndicatorVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glLineWidth(2.0f);
+
+    m_lineShader->Bind();
+    glm::mat4 mvp = camera.GetProjection() * camera.GetView();
+    m_lineShader->SetMat4("u_MVP", mvp);
+
+    glBindVertexArray(m_snapIndicatorVAO);
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size() / 7));
+    glBindVertexArray(0);
+
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glLineWidth(1.0f);
+}
+
 } // namespace Nova

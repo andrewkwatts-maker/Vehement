@@ -1,0 +1,439 @@
+{
+    "id": "wendigo",
+    "name": "Wendigo",
+    "race": "cryptids",
+    "type": "unit",
+    "category": "melee",
+    "description": "A gaunt, antlered horror driven by insatiable hunger. The Wendigo grows stronger with each kill, consuming the essence of its victims.",
+
+    "stats": {
+        "health": 600,
+        "armor": 3,
+        "damage": 28,
+        "attackSpeed": 1.6,
+        "moveSpeed": 290,
+        "attackRange": 128
+    },
+
+    "costs": {
+        "gold": 220,
+        "lumber": 40,
+        "essence": 25,
+        "food": 3,
+        "buildTime": 35.0
+    },
+
+    "sdfModel": {
+        "name": "wendigo_model",
+        "bounds": { "min": [-0.5, 0.0, -0.4], "max": [0.5, 2.2, 0.5] },
+        "primitives": [
+            {
+                "id": "torso",
+                "type": "Capsule",
+                "params": { "radius": 0.12, "height": 0.4 },
+                "transform": { "position": [0.0, 1.2, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.7] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union",
+                "bone": "spine"
+            },
+            {
+                "id": "ribs_visible",
+                "type": "RoundedBox",
+                "params": { "size": [0.14, 0.25, 0.08], "radius": 0.02 },
+                "transform": { "position": [0.0, 1.25, 0.06], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.4, 0.38, 0.35, 1.0], "metallic": 0.1, "roughness": 0.85 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.03,
+                "bone": "spine"
+            },
+            {
+                "id": "pelvis",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.1, 0.08, 0.06] },
+                "transform": { "position": [0.0, 0.95, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.03,
+                "bone": "spine"
+            },
+            {
+                "id": "neck",
+                "type": "Capsule",
+                "params": { "radius": 0.04, "height": 0.15 },
+                "transform": { "position": [0.0, 1.55, 0.02], "rotation": [0.1, 0.0, 0.0, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.32, 0.3, 0.28, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02,
+                "bone": "head"
+            },
+            {
+                "id": "skull",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.08, 0.1, 0.12] },
+                "transform": { "position": [0.0, 1.75, 0.05], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.9, 0.85, 0.75, 1.0], "metallic": 0.1, "roughness": 0.6 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02,
+                "bone": "head"
+            },
+            {
+                "id": "snout",
+                "type": "Capsule",
+                "params": { "radius": 0.035, "height": 0.1 },
+                "transform": { "position": [0.0, 1.7, 0.15], "rotation": [0.7, 0.0, 0.0, 0.7], "scale": [0.9, 1.0, 0.8] },
+                "material": { "baseColor": [0.88, 0.82, 0.72, 1.0], "metallic": 0.1, "roughness": 0.6 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02,
+                "bone": "head"
+            },
+            {
+                "id": "eye_socket_left",
+                "type": "Sphere",
+                "params": { "radius": 0.025 },
+                "transform": { "position": [-0.04, 1.78, 0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.1, 0.05, 0.05, 1.0], "metallic": 0.0, "roughness": 1.0 },
+                "operation": "Subtraction",
+                "bone": "head"
+            },
+            {
+                "id": "eye_socket_right",
+                "type": "Sphere",
+                "params": { "radius": 0.025 },
+                "transform": { "position": [0.04, 1.78, 0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.1, 0.05, 0.05, 1.0], "metallic": 0.0, "roughness": 1.0 },
+                "operation": "Subtraction",
+                "bone": "head"
+            },
+            {
+                "id": "eye_glow_left",
+                "type": "Sphere",
+                "params": { "radius": 0.015 },
+                "transform": { "position": [-0.04, 1.78, 0.09], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.4, 0.8, 1.0, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.3, 0.7, 1.0] },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "eye_glow_right",
+                "type": "Sphere",
+                "params": { "radius": 0.015 },
+                "transform": { "position": [0.04, 1.78, 0.09], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.4, 0.8, 1.0, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.3, 0.7, 1.0] },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "antler_base_left",
+                "type": "Capsule",
+                "params": { "radius": 0.02, "height": 0.15 },
+                "transform": { "position": [-0.06, 1.9, 0.0], "rotation": [-0.2, 0.0, -0.3, 0.93], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.45, 1.0], "metallic": 0.2, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "antler_branch_left_1",
+                "type": "Capsule",
+                "params": { "radius": 0.015, "height": 0.12 },
+                "transform": { "position": [-0.12, 2.05, -0.02], "rotation": [-0.1, 0.0, -0.4, 0.91], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.45, 1.0], "metallic": 0.2, "roughness": 0.6 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.01,
+                "bone": "head"
+            },
+            {
+                "id": "antler_branch_left_2",
+                "type": "Capsule",
+                "params": { "radius": 0.012, "height": 0.1 },
+                "transform": { "position": [-0.18, 2.12, 0.02], "rotation": [0.1, 0.0, -0.5, 0.86], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.45, 1.0], "metallic": 0.2, "roughness": 0.6 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.01,
+                "bone": "head"
+            },
+            {
+                "id": "antler_base_right",
+                "type": "Capsule",
+                "params": { "radius": 0.02, "height": 0.15 },
+                "transform": { "position": [0.06, 1.9, 0.0], "rotation": [-0.2, 0.0, 0.3, 0.93], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.45, 1.0], "metallic": 0.2, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "antler_branch_right_1",
+                "type": "Capsule",
+                "params": { "radius": 0.015, "height": 0.12 },
+                "transform": { "position": [0.12, 2.05, -0.02], "rotation": [-0.1, 0.0, 0.4, 0.91], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.45, 1.0], "metallic": 0.2, "roughness": 0.6 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.01,
+                "bone": "head"
+            },
+            {
+                "id": "antler_branch_right_2",
+                "type": "Capsule",
+                "params": { "radius": 0.012, "height": 0.1 },
+                "transform": { "position": [0.18, 2.12, 0.02], "rotation": [0.1, 0.0, 0.5, 0.86], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.45, 1.0], "metallic": 0.2, "roughness": 0.6 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.01,
+                "bone": "head"
+            },
+            {
+                "id": "arm_upper_left",
+                "type": "Capsule",
+                "params": { "radius": 0.035, "height": 0.3 },
+                "transform": { "position": [-0.18, 1.2, 0.0], "rotation": [0.0, 0.0, 0.2, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "arm_lower_left",
+                "type": "Capsule",
+                "params": { "radius": 0.025, "height": 0.35 },
+                "transform": { "position": [-0.25, 0.85, 0.0], "rotation": [0.0, 0.0, 0.1, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02,
+                "bone": "arm_l"
+            },
+            {
+                "id": "claw_left_1",
+                "type": "Cone",
+                "params": { "radius": 0.015, "height": 0.1 },
+                "transform": { "position": [-0.28, 0.58, 0.02], "rotation": [0.7, 0.0, 0.0, 0.7], "scale": [0.5, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.1, 1.0], "metallic": 0.4, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "claw_left_2",
+                "type": "Cone",
+                "params": { "radius": 0.012, "height": 0.08 },
+                "transform": { "position": [-0.26, 0.58, 0.02], "rotation": [0.65, 0.0, -0.1, 0.75], "scale": [0.5, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.1, 1.0], "metallic": 0.4, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "claw_left_3",
+                "type": "Cone",
+                "params": { "radius": 0.012, "height": 0.08 },
+                "transform": { "position": [-0.3, 0.58, 0.02], "rotation": [0.65, 0.0, 0.1, 0.75], "scale": [0.5, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.1, 1.0], "metallic": 0.4, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "arm_upper_right",
+                "type": "Capsule",
+                "params": { "radius": 0.035, "height": 0.3 },
+                "transform": { "position": [0.18, 1.2, 0.0], "rotation": [0.0, 0.0, -0.2, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "arm_lower_right",
+                "type": "Capsule",
+                "params": { "radius": 0.025, "height": 0.35 },
+                "transform": { "position": [0.25, 0.85, 0.0], "rotation": [0.0, 0.0, -0.1, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02,
+                "bone": "arm_r"
+            },
+            {
+                "id": "claw_right_1",
+                "type": "Cone",
+                "params": { "radius": 0.015, "height": 0.1 },
+                "transform": { "position": [0.28, 0.58, 0.02], "rotation": [0.7, 0.0, 0.0, 0.7], "scale": [0.5, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.1, 1.0], "metallic": 0.4, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "claw_right_2",
+                "type": "Cone",
+                "params": { "radius": 0.012, "height": 0.08 },
+                "transform": { "position": [0.26, 0.58, 0.02], "rotation": [0.65, 0.0, 0.1, 0.75], "scale": [0.5, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.1, 1.0], "metallic": 0.4, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "claw_right_3",
+                "type": "Cone",
+                "params": { "radius": 0.012, "height": 0.08 },
+                "transform": { "position": [0.3, 0.58, 0.02], "rotation": [0.65, 0.0, -0.1, 0.75], "scale": [0.5, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.1, 1.0], "metallic": 0.4, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "leg_upper_left",
+                "type": "Capsule",
+                "params": { "radius": 0.045, "height": 0.3 },
+                "transform": { "position": [-0.08, 0.7, 0.0], "rotation": [0.1, 0.0, 0.0, 0.995], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union",
+                "bone": "leg_l"
+            },
+            {
+                "id": "leg_lower_left",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.35 },
+                "transform": { "position": [-0.08, 0.28, 0.02], "rotation": [-0.15, 0.0, 0.0, 0.99], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02,
+                "bone": "leg_l"
+            },
+            {
+                "id": "hoof_left",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.04, 0.02, 0.06] },
+                "transform": { "position": [-0.08, 0.02, 0.06], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.18, 0.15, 1.0], "metallic": 0.3, "roughness": 0.5 },
+                "operation": "Union",
+                "bone": "leg_l"
+            },
+            {
+                "id": "leg_upper_right",
+                "type": "Capsule",
+                "params": { "radius": 0.045, "height": 0.3 },
+                "transform": { "position": [0.08, 0.7, 0.0], "rotation": [0.1, 0.0, 0.0, 0.995], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union",
+                "bone": "leg_r"
+            },
+            {
+                "id": "leg_lower_right",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.35 },
+                "transform": { "position": [0.08, 0.28, 0.02], "rotation": [-0.15, 0.0, 0.0, 0.99], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02,
+                "bone": "leg_r"
+            },
+            {
+                "id": "hoof_right",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.04, 0.02, 0.06] },
+                "transform": { "position": [0.08, 0.02, 0.06], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.18, 0.15, 1.0], "metallic": 0.3, "roughness": 0.5 },
+                "operation": "Union",
+                "bone": "leg_r"
+            },
+            {
+                "id": "frost_aura",
+                "type": "Sphere",
+                "params": { "radius": 0.35 },
+                "transform": { "position": [0.0, 1.2, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.7, 0.9, 0.1], "metallic": 0.0, "roughness": 1.0, "emissive": [0.1, 0.15, 0.2] },
+                "operation": "Union",
+                "bone": "spine"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "spine", "parent": "root", "position": [0.0, 0.95, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "head", "parent": "spine", "position": [0.0, 0.5, 0.02], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "arm_l", "parent": "spine", "position": [-0.14, 0.35, 0.0], "rotation": [0.0, 0.0, 0.15, 0.99] },
+            { "name": "arm_r", "parent": "spine", "position": [0.14, 0.35, 0.0], "rotation": [0.0, 0.0, -0.15, 0.99] },
+            { "name": "leg_l", "parent": "root", "position": [-0.08, 0.85, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "leg_r", "parent": "root", "position": [0.08, 0.85, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 3.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "head": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 1.0, "bones": { "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] }, "head": { "rotation": [-0.05, 0.1, 0.0, 0.99] } } },
+                { "time": 2.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "head": { "rotation": [-0.05, -0.1, 0.0, 0.99] } } },
+                { "time": 3.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "head": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+            ]
+        },
+        "walk": {
+            "duration": 0.8, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "leg_l": { "rotation": [0.3, 0.0, 0.0, 0.95] }, "leg_r": { "rotation": [-0.3, 0.0, 0.0, 0.95] }, "arm_l": { "rotation": [-0.15, 0.0, 0.15, 0.97] }, "arm_r": { "rotation": [0.15, 0.0, -0.15, 0.97] } } },
+                { "time": 0.2, "bones": { "root": { "position": [0.0, 0.03, 0.0] } } },
+                { "time": 0.4, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "leg_l": { "rotation": [-0.3, 0.0, 0.0, 0.95] }, "leg_r": { "rotation": [0.3, 0.0, 0.0, 0.95] }, "arm_l": { "rotation": [0.15, 0.0, 0.15, 0.97] }, "arm_r": { "rotation": [-0.15, 0.0, -0.15, 0.97] } } },
+                { "time": 0.6, "bones": { "root": { "position": [0.0, 0.03, 0.0] } } },
+                { "time": 0.8, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "leg_l": { "rotation": [0.3, 0.0, 0.0, 0.95] }, "leg_r": { "rotation": [-0.3, 0.0, 0.0, 0.95] }, "arm_l": { "rotation": [-0.15, 0.0, 0.15, 0.97] }, "arm_r": { "rotation": [0.15, 0.0, -0.15, 0.97] } } }
+            ]
+        },
+        "attack": {
+            "duration": 1.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.0, -0.15, 0.0, 0.99] }, "arm_l": { "rotation": [-0.3, 0.0, -0.4, 0.86] }, "arm_r": { "rotation": [-0.3, 0.0, 0.4, 0.86] } } },
+                { "time": 0.3, "bones": { "spine": { "rotation": [-0.1, -0.2, 0.0, 0.97] }, "arm_l": { "rotation": [-0.5, 0.0, -0.5, 0.71] }, "arm_r": { "rotation": [-0.5, 0.0, 0.5, 0.71] } } },
+                { "time": 0.5, "bones": { "spine": { "rotation": [0.15, 0.15, 0.0, 0.97] }, "arm_l": { "rotation": [0.4, 0.0, -0.3, 0.87] }, "arm_r": { "rotation": [0.4, 0.0, 0.3, 0.87] } }, "events": ["claw_slash"] },
+                { "time": 1.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.15, 0.99] }, "arm_r": { "rotation": [0.0, 0.0, -0.15, 0.99] } } }
+            ]
+        },
+        "consume": {
+            "duration": 2.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "head": { "rotation": [0.3, 0.0, 0.0, 0.95] } } },
+                { "time": 0.5, "bones": { "spine": { "rotation": [0.4, 0.0, 0.0, 0.92] }, "head": { "rotation": [0.5, 0.0, 0.0, 0.87] } }, "events": ["consume_start"] },
+                { "time": 1.5, "bones": { "spine": { "rotation": [0.3, 0.0, 0.0, 0.95] }, "head": { "rotation": [0.4, 0.0, 0.0, 0.92] } } },
+                { "time": 2.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "head": { "rotation": [0.0, 0.0, 0.0, 1.0] } }, "events": ["consume_end"] }
+            ]
+        },
+        "frenzy": {
+            "duration": 1.5, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [-0.4, 0.0, -0.4, 0.82] }, "arm_r": { "rotation": [-0.4, 0.0, 0.4, 0.82] } } },
+                { "time": 0.25, "bones": { "spine": { "rotation": [0.1, 0.1, 0.0, 0.99] }, "arm_l": { "rotation": [0.3, 0.0, -0.3, 0.9] }, "arm_r": { "rotation": [-0.4, 0.0, 0.4, 0.82] } }, "events": ["frenzy_slash"] },
+                { "time": 0.5, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [-0.4, 0.0, -0.4, 0.82] }, "arm_r": { "rotation": [-0.4, 0.0, 0.4, 0.82] } } },
+                { "time": 0.75, "bones": { "spine": { "rotation": [0.1, -0.1, 0.0, 0.99] }, "arm_l": { "rotation": [-0.4, 0.0, -0.4, 0.82] }, "arm_r": { "rotation": [0.3, 0.0, 0.3, 0.9] } }, "events": ["frenzy_slash"] },
+                { "time": 1.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 1.5, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [-0.4, 0.0, -0.4, 0.82] }, "arm_r": { "rotation": [-0.4, 0.0, 0.4, 0.82] } } }
+            ]
+        },
+        "death": {
+            "duration": 1.5, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.4, "bones": { "root": { "position": [0.0, -0.2, 0.0], "rotation": [0.15, 0.0, 0.15, 0.97] }, "spine": { "rotation": [-0.2, 0.0, 0.0, 0.98] } } },
+                { "time": 0.8, "bones": { "root": { "position": [0.0, -0.5, 0.15], "rotation": [0.4, 0.0, 0.2, 0.89] } } },
+                { "time": 1.5, "bones": { "root": { "position": [0.0, -0.8, 0.25], "rotation": [0.6, 0.0, 0.2, 0.77] } } }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "walk", "condition": "isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "consume", "condition": "isConsuming" }, { "to": "frenzy", "condition": "isFrenzied" }, { "to": "death", "condition": "isDead" }] },
+            "walk": { "animation": "walk", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "frenzy", "condition": "isFrenzied" }, { "to": "death", "condition": "isDead" }] },
+            "attack": { "animation": "attack", "transitions": [{ "to": "idle", "condition": "animationComplete && !isMoving" }, { "to": "walk", "condition": "animationComplete && isMoving" }, { "to": "frenzy", "condition": "isFrenzied" }, { "to": "death", "condition": "isDead" }] },
+            "consume": { "animation": "consume", "transitions": [{ "to": "idle", "condition": "animationComplete" }, { "to": "death", "condition": "isDead" }] },
+            "frenzy": { "animation": "frenzy", "transitions": [{ "to": "idle", "condition": "!isFrenzied && !isMoving" }, { "to": "walk", "condition": "!isFrenzied && isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "consume", "name": "Consume", "description": "Devours a corpse to heal and permanently gain stats.", "hotkey": "C", "cooldown": 10.0 },
+        { "id": "ravenous_frenzy", "name": "Ravenous Frenzy", "description": "Enters a bloodthirsty state, gaining attack speed but losing armor.", "hotkey": "F", "cooldown": 30.0 },
+        { "id": "freezing_aura", "name": "Freezing Aura", "description": "Nearby enemies are slowed by supernatural cold.", "isPassive": true },
+        { "id": "hunger_grows", "name": "Hunger Grows", "description": "Gains bonus damage and health for each kill.", "isPassive": true }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "wendigo_ready" }, { "type": "random_say", "texts": ["*hungry howl*", "*ravenous growl*", "*icy breath*"], "chance": 1.0 }] },
+        "on_attack": { "actions": [{ "type": "play_animation", "animation": "attack" }, { "type": "play_sound", "sound": "wendigo_attack" }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "wendigo_death" }] }
+    }
+}

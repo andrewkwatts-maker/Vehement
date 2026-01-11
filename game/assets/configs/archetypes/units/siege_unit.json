@@ -1,0 +1,445 @@
+{
+  "$schema": "../../../schemas/unit_archetype.schema.json",
+
+  // =============================================================================
+  // SIEGE UNIT ARCHETYPE
+  // =============================================================================
+  // This archetype represents a siege weapon unit.
+  // Behavior composition:
+  // - MovementBehavior: Ground (slow movement)
+  // - CombatBehavior: Siege damage, bonus vs buildings
+  // - StatsComponent: High damage, low speed, vulnerable
+  //
+  // Use this as a base template for units like:
+  // - Catapult, Trebuchet, Ballista, Cannon, Ram, etc.
+  // =============================================================================
+
+  "id": "siege_unit_archetype",
+  "name": "Siege Unit Template",
+  "description": "A heavy siege weapon designed to destroy buildings and fortifications. Devastating vs structures but slow and vulnerable.",
+
+  "category": "siege",
+  "tier": 2,
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "baseStats": {
+    // Survivability - moderate health, good armor
+    "health": 180,
+    "healthRegen": 0.0,  // Siege weapons don't regenerate
+    "mana": 0,
+    "manaRegen": 0,
+
+    // Offensive stats - very high damage, slow attack
+    "damage": 50,  // Base damage
+    "damageVariance": 0.25,  // High variance for siege
+    "attackSpeed": 0.4,  // Very slow attacks
+    "attackRange": 12,  // Long range
+
+    // Defensive stats - armored but vulnerable to melee
+    "armor": 4,  // Fortified armor
+    "magicResist": 0,
+
+    // Mobility - very slow
+    "moveSpeed": 3.0,  // Slowest units
+    "turnSpeed": 90,   // Turns very slowly
+    "acceleration": 3.0,
+
+    // Perception
+    "sightRange": 13,
+    "detectionRange": 10,
+
+    // No crits
+    "critChance": 0.0,
+    "critMultiplier": 1.0
+  },
+
+  // =============================================================================
+  // COMBAT BEHAVIOR
+  // =============================================================================
+  "combat": {
+    "attackType": "siege",
+    "armorType": "fortified",
+
+    "attackAnimation": {
+      "windupTime": 1.5,  // Long windup for siege
+      "backswingTime": 1.0,
+      "totalDuration": 2.5
+    },
+
+    // Massive bonus vs buildings, penalty vs units
+    "bonusVs": [
+      {
+        "category": "fortified",
+        "multiplier": 3.0,  // 300% damage vs fortified
+        "flatBonus": 50
+      },
+      {
+        "category": "building",
+        "multiplier": 3.5,
+        "flatBonus": 75
+      }
+    ],
+
+    "penaltyVs": [
+      {
+        "category": "unarmored",
+        "multiplier": 0.3  // 70% damage reduction vs units
+      },
+      {
+        "category": "light",
+        "multiplier": 0.4
+      },
+      {
+        "category": "medium",
+        "multiplier": 0.5
+      }
+    ],
+
+    // No cleave
+    "cleave": {
+      "enabled": false
+    },
+
+    // Large splash damage
+    "splash": {
+      "enabled": true,
+      "radius": 4.0,
+      "fullDamageRadius": 1.0,  // 100% damage in center
+      "mediumDamageRadius": 2.5,  // 50% damage
+      "lightDamageRadius": 4.0,   // 25% damage
+      "damageFalloff": "linear",
+      "affectsAllies": true  // Can damage own units!
+    }
+  },
+
+  // =============================================================================
+  // SIEGE MECHANICS
+  // =============================================================================
+  "siegeMechanics": {
+    // Setup time before attacking
+    "requiresSetup": true,
+    "setupTime": 3.0,  // Seconds to deploy
+    "packTime": 2.0,   // Seconds to pack up
+    "canMoveWhileSetup": false,
+    "canAttackWhileMoving": false,
+
+    // Setup animations and states
+    "setupAnimation": "anim_deploy",
+    "packAnimation": "anim_pack",
+    "setupSound": "sounds/siege/deploy.wav",
+    "packSound": "sounds/siege/pack.wav",
+
+    // Minimum range (can't attack too close)
+    "minimumRange": 4.0,
+    "deadZone": true,  // Has a dead zone where can't attack
+
+    // Accuracy
+    "baseAccuracy": 0.7,  // 70% accuracy vs moving targets
+    "accuracyVsBuildings": 1.0,  // 100% vs stationary buildings
+    "accuracyVsUnits": 0.5,  // 50% vs units
+    "missScatter": 2.0,  // How far projectiles scatter when miss
+
+    // Crew requirement (some siege needs crew)
+    "requiresCrew": false,
+    "crewSize": 0,
+    "crewType": null
+  },
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  "projectile": {
+    "type": "ballistic",
+    "speed": 15.0,
+    "arc": 0.8,  // High arcing shot
+    "maxTravelDistance": 15.0,
+
+    "piercing": false,
+    "canBeBlocked": false,  // Flies over walls
+    "canBeDodged": true,  // Slow projectile, can be dodged
+    "canMiss": true,
+    "missChance": 0.3,  // 30% miss vs units
+
+    "visualModel": "models/projectiles/boulder.fbx",
+    "trailEffect": "effects/boulder_trail.fx",
+    "impactEffect": "effects/boulder_impact.fx",
+    "projectileSize": 1.0,
+
+    // Ground impact
+    "sticksInTarget": false,
+    "sticksInGround": true,
+    "groundCrater": true,
+    "craterDuration": 10.0,
+    "craterSize": 2.0
+  },
+
+  // =============================================================================
+  // MOVEMENT BEHAVIOR
+  // =============================================================================
+  "movement": {
+    "movementType": "ground",
+
+    "canMoveOnLand": true,
+    "canMoveOnWater": false,
+    "canMoveOnLava": false,
+    "canClimbCliffs": false,
+    "canPassThroughUnits": false,
+
+    "collisionRadius": 1.0,  // Large collision
+    "pushPriority": 10,  // High priority, pushes other units
+
+    "pathfindingType": "ground",
+    "unitSize": "large",
+
+    // Terrain restrictions
+    "difficultTerrain": {
+      "forest": {
+        "speedMultiplier": 0.5,  // 50% speed in forest
+        "canPass": true
+      },
+      "hills": {
+        "speedMultiplier": 0.7,
+        "canPass": true
+      }
+    }
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 300,
+    "wood": 150,  // Lots of wood for siege
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "trainTime": 60,  // Long build time
+  "populationCost": 3,  // Expensive population
+
+  "requiredBuilding": "siege_workshop",
+  "requiredAge": 2,  // Late game unit
+  "requiredTech": "siege_engineering",
+
+  // =============================================================================
+  // ABILITIES & UPGRADES
+  // =============================================================================
+  "abilities": [
+    {
+      "id": "ground_attack",
+      "unlockedByDefault": true,
+      "description": "Attack ground to damage area"
+    }
+  ],
+
+  "upgrades": [
+    "siege_damage_1",
+    "siege_damage_2",
+    "siege_range_1",
+    "siege_accuracy_1",
+    "siege_armor_1"
+  ],
+
+  // =============================================================================
+  // UNIT CAPABILITIES
+  // =============================================================================
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+
+  // Attack capabilities
+  "canAttackGround": true,  // Can target ground
+  "canAttackAir": false,  // Usually can't hit air
+  "canAttackBuildings": true,
+  "requiresSetupToAttack": true,
+  "requiresFacing": true,
+
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": false,
+  "isMechanical": true,  // Siege is mechanical
+  "isUndead": false,
+
+  // =============================================================================
+  // VULNERABILITIES
+  // =============================================================================
+  "vulnerabilities": {
+    // Very vulnerable to melee
+    "vulnerableToMelee": true,
+    "meleeDamageMultiplier": 1.5,
+
+    // Can be captured by enemies
+    "canBeCaptured": true,
+    "captureTime": 5.0,
+
+    // Can be destroyed by workers
+    "canBeDestroyed": true,
+    "destroyTime": 10.0,
+
+    // Vulnerable to anti-siege units
+    "vulnerableToAntiSiege": true,
+    "antiSiegeMultiplier": 2.0
+  },
+
+  // =============================================================================
+  // FORMATIONS
+  // =============================================================================
+  "formation": {
+    "preferredPosition": "back",  // Behind frontline
+    "formationSpacing": 3.0,  // Large spacing
+    "maintainFormation": false,
+    "requiresProtection": true  // Needs escort
+  },
+
+  // =============================================================================
+  // AI BEHAVIOR
+  // =============================================================================
+  "ai": {
+    "aggroRange": 15,
+    "returnToPosition": true,
+    "acquisitionRange": 13,
+
+    "targetPriority": [
+      {
+        "type": "building",  // Prioritize buildings
+        "weight": 3.0
+      },
+      {
+        "type": "fortified",
+        "weight": 2.5
+      },
+      {
+        "type": "siege",  // Counter enemy siege
+        "weight": 2.0
+      },
+      {
+        "type": "closest",
+        "weight": 0.5
+      }
+    ],
+
+    "fleeAtHealthPercent": 0.0,  // Don't flee
+    "pursuitRange": 0,  // Don't chase
+
+    // Siege AI
+    "autoSetup": true,
+    "setupWhenInRange": true,
+    "preferGroundAttack": true,  // Use ground attack for splash
+    "avoidMelee": true,
+    "retreatFromMelee": true,
+    "retreatDistance": 8.0
+  },
+
+  // =============================================================================
+  // EXPERIENCE & LEVELING
+  // =============================================================================
+  "experience": {
+    "canGainExperience": false,
+    "experienceValue": 120,  // High XP value
+    "bountyGold": 30,  // High bounty
+    "bountyMultiplier": 1.0
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/units/catapult.fbx",
+    "portrait": "textures/portraits/catapult.png",
+    "icon": "textures/icons/units/catapult.png",
+    "scale": 1.5,  // Larger than normal units
+
+    "animations": {
+      "idle": "anim_idle",
+      "walk": "anim_move",
+      "attack": "anim_fire",
+      "death": "anim_destroyed",
+      "decay": null,  // Mechanical, no decay
+      "build": null,
+      "gather": null,
+      "spell": null,
+      "deploy": "anim_deploy",
+      "pack": "anim_pack",
+      "reload": "anim_reload"
+    },
+
+    "deathEffect": "effects/siege_destroyed.fx",
+    "bloodType": "none",  // No blood, mechanical
+    "shadowSize": 2.0,  // Large shadow
+    "selectionScale": 1.5,
+
+    "teamColorParts": ["frame"],
+
+    // Destruction
+    "debrisEffect": "effects/wood_debris.fx",
+    "wreckModel": "models/wrecks/catapult_wreck.fbx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/units/siege/select1.wav"
+    ],
+    "move": [
+      "sounds/units/siege/move1.wav",
+      "sounds/units/siege/wheels_creak.wav"
+    ],
+    "attack": [
+      "sounds/units/siege/fire1.wav",
+      "sounds/units/siege/fire2.wav"
+    ],
+    "death": [
+      "sounds/units/siege/destroyed.wav"
+    ],
+    "ready": [
+      "sounds/units/siege/ready.wav"
+    ],
+
+    // Siege-specific
+    "deploy": "sounds/siege/deploy.wav",
+    "pack": "sounds/siege/pack.wav",
+    "reload": "sounds/siege/reload.wav",
+    "projectileLaunch": "sounds/projectiles/catapult_launch.wav",
+    "projectileTravel": "sounds/projectiles/boulder_whoosh.wav",
+    "impact": "sounds/impacts/boulder_crash.wav",
+    "movement": "sounds/siege/wheels_loop.wav"
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "trebuchet" could inherit from this with:
+  // - damage: 100
+  // - attackRange: 16
+  // - splash.radius: 5.0
+  // - setupTime: 5.0
+  // - cost.gold: 500
+
+  // A "ram" could inherit with:
+  // - attackRange: 1.5 (melee)
+  // - requiresSetup: false
+  // - moveSpeed: 4.0
+  // - bonusVs.building.multiplier: 5.0
+  // - splash.enabled: false
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for siege weapons. Essential for destroying buildings and fortifications.",
+    "tacticalUse": "Protect with army. Focus buildings. Use ground attack for groups. Keep away from melee.",
+    "strengths": "Devastating vs buildings, long range, splash damage",
+    "weaknesses": "Slow, vulnerable to melee, expensive, setup time, can't hit air",
+    "counters": ["buildings", "fortifications", "grouped_units"],
+    "counteredBy": ["cavalry", "assassins", "fast_melee"]
+  }
+}

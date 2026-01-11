@@ -1,0 +1,587 @@
+{
+  "$schema": "../../../schemas/building_archetype.schema.json",
+
+  // =============================================================================
+  // DEFENSE BUILDING ARCHETYPE
+  // =============================================================================
+  // This archetype represents a defensive structure.
+  // Behavior composition:
+  // - DefenseBehavior: High armor, garrison capability, attack capability
+  // - StatsComponent: Very high health, high armor
+  //
+  // Use this as a base template for buildings like:
+  // - Tower, Guard Tower, Cannon Tower, Wall, Gate, Bunker, etc.
+  // =============================================================================
+
+  "id": "defense_building_archetype",
+  "name": "Defense Building Template",
+  "description": "A fortified defensive structure that attacks enemies and protects your base. High durability and strong attacks.",
+
+  "category": "defensive",
+  "tier": 1,
+
+  // =============================================================================
+  // BUILDING SIZE & PLACEMENT
+  // =============================================================================
+  "size": {
+    "width": 2,
+    "height": 2,
+    "footprintShape": "square"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "canPlaceOnWater": false,
+    "canPlaceOnCliff": true,  // Towers can be on cliffs
+    "requiresFlatTerrain": false,
+    "minDistanceFromOther": 3.0,
+    "minDistanceFromResources": 5.0,
+    "requiresNearby": null,
+    "nearbyRange": 0.0,
+    "blocksPathing": true,
+    "providesVision": true,
+
+    // Defense-specific placement
+    "strategicPlacement": true,
+    "heightBonus": true,  // Bonus range/damage on high ground
+    "heightBonusMultiplier": 1.2,  // 20% bonus on cliffs
+    "canFormWall": false,  // Walls can connect
+    "wallConnectable": false
+  },
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "health": 800,  // Very durable
+  "healthRegen": 0.0,
+  "armor": 6,  // Fortified armor
+  "magicResist": 2,  // Some magic resistance
+
+  // Armor type
+  "armorType": "fortified",  // Takes reduced damage from most sources
+
+  // =============================================================================
+  // ATTACK CAPABILITY
+  // =============================================================================
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 20,  // Strong attack
+    "attackSpeed": 1.2,  // Faster than units
+    "attackRange": 11,  // Long range
+    "attackType": "pierce",
+    "targetAir": true,
+    "targetGround": true,
+
+    // Attack behavior
+    "autoAcquire": true,
+    "autoAcquireRange": 11,
+    "preferredTargets": ["air", "siege"],
+    "targetPriority": [
+      {
+        "type": "siege",
+        "weight": 2.0  // Prioritize siege weapons
+      },
+      {
+        "type": "air",
+        "weight": 1.5
+      },
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+
+    // Attack modifiers
+    "bonusDamage": [
+      {
+        "targetType": "air",
+        "bonus": 10
+      },
+      {
+        "targetType": "unarmored",
+        "bonus": 5
+      }
+    ],
+
+    // Multi-attack
+    "multiAttack": {
+      "enabled": false,
+      "maxTargets": 1,
+      "simultaneousAttacks": 1
+    }
+  },
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  "projectile": {
+    "type": "ballistic",
+    "speed": 30.0,
+    "arc": 0.4,
+    "maxTravelDistance": 13.0,
+
+    "piercing": false,
+    "maxPierceTargets": 0,
+    "canBeBlocked": false,  // Tower shots not blocked
+    "canBeDodged": false,
+    "canMiss": false,  // Towers don't miss
+
+    "visualModel": "models/projectiles/tower_arrow.fbx",
+    "trailEffect": "effects/arrow_trail.fx",
+    "impactEffect": "effects/tower_arrow_impact.fx",
+    "projectileSize": 0.2,
+
+    // Splash (for some tower types)
+    "splash": {
+      "enabled": false,
+      "radius": 0.0,
+      "fullDamageRadius": 0.0,
+      "damagePercent": 0.0
+    }
+  },
+
+  // Attack animation
+  "attackAnimation": {
+    "windupTime": 0.3,
+    "backswingTime": 0.5,
+    "muzzleFlashEffect": "effects/tower_shot_flash.fx",
+    "attackSound": "sounds/buildings/tower/attack.wav"
+  },
+
+  // =============================================================================
+  // GARRISON BEHAVIOR
+  // =============================================================================
+  "garrisonCapacity": 4,  // Can garrison units for extra defense
+  "canGarrison": true,
+  "garrisonTypes": ["infantry", "ranged", "worker"],
+  "garrisonProtection": true,
+  "garrisonedUnitsInvisible": true,
+
+  // Garrison bonuses
+  "garrisonBonus": {
+    "attackPerUnit": 2,  // Each garrisoned unit adds attack
+    "maxBonusUnits": 4,
+    "rangePerUnit": 0,
+    "attackSpeedPerUnit": 0.05,  // 5% attack speed per unit
+
+    // Garrisoned units can fire arrows
+    "garrisonedUnitsAttack": true,
+    "garrisonAttackDamage": 5,
+    "garrisonAttackRange": 10
+  },
+
+  // Garrison healing
+  "garrisonHeal": true,
+  "garrisonHealRate": 2.0,  // HP per second
+
+  // =============================================================================
+  // DETECTION & VISION
+  // =============================================================================
+  "vision": {
+    "sightRange": 14,  // Excellent vision
+    "detectionRange": 12,  // Can detect stealth
+    "heightVisionBonus": true,
+    "nightVisionPenalty": false,  // No penalty at night
+
+    // True sight
+    "trueSight": false,
+    "trueSightRange": 0.0,
+
+    // Share vision
+    "sharesVision": true,
+    "visionPriority": "high"
+  },
+
+  // =============================================================================
+  // RESOURCE GENERATION
+  // =============================================================================
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0,
+    "foodPerSecond": 0,
+    "stonePerSecond": 0,
+    "manaPerSecond": 0,
+    "requiresWorker": false,
+    "workerCapacity": 0
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 150,
+    "wood": 100,
+    "food": 0,
+    "stone": 50,  // Towers use stone
+    "mana": 0
+  },
+
+  "buildTime": 40,
+  "requiredBuilding": "blacksmith",
+  "requiredAge": 1,
+  "requiredTech": "tower_construction",
+
+  // =============================================================================
+  // HOUSING & POPULATION
+  // =============================================================================
+  "providesPopulation": 0,
+  "populationCapacity": 0,
+  "requiresPopulation": 0,
+
+  // =============================================================================
+  // PRODUCTION QUEUE
+  // =============================================================================
+  "productionQueue": [],  // Defense buildings don't produce
+
+  // =============================================================================
+  // BUILDING FEATURES
+  // =============================================================================
+  "isUnique": false,
+  "canRally": false,
+  "canUpgrade": true,
+  "upgradesTo": "guard_tower",
+  "upgradeCost": {
+    "gold": 200,
+    "wood": 100,
+    "stone": 100,
+    "food": 0,
+    "mana": 0
+  },
+  "upgradeTime": 50,
+  "upgradeBenefits": {
+    "health": 1200,
+    "armor": 8,
+    "damage": 30,
+    "attackRange": 13,
+    "attackSpeed": 1.5,
+    "garrisonCapacity": 6
+  },
+
+  // Building flags
+  "isPermanent": true,
+  "isMilitary": true,
+  "isEconomic": false,
+  "isDefensive": true,
+  "requiresPower": false,
+  "providesPower": false,
+
+  // =============================================================================
+  // DEFENSIVE FEATURES
+  // =============================================================================
+  "defense": {
+    // Area denial
+    "controlRadius": 11,  // Area controlled by tower
+    "denialRadius": 9,  // High danger zone
+
+    // Threat level
+    "threatLevel": "medium",
+    "detterentValue": 0.7,  // How much AI avoids
+
+    // Special abilities
+    "abilities": [
+      {
+        "id": "fortified_position",
+        "description": "Takes 50% less damage from pierce attacks",
+        "passive": true
+      }
+    ],
+
+    // Armor penetration
+    "armorPenetration": 0,
+
+    // Regeneration when not in combat
+    "combatRegeneration": {
+      "enabled": false,
+      "outOfCombatTime": 10.0,
+      "regenRate": 0.0
+    }
+  },
+
+  // =============================================================================
+  // DESTRUCTION & REPAIR
+  // =============================================================================
+  "destruction": {
+    "canBeDestroyed": true,
+    "debrisType": "stone",
+    "resourcesOnDestroy": {
+      "gold": 30,
+      "wood": 20,
+      "stone": 10
+    },
+    "leavesRuins": true,
+    "ruinsDuration": 120.0,  // 2 minutes
+    "ruinsModel": "models/buildings/tower_ruins.fbx",
+    "ruinsBlockPathing": true,
+    "ruinsProvidesCover": true,  // Units can hide behind ruins
+
+    // Strategic impact
+    "destroyedPenalty": {
+      "loseDefenseCoverage": true,
+      "ejectGarrison": true,
+      "garrisonTakesDamage": false
+    }
+  },
+
+  "repair": {
+    "canBeRepaired": true,
+    "repairCostMultiplier": 0.6,  // More expensive to repair
+    "repairSpeed": 12.0,
+    "autoRepair": false,
+    "autoRepairThreshold": 0.0,
+    "repairPriority": "high",
+    "canRepairWhileAttacking": false
+  },
+
+  // =============================================================================
+  // AURA & EFFECTS
+  // =============================================================================
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 8.0,
+    "auraType": "defensive",
+    "auraEffects": [
+      {
+        "type": "armor_bonus",
+        "amount": 1,
+        "affectsAllies": true,
+        "affectsBuildings": true
+      }
+    ],
+    "auraVisual": "effects/defensive_aura.fx"
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/buildings/tower.fbx",
+    "icon": "textures/icons/buildings/tower.png",
+    "portrait": "textures/portraits/tower.png",
+
+    // Construction
+    "constructionStages": 4,
+    "constructionModels": [
+      "models/buildings/tower_stage1.fbx",
+      "models/buildings/tower_stage2.fbx",
+      "models/buildings/tower_stage3.fbx",
+      "models/buildings/tower_complete.fbx"
+    ],
+
+    // Damage states
+    "hasDestructionAnimation": true,
+    "destructionStages": 4,
+    "damageThreshold": 0.75,  // More durable, shows damage later
+    "smokeWhenDamaged": true,
+    "fireWhenCritical": true,
+    "criticalHealthPercent": 0.2,
+
+    // Effects
+    "idleEffect": null,
+    "constructionEffect": "effects/construction_stone.fx",
+    "destructionEffect": "effects/tower_collapse.fx",
+    "fireEffect": "effects/building_fire.fx",
+    "smokeEffect": "effects/building_smoke.fx",
+
+    // Attack effects
+    "attackEffect": "effects/tower_shot.fx",
+    "muzzleFlashEffect": "effects/muzzle_flash.fx",
+
+    // Visual features
+    "scale": 1.0,
+    "shadowSize": 2.5,
+    "teamColorParts": ["banners", "roof"],
+    "nightLighting": true,
+    "glowAtNight": true,
+    "glowColor": "#FFAA00",
+
+    // Garrison visuals
+    "garrisonSlots": [
+      {
+        "position": {
+          "x": 0.8,
+          "y": 3.0,
+          "z": 0.0
+        },
+        "rotation": 0
+      },
+      {
+        "position": {
+          "x": -0.8,
+          "y": 3.0,
+          "z": 0.0
+        },
+        "rotation": 180
+      },
+      {
+        "position": {
+          "x": 0.0,
+          "y": 3.0,
+          "z": 0.8
+        },
+        "rotation": 90
+      },
+      {
+        "position": {
+          "x": 0.0,
+          "y": 3.0,
+          "z": -0.8
+        },
+        "rotation": 270
+      }
+    ],
+    "showGarrisonedUnits": true  // Show units at top of tower
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/buildings/tower/select1.wav",
+      "sounds/buildings/tower/select2.wav"
+    ],
+    "construct": "sounds/construction/build_stone_loop.wav",
+    "complete": "sounds/construction/tower_complete.wav",
+    "destroy": "sounds/destruction/tower_collapse.wav",
+    "damaged": "sounds/destruction/stone_break.wav",
+    "repair": "sounds/construction/repair_stone_loop.wav",
+
+    // Attack sounds
+    "attack": [
+      "sounds/buildings/tower/attack1.wav",
+      "sounds/buildings/tower/attack2.wav"
+    ],
+    "projectileLaunch": "sounds/projectiles/arrow_fire.wav",
+    "projectileImpact": "sounds/impacts/arrow_hit.wav",
+
+    // Garrison sounds
+    "garrisonEnter": "sounds/buildings/tower/garrison_in.wav",
+    "garrisonExit": "sounds/buildings/tower/garrison_out.wav",
+
+    // Ambient
+    "ambient": "sounds/ambient/tower_wind.wav",
+    "underAttack": "sounds/ui/tower_under_attack.wav"
+  },
+
+  // =============================================================================
+  // STRATEGIC VALUE
+  // =============================================================================
+  "strategic": {
+    "importance": "high",
+    "targetPriority": 0.8,  // High priority target
+    "defenseValue": 10,  // Extremely valuable for defense
+    "economicValue": 2,
+    "militaryValue": 9,
+
+    // Coverage
+    "coverageArea": 380,  // π * 11² ≈ 380
+    "effectiveDefenseRadius": 9,
+
+    // Loss impact
+    "lossImpact": {
+      "loseDefenseCoverage": true,
+      "vulnerableArea": true,
+      "militaryCapacityReduced": false
+    },
+
+    // Optimal placement
+    "placementStrategy": {
+      "coverChokpoints": true,
+      "protectResources": true,
+      "overlappingCoverage": true,
+      "spacingRecommendation": 8.0  // Space towers 8 units apart
+    }
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "guard_tower" could inherit from this with:
+  // - damage: 30
+  // - attackRange: 13
+  // - health: 1200
+
+  // A "cannon_tower" could inherit with:
+  // - damage: 50
+  // - attackType: "siege"
+  // - splash.enabled: true
+  // - attackSpeed: 0.6 (slower)
+  // - tier: 2
+
+  "variants": {
+    "guard_tower": {
+      "parentArchetype": "defense_building_archetype",
+      "name": "Guard Tower",
+      "health": 1200,
+      "armor": 8,
+      "attackCapability": {
+        "damage": 30,
+        "attackSpeed": 1.5,
+        "attackRange": 13
+      },
+      "garrisonCapacity": 6,
+      "cost": {
+        "gold": 200,
+        "wood": 100,
+        "stone": 100
+      }
+    },
+    "cannon_tower": {
+      "parentArchetype": "defense_building_archetype",
+      "name": "Cannon Tower",
+      "tier": 2,
+      "health": 1500,
+      "armor": 10,
+      "attackCapability": {
+        "damage": 50,
+        "attackSpeed": 0.6,
+        "attackRange": 12,
+        "attackType": "siege"
+      },
+      "projectile": {
+        "type": "ballistic",
+        "splash": {
+          "enabled": true,
+          "radius": 3.0,
+          "fullDamageRadius": 1.0,
+          "damagePercent": 0.5
+        }
+      },
+      "cost": {
+        "gold": 400,
+        "wood": 200,
+        "stone": 200
+      },
+      "requiredAge": 2
+    },
+    "arrow_tower": {
+      "parentArchetype": "defense_building_archetype",
+      "name": "Arrow Tower",
+      "attackCapability": {
+        "damage": 15,
+        "attackSpeed": 2.0,
+        "attackRange": 11,
+        "multiAttack": {
+          "enabled": true,
+          "maxTargets": 3,
+          "simultaneousAttacks": 3
+        }
+      },
+      "bonusDamage": [
+        {
+          "targetType": "air",
+          "bonus": 15
+        }
+      ]
+    }
+  },
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for defensive structures. Essential for base protection and area control.",
+    "tacticalConsideration": "Place at choke points, near resources, and overlapping coverage. Garrison for extra power.",
+    "optimalCount": "4-8 towers for adequate base defense",
+    "strategicRole": "Area denial, base protection, anti-air defense, vision control",
+    "counters": ["air_units", "light_infantry", "raiders"],
+    "counteredBy": ["siege_weapons", "long_range_artillery", "heavy_armor"]
+  }
+}

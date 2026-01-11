@@ -1,0 +1,487 @@
+{
+  "$schema": "../../../schemas/building_archetype.schema.json",
+
+  // =============================================================================
+  // SPAWNER/PRODUCTION BUILDING ARCHETYPE
+  // =============================================================================
+  // This archetype represents a building that produces units and researches tech.
+  // Behavior composition:
+  // - SpawnerBehavior: Unit production queue, rally point
+  // - HousingBehavior: May provide population capacity
+  // - StatsComponent: Health, armor
+  //
+  // Use this as a base template for buildings like:
+  // - Barracks, Archery Range, Stable, Siege Workshop, Mage Tower, etc.
+  // =============================================================================
+
+  "id": "spawner_building_archetype",
+  "name": "Spawner Building Template",
+  "description": "A military production building that trains units and researches technologies. Core of your military infrastructure.",
+
+  "category": "military",
+  "tier": 1,
+
+  // =============================================================================
+  // BUILDING SIZE & PLACEMENT
+  // =============================================================================
+  "size": {
+    "width": 4,
+    "height": 4,
+    "footprintShape": "square"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "canPlaceOnWater": false,
+    "canPlaceOnCliff": false,
+    "requiresFlatTerrain": true,
+    "minDistanceFromOther": 2.0,
+    "minDistanceFromResources": 3.0,
+    "requiresNearby": null,
+    "nearbyRange": 0.0,
+    "blocksPathing": true,
+    "providesVision": true,
+    "strategicPlacement": true  // Should be placed strategically
+  },
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "health": 1000,  // More durable than resource buildings
+  "healthRegen": 0.0,
+  "armor": 4,  // Better armor
+  "magicResist": 0,
+
+  // =============================================================================
+  // SPAWNER BEHAVIOR
+  // =============================================================================
+  "spawner": {
+    // Production queue
+    "queueSize": 5,  // Maximum items in production queue
+    "simultaneousProduction": 1,  // How many units can train at once
+    "queueType": "sequential",  // Options: "sequential", "parallel"
+
+    // Rally point
+    "hasRallyPoint": true,
+    "rallyPointRange": 50.0,
+    "rallyPointVisual": "effects/rally_flag.fx",
+    "canRallyToUnit": true,  // Rally to follow a unit
+    "canRallyToBuilding": true,
+    "canRallyToPoint": true,
+
+    // Spawn location
+    "spawnOffset": {
+      "x": 2.0,
+      "y": 0.0,
+      "z": 2.0
+    },
+    "spawnAnimation": "anim_door_open",
+    "spawnEffect": "effects/unit_spawn.fx",
+    "spawnSound": "sounds/buildings/barracks/unit_ready.wav",
+
+    // Production bonuses
+    "productionSpeedMultiplier": 1.0,
+    "costReductionPercent": 0.0,
+    "experienceBonusPercent": 0.0  // Units spawn with bonus XP
+  },
+
+  // =============================================================================
+  // PRODUCTION QUEUE
+  // =============================================================================
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "militia",
+      "name": "Militia",
+      "requiredAge": 0,
+      "requiredTech": null,
+      "hotkey": "M"
+    },
+    {
+      "type": "unit",
+      "id": "infantry",
+      "name": "Infantry",
+      "requiredAge": 0,
+      "requiredTech": null,
+      "hotkey": "I"
+    },
+    {
+      "type": "unit",
+      "id": "heavy_infantry",
+      "name": "Heavy Infantry",
+      "requiredAge": 1,
+      "requiredTech": "heavy_armor",
+      "hotkey": "H"
+    },
+    {
+      "type": "tech",
+      "id": "infantry_attack_1",
+      "name": "Infantry Attack I",
+      "description": "+1 attack for infantry units",
+      "requiredAge": 0,
+      "requiredTech": null,
+      "hotkey": "A"
+    },
+    {
+      "type": "tech",
+      "id": "infantry_armor_1",
+      "name": "Infantry Armor I",
+      "description": "+1 armor for infantry units",
+      "requiredAge": 0,
+      "requiredTech": null,
+      "hotkey": "D"
+    }
+  ],
+
+  // =============================================================================
+  // TECHNOLOGY RESEARCH
+  // =============================================================================
+  "research": {
+    "canResearch": true,
+    "researchSlots": 1,  // How many techs can research simultaneously
+    "researchSpeedMultiplier": 1.0,
+    "researchCostMultiplier": 1.0,
+
+    // Available technologies
+    "availableTech": [
+      "infantry_attack_1",
+      "infantry_attack_2",
+      "infantry_attack_3",
+      "infantry_armor_1",
+      "infantry_armor_2",
+      "infantry_armor_3",
+      "formation_training",
+      "veteran_training"
+    ]
+  },
+
+  // =============================================================================
+  // RESOURCE GENERATION
+  // =============================================================================
+  // Production buildings don't generate resources
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0,
+    "foodPerSecond": 0,
+    "stonePerSecond": 0,
+    "manaPerSecond": 0,
+    "requiresWorker": false,
+    "workerCapacity": 0
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 200,
+    "wood": 150,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "buildTime": 50,
+  "requiredBuilding": "town_hall",
+  "requiredAge": 0,
+  "requiredTech": null,
+
+  // =============================================================================
+  // HOUSING & POPULATION
+  // =============================================================================
+  "providesPopulation": 5,  // Military buildings may provide some housing
+  "populationCapacity": 5,
+  "requiresPopulation": 0,
+
+  // =============================================================================
+  // GARRISON & DEFENSE
+  // =============================================================================
+  "garrisonCapacity": 0,  // Production buildings usually don't garrison
+  "canGarrison": false,
+
+  "attackCapability": {
+    "canAttack": false,
+    "damage": 0,
+    "attackSpeed": 0,
+    "attackRange": 0,
+    "attackType": "normal",
+    "targetAir": false,
+    "targetGround": false
+  },
+
+  // =============================================================================
+  // BUILDING FEATURES
+  // =============================================================================
+  "isUnique": false,
+  "canRally": true,
+  "canUpgrade": true,
+  "upgradesTo": "advanced_barracks",
+  "upgradeCost": {
+    "gold": 300,
+    "wood": 200,
+    "stone": 100,
+    "food": 0,
+    "mana": 0
+  },
+  "upgradeTime": 60,
+  "upgradeBenefits": {
+    "unlocksUnits": ["elite_infantry", "champion"],
+    "unlocksResearch": ["elite_training"],
+    "productionSpeedBonus": 0.25,  // 25% faster production
+    "health": 1500,
+    "armor": 6
+  },
+
+  // Building flags
+  "isPermanent": true,
+  "isMilitary": true,
+  "isEconomic": false,
+  "requiresPower": false,
+  "providesPower": false,
+
+  // =============================================================================
+  // PRODUCTION EFFICIENCY
+  // =============================================================================
+  "efficiency": {
+    // Auto-queue system
+    "autoQueue": {
+      "enabled": false,
+      "autoQueueUnits": [],
+      "maintainQueue": false,
+      "queueLimit": 5
+    },
+
+    // Batch training
+    "batchTraining": {
+      "enabled": false,
+      "maxBatchSize": 5,
+      "batchDiscount": 0.1  // 10% discount for batch
+    },
+
+    // Production modifiers
+    "modifiers": {
+      "nearTownCenter": {
+        "enabled": true,
+        "range": 15.0,
+        "productionBonus": 0.1  // 10% faster near town
+      },
+      "multipleBarracks": {
+        "enabled": false,
+        "stackingBonus": 0.05  // 5% per additional barracks
+      }
+    }
+  },
+
+  // =============================================================================
+  // AURA & EFFECTS
+  // =============================================================================
+  "aura": {
+    "hasAura": false,
+    "auraRadius": 0.0,
+    "auraType": null,
+    "auraEffects": []
+  },
+
+  // Some advanced versions might have auras
+  "advancedFeatures": {
+    "veterancyAura": {
+      "enabled": false,
+      "radius": 10.0,
+      "effect": "Units trained start with +1 level"
+    },
+    "inspirationAura": {
+      "enabled": false,
+      "radius": 15.0,
+      "effect": "Nearby units gain +10% attack speed"
+    }
+  },
+
+  // =============================================================================
+  // DESTRUCTION & REPAIR
+  // =============================================================================
+  "destruction": {
+    "canBeDestroyed": true,
+    "debrisType": "wood_stone",
+    "resourcesOnDestroy": {
+      "gold": 40,
+      "wood": 30,
+      "stone": 0
+    },
+    "leavesRuins": true,
+    "ruinsDuration": 60.0,  // Ruins stay for 1 minute
+    "ruinsModel": "models/buildings/barracks_ruins.fbx",
+
+    // Strategic impact
+    "destroyedPenalty": {
+      "cantTrainUnits": true,
+      "loseQueuedUnits": false,  // Queued units return resources
+      "refundPercent": 0.75  // 75% refund
+    }
+  },
+
+  "repair": {
+    "canBeRepaired": true,
+    "repairCostMultiplier": 0.5,
+    "repairSpeed": 15.0,
+    "autoRepair": false,
+    "autoRepairThreshold": 0.0,
+    "repairPriority": "high"  // Should be repaired quickly
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/buildings/barracks.fbx",
+    "icon": "textures/icons/buildings/barracks.png",
+    "portrait": "textures/portraits/barracks.png",
+
+    // Construction
+    "constructionStages": 5,
+    "constructionModels": [
+      "models/buildings/barracks_stage1.fbx",
+      "models/buildings/barracks_stage2.fbx",
+      "models/buildings/barracks_stage3.fbx",
+      "models/buildings/barracks_stage4.fbx",
+      "models/buildings/barracks_complete.fbx"
+    ],
+
+    // Damage states
+    "hasDestructionAnimation": true,
+    "destructionStages": 3,
+    "damageThreshold": 0.6,
+    "smokeWhenDamaged": true,
+    "fireWhenCritical": true,
+    "criticalHealthPercent": 0.25,
+
+    // Effects
+    "idleEffect": null,
+    "constructionEffect": "effects/construction.fx",
+    "destructionEffect": "effects/building_collapse_large.fx",
+    "fireEffect": "effects/building_fire.fx",
+    "smokeEffect": "effects/building_smoke.fx",
+    "productionEffect": "effects/forge_glow.fx",  // Visual during production
+
+    // Visual features
+    "scale": 1.0,
+    "shadowSize": 4.0,
+    "teamColorParts": ["banners", "roof_trim"],
+    "nightLighting": true,
+    "glowAtNight": true,
+    "glowColor": "#FF8800",
+
+    // Rally point visual
+    "rallyPointFlag": "models/props/rally_flag.fbx",
+    "rallyPointEffect": "effects/rally_point.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/buildings/barracks/select1.wav",
+      "sounds/buildings/barracks/select2.wav"
+    ],
+    "construct": "sounds/construction/build_loop.wav",
+    "complete": "sounds/construction/barracks_complete.wav",
+    "destroy": "sounds/destruction/building_collapse.wav",
+    "damaged": "sounds/destruction/stone_crack.wav",
+    "repair": "sounds/construction/repair_loop.wav",
+
+    // Production sounds
+    "trainStart": "sounds/buildings/barracks/train_start.wav",
+    "trainComplete": "sounds/buildings/barracks/unit_ready.wav",
+    "researchStart": "sounds/buildings/research_start.wav",
+    "researchComplete": "sounds/buildings/research_complete.wav",
+    "queueFull": "sounds/ui/queue_full.wav",
+
+    // Ambient
+    "ambient": "sounds/ambient/barracks_ambient.wav",  // Hammering, training sounds
+    "rallyPointSet": "sounds/ui/rally_set.wav"
+  },
+
+  // =============================================================================
+  // STRATEGIC VALUE
+  // =============================================================================
+  "strategic": {
+    "importance": "high",
+    "targetPriority": 0.7,  // AI target priority
+    "defenseValue": 8,  // Worth defending
+    "economicValue": 0,
+    "militaryValue": 10,
+
+    // Loss impact
+    "lossImpact": {
+      "cantProduceUnits": true,
+      "militaryCapacityReduced": true,
+      "populationLost": 5
+    }
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // An "archery_range" could inherit from this with:
+  // - productionQueue: archer units
+  // - availableTech: ranged upgrades
+  // - cost slightly different
+
+  // A "mage_tower" could inherit with:
+  // - productionQueue: spellcaster units
+  // - requiredAge: 1
+  // - cost.mana: 100
+
+  "variants": {
+    "advanced_barracks": {
+      "parentArchetype": "spawner_building_archetype",
+      "name": "Advanced Barracks",
+      "health": 1500,
+      "armor": 6,
+      "productionQueue": [
+        "militia",
+        "infantry",
+        "heavy_infantry",
+        "elite_infantry",
+        "champion"
+      ],
+      "spawner": {
+        "simultaneousProduction": 2,
+        "productionSpeedMultiplier": 1.25
+      },
+      "providesPopulation": 8
+    },
+    "siege_workshop": {
+      "parentArchetype": "spawner_building_archetype",
+      "name": "Siege Workshop",
+      "category": "siege",
+      "tier": 2,
+      "productionQueue": [
+        "ram",
+        "catapult",
+        "trebuchet",
+        "ballista"
+      ],
+      "spawner": {
+        "queueSize": 3,
+        "simultaneousProduction": 1
+      },
+      "size": {
+        "width": 5,
+        "height": 5
+      },
+      "cost": {
+        "gold": 300,
+        "wood": 200,
+        "stone": 100
+      },
+      "requiredAge": 1
+    }
+  },
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for unit production buildings. Core of military infrastructure.",
+    "tacticalConsideration": "Place near resources and town center. Protect from raids. Set rally points strategically.",
+    "optimalCount": "2-3 per unit type for rapid army production",
+    "strategicRole": "Military production, technology research, population capacity"
+  }
+}

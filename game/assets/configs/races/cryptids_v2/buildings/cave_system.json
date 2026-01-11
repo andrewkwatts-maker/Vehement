@@ -1,0 +1,125 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "defensive_structure",
+  "id": "cryptid_cave_system",
+  "name": "Cave System",
+  "description": "Network of underground tunnels and caves. Provides strong defense and can hide units underground. Attacks enemies with rock throws.",
+  "race": "cryptids",
+  "category": "defense",
+  "tier": 2,
+
+  "size": {
+    "width": 2,
+    "height": 2
+  },
+
+  "health": 1500,
+  "armor": 8,
+
+  "cost": {
+    "gold": 150,
+    "stone": 200
+  },
+
+  "buildTime": 30,
+  "requiredBuilding": "cryptid_den",
+  "requiredAge": 1,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [],
+
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0,
+    "foodPerSecond": 0,
+    "stonePerSecond": 0.1,
+    "manaPerSecond": 0,
+    "requiresWorker": false,
+    "workerCapacity": 0
+  },
+
+  "garrisonCapacity": 10,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 35,
+    "attackSpeed": 2.5,
+    "attackRange": 11.0,
+    "attackType": "siege",
+    "targetAir": false,
+    "targetGround": true,
+    "bonusVs": [
+      {
+        "category": "infantry",
+        "multiplier": 1.3
+      }
+    ]
+  },
+
+  "isUnique": false,
+  "maxCount": 15,
+  "canRally": false,
+  "canUpgrade": true,
+
+  "upgradeTo": ["cryptid_cave_system_tier2"],
+
+  "passiveAbilities": [
+    {
+      "id": "underground_network",
+      "name": "Underground Network",
+      "description": "Garrisoned units can emerge from any Cave System on the map",
+      "allowsUnitTransfer": true,
+      "transferToSameType": true
+    },
+    {
+      "id": "stone_fortification",
+      "name": "Stone Fortification",
+      "description": "Takes 40% reduced damage from ranged attacks",
+      "effects": [
+        {
+          "stat": "rangedDamageReduction",
+          "value": 0.40
+        }
+      ]
+    },
+    {
+      "id": "tremor_sense",
+      "name": "Tremor Sense",
+      "description": "Detects all ground units within 15 units, including stealthed units",
+      "detectionRadius": 15.0,
+      "detectsStealth": true,
+      "detectsUnderground": true
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "rock_barrage",
+      "name": "Rock Barrage",
+      "description": "Hurls multiple boulders in an area, dealing heavy damage",
+      "type": "active",
+      "cooldown": 45.0,
+      "range": 12.0,
+      "radius": 4.0,
+      "projectileCount": 8,
+      "damagePerProjectile": 60,
+      "manaCost": 0
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/cryptids/buildings/cave_system.obj",
+    "icon": "textures/races/cryptids/icons/buildings/cave_system.png",
+    "textures": {
+      "diffuse": "textures/races/cryptids/buildings/cave_system_diffuse.png",
+      "normal": "textures/races/cryptids/buildings/cave_system_normal.png"
+    },
+    "constructionStages": 2,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": true,
+    "damageThreshold": 0.3
+  },
+
+  "visionRange": 13.0
+}

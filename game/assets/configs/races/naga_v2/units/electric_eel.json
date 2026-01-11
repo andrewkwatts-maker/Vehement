@@ -1,0 +1,226 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "ranged_unit_archetype",
+  "id": "naga_electric_eel",
+  "name": "Electric Eel",
+  "description": "Bio-electric sea creature that channels lightning through water. Chains electricity between enemies.",
+
+  "category": "special",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 110,
+    "healthRegen": 0.6,
+    "mana": 150,
+    "manaRegen": 1.5,
+    "damage": 18,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.3,
+    "attackRange": 7,
+    "spellPower": 20,
+    "armor": 0,
+    "magicResist": 5,  // High magic resist
+    "moveSpeed": 6.5,  // Fast and agile
+    "turnSpeed": 450,
+    "sightRange": 11,
+    "critChance": 0.1,
+    "critMultiplier": 1.8
+  },
+
+  "combat": {
+    "attackType": "magic",
+    "armorType": "light",
+
+    "attackAnimation": {
+      "windupTime": 0.2,
+      "backswingTime": 0.4,
+      "totalDuration": 0.77
+    },
+
+    "bonusVs": [
+      {
+        "category": "mechanical",
+        "multiplier": 2.0
+      },
+      {
+        "category": "heavy",
+        "multiplier": 1.3
+      }
+    ],
+
+    "chainLightning": {
+      "enabled": true,
+      "maxChains": 3,
+      "chainRange": 4.0,
+      "damageReduction": 0.25,  // 25% less damage per chain
+      "canChainToSameTarget": false
+    }
+  },
+
+  "projectile": {
+    "type": "linear",
+    "speed": 35.0,  // Lightning fast
+    "arc": 0.0,
+    "maxTravelDistance": 9.0,
+
+    "piercing": true,
+    "maxPierceTargets": 2,
+    "canBeBlocked": false,
+    "canBeDodged": false,
+
+    "visualModel": "effects/lightning_bolt.fx",
+    "trailEffect": "effects/electric_trail.fx",
+    "impactEffect": "effects/lightning_impact.fx",
+    "chainEffect": "effects/chain_lightning.fx"
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 0.35,
+    "pushPriority": 4,
+    "pathfindingType": "amphibious",
+    "unitSize": "small",
+
+    "waterMovementMultiplier": 2.0,  // Extremely fast in water
+    "landMovementMultiplier": 0.7
+  },
+
+  "cost": {
+    "gold": 140,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 60
+  },
+
+  "trainTime": 38,
+  "populationCost": 2,
+  "requiredBuilding": "deep_trench",
+  "requiredAge": 1,
+  "requiredTech": "electric_cultivation",
+
+  "abilities": [
+    {
+      "id": "lightning_discharge",
+      "name": "Lightning Discharge",
+      "description": "Releases stored electricity, dealing damage to all nearby enemies",
+      "manaCost": 50,
+      "cooldown": 20,
+      "damage": 80,
+      "aoeRadius": 5
+    },
+    {
+      "id": "overcharge",
+      "name": "Overcharge",
+      "description": "Charges up, increasing attack speed by 50% and adding chain targets for 8 seconds",
+      "manaCost": 40,
+      "cooldown": 30,
+      "duration": 8,
+      "bonusChains": 2
+    },
+    {
+      "id": "conductive_field",
+      "name": "Conductive Field",
+      "description": "Passive: Nearby allies deal bonus lightning damage. In water, chains spread further.",
+      "passive": true,
+      "auraRadius": 8,
+      "bonusDamage": 5
+    }
+  ],
+
+  "upgrades": [
+    "electric_mastery",
+    "chain_enhancement",
+    "storm_caller"
+  ],
+
+  "formation": {
+    "preferredPosition": "middle",
+    "formationSpacing": 1.5
+  },
+
+  "ai": {
+    "aggroRange": 14,
+    "targetPriority": [
+      {
+        "type": "grouped",
+        "weight": 2.5  // Prioritize groups for chain lightning
+      },
+      {
+        "type": "mechanical",
+        "weight": 2.0
+      },
+      {
+        "type": "heavy",
+        "weight": 1.5
+      }
+    ]
+  },
+
+  "visuals": {
+    "model": "models/units/naga/electric_eel.fbx",
+    "portrait": "textures/portraits/naga/electric_eel.png",
+    "icon": "textures/icons/units/naga/electric_eel.png",
+    "scale": 1.1,
+
+    "animations": {
+      "idle": "anim_idle_coil",
+      "walk": "anim_serpentine_swim",
+      "attack": "anim_discharge",
+      "death": "anim_death",
+      "special": "anim_overcharge"
+    },
+
+    "teamColorParts": ["bioelectric_organs"],
+    "glowAtNight": true,
+    "glowColor": "#00FFFF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 1.0,
+      "pulseSpeed": 4.0,  // Rapid pulse
+      "patterns": ["electric_lines", "charge_glow"],
+      "color": "cyan-white"
+    },
+    "electricArc": "effects/passive_electric_arc.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/eel/select1.wav"],
+    "move": ["sounds/units/naga/eel/move1.wav"],
+    "attack": ["sounds/units/naga/eel/zap1.wav", "sounds/units/naga/eel/zap2.wav"],
+    "death": ["sounds/units/naga/eel/death1.wav"],
+    "ambient": "sounds/ambient/electric_crackle.wav"
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "bioelectric": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "moveSpeed": 2.0,
+        "chainRange": 1.5,
+        "chainTargets": 2,
+        "spellPower": 1.3,
+        "attackSpeed": 1.2
+      },
+      "onLand": {
+        "moveSpeed": 0.7,
+        "chainTargets": -1
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Lightning specialist. Chain attacks devastate groups. Fast, fragile, high DPS.",
+    "tacticalUse": "Fight in water for maximum chains. Target grouped enemies. Use vs heavy armor and mechanical.",
+    "counters": ["grouped_enemies", "heavy_armor", "mechanical"],
+    "counteredBy": ["spread_formation", "magic_resist", "assassins"]
+  }
+}

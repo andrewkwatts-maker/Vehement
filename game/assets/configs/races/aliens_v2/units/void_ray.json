@@ -1,0 +1,144 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "alien_void_ray",
+  "name": "Void Ray",
+  "description": "Powerful capital ships that channel prismatic beams. Their damage increases the longer they focus on a single target, making them devastating against large units and structures.",
+  "race": "aliens",
+  "category": "air",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 150,
+    "healthRegen": 0,
+    "shield": 100,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+
+    "damage": 6,
+    "damageVariance": 0,
+    "attackSpeed": 0.36,
+    "attackRange": 6,
+
+    "armor": 0,
+    "shieldArmor": 0,
+    "magicResist": 0,
+
+    "moveSpeed": 3.85,
+    "turnSpeed": 999,
+    "acceleration": 999,
+
+    "sightRange": 10,
+    "detectionRange": 0,
+
+    "critChance": 0.0,
+    "critMultiplier": 1.0
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "armored",
+    "bonusVs": [
+      {
+        "category": "armored",
+        "multiplier": 1.0,
+        "flatBonus": 4
+      }
+    ]
+  },
+
+  "projectile": {
+    "type": "instant",
+    "visualModel": "models/projectiles/prismatic_beam.fbx",
+    "trailEffect": "effects/prismatic_beam.fx",
+    "impactEffect": "effects/prismatic_impact.fx"
+  },
+
+  "movement": {
+    "movementType": "flying",
+    "flyingHeight": 4.0,
+    "canAttackWhileMoving": false
+  },
+
+  "cost": {
+    "minerals": 250,
+    "vespene": 150,
+    "supply": 4
+  },
+
+  "trainTime": 60,
+  "populationCost": 4,
+  "requiredBuilding": "alien_stargate",
+
+  "abilities": [
+    {
+      "id": "prismatic_alignment",
+      "name": "Prismatic Alignment",
+      "description": "Toggled: Gain +6 damage to armored targets but cannot attack non-armored targets",
+      "type": "toggle",
+      "hotkey": "P",
+      "effects": [
+        {
+          "stat": "bonusDamageVsArmored",
+          "value": 6
+        },
+        {
+          "restriction": "canOnlyAttackArmored"
+        }
+      ]
+    },
+    {
+      "id": "flux_vanes",
+      "name": "Flux Vanes",
+      "description": "Passive: Increases movement speed by 1.31",
+      "type": "passive",
+      "requiredTech": "flux_vanes_upgrade",
+      "unlockedByDefault": false,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "value": 1.31
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_air_weapons_1",
+    "alien_air_weapons_2",
+    "alien_air_weapons_3",
+    "alien_air_armor_1",
+    "alien_air_armor_2",
+    "alien_air_armor_3",
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "flux_vanes_upgrade"
+  ],
+
+  "canAttackGround": true,
+  "canAttackAir": true,
+
+  "attributes": {
+    "isBiological": false,
+    "isPsionic": false,
+    "isLight": false,
+    "isArmored": true,
+    "isMassive": false,
+    "isMechanical": true,
+    "cargoSize": 4,
+    "canBeWarped": false
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/void_ray.fbx",
+    "scale": 1.5,
+    "shieldEffect": "effects/shield_shimmer.fx"
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.75,
+    "mass": 150.0
+  }
+}

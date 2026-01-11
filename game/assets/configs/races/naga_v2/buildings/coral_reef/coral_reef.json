@@ -1,0 +1,404 @@
+{
+  "$schema": "../../../../../schemas/building_archetype.schema.json",
+
+  // =============================================================================
+  // CORAL REEF - Naga Main Hall / Resource Building
+  // =============================================================================
+  // Inherits from: resource_building_archetype + spawner_building_archetype
+  // The living heart of Naga settlements. Generates resources and trains workers.
+  // =============================================================================
+
+  "parentArchetype": "resource_building_archetype",
+  "id": "naga_coral_reef",
+  "name": "Coral Reef",
+  "description": "Living coral structure that serves as the heart of Naga civilization. Generates pearls and spawns Tidecallers.",
+
+  "category": "main_hall",
+  "tier": 1,
+
+  // =============================================================================
+  // BUILDING SIZE & PLACEMENT
+  // =============================================================================
+  "size": {
+    "width": 5,
+    "height": 5,
+    "footprintShape": "circle"  // Organic reef shape
+  },
+
+  "placement": {
+    "requiresLand": false,
+    "canPlaceOnWater": true,
+    "canPlaceOnLand": true,  // Can build on coast
+    "requiresShallowWater": true,  // Prefers shallow water
+    "canPlaceOnCliff": false,
+    "requiresFlatTerrain": false,  // Adapts to terrain
+    "minDistanceFromOther": 15.0,  // Main halls need spacing
+    "minDistanceFromResources": 0.0,
+    "requiresNearby": null,
+    "nearbyRange": 0.0,
+    "blocksPathing": true,
+    "providesVision": true,
+    "waterProximityRequired": true,
+    "waterProximityRange": 5.0
+  },
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "health": 1500,
+  "healthRegen": 2.0,  // Coral regenerates!
+  "armor": 5,
+  "magicResist": 2,
+
+  // =============================================================================
+  // RESOURCE GENERATION BEHAVIOR
+  // =============================================================================
+  "resourceGeneration": {
+    "resourceType": "multiple",
+    "generationType": "passive",
+
+    "passiveGeneration": {
+      "goldPerSecond": 0.5,  // Pearl production
+      "woodPerSecond": 0.0,
+      "foodPerSecond": 1.2,  // Fish and kelp
+      "stonePerSecond": 0.2,  // Coral stone
+      "manaPerSecond": 0.8,  // Magical waters
+
+      "maxStoredGold": 500,
+      "maxStoredFood": 800,
+      "maxStoredStone": 300,
+      "maxStoredMana": 400,
+
+      "autoCollect": true,
+      "requiresCollection": false
+    },
+
+    "workerGeneration": {
+      "requiresWorker": false,
+      "workerCapacity": 5,
+      "generationPerWorker": {
+        "goldPerSecond": 0.2,
+        "foodPerSecond": 0.3
+      }
+    },
+
+    "upkeep": {
+      "enabled": false
+    },
+
+    "bonusInWater": {
+      "enabled": true,
+      "generationMultiplier": 1.5,
+      "regenMultiplier": 2.0
+    }
+  },
+
+  // =============================================================================
+  // SPAWNER BEHAVIOR
+  // =============================================================================
+  "spawner": {
+    "queueSize": 5,
+    "simultaneousProduction": 1,
+    "queueType": "sequential",
+
+    "hasRallyPoint": true,
+    "rallyPointRange": 50.0,
+    "rallyPointVisual": "effects/naga_rally_bubble.fx",
+
+    "spawnOffset": {
+      "x": 3.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "spawnAnimation": "anim_coral_open",
+    "spawnEffect": "effects/tidecaller_emerge.fx",
+    "spawnSound": "sounds/buildings/naga/coral_reef/spawn.wav",
+
+    "productionSpeedMultiplier": 1.0,
+    "productionSpeedInWater": 1.25  // 25% faster in water
+  },
+
+  // =============================================================================
+  // PRODUCTION QUEUE
+  // =============================================================================
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "naga_tidecaller",
+      "name": "Tidecaller",
+      "requiredAge": 0,
+      "hotkey": "T"
+    },
+    {
+      "type": "tech",
+      "id": "tidal_gathering",
+      "name": "Tidal Gathering",
+      "description": "Tidecallers gather resources 15% faster",
+      "requiredAge": 0,
+      "cost": {
+        "gold": 100,
+        "mana": 50
+      },
+      "researchTime": 30,
+      "hotkey": "G"
+    },
+    {
+      "type": "tech",
+      "id": "coral_growth",
+      "name": "Coral Growth",
+      "description": "Coral Reef generates resources 25% faster",
+      "requiredAge": 1,
+      "cost": {
+        "gold": 150,
+        "stone": 50,
+        "mana": 75
+      },
+      "researchTime": 45,
+      "hotkey": "C"
+    }
+  ],
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 0,  // Starting building
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "buildTime": 0,
+  "requiredBuilding": null,
+  "requiredAge": 0,
+
+  // =============================================================================
+  // HOUSING & POPULATION
+  // =============================================================================
+  "providesPopulation": 10,
+  "populationCapacity": 10,
+
+  // =============================================================================
+  // GARRISON & DEFENSE
+  // =============================================================================
+  "garrisonCapacity": 10,
+  "canGarrison": true,
+  "garrisonTypes": ["worker", "melee", "ranged"],
+  "garrisonHeal": true,
+  "garrisonHealRate": 5.0,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 15,
+    "attackSpeed": 1.0,
+    "attackRange": 9,
+    "attackType": "pierce",
+    "targetAir": true,
+    "targetGround": true,
+    "attacksWhenGarrisoned": true,
+    "attacksPerGarrison": 5  // Each garrisoned unit adds an attack
+  },
+
+  // =============================================================================
+  // BUILDING FEATURES
+  // =============================================================================
+  "isUnique": true,  // Only one main hall at start
+  "canRally": true,
+  "canUpgrade": true,
+  "upgradesTo": "naga_greater_reef",
+  "upgradeCost": {
+    "gold": 400,
+    "wood": 0,
+    "stone": 200,
+    "food": 0,
+    "mana": 200
+  },
+  "upgradeTime": 90,
+
+  "isPermanent": true,
+  "isMilitary": false,
+  "isEconomic": true,
+  "requiresPower": false,
+  "providesPower": true,
+  "powerRadius": 25.0,
+
+  // =============================================================================
+  // AURA & EFFECTS
+  // =============================================================================
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 15.0,
+    "auraType": "regeneration",
+    "auraEffects": [
+      {
+        "type": "health_regen",
+        "value": 1.0,
+        "affectsNagaOnly": true
+      },
+      {
+        "type": "mana_regen",
+        "value": 0.5,
+        "affectsNagaOnly": true
+      }
+    ],
+    "auraVisual": "effects/coral_aura.fx"
+  },
+
+  // =============================================================================
+  // DESTRUCTION & REPAIR
+  // =============================================================================
+  "destruction": {
+    "canBeDestroyed": true,
+    "debrisType": "coral_stone",
+    "resourcesOnDestroy": {
+      "gold": 100,
+      "stone": 50
+    },
+    "leavesRuins": true,
+    "ruinsDuration": 120.0,
+    "ruinsModel": "models/buildings/naga/coral_reef_ruins.fbx"
+  },
+
+  "repair": {
+    "canBeRepaired": true,
+    "repairCostMultiplier": 0.4,  // Coral regenerates easily
+    "repairSpeed": 20.0,
+    "autoRepair": true,  // Living coral auto-repairs!
+    "autoRepairThreshold": 0.75,  // Starts at 75% HP
+    "autoRepairRate": 3.0,  // 3 HP/sec
+    "repairPriority": "critical"
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/buildings/naga/coral_reef.fbx",
+    "icon": "textures/icons/buildings/naga/coral_reef.png",
+    "portrait": "textures/portraits/naga/coral_reef.png",
+
+    "constructionStages": 5,
+    "constructionType": "growth",  // Grows organically
+
+    "hasDestructionAnimation": true,
+    "destructionStages": 3,
+    "damageThreshold": 0.5,
+    "smokeWhenDamaged": false,  // Coral bleaching instead
+    "bleachingWhenDamaged": true,
+    "fireWhenCritical": false,
+    "criticalHealthPercent": 0.25,
+
+    "idleEffect": "effects/coral_bubbles.fx",
+    "constructionEffect": "effects/coral_growth.fx",
+    "destructionEffect": "effects/coral_shatter.fx",
+    "damageEffect": "effects/coral_bleach.fx",
+
+    "scale": 1.0,
+    "shadowSize": 5.0,
+    "teamColorParts": ["coral_tips", "pearls"],
+    "nightLighting": true,
+    "glowAtNight": true,
+    "glowColor": "#00FFCC",
+
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.8,
+      "pulseSpeed": 0.5,
+      "patterns": ["coral_branches", "pearl_lights"]
+    },
+
+    "rallyPointFlag": "models/props/naga_current_marker.fbx",
+    "rallyPointEffect": "effects/water_current.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/buildings/naga/coral_reef/select1.wav",
+      "sounds/buildings/naga/coral_reef/select2.wav"
+    ],
+    "construct": "sounds/construction/coral_grow.wav",
+    "complete": "sounds/construction/coral_bloom.wav",
+    "destroy": "sounds/destruction/coral_shatter.wav",
+    "damaged": "sounds/destruction/coral_crack.wav",
+    "repair": "sounds/construction/coral_heal.wav",
+
+    "trainStart": "sounds/buildings/naga/coral_reef/spawn_start.wav",
+    "trainComplete": "sounds/buildings/naga/coral_reef/spawn_complete.wav",
+    "researchStart": "sounds/buildings/research_start.wav",
+    "researchComplete": "sounds/buildings/research_complete.wav",
+
+    "ambient": "sounds/ambient/underwater_ambient.wav",
+    "rallyPointSet": "sounds/ui/water_rally.wav"
+  },
+
+  // =============================================================================
+  // MODULAR BUILDING COMPONENTS
+  // =============================================================================
+  "modularBuilding": {
+    "enabled": true,
+    "maxComponents": 8,
+    "componentCategories": ["structure", "decoration", "defense"],
+    "allowedComponents": [
+      "coral_tower_component",
+      "pearl_garden_component",
+      "kelp_wall_component",
+      "anemone_defense_component",
+      "tide_pool_component"
+    ]
+  },
+
+  // =============================================================================
+  // STRATEGIC VALUE
+  // =============================================================================
+  "strategic": {
+    "importance": "critical",
+    "targetPriority": 1.0,
+    "defenseValue": 10,
+    "economicValue": 10,
+    "militaryValue": 5,
+
+    "lossImpact": {
+      "cantProduceUnits": true,
+      "resourceGenerationLost": true,
+      "populationLost": 10,
+      "defeatedIfAllDestroyed": true
+    }
+  },
+
+  // =============================================================================
+  // NAGA RACIAL TRAITS
+  // =============================================================================
+  "racialTraits": {
+    "race": "naga",
+    "living": true,
+    "waterDependent": false,  // Can survive on land but thrives in water
+    "coralConstruction": true,
+    "bioluminescent": true,
+
+    "environmentalBonuses": {
+      "inWater": {
+        "healthRegen": 2.0,
+        "resourceGeneration": 1.5,
+        "productionSpeed": 1.25,
+        "auraRadius": 1.2
+      },
+      "inDeepWater": {
+        "healthRegen": 3.0,
+        "armor": 2
+      },
+      "onLand": {
+        "healthRegen": 0.5,
+        "resourceGeneration": 0.8
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "version": "1.0",
+    "notes": "Naga main hall. Generates multiple resources. Living building that regenerates. Best in water.",
+    "tacticalConsideration": "Place in shallow water for bonuses. Garrison for defense. Aura helps nearby units.",
+    "strategicRole": "Economic heart, worker production, resource generation, population capacity"
+  }
+}

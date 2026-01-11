@@ -3,6 +3,7 @@
 #include <glad/gl.h>
 #include <cmath>
 #include <algorithm>
+#include <glm/gtc/constants.hpp>
 
 namespace Nova {
 

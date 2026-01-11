@@ -1,0 +1,127 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "ranged_unit_archetype",
+  "id": "fairy_centaur",
+  "name": "Centaur Archer",
+  "description": "Swift horse-like archers of the enchanted forest. Centaurs combine mobility with deadly archery and can trample enemies while moving.",
+  "race": "fairies",
+  "category": "ranged",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 200,
+    "healthRegen": 0.7,
+    "mana": 80,
+    "manaRegen": 0.8,
+    "damage": 20,
+    "damageVariance": 0.22,
+    "attackSpeed": 1.2,
+    "attackRange": 10,
+    "armor": 2,
+    "magicResist": 10,
+    "moveSpeed": 6.5,
+    "sightRange": 13,
+    "critChance": 0.2,
+    "critMultiplier": 2.0
+  },
+
+  "cost": {
+    "gold": 180,
+    "wood": 50,
+    "mana": 20,
+    "food": 3
+  },
+
+  "trainTime": 35,
+  "populationCost": 3,
+  "requiredBuilding": "fairy_grove",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "pierce",
+  "movementType": "ground",
+
+  "projectile": {
+    "id": "centaur_arrow",
+    "type": "ballistic",
+    "speed": 30.0,
+    "arc": 0.25,
+    "model": "models/projectiles/leaf_arrow.obj",
+    "trailEffect": "effects/nature_trail.fx",
+    "impactEffect": "effects/arrow_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "trample",
+      "name": "Trample",
+      "description": "Charge forward, dealing 30 damage to units in path and knocking them aside",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 20.0,
+      "manaCost": 40,
+      "chargeDistance": 8.0,
+      "damage": 30,
+      "knockbackDistance": 2.0
+    },
+    {
+      "id": "aimed_shot",
+      "name": "Aimed Shot",
+      "description": "Fire a powerful arrow dealing 2x damage and stunning target for 1 second",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 15.0,
+      "manaCost": 35,
+      "range": 12.0,
+      "damageMultiplier": 2.0,
+      "stunDuration": 1.0,
+      "castTime": 1.5
+    }
+  ],
+
+  "canAttackWhileMoving": true,
+  "movementAttackPenalty": 0.15,
+
+  "visuals": {
+    "model": "models/races/fairies/units/centaur.obj",
+    "portrait": "textures/races/fairies/portraits/centaur.png",
+    "icon": "textures/races/fairies/icons/centaur.png",
+    "scale": 1.1,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/centaur_diffuse.png",
+      "normal": "textures/races/fairies/units/centaur_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/centaur/idle.anim",
+      "walk": "animations/fairies/centaur/walk.anim",
+      "run": "animations/fairies/centaur/gallop.anim",
+      "attack": "animations/fairies/centaur/shoot.anim",
+      "death": "animations/fairies/centaur/death.anim",
+      "charge": "animations/fairies/centaur/charge.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/centaur/select_1.wav", "sounds/fairies/centaur/select_2.wav"],
+    "move": ["sounds/fairies/centaur/ack_1.wav", "sounds/fairies/centaur/hooves.wav"],
+    "attack": ["sounds/fairies/centaur/shoot.wav"],
+    "death": ["sounds/fairies/centaur/death.wav"],
+    "ready": ["sounds/fairies/centaur/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.5,
+    "height": 2.0,
+    "mass": 120.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/ranged.bt",
+    "profile": "ranged",
+    "aggroRange": 15.0,
+    "preferredDistance": 9.0,
+    "fleeThreshold": 0.3,
+    "kiteEfficiency": 0.85
+  }
+}

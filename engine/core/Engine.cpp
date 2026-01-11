@@ -1,3 +1,4 @@
+#include <glad/glad.h>
 #include "core/Engine.hpp"
 #include "core/Window.hpp"
 #include "core/Time.hpp"

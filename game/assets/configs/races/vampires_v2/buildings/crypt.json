@@ -1,0 +1,94 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "spawner_building",
+  "id": "vampire_crypt",
+  "name": "Crypt",
+  "description": "Ancient burial chambers where vampires rest and new blood knights rise. Trains melee vampire units and stores coffins for vampire lords.",
+  "race": "vampires",
+  "category": "military",
+  "tier": 1,
+
+  "size": {
+    "width": 4,
+    "height": 4,
+    "footprintShape": "square"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "requiresFlatTerrain": true,
+    "requiresShadow": true,
+    "shadowRequirement": 0.50,
+    "minDistanceFromOther": 2.0
+  },
+
+  "health": 1200,
+  "armor": 6,
+  "magicResist": 10,
+
+  "spawner": {
+    "queueSize": 5,
+    "simultaneousProduction": 1,
+    "hasRallyPoint": true,
+    "nightProductionBonus": 0.30
+  },
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "vampire_blood_knight",
+      "hotkey": "K"
+    },
+    {
+      "type": "unit",
+      "id": "vampire_nosferatu",
+      "hotkey": "N"
+    },
+    {
+      "type": "unit",
+      "id": "vampire_werewolf",
+      "hotkey": "W",
+      "requiredTech": "lycanthropy"
+    },
+    {
+      "type": "tech",
+      "id": "vampire_melee_1",
+      "name": "Crimson Blades",
+      "hotkey": "C"
+    }
+  ],
+
+  "cost": {
+    "gold": 250,
+    "stone": 200,
+    "blood": 50
+  },
+
+  "buildTime": 60,
+  "providesPopulation": 5,
+  "requiredBuilding": "vampire_castle",
+
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 8.0,
+    "auraType": "crypt_blessing",
+    "auraEffects": [
+      {
+        "affect": "vampire_melee_units",
+        "bonus": {
+          "healthRegen": 1.5,
+          "lifesteal": 0.10
+        }
+      }
+    ]
+  },
+
+  "visuals": {
+    "model": "models/races/vampires/buildings/crypt.obj",
+    "icon": "textures/races/vampires/icons/crypt.png",
+    "glowAtNight": true,
+    "particleEffects": {
+      "ambient": "effects/vampires/crypt_mist.fx"
+    }
+  }
+}

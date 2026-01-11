@@ -1,0 +1,141 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "worker",
+  "id": "undead_acolyte",
+  "name": "Acolyte",
+  "description": "Living cultists who serve the forces of death. They gather corpses and resources to fuel the undead army's expansion.",
+  "race": "undead",
+  "category": "worker",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 35,
+    "healthRegen": 0.2,
+    "mana": 50,
+    "manaRegen": 0.5,
+    "damage": 4,
+    "attackSpeed": 1.0,
+    "attackRange": 1,
+    "armor": 0,
+    "magicResist": 15,
+    "moveSpeed": 4.2
+  },
+
+  "cost": {
+    "gold": 75,
+    "corpses": 0
+  },
+
+  "trainTime": 18,
+  "requiredBuilding": "undead_necropolis",
+
+  "canGather": true,
+  "canBuild": true,
+  "canRepair": true,
+
+  "gatheringRates": {
+    "gold": 10,
+    "wood": 10,
+    "stone": 8,
+    "corpses": 15
+  },
+
+  "carryCapacity": {
+    "gold": 10,
+    "wood": 15,
+    "stone": 10,
+    "corpses": 3
+  },
+
+  "constructionSpeed": 0.9,
+  "repairRate": 4.0,
+
+  "abilities": [
+    {
+      "id": "sacrifice",
+      "name": "Sacrifice",
+      "description": "Sacrifice self to instantly complete building construction or provide 100 mana to target structure",
+      "type": "active",
+      "hotkey": "S",
+      "cooldown": 0,
+      "manaCost": 0,
+      "range": 1.5,
+      "targetType": "friendly_building",
+      "effects": [
+        {
+          "type": "complete_construction",
+          "value": 1.0
+        },
+        {
+          "type": "self_destruct",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "id": "dark_ritual",
+      "name": "Dark Ritual",
+      "description": "Channel dark energies to increase nearby undead units' damage by 15% for 20 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 45.0,
+      "manaCost": 50,
+      "radius": 8.0,
+      "duration": 20.0,
+      "effects": [
+        {
+          "stat": "damage",
+          "value": 0.15,
+          "type": "percent"
+        }
+      ],
+      "targetRace": "undead"
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/undead/units/acolyte.obj",
+    "portrait": "textures/races/undead/portraits/acolyte.png",
+    "icon": "textures/races/undead/icons/acolyte.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/undead/units/acolyte_diffuse.png",
+      "normal": "textures/races/undead/units/acolyte_normal.png"
+    },
+    "animations": {
+      "idle": "animations/undead/acolyte/idle.anim",
+      "walk": "animations/undead/acolyte/walk.anim",
+      "run": "animations/undead/acolyte/run.anim",
+      "attack": "animations/undead/acolyte/attack.anim",
+      "death": "animations/undead/acolyte/death.anim",
+      "gather_corpses": "animations/undead/acolyte/gather_corpses.anim",
+      "gather_gold": "animations/undead/acolyte/mine.anim",
+      "gather_wood": "animations/undead/acolyte/chop.anim",
+      "build": "animations/undead/acolyte/build.anim",
+      "ritual": "animations/undead/acolyte/ritual.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/acolyte/select_1.wav", "sounds/undead/acolyte/select_2.wav"],
+    "move": ["sounds/undead/acolyte/ack_1.wav", "sounds/undead/acolyte/ack_2.wav"],
+    "attack": ["sounds/undead/acolyte/attack.wav"],
+    "death": ["sounds/undead/acolyte/death.wav"],
+    "ready": ["sounds/undead/acolyte/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.25,
+    "height": 1.7,
+    "mass": 65.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/worker_undead.bt",
+    "profile": "passive",
+    "fleeThreshold": 0.25,
+    "autoGather": true,
+    "prioritizeCorpses": true
+  }
+}

@@ -1,0 +1,49 @@
+#version 460 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// ============================================================================
+// SVGF Final Modulation Pass
+// ============================================================================
+// Combines the filtered illumination with the albedo to produce the final
+// color. In many denoisers, we filter illumination separately from albedo
+// to avoid over-blurring textures and material details.
+//
+// Final color = Filtered Illumination × Albedo
+// ============================================================================
+
+// Inputs
+layout(rgba16f, binding = 0) uniform image2D u_filteredColor;
+layout(rgba8, binding = 1) uniform image2D u_albedo;
+
+// Output
+layout(rgba16f, binding = 2) uniform image2D u_finalColor;
+
+// Uniforms
+uniform vec2 u_resolution = vec2(1920.0, 1080.0);
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    if (pixelCoord.x >= int(u_resolution.x) || pixelCoord.y >= int(u_resolution.y)) return;
+
+    // Load filtered illumination
+    vec3 filteredIllum = imageLoad(u_filteredColor, pixelCoord).rgb;
+
+    // Load albedo
+    vec3 albedo = imageLoad(u_albedo, pixelCoord).rgb;
+
+    // Modulate
+    // Note: If ReSTIR already applied albedo, we might want to skip this
+    // For now, we assume the filtered color is already modulated
+    vec3 finalColor = filteredIllum;
+
+    // Optional: If we want to apply albedo separately (for denoising illumination only)
+    // vec3 finalColor = filteredIllum * albedo;
+
+    // Store result
+    imageStore(u_finalColor, pixelCoord, vec4(finalColor, 1.0));
+}

@@ -1,0 +1,306 @@
+{
+  "$schema": "../../../schemas/unit_archetype.schema.json",
+
+  // =============================================================================
+  // MELEE UNIT ARCHETYPE
+  // =============================================================================
+  // This archetype represents a basic melee fighter unit.
+  // Behavior composition:
+  // - MovementBehavior: Ground movement
+  // - CombatBehavior: Melee, Physical damage
+  // - StatsComponent: Health, armor, speed
+  //
+  // Use this as a base template for units like:
+  // - Footman, Grunt, Warrior, Knight, etc.
+  // =============================================================================
+
+  "id": "melee_unit_archetype",
+  "name": "Melee Unit Template",
+  "description": "A basic melee combat unit that engages enemies in close-quarters combat. Strong frontline fighter with good armor.",
+
+  "category": "melee",
+  "tier": 1,
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "baseStats": {
+    // Survivability
+    "health": 150,
+    "healthRegen": 0.5,  // HP per second
+    "mana": 0,  // Melee units typically don't use mana
+    "manaRegen": 0,
+
+    // Offensive stats
+    "damage": 12,
+    "damageVariance": 0.15,  // ±15% damage variance
+    "attackSpeed": 1.2,  // Attacks per second
+    "attackRange": 1.5,  // Melee range (game units)
+
+    // Defensive stats
+    "armor": 3,  // Physical damage reduction
+    "magicResist": 0,  // Magic damage reduction
+
+    // Mobility
+    "moveSpeed": 5.0,  // Movement speed (units per second)
+    "turnSpeed": 360,  // Degrees per second
+    "acceleration": 10.0,
+
+    // Perception
+    "sightRange": 10,
+    "detectionRange": 8,  // Can detect stealth units within this range
+
+    // Critical hits
+    "critChance": 0.05,  // 5% base crit chance
+    "critMultiplier": 2.0  // 200% damage on crit
+  },
+
+  // =============================================================================
+  // COMBAT BEHAVIOR
+  // =============================================================================
+  "combat": {
+    "attackType": "normal",  // Options: "normal", "pierce", "siege", "magic", "hero"
+    "armorType": "medium",   // Options: "unarmored", "light", "medium", "heavy", "fortified"
+
+    // Attack animation and timing
+    "attackAnimation": {
+      "windupTime": 0.3,  // Time before damage is dealt
+      "backswingTime": 0.5,  // Time after damage before next attack
+      "totalDuration": 0.83  // 1 / attackSpeed
+    },
+
+    // Damage bonuses against specific types
+    "bonusVs": [
+      {
+        "category": "unarmored",
+        "multiplier": 1.25,
+        "flatBonus": 0
+      }
+    ],
+
+    // Damage penalties
+    "penaltyVs": [
+      {
+        "category": "fortified",
+        "multiplier": 0.7
+      }
+    ],
+
+    // Cleave attack (hits multiple nearby enemies)
+    "cleave": {
+      "enabled": false,
+      "radius": 0.0,
+      "damagePercent": 0.0,
+      "maxTargets": 0
+    },
+
+    // Splash damage
+    "splash": {
+      "enabled": false,
+      "radius": 0.0,
+      "fullDamageRadius": 0.0,
+      "mediumDamageRadius": 0.0,
+      "lightDamageRadius": 0.0
+    }
+  },
+
+  // =============================================================================
+  // MOVEMENT BEHAVIOR
+  // =============================================================================
+  "movement": {
+    "movementType": "ground",  // Options: "ground", "flying", "amphibious", "burrowed"
+
+    // Terrain movement
+    "canMoveOnLand": true,
+    "canMoveOnWater": false,
+    "canMoveOnLava": false,
+    "canClimbCliffs": false,
+    "canPassThroughUnits": false,
+
+    // Collision
+    "collisionRadius": 0.5,
+    "pushPriority": 5,  // Higher priority pushes lower priority units
+
+    // Pathing
+    "pathfindingType": "ground",
+    "unitSize": "medium",  // Affects how much space unit needs
+
+    // Special movement
+    "canCharge": false,  // Can charge at enemies
+    "chargeSpeed": 0.0,
+    "chargeDuration": 0.0,
+    "chargeStunDuration": 0.0
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 100,
+    "wood": 20,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "trainTime": 30,  // Seconds to train
+  "populationCost": 1,  // How much population space it uses
+
+  "requiredBuilding": "barracks",
+  "requiredAge": 0,
+  "requiredTech": null,
+
+  // =============================================================================
+  // ABILITIES & UPGRADES
+  // =============================================================================
+  "abilities": [],  // Melee units typically have no special abilities
+
+  "upgrades": [
+    "melee_attack_1",
+    "melee_attack_2",
+    "melee_attack_3",
+    "melee_armor_1",
+    "melee_armor_2",
+    "melee_armor_3"
+  ],
+
+  // =============================================================================
+  // UNIT CAPABILITIES
+  // =============================================================================
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,  // Can hold position
+  "canPatrol": true,
+  "canStop": true,
+
+  // Unit flags
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": true,
+  "isMechanical": false,
+  "isUndead": false,
+
+  // =============================================================================
+  // FORMATIONS
+  // =============================================================================
+  "formation": {
+    "preferredPosition": "front",  // Options: "front", "middle", "back", "any"
+    "formationSpacing": 1.0,
+    "maintainFormation": true
+  },
+
+  // =============================================================================
+  // AI BEHAVIOR
+  // =============================================================================
+  "ai": {
+    "aggroRange": 12,  // How far unit will chase enemies
+    "returnToPosition": true,  // Return after chasing
+    "acquisitionRange": 10,  // Auto-acquire targets within this range
+
+    "targetPriority": [
+      {
+        "type": "closest",
+        "weight": 1.0
+      },
+      {
+        "type": "weakest",
+        "weight": 0.5
+      }
+    ],
+
+    "fleeAtHealthPercent": 0.0,  // Don't flee (0 = never)
+    "pursuitRange": 15  // How far to chase fleeing enemies
+  },
+
+  // =============================================================================
+  // EXPERIENCE & LEVELING
+  // =============================================================================
+  "experience": {
+    "canGainExperience": false,  // Regular units don't level
+    "experienceValue": 50,  // XP given to heroes when killed
+    "bountyGold": 10,  // Gold given when killed
+    "bountyMultiplier": 1.0
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/units/footman.fbx",
+    "portrait": "textures/portraits/footman.png",
+    "icon": "textures/icons/units/footman.png",
+    "scale": 1.0,
+
+    "animations": {
+      "idle": "anim_idle",
+      "walk": "anim_walk",
+      "attack": "anim_attack",
+      "death": "anim_death",
+      "decay": "anim_decay",  // Corpse decay animation
+      "build": null,
+      "gather": null,
+      "spell": null
+    },
+
+    // Visual effects
+    "deathEffect": "effects/unit_death.fx",
+    "bloodType": "red",  // Options: "red", "green", "none", "oil"
+    "shadowSize": 1.0,
+    "selectionScale": 1.0,
+
+    // Team coloring
+    "teamColorParts": ["armor_trim", "shield"]  // Which parts get team colors
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/units/footman/select1.wav",
+      "sounds/units/footman/select2.wav",
+      "sounds/units/footman/select3.wav"
+    ],
+    "move": [
+      "sounds/units/footman/move1.wav",
+      "sounds/units/footman/move2.wav"
+    ],
+    "attack": [
+      "sounds/units/footman/attack1.wav",
+      "sounds/units/footman/attack2.wav"
+    ],
+    "death": [
+      "sounds/units/footman/death1.wav"
+    ],
+    "ready": [
+      "sounds/units/footman/ready.wav"
+    ],
+
+    // Ambient sounds
+    "footsteps": "sounds/footsteps/metal.wav",
+    "attackImpact": "sounds/impacts/sword_hit.wav"
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "heavy_infantry" could inherit from this with:
+  // - parentArchetype: "melee_unit_archetype"
+  // - baseStats.health: 200
+  // - baseStats.armor: 5
+  // - baseStats.moveSpeed: 4.5
+  // - cost.gold: 150
+  // - armorType: "heavy"
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for melee combat units. Strong in direct combat, good for frontline.",
+    "tacticalUse": "Use as frontline to protect ranged units. Strong against ranged, weak against siege.",
+    "counters": ["ranged_light"],
+    "counteredBy": ["siege", "heavy_cavalry"]
+  }
+}

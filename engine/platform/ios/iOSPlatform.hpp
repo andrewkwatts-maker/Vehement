@@ -1,137 +1,197 @@
 #pragma once
 
-/**
- * @file iOSPlatform.hpp
- * @brief iOS-specific platform implementation (stub)
- *
- * Full implementation would use UIKit with Metal.
- */
-
 #include "../Platform.hpp"
-
-#ifdef NOVA_PLATFORM_IOS
+#include <glm/glm.hpp>
+#include <string>
+#include <memory>
+#include <atomic>
 
 namespace Nova {
+
+// Forward declarations
+class IOSGLContext;
+class MetalRenderer;
+class IOSTouchInput;
+
+/**
+ * @brief Rendering API selection for iOS
+ */
+enum class IOSRenderingAPI {
+    OpenGLES,   // OpenGL ES 3.0 (wider compatibility)
+    Metal       // Metal (higher performance, iOS 8+)
+};
 
 /**
  * @brief iOS platform implementation
  *
- * Features:
- * - UIKit integration
- * - Metal rendering
- * - Core Location for GPS
- * - Full touch and sensor support
- * - App lifecycle handling
+ * Provides iOS-specific functionality including:
+ * - CAMetalLayer / EAGLContext management
+ * - Touch input handling
+ * - GPS/CoreLocation integration
+ * - App lifecycle management (background/foreground)
+ * - Retina display support
  */
-class iOSPlatform : public Platform {
+class IOSPlatform : public Platform {
 public:
-    iOSPlatform();
-    ~iOSPlatform() override;
+    IOSPlatform();
+    ~IOSPlatform() override;
 
-    // Lifecycle
+    // Non-copyable
+    IOSPlatform(const IOSPlatform&) = delete;
+    IOSPlatform& operator=(const IOSPlatform&) = delete;
+
+    // =========================================================================
+    // Platform Interface Implementation
+    // =========================================================================
+
     bool Initialize() override;
     void Shutdown() override;
-    [[nodiscard]] bool IsInitialized() const noexcept override { return m_initialized; }
     [[nodiscard]] PlatformState GetState() const override { return m_state; }
+    void ProcessEvents() override;
 
-    // Window/View Management
-    bool CreateWindow(const WindowConfig& config) override;  // Creates UIWindow
-    void DestroyWindow() override;
-    [[nodiscard]] bool HasWindow() const noexcept override;
+    void CreateWindow(int width, int height) override;
     void SwapBuffers() override;
-
-    [[nodiscard]] glm::ivec2 GetWindowSize() const override;
+    [[nodiscard]] glm::ivec2 GetScreenSize() const override;
     [[nodiscard]] glm::ivec2 GetFramebufferSize() const override;
-    [[nodiscard]] float GetDisplayScale() const override;  // UIScreen.scale
-    [[nodiscard]] bool IsFullscreen() const override { return true; }  // Always fullscreen
-    void SetFullscreen(bool fullscreen) override;  // No-op on iOS
-    void SetWindowTitle(const std::string& title) override;  // No-op
-    void SetWindowSize(int width, int height) override;  // No-op
+    [[nodiscard]] float GetDisplayScale() const override;
+    [[nodiscard]] bool SupportsFeature(const std::string& feature) const override;
 
-    [[nodiscard]] void* GetNativeWindowHandle() const override;  // UIWindow*
-    [[nodiscard]] void* GetNativeDisplayHandle() const override; // CAMetalLayer*
-
-    // Input/Events
-    void PollEvents() override;
-    void WaitEvents() override;
-    void WaitEventsTimeout(double timeout) override;
-    [[nodiscard]] bool ShouldClose() const override;
-    void RequestClose() override;
-
-    // File System (iOS sandbox)
-    [[nodiscard]] std::string GetDataPath() const override;      // App sandbox
-    [[nodiscard]] std::string GetCachePath() const override;     // Caches/
-    [[nodiscard]] std::string GetDocumentsPath() const override; // Documents/
-    [[nodiscard]] std::string GetBundlePath() const override;    // .app bundle
-    [[nodiscard]] std::string GetAssetsPath() const override;
-
-    [[nodiscard]] std::vector<uint8_t> ReadFile(const std::string& path) override;
-    [[nodiscard]] std::string ReadFileAsString(const std::string& path) override;
-    bool WriteFile(const std::string& path, const std::vector<uint8_t>& data) override;
-    bool WriteFile(const std::string& path, const std::string& content) override;
-    [[nodiscard]] bool FileExists(const std::string& path) const override;
-    [[nodiscard]] bool IsDirectory(const std::string& path) const override;
-    bool CreateDirectory(const std::string& path) override;
-    bool DeleteFile(const std::string& path) override;
-    [[nodiscard]] std::vector<std::string> ListFiles(const std::string& path, bool recursive) override;
-
-    // Permissions (iOS permission system)
-    void RequestPermission(Permission permission, PermissionCallback callback) override;
-    [[nodiscard]] bool HasPermission(Permission permission) const override;
-    [[nodiscard]] PermissionResult GetPermissionStatus(Permission permission) const override;
-    void OpenPermissionSettings() override;
-
-    // GPS/Location (Core Location)
-    [[nodiscard]] bool IsLocationAvailable() const override;
-    [[nodiscard]] bool IsLocationEnabled() const override;
-    void StartLocationUpdates(const LocationConfig& config, LocationCallback callback,
-                             LocationErrorCallback errorCallback) override;
-    void StartLocationUpdates(LocationCallback callback) override;
+    void RequestLocationPermission() override;
+    void StartLocationUpdates() override;
     void StopLocationUpdates() override;
-    void RequestSingleLocation(LocationCallback callback) override;
-    [[nodiscard]] GPSCoordinates GetLastKnownLocation() const override;
+    [[nodiscard]] GPSCoordinates GetCurrentLocation() const override;
+    [[nodiscard]] bool IsLocationAvailable() const override;
 
-    // System Information
-    [[nodiscard]] uint64_t GetAvailableMemory() const override;
-    [[nodiscard]] uint64_t GetTotalMemory() const override;
-    [[nodiscard]] int GetCPUCores() const override;
-    [[nodiscard]] std::string GetCPUArchitecture() const override;  // arm64
-    [[nodiscard]] bool HasGPUCompute() const override;
-    [[nodiscard]] std::string GetDeviceModel() const override;  // "iPhone15,2"
-    [[nodiscard]] std::string GetOSVersion() const override;    // "iOS 17.2"
-    [[nodiscard]] std::string GetDeviceId() const override;     // identifierForVendor
-    [[nodiscard]] std::string GetLocale() const override;
-    [[nodiscard]] int GetTimezoneOffset() const override;
-    [[nodiscard]] bool HasHardwareFeature(const std::string& feature) const override;
+    [[nodiscard]] std::string GetPlatformName() const override { return "iOS"; }
+    [[nodiscard]] std::string GetOSVersion() const override;
+    [[nodiscard]] std::string GetDeviceModel() const override;
 
-    // Battery/Network
-    [[nodiscard]] float GetBatteryLevel() const override;
-    [[nodiscard]] bool IsBatteryCharging() const override;
-    [[nodiscard]] bool IsNetworkAvailable() const override;
-    [[nodiscard]] bool IsWifiConnected() const override;
-    [[nodiscard]] bool IsCellularConnected() const override;
+    // =========================================================================
+    // iOS-Specific Methods
+    // =========================================================================
 
-    // Lifecycle & Haptics
-    void SetLifecycleCallbacks(LifecycleCallbacks callbacks) override;
-    void TriggerHaptic(HapticType type) override;
-    [[nodiscard]] bool HasHaptics() const override { return true; }
+    /**
+     * @brief Set the rendering API (must be called before Initialize)
+     */
+    void SetRenderingAPI(IOSRenderingAPI api) { m_renderingAPI = api; }
+    [[nodiscard]] IOSRenderingAPI GetRenderingAPI() const { return m_renderingAPI; }
 
-    // iOS-specific
-    void HandleAppDidBecomeActive();
-    void HandleAppWillResignActive();
-    void HandleAppDidEnterBackground();
-    void HandleAppWillEnterForeground();
-    void HandleAppWillTerminate();
-    void HandleMemoryWarning();
+    /**
+     * @brief Set the native view (UIView*) - called from Objective-C code
+     */
+    void SetNativeView(void* view);
+
+    /**
+     * @brief Get the Metal layer (CAMetalLayer*)
+     */
+    [[nodiscard]] void* GetMetalLayer() const { return m_metalLayer; }
+
+    /**
+     * @brief Get the OpenGL ES context (EAGLContext*)
+     */
+    [[nodiscard]] void* GetGLContext() const { return m_glContext; }
+
+    /**
+     * @brief Get the GL context wrapper
+     */
+    [[nodiscard]] IOSGLContext* GetGLContextWrapper() const { return m_glContextWrapper.get(); }
+
+    /**
+     * @brief Get the Metal renderer
+     */
+    [[nodiscard]] MetalRenderer* GetMetalRenderer() const { return m_metalRenderer.get(); }
+
+    /**
+     * @brief Get the touch input handler
+     */
+    [[nodiscard]] IOSTouchInput* GetTouchInput() const { return m_touchInput.get(); }
+
+    // =========================================================================
+    // Touch Input (called from Objective-C touch handlers)
+    // =========================================================================
+
+    void HandleTouchBegan(float x, float y, int touchId);
+    void HandleTouchMoved(float x, float y, int touchId);
+    void HandleTouchEnded(float x, float y, int touchId);
+    void HandleTouchCancelled(float x, float y, int touchId);
+
+    // =========================================================================
+    // App Lifecycle (called from AppDelegate)
+    // =========================================================================
+
+    void OnEnterBackground();
+    void OnEnterForeground();
+    void OnMemoryWarning();
+    void OnWillTerminate();
+    void OnDidBecomeActive();
+    void OnWillResignActive();
+
+    // =========================================================================
+    // Location Updates (called from CLLocationManagerDelegate)
+    // =========================================================================
+
+    void OnLocationUpdate(double latitude, double longitude, double altitude,
+                          double accuracy, double timestamp);
+    void OnLocationError(int errorCode);
+
+    // =========================================================================
+    // Display Properties
+    // =========================================================================
+
+    /**
+     * @brief Get safe area insets (notch, home indicator)
+     */
+    [[nodiscard]] glm::vec4 GetSafeAreaInsets() const;
+
+    /**
+     * @brief Get current device orientation
+     */
+    [[nodiscard]] int GetDeviceOrientation() const;
+
+    /**
+     * @brief Check if device supports haptic feedback
+     */
+    [[nodiscard]] bool SupportsHaptics() const;
+
+    /**
+     * @brief Trigger haptic feedback
+     */
+    void TriggerHaptic(int type);
 
 private:
-    struct Impl;
-    std::unique_ptr<Impl> m_impl;  // PIMPL for Obj-C types
+    // Objective-C bridge - these hold Objective-C objects
+    void* m_nativeView = nullptr;       // UIView*
+    void* m_metalLayer = nullptr;       // CAMetalLayer*
+    void* m_glContext = nullptr;        // EAGLContext*
+    void* m_locationManager = nullptr;  // CLLocationManager*
+    void* m_hapticEngine = nullptr;     // CHHapticEngine*
 
-    bool m_initialized = false;
+    // C++ wrappers
+    std::unique_ptr<IOSGLContext> m_glContextWrapper;
+    std::unique_ptr<MetalRenderer> m_metalRenderer;
+    std::unique_ptr<IOSTouchInput> m_touchInput;
+
+    // State
     PlatformState m_state = PlatformState::Unknown;
+    IOSRenderingAPI m_renderingAPI = IOSRenderingAPI::Metal;
+
+    // Display properties
+    glm::ivec2 m_screenSize{0, 0};
+    glm::ivec2 m_framebufferSize{0, 0};
+    float m_displayScale = 1.0f;
+    glm::vec4 m_safeAreaInsets{0.0f};
+
+    // Location
+    mutable GPSCoordinates m_currentLocation;
+    std::atomic<bool> m_locationUpdatesActive{false};
+    std::atomic<bool> m_locationAvailable{false};
+
+    // Helpers
+    void InitializeOpenGLES();
+    void InitializeMetal();
+    void InitializeLocationServices();
+    void CleanupLocationServices();
+    void UpdateDisplayMetrics();
 };
 
 } // namespace Nova
-
-#endif // NOVA_PLATFORM_IOS

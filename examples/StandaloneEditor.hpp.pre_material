@@ -1,0 +1,353 @@
+#pragma once
+
+#include <memory>
+#include <string>
+#include <vector>
+#include <glm/glm.hpp>
+#include <imgui.h>
+
+namespace Nova {
+    class Renderer;
+    class Camera;
+    class Mesh;
+}
+
+class WorldMapEditor;
+class LocalMapEditor;
+class PCGGraphEditor;
+class CommandHistory;
+
+/**
+ * @brief Standalone editor for RTSApplication
+ *
+ * Supports two types of maps:
+ * 1. World Maps - Global maps using lat/long coordinates with PCG-based generation
+ * 2. Local Maps - Small instance maps (arenas, dungeons, etc.)
+ *
+ * Features:
+ * - PCG node graph system for procedural generation
+ * - Real-world data integration (elevation, roads, buildings, biomes)
+ * - Terrain painting and sculpting
+ * - Asset browser and placement
+ * - Material editor
+ */
+class StandaloneEditor {
+public:
+    enum class EditorType {
+        WorldMap,   // Global world using lat/long
+        LocalMap,   // Local instance map
+        PCGGraph    // PCG node graph editor
+    };
+
+    enum class EditMode {
+        None,
+        TerrainPaint,    // Paint terrain tiles
+        TerrainSculpt,   // Raise/lower terrain
+        ObjectPlace,     // Place objects/units/buildings
+        ObjectSelect,    // Select and transform objects
+        MaterialEdit,    // Edit materials
+        PCGEdit          // Edit PCG graphs
+    };
+
+    enum class TerrainBrush {
+        Grass,
+        Dirt,
+        Stone,
+        Sand,
+        Water,
+        Raise,   // Raise terrain height
+        Lower    // Lower terrain height
+    };
+
+    enum class TransformTool {
+        None,
+        Move,
+        Rotate,
+        Scale
+    };
+
+    StandaloneEditor();
+    ~StandaloneEditor();
+
+    /**
+     * @brief Initialize the editor
+     */
+    bool Initialize();
+
+    /**
+     * @brief Apply custom editor theme
+     */
+    void ApplyEditorTheme();
+
+    /**
+     * @brief Panel docking zones
+     */
+    enum class DockZone {
+        None,
+        Left,
+        Right,
+        Top,
+        Bottom,
+        Center,
+        Floating
+    };
+
+    /**
+     * @brief Panel identifiers
+     */
+    enum class PanelID {
+        Viewport,
+        Tools,
+        ContentBrowser,
+        Details,
+        MaterialEditor,
+        EngineStats
+    };
+
+    /**
+     * @brief Panel layout configuration
+     */
+    struct PanelLayout {
+        PanelID id;
+        DockZone zone;
+        float splitRatio = 0.5f;  // For multiple panels in same zone
+        bool isVisible = true;
+    };
+
+    /**
+     * @brief Setup default panel layout
+     */
+    void SetupDefaultLayout();
+
+    /**
+     * @brief Shutdown the editor
+     */
+    void Shutdown();
+
+    /**
+     * @brief Update editor state
+     */
+    void Update(float deltaTime);
+
+    /**
+     * @brief Render editor UI
+     */
+    void RenderUI();
+
+    /**
+     * @brief Render 3D scene
+     */
+    void Render3D(Nova::Renderer& renderer, const Nova::Camera& camera);
+
+    /**
+     * @brief Process input
+     */
+    void ProcessInput();
+
+    /**
+     * @brief Check if editor is initialized
+     */
+    bool IsInitialized() const { return m_initialized; }
+
+    /**
+     * @brief Get current edit mode
+     */
+    EditMode GetEditMode() const { return m_editMode; }
+
+    /**
+     * @brief Set edit mode
+     */
+    void SetEditMode(EditMode mode);
+
+    /**
+     * @brief Get current editor type
+     */
+    EditorType GetEditorType() const { return m_editorType; }
+
+    /**
+     * @brief Switch editor type
+     */
+    void SwitchEditorType(EditorType type);
+
+    /**
+     * @brief New map (simple version)
+     */
+    void NewMap(int width, int height);
+
+    /**
+     * @brief New world map
+     */
+    void NewWorldMap();
+
+    /**
+     * @brief New local map
+     */
+    void NewLocalMap(int width, int height);
+
+    /**
+     * @brief New PCG graph
+     */
+    void NewPCGGraph();
+
+    /**
+     * @brief Load map from file
+     */
+    bool LoadMap(const std::string& path);
+
+    /**
+     * @brief Save map to file
+     */
+    bool SaveMap(const std::string& path);
+
+private:
+    // UI rendering
+    void RenderMenuBar();
+    void RenderToolbar();
+    void RenderAssetBrowser();
+    void RenderTerrainPanel();
+    void RenderObjectPanel();
+    void RenderMaterialPanel();
+    void RenderPropertiesPanel();
+    void RenderStatusBar();
+    void RenderToolsPanel();
+    void RenderContentBrowser();
+    void RenderDetailsPanel();
+    void RenderViewportControls();
+
+    // Docking system
+    void RenderDockingLayout();
+    void RenderDockZone(DockZone zone, ImVec2 pos, ImVec2 size);
+    DockZone GetDropZone(ImVec2 mousePos, ImVec2 windowPos, ImVec2 windowSize);
+    void DrawDropIndicator(DockZone zone, ImVec2 pos, ImVec2 size);
+    void RenderPanel(PanelID panel, ImVec2 pos, ImVec2 size);
+    const char* GetPanelName(PanelID panel);
+    void RenderPanelContent(PanelID panel);
+
+    // Unified panel rendering (merged from separate panels)
+    void RenderUnifiedToolsPanel();
+    void RenderUnifiedContentBrowser();
+    void RenderDetailsContent();
+    void RenderMaterialEditorContent();
+    void RenderEngineStatsContent();
+
+    // Debug overlays
+    void RenderDebugOverlay();
+    void RenderProfiler();
+    void RenderMemoryStats();
+    void RenderTimeDistribution();
+
+    // Dialogs
+    void ShowNewMapDialog();
+    void ShowLoadMapDialog();
+    void ShowSaveMapDialog();
+    void ShowAboutDialog();
+    void ShowMapPropertiesDialog();
+
+    // Terrain editing
+    void PaintTerrain(int x, int y);
+    void SculptTerrain(int x, int y, float strength);
+
+    // Object editing
+    void PlaceObject(const glm::vec3& position, const std::string& objectType);
+    void SelectObject(const glm::vec3& rayOrigin, const glm::vec3& rayDir);
+    void TransformSelectedObject();
+    void DeleteSelectedObject();
+
+    // State
+    bool m_initialized = false;
+    EditorType m_editorType = EditorType::LocalMap;  // Default to local map
+    EditMode m_editMode = EditMode::None;
+    TerrainBrush m_selectedBrush = TerrainBrush::Grass;
+    TransformTool m_transformTool = TransformTool::None;
+    int m_brushSize = 1;
+    float m_brushStrength = 1.0f;
+
+    // Sub-editors (TODO: Implement these)
+    // std::unique_ptr<WorldMapEditor> m_worldMapEditor;
+    // std::unique_ptr<LocalMapEditor> m_localMapEditor;
+    // std::unique_ptr<PCGGraphEditor> m_pcgGraphEditor;
+
+    // Command history for undo/redo
+    std::unique_ptr<CommandHistory> m_commandHistory;
+
+    // Map data
+    int m_mapWidth = 64;
+    int m_mapHeight = 64;
+    std::vector<int> m_terrainTiles;
+    std::vector<float> m_terrainHeights;
+
+    // File paths
+    std::string m_currentMapPath;
+    std::string m_assetDirectory = "assets/";
+    std::vector<std::string> m_recentFiles;
+
+    // Selection
+    int m_selectedObjectIndex = -1;
+    glm::vec3 m_selectedObjectPosition{0.0f};
+    glm::vec3 m_selectedObjectRotation{0.0f};
+    glm::vec3 m_selectedObjectScale{1.0f};
+
+    // Camera
+    glm::vec3 m_editorCameraPos{0.0f, 20.0f, 20.0f};
+    glm::vec3 m_editorCameraTarget{0.0f};
+    float m_cameraDistance = 30.0f;
+    float m_cameraAngle = 45.0f;
+
+    // UI state
+    bool m_showAssetBrowser = true;
+    bool m_showTerrainPanel = true;
+    bool m_showObjectPanel = false;
+    bool m_showMaterialPanel = false;
+    bool m_showPropertiesPanel = true;
+
+    // Dialog state
+    bool m_showNewMapDialog = false;
+    bool m_showLoadMapDialog = false;
+    bool m_showSaveMapDialog = false;
+    bool m_showAboutDialog = false;
+    bool m_showMapPropertiesDialog = false;
+
+    // Map properties
+    std::string m_mapName = "Untitled";
+    std::string m_mapDescription = "";
+    glm::vec3 m_mapAmbientLight{0.3f, 0.3f, 0.4f};
+    glm::vec3 m_mapDirectionalLight{1.0f, 0.9f, 0.8f};
+    glm::vec3 m_mapFogColor{0.5f, 0.6f, 0.7f};
+    float m_mapFogDensity = 0.01f;
+    std::string m_mapSkybox = "default";
+
+    // Grid visualization
+    bool m_showGrid = true;
+    bool m_showGizmos = true;
+    bool m_snapToGrid = true;
+    float m_gridSize = 1.0f;
+
+    // Docking system
+    std::vector<PanelLayout> m_panelLayouts;
+    PanelID m_draggedPanel = PanelID::Viewport;
+    bool m_isDraggingPanel = false;
+    DockZone m_hoveredZone = DockZone::None;
+
+    // Zone dimensions (pixels)
+    float m_leftZoneWidth = 250.0f;
+    float m_rightZoneWidth = 300.0f;
+    float m_topZoneHeight = 50.0f;
+    float m_bottomZoneHeight = 200.0f;
+
+    // Drop zone detection margin (percentage)
+    float m_dropZoneMargin = 0.25f;
+
+    // Debug overlay toggles
+    bool m_showDebugOverlay = false;
+    bool m_showProfiler = false;
+    bool m_showMemoryStats = false;
+    bool m_showRenderTime = false;
+    bool m_showUpdateTime = false;
+    bool m_showPhysicsTime = false;
+
+    // Performance tracking data
+    std::vector<float> m_fpsHistory;
+    std::vector<float> m_frameTimeHistory;
+    int m_historyMaxSize = 100;
+};
+

@@ -1,0 +1,198 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "melee_unit_archetype",
+  "id": "naga_serpent_guard",
+  "name": "Serpent Guard",
+  "description": "Heavily armored naga elite wearing living coral armor. Stalwart defenders of the deep.",
+
+  "category": "melee",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 280,
+    "healthRegen": 0.8,
+    "mana": 60,
+    "manaRegen": 0.9,
+    "damage": 18,
+    "damageVariance": 0.12,
+    "attackSpeed": 0.9,
+    "attackRange": 1.8,
+    "armor": 7,  // Heavy armor
+    "magicResist": 3,
+    "moveSpeed": 4.2,
+    "turnSpeed": 300,
+    "acceleration": 8.0,
+    "sightRange": 10,
+    "detectionRange": 8,
+    "critChance": 0.05,
+    "critMultiplier": 2.0
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "heavy",
+
+    "attackAnimation": {
+      "windupTime": 0.4,
+      "backswingTime": 0.7,
+      "totalDuration": 1.11
+    },
+
+    "bonusVs": [
+      {
+        "category": "cavalry",
+        "multiplier": 1.5
+      }
+    ],
+
+    "penaltyVs": [
+      {
+        "category": "siege",
+        "multiplier": 0.8
+      }
+    ],
+
+    "cleave": {
+      "enabled": true,
+      "radius": 2.0,
+      "damagePercent": 0.4,
+      "maxTargets": 3
+    }
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 0.6,
+    "pushPriority": 8,
+    "pathfindingType": "amphibious",
+    "unitSize": "large",
+
+    "waterMovementMultiplier": 1.4,
+    "landMovementMultiplier": 0.7  // Heavy armor slows on land
+  },
+
+  "cost": {
+    "gold": 180,
+    "wood": 0,
+    "food": 0,
+    "stone": 50,
+    "mana": 20
+  },
+
+  "trainTime": 45,
+  "populationCost": 3,
+  "requiredBuilding": "deep_trench",
+  "requiredAge": 1,
+  "requiredTech": "coral_forging",
+
+  "abilities": [
+    {
+      "id": "shell_shield",
+      "name": "Shell Shield",
+      "description": "Hardens coral armor, gaining +5 armor and immunity to stuns for 8 seconds",
+      "manaCost": 30,
+      "cooldown": 25
+    },
+    {
+      "id": "tidal_slam",
+      "name": "Tidal Slam",
+      "description": "Slams weapon into ground, creating shockwave that knocks back enemies",
+      "manaCost": 40,
+      "cooldown": 18,
+      "effect": "Knockback enemies in 4 unit radius"
+    }
+  ],
+
+  "upgrades": [
+    "naga_melee_attack_1",
+    "naga_melee_attack_2",
+    "naga_melee_attack_3",
+    "naga_armor_1",
+    "naga_armor_2",
+    "naga_armor_3",
+    "living_coral_armor"
+  ],
+
+  "formation": {
+    "preferredPosition": "front",
+    "formationSpacing": 1.5,
+    "maintainFormation": true
+  },
+
+  "ai": {
+    "aggroRange": 12,
+    "targetPriority": [
+      {
+        "type": "closest",
+        "weight": 1.5
+      },
+      {
+        "type": "strongest",
+        "weight": 1.0
+      }
+    ]
+  },
+
+  "visuals": {
+    "model": "models/units/naga/serpent_guard.fbx",
+    "portrait": "textures/portraits/naga/serpent_guard.png",
+    "icon": "textures/icons/units/naga/serpent_guard.png",
+    "scale": 1.25,
+
+    "animations": {
+      "idle": "anim_idle_guard",
+      "walk": "anim_heavy_swim",
+      "attack": "anim_heavy_strike",
+      "death": "anim_death",
+      "spell": "anim_shell_harden"
+    },
+
+    "teamColorParts": ["coral_armor", "shield_emblem"],
+    "glowAtNight": true,
+    "glowColor": "#00FFCC",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.75,
+      "pulseSpeed": 1.0
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/serpent_guard/select1.wav"],
+    "move": ["sounds/units/naga/serpent_guard/move1.wav"],
+    "attack": ["sounds/units/naga/serpent_guard/attack1.wav"],
+    "death": ["sounds/units/naga/serpent_guard/death1.wav"]
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "healthRegen": 2.0,
+        "manaRegen": 1.5,
+        "moveSpeed": 1.4,
+        "damageReduction": 0.2
+      },
+      "atDepth": {
+        "deepWater": {
+          "armor": 4,
+          "healthRegen": 3.0
+        }
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Heavy tank unit. Excellent armor, cleave attacks, crowd control abilities.",
+    "tacticalUse": "Frontline anchor. Protect ranged units. Use shell shield before engaging.",
+    "counters": ["light_melee", "cavalry"],
+    "counteredBy": ["magic_damage", "siege", "armor_penetration"]
+  }
+}

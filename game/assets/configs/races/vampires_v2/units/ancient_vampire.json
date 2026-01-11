@@ -1,0 +1,129 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "vampire_ancient",
+  "name": "Ancient Vampire",
+  "description": "Elder vampires who have walked the earth for millennia. Near-immortal beings with legendary power, dark sorcery, and command over lesser undead.",
+  "race": "vampires",
+  "category": "hero",
+  "tier": 4,
+
+  "baseStats": {
+    "health": 1200,
+    "healthRegen": 5.0,
+    "mana": 300,
+    "manaRegen": 3.0,
+    "damage": 45,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.6,
+    "attackRange": 1.8,
+    "spellPower": 50,
+    "armor": 12,
+    "magicResist": 35,
+    "moveSpeed": 6.0,
+    "sightRange": 16,
+    "detectionRange": 14,
+    "critChance": 0.20,
+    "critMultiplier": 2.5
+  },
+
+  "cost": {
+    "gold": 800,
+    "blood": 200,
+    "mana": 150,
+    "food": 8
+  },
+
+  "trainTime": 120,
+  "populationCost": 6,
+  "requiredBuilding": "vampire_castle",
+  "requiredAge": 3,
+  "requiredTech": "ancient_bloodline",
+
+  "isHero": true,
+  "isUnique": true,
+  "maxCount": 1,
+
+  "armorType": "hero",
+  "attackType": "hero",
+
+  "abilities": [
+    {
+      "id": "elder_aura",
+      "name": "Elder's Dominion",
+      "description": "Massive aura granting nearby vampires +30% damage, +5 armor, 25% lifesteal",
+      "type": "aura",
+      "radius": 15.0,
+      "affects": ["vampire_units", "undead_units"],
+      "bonuses": {
+        "damage": 0.30,
+        "armor": 5,
+        "lifesteal": 0.25
+      }
+    },
+    {
+      "id": "summon_thralls",
+      "name": "Summon Thralls",
+      "description": "Summon 5 vampire thralls to serve for 60 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 100,
+      "cooldown": 60.0,
+      "summonCount": 5,
+      "summonType": "vampire_thrall",
+      "duration": 60.0
+    },
+    {
+      "id": "blood_storm",
+      "name": "Blood Storm",
+      "description": "Create a storm of blood dealing 50 damage/sec in large area for 8 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 150,
+      "cooldown": 45.0,
+      "range": 12.0,
+      "radius": 6.0,
+      "damagePerSecond": 50,
+      "duration": 8.0
+    },
+    {
+      "id": "immortal_form",
+      "name": "Immortal Form",
+      "description": "Upon death, transform into mist and resurrect after 20 seconds at 30% health (once per battle)",
+      "type": "passive",
+      "onDeath": {
+        "transform": "mist",
+        "resurrectTime": 20.0,
+        "resurrectHealth": 0.30,
+        "usesPerBattle": 1
+      }
+    },
+    {
+      "id": "ancient_power",
+      "name": "Ancient Power",
+      "description": "At night: Gain all vampire bonuses at 200% effectiveness. Near-invincible.",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "damage": 1.60,
+          "healthRegen": 8.0,
+          "spellPower": 1.80,
+          "moveSpeed": 1.40,
+          "armor": 8,
+          "allAbilitiesEnhanced": true
+        }
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/vampires/units/ancient_vampire.obj",
+    "portrait": "textures/races/vampires/portraits/ancient_vampire.png",
+    "icon": "textures/races/vampires/icons/ancient_vampire.png",
+    "scale": 1.15,
+    "particleEffects": {
+      "aura": "effects/vampires/elder_aura.fx",
+      "bloodStorm": "effects/vampires/blood_storm.fx"
+    }
+  }
+}

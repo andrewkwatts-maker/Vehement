@@ -1,0 +1,206 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+
+/**
+ * @file rtx_pathtracer.rgen
+ * @brief Ray Generation Shader for RTX Path Tracing
+ *
+ * This is the entry point for hardware ray tracing.
+ * Generates primary rays from camera and accumulates samples.
+ */
+
+// Ray payload (data passed between shaders)
+layout(location = 0) rayPayloadNV vec3 hitValue;
+layout(location = 1) rayPayloadNV bool shadowed;
+
+// Bindings
+layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
+layout(binding = 1, set = 0, rgba32f) uniform image2D accumulationImage;
+layout(binding = 2, set = 0, rgba8) uniform image2D outputImage;
+
+// Camera uniform buffer
+layout(binding = 3, set = 0) uniform CameraUBO {
+    mat4 viewInverse;
+    mat4 projInverse;
+    vec3 cameraPos;
+    float _pad0;
+    vec3 cameraDir;
+    float _pad1;
+    vec2 jitter;          // Temporal AA jitter
+    uint frameCount;      // For accumulation
+    uint samplesPerPixel;
+} camera;
+
+// Render settings
+layout(binding = 4, set = 0) uniform RenderSettings {
+    vec3 lightDirection;
+    float lightIntensity;
+    vec3 lightColor;
+    float maxDistance;
+    vec3 backgroundColor;
+    int maxBounces;
+    int enableShadows;
+    int enableGI;
+    int enableAO;
+    float aoRadius;
+} settings;
+
+// Random number generation
+uint rngState;
+
+uint wang_hash(uint seed) {
+    seed = (seed ^ 61u) ^ (seed >> 16u);
+    seed *= 9u;
+    seed = seed ^ (seed >> 4u);
+    seed *= 0x27d4eb2du;
+    seed = seed ^ (seed >> 15u);
+    return seed;
+}
+
+float random() {
+    rngState = wang_hash(rngState);
+    return float(rngState) / 4294967296.0;
+}
+
+vec3 randomInUnitSphere() {
+    float z = random() * 2.0 - 1.0;
+    float a = random() * 2.0 * 3.14159265;
+    float r = sqrt(1.0 - z * z);
+    return vec3(r * cos(a), r * sin(a), z);
+}
+
+vec3 randomCosineDirection() {
+    float r1 = random();
+    float r2 = random();
+    float z = sqrt(1.0 - r2);
+
+    float phi = 2.0 * 3.14159265 * r1;
+    float x = cos(phi) * sqrt(r2);
+    float y = sin(phi) * sqrt(r2);
+
+    return vec3(x, y, z);
+}
+
+// Convert pixel coordinates to world-space ray
+void generateCameraRay(vec2 pixelCoord, out vec3 origin, out vec3 direction) {
+    // Pixel center with jitter for antialiasing
+    vec2 pixelCenter = pixelCoord + vec2(0.5) + camera.jitter;
+    vec2 inUV = pixelCenter / vec2(gl_LaunchSizeNV.xy);
+    vec2 d = inUV * 2.0 - 1.0;
+
+    // Transform to world space
+    origin = (camera.viewInverse * vec4(0, 0, 0, 1)).xyz;
+    vec4 target = camera.projInverse * vec4(d.x, d.y, 1, 1);
+    direction = (camera.viewInverse * vec4(normalize(target.xyz), 0)).xyz;
+}
+
+// Trace primary ray
+vec3 tracePrimaryRay(vec3 origin, vec3 direction) {
+    uint rayFlags = gl_RayFlagsOpaqueNV;
+    float tMin = 0.001;
+    float tMax = settings.maxDistance;
+
+    traceNV(
+        topLevelAS,     // acceleration structure
+        rayFlags,       // rayFlags
+        0xFF,           // cullMask (all objects)
+        0,              // sbtRecordOffset
+        0,              // sbtRecordStride
+        0,              // missIndex
+        origin,         // ray origin
+        tMin,           // ray min range
+        direction,      // ray direction
+        tMax,           // ray max range
+        0               // payload location
+    );
+
+    return hitValue;
+}
+
+// Path tracing with multiple bounces
+vec3 pathTrace(vec3 origin, vec3 direction, int maxBounces) {
+    vec3 throughput = vec3(1.0);
+    vec3 radiance = vec3(0.0);
+
+    for (int bounce = 0; bounce < maxBounces; bounce++) {
+        // Trace ray
+        uint rayFlags = gl_RayFlagsOpaqueNV;
+        float tMin = 0.001;
+        float tMax = settings.maxDistance;
+
+        traceNV(
+            topLevelAS,
+            rayFlags,
+            0xFF,
+            0,
+            0,
+            0,
+            origin,
+            tMin,
+            direction,
+            tMax,
+            0
+        );
+
+        // Accumulate radiance
+        radiance += throughput * hitValue;
+
+        // Early exit if hit sky or absorbed
+        if (length(hitValue - settings.backgroundColor) < 0.01) {
+            break;
+        }
+
+        // Russian roulette for path termination
+        float p = max(throughput.r, max(throughput.g, throughput.b));
+        if (random() > p || bounce >= maxBounces - 1) {
+            break;
+        }
+        throughput /= p;
+
+        // TODO: Get hit point and normal from closest hit shader
+        // For now, just terminate after first bounce
+        break;
+    }
+
+    return radiance;
+}
+
+void main() {
+    // Initialize RNG
+    uint pixelIndex = gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x;
+    rngState = wang_hash(pixelIndex + camera.frameCount * 719393u);
+
+    vec2 pixelCoord = vec2(gl_LaunchIDNV.xy);
+
+    // Generate camera ray
+    vec3 origin, direction;
+    generateCameraRay(pixelCoord, origin, direction);
+
+    // Trace rays
+    vec3 color = vec3(0.0);
+
+    if (settings.enableGI && settings.maxBounces > 1) {
+        // Path tracing with multiple bounces
+        color = pathTrace(origin, direction, settings.maxBounces);
+    } else {
+        // Simple primary ray tracing
+        color = tracePrimaryRay(origin, direction);
+    }
+
+    // Accumulate samples for temporal antialiasing
+    if (camera.frameCount > 0) {
+        vec3 prevColor = imageLoad(accumulationImage, ivec2(gl_LaunchIDNV.xy)).rgb;
+        float weight = 1.0 / float(camera.frameCount + 1);
+        color = mix(prevColor, color, weight);
+    }
+
+    // Store accumulated color
+    imageStore(accumulationImage, ivec2(gl_LaunchIDNV.xy), vec4(color, 1.0));
+
+    // Tone mapping and gamma correction for display
+    vec3 mapped = color / (color + vec3(1.0)); // Reinhard tone mapping
+    mapped = pow(mapped, vec3(1.0 / 2.2));     // Gamma correction
+
+    // Write final color
+    imageStore(outputImage, ivec2(gl_LaunchIDNV.xy), vec4(mapped, 1.0));
+}

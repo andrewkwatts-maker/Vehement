@@ -1,0 +1,130 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "fairy_sprite",
+  "name": "Sprite",
+  "description": "Elegant flying archers that rain enchanted arrows from above. Their attacks can slow enemies or pierce through multiple targets.",
+  "race": "fairies",
+  "category": "air",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 95,
+    "healthRegen": 0.5,
+    "mana": 120,
+    "manaRegen": 1.2,
+    "damage": 16,
+    "damageVariance": 0.18,
+    "attackSpeed": 1.3,
+    "attackRange": 8,
+    "armor": 1,
+    "magicResist": 12,
+    "moveSpeed": 7.5,
+    "sightRange": 14,
+    "critChance": 0.18,
+    "critMultiplier": 1.8
+  },
+
+  "cost": {
+    "gold": 120,
+    "wood": 40,
+    "mana": 30,
+    "food": 2
+  },
+
+  "trainTime": 25,
+  "populationCost": 2,
+  "requiredBuilding": "fairy_grove",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "pierce",
+  "movementType": "flying",
+  "flyingHeight": 3.0,
+
+  "projectile": {
+    "id": "enchanted_arrow",
+    "type": "ballistic",
+    "speed": 28.0,
+    "arc": 0.2,
+    "model": "models/projectiles/enchanted_arrow.obj",
+    "trailEffect": "effects/magic_trail.fx",
+    "impactEffect": "effects/magic_arrow_impact.fx",
+    "piercing": true,
+    "maxPierceTargets": 2
+  },
+
+  "abilities": [
+    {
+      "id": "frost_arrows",
+      "name": "Frost Arrows",
+      "description": "Enchant arrows with frost, slowing targets by 30% for 3 seconds",
+      "type": "toggle",
+      "hotkey": "Q",
+      "manaCostPerAttack": 8,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.3,
+          "type": "percent",
+          "duration": 3.0
+        }
+      ]
+    },
+    {
+      "id": "multi_shot",
+      "name": "Multi-Shot",
+      "description": "Fire 5 arrows in an arc dealing 75% damage each",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 15.0,
+      "manaCost": 60,
+      "range": 8.0,
+      "arrows": 5,
+      "damageMultiplier": 0.75,
+      "arcSpread": 45
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/sprite.obj",
+    "portrait": "textures/races/fairies/portraits/sprite.png",
+    "icon": "textures/races/fairies/icons/sprite.png",
+    "scale": 0.85,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/sprite_diffuse.png",
+      "normal": "textures/races/fairies/units/sprite_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/sprite/hover.anim",
+      "walk": "animations/fairies/sprite/fly.anim",
+      "attack": "animations/fairies/sprite/shoot_bow.anim",
+      "death": "animations/fairies/sprite/death.anim",
+      "cast": "animations/fairies/sprite/cast.anim"
+    },
+    "wingTrailEffect": "effects/sprite_wings.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/sprite/select_1.wav", "sounds/fairies/sprite/select_2.wav"],
+    "move": ["sounds/fairies/sprite/ack_1.wav", "sounds/fairies/sprite/ack_2.wav"],
+    "attack": ["sounds/fairies/sprite/shoot.wav"],
+    "death": ["sounds/fairies/sprite/death.wav"],
+    "ready": ["sounds/fairies/sprite/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.28,
+    "height": 1.5,
+    "mass": 30.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/ranged_flyer.bt",
+    "profile": "ranged",
+    "aggroRange": 14.0,
+    "preferredDistance": 7.0,
+    "fleeThreshold": 0.35
+  }
+}

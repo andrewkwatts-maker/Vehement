@@ -1,0 +1,228 @@
+{
+  "name": "Island Archipelago",
+  "description": "A world of scattered islands in a vast ocean. Features tropical biomes, beaches, and scattered ruins.",
+  "version": "1.0.0",
+  "seed": 54321,
+  "author": "Nova3D Engine",
+  "tags": ["island", "tropical", "ocean", "archipelago"],
+
+  "worldSize": {
+    "width": 8000,
+    "height": 8000
+  },
+  "maxHeight": 180,
+
+  "terrainScale": 1.0,
+  "terrainAmplitude": 80.0,
+  "erosionStrength": 0.4,
+  "erosionIterations": 150,
+
+  "procGenGraph": {
+    "nodes": [
+      {
+        "id": "island_base",
+        "type": "WorleyNoise",
+        "position": [100, 100],
+        "parameters": {
+          "frequency": 0.002,
+          "distanceType": 0
+        }
+      },
+      {
+        "id": "island_mask",
+        "type": "Remap",
+        "position": [300, 100],
+        "parameters": {
+          "inputMin": 0.3,
+          "inputMax": 1.0,
+          "outputMin": 0.0,
+          "outputMax": 1.0
+        }
+      },
+      {
+        "id": "terrain_detail",
+        "type": "SimplexNoise",
+        "position": [100, 250],
+        "parameters": {
+          "frequency": 0.02,
+          "octaves": 5,
+          "persistence": 0.5,
+          "lacunarity": 2.0
+        }
+      },
+      {
+        "id": "multiply",
+        "type": "Blend",
+        "position": [500, 175],
+        "parameters": {
+          "blend": 1.0,
+          "blendMode": "multiply"
+        }
+      }
+    ],
+    "connections": [
+      {
+        "from": "island_base.value",
+        "to": "island_mask.input"
+      },
+      {
+        "from": "island_mask.result",
+        "to": "multiply.inputA"
+      },
+      {
+        "from": "terrain_detail.value",
+        "to": "multiply.inputB"
+      }
+    ]
+  },
+
+  "biomes": [
+    {
+      "id": 0,
+      "name": "Ocean",
+      "description": "Deep tropical ocean",
+      "color": [0.1, 0.3, 0.8],
+      "minTemperature": 20.0,
+      "maxTemperature": 30.0,
+      "minPrecipitation": 1000.0,
+      "maxPrecipitation": 3000.0,
+      "minElevation": 0.0,
+      "maxElevation": 40.0,
+      "treeTypes": [],
+      "plantTypes": ["coral", "kelp"],
+      "vegetationDensity": 0.4,
+      "oreTypes": [],
+      "oreDensities": []
+    },
+    {
+      "id": 1,
+      "name": "Beach",
+      "description": "Sandy shoreline",
+      "color": [0.9, 0.9, 0.7],
+      "minTemperature": 22.0,
+      "maxTemperature": 32.0,
+      "minPrecipitation": 800.0,
+      "maxPrecipitation": 2000.0,
+      "minElevation": 40.0,
+      "maxElevation": 55.0,
+      "treeTypes": ["palm"],
+      "plantTypes": ["beach_grass"],
+      "vegetationDensity": 0.3,
+      "oreTypes": [],
+      "oreDensities": []
+    },
+    {
+      "id": 2,
+      "name": "Tropical Forest",
+      "description": "Dense jungle",
+      "color": [0.2, 0.6, 0.3],
+      "minTemperature": 24.0,
+      "maxTemperature": 35.0,
+      "minPrecipitation": 1500.0,
+      "maxPrecipitation": 3000.0,
+      "minElevation": 55.0,
+      "maxElevation": 150.0,
+      "treeTypes": ["palm", "jungle_tree", "bamboo"],
+      "plantTypes": ["ferns", "vines", "tropical_flowers"],
+      "vegetationDensity": 0.95,
+      "oreTypes": ["iron", "gold"],
+      "oreDensities": [0.15, 0.08]
+    },
+    {
+      "id": 3,
+      "name": "Mountain Peak",
+      "description": "Rocky island peaks",
+      "color": [0.4, 0.4, 0.4],
+      "minTemperature": 15.0,
+      "maxTemperature": 25.0,
+      "minPrecipitation": 1000.0,
+      "maxPrecipitation": 2000.0,
+      "minElevation": 150.0,
+      "maxElevation": 180.0,
+      "treeTypes": [],
+      "plantTypes": ["moss"],
+      "vegetationDensity": 0.1,
+      "oreTypes": ["diamond"],
+      "oreDensities": [0.03]
+    }
+  ],
+
+  "resources": {
+    "ores": [
+      {
+        "resourceType": "iron_ore",
+        "density": 0.15,
+        "minHeight": 50.0,
+        "maxHeight": 120.0,
+        "minSlope": 0.0,
+        "maxSlope": 40.0,
+        "clusterSize": 6.0,
+        "allowedBiomes": [2, 3]
+      },
+      {
+        "resourceType": "gold_ore",
+        "density": 0.08,
+        "minHeight": 60.0,
+        "maxHeight": 150.0,
+        "minSlope": 20.0,
+        "maxSlope": 70.0,
+        "clusterSize": 4.0,
+        "allowedBiomes": [2, 3]
+      }
+    ],
+    "vegetation": [
+      {
+        "resourceType": "palm_tree",
+        "density": 0.4,
+        "minHeight": 40.0,
+        "maxHeight": 100.0,
+        "minSlope": 0.0,
+        "maxSlope": 25.0,
+        "clusterSize": 8.0,
+        "allowedBiomes": [1, 2]
+      }
+    ],
+    "water": []
+  },
+
+  "structures": {
+    "ruins": [
+      {
+        "structureType": "beach_ruins",
+        "density": 0.02,
+        "minDistance": 300.0,
+        "minSize": 8.0,
+        "maxSize": 25.0,
+        "maxSlope": 15.0,
+        "allowedBiomes": [1],
+        "variants": ["shipwreck", "hut", "statue"]
+      }
+    ],
+    "ancients": [
+      {
+        "structureType": "temple",
+        "density": 0.001,
+        "minDistance": 1500.0,
+        "minSize": 30.0,
+        "maxSize": 80.0,
+        "maxSlope": 20.0,
+        "allowedBiomes": [2],
+        "variants": ["pyramid", "shrine"]
+      }
+    ],
+    "buildings": []
+  },
+
+  "climate": {
+    "equatorTemperature": 28.0,
+    "poleTemperature": 22.0,
+    "temperatureVariation": 3.0,
+    "elevationTemperatureGradient": -5.0,
+    "baseRainfall": 1800.0,
+    "oceanRainfallBonus": 800.0,
+    "mountainRainShadow": 0.3,
+    "windPattern": "trade"
+  },
+
+  "modificationLog": []
+}

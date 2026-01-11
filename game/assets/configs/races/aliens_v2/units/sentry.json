@@ -1,0 +1,244 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "mystic_unit_archetype",
+  "id": "alien_sentry",
+  "name": "Sentry",
+  "description": "Support unit that provides force fields and guardian shields to protect allies. Sentries use energy to cast defensive abilities and can detect cloaked units.",
+  "race": "aliens",
+  "category": "mystic",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 40,
+    "healthRegen": 0,
+    "shield": 40,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+    "energy": 200,
+    "energyRegen": 0.56,
+
+    "damage": 6,
+    "damageVariance": 0,
+    "attackSpeed": 1.0,
+    "attackRange": 5,
+
+    "armor": 0,
+    "shieldArmor": 1,
+    "magicResist": 10,
+
+    "moveSpeed": 3.15,
+    "turnSpeed": 999,
+    "acceleration": 999,
+
+    "sightRange": 10,
+    "detectionRange": 11,
+
+    "critChance": 0.0,
+    "critMultiplier": 1.0
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "light",
+    "attackAnimation": {
+      "windupTime": 0.3,
+      "backswingTime": 0.7,
+      "totalDuration": 1.0
+    },
+    "bonusVs": [],
+    "penaltyVs": [],
+    "cleave": {
+      "enabled": false
+    },
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  "projectile": {
+    "type": "instant",
+    "visualModel": "models/projectiles/sentry_beam.fbx",
+    "trailEffect": "effects/sentry_beam.fx",
+    "impactEffect": "effects/sentry_impact.fx"
+  },
+
+  "cost": {
+    "minerals": 50,
+    "vespene": 100,
+    "supply": 2
+  },
+
+  "trainTime": 37,
+  "warpTime": 27,
+  "populationCost": 2,
+  "requiredBuilding": "alien_gateway",
+  "requiredAge": 0,
+  "requiredTech": "cybernetics_core",
+
+  "abilities": [
+    {
+      "id": "force_field",
+      "name": "Force Field",
+      "description": "Creates a force field barrier that blocks ground unit movement for 11 seconds",
+      "type": "targeted_position",
+      "hotkey": "F",
+      "cooldown": 0.0,
+      "range": 10.0,
+      "energyCost": 50,
+      "duration": 11.0,
+      "unlockedByDefault": true,
+      "effects": [
+        {
+          "type": "create_barrier",
+          "radius": 1.5,
+          "duration": 11.0,
+          "blocksGround": true,
+          "blocksAir": false,
+          "blocksProjectiles": false
+        }
+      ]
+    },
+    {
+      "id": "guardian_shield",
+      "name": "Guardian Shield",
+      "description": "Projects a shield that reduces ranged damage to nearby friendly units by 2",
+      "type": "aura",
+      "hotkey": "G",
+      "cooldown": 0.0,
+      "range": 0,
+      "energyCost": 75,
+      "energyCostPerSecond": 1.0,
+      "duration": -1,
+      "unlockedByDefault": true,
+      "effects": [
+        {
+          "type": "aura",
+          "radius": 4.5,
+          "affectsAllies": true,
+          "affectsEnemies": false,
+          "stat": "rangedDamageReduction",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "hallucination",
+      "name": "Hallucination",
+      "description": "Creates two hallucinated copies of target unit that deal no damage but can scout and distract",
+      "type": "targeted_unit",
+      "hotkey": "H",
+      "cooldown": 0.0,
+      "range": 7.0,
+      "energyCost": 100,
+      "requiredTech": "hallucination_upgrade",
+      "unlockedByDefault": false,
+      "effects": [
+        {
+          "type": "summon",
+          "count": 2,
+          "duration": 43.0,
+          "copyTarget": true,
+          "damageMultiplier": 0.0,
+          "isHallucination": true
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "hallucination_upgrade"
+  ],
+
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+  "canAttackGround": true,
+  "canAttackAir": true,
+  "canDetectCloaked": true,
+
+  "attributes": {
+    "isBiological": true,
+    "isPsionic": true,
+    "isLight": true,
+    "isArmored": false,
+    "isMassive": false,
+    "cargoSize": 2,
+    "canBeWarped": true,
+    "providesDetection": true
+  },
+
+  "formation": {
+    "preferredPosition": "middle",
+    "formationSpacing": 1.5,
+    "maintainFormation": true
+  },
+
+  "ai": {
+    "aggroRange": 12,
+    "returnToPosition": true,
+    "acquisitionRange": 10,
+    "targetPriority": [
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+    "fleeAtHealthPercent": 0.2,
+    "pursuitRange": 8,
+    "useAbilities": true,
+    "abilityPriority": ["force_field", "guardian_shield", "hallucination"]
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/sentry.fbx",
+    "portrait": "textures/races/aliens/portraits/sentry.png",
+    "icon": "textures/races/aliens/icons/sentry.png",
+    "scale": 0.8,
+    "animations": {
+      "idle": "anim_hover",
+      "walk": "anim_move",
+      "attack": "anim_attack",
+      "cast": "anim_cast_spell",
+      "death": "anim_death",
+      "decay": "anim_disintegrate"
+    },
+    "shieldEffect": "effects/shield_shimmer.fx",
+    "guardianShieldEffect": "effects/guardian_shield_aura.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/aliens/sentry/select1.wav",
+      "sounds/aliens/sentry/select2.wav"
+    ],
+    "move": [
+      "sounds/aliens/sentry/move1.wav"
+    ],
+    "attack": [
+      "sounds/aliens/sentry/attack.wav"
+    ],
+    "death": [
+      "sounds/aliens/sentry/death.wav"
+    ],
+    "ready": [
+      "sounds/aliens/sentry/ready.wav"
+    ],
+    "forceField": "sounds/aliens/sentry/force_field.wav",
+    "guardianShield": "sounds/aliens/sentry/guardian_shield.wav"
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.4,
+    "height": 0.8,
+    "mass": 40.0
+  }
+}

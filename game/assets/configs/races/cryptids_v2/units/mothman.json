@@ -1,0 +1,187 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "scout",
+  "id": "cryptid_mothman",
+  "name": "Mothman",
+  "description": "Mysterious winged cryptid with prophetic abilities. Mothman serves as the eyes of the cryptid forces, spreading fear and confusion among enemies while scouting from the skies.",
+  "race": "cryptids",
+  "category": "air",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 320,
+    "healthRegen": 0.8,
+    "damage": 15,
+    "damageVariance": 0.1,
+    "attackSpeed": 1.6,
+    "attackRange": 3.0,
+    "armor": 1,
+    "magicResist": 20,
+    "moveSpeed": 10.0,
+    "sightRange": 20,
+    "critChance": 0.15,
+    "critMultiplier": 1.8
+  },
+
+  "cost": {
+    "gold": 140,
+    "wood": 30,
+    "food": 2
+  },
+
+  "trainTime": 25,
+  "populationCost": 2,
+  "requiredBuilding": "cryptid_sacred_grove",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "normal",
+  "movementType": "air",
+
+  "canAttackAir": true,
+  "canAttackGround": true,
+
+  "abilities": [
+    {
+      "id": "fear_aura",
+      "name": "Fear Aura",
+      "description": "Enemies within 8 units have -15% attack speed and -10% movement speed",
+      "type": "passive",
+      "radius": 8.0,
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "value": -0.15
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.90
+        }
+      ],
+      "targetType": "enemy"
+    },
+    {
+      "id": "night_vision",
+      "name": "Night Vision",
+      "description": "Has double vision range at night and can see stealthed units",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "sightRange",
+          "multiplier": 2.0,
+          "condition": "isNight"
+        }
+      ],
+      "detectsStealth": true,
+      "stealthDetectionRadius": 12.0
+    },
+    {
+      "id": "prophetic_screech",
+      "name": "Prophetic Screech",
+      "description": "Unleashes a piercing screech that reveals all enemy units in a large area and reduces their accuracy by 40% for 8 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 30.0,
+      "radius": 15.0,
+      "duration": 8.0,
+      "revealsEnemies": true,
+      "effects": [
+        {
+          "stat": "accuracy",
+          "value": -0.40
+        }
+      ],
+      "targetType": "enemy"
+    },
+    {
+      "id": "shadow_dive",
+      "name": "Shadow Dive",
+      "description": "Dive from the sky dealing 120% damage and becoming briefly invisible",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 14.0,
+      "damageMultiplier": 1.20,
+      "stealthDuration": 3.0,
+      "requiresFlight": true
+    },
+    {
+      "id": "omen_of_doom",
+      "name": "Omen of Doom",
+      "description": "Mark a target, causing them to take 20% increased damage from all sources for 10 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 20.0,
+      "duration": 10.0,
+      "effects": [
+        {
+          "stat": "damageTaken",
+          "multiplier": 1.20
+        }
+      ],
+      "targetType": "enemy"
+    }
+  ],
+
+  "flight": {
+    "height": 7.0,
+    "canLand": true,
+    "landingSpeedMultiplier": 0.5,
+    "ignoreTerrain": true,
+    "ignoreWalls": true
+  },
+
+  "upgrades": ["mothman_prophesy", "shadow_wings"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/mothman.obj",
+    "portrait": "textures/races/cryptids/portraits/mothman.png",
+    "icon": "textures/races/cryptids/icons/mothman.png",
+    "scale": 1.2,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/mothman_diffuse.png",
+      "normal": "textures/races/cryptids/units/mothman_normal.png",
+      "emissive": "textures/races/cryptids/units/mothman_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/mothman/hover.anim",
+      "fly": "animations/cryptids/mothman/fly.anim",
+      "glide": "animations/cryptids/mothman/glide.anim",
+      "attack": "animations/cryptids/mothman/slash.anim",
+      "dive": "animations/cryptids/mothman/dive.anim",
+      "screech": "animations/cryptids/mothman/screech.anim",
+      "land": "animations/cryptids/mothman/land.anim",
+      "takeoff": "animations/cryptids/mothman/takeoff.anim",
+      "death": "animations/cryptids/mothman/death.anim"
+    },
+    "particleEffects": {
+      "fear_aura": "particles/cryptids/fear_aura.particle",
+      "red_eyes": "particles/cryptids/red_glow.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/mothman/select_1.wav", "sounds/cryptids/mothman/select_2.wav"],
+    "move": ["sounds/cryptids/mothman/wing_flap.wav"],
+    "attack": ["sounds/cryptids/mothman/slash.wav"],
+    "screech": ["sounds/cryptids/mothman/screech.wav"],
+    "death": ["sounds/cryptids/mothman/death.wav"],
+    "ready": ["sounds/cryptids/mothman/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.4,
+    "height": 1.9,
+    "mass": 80.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/fear_scout.bt",
+    "profile": "scout",
+    "aggroRange": 15.0,
+    "priorityTargets": ["ranged", "caster", "siege"],
+    "maintainDistance": 3.0,
+    "preferNightOperations": true,
+    "useScreechOnGroups": true
+  }
+}

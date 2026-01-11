@@ -1,0 +1,270 @@
+#version 460 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// ============================================================================
+// ReSTIR Temporal Reuse Pass
+// ============================================================================
+// Merges current frame's initial samples with previous frame's reservoirs.
+// This allows us to reuse up to 20x more samples "for free" through temporal
+// coherence. We:
+// 1. Reproject current pixel to previous frame using motion vectors
+// 2. Check if surfaces match (depth, normal similarity)
+// 3. Merge previous reservoir with current reservoir
+// 4. Clamp M to prevent infinite accumulation
+//
+// This dramatically improves sample quality without additional ray tracing.
+// ============================================================================
+
+// Reservoir structure
+struct Reservoir {
+    int lightIndex;
+    float weightSum;
+    float W;
+    int M;
+    vec3 padding;
+};
+
+// Light structure
+struct GPULight {
+    vec4 position;
+    vec4 direction;
+    vec4 color;
+    vec4 params;
+};
+
+// Input G-buffers
+layout(rgba32f, binding = 0) uniform image2D u_gBufferPosition;
+layout(rgba16f, binding = 1) uniform image2D u_gBufferNormal;
+layout(rg16f, binding = 2) uniform image2D u_motionVectors;
+
+// Reservoir buffers
+layout(std430, binding = 0) buffer ReservoirBufferPrev {
+    Reservoir prevReservoirs[];
+};
+
+layout(std430, binding = 1) buffer ReservoirBufferCurrent {
+    Reservoir currentReservoirs[];
+};
+
+// Light data (for revalidation)
+layout(std430, binding = 2) buffer LightBuffer {
+    GPULight lights[];
+};
+
+// Uniforms
+uniform int u_frameCount = 0;
+uniform vec2 u_resolution = vec2(1920.0, 1080.0);
+uniform float u_maxM = 20.0;
+uniform float u_depthThreshold = 0.1;
+uniform float u_normalThreshold = 0.9;
+
+// ============================================================================
+// Random Number Generation
+// ============================================================================
+
+uint g_rngState;
+
+void InitRNG(ivec2 pixelCoord, int frame) {
+    uint seed = uint(pixelCoord.x) + uint(pixelCoord.y) * 8192u + uint(frame) * 65536u;
+    g_rngState = seed * 747796405u + 2891336453u;
+}
+
+float Random01() {
+    g_rngState = g_rngState * 747796405u + 2891336453u;
+    uint word = ((g_rngState >> ((g_rngState >> 28u) + 4u)) ^ g_rngState) * 277803737u;
+    return float((word >> 22u) ^ word) / 4294967296.0;
+}
+
+// ============================================================================
+// Light Evaluation (same as initial pass)
+// ============================================================================
+
+vec3 EvaluateLight(GPULight light, vec3 position, vec3 normal, vec3 albedo) {
+    int lightType = int(light.params.y);
+
+    if (lightType == 0) {  // Point light
+        vec3 lightDir = light.position.xyz - position;
+        float dist = length(lightDir);
+        if (dist > light.position.w) return vec3(0.0);
+
+        lightDir /= dist;
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        if (NdotL < 0.001) return vec3(0.0);
+
+        float attenuation = 1.0 / (dist * dist + 1.0);
+        float rangeFalloff = 1.0 - smoothstep(light.position.w * 0.8, light.position.w, dist);
+        return light.color.rgb * light.color.a * NdotL * attenuation * rangeFalloff * albedo;
+
+    } else if (lightType == 1) {  // Spot light
+        vec3 lightDir = light.position.xyz - position;
+        float dist = length(lightDir);
+        if (dist > light.position.w) return vec3(0.0);
+
+        lightDir /= dist;
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        if (NdotL < 0.001) return vec3(0.0);
+
+        float spotAngle = dot(-lightDir, normalize(light.direction.xyz));
+        float innerCone = cos(light.direction.w);
+        float outerCone = cos(light.params.x);
+        float spotFalloff = smoothstep(outerCone, innerCone, spotAngle);
+        if (spotFalloff < 0.001) return vec3(0.0);
+
+        float attenuation = 1.0 / (dist * dist + 1.0);
+        float rangeFalloff = 1.0 - smoothstep(light.position.w * 0.8, light.position.w, dist);
+        return light.color.rgb * light.color.a * NdotL * attenuation * rangeFalloff * spotFalloff * albedo;
+
+    } else if (lightType == 2) {  // Directional light
+        vec3 lightDir = -normalize(light.direction.xyz);
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        if (NdotL < 0.001) return vec3(0.0);
+        return light.color.rgb * light.color.a * NdotL * albedo;
+    }
+
+    return vec3(0.0);
+}
+
+float ContributionToWeight(vec3 contribution) {
+    return dot(contribution, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// ============================================================================
+// Reservoir Operations
+// ============================================================================
+
+// Merge two reservoirs
+void MergeReservoirs(inout Reservoir dst, Reservoir src, vec3 dstPosition, vec3 dstNormal, vec3 dstAlbedo) {
+    // If source reservoir is empty, nothing to merge
+    if (src.M == 0 || src.lightIndex < 0) return;
+
+    // Revalidate source's light sample for destination's surface
+    // This is crucial for temporal reuse - the light that was good for the
+    // previous frame's surface may not be good for the current frame's surface
+    GPULight srcLight = lights[src.lightIndex];
+    vec3 contribution = EvaluateLight(srcLight, dstPosition, dstNormal, dstAlbedo);
+    float targetPdf = ContributionToWeight(contribution);
+
+    // Weight for merging = W * M * target_pdf
+    // This makes the merge unbiased (according to ReSTIR paper)
+    float mergeWeight = src.W * float(src.M) * targetPdf;
+
+    // Update destination reservoir with source's contribution
+    dst.weightSum += mergeWeight;
+    dst.M += src.M;
+
+    // Randomly accept source's sample with appropriate probability
+    if (Random01() < mergeWeight / max(dst.weightSum, 0.0001)) {
+        dst.lightIndex = src.lightIndex;
+    }
+}
+
+// Finalize reservoir after merging
+void FinalizeReservoir(inout Reservoir r, vec3 position, vec3 normal, vec3 albedo) {
+    if (r.M == 0 || r.lightIndex < 0) {
+        r.W = 0.0;
+        return;
+    }
+
+    // Clamp M to prevent infinite accumulation
+    r.M = int(min(float(r.M), u_maxM));
+
+    // Recompute target PDF for selected light
+    GPULight selectedLight = lights[r.lightIndex];
+    vec3 contribution = EvaluateLight(selectedLight, position, normal, albedo);
+    float targetPdf = ContributionToWeight(contribution);
+
+    // W = (1/M) * (weightSum / targetPdf)
+    r.W = (r.weightSum / float(r.M)) / max(targetPdf, 0.0001);
+}
+
+// ============================================================================
+// Temporal Reprojection
+// ============================================================================
+
+bool IsValidTemporalSample(vec3 currentPos, vec3 currentNormal, vec3 prevPos, vec3 prevNormal) {
+    // Check depth similarity
+    float depthDiff = abs(length(currentPos) - length(prevPos));
+    if (depthDiff > u_depthThreshold) return false;
+
+    // Check normal similarity
+    float normalSimilarity = dot(currentNormal, prevNormal);
+    if (normalSimilarity < u_normalThreshold) return false;
+
+    return true;
+}
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    // Bounds check
+    if (pixelCoord.x >= int(u_resolution.x) || pixelCoord.y >= int(u_resolution.y)) return;
+
+    // Initialize RNG
+    InitRNG(pixelCoord, u_frameCount);
+
+    // Load current frame data
+    vec3 position = imageLoad(u_gBufferPosition, pixelCoord).xyz;
+    vec3 normal = imageLoad(u_gBufferNormal, pixelCoord).xyz;
+
+    // Early out for sky/background
+    if (length(normal) < 0.1) return;
+
+    normal = normalize(normal);
+
+    // Load current frame's initial reservoir
+    int bufferIdx = pixelCoord.y * int(u_resolution.x) + pixelCoord.x;
+    Reservoir currentReservoir = currentReservoirs[bufferIdx];
+
+    // Read motion vector and reproject to previous frame
+    vec2 motionVector = imageLoad(u_motionVectors, pixelCoord).xy;
+    vec2 prevUV = (vec2(pixelCoord) + 0.5) / u_resolution - motionVector;
+    ivec2 prevPixelCoord = ivec2(prevUV * u_resolution);
+
+    // Check if previous pixel is in bounds
+    if (prevPixelCoord.x < 0 || prevPixelCoord.x >= int(u_resolution.x) ||
+        prevPixelCoord.y < 0 || prevPixelCoord.y >= int(u_resolution.y)) {
+        // Out of bounds - can't do temporal reuse
+        FinalizeReservoir(currentReservoir, position, normal, vec3(1.0));
+        currentReservoirs[bufferIdx] = currentReservoir;
+        return;
+    }
+
+    // Load previous frame's G-buffer data at reprojected location
+    vec3 prevPosition = imageLoad(u_gBufferPosition, prevPixelCoord).xyz;
+    vec3 prevNormal = imageLoad(u_gBufferNormal, prevPixelCoord).xyz;
+
+    if (length(prevNormal) < 0.1) {
+        // Previous frame was sky/background
+        FinalizeReservoir(currentReservoir, position, normal, vec3(1.0));
+        currentReservoirs[bufferIdx] = currentReservoir;
+        return;
+    }
+
+    prevNormal = normalize(prevNormal);
+
+    // Validate temporal sample (check surface similarity)
+    if (!IsValidTemporalSample(position, normal, prevPosition, prevNormal)) {
+        // Surface changed too much - discard temporal history
+        FinalizeReservoir(currentReservoir, position, normal, vec3(1.0));
+        currentReservoirs[bufferIdx] = currentReservoir;
+        return;
+    }
+
+    // Load previous frame's reservoir
+    int prevBufferIdx = prevPixelCoord.y * int(u_resolution.x) + prevPixelCoord.x;
+    Reservoir prevReservoir = prevReservoirs[prevBufferIdx];
+
+    // Merge previous reservoir with current
+    // Note: We use albedo=1.0 for merging, actual albedo is applied in final shading
+    MergeReservoirs(currentReservoir, prevReservoir, position, normal, vec3(1.0));
+
+    // Finalize merged reservoir
+    FinalizeReservoir(currentReservoir, position, normal, vec3(1.0));
+
+    // Store result
+    currentReservoirs[bufferIdx] = currentReservoir;
+}

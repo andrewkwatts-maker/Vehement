@@ -1,0 +1,156 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "ranged",
+  "id": "undead_skeleton_archer",
+  "name": "Skeleton Archer",
+  "description": "Skeletal archers armed with cursed bows. Their arrows carry necrotic energy that prevents healing.",
+  "race": "undead",
+  "category": "ranged",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 260,
+    "healthRegen": 0,
+    "damage": 16,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.5,
+    "attackRange": 12.0,
+    "armor": 0,
+    "magicResist": 5,
+    "moveSpeed": 4.8,
+    "sightRange": 14,
+    "critChance": 0.12,
+    "critMultiplier": 2.2
+  },
+
+  "cost": {
+    "gold": 150,
+    "wood": 30,
+    "corpses": 1
+  },
+
+  "trainTime": 24,
+  "populationCost": 2,
+  "requiredBuilding": "undead_tomb",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "pierce",
+
+  "bonusVs": [
+    {
+      "category": "flying",
+      "multiplier": 1.5
+    },
+    {
+      "category": "light",
+      "multiplier": 1.3
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "cursed_arrows",
+      "name": "Cursed Arrows",
+      "description": "Arrows prevent healing on hit for 6 seconds and deal 3 damage per second",
+      "type": "passive",
+      "healingReduction": 1.0,
+      "duration": 6.0,
+      "damageOverTime": 3
+    },
+    {
+      "id": "bone_volley",
+      "name": "Bone Volley",
+      "description": "Fire a volley of 5 arrows in quick succession at random targets in an area",
+      "type": "active",
+      "hotkey": "V",
+      "cooldown": 18.0,
+      "manaCost": 0,
+      "range": 12.0,
+      "radius": 4.0,
+      "arrowCount": 5,
+      "damagePerArrow": 12
+    },
+    {
+      "id": "black_arrow",
+      "name": "Black Arrow",
+      "description": "Next attack deals double damage and turns the killed unit into a skeleton for 30 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 60.0,
+      "manaCost": 0,
+      "damageMultiplier": 2.0,
+      "raisesUndead": true,
+      "summonUnit": "undead_skeleton",
+      "summonDuration": 30.0
+    },
+    {
+      "id": "eternal_quiver",
+      "name": "Eternal Quiver",
+      "description": "Never runs out of arrows",
+      "type": "passive",
+      "infiniteAmmo": true
+    }
+  ],
+
+  "projectile": {
+    "id": "cursed_arrow",
+    "model": "models/projectiles/cursed_arrow.obj",
+    "speed": 35.0,
+    "lifetime": 2.0,
+    "gravity": 8.0,
+    "trailEffect": "effects/necrotic_trail.fx",
+    "impactEffect": "effects/necrotic_impact.fx"
+  },
+
+  "upgrades": ["undead_ranged_damage_1", "cursed_arrow_enhancement", "skeleton_archer_range"],
+
+  "visuals": {
+    "model": "models/races/undead/units/skeleton_archer.obj",
+    "portrait": "textures/races/undead/portraits/skeleton_archer.png",
+    "icon": "textures/races/undead/icons/skeleton_archer.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/undead/units/skeleton_archer_diffuse.png",
+      "normal": "textures/races/undead/units/skeleton_archer_normal.png"
+    },
+    "animations": {
+      "idle": "animations/undead/skeleton_archer/idle.anim",
+      "walk": "animations/undead/skeleton_archer/walk.anim",
+      "run": "animations/undead/skeleton_archer/run.anim",
+      "attack": "animations/undead/skeleton_archer/attack.anim",
+      "volley": "animations/undead/skeleton_archer/volley.anim",
+      "death": "animations/undead/skeleton_archer/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/skeleton/select_1.wav", "sounds/undead/skeleton/select_2.wav"],
+    "move": ["sounds/undead/skeleton/move_1.wav", "sounds/undead/skeleton/move_2.wav"],
+    "attack": ["sounds/bow_release.wav"],
+    "death": ["sounds/undead/skeleton/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.28,
+    "height": 1.75,
+    "mass": 42.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/ranged_undead.bt",
+    "profile": "ranged",
+    "aggroRange": 12.0,
+    "preferredDistance": 10.0,
+    "priorityTargets": ["flying", "caster", "ranged"],
+    "fearless": true,
+    "keepDistance": true
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": false,
+    "dropsBones": true,
+    "boneAmount": 1
+  }
+}

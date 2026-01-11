@@ -1,0 +1,261 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit_archetype",
+  "id": "alien_zealot",
+  "name": "Zealot",
+  "description": "Elite psionic warriors of the Collective. Zealots channel psionic energy through their dual energy blades, cutting through enemies with devastating melee attacks. Their shields and Charge ability make them deadly shock troops.",
+  "race": "aliens",
+  "category": "melee",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 100,
+    "healthRegen": 0,
+    "shield": 50,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+    "mana": 0,
+    "manaRegen": 0,
+
+    "damage": 8,
+    "damageVariance": 0,
+    "attackSpeed": 0.86,
+    "attackRange": 0.1,
+
+    "armor": 1,
+    "shieldArmor": 0,
+    "magicResist": 0,
+
+    "moveSpeed": 3.15,
+    "turnSpeed": 999,
+    "acceleration": 999,
+
+    "sightRange": 9,
+    "detectionRange": 0,
+
+    "critChance": 0.05,
+    "critMultiplier": 2.0
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "light",
+    "attackAnimation": {
+      "windupTime": 0.3,
+      "backswingTime": 0.4,
+      "totalDuration": 1.16
+    },
+    "attacksPerSwing": 2,
+    "bonusVs": [
+      {
+        "category": "unarmored",
+        "multiplier": 1.2,
+        "flatBonus": 0
+      }
+    ],
+    "penaltyVs": [],
+    "cleave": {
+      "enabled": false
+    },
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  "movement": {
+    "movementType": "ground",
+    "canMoveOnLand": true,
+    "canMoveOnWater": false,
+    "canMoveOnLava": false,
+    "canClimbCliffs": false,
+    "canPassThroughUnits": false,
+    "collisionRadius": 0.5,
+    "pushPriority": 6,
+    "pathfindingType": "ground",
+    "unitSize": "medium",
+    "canCharge": true,
+    "chargeSpeed": 8.5,
+    "chargeDuration": 1.5,
+    "chargeStunDuration": 0.0
+  },
+
+  "cost": {
+    "minerals": 100,
+    "vespene": 0,
+    "supply": 2
+  },
+
+  "trainTime": 38,
+  "warpTime": 28,
+  "populationCost": 2,
+  "requiredBuilding": "alien_gateway",
+  "requiredAge": 0,
+  "requiredTech": null,
+
+  "abilities": [
+    {
+      "id": "charge",
+      "name": "Charge",
+      "description": "Charge toward an enemy unit, rapidly closing distance and dealing bonus damage on arrival",
+      "type": "autocast",
+      "hotkey": "C",
+      "cooldown": 7.0,
+      "range": 8.0,
+      "speedBonus": 8.5,
+      "bonusDamage": 8,
+      "requiredTech": "charge_upgrade",
+      "unlockedByDefault": false,
+      "manaCost": 0,
+      "effects": [
+        {
+          "type": "dash",
+          "speed": 8.5,
+          "duration": 1.5,
+          "targetType": "enemy"
+        },
+        {
+          "type": "damage_on_arrival",
+          "damage": 8
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_ground_weapons_1",
+    "alien_ground_weapons_2",
+    "alien_ground_weapons_3",
+    "alien_ground_armor_1",
+    "alien_ground_armor_2",
+    "alien_ground_armor_3",
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "charge_upgrade"
+  ],
+
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": true,
+  "isMechanical": false,
+  "isUndead": false,
+  "isPsionic": true,
+
+  "attributes": {
+    "isBiological": true,
+    "isPsionic": true,
+    "isLight": false,
+    "isArmored": false,
+    "isMassive": false,
+    "cargoSize": 2,
+    "canBeWarped": true
+  },
+
+  "formation": {
+    "preferredPosition": "front",
+    "formationSpacing": 1.0,
+    "maintainFormation": true
+  },
+
+  "ai": {
+    "aggroRange": 12,
+    "returnToPosition": true,
+    "acquisitionRange": 10,
+    "targetPriority": [
+      {
+        "type": "worker",
+        "weight": 2.0
+      },
+      {
+        "type": "ranged",
+        "weight": 1.8
+      },
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+    "fleeAtHealthPercent": 0.0,
+    "pursuitRange": 15,
+    "behaviorTree": "ai/behaviors/aggressive_melee.bt",
+    "profile": "aggressive",
+    "useAbilities": true,
+    "abilityPriority": ["charge"]
+  },
+
+  "experience": {
+    "canGainExperience": false,
+    "experienceValue": 75,
+    "bountyGold": 12,
+    "bountyMultiplier": 1.0
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/zealot.fbx",
+    "portrait": "textures/races/aliens/portraits/zealot.png",
+    "icon": "textures/races/aliens/icons/zealot.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/aliens/units/zealot_diffuse.png",
+      "normal": "textures/races/aliens/units/zealot_normal.png",
+      "emissive": "textures/races/aliens/units/zealot_emissive.png"
+    },
+    "animations": {
+      "idle": "anim_idle",
+      "walk": "anim_walk",
+      "attack": "anim_attack",
+      "charge": "anim_charge",
+      "death": "anim_death",
+      "decay": "anim_disintegrate"
+    },
+    "deathEffect": "effects/zealot_death.fx",
+    "bloodType": "none",
+    "shadowSize": 1.0,
+    "selectionScale": 1.0,
+    "teamColorParts": ["armor_trim", "psi_blades"],
+    "shieldEffect": "effects/shield_shimmer.fx",
+    "psiBladeEffect": "effects/psi_blades.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/aliens/zealot/select1.wav",
+      "sounds/aliens/zealot/select2.wav",
+      "sounds/aliens/zealot/select3.wav"
+    ],
+    "move": [
+      "sounds/aliens/zealot/move1.wav",
+      "sounds/aliens/zealot/move2.wav"
+    ],
+    "attack": [
+      "sounds/aliens/zealot/attack1.wav",
+      "sounds/aliens/zealot/attack2.wav"
+    ],
+    "death": [
+      "sounds/aliens/zealot/death.wav"
+    ],
+    "ready": [
+      "sounds/aliens/zealot/ready.wav"
+    ],
+    "charge": "sounds/aliens/zealot/charge.wav",
+    "attackImpact": "sounds/impacts/psi_blade_hit.wav"
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.5,
+    "height": 1.8,
+    "mass": 85.0
+  }
+}

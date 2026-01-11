@@ -1,0 +1,150 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "siege_unit_archetype",
+  "id": "fairy_treant",
+  "name": "Ancient Treant",
+  "description": "Massive walking trees that serve as living siege weapons. Treants can root themselves to become defensive structures, regenerate health rapidly, and command the forest itself.",
+  "race": "fairies",
+  "category": "siege",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 1200,
+    "healthRegen": 4.0,
+    "mana": 150,
+    "manaRegen": 1.5,
+    "damage": 45,
+    "damageVariance": 0.2,
+    "attackSpeed": 0.7,
+    "attackRange": 2.0,
+    "armor": 12,
+    "magicResist": 25,
+    "moveSpeed": 3.0,
+    "sightRange": 13
+  },
+
+  "cost": {
+    "gold": 350,
+    "wood": 200,
+    "mana": 75,
+    "food": 6
+  },
+
+  "trainTime": 60,
+  "populationCost": 5,
+  "requiredBuilding": "fairy_ancient_tree",
+  "requiredAge": 2,
+
+  "armorType": "fortified",
+  "attackType": "siege",
+  "movementType": "ground",
+
+  "combat": {
+    "cleave": {
+      "enabled": true,
+      "radius": 2.0,
+      "damagePercent": 60
+    },
+    "bonusVs": [
+      {
+        "category": "building",
+        "multiplier": 2.5,
+        "flatBonus": 50
+      }
+    ]
+  },
+
+  "abilities": [
+    {
+      "id": "root_transformation",
+      "name": "Root",
+      "description": "Root into the ground, becoming an immobile building with +5 armor, attack range 8, and Nature's Blessing aura",
+      "type": "transformation",
+      "hotkey": "Q",
+      "cooldown": 10.0,
+      "transformTime": 3.0,
+      "targetFormId": "fairy_treant_rooted",
+      "preservesHealth": true,
+      "preservesMana": true
+    },
+    {
+      "id": "entangling_vines",
+      "name": "Entangling Vines",
+      "description": "Summon vines to immobilize enemies in area for 4 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 20.0,
+      "manaCost": 80,
+      "range": 10.0,
+      "radius": 4.0,
+      "duration": 4.0,
+      "damagePerSecond": 15
+    },
+    {
+      "id": "rapid_regeneration",
+      "name": "Rapid Regeneration",
+      "description": "Increase health regeneration to 20/sec for 10 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 45.0,
+      "manaCost": 60,
+      "duration": 10.0,
+      "healthRegenBonus": 16.0
+    }
+  ],
+
+  "bonusVsEnvironment": [
+    {
+      "terrain": "forest",
+      "statModifiers": {
+        "healthRegen": 2.0,
+        "armor": 2,
+        "moveSpeed": 0.5
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/treant_mobile.obj",
+    "portrait": "textures/races/fairies/portraits/treant.png",
+    "icon": "textures/races/fairies/icons/treant.png",
+    "scale": 2.0,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/treant_diffuse.png",
+      "normal": "textures/races/fairies/units/treant_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/treant/idle.anim",
+      "walk": "animations/fairies/treant/walk.anim",
+      "attack": "animations/fairies/treant/smash.anim",
+      "death": "animations/fairies/treant/fall.anim",
+      "root": "animations/fairies/treant/root.anim",
+      "uproot": "animations/fairies/treant/uproot.anim"
+    },
+    "shadowSize": 3.0
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/treant/groan_1.wav", "sounds/fairies/treant/creak.wav"],
+    "move": ["sounds/fairies/treant/walk.wav"],
+    "attack": ["sounds/fairies/treant/smash.wav"],
+    "death": ["sounds/fairies/treant/fall.wav"],
+    "root": ["sounds/fairies/treant/root.wav"],
+    "ready": ["sounds/fairies/treant/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 1.5,
+    "height": 4.0,
+    "mass": 500.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/siege.bt",
+    "profile": "siege",
+    "aggroRange": 13.0,
+    "prioritizeBuildings": true,
+    "fleeThreshold": 0.15
+  }
+}

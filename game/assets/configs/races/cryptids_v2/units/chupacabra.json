@@ -1,0 +1,158 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "light_infantry",
+  "id": "cryptid_chupacabra",
+  "name": "Chupacabra",
+  "description": "Swift, vampiric cryptid that drains life from its victims. Chupacabras excel at hit-and-run tactics, leaping onto prey and draining their vitality.",
+  "race": "cryptids",
+  "category": "infantry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 340,
+    "healthRegen": 0.6,
+    "damage": 22,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.8,
+    "attackRange": 1.2,
+    "armor": 2,
+    "magicResist": 10,
+    "moveSpeed": 6.5,
+    "critChance": 0.18,
+    "critMultiplier": 2.2
+  },
+
+  "cost": {
+    "gold": 160,
+    "food": 2
+  },
+
+  "trainTime": 24,
+  "populationCost": 2,
+  "requiredBuilding": "cryptid_hunting_grounds",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "piercing",
+
+  "bonusVs": [
+    {
+      "category": "ranged",
+      "multiplier": 1.4
+    },
+    {
+      "category": "caster",
+      "multiplier": 1.5
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "life_drain",
+      "name": "Life Drain",
+      "description": "Each attack heals the Chupacabra for 35% of damage dealt",
+      "type": "passive",
+      "lifesteal": 0.35
+    },
+    {
+      "id": "pounce",
+      "name": "Pounce",
+      "description": "Leap to target enemy up to 8 units away, dealing 150% damage and rooting them for 2 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 12.0,
+      "range": 8.0,
+      "damageMultiplier": 1.50,
+      "rootDuration": 2.0
+    },
+    {
+      "id": "blood_frenzy",
+      "name": "Blood Frenzy",
+      "description": "After killing an enemy, gains 40% attack speed and 30% movement speed for 6 seconds",
+      "type": "passive",
+      "trigger": "onKill",
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "multiplier": 1.40,
+          "duration": 6.0
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 1.30,
+          "duration": 6.0
+        }
+      ]
+    },
+    {
+      "id": "exsanguinate",
+      "name": "Exsanguinate",
+      "description": "Drain a target's blood over 6 seconds, dealing damage over time and reducing their healing by 60%",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 18.0,
+      "duration": 6.0,
+      "damagePerSecond": 25,
+      "effects": [
+        {
+          "stat": "healingReceived",
+          "multiplier": 0.40
+        }
+      ],
+      "targetType": "enemy"
+    }
+  ],
+
+  "upgrades": ["vampiric_fangs", "predator_instinct"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/chupacabra.obj",
+    "portrait": "textures/races/cryptids/portraits/chupacabra.png",
+    "icon": "textures/races/cryptids/icons/chupacabra.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/chupacabra_diffuse.png",
+      "normal": "textures/races/cryptids/units/chupacabra_normal.png",
+      "specular": "textures/races/cryptids/units/chupacabra_specular.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/chupacabra/idle.anim",
+      "walk": "animations/cryptids/chupacabra/prowl.anim",
+      "run": "animations/cryptids/chupacabra/sprint.anim",
+      "attack": "animations/cryptids/chupacabra/bite.anim",
+      "pounce": "animations/cryptids/chupacabra/pounce.anim",
+      "drain": "animations/cryptids/chupacabra/drain.anim",
+      "death": "animations/cryptids/chupacabra/death.anim"
+    },
+    "particleEffects": {
+      "blood_drain": "particles/cryptids/blood_drain.particle",
+      "frenzy": "particles/cryptids/blood_frenzy.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/chupacabra/hiss_1.wav", "sounds/cryptids/chupacabra/hiss_2.wav"],
+    "move": ["sounds/cryptids/chupacabra/growl.wav"],
+    "attack": ["sounds/cryptids/chupacabra/bite.wav"],
+    "pounce": ["sounds/cryptids/chupacabra/screech.wav"],
+    "death": ["sounds/cryptids/chupacabra/death.wav"],
+    "ready": ["sounds/cryptids/chupacabra/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.3,
+    "height": 1.4,
+    "mass": 65.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/hit_and_run.bt",
+    "profile": "aggressive",
+    "aggroRange": 11.0,
+    "priorityTargets": ["ranged", "caster", "low_health"],
+    "usePounceForEngagement": true,
+    "fleeWhenLowHealth": true,
+    "fleeThreshold": 0.25
+  }
+}

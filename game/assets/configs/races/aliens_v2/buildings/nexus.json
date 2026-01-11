@@ -1,0 +1,188 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "resource_building",
+  "id": "alien_nexus",
+  "name": "Nexus",
+  "description": "The heart of the Alien base. The Nexus warps in Probes and provides supply. It also projects a power field and can recall units in danger via Mass Recall.",
+  "race": "aliens",
+  "category": "resource",
+  "tier": 0,
+
+  "size": {
+    "width": 5,
+    "height": 5,
+    "footprintShape": "square"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "canPlaceOnWater": false,
+    "requiresFlatTerrain": true,
+    "minDistanceFromOther": 3.0,
+    "requiresNearby": "mineral_field",
+    "nearbyRange": 10.0,
+    "blocksPathing": true,
+    "providesVision": true
+  },
+
+  "health": 1000,
+  "healthRegen": 0,
+  "shield": 1000,
+  "shieldRegen": 2.0,
+  "shieldRegenDelay": 10.0,
+  "armor": 1,
+  "shieldArmor": 0,
+
+  "spawner": {
+    "queueSize": 5,
+    "simultaneousProduction": 1,
+    "hasRallyPoint": true,
+    "rallyPointRange": 50.0,
+    "spawnOffset": {
+      "x": 3.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "spawnAnimation": "anim_warp_in",
+    "spawnEffect": "effects/probe_warp_in.fx",
+    "spawnSound": "sounds/aliens/nexus/probe_complete.wav"
+  },
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "alien_probe",
+      "name": "Probe",
+      "hotkey": "P"
+    },
+    {
+      "type": "ability",
+      "id": "chrono_boost",
+      "name": "Chrono Boost",
+      "hotkey": "C"
+    },
+    {
+      "type": "ability",
+      "id": "mass_recall",
+      "name": "Mass Recall",
+      "hotkey": "R"
+    }
+  ],
+
+  "resourceGeneration": {
+    "requiresWorker": true,
+    "workerCapacity": 24,
+    "mineralGatherBonus": 0,
+    "vespeneGatherBonus": 0
+  },
+
+  "cost": {
+    "minerals": 400,
+    "vespene": 0
+  },
+
+  "buildTime": 100,
+  "requiredBuilding": null,
+  "requiredAge": 0,
+
+  "providesPopulation": 15,
+  "providesPower": true,
+  "powerRadius": 6.5,
+
+  "abilities": [
+    {
+      "id": "chrono_boost",
+      "name": "Chrono Boost",
+      "description": "Target structure produces 50% faster for 20 seconds",
+      "type": "targeted_building",
+      "hotkey": "C",
+      "cooldown": 0.0,
+      "range": 10.0,
+      "energyCost": 50,
+      "duration": 20.0,
+      "effects": [
+        {
+          "type": "production_speed_bonus",
+          "multiplier": 1.5,
+          "duration": 20.0
+        }
+      ]
+    },
+    {
+      "id": "mass_recall",
+      "name": "Mass Recall",
+      "description": "Teleport all friendly units in target area back to the Nexus",
+      "type": "targeted_position",
+      "hotkey": "R",
+      "cooldown": 130.0,
+      "range": 100.0,
+      "energyCost": 50,
+      "radius": 2.5,
+      "channelTime": 2.86,
+      "effects": [
+        {
+          "type": "mass_teleport",
+          "radius": 2.5,
+          "destination": "self",
+          "affectsAllies": true,
+          "channelTime": 2.86
+        }
+      ]
+    }
+  ],
+
+  "attackCapability": {
+    "canAttack": false
+  },
+
+  "isUnique": false,
+  "maxCount": 20,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "isPermanent": true,
+  "requiresPower": false,
+  "providesPower": true,
+
+  "visuals": {
+    "model": "models/races/aliens/buildings/nexus.fbx",
+    "icon": "textures/races/aliens/icons/buildings/nexus.png",
+    "portrait": "textures/races/aliens/portraits/nexus.png",
+    "constructionStages": 3,
+    "hasDestructionAnimation": true,
+    "destructionStages": 2,
+    "damageThreshold": 0.5,
+    "smokeWhenDamaged": false,
+    "fireWhenCritical": false,
+    "scale": 1.0,
+    "shadowSize": 5.0,
+    "teamColorParts": ["crystal_core"],
+    "shieldEffect": "effects/nexus_shield.fx",
+    "powerFieldEffect": "effects/power_field.fx",
+    "idleEffect": "effects/nexus_idle_glow.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/aliens/nexus/select1.wav",
+      "sounds/aliens/nexus/select2.wav"
+    ],
+    "construct": "sounds/aliens/nexus/warp_in.wav",
+    "complete": "sounds/aliens/nexus/complete.wav",
+    "destroy": "sounds/aliens/nexus/destroy.wav",
+    "trainComplete": "sounds/aliens/nexus/probe_complete.wav",
+    "chronoBoost": "sounds/aliens/nexus/chrono_boost.wav",
+    "massRecall": "sounds/aliens/nexus/mass_recall.wav",
+    "ambient": "sounds/aliens/nexus/ambient.wav"
+  },
+
+  "strategic": {
+    "importance": "critical",
+    "targetPriority": 0.9,
+    "defenseValue": 10,
+    "economicValue": 10,
+    "militaryValue": 2
+  },
+
+  "visionRange": 9.0
+}

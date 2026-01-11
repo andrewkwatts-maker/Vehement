@@ -1,0 +1,218 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "cavalry",
+  "id": "naga_manta_rider",
+  "name": "Manta Rider",
+  "description": "Naga cavalry mounted on giant manta rays. Glides through water and can briefly soar above waves.",
+
+  "category": "cavalry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 200,
+    "healthRegen": 0.7,
+    "mana": 60,
+    "manaRegen": 0.9,
+    "damage": 20,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.4,
+    "attackRange": 2.5,  // Lance reach
+    "armor": 2,
+    "magicResist": 2,
+    "moveSpeed": 7.5,  // Very fast
+    "turnSpeed": 360,
+    "acceleration": 15.0,
+    "sightRange": 14,  // Excellent vision
+    "critChance": 0.2,  // High crit on charge
+    "critMultiplier": 3.0
+  },
+
+  "combat": {
+    "attackType": "pierce",
+    "armorType": "medium",
+
+    "attackAnimation": {
+      "windupTime": 0.25,
+      "backswingTime": 0.4,
+      "totalDuration": 0.71
+    },
+
+    "bonusVs": [
+      {
+        "category": "ranged",
+        "multiplier": 1.7
+      },
+      {
+        "category": "caster",
+        "multiplier": 1.8
+      }
+    ],
+
+    "chargeAttack": {
+      "enabled": true,
+      "chargeDamageMultiplier": 2.0,
+      "chargeDistance": 12.0,
+      "chargeSpeed": 14.0,
+      "chargeCooldown": 15,
+      "knockbackDistance": 3.0
+    }
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "canGlide": true,  // Can briefly fly over obstacles
+    "glideHeight": 2.0,
+    "glideDuration": 3.0,
+
+    "collisionRadius": 0.65,
+    "pushPriority": 7,
+    "pathfindingType": "amphibious",
+    "unitSize": "large",
+
+    "waterMovementMultiplier": 1.9,
+    "landMovementMultiplier": 0.75,
+
+    "canCharge": true,
+    "chargeSpeed": 14.0,
+    "chargeDuration": 2.5,
+    "chargeStunDuration": 1.0
+  },
+
+  "cost": {
+    "gold": 160,
+    "wood": 20,
+    "food": 0,
+    "stone": 0,
+    "mana": 40
+  },
+
+  "trainTime": 42,
+  "populationCost": 3,
+  "requiredBuilding": "tidal_temple",
+  "requiredAge": 1,
+  "requiredTech": "manta_domestication",
+
+  "abilities": [
+    {
+      "id": "wave_jump",
+      "name": "Wave Jump",
+      "description": "Leaps over water on a wave crest, briefly gaining flying movement",
+      "manaCost": 25,
+      "cooldown": 18,
+      "duration": 3,
+      "effect": "Flying movement, immune to ground effects"
+    },
+    {
+      "id": "charge_strike",
+      "name": "Charge Strike",
+      "description": "Charges forward with lance, dealing double damage and knocking back target",
+      "manaCost": 20,
+      "cooldown": 15,
+      "range": 12
+    },
+    {
+      "id": "graceful_glide",
+      "name": "Graceful Glide",
+      "description": "Passive: Ignores pathing penalties in shallow water",
+      "passive": true
+    }
+  ],
+
+  "upgrades": [
+    "lance_mastery",
+    "manta_armor",
+    "cavalry_charge"
+  ],
+
+  "formation": {
+    "preferredPosition": "front",
+    "formationSpacing": 2.0,
+    "maintainFormation": false  // Flanking cavalry
+  },
+
+  "ai": {
+    "aggroRange": 16,
+    "cavalryBehavior": true,
+    "targetPriority": [
+      {
+        "type": "ranged",
+        "weight": 2.5
+      },
+      {
+        "type": "caster",
+        "weight": 2.3
+      },
+      {
+        "type": "isolated",
+        "weight": 2.0
+      }
+    ],
+    "useChargeOnCooldown": true,
+    "pursuitRange": 25
+  },
+
+  "visuals": {
+    "model": "models/units/naga/manta_rider.fbx",
+    "portrait": "textures/portraits/naga/manta_rider.png",
+    "icon": "textures/icons/units/naga/manta_rider.png",
+    "scale": 1.4,
+
+    "animations": {
+      "idle": "anim_idle_mounted",
+      "walk": "anim_manta_glide",
+      "attack": "anim_lance_strike",
+      "death": "anim_death",
+      "special": "anim_charge",
+      "fly": "anim_wave_jump"
+    },
+
+    "teamColorParts": ["rider_armor", "manta_saddle"],
+    "glowAtNight": true,
+    "glowColor": "#88CCFF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.7,
+      "pulseSpeed": 2.0,
+      "patterns": ["manta_wings", "rider_spear"]
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/manta/select1.wav"],
+    "move": ["sounds/units/naga/manta/move1.wav"],
+    "attack": ["sounds/units/naga/manta/attack1.wav"],
+    "death": ["sounds/units/naga/manta/death1.wav"],
+    "charge": "sounds/units/naga/manta/charge.wav"
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "mounted": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "moveSpeed": 1.9,
+        "chargeSpeed": 1.5,
+        "evasion": 0.15,
+        "sightRange": 1.2
+      },
+      "onLand": {
+        "moveSpeed": 0.75,
+        "chargeSpeed": 0.8
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Fast cavalry. Excellent mobility in water. Charge attacks devastate backline. Can glide briefly.",
+    "tacticalUse": "Flank and charge ranged/casters. Use wave jump to bypass obstacles. Scout with superior vision.",
+    "counters": ["ranged", "casters", "isolated_units"],
+    "counteredBy": ["pike_units", "area_damage", "roots"]
+  }
+}

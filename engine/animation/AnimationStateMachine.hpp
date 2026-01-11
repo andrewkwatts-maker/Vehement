@@ -87,7 +87,7 @@ struct StateBehavior {
 /**
  * @brief Single animation state in the state machine
  */
-struct AnimationState {
+struct StateNode {
     std::string name;
     std::string animationClip;
     float speed = 1.0f;
@@ -107,7 +107,7 @@ struct AnimationState {
     json blendTreeConfig;
 
     [[nodiscard]] json ToJson() const;
-    static AnimationState FromJson(const json& j);
+    static StateNode FromJson(const json& j);
 };
 
 /**
@@ -133,12 +133,12 @@ struct AnimationParameter {
 /**
  * @brief Animation layer for blending
  */
-struct AnimationLayer {
+struct StateMachineLayer {
     std::string name;
     float weight = 1.0f;
     std::string blendingMode = "override";  // override, additive
     std::string maskId;
-    std::vector<AnimationState> states;
+    std::vector<StateNode> states;
     std::string defaultState;
     int syncedLayerIndex = -1;
     bool ikPass = false;
@@ -148,7 +148,7 @@ struct AnimationLayer {
     float stateTime = 0.0f;
 
     [[nodiscard]] json ToJson() const;
-    static AnimationLayer FromJson(const json& j);
+    static StateMachineLayer FromJson(const json& j);
 };
 
 /**
@@ -258,8 +258,8 @@ public:
     /**
      * @brief Add a state to the machine
      */
-    void AddState(const AnimationState& state);
-    void AddState(AnimationState&& state);
+    void AddState(const StateNode& state);
+    void AddState(StateNode&& state);
 
     /**
      * @brief Remove a state by name
@@ -269,13 +269,13 @@ public:
     /**
      * @brief Get state by name
      */
-    [[nodiscard]] AnimationState* GetState(const std::string& name);
-    [[nodiscard]] const AnimationState* GetState(const std::string& name) const;
+    [[nodiscard]] StateNode* GetState(const std::string& name);
+    [[nodiscard]] const StateNode* GetState(const std::string& name) const;
 
     /**
      * @brief Get all states
      */
-    [[nodiscard]] const std::vector<AnimationState>& GetStates() const { return m_states; }
+    [[nodiscard]] const std::vector<StateNode>& GetStates() const { return m_states; }
 
     /**
      * @brief Set the default/initial state
@@ -290,18 +290,18 @@ public:
     /**
      * @brief Add an animation layer
      */
-    void AddLayer(const AnimationLayer& layer);
+    void AddLayer(const StateMachineLayer& layer);
 
     /**
      * @brief Get layer by name
      */
-    [[nodiscard]] AnimationLayer* GetLayer(const std::string& name);
-    [[nodiscard]] const AnimationLayer* GetLayer(const std::string& name) const;
+    [[nodiscard]] StateMachineLayer* GetLayer(const std::string& name);
+    [[nodiscard]] const StateMachineLayer* GetLayer(const std::string& name) const;
 
     /**
      * @brief Get all layers
      */
-    [[nodiscard]] const std::vector<AnimationLayer>& GetLayers() const { return m_layers; }
+    [[nodiscard]] const std::vector<StateMachineLayer>& GetLayers() const { return m_layers; }
 
     /**
      * @brief Set layer weight at runtime
@@ -446,8 +446,8 @@ private:
     std::string m_id;
     std::string m_name;
     std::string m_configPath;
-    std::vector<AnimationState> m_states;
-    std::vector<AnimationLayer> m_layers;
+    std::vector<StateNode> m_states;
+    std::vector<StateMachineLayer> m_layers;
     std::unordered_map<std::string, AnimationParameter> m_parameters;
     std::string m_defaultState;
 

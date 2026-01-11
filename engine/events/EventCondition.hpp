@@ -7,12 +7,8 @@
 #include <functional>
 #include <any>
 #include <variant>
+#include <nlohmann/json.hpp>
 
-// Forward declaration for JSON
-namespace nlohmann {
-    template<typename, typename, typename> class basic_json;
-    using json = basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, double, std::allocator, struct adl_serializer, std::vector<uint8_t>>;
-}
 using json = nlohmann::json;
 
 namespace Nova {

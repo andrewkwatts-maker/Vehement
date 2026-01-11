@@ -220,10 +220,10 @@ void Batching::Flush(const glm::mat4& viewProjection) {
 
         if (batch->instances.size() >= m_config.minInstancesForBatching &&
             m_instancingSupported && m_config.useInstancedRendering) {
-            RenderBatchInstanced(*batch, viewProjection);
+            DrawBatchInstanced(*batch, viewProjection);
             m_stats.instancedDrawCalls++;
         } else {
-            RenderBatch(*batch, viewProjection);
+            DrawBatch(*batch, viewProjection);
         }
     }
 }
@@ -259,7 +259,7 @@ void Batching::UpdateInstanceBuffer(RenderBatch& batch) {
     batch.dirty = false;
 }
 
-void Batching::RenderBatch(RenderBatch& batch, const glm::mat4& viewProjection) {
+void Batching::DrawBatch(RenderBatch& batch, const glm::mat4& viewProjection) {
     if (!batch.mesh || !batch.material) {
         return;
     }
@@ -279,7 +279,7 @@ void Batching::RenderBatch(RenderBatch& batch, const glm::mat4& viewProjection) 
     }
 }
 
-void Batching::RenderBatchInstanced(RenderBatch& batch, const glm::mat4& viewProjection) {
+void Batching::DrawBatchInstanced(RenderBatch& batch, const glm::mat4& viewProjection) {
     if (!batch.mesh || !batch.material || batch.instanceCount == 0) {
         return;
     }

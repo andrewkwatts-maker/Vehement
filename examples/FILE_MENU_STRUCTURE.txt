@@ -1,0 +1,348 @@
+================================================================================
+                      STANDALONE EDITOR - FILE MENU STRUCTURE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ File  Edit  View  Tools  Help                                   FPS: 60.0  │
+└─────────────────────────────────────────────────────────────────────────────┘
+  │
+  └─ File ▼
+     │
+     ├─ New Map                         Ctrl+N
+     │  └─> Opens: ShowNewMapDialog()
+     │      ┌─────────────────────────────────────────┐
+     │      │           New Map                       │
+     │      ├─────────────────────────────────────────┤
+     │      │ Map Properties                          │
+     │      │ ─────────────────                       │
+     │      │ Width:  [64      ]                      │
+     │      │ Height: [64      ]                      │
+     │      │                                         │
+     │      │ World Type:                             │
+     │      │ ◉ Flat      ○ Spherical                │
+     │      │                                         │
+     │      │ [ If Spherical selected: ]              │
+     │      │   Spherical World Settings:             │
+     │      │   Planet Radius: [6371.0 km]            │
+     │      │   Creates a spherical world with        │
+     │      │   lat/long coordinates                  │
+     │      │                                         │
+     │      │ ─────────────────                       │
+     │      │  [Create]  [Cancel]                     │
+     │      └─────────────────────────────────────────┘
+     │
+     ├─ Open                            Ctrl+O
+     │  └─> Calls: OpenNativeFileDialog()
+     │      └─> Shows: Windows native file picker
+     │          ┌─────────────────────────────────────────┐
+     │          │ Open Map                                │
+     │          ├─────────────────────────────────────────┤
+     │          │ Look in: ▼ [Documents      ]            │
+     │          │ ┌─────────────────────────────────────┐ │
+     │          │ │ 📁 maps                             │ │
+     │          │ │ 📄 level1.map                       │ │
+     │          │ │ 📄 level2.map                       │ │
+     │          │ │ 📄 test_map.map                     │ │
+     │          │ └─────────────────────────────────────┘ │
+     │          │ File name: [              ]             │
+     │          │ Files of type: [Map Files (*.map) ▼]    │
+     │          │                 [Open] [Cancel]         │
+     │          └─────────────────────────────────────────┘
+     │          └─> On Success: LoadMap(path)
+     │              └─> Adds to: Recent Files
+     │
+     ├─ Open Recent                     ▶
+     │  │  (Disabled if m_recentFiles empty)
+     │  │
+     │  └─ Submenu ▼
+     │     ├─ C:\maps\level1.map
+     │     │  └─> Calls: LoadMap(path) + AddToRecentFiles(path)
+     │     │
+     │     ├─ C:\maps\level2.map
+     │     │  └─> Calls: LoadMap(path) + AddToRecentFiles(path)
+     │     │
+     │     ├─ C:\maps\test_map.map
+     │     │  └─> Calls: LoadMap(path) + AddToRecentFiles(path)
+     │     │
+     │     ├─ ───────────────────────
+     │     │
+     │     └─ Clear Recent Files
+     │        └─> Calls: ClearRecentFiles()
+     │            └─> Clears m_recentFiles and saves to editor.json
+     │
+     ├─ ───────────────────────────────
+     │
+     ├─ Save                            Ctrl+S
+     │  └─> If m_currentMapPath not empty:
+     │      │   └─> Calls: SaveMap(m_currentMapPath)
+     │      │
+     │      └─> Else:
+     │          └─> Calls: SaveNativeFileDialog()
+     │              └─> Calls: SaveMap(path) + AddToRecentFiles(path)
+     │
+     ├─ Save As                         Ctrl+Shift+S
+     │  └─> Calls: SaveNativeFileDialog()
+     │      └─> Shows: Windows native save dialog
+     │          ┌─────────────────────────────────────────┐
+     │          │ Save Map As                             │
+     │          ├─────────────────────────────────────────┤
+     │          │ Save in: ▼ [Documents      ]            │
+     │          │ ┌─────────────────────────────────────┐ │
+     │          │ │ 📁 maps                             │ │
+     │          │ │ 📄 level1.map                       │ │
+     │          │ │ 📄 level2.map                       │ │
+     │          │ └─────────────────────────────────────┘ │
+     │          │ File name: [new_map.map]                │
+     │          │ Save as type: [Map Files (*.map) ▼]     │
+     │          │                 [Save] [Cancel]         │
+     │          └─────────────────────────────────────────┘
+     │          └─> On Success: SaveMap(path) + AddToRecentFiles(path)
+     │
+     ├─ ───────────────────────────────
+     │
+     ├─ Import                          ▶
+     │  │
+     │  └─ Submenu ▼
+     │     │
+     │     └─ Heightmap (PNG/RAW)
+     │        └─> Calls: OpenNativeFileDialog("*.png;*.raw")
+     │            └─> Calls: ImportHeightmap(path)
+     │                │
+     │                ├─ If .raw:
+     │                │   ├─ Read binary data
+     │                │   ├─ Auto-detect square dimensions
+     │                │   ├─ Convert 16-bit to float (0-100 range)
+     │                │   └─ Initialize terrain tiles
+     │                │
+     │                └─ If .png:
+     │                    └─> Shows: "Not implemented" warning
+     │                        (Requires stb_image.h)
+     │
+     ├─ Export                          ▶
+     │  │
+     │  └─ Submenu ▼
+     │     │
+     │     ├─ Heightmap (PNG)
+     │     │  └─> Calls: SaveNativeFileDialog("*.png")
+     │     │      └─> Calls: ExportHeightmap(path)
+     │     │          └─> Shows: "Not implemented" warning
+     │     │              (Requires stb_image_write.h)
+     │     │
+     │     └─ Heightmap (RAW)
+     │        └─> Calls: SaveNativeFileDialog("*.raw")
+     │            └─> Calls: ExportHeightmap(path)
+     │                ├─ Convert float heights to 16-bit
+     │                ├─ Clamp to 0-100 range
+     │                ├─ Normalize to 0-65535
+     │                └─> Write binary data
+     │
+     ├─ ───────────────────────────────
+     │
+     └─ Exit
+        └─> Handled by RTSApplication
+
+
+================================================================================
+                              FILE FORMAT DETAILS
+================================================================================
+
+Map File Format (.map)
+─────────────────────────────────────────────────────────────────────────────
+Offset  Size    Type        Description
+─────────────────────────────────────────────────────────────────────────────
+0x00    4       char[4]     Magic Number: "NOVA"
+0x04    4       uint32_t    Version: 1
+0x08    4       int         Map Width
+0x0C    4       int         Map Height
+0x10    4       int         World Type (0=Flat, 1=Spherical)
+0x14    W*H*4   int[]       Terrain Tiles (W*H integers)
+...     W*H*4   float[]     Terrain Heights (W*H floats)
+
+Example: 64x64 map = 4+4+4+4+4 + (4096*4) + (4096*4) = 32,788 bytes
+
+RAW Heightmap Format (.raw)
+─────────────────────────────────────────────────────────────────────────────
+Offset  Size    Type        Description
+─────────────────────────────────────────────────────────────────────────────
+0x00    N*N*2   uint16_t[]  Height values (0-65535)
+
+Example: 512x512 RAW = 512*512*2 = 524,288 bytes
+Dimensions detected via: sqrt(filesize / 2)
+
+Recent Files Format (editor.json)
+─────────────────────────────────────────────────────────────────────────────
+{
+  "recentFiles": [
+    "C:\\maps\\most_recent.map",
+    "C:\\maps\\second_recent.map",
+    "C:\\maps\\third_recent.map"
+  ]
+}
+
+Maximum: 10 files
+Location: assets/config/editor.json
+
+
+================================================================================
+                           KEYBOARD SHORTCUTS
+================================================================================
+
+Key Combination         Action              Notes
+─────────────────────────────────────────────────────────────────────────────
+Ctrl+N                  New Map             Opens dialog with Flat/Spherical
+Ctrl+O                  Open                Native file dialog
+Ctrl+S                  Save                Save As if no current path
+Ctrl+Shift+S            Save As             Always shows native dialog
+
+Additional Shortcuts (from Tools menu):
+─────────────────────────────────────────────────────────────────────────────
+Q                       Object Select
+W                       Move Tool
+E                       Rotate Tool
+R                       Scale Tool
+1                       Terrain Paint
+2                       Terrain Sculpt
+[                       Decrease Brush Size
+]                       Increase Brush Size
+Delete                  Delete Selected
+Escape                  Clear Selection
+
+
+================================================================================
+                              FUNCTION CALL FLOW
+================================================================================
+
+User Action: "Press Ctrl+N"
+─────────────────────────────────────────────────────────────────────────────
+1. RenderUI() detects Ctrl+N
+2. Sets m_showNewMapDialog = true
+3. Next frame: ShowNewMapDialog() runs
+4. User selects Flat/Spherical and dimensions
+5. User clicks Create
+6. Calls NewLocalMap(w,h) or NewWorldMap()
+7. Initializes m_terrainTiles and m_terrainHeights
+8. Dialog closes
+
+User Action: "File > Open"
+─────────────────────────────────────────────────────────────────────────────
+1. User clicks "Open" menu item
+2. Calls OpenNativeFileDialog("*.map", "Open Map")
+3. Windows shows GetOpenFileNameA dialog
+4. User selects file, clicks Open
+5. Returns path string
+6. Calls LoadMap(path)
+   6a. Opens binary file
+   6b. Reads and validates "NOVA" magic
+   6c. Reads version, dimensions, world type
+   6d. Reads terrain tiles array
+   6e. Reads terrain heights array
+   6f. Closes file
+   6g. Updates m_currentMapPath
+7. Calls AddToRecentFiles(path)
+   7a. Removes duplicates
+   7b. Inserts at front
+   7c. Limits to 10 entries
+   7d. Calls SaveRecentFiles()
+       7d-i.  Opens assets/config/editor.json
+       7d-ii. Writes JSON array
+       7d-iii. Closes file
+
+User Action: "File > Save As"
+─────────────────────────────────────────────────────────────────────────────
+1. User clicks "Save As" (or Ctrl+Shift+S)
+2. Calls SaveNativeFileDialog("*.map", "Save Map As", "map")
+3. Windows shows GetSaveFileNameA dialog
+4. User enters filename, clicks Save
+5. Windows checks overwrite (OFN_OVERWRITEPROMPT)
+6. Returns path string
+7. Calls SaveMap(path)
+   7a. Opens binary file for writing
+   7b. Writes "NOVA" magic
+   7c. Writes version (1)
+   7d. Writes dimensions and world type
+   7e. Writes terrain tiles array
+   7f. Writes terrain heights array
+   7g. Closes file
+   7h. Updates m_currentMapPath
+8. Calls AddToRecentFiles(path)
+9. Recent files menu updates
+
+User Action: "File > Import > Heightmap (PNG/RAW)"
+─────────────────────────────────────────────────────────────────────────────
+1. User clicks "Heightmap (PNG/RAW)"
+2. Calls OpenNativeFileDialog("*.png;*.raw", "Import Heightmap")
+3. User selects .raw file
+4. Calls ImportHeightmap(path)
+   4a. Detects .raw extension
+   4b. Opens binary file
+   4c. Gets file size
+   4d. Calculates dimension = sqrt(filesize/2)
+   4e. Reads uint16_t array
+   4f. Converts to float (0-100 range)
+   4g. Updates m_terrainHeights
+   4h. Initializes m_terrainTiles to 0 (grass)
+   4i. Updates m_mapWidth, m_mapHeight
+5. Terrain updates in next render
+
+
+================================================================================
+                            ERROR HANDLING
+================================================================================
+
+Scenario: User tries to load corrupt .map file
+─────────────────────────────────────────────────────────────────────────────
+1. LoadMap() opens file
+2. Reads first 4 bytes
+3. Compares to "NOVA"
+4. Mismatch detected
+5. Logs error: "Invalid map file format"
+6. Closes file
+7. Returns false
+8. Map remains unchanged
+
+Scenario: File write fails (disk full, permissions)
+─────────────────────────────────────────────────────────────────────────────
+1. SaveMap() tries to open file
+2. std::ofstream::open() fails
+3. if (!file.is_open()) check catches it
+4. Logs error: "Failed to create map file: {path}"
+5. Returns false
+6. No data lost (original file unchanged)
+
+Scenario: Exception during I/O
+─────────────────────────────────────────────────────────────────────────────
+1. File operation in progress
+2. Exception thrown (bad_alloc, etc.)
+3. Caught by try-catch block
+4. Logs error: "Exception while loading/saving map: {what}"
+5. Closes file in catch block
+6. Returns false
+
+Scenario: Recent files config doesn't exist
+─────────────────────────────────────────────────────────────────────────────
+1. LoadRecentFiles() runs in Initialize()
+2. Opens assets/config/editor.json
+3. File doesn't exist
+4. if (!file.is_open()) check catches it
+5. Logs info: "No editor config found, starting with empty recent files"
+6. m_recentFiles remains empty
+7. "Open Recent" menu disabled
+
+
+================================================================================
+                       INTEGRATION CHECKLIST
+================================================================================
+
+☐ 1. Add #include <fstream>
+☐ 2. Add Windows headers (#ifdef _WIN32)
+☐ 3. Copy all function implementations from StandaloneEditor_FileMenuImplementations.cpp
+☐ 4. Replace ShowNewMapDialog() with enhanced version
+☐ 5. Replace LoadMap() stub with full implementation
+☐ 6. Replace SaveMap() stub with full implementation
+☐ 7. Add LoadRecentFiles() call to Initialize()
+☐ 8. Replace File menu in RenderUI()
+☐ 9. Add keyboard shortcuts at start of RenderUI()
+☐ 10. Create assets/config/ directory
+☐ 11. Build and test
+
+================================================================================

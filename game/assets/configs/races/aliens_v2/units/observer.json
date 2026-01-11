@@ -1,0 +1,157 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "alien_observer",
+  "name": "Observer",
+  "description": "Cloaked detector units that provide vision and can detect cloaked and burrowed units. Observers are essential for scouting and countering invisible threats.",
+  "race": "aliens",
+  "category": "air",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 40,
+    "healthRegen": 0,
+    "shield": 20,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+
+    "damage": 0,
+    "attackSpeed": 0,
+    "attackRange": 0,
+
+    "armor": 0,
+    "shieldArmor": 1,
+    "magicResist": 0,
+
+    "moveSpeed": 3.36,
+    "turnSpeed": 999,
+    "acceleration": 999,
+
+    "sightRange": 11,
+    "detectionRange": 11
+  },
+
+  "combat": {
+    "attackType": "none",
+    "armorType": "light"
+  },
+
+  "movement": {
+    "movementType": "flying",
+    "flyingHeight": 2.5,
+    "collisionRadius": 0.4,
+    "unitSize": "small"
+  },
+
+  "cost": {
+    "minerals": 25,
+    "vespene": 75,
+    "supply": 1
+  },
+
+  "trainTime": 30,
+  "populationCost": 1,
+  "requiredBuilding": "alien_robotics_facility",
+
+  "abilities": [
+    {
+      "id": "permanent_cloak",
+      "name": "Surveillance Mode",
+      "description": "Passive: Permanently cloaked and can detect cloaked/burrowed units",
+      "type": "passive",
+      "unlockedByDefault": true,
+      "effects": [
+        {
+          "type": "permanent_cloak"
+        },
+        {
+          "type": "detector",
+          "range": 11
+        }
+      ]
+    },
+    {
+      "id": "gravitic_boosters",
+      "name": "Gravitic Boosters",
+      "description": "Passive: Increases movement speed by 1.31",
+      "type": "passive",
+      "requiredTech": "gravitic_boosters_upgrade",
+      "unlockedByDefault": false,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "value": 1.31
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "gravitic_boosters_upgrade"
+  ],
+
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": false,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+  "canDetectCloaked": true,
+
+  "attributes": {
+    "isBiological": false,
+    "isPsionic": false,
+    "isLight": true,
+    "isArmored": false,
+    "isMassive": false,
+    "isMechanical": true,
+    "cargoSize": 1,
+    "canBeWarped": false,
+    "isCloaked": true,
+    "permanentCloak": true,
+    "providesDetection": true
+  },
+
+  "formation": {
+    "preferredPosition": "any",
+    "formationSpacing": 0,
+    "maintainFormation": false
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/scout.bt",
+    "profile": "scout",
+    "avoidCombat": true,
+    "fleeFromEnemies": true,
+    "fleeDistance": 10.0
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/observer.fbx",
+    "portrait": "textures/races/aliens/portraits/observer.png",
+    "icon": "textures/races/aliens/icons/observer.png",
+    "scale": 0.7,
+    "cloakEffect": "effects/observer_cloak.fx",
+    "shieldEffect": "effects/shield_shimmer.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/aliens/observer/select1.wav"
+    ],
+    "move": [
+      "sounds/aliens/observer/move1.wav"
+    ]
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.4,
+    "mass": 25.0
+  }
+}

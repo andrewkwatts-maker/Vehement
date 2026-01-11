@@ -1,0 +1,145 @@
+{
+  "description": "Unified rendering pipeline configuration for SDF-first, polygon, and hybrid rendering",
+
+  "renderMode": "sdf_first",
+  "_renderModeOptions": ["sdf_first", "polygon_first", "hybrid", "auto"],
+  "_renderModeDescription": "sdf_first: SDF raymarch then polygons | polygon_first: Polygons then SDF | hybrid: Both simultaneously | auto: Dynamically choose",
+
+  "useRTX": false,
+  "_useRTXDescription": "Enable hardware raytracing (RTX). Falls back to compute if unavailable",
+
+  "fallbackToCompute": true,
+  "_fallbackToComputeDescription": "Use compute shaders for raymarching if RTX unavailable",
+
+  "sdfRasterizer": {
+    "tileSize": 16,
+    "_tileSizeDescription": "Tile size for tile-based culling (8, 16, or 32)",
+
+    "maxRaymarchSteps": 128,
+    "_maxRaymarchStepsDescription": "Maximum raymarching steps per ray (64-256)",
+
+    "rayEpsilon": 0.001,
+    "_rayEpsilonDescription": "Ray hit threshold for SDF surface detection",
+
+    "enableShadows": true,
+    "_enableShadowsDescription": "Enable shadow rays during SDF raymarching",
+
+    "shadowSteps": 32,
+    "_shadowStepsDescription": "Maximum steps for shadow rays (16-64)",
+
+    "enableAO": true,
+    "_enableAODescription": "Enable ambient occlusion sampling",
+
+    "aoRadius": 0.5,
+    "_aoRadiusDescription": "Ambient occlusion sampling radius",
+
+    "aoSamples": 4,
+    "_aoSamplesDescription": "Number of AO samples per pixel (2-8)"
+  },
+
+  "polygonRasterizer": {
+    "shadowMapSize": 2048,
+    "_shadowMapSizeDescription": "Shadow map resolution per cascade (1024, 2048, 4096)",
+
+    "cascadeCount": 4,
+    "_cascadeCountDescription": "Number of cascaded shadow maps (1-4)",
+
+    "enableMSAA": false,
+    "_enableMSAADescription": "Enable multi-sample anti-aliasing",
+
+    "msaaSamples": 4,
+    "_msaaSamplesDescription": "MSAA sample count (2, 4, 8, 16)"
+  },
+
+  "hybridSettings": {
+    "renderOrder": "sdf_then_polygons",
+    "_renderOrderOptions": ["sdf_then_polygons", "polygons_then_sdf", "auto"],
+    "_renderOrderDescription": "Order of rendering passes in hybrid mode",
+
+    "enableDepthInterleaving": true,
+    "_enableDepthInterleavingDescription": "Enable Z-buffer merging between passes",
+
+    "depthBias": 0.0001,
+    "_depthBiasDescription": "Depth bias to prevent Z-fighting between SDF and polygons",
+
+    "autoOrderThreshold": 0.5,
+    "_autoOrderThresholdDescription": "SDF percentage threshold for auto render order selection (0.0-1.0)"
+  },
+
+  "performance": {
+    "enableFrustumCulling": true,
+    "enableOcclusionCulling": false,
+    "_occlusionCullingDescription": "CPU occlusion culling (expensive, usually not worth it)",
+
+    "enableLOD": true,
+    "_enableLODDescription": "Enable level-of-detail system for polygon meshes",
+
+    "tileCulling": true,
+    "_tileCullingDescription": "Enable tile-based frustum culling for SDF objects",
+
+    "maxSDFObjectsPerTile": 32,
+    "_maxSDFObjectsPerTileDescription": "Maximum SDF objects to test per tile"
+  },
+
+  "quality": {
+    "preset": "high",
+    "_presetOptions": ["low", "medium", "high", "ultra"],
+    "_presetDescription": "Quality preset that overrides individual settings",
+
+    "presets": {
+      "low": {
+        "sdfTileSize": 32,
+        "maxRaymarchSteps": 64,
+        "shadowMapSize": 1024,
+        "cascadeCount": 2,
+        "enableShadows": false,
+        "enableAO": false
+      },
+      "medium": {
+        "sdfTileSize": 16,
+        "maxRaymarchSteps": 96,
+        "shadowMapSize": 2048,
+        "cascadeCount": 3,
+        "enableShadows": true,
+        "enableAO": false
+      },
+      "high": {
+        "sdfTileSize": 16,
+        "maxRaymarchSteps": 128,
+        "shadowMapSize": 2048,
+        "cascadeCount": 4,
+        "enableShadows": true,
+        "enableAO": true,
+        "aoSamples": 4
+      },
+      "ultra": {
+        "sdfTileSize": 8,
+        "maxRaymarchSteps": 256,
+        "shadowMapSize": 4096,
+        "cascadeCount": 4,
+        "enableShadows": true,
+        "enableAO": true,
+        "aoSamples": 8,
+        "enableMSAA": true,
+        "msaaSamples": 4
+      }
+    }
+  },
+
+  "debug": {
+    "showTiles": false,
+    "_showTilesDescription": "Visualize tile boundaries and active tiles",
+
+    "showDepthBuffer": false,
+    "_showDepthBufferDescription": "Display depth buffer in grayscale",
+
+    "showPerformanceOverlay": true,
+    "_showPerformanceOverlayDescription": "Display FPS and timing information",
+
+    "colorByRenderMode": false,
+    "_colorByRenderModeDescription": "Tint SDFs and polygons different colors for debugging",
+
+    "logFrameTiming": false,
+    "_logFrameTimingDescription": "Log per-frame timing to console"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "id": "undead_graveyard",
+  "name": "Graveyard",
+  "description": "A field of tombstones and open graves where the dead rise to serve. Trains basic undead infantry units and stores corpses.",
+  "race": "undead",
+  "category": "military",
+  "tier": 1,
+
+  "size": {
+    "width": 4,
+    "height": 4
+  },
+
+  "health": 1100,
+  "armor": 4,
+  "magicResist": 10,
+
+  "cost": {
+    "gold": 240,
+    "wood": 120
+  },
+
+  "buildTime": 60,
+  "requiredBuilding": "undead_necropolis",
+  "requiredAge": 0,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "undead_skeleton",
+      "requiredAge": 0
+    },
+    {
+      "type": "unit",
+      "id": "undead_zombie",
+      "requiredAge": 1
+    },
+    {
+      "type": "unit",
+      "id": "undead_ghoul",
+      "requiredAge": 1
+    }
+  ],
+
+  "resourceGeneration": {
+    "corpseStorage": 15,
+    "manaPerSecond": 0.25,
+    "requiresWorker": false
+  },
+
+  "garrisonCapacity": 0,
+
+  "attackCapability": {
+    "canAttack": false
+  },
+
+  "abilities": [
+    {
+      "id": "corpse_generation",
+      "name": "Corpse Generation",
+      "description": "Periodically generates 1 corpse every 120 seconds (max storage: 15)",
+      "type": "passive",
+      "generationRate": 120.0,
+      "resourceType": "corpse",
+      "maxStorage": 15
+    },
+    {
+      "id": "blight_spreader",
+      "name": "Blight Spreader",
+      "description": "Spreads blight in a 20 unit radius",
+      "type": "passive",
+      "auraRadius": 20.0,
+      "createsBlight": true,
+      "blightGrowthRate": 0.3
+    },
+    {
+      "id": "mass_resurrection",
+      "name": "Mass Resurrection",
+      "description": "Raise 5 skeletons from stored corpses (costs 5 corpses)",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 90.0,
+      "corpseCost": 5,
+      "summonCount": 5,
+      "summonUnit": "undead_skeleton",
+      "summonDuration": 60.0
+    }
+  ],
+
+  "aura": {
+    "id": "graveyard_aura",
+    "name": "Unhallowed Ground",
+    "radius": 20.0,
+    "effects": [
+      {
+        "stat": "damage",
+        "value": 0.10,
+        "type": "percent",
+        "scope": "undead"
+      }
+    ]
+  },
+
+  "isUnique": false,
+  "maxCount": 12,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "visuals": {
+    "model": "models/races/undead/buildings/graveyard.obj",
+    "icon": "textures/races/undead/icons/buildings/graveyard.png",
+    "textures": {
+      "diffuse": "textures/races/undead/buildings/graveyard_diffuse.png",
+      "normal": "textures/races/undead/buildings/graveyard_normal.png",
+      "emissive": "textures/races/undead/buildings/graveyard_emissive.png"
+    },
+    "constructionStages": 3,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "blightWhenDamaged": true,
+    "damageThreshold": 0.5
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/graveyard/select.wav"],
+    "complete": ["sounds/undead/graveyard/complete.wav"],
+    "destroyed": ["sounds/undead/graveyard/destroyed.wav"],
+    "resurrect": ["sounds/undead/graveyard/resurrect.wav"]
+  },
+
+  "visionRange": 10.0,
+
+  "blightProperties": {
+    "createsBlight": true,
+    "blightRadius": 20.0,
+    "blightGrowthRate": 0.3,
+    "requiresBlight": false
+  }
+}

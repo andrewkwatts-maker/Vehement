@@ -1,0 +1,163 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "fairy_dragon",
+  "name": "Faerie Dragon",
+  "description": "Small magical dragons with powerful enchantment abilities. Faerie Dragons can phase shift to avoid attacks, mana burn enemies, and emit a protective anti-magic aura.",
+  "race": "fairies",
+  "category": "air",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 280,
+    "healthRegen": 1.0,
+    "mana": 300,
+    "manaRegen": 3.0,
+    "damage": 20,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.4,
+    "attackRange": 7,
+    "armor": 2,
+    "magicResist": 40,
+    "moveSpeed": 7.0,
+    "sightRange": 15,
+    "spellPower": 50
+  },
+
+  "cost": {
+    "gold": 280,
+    "wood": 30,
+    "mana": 120,
+    "food": 4
+  },
+
+  "trainTime": 45,
+  "populationCost": 3,
+  "requiredBuilding": "fairy_moonwell",
+  "requiredAge": 2,
+
+  "armorType": "light",
+  "attackType": "magic",
+  "movementType": "flying",
+  "flyingHeight": 4.0,
+
+  "projectile": {
+    "id": "arcane_bolt",
+    "type": "linear",
+    "speed": 22.0,
+    "model": "models/projectiles/arcane_bolt.obj",
+    "trailEffect": "effects/arcane_trail.fx",
+    "impactEffect": "effects/arcane_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "phase_shift",
+      "name": "Phase Shift",
+      "description": "Become ethereal, immune to physical attacks for 4 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 20.0,
+      "manaCost": 50,
+      "duration": 4.0
+    },
+    {
+      "id": "mana_burn",
+      "name": "Mana Burn",
+      "description": "Burn 100 mana from target, dealing 0.5 damage per mana burned",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 8.0,
+      "manaCost": 40,
+      "range": 9.0,
+      "manaBurned": 100,
+      "damagePerMana": 0.5
+    },
+    {
+      "id": "anti_magic_shell",
+      "name": "Anti-Magic Shell",
+      "description": "Create a barrier that absorbs up to 300 magic damage for 8 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 30.0,
+      "manaCost": 80,
+      "duration": 8.0,
+      "absorbAmount": 300
+    },
+    {
+      "id": "arcane_breath",
+      "name": "Arcane Breath",
+      "description": "Breathe arcane fire in a cone, dealing 100 magic damage and silencing for 3 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 25.0,
+      "manaCost": 100,
+      "range": 8.0,
+      "coneAngle": 60,
+      "damage": 100,
+      "silenceDuration": 3.0
+    }
+  ],
+
+  "auras": [
+    {
+      "id": "spell_resistance_aura",
+      "name": "Spell Resistance Aura",
+      "radius": 8.0,
+      "affectsAllies": true,
+      "effects": [
+        {
+          "stat": "magicResist",
+          "value": 15,
+          "type": "flat"
+        }
+      ]
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/faerie_dragon.obj",
+    "portrait": "textures/races/fairies/portraits/faerie_dragon.png",
+    "icon": "textures/races/fairies/icons/faerie_dragon.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/faerie_dragon_diffuse.png",
+      "emissive": "textures/races/fairies/units/faerie_dragon_glow.png",
+      "normal": "textures/races/fairies/units/faerie_dragon_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/faerie_dragon/hover.anim",
+      "walk": "animations/fairies/faerie_dragon/fly.anim",
+      "attack": "animations/fairies/faerie_dragon/spit.anim",
+      "death": "animations/fairies/faerie_dragon/death.anim",
+      "cast": "animations/fairies/faerie_dragon/cast.anim",
+      "breath": "animations/fairies/faerie_dragon/breath.anim"
+    },
+    "wingTrailEffect": "effects/faerie_dragon_trail.fx",
+    "auraEffect": "effects/anti_magic_aura.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/faerie_dragon/select_1.wav", "sounds/fairies/faerie_dragon/chirp.wav"],
+    "move": ["sounds/fairies/faerie_dragon/ack_1.wav"],
+    "attack": ["sounds/fairies/faerie_dragon/attack.wav"],
+    "death": ["sounds/fairies/faerie_dragon/death.wav"],
+    "cast": ["sounds/fairies/faerie_dragon/cast.wav"],
+    "ready": ["sounds/fairies/faerie_dragon/ready.wav"]
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.6,
+    "mass": 40.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/caster_flyer.bt",
+    "profile": "caster",
+    "aggroRange": 14.0,
+    "preferredDistance": 8.0,
+    "manaConservationThreshold": 0.25,
+    "priorityAbilities": ["mana_burn", "arcane_breath"]
+  }
+}

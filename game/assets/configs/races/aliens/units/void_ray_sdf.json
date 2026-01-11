@@ -1,0 +1,248 @@
+{
+    "id": "void_ray",
+    "name": "Void Ray",
+    "race": "aliens",
+    "type": "unit",
+    "category": "flying",
+    "description": "Powerful beam weapon platform that channels prismatic energy with charging damage.",
+
+    "stats": {
+        "health": 150,
+        "shield": 100,
+        "armor": 0,
+        "damage": 6,
+        "attackSpeed": 0.36,
+        "moveSpeed": 350,
+        "attackRange": 600
+    },
+
+    "costs": {
+        "minerals": 250,
+        "vespene": 150,
+        "supply": 4,
+        "buildTime": 60.0
+    },
+
+    "sdfModel": {
+        "name": "void_ray_model",
+        "bounds": { "min": [-1.0, -0.4, -1.5], "max": [1.0, 0.6, 1.5] },
+        "primitives": [
+            {
+                "id": "hull_main",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.3, 0.2, 0.7] },
+                "transform": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.8, "roughness": 0.3, "emissive": [0.02, 0.04, 0.07] },
+                "operation": "Union"
+            },
+            {
+                "id": "hull_upper",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.25, 0.15, 0.5] },
+                "transform": { "position": [0.0, 0.15, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.2, 0.32, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.05
+            },
+            {
+                "id": "cockpit",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.15, 0.1, 0.25] },
+                "transform": { "position": [0.0, 0.2, 0.2], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.25, 0.7, 1.0, 0.9], "metallic": 0.1, "roughness": 0.15, "emissive": [0.3, 0.7, 0.95] },
+                "operation": "Union"
+            },
+            {
+                "id": "prismatic_core",
+                "type": "Sphere",
+                "params": { "radius": 0.15 },
+                "transform": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.4, 0.3, 0.9, 1.0], "metallic": 0.1, "roughness": 0.1, "emissive": [0.5, 0.4, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "prismatic_ring_1",
+                "type": "Torus",
+                "params": { "majorRadius": 0.2, "minorRadius": 0.02 },
+                "transform": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.7, 0.6, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.2, 0.15, 0.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "prismatic_ring_2",
+                "type": "Torus",
+                "params": { "majorRadius": 0.2, "minorRadius": 0.02 },
+                "transform": { "position": [0.0, 0.0, 0.0], "rotation": [0.707, 0.0, 0.0, 0.707], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.7, 0.6, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.2, 0.15, 0.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "beam_emitter",
+                "type": "Cone",
+                "params": { "radius1": 0.08, "radius2": 0.03, "height": 0.4 },
+                "transform": { "position": [0.0, 0.0, 1.0], "rotation": [0.707, 0.0, 0.0, 0.707], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.85, "roughness": 0.25 },
+                "operation": "Union"
+            },
+            {
+                "id": "beam_crystal",
+                "type": "Cone",
+                "params": { "radius1": 0.01, "radius2": 0.05, "height": 0.15 },
+                "transform": { "position": [0.0, 0.0, 1.25], "rotation": [0.707, 0.0, 0.0, 0.707], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.3, 1.0, 0.95], "metallic": 0.1, "roughness": 0.1, "emissive": [0.6, 0.4, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "wing_left",
+                "type": "RoundedBox",
+                "params": { "size": [0.6, 0.04, 0.4], "radius": 0.02 },
+                "transform": { "position": [-0.45, 0.0, -0.2], "rotation": [0.0, 0.0, -0.1, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.2, 0.32, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union"
+            },
+            {
+                "id": "wing_right",
+                "type": "RoundedBox",
+                "params": { "size": [0.6, 0.04, 0.4], "radius": 0.02 },
+                "transform": { "position": [0.45, 0.0, -0.2], "rotation": [0.0, 0.0, 0.1, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.2, 0.32, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union"
+            },
+            {
+                "id": "wing_crystal_left",
+                "type": "Cone",
+                "params": { "radius1": 0.01, "radius2": 0.04, "height": 0.15 },
+                "transform": { "position": [-0.75, 0.05, -0.2], "rotation": [0.0, 0.0, 0.3, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.3, 1.0, 0.95], "metallic": 0.1, "roughness": 0.1, "emissive": [0.5, 0.35, 0.9] },
+                "operation": "Union"
+            },
+            {
+                "id": "wing_crystal_right",
+                "type": "Cone",
+                "params": { "radius1": 0.01, "radius2": 0.04, "height": 0.15 },
+                "transform": { "position": [0.75, 0.05, -0.2], "rotation": [0.0, 0.0, -0.3, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.3, 1.0, 0.95], "metallic": 0.1, "roughness": 0.1, "emissive": [0.5, 0.35, 0.9] },
+                "operation": "Union"
+            },
+            {
+                "id": "engine_left",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.08, 0.06, 0.2] },
+                "transform": { "position": [-0.3, -0.1, -0.5], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.2, 0.32, 1.0], "metallic": 0.8, "roughness": 0.3 },
+                "operation": "Union"
+            },
+            {
+                "id": "engine_right",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.08, 0.06, 0.2] },
+                "transform": { "position": [0.3, -0.1, -0.5], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.2, 0.32, 1.0], "metallic": 0.8, "roughness": 0.3 },
+                "operation": "Union"
+            },
+            {
+                "id": "engine_glow_left",
+                "type": "Sphere",
+                "params": { "radius": 0.05 },
+                "transform": { "position": [-0.3, -0.1, -0.7], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.5, 0.3, 1.0, 1.0], "metallic": 0.0, "roughness": 0.1, "emissive": [0.6, 0.4, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "engine_glow_right",
+                "type": "Sphere",
+                "params": { "radius": 0.05 },
+                "transform": { "position": [0.3, -0.1, -0.7], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.5, 0.3, 1.0, 1.0], "metallic": 0.0, "roughness": 0.1, "emissive": [0.6, 0.4, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "tail_fin",
+                "type": "RoundedBox",
+                "params": { "size": [0.02, 0.2, 0.25], "radius": 0.01 },
+                "transform": { "position": [0.0, 0.15, -0.55], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "body", "parent": "root", "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "core_ring", "parent": "body", "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 3.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "core_ring": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 1.5, "bones": { "root": { "position": [0.0, 0.05, 0.0] }, "core_ring": { "rotation": [0.0, 0.38, 0.0, 0.92] } } },
+                { "time": 3.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "core_ring": { "rotation": [0.0, 0.71, 0.0, 0.71] } } }
+            ]
+        },
+        "fly": {
+            "duration": 1.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "body": { "rotation": [0.03, 0.0, 0.0, 0.9995] }, "core_ring": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.5, "bones": { "body": { "rotation": [-0.03, 0.0, 0.0, 0.9995] }, "core_ring": { "rotation": [0.0, 0.71, 0.0, 0.71] } } },
+                { "time": 1.0, "bones": { "body": { "rotation": [0.03, 0.0, 0.0, 0.9995] }, "core_ring": { "rotation": [0.0, 1.0, 0.0, 0.0] } } }
+            ]
+        },
+        "attack_charging": {
+            "duration": 4.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "body": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 1.3, "bones": { "body": { "rotation": [-0.03, 0.0, 0.0, 0.9995] } }, "events": ["beam_level_1"] },
+                { "time": 2.6, "bones": { "body": { "rotation": [-0.05, 0.0, 0.0, 0.999] } }, "events": ["beam_level_2"] },
+                { "time": 4.0, "bones": { "body": { "rotation": [-0.08, 0.0, 0.0, 0.997] } }, "events": ["beam_level_3"] }
+            ]
+        },
+        "prismatic_alignment": {
+            "duration": 1.5, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "body": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.5, "bones": { "body": { "rotation": [-0.1, 0.0, 0.0, 0.995] } }, "events": ["prismatic_activate"] },
+                { "time": 1.5, "bones": { "body": { "rotation": [-0.08, 0.0, 0.0, 0.997] } } }
+            ]
+        },
+        "death": {
+            "duration": 2.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.6, "bones": { "root": { "position": [0.0, -0.3, 0.0], "rotation": [0.2, 0.1, 0.3, 0.92] } }, "events": ["explosion_core"] },
+                { "time": 2.0, "bones": { "root": { "position": [0.0, -3.0, 0.5], "rotation": [0.5, 0.3, 0.5, 0.64] } } }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "fly", "condition": "isMoving" }, { "to": "attack_charging", "condition": "isAttacking" }, { "to": "prismatic_alignment", "condition": "isPrismaticActive" }, { "to": "death", "condition": "isDead" }] },
+            "fly": { "animation": "fly", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "attack_charging", "condition": "isAttacking" }, { "to": "prismatic_alignment", "condition": "isPrismaticActive" }, { "to": "death", "condition": "isDead" }] },
+            "attack_charging": { "animation": "attack_charging", "transitions": [{ "to": "idle", "condition": "!isAttacking && !isMoving" }, { "to": "fly", "condition": "!isAttacking && isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "prismatic_alignment": { "animation": "prismatic_alignment", "transitions": [{ "to": "attack_charging", "condition": "animationComplete && isAttacking" }, { "to": "idle", "condition": "animationComplete && !isAttacking" }, { "to": "death", "condition": "isDead" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "prismatic_alignment", "name": "Prismatic Alignment", "description": "Instantly activates maximum beam charge for 14.3 seconds.", "hotkey": "A", "cooldown": 60.0 }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "void_ray_online" }, { "type": "spawn_effect", "effect": "warp_in_air", "duration": 1.5 }] },
+        "on_attack": { "actions": [{ "type": "play_sound", "sound": "void_beam" }, { "type": "spawn_effect", "effect": "void_beam" }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "void_ray_death" }, { "type": "spawn_effect", "effect": "prismatic_explosion" }] }
+    },
+
+    "effects": {
+        "warp_in_air": { "type": "flash", "color": [0.5, 0.3, 1.0, 0.8], "duration": 1.5 },
+        "void_beam": { "type": "beam", "color": [0.5, 0.3, 1.0, 0.9], "width": 0.15, "charging": true },
+        "prismatic_explosion": { "type": "explosion", "radius": 2.5, "color": [0.5, 0.4, 1.0, 0.8], "particles": { "type": "prismatic_shards", "count": 50, "color": [0.6, 0.4, 1.0, 1.0] } }
+    }
+}

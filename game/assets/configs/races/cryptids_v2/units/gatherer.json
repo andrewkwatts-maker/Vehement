@@ -1,0 +1,135 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "worker",
+  "id": "cryptid_gatherer",
+  "name": "Forest Sprite",
+  "description": "Small, nimble cryptids that gather resources while remaining nearly invisible in natural terrain. They blend seamlessly with the forest and can vanish at the first sign of danger.",
+  "race": "cryptids",
+  "category": "worker",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 35,
+    "healthRegen": 0.5,
+    "damage": 3,
+    "attackSpeed": 0.8,
+    "attackRange": 1,
+    "armor": 0,
+    "moveSpeed": 5.0
+  },
+
+  "cost": {
+    "gold": 60,
+    "food": 1
+  },
+
+  "trainTime": 12,
+  "requiredBuilding": "cryptid_den",
+
+  "canGather": true,
+  "canBuild": true,
+  "canRepair": true,
+
+  "gatheringRates": {
+    "gold": 8,
+    "wood": 15,
+    "stone": 7,
+    "food": 12
+  },
+
+  "carryCapacity": {
+    "gold": 8,
+    "wood": 18,
+    "stone": 8,
+    "food": 14
+  },
+
+  "constructionSpeed": 1.2,
+  "repairRate": 4.0,
+
+  "abilities": [
+    {
+      "id": "forest_camouflage",
+      "name": "Forest Camouflage",
+      "description": "Becomes invisible when in forest terrain and not moving",
+      "type": "passive",
+      "stealthInTerrain": ["forest", "jungle"],
+      "stealthDelay": 2.0
+    },
+    {
+      "id": "natural_regeneration",
+      "name": "Natural Regeneration",
+      "description": "Regenerates health faster when near trees",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "healthRegen",
+          "value": 1.0,
+          "condition": "nearTerrain:forest",
+          "radius": 5.0
+        }
+      ]
+    },
+    {
+      "id": "nimble_escape",
+      "name": "Nimble Escape",
+      "description": "When attacked, gains 100% movement speed for 3 seconds",
+      "type": "passive",
+      "trigger": "onDamaged",
+      "cooldown": 20.0,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "multiplier": 2.0,
+          "duration": 3.0
+        }
+      ]
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/sprite.obj",
+    "portrait": "textures/races/cryptids/portraits/sprite.png",
+    "icon": "textures/races/cryptids/icons/sprite.png",
+    "scale": 0.8,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/sprite_diffuse.png",
+      "normal": "textures/races/cryptids/units/sprite_normal.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/sprite/idle.anim",
+      "walk": "animations/cryptids/sprite/walk.anim",
+      "run": "animations/cryptids/sprite/run.anim",
+      "attack": "animations/cryptids/sprite/scratch.anim",
+      "death": "animations/cryptids/sprite/fade.anim",
+      "gather_gold": "animations/cryptids/sprite/gather.anim",
+      "gather_wood": "animations/cryptids/sprite/gather.anim",
+      "gather_food": "animations/cryptids/sprite/gather.anim",
+      "build": "animations/cryptids/sprite/build.anim",
+      "stealth": "animations/cryptids/sprite/invisible.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/sprite/chirp_1.wav", "sounds/cryptids/sprite/chirp_2.wav"],
+    "move": ["sounds/cryptids/sprite/rustle_1.wav", "sounds/cryptids/sprite/rustle_2.wav"],
+    "attack": ["sounds/cryptids/sprite/scratch.wav"],
+    "death": ["sounds/cryptids/sprite/vanish.wav"],
+    "ready": ["sounds/cryptids/sprite/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.2,
+    "height": 1.0,
+    "mass": 35.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/stealth_worker.bt",
+    "profile": "passive",
+    "fleeThreshold": 0.5,
+    "autoGather": true,
+    "useStealthWhenThreatened": true
+  }
+}

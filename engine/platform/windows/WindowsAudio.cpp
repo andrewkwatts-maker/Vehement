@@ -8,6 +8,8 @@
 #ifdef NOVA_PLATFORM_WINDOWS
 
 #include <Windows.h>
+#include <VersionHelpers.h>
+#include <VersionHelpers.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <audiopolicy.h>

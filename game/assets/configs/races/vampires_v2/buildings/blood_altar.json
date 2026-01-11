@@ -1,0 +1,149 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "resource_building",
+  "id": "vampire_blood_altar",
+  "name": "Blood Altar",
+  "description": "A profane altar where blood sacrifices fuel dark rituals. Generates blood resource, converts prisoners, and empowers vampire magic.",
+  "race": "vampires",
+  "category": "resource",
+  "tier": 1,
+
+  "size": {
+    "width": 4,
+    "height": 4,
+    "footprintShape": "circle"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "canPlaceOnWater": false,
+    "requiresFlatTerrain": true,
+    "minDistanceFromOther": 2.5,
+    "requiresShadow": true,
+    "shadowRequirement": 0.40,
+    "blocksPathing": true
+  },
+
+  "health": 800,
+  "healthRegen": 0.5,
+  "armor": 4,
+  "magicResist": 20,
+
+  "resourceGeneration": {
+    "resourceType": "blood",
+    "generationType": "passive",
+    "passiveGeneration": {
+      "bloodPerSecond": 2.0,
+      "manaPerSecond": 0.8,
+      "maxStoredBlood": 500,
+      "maxStoredMana": 200,
+      "autoCollect": true
+    },
+    "nightBonus": {
+      "bloodPerSecond": 3.5,
+      "manaPerSecond": 1.5
+    },
+    "workerGeneration": {
+      "requiresWorker": false,
+      "workerCapacity": 3,
+      "generationPerWorker": {
+        "bloodPerSecond": 1.0
+      }
+    }
+  },
+
+  "cost": {
+    "gold": 200,
+    "wood": 100,
+    "stone": 150
+  },
+
+  "buildTime": 50,
+
+  "abilities": [
+    {
+      "id": "sacrifice_unit",
+      "name": "Blood Sacrifice",
+      "description": "Sacrifice a friendly unit to gain blood and mana based on unit cost",
+      "type": "active",
+      "targetType": "friendly_unit",
+      "range": 3.0,
+      "bloodGain": "unit_cost_multiplied_by_2",
+      "manaGain": "unit_cost_multiplied_by_1"
+    },
+    {
+      "id": "convert_prisoner",
+      "name": "Convert to Thrall",
+      "description": "Convert captured enemy units into vampire thralls",
+      "type": "active",
+      "cost": {
+        "blood": 50,
+        "mana": 25
+      },
+      "conversionTime": 15.0,
+      "producesUnit": "vampire_thrall"
+    },
+    {
+      "id": "blood_ritual",
+      "name": "Blood Ritual",
+      "description": "Spend 100 blood to grant nearby vampires +25% damage for 60 seconds",
+      "type": "active",
+      "cost": {
+        "blood": 100
+      },
+      "cooldown": 90.0,
+      "radius": 12.0,
+      "duration": 60.0,
+      "damageBonus": 0.25
+    }
+  ],
+
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 10.0,
+    "auraType": "blood_empowerment",
+    "auraEffects": [
+      {
+        "affect": "vampire_spellcasters",
+        "bonus": {
+          "spellPower": 0.15,
+          "manaRegen": 0.5
+        }
+      }
+    ]
+  },
+
+  "canUpgrade": true,
+  "upgradesTo": "grand_blood_altar",
+  "upgradeCost": {
+    "gold": 300,
+    "stone": 200,
+    "blood": 150
+  },
+
+  "visuals": {
+    "model": "models/races/vampires/buildings/blood_altar.obj",
+    "icon": "textures/races/vampires/icons/blood_altar.png",
+    "portrait": "textures/races/vampires/portraits/blood_altar.png",
+    "glowAtNight": true,
+    "glowColor": "#FF0000",
+    "particleEffects": {
+      "sacrifice": "effects/vampires/blood_sacrifice.fx",
+      "ritual": "effects/vampires/blood_ritual.fx",
+      "ambient": "effects/vampires/blood_altar_ambient.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/blood_altar/select.wav"],
+    "sacrifice": "sounds/vampires/blood_sacrifice.wav",
+    "ritual": "sounds/vampires/ritual.wav",
+    "ambient": "sounds/ambient/blood_altar.wav"
+  },
+
+  "metadata": {
+    "loreDescription": "These dark altars are stained with the blood of countless sacrifices. They channel blood magic to empower vampires and convert the living into undead thralls.",
+    "strategicRole": "Primary blood generation. Can sacrifice units for resources. Converts enemies to thralls.",
+    "placement": "Requires 40% shadow. Place centrally for aura coverage."
+  }
+}

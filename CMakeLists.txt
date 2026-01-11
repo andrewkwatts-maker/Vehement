@@ -10,7 +10,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(NOVA_BUILD_EXAMPLES "Build example applications" ON)
 option(NOVA_BUILD_TESTS "Build unit tests" OFF)
 option(NOVA_USE_ASAN "Enable Address Sanitizer" OFF)
-option(NOVA_ENABLE_SCRIPTING "Enable Python scripting support" ON)
+option(NOVA_ENABLE_SCRIPTING "Enable Python scripting support" OFF) # Temporarily disabled
+
+# Feature flags for optional subsystems (OFF by default if external dependencies required)
+option(NOVA_ENABLE_PHYSICS "Enable physics system" ON)
+option(NOVA_ENABLE_AUDIO "Enable audio system (requires OpenAL, libsndfile, libvorbis)" OFF)
+option(NOVA_ENABLE_PERSISTENCE "Enable persistence/database systems (requires SQLite3)" OFF)
+option(NOVA_ENABLE_NETWORKING "Enable networking and Firebase integration" OFF)
+option(NOVA_ENABLE_UI "Enable advanced UI system" ON)
+option(NOVA_ENABLE_EVENTS "Enable event binding system" OFF) # Disabled: has JSON API issues
+option(NOVA_ENABLE_MODDING "Enable modding system" ON)
+option(NOVA_ENABLE_LOCATION "Enable location services" OFF)
+option(NOVA_ENABLE_PROFILING "Enable performance profiling (requires SQLite3)" OFF)
+option(NOVA_ENABLE_ADVANCED_GRAPHICS "Enable advanced rendering features" OFF) # Disabled: orphaned files with include errors
+option(NOVA_ENABLE_RTS_GAME "Enable RTS game systems" OFF) # Disabled: has constructor/access errors
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -480,6 +493,82 @@ add_library(nova3d STATIC
     # Asset Serialization System
     engine/assets/JsonAssetSerializer.cpp
 
+    # ==========================================================================
+    # ORPHANED FILES - Now included in build!
+    # ==========================================================================
+
+    # Core System Extensions
+    engine/core/PropertySystem.cpp
+    engine/core/SettingsManager.cpp
+
+    # Extended Reflection System
+    engine/reflection/TypeRegistryImpl.cpp
+    engine/reflection/TypeInfo.cpp
+    engine/reflection/EventBus.cpp
+    engine/reflection/Observable.cpp
+
+    # Spatial Data Structures
+    engine/spatial/AABB.cpp
+    engine/spatial/CollisionPrimitives.cpp
+    engine/spatial/BVH.cpp
+    engine/spatial/SpatialManager.cpp
+    engine/spatial/SpatialIndex.cpp
+    engine/spatial/SpatialHash3D.cpp
+    engine/spatial/OBB.cpp
+    engine/spatial/Octree.cpp
+    engine/spatial/Frustum.cpp
+
+    # Scene Extensions
+    engine/scene/InstanceData.cpp
+    engine/scene/InstanceManager.cpp
+
+    # Advanced Animation System
+    engine/animation/AnimationStateMachine.cpp
+    engine/animation/AnimationEventSystem.cpp
+    engine/animation/AnimationTrigger.cpp
+    engine/animation/AnimationConfig.cpp
+    engine/animation/AnimationBlendTree.cpp
+    engine/animation/blending/BlendTreeRuntime.cpp
+    engine/animation/blending/BlendSpace2D.cpp
+    engine/animation/blending/BlendSpace1D.cpp
+    engine/animation/blending/BlendNode.cpp
+    engine/animation/blending/BlendTreeBuilder.cpp
+    engine/animation/blending/BlendMask.cpp
+    engine/animation/blending/AnimationLayer.cpp
+    engine/animation/editor/AnimationClipboard.cpp
+    engine/animation/editor/EditableAnimation.cpp
+    engine/animation/editor/EditableSkeleton.cpp
+
+    # Extended Terrain System
+    engine/terrain/LandscapeSDFIntegration.cpp
+    engine/terrain/SDFTerrain.cpp
+    engine/terrain/TerrainSDFDemo.cpp
+    engine/terrain/VoxelTerrain.cpp
+
+    # Import Pipeline
+    engine/import/ModelImporter.cpp
+    engine/import/TextureImporter.cpp
+    engine/import/ImportSettings.cpp
+    engine/import/AssetProcessor.cpp
+    engine/import/AnimationImporter.cpp
+    engine/import/ImportProgress.cpp
+
+    # Materials System
+    engine/materials/AdvancedMaterial.cpp
+    engine/materials/MaterialGraphEditor.cpp
+    engine/materials/MaterialNode.cpp
+    engine/materials/NoiseNodes.cpp
+    engine/materials/ShaderGraph.cpp
+    engine/materials/ShaderGraphEditor.cpp
+    engine/materials/ShaderNodes.cpp
+
+    # Lighting System
+    engine/lighting/EmissiveGeometryLight.cpp
+    engine/lighting/LightMaterialFunction.cpp
+    engine/lighting/PhysicalLight.cpp
+
+    # Post-Processing
+    engine/postprocess/PostProcess.cpp
 
     # Platform-specific sources (populated by platform detection above)
     ${NOVA_PLATFORM_SOURCES}
@@ -546,8 +635,11 @@ if(NOVA_PLATFORM_LIBS)
 endif()
 
 # Compiler warnings
+
+target_compile_definitions(nova3d PUBLIC JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0 GLM_ENABLE_EXPERIMENTAL)
+
 if(MSVC)
-    target_compile_options(nova3d PRIVATE /W4)
+    target_compile_options(nova3d PRIVATE /W4 /FS)
 else()
     target_compile_options(nova3d PRIVATE -Wall -Wextra -Wpedantic)
 endif()
@@ -717,3 +809,238 @@ add_executable(asset_icon_renderer_gi
 )
 target_link_libraries(asset_icon_renderer_gi PRIVATE nova3d)
 target_include_directories(asset_icon_renderer_gi PRIVATE ${CMAKE_SOURCE_DIR})
+# ========================================================================
+# Physics System
+# ========================================================================
+if(NOVA_ENABLE_PHYSICS)
+    target_sources(nova3d PRIVATE
+        engine/physics/PhysicsDebugDraw.cpp
+        engine/physics/CollisionShape.cpp
+        engine/physics/CollisionBody.cpp
+        engine/physics/CollisionConfig.cpp
+        engine/physics/PhysicsWorld.cpp
+        engine/physics/Triggers.cpp
+        engine/physics/BlackbodyRadiation.cpp
+    )
+    message(STATUS "Physics System: ENABLED")
+else()
+    message(STATUS "Physics System: DISABLED")
+endif()
+
+# ========================================================================
+# Audio System
+# ========================================================================
+if(NOVA_ENABLE_AUDIO)
+    target_sources(nova3d PRIVATE
+        engine/audio/AudioEngine.cpp
+    )
+    message(STATUS "Audio System: ENABLED")
+else()
+    message(STATUS "Audio System: DISABLED")
+endif()
+
+# ========================================================================
+# Persistence System
+# ========================================================================
+if(NOVA_ENABLE_PERSISTENCE)
+    target_sources(nova3d PRIVATE
+        engine/persistence/ChunkStreamer.cpp
+        engine/persistence/EntitySerializer.cpp
+        engine/persistence/FirebaseBackend.cpp
+        engine/persistence/PersistenceManager.cpp
+        engine/persistence/PlayerDatabase.cpp
+        engine/persistence/SQLiteBackend.cpp
+        engine/persistence/WorldDatabase.cpp
+    )
+    message(STATUS "Persistence System: ENABLED")
+else()
+    message(STATUS "Persistence System: DISABLED")
+endif()
+
+# ========================================================================
+# Networking System
+# ========================================================================
+if(NOVA_ENABLE_NETWORKING)
+    target_sources(nova3d PRIVATE
+        engine/networking/FirebaseClient.cpp
+        engine/networking/FirebasePersistence.cpp
+        engine/networking/ReplicationSystem.cpp
+    )
+    message(STATUS "Networking System: ENABLED")
+else()
+    message(STATUS "Networking System: DISABLED")
+endif()
+
+# ========================================================================
+# Advanced UI System
+# ========================================================================
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/ui/editor/UIEditor.cpp
+        engine/ui/EditorPanel.cpp
+        engine/ui/EditorTheme.cpp
+        engine/ui/EditorWidgets.cpp
+        engine/ui/runtime/HTMLRenderer.cpp
+        engine/ui/runtime/RuntimeUIManager.cpp
+        engine/ui/runtime/UIAnimation.cpp
+        engine/ui/runtime/UIBinding.cpp
+        engine/ui/runtime/UIDataBinding.cpp
+        engine/ui/runtime/UIEventRouter.cpp
+        engine/ui/runtime/UIWindow.cpp
+        engine/ui/widgets/UIParser.cpp
+        engine/ui/widgets/UIWidget.cpp
+    )
+    message(STATUS "Advanced UI System: ENABLED")
+else()
+    message(STATUS "Advanced UI System: DISABLED")
+endif()
+
+# ========================================================================
+# Event System
+# ========================================================================
+if(NOVA_ENABLE_EVENTS)
+    target_sources(nova3d PRIVATE
+        engine/events/EventCondition.cpp
+        engine/events/EventBindingManager.cpp
+        engine/events/PropertyWatcher.cpp
+        engine/events/EventBinding.cpp
+    )
+    message(STATUS "Event System: ENABLED")
+else()
+    message(STATUS "Event System: DISABLED")
+endif()
+
+# ========================================================================
+# Modding System
+# ========================================================================
+if(NOVA_ENABLE_MODDING)
+    target_sources(nova3d PRIVATE
+        engine/modding/BehaviorSystem.cpp
+        engine/modding/EntityTypes.cpp
+        engine/modding/JsonSchema.cpp
+        engine/modding/ModManager.cpp
+        engine/modding/UIComponents.cpp
+        engine/modding/UITemplateEngine.cpp
+    )
+    message(STATUS "Modding System: ENABLED")
+else()
+    message(STATUS "Modding System: DISABLED")
+endif()
+
+# ========================================================================
+# Location Services
+# ========================================================================
+if(NOVA_ENABLE_LOCATION)
+    target_sources(nova3d PRIVATE
+        engine/location/LocationSimulator.cpp
+        engine/location/LocationManager.cpp
+        engine/location/Geofence.cpp
+        engine/location/Geocoding.cpp
+    )
+    message(STATUS "Location Services: ENABLED")
+else()
+    message(STATUS "Location Services: DISABLED")
+endif()
+
+# ========================================================================
+# Performance Profiling
+# ========================================================================
+if(NOVA_ENABLE_PROFILING)
+    target_sources(nova3d PRIVATE
+        engine/profiling/DetailedFrameProfiler.cpp
+        engine/profiling/PerformanceAnalyzer.cpp
+        engine/profiling/PerformanceDatabase.cpp
+    )
+    message(STATUS "Performance Profiling: ENABLED")
+else()
+    message(STATUS "Performance Profiling: DISABLED")
+endif()
+
+# ========================================================================
+# Advanced Graphics
+# ========================================================================
+if(NOVA_ENABLE_ADVANCED_GRAPHICS)
+    target_sources(nova3d PRIVATE
+        engine/graphics/AsyncComputePipeline.cpp
+        engine/graphics/ClusteredLighting.cpp
+        engine/graphics/ClusteredLightingExpanded.cpp
+        engine/graphics/GPUDrivenRenderer.cpp
+        engine/graphics/HybridDepthMerge.cpp
+        engine/graphics/HybridPathTracer.cpp
+        engine/graphics/HybridRasterizer.cpp
+        engine/graphics/MassiveSceneProfiler.cpp
+        engine/graphics/MeshToSDFConverter.cpp
+        engine/graphics/ParallelCullingSystem.cpp
+        engine/graphics/PathTracer.cpp
+        engine/graphics/PathTracerIntegration.cpp
+        engine/graphics/PolygonRasterizer.cpp
+        engine/graphics/RadianceCascadeTest.cpp
+        engine/graphics/ReSTIR.cpp
+        engine/graphics/RTGIPipeline.cpp
+        engine/graphics/RTXAccelerationStructure.cpp
+        engine/graphics/RTXPathTracer.cpp
+        engine/graphics/RTXSupport.cpp
+        engine/graphics/SDFAcceleration.cpp
+        engine/graphics/SDFBatchRenderer.cpp
+        engine/graphics/SDFBrickCache.cpp
+        engine/graphics/SDFBrickMap.cpp
+        engine/graphics/SDFDeferredLighting.cpp
+        engine/graphics/SDFGPUEvaluator.cpp
+        engine/graphics/SDFInstanceManager.cpp
+        engine/graphics/SDFLODSystem.cpp
+        engine/graphics/SDFPerformanceProfiler.cpp
+        engine/graphics/SDFRasterizer.cpp
+        engine/graphics/SDFRendererAccelerated.cpp
+        engine/graphics/SDFSkeletalAnimation.cpp
+        engine/graphics/SDFSparseOctree.cpp
+        engine/graphics/SVGF.cpp
+    )
+    message(STATUS "Advanced Graphics: ENABLED")
+else()
+    message(STATUS "Advanced Graphics: DISABLED")
+endif()
+
+# ========================================================================
+# RTS Game Systems
+# ========================================================================
+if(NOVA_ENABLE_RTS_GAME)
+    target_sources(nova3d PRIVATE
+        engine/game/BuildingComponentSystem.cpp
+        engine/game/BuildingInstanceExtensions.cpp
+        engine/game/BuildingUI.cpp
+        engine/game/ComponentPlacementController.cpp
+        engine/game/DefenseStructures.cpp
+        engine/game/SDFConfigLoader.cpp
+        engine/game/WallPlacementSystem.cpp
+    )
+    message(STATUS "RTS Game Systems: ENABLED")
+else()
+    message(STATUS "RTS Game Systems: DISABLED")
+endif()
+
+if(NOVA_ENABLE_SCRIPTING)
+    target_sources(nova3d PRIVATE
+        engine/scripting/ScriptValidator.cpp
+        engine/scripting/ScriptStorage.cpp
+        engine/scripting/ScriptTemplate.cpp
+        engine/scripting/GameAPI.cpp
+        engine/scripting/EventNodes.cpp
+        engine/scripting/visual/VisualScriptEditor.cpp
+        engine/scripting/visual/VisualScriptingCore.cpp
+    )
+    message(STATUS "Extended scripting features: ENABLED")
+endif()
+
+# Asset Media Renderer (Icons + Animated Videos)
+add_executable(asset_media_renderer
+    tools/asset_media_renderer.cpp
+)
+target_link_libraries(asset_media_renderer PRIVATE nova3d)
+target_include_directories(asset_media_renderer PRIVATE ${CMAKE_SOURCE_DIR})
+
+# Asset Thumbnail Cache System (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/AssetThumbnailCache.cpp
+    )
+endif()

@@ -1,0 +1,140 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "infantry",
+  "id": "undead_zombie",
+  "name": "Zombie",
+  "description": "Shambling corpses animated by necromancy. Slow but resilient, zombies spread disease with their festering touch.",
+  "race": "undead",
+  "category": "infantry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 520,
+    "healthRegen": 0.5,
+    "damage": 15,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.0,
+    "attackRange": 1.3,
+    "armor": 3,
+    "magicResist": 20,
+    "moveSpeed": 3.2,
+    "critChance": 0.02,
+    "critMultiplier": 1.3
+  },
+
+  "cost": {
+    "gold": 180,
+    "corpses": 2
+  },
+
+  "trainTime": 30,
+  "populationCost": 2,
+  "requiredBuilding": "undead_graveyard",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "infantry",
+      "multiplier": 1.15
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "plague_carrier",
+      "name": "Plague Carrier",
+      "description": "Attacks spread disease, dealing 5 damage per second for 8 seconds and reducing healing by 50%",
+      "type": "passive",
+      "diseaseType": "plague",
+      "damagePerSecond": 5,
+      "duration": 8.0,
+      "healingReduction": 0.50,
+      "stackable": true
+    },
+    {
+      "id": "regeneration",
+      "name": "Unholy Regeneration",
+      "description": "Regenerates 2% max health per second while standing on blight",
+      "type": "passive",
+      "regenPercent": 0.02,
+      "requiresBlight": true
+    },
+    {
+      "id": "corpse_explosion",
+      "name": "Corpse Explosion",
+      "description": "When killed, explode dealing 80 damage and applying plague to nearby enemies",
+      "type": "passive",
+      "onDeath": true,
+      "damage": 80,
+      "radius": 3.0,
+      "applyDisease": "plague"
+    },
+    {
+      "id": "tenacious_grasp",
+      "name": "Tenacious Grasp",
+      "description": "Melee attacks slow enemies by 30% for 2 seconds",
+      "type": "passive",
+      "slowPercent": 0.30,
+      "slowDuration": 2.0
+    }
+  ],
+
+  "upgrades": ["zombie_plague_enhancement", "undead_armor_1", "corpse_enhancement"],
+
+  "visuals": {
+    "model": "models/races/undead/units/zombie.obj",
+    "portrait": "textures/races/undead/portraits/zombie.png",
+    "icon": "textures/races/undead/icons/zombie.png",
+    "scale": 1.05,
+    "textures": {
+      "diffuse": "textures/races/undead/units/zombie_diffuse.png",
+      "normal": "textures/races/undead/units/zombie_normal.png",
+      "emissive": "textures/races/undead/units/zombie_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/undead/zombie/idle.anim",
+      "walk": "animations/undead/zombie/walk.anim",
+      "run": "animations/undead/zombie/shamble.anim",
+      "attack": "animations/undead/zombie/attack.anim",
+      "death": "animations/undead/zombie/death.anim",
+      "explode": "animations/undead/zombie/explode.anim"
+    },
+    "effects": {
+      "diseaseAura": "effects/plague_aura.fx",
+      "explosion": "effects/corpse_explosion.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/zombie/select_1.wav", "sounds/undead/zombie/groan_1.wav"],
+    "move": ["sounds/undead/zombie/move_1.wav", "sounds/undead/zombie/move_2.wav"],
+    "attack": ["sounds/undead/zombie/attack.wav"],
+    "death": ["sounds/undead/zombie/death.wav"],
+    "explode": ["sounds/gore_explosion.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.38,
+    "height": 1.8,
+    "mass": 85.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/tank_undead.bt",
+    "profile": "tank",
+    "aggroRange": 10.0,
+    "priorityTargets": ["caster", "ranged"],
+    "fearless": true,
+    "seekBlight": true
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": true,
+    "corpseDecayTime": 30.0,
+    "explosionOnDeath": true
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "fairy_dryad",
+  "name": "Dryad",
+  "description": "Tree spirits bound to nature who excel at healing and support. Dryads can slow enemies with entangling vines and bolster allies with nature's blessing.",
+  "race": "fairies",
+  "category": "support",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 180,
+    "healthRegen": 1.5,
+    "mana": 200,
+    "manaRegen": 2.0,
+    "damage": 12,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.1,
+    "attackRange": 1.5,
+    "armor": 3,
+    "magicResist": 20,
+    "moveSpeed": 4.5,
+    "sightRange": 11,
+    "healingPower": 30
+  },
+
+  "cost": {
+    "gold": 140,
+    "wood": 60,
+    "mana": 40,
+    "food": 2
+  },
+
+  "trainTime": 30,
+  "populationCost": 2,
+  "requiredBuilding": "fairy_grove",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "normal",
+  "movementType": "ground",
+
+  "abilities": [
+    {
+      "id": "heal",
+      "name": "Nature's Touch",
+      "description": "Heal target ally for 80 health over 4 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 8.0,
+      "manaCost": 40,
+      "range": 7.0,
+      "healing": 80,
+      "duration": 4.0,
+      "healingPerTick": 20,
+      "tickRate": 1.0
+    },
+    {
+      "id": "entangling_roots",
+      "name": "Entangling Roots",
+      "description": "Roots target enemy in place for 3 seconds, dealing 10 damage per second",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 12.0,
+      "manaCost": 50,
+      "range": 9.0,
+      "duration": 3.0,
+      "damagePerTick": 10,
+      "tickRate": 1.0
+    },
+    {
+      "id": "natures_blessing",
+      "name": "Nature's Blessing",
+      "description": "Grant nearby allies +2 armor and +15% health regen for 15 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 30.0,
+      "manaCost": 80,
+      "radius": 8.0,
+      "duration": 15.0,
+      "effects": [
+        {
+          "stat": "armor",
+          "value": 2,
+          "type": "flat"
+        },
+        {
+          "stat": "healthRegen",
+          "value": 0.15,
+          "type": "percent"
+        }
+      ]
+    }
+  ],
+
+  "bonusVsEnvironment": [
+    {
+      "terrain": "forest",
+      "statModifiers": {
+        "healthRegen": 1.0,
+        "moveSpeed": 1.0
+      }
+    },
+    {
+      "near": "trees",
+      "radius": 5.0,
+      "statModifiers": {
+        "armor": 1,
+        "magicResist": 5
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/dryad.obj",
+    "portrait": "textures/races/fairies/portraits/dryad.png",
+    "icon": "textures/races/fairies/icons/dryad.png",
+    "scale": 0.95,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/dryad_diffuse.png",
+      "normal": "textures/races/fairies/units/dryad_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/dryad/idle.anim",
+      "walk": "animations/fairies/dryad/walk.anim",
+      "attack": "animations/fairies/dryad/attack.anim",
+      "death": "animations/fairies/dryad/death.anim",
+      "cast": "animations/fairies/dryad/cast_heal.anim",
+      "channel": "animations/fairies/dryad/channel.anim"
+    },
+    "auraEffect": "effects/nature_aura.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/dryad/select_1.wav", "sounds/fairies/dryad/select_2.wav"],
+    "move": ["sounds/fairies/dryad/ack_1.wav", "sounds/fairies/dryad/ack_2.wav"],
+    "attack": ["sounds/fairies/dryad/attack.wav"],
+    "death": ["sounds/fairies/dryad/death.wav"],
+    "cast": ["sounds/fairies/dryad/cast_nature.wav"],
+    "ready": ["sounds/fairies/dryad/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.35,
+    "height": 1.7,
+    "mass": 55.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/healer.bt",
+    "profile": "support",
+    "aggroRange": 10.0,
+    "healPriority": 0.8,
+    "preferredDistance": 6.0
+  }
+}

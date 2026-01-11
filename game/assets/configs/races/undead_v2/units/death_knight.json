@@ -1,0 +1,197 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "hero",
+  "id": "undead_death_knight",
+  "name": "Death Knight",
+  "description": "Fallen paladins reborn in darkness. Death Knights combine devastating melee prowess with dark magic, leading undead armies into battle.",
+  "race": "undead",
+  "category": "hero",
+  "tier": 4,
+
+  "baseStats": {
+    "health": 850,
+    "healthRegen": 2.0,
+    "mana": 400,
+    "manaRegen": 2.5,
+    "damage": 45,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.5,
+    "attackRange": 1.5,
+    "armor": 8,
+    "magicResist": 30,
+    "moveSpeed": 5.2,
+    "critChance": 0.18,
+    "critMultiplier": 2.5
+  },
+
+  "cost": {
+    "gold": 550,
+    "mana": 150,
+    "corpses": 8
+  },
+
+  "trainTime": 85,
+  "populationCost": 5,
+  "requiredBuilding": "undead_black_citadel",
+  "requiredAge": 3,
+
+  "armorType": "hero",
+  "attackType": "hero_normal",
+
+  "isHero": true,
+  "maxLevel": 10,
+  "experienceToLevel": [100, 250, 500, 900, 1500, 2300, 3300, 4500, 6000],
+
+  "bonusVs": [
+    {
+      "category": "hero",
+      "multiplier": 1.3
+    },
+    {
+      "category": "cavalry",
+      "multiplier": 1.4
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "death_coil_dk",
+      "name": "Death Coil",
+      "description": "Hurl unholy energy dealing 200 damage to enemies or healing 200 to undead",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 7.0,
+      "manaCost": 75,
+      "range": 12.0,
+      "damage": 200,
+      "healAmount": 200,
+      "damageType": "dark",
+      "canTargetUndead": true
+    },
+    {
+      "id": "unholy_aura",
+      "name": "Unholy Aura",
+      "description": "Nearby undead units gain 20% movement speed and regenerate 2 health per second",
+      "type": "passive",
+      "auraRadius": 14.0,
+      "targetRace": "undead",
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "value": 0.20,
+          "type": "percent"
+        },
+        {
+          "stat": "healthRegen",
+          "value": 2.0
+        }
+      ]
+    },
+    {
+      "id": "death_pact",
+      "name": "Death Pact",
+      "description": "Kill target friendly undead to heal 75% of its current health",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 30.0,
+      "manaCost": 50,
+      "range": 6.0,
+      "targetType": "friendly_undead",
+      "healPercent": 0.75,
+      "killsTarget": true
+    },
+    {
+      "id": "animate_dead",
+      "name": "Animate Dead",
+      "description": "Raise 6 invulnerable skeleton warriors from corpses for 40 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 40.0,
+      "manaCost": 200,
+      "range": 10.0,
+      "radius": 6.0,
+      "maxSummons": 6,
+      "summonUnit": "undead_skeleton_invulnerable",
+      "summonDuration": 40.0,
+      "requiresCorpse": true,
+      "invulnerable": true,
+      "requiredLevel": 6
+    },
+    {
+      "id": "vampiric_blades",
+      "name": "Vampiric Blades",
+      "description": "Melee attacks steal 35% of damage dealt as health",
+      "type": "passive",
+      "lifestealPercent": 0.35
+    },
+    {
+      "id": "runic_armor",
+      "name": "Runic Armor",
+      "description": "Each enemy killed grants +1 armor (max 10 stacks), reset on death",
+      "type": "passive",
+      "armorPerKill": 1,
+      "maxStacks": 10,
+      "resetOnDeath": true
+    }
+  ],
+
+  "upgrades": ["death_knight_mastery", "unholy_strength", "runic_enhancement"],
+
+  "visuals": {
+    "model": "models/races/undead/units/death_knight.obj",
+    "portrait": "textures/races/undead/portraits/death_knight.png",
+    "icon": "textures/races/undead/icons/death_knight.png",
+    "scale": 1.15,
+    "textures": {
+      "diffuse": "textures/races/undead/units/death_knight_diffuse.png",
+      "normal": "textures/races/undead/units/death_knight_normal.png",
+      "emissive": "textures/races/undead/units/death_knight_emissive.png",
+      "specular": "textures/races/undead/units/death_knight_specular.png"
+    },
+    "animations": {
+      "idle": "animations/undead/death_knight/idle.anim",
+      "walk": "animations/undead/death_knight/walk.anim",
+      "run": "animations/undead/death_knight/run.anim",
+      "attack": "animations/undead/death_knight/attack.anim",
+      "cast_coil": "animations/undead/death_knight/death_coil.anim",
+      "cast_animate": "animations/undead/death_knight/animate_dead.anim",
+      "death": "animations/undead/death_knight/death.anim"
+    },
+    "effects": {
+      "aura": "effects/unholy_aura.fx",
+      "weaponGlow": "effects/runic_glow.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/death_knight/select_1.wav", "sounds/undead/death_knight/select_2.wav"],
+    "move": ["sounds/undead/death_knight/move_1.wav", "sounds/undead/death_knight/move_2.wav"],
+    "attack": ["sounds/heavy_sword_swing.wav"],
+    "cast": ["sounds/undead/death_knight/cast.wav"],
+    "coil": ["sounds/death_coil.wav"],
+    "animate": ["sounds/undead/death_knight/animate.wav"],
+    "death": ["sounds/undead/death_knight/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.40,
+    "height": 2.1,
+    "mass": 120.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/hero_melee.bt",
+    "profile": "hero_tank",
+    "aggroRange": 12.0,
+    "priorityTargets": ["hero", "caster", "ranged"],
+    "useDeathPact": true,
+    "seekCorpses": true,
+    "retreatThreshold": 0.20
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": true,
+    "corpseDecayTime": 120.0
+  }
+}

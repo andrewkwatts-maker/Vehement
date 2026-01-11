@@ -627,13 +627,13 @@ bool TextureCompressor::IsFormatSupported(CompressedFormat format) {
     switch (format) {
         case CompressedFormat::DXT1:
         case CompressedFormat::DXT5:
-            return glewIsSupported("GL_EXT_texture_compression_s3tc");
+            return GLAD_GL_EXT_texture_compression_s3tc;
         case CompressedFormat::ETC1:
         case CompressedFormat::ETC2:
-            return glewIsSupported("GL_ARB_ES3_compatibility");
+            return GLAD_GL_ARB_ES3_compatibility;
         case CompressedFormat::ASTC_4x4:
         case CompressedFormat::ASTC_8x8:
-            return glewIsSupported("GL_KHR_texture_compression_astc_ldr");
+            return GLAD_GL_KHR_texture_compression_astc_ldr;
         default:
             return true;
     }

@@ -1,0 +1,108 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "archer",
+  "id": "human_crossbowman",
+  "name": "Crossbowman",
+  "description": "Heavy ranged infantry armed with powerful crossbows. Slower to fire but deals high damage and can pierce armor.",
+  "race": "humans",
+  "category": "ranged",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 220,
+    "healthRegen": 0.5,
+    "damage": 20,
+    "damageVariance": 0.15,
+    "attackSpeed": 2.0,
+    "attackRange": 12.0,
+    "armor": 2,
+    "magicResist": 5,
+    "moveSpeed": 4.5,
+    "sightRange": 14,
+    "critChance": 0.08,
+    "critMultiplier": 1.8
+  },
+
+  "cost": {
+    "gold": 180,
+    "wood": 40,
+    "food": 2
+  },
+
+  "trainTime": 28,
+  "populationCost": 2,
+  "requiredBuilding": "human_archery_range",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "pierce",
+
+  "bonusVs": [
+    {
+      "category": "heavy",
+      "multiplier": 1.5
+    },
+    {
+      "category": "air",
+      "multiplier": 1.25
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "piercing_bolt",
+      "name": "Piercing Bolt",
+      "description": "Bolts ignore 50% of enemy armor",
+      "type": "passive",
+      "armorPenetration": 0.50
+    },
+    {
+      "id": "pavise",
+      "name": "Pavise",
+      "description": "Deploy a shield providing 75% ranged damage reduction while stationary",
+      "type": "toggle",
+      "hotkey": "V",
+      "effects": [
+        {
+          "stat": "rangedDamageReduction",
+          "value": 0.75
+        }
+      ],
+      "requiresStationary": true,
+      "requiredUpgrade": "upgrade_pavise"
+    }
+  ],
+
+  "projectile": {
+    "id": "bolt_heavy",
+    "model": "models/projectiles/bolt.obj",
+    "speed": 40.0,
+    "lifetime": 2.5,
+    "gravity": 0.3,
+    "trailEffect": "effects/bolt_trail.fx",
+    "impactEffect": "effects/bolt_impact.fx"
+  },
+
+  "upgrades": ["ranged_damage_2", "crossbow_armor"],
+
+  "visuals": {
+    "model": "models/races/humans/units/crossbowman.obj",
+    "portrait": "textures/races/humans/portraits/crossbowman.png",
+    "icon": "textures/races/humans/icons/crossbowman.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "animations/humans/crossbowman/idle.anim",
+      "walk": "animations/humans/crossbowman/walk.anim",
+      "attack": "animations/humans/crossbowman/shoot.anim",
+      "reload": "animations/humans/crossbowman/reload.anim",
+      "death": "animations/humans/crossbowman/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/humans/crossbowman/select_1.wav"],
+    "move": ["sounds/humans/crossbowman/ack_1.wav"],
+    "attack": ["sounds/crossbow_release.wav"],
+    "death": ["sounds/humans/crossbowman/death.wav"]
+  }
+}

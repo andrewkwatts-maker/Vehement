@@ -1,0 +1,47 @@
+
+    // Material editing
+    void RenderTextureSlot(const char* label, std::string& texturePath);
+    void SaveMaterial(const std::string& path);
+    void LoadMaterial(const std::string& path);
+    void ApplyMaterialToSelected();
+    void ResetMaterial();
+    void LoadGoldPreset();
+    void LoadChromePreset();
+    void LoadPlasticPreset();
+    void LoadWoodPreset();
+    void LoadGlassPreset();
+    void AddToMaterialHistory();
+
+    // Material data structure
+    struct Material {
+        std::string name = "New Material";
+
+        // PBR Properties
+        glm::vec3 albedoColor{1.0f, 1.0f, 1.0f};
+        std::string albedoTexture = "";
+
+        float metallic = 0.0f;
+        std::string metallicTexture = "";
+
+        float roughness = 0.5f;
+        std::string roughnessTexture = "";
+
+        std::string normalMap = "";
+        float normalStrength = 1.0f;
+
+        glm::vec3 emissiveColor{0.0f, 0.0f, 0.0f};
+        std::string emissiveTexture = "";
+        float emissiveStrength = 1.0f;
+
+        // UV Settings
+        glm::vec2 uvTiling{1.0f, 1.0f};
+        glm::vec2 uvOffset{0.0f, 0.0f};
+
+        // Shader
+        std::string shaderName = "pbr_standard";
+    };
+
+    struct MaterialHistoryEntry {
+        std::string name;
+        std::string path;
+    };

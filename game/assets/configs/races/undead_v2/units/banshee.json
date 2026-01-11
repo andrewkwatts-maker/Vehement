@@ -1,0 +1,184 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying",
+  "id": "undead_banshee",
+  "name": "Banshee",
+  "description": "Vengeful female spirits whose piercing screams can kill mortals with fear. Their wails silence magic and curse the living.",
+  "race": "undead",
+  "category": "flying",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 380,
+    "healthRegen": 0,
+    "mana": 300,
+    "manaRegen": 2.0,
+    "damage": 20,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.4,
+    "attackRange": 8.0,
+    "armor": 0,
+    "magicResist": 35,
+    "moveSpeed": 5.8,
+    "flyHeight": 4.0,
+    "sightRange": 14
+  },
+
+  "cost": {
+    "gold": 260,
+    "mana": 75,
+    "corpses": 2
+  },
+
+  "trainTime": 38,
+  "populationCost": 3,
+  "requiredBuilding": "undead_tomb",
+  "requiredAge": 2,
+
+  "armorType": "ethereal",
+  "attackType": "magic",
+
+  "bonusVs": [
+    {
+      "category": "caster",
+      "multiplier": 1.6
+    },
+    {
+      "category": "hero",
+      "multiplier": 1.3
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "death_wail",
+      "name": "Death Wail",
+      "description": "Release a piercing scream dealing 150 magic damage to all enemies in a cone",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 15.0,
+      "manaCost": 100,
+      "range": 10.0,
+      "coneAngle": 60,
+      "damage": 150,
+      "damageType": "magic"
+    },
+    {
+      "id": "curse_of_silence",
+      "name": "Curse of Silence",
+      "description": "Prevent target from casting spells for 5 seconds and drain 50 mana",
+      "type": "active",
+      "hotkey": "S",
+      "cooldown": 18.0,
+      "manaCost": 80,
+      "range": 12.0,
+      "duration": 5.0,
+      "targetType": "enemy_unit",
+      "manaDrain": 50,
+      "effects": [
+        {
+          "stat": "silenced",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "id": "anti_magic_shell",
+      "name": "Anti-Magic Shell",
+      "description": "Create a barrier that absorbs 200 magic damage for 8 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 30.0,
+      "manaCost": 120,
+      "duration": 8.0,
+      "absorbAmount": 200,
+      "absorbType": "magic"
+    },
+    {
+      "id": "mana_burn",
+      "name": "Mana Burn",
+      "description": "Attacks burn 20 mana and deal damage equal to mana burned",
+      "type": "passive",
+      "manaBurnAmount": 20,
+      "damageFromManaBurned": true
+    },
+    {
+      "id": "frightening_presence",
+      "name": "Frightening Presence",
+      "description": "Nearby enemies have -20% attack speed and -15% movement speed",
+      "type": "passive",
+      "auraRadius": 8.0,
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "value": -0.20,
+          "type": "percent"
+        },
+        {
+          "stat": "moveSpeed",
+          "value": -0.15,
+          "type": "percent"
+        }
+      ]
+    }
+  },
+
+  "upgrades": ["banshee_wail_enhancement", "undead_magic_damage_1", "mana_burn_boost"],
+
+  "visuals": {
+    "model": "models/races/undead/units/banshee.obj",
+    "portrait": "textures/races/undead/portraits/banshee.png",
+    "icon": "textures/races/undead/icons/banshee.png",
+    "scale": 1.15,
+    "textures": {
+      "diffuse": "textures/races/undead/units/banshee_diffuse.png",
+      "normal": "textures/races/undead/units/banshee_normal.png",
+      "emissive": "textures/races/undead/units/banshee_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/undead/banshee/idle.anim",
+      "fly": "animations/undead/banshee/fly.anim",
+      "attack": "animations/undead/banshee/attack.anim",
+      "wail": "animations/undead/banshee/wail.anim",
+      "silence": "animations/undead/banshee/curse.anim",
+      "death": "animations/undead/banshee/death.anim"
+    },
+    "effects": {
+      "aura": "effects/fear_aura.fx",
+      "trail": "effects/ethereal_trail.fx",
+      "wail": "effects/sonic_wave.fx"
+    },
+    "opacity": 0.75
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/banshee/select_1.wav", "sounds/undead/banshee/wail_soft.wav"],
+    "move": ["sounds/undead/banshee/move_1.wav", "sounds/undead/banshee/move_2.wav"],
+    "attack": ["sounds/undead/banshee/attack.wav"],
+    "wail": ["sounds/undead/banshee/death_scream.wav"],
+    "death": ["sounds/undead/banshee/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.32,
+    "height": 1.9,
+    "mass": 8.0,
+    "ethereal": true
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/anti_caster.bt",
+    "profile": "caster",
+    "aggroRange": 14.0,
+    "priorityTargets": ["caster", "hero", "ranged"],
+    "fearless": true,
+    "preferredDistance": 8.0,
+    "targetManaUsers": true
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": false,
+    "dissipates": true
+  }
+}

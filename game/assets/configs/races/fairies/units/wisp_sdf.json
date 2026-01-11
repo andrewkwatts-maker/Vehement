@@ -1,0 +1,202 @@
+{
+    "id": "fairy_wisp",
+    "name": "Wisp",
+    "race": "fairies",
+    "type": "unit",
+    "category": "worker",
+    "description": "A glowing spirit of nature that gathers resources and builds structures. Can detonate to dispel magic.",
+
+    "stats": {
+        "health": 120,
+        "armor": 0,
+        "damage": 0,
+        "attackSpeed": 0,
+        "moveSpeed": 270,
+        "buildSpeed": 1.2,
+        "harvestSpeed": 1.0,
+        "manaHarvest": 0.5
+    },
+
+    "costs": {
+        "gold": 60,
+        "food": 1,
+        "buildTime": 14.0
+    },
+
+    "sdfModel": {
+        "name": "wisp_model",
+        "bounds": { "min": [-0.3, 0.0, -0.3], "max": [0.3, 0.8, 0.3] },
+        "primitives": [
+            {
+                "id": "core_inner",
+                "type": "Sphere",
+                "params": { "radius": 0.12 },
+                "transform": { "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [1.0, 1.0, 1.0, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.9, 0.95, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "core_outer",
+                "type": "Sphere",
+                "params": { "radius": 0.18 },
+                "transform": { "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.85, 0.95, 0.4], "metallic": 0.0, "roughness": 0.1, "emissive": [0.3, 0.5, 0.6] },
+                "operation": "Union"
+            },
+            {
+                "id": "aura_glow",
+                "type": "Sphere",
+                "params": { "radius": 0.25 },
+                "transform": { "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.9, 1.0] },
+                "material": { "baseColor": [0.5, 0.8, 0.9, 0.15], "metallic": 0.0, "roughness": 0.2, "emissive": [0.2, 0.4, 0.5] },
+                "operation": "Union"
+            },
+            {
+                "id": "sparkle_1",
+                "type": "Sphere",
+                "params": { "radius": 0.025 },
+                "transform": { "position": [0.15, 0.55, 0.08], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [1.0, 1.0, 0.9, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [1.0, 1.0, 0.8] },
+                "operation": "Union",
+                "bone": "sparkle_orbit"
+            },
+            {
+                "id": "sparkle_2",
+                "type": "Sphere",
+                "params": { "radius": 0.02 },
+                "transform": { "position": [-0.12, 0.35, 0.12], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.9, 1.0, 1.0, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.8, 1.0, 1.0] },
+                "operation": "Union",
+                "bone": "sparkle_orbit"
+            },
+            {
+                "id": "sparkle_3",
+                "type": "Sphere",
+                "params": { "radius": 0.018 },
+                "transform": { "position": [0.08, 0.25, -0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.95, 0.95, 1.0, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.9, 0.9, 1.0] },
+                "operation": "Union",
+                "bone": "sparkle_orbit"
+            },
+            {
+                "id": "tail_wisp_1",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.04, 0.08, 0.04] },
+                "transform": { "position": [0.0, 0.18, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.85, 0.95, 0.5], "metallic": 0.0, "roughness": 0.1, "emissive": [0.3, 0.5, 0.6] },
+                "operation": "SmoothUnion",
+                "smoothness": 0.05,
+                "bone": "tail"
+            },
+            {
+                "id": "tail_wisp_2",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.025, 0.06, 0.025] },
+                "transform": { "position": [0.0, 0.08, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.8, 0.9, 0.3], "metallic": 0.0, "roughness": 0.1, "emissive": [0.2, 0.4, 0.5] },
+                "operation": "SmoothUnion",
+                "smoothness": 0.03,
+                "bone": "tail_tip"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "core", "parent": "root", "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "sparkle_orbit", "parent": "core", "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "tail", "parent": "root", "position": [0.0, -0.22, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "tail_tip", "parent": "tail", "position": [0.0, -0.1, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 3.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.4, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "tail": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.75, "bones": { "root": { "position": [0.0, 0.45, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 0.38, 0.0, 0.92] }, "tail": { "rotation": [0.05, 0.0, 0.05, 0.997] } } },
+                { "time": 1.5, "bones": { "root": { "position": [0.0, 0.4, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 0.71, 0.0, 0.71] }, "tail": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 2.25, "bones": { "root": { "position": [0.0, 0.45, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 0.92, 0.0, 0.38] }, "tail": { "rotation": [-0.05, 0.0, -0.05, 0.997] } } },
+                { "time": 3.0, "bones": { "root": { "position": [0.0, 0.4, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 1.0, 0.0, 0.0] }, "tail": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+            ]
+        },
+        "fly": {
+            "duration": 1.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.4, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "tail": { "rotation": [0.15, 0.0, 0.0, 0.99] }, "tail_tip": { "rotation": [0.1, 0.0, 0.0, 0.995] } } },
+                { "time": 0.5, "bones": { "root": { "position": [0.0, 0.45, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 0.71, 0.0, 0.71] }, "tail": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "tail_tip": { "rotation": [0.15, 0.0, 0.0, 0.99] } } },
+                { "time": 1.0, "bones": { "root": { "position": [0.0, 0.4, 0.0] }, "sparkle_orbit": { "rotation": [0.0, 1.0, 0.0, 0.0] }, "tail": { "rotation": [0.15, 0.0, 0.0, 0.99] }, "tail_tip": { "rotation": [0.1, 0.0, 0.0, 0.995] } } }
+            ]
+        },
+        "harvest": {
+            "duration": 2.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "core": { "scale": [1.0, 1.0, 1.0] }, "sparkle_orbit": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.5, "bones": { "core": { "scale": [1.1, 1.1, 1.1] }, "sparkle_orbit": { "rotation": [0.0, 0.5, 0.0, 0.87] } } },
+                { "time": 1.0, "bones": { "core": { "scale": [0.95, 0.95, 0.95] }, "sparkle_orbit": { "rotation": [0.0, 0.87, 0.0, 0.5] } }, "events": ["absorb_essence"] },
+                { "time": 1.5, "bones": { "core": { "scale": [1.05, 1.05, 1.05] }, "sparkle_orbit": { "rotation": [0.0, 1.0, 0.0, 0.0] } } },
+                { "time": 2.0, "bones": { "core": { "scale": [1.0, 1.0, 1.0] }, "sparkle_orbit": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+            ]
+        },
+        "build": {
+            "duration": 1.5, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.4, 0.0] }, "core": { "scale": [1.0, 1.0, 1.0] } } },
+                { "time": 0.375, "bones": { "root": { "position": [0.0, 0.5, 0.0] }, "core": { "scale": [1.15, 1.15, 1.15] } } },
+                { "time": 0.75, "bones": { "root": { "position": [0.0, 0.35, 0.0] }, "core": { "scale": [0.9, 0.9, 0.9] } }, "events": ["infuse_nature"] },
+                { "time": 1.125, "bones": { "root": { "position": [0.0, 0.45, 0.0] }, "core": { "scale": [1.1, 1.1, 1.1] } } },
+                { "time": 1.5, "bones": { "root": { "position": [0.0, 0.4, 0.0] }, "core": { "scale": [1.0, 1.0, 1.0] } } }
+            ]
+        },
+        "detonate": {
+            "duration": 1.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "core": { "scale": [1.0, 1.0, 1.0] } } },
+                { "time": 0.3, "bones": { "core": { "scale": [1.5, 1.5, 1.5] } } },
+                { "time": 0.5, "bones": { "core": { "scale": [2.0, 2.0, 2.0] } }, "events": ["dispel_burst"] },
+                { "time": 1.0, "bones": { "core": { "scale": [0.0, 0.0, 0.0] } } }
+            ]
+        },
+        "death": {
+            "duration": 1.5, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "core": { "scale": [1.0, 1.0, 1.0] }, "root": { "position": [0.0, 0.4, 0.0] } } },
+                { "time": 0.5, "bones": { "core": { "scale": [1.3, 1.3, 1.3] }, "root": { "position": [0.0, 0.5, 0.0] } } },
+                { "time": 1.0, "bones": { "core": { "scale": [0.5, 0.5, 0.5] }, "root": { "position": [0.0, 0.3, 0.0] } } },
+                { "time": 1.5, "bones": { "core": { "scale": [0.0, 0.0, 0.0] }, "root": { "position": [0.0, 0.1, 0.0] } } }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "fly", "condition": "isMoving" }, { "to": "harvest", "condition": "isHarvesting" }, { "to": "build", "condition": "isBuilding" }, { "to": "detonate", "condition": "isDetonating" }, { "to": "death", "condition": "isDead" }] },
+            "fly": { "animation": "fly", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "harvest": { "animation": "harvest", "transitions": [{ "to": "idle", "condition": "!isHarvesting" }, { "to": "death", "condition": "isDead" }] },
+            "build": { "animation": "build", "transitions": [{ "to": "idle", "condition": "!isBuilding" }, { "to": "death", "condition": "isDead" }] },
+            "detonate": { "animation": "detonate", "transitions": [{ "to": "death", "condition": "animationComplete" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "gather", "name": "Gather", "description": "Gather gold or harvest lumber from trees. Wisps do not destroy trees when harvesting.", "targetType": "resource" },
+        { "id": "build", "name": "Build", "description": "Grow a living building from a seed.", "targetType": "building_placement" },
+        { "id": "detonate", "name": "Detonate", "description": "Sacrifice the Wisp to dispel all magic in an area and damage summoned units.", "hotkey": "D", "manaCost": 0, "radius": 250, "dispelDamage": 225 },
+        { "id": "renew", "name": "Renew", "description": "Channels energy to repair a building or restore mana to a unit.", "hotkey": "R", "targetType": "friendly" }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "wisp_birth" }, { "type": "spawn_effect", "effect": "nature_sparkle", "duration": 1.0 }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "spawn_effect", "effect": "wisp_fade", "duration": 1.5 }, { "type": "play_sound", "sound": "wisp_death" }] },
+        "on_select": { "actions": [{ "type": "play_sound", "sound": "wisp_acknowledge" }] }
+    },
+
+    "effects": {
+        "nature_sparkle": { "type": "burst", "particles": { "type": "sparkle", "count": 20, "color": [0.7, 0.95, 1.0, 1.0], "size": 0.05 } },
+        "wisp_fade": { "type": "dissolve", "particles": { "type": "motes", "count": 30, "color": [0.8, 0.95, 1.0, 0.8], "size": 0.03, "velocity": [0.0, 0.5, 0.0] } }
+    }
+}

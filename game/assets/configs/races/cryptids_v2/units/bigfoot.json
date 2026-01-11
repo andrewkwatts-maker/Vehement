@@ -1,0 +1,163 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "infantry",
+  "id": "cryptid_bigfoot",
+  "name": "Bigfoot",
+  "description": "Massive, hairy humanoid cryptid with incredible strength. Bigfoot warriors become more powerful near their territory and can intimidate enemies with their roar.",
+  "race": "cryptids",
+  "category": "infantry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 550,
+    "healthRegen": 1.5,
+    "damage": 18,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.1,
+    "attackRange": 1.5,
+    "armor": 4,
+    "magicResist": 15,
+    "moveSpeed": 4.5,
+    "critChance": 0.12,
+    "critMultiplier": 2.0
+  },
+
+  "cost": {
+    "gold": 180,
+    "wood": 20,
+    "food": 3
+  },
+
+  "trainTime": 30,
+  "populationCost": 2,
+  "requiredBuilding": "cryptid_hunting_grounds",
+  "requiredAge": 1,
+
+  "armorType": "heavy",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "infantry",
+      "multiplier": 1.3
+    },
+    {
+      "category": "cavalry",
+      "multiplier": 1.2
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "territorial_rage",
+      "name": "Territorial Rage",
+      "description": "Gains 30% increased damage and 25% damage reduction when within 15 units of friendly buildings",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "damage",
+          "multiplier": 1.3,
+          "condition": "nearFriendlyBuilding",
+          "radius": 15.0
+        },
+        {
+          "stat": "damageReduction",
+          "value": 0.25,
+          "condition": "nearFriendlyBuilding",
+          "radius": 15.0
+        }
+      ]
+    },
+    {
+      "id": "primal_roar",
+      "name": "Primal Roar",
+      "description": "Unleashes a terrifying roar that reduces enemy attack damage by 30% and movement speed by 20% for 6 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 18.0,
+      "radius": 7.0,
+      "duration": 6.0,
+      "effects": [
+        {
+          "stat": "attackDamage",
+          "value": -0.30
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.80
+        }
+      ],
+      "targetType": "enemy"
+    },
+    {
+      "id": "crushing_blow",
+      "name": "Crushing Blow",
+      "description": "Powerful melee strike that deals 200% damage and stuns for 1.5 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 15.0,
+      "damageMultiplier": 2.0,
+      "stunDuration": 1.5
+    },
+    {
+      "id": "forest_regeneration",
+      "name": "Forest Regeneration",
+      "description": "Regenerates 2% max health per second when in forest terrain",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "healthRegenPercent",
+          "value": 0.02,
+          "condition": "inTerrain:forest"
+        }
+      ]
+    }
+  ],
+
+  "upgrades": ["bigfoot_fury", "territorial_instinct", "primal_strength"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/bigfoot.obj",
+    "portrait": "textures/races/cryptids/portraits/bigfoot.png",
+    "icon": "textures/races/cryptids/icons/bigfoot.png",
+    "scale": 1.4,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/bigfoot_diffuse.png",
+      "normal": "textures/races/cryptids/units/bigfoot_normal.png",
+      "specular": "textures/races/cryptids/units/bigfoot_specular.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/bigfoot/idle.anim",
+      "walk": "animations/cryptids/bigfoot/walk.anim",
+      "run": "animations/cryptids/bigfoot/run.anim",
+      "attack": "animations/cryptids/bigfoot/smash.anim",
+      "roar": "animations/cryptids/bigfoot/roar.anim",
+      "death": "animations/cryptids/bigfoot/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/bigfoot/grunt_1.wav", "sounds/cryptids/bigfoot/grunt_2.wav"],
+    "move": ["sounds/cryptids/bigfoot/stomp_1.wav", "sounds/cryptids/bigfoot/stomp_2.wav"],
+    "attack": ["sounds/cryptids/bigfoot/smash.wav"],
+    "roar": ["sounds/cryptids/bigfoot/roar.wav"],
+    "death": ["sounds/cryptids/bigfoot/death.wav"],
+    "ready": ["sounds/cryptids/bigfoot/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.5,
+    "height": 2.4,
+    "mass": 180.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/territorial_melee.bt",
+    "profile": "aggressive",
+    "aggroRange": 12.0,
+    "priorityTargets": ["infantry", "cavalry"],
+    "preferNearBuildings": true,
+    "useRoarOnMultipleEnemies": true
+  }
+}

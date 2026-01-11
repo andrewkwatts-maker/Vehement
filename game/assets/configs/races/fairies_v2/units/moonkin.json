@@ -1,0 +1,150 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "mystic_unit_archetype",
+  "id": "fairy_moonkin",
+  "name": "Moonkin",
+  "description": "Owl-like nature casters that channel the power of the moon. Moonkins can cast powerful lunar and solar spells, switching between balance forms for different effects.",
+  "race": "fairies",
+  "category": "spellcaster",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 240,
+    "healthRegen": 0.8,
+    "mana": 300,
+    "manaRegen": 2.8,
+    "damage": 20,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.2,
+    "attackRange": 9,
+    "armor": 2,
+    "magicResist": 20,
+    "moveSpeed": 4.8,
+    "sightRange": 14,
+    "spellPower": 60
+  },
+
+  "cost": {
+    "gold": 200,
+    "wood": 40,
+    "mana": 80,
+    "food": 3
+  },
+
+  "trainTime": 38,
+  "populationCost": 2,
+  "requiredBuilding": "fairy_moonwell",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "magic",
+  "movementType": "ground",
+
+  "projectile": {
+    "id": "moonfire",
+    "type": "linear",
+    "speed": 24.0,
+    "model": "models/projectiles/moonfire.obj",
+    "trailEffect": "effects/moon_trail.fx",
+    "impactEffect": "effects/moon_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "moonfire",
+      "name": "Moonfire",
+      "description": "Launch lunar energy dealing 60 damage and applying DoT of 10/sec for 6 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 6.0,
+      "manaCost": 50,
+      "range": 12.0,
+      "damage": 60,
+      "dotDamage": 10,
+      "dotDuration": 6.0,
+      "damageType": "arcane"
+    },
+    {
+      "id": "starfall",
+      "name": "Starfall",
+      "description": "Call down stars in target area, dealing 30 damage per second for 5 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 25.0,
+      "manaCost": 100,
+      "range": 14.0,
+      "radius": 5.0,
+      "duration": 5.0,
+      "damagePerTick": 30,
+      "tickRate": 1.0,
+      "damageType": "arcane"
+    },
+    {
+      "id": "lunar_blessing",
+      "name": "Lunar Blessing",
+      "description": "Buff nearby allies with +20% spell power and mana regen for 20 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 40.0,
+      "manaCost": 80,
+      "radius": 10.0,
+      "duration": 20.0,
+      "effects": [
+        {
+          "stat": "spellPower",
+          "value": 0.2,
+          "type": "percent"
+        },
+        {
+          "stat": "manaRegen",
+          "value": 0.2,
+          "type": "percent"
+        }
+      ]
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/moonkin.obj",
+    "portrait": "textures/races/fairies/portraits/moonkin.png",
+    "icon": "textures/races/fairies/icons/moonkin.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/moonkin_diffuse.png",
+      "emissive": "textures/races/fairies/units/moonkin_glow.png",
+      "normal": "textures/races/fairies/units/moonkin_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/moonkin/idle.anim",
+      "walk": "animations/fairies/moonkin/walk.anim",
+      "attack": "animations/fairies/moonkin/cast_moon.anim",
+      "death": "animations/fairies/moonkin/death.anim",
+      "cast": "animations/fairies/moonkin/cast_star.anim",
+      "channel": "animations/fairies/moonkin/channel.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/moonkin/select_1.wav", "sounds/fairies/moonkin/hoot.wav"],
+    "move": ["sounds/fairies/moonkin/ack_1.wav"],
+    "attack": ["sounds/fairies/moonkin/cast.wav"],
+    "death": ["sounds/fairies/moonkin/death.wav"],
+    "ready": ["sounds/fairies/moonkin/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.4,
+    "height": 1.6,
+    "mass": 70.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/caster.bt",
+    "profile": "caster",
+    "aggroRange": 12.0,
+    "preferredDistance": 10.0,
+    "manaConservationThreshold": 0.25,
+    "priorityAbilities": ["starfall", "moonfire"]
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit_archetype",
+  "id": "alien_dark_templar",
+  "name": "Dark Templar",
+  "description": "Permanently cloaked assassins who strike from the shadows. Dark Templars deal massive damage and can only be seen by detectors, making them ideal for surgical strikes.",
+  "race": "aliens",
+  "category": "melee",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 40,
+    "healthRegen": 0,
+    "shield": 80,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+
+    "damage": 45,
+    "damageVariance": 0,
+    "attackSpeed": 1.69,
+    "attackRange": 0.1,
+
+    "armor": 1,
+    "shieldArmor": 0,
+    "magicResist": 0,
+
+    "moveSpeed": 3.94,
+    "turnSpeed": 999,
+    "acceleration": 999,
+
+    "sightRange": 10,
+    "detectionRange": 0,
+
+    "critChance": 0.15,
+    "critMultiplier": 2.5
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "light",
+    "attackAnimation": {
+      "windupTime": 0.4,
+      "backswingTime": 0.5,
+      "totalDuration": 0.59
+    },
+    "bonusVs": [
+      {
+        "category": "unarmored",
+        "multiplier": 1.5
+      }
+    ]
+  },
+
+  "movement": {
+    "movementType": "ground",
+    "collisionRadius": 0.5,
+    "unitSize": "medium"
+  },
+
+  "cost": {
+    "minerals": 125,
+    "vespene": 125,
+    "supply": 2
+  },
+
+  "trainTime": 55,
+  "warpTime": 45,
+  "populationCost": 2,
+  "requiredBuilding": "alien_gateway",
+  "requiredTech": "dark_shrine",
+
+  "abilities": [
+    {
+      "id": "permanent_cloak",
+      "name": "Shadow Walk",
+      "description": "Passive: Permanently cloaked. Can only be detected by detectors.",
+      "type": "passive",
+      "unlockedByDefault": true,
+      "effects": [
+        {
+          "type": "permanent_cloak",
+          "canBeDetected": true
+        }
+      ]
+    },
+    {
+      "id": "shadow_fury",
+      "name": "Shadow Fury",
+      "description": "Blink to target location and deal damage in an area",
+      "type": "targeted_position",
+      "hotkey": "F",
+      "cooldown": 12.0,
+      "range": 8.0,
+      "requiredTech": "shadow_fury_upgrade",
+      "unlockedByDefault": false,
+      "effects": [
+        {
+          "type": "teleport",
+          "range": 8.0
+        },
+        {
+          "type": "damage_area",
+          "radius": 2.0,
+          "damage": 30
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_ground_weapons_1",
+    "alien_ground_weapons_2",
+    "alien_ground_weapons_3",
+    "alien_ground_armor_1",
+    "alien_ground_armor_2",
+    "alien_ground_armor_3",
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "shadow_fury_upgrade"
+  ],
+
+  "attributes": {
+    "isBiological": true,
+    "isPsionic": true,
+    "isLight": true,
+    "isArmored": false,
+    "isMassive": false,
+    "cargoSize": 2,
+    "canBeWarped": true,
+    "isCloaked": true,
+    "permanentCloak": true
+  },
+
+  "formation": {
+    "preferredPosition": "front",
+    "formationSpacing": 1.5,
+    "maintainFormation": false
+  },
+
+  "ai": {
+    "aggroRange": 12,
+    "targetPriority": [
+      {
+        "type": "worker",
+        "weight": 3.0
+      },
+      {
+        "type": "caster",
+        "weight": 2.5
+      },
+      {
+        "type": "ranged",
+        "weight": 2.0
+      }
+    ],
+    "useAbilities": true,
+    "abilityPriority": ["shadow_fury"]
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/dark_templar.fbx",
+    "portrait": "textures/races/aliens/portraits/dark_templar.png",
+    "icon": "textures/races/aliens/icons/dark_templar.png",
+    "scale": 1.0,
+    "cloakEffect": "effects/dark_templar_cloak.fx",
+    "shieldEffect": "effects/shield_shimmer.fx",
+    "warpBladeEffect": "effects/warp_blades.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/aliens/dark_templar/select1.wav",
+      "sounds/aliens/dark_templar/select2.wav"
+    ],
+    "attack": [
+      "sounds/aliens/dark_templar/attack.wav"
+    ],
+    "attackImpact": "sounds/impacts/warp_blade_hit.wav"
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.5,
+    "height": 1.9,
+    "mass": 75.0
+  }
+}

@@ -4,12 +4,14 @@
 #include <spdlog/spdlog.h>
 
 // STB_IMAGE_IMPLEMENTATION should only be defined once in the entire project.
-// This is the designated compilation unit for stb_image.
+// This is the designated compilation unit for stb_image and stb_image_write.
 #ifndef NOVA_STB_IMAGE_IMPLEMENTED
     #define NOVA_STB_IMAGE_IMPLEMENTED
     #define STB_IMAGE_IMPLEMENTATION
+    #define STB_IMAGE_WRITE_IMPLEMENTATION
 #endif
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 namespace Nova {
 

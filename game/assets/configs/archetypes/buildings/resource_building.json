@@ -1,0 +1,371 @@
+{
+  "$schema": "../../../schemas/building_archetype.schema.json",
+
+  // =============================================================================
+  // RESOURCE BUILDING ARCHETYPE
+  // =============================================================================
+  // This archetype represents a building that generates resources over time.
+  // Behavior composition:
+  // - ResourceGenerationBehavior: Passive or active resource generation
+  // - HousingBehavior: May provide some population
+  // - StatsComponent: Health, armor
+  //
+  // Use this as a base template for buildings like:
+  // - Farm, Gold Mine, Lumber Mill, Mana Well, Quarry, etc.
+  // =============================================================================
+
+  "id": "resource_building_archetype",
+  "name": "Resource Building Template",
+  "description": "A building that generates resources over time, either passively or with workers assigned. Foundation of your economy.",
+
+  "category": "economic",
+  "tier": 1,
+
+  // =============================================================================
+  // BUILDING SIZE & PLACEMENT
+  // =============================================================================
+  "size": {
+    "width": 3,  // Grid units
+    "height": 3,
+    "footprintShape": "square"  // Options: "square", "rectangle", "circle"
+  },
+
+  // Placement requirements
+  "placement": {
+    "requiresLand": true,
+    "canPlaceOnWater": false,
+    "canPlaceOnCliff": false,
+    "requiresFlatTerrain": true,
+    "minDistanceFromOther": 2.0,  // Minimum spacing from other buildings
+    "minDistanceFromResources": 0.0,  // Can be placed near resources
+    "requiresNearby": null,  // e.g., "gold_mine" for refineries
+    "nearbyRange": 0.0,
+    "blocksPathing": true,
+    "providesVision": true
+  },
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "health": 600,
+  "healthRegen": 0.0,  // Buildings don't regenerate
+  "armor": 2,
+  "magicResist": 0,
+
+  // =============================================================================
+  // RESOURCE GENERATION BEHAVIOR
+  // =============================================================================
+  "resourceGeneration": {
+    // Resource type generated
+    "resourceType": "food",  // Options: "gold", "wood", "food", "stone", "mana"
+
+    // Generation mode
+    "generationType": "passive",  // Options: "passive", "worker_required", "timed"
+
+    // Passive generation (no workers needed)
+    "passiveGeneration": {
+      "goldPerSecond": 0.0,
+      "woodPerSecond": 0.0,
+      "foodPerSecond": 1.0,  // Farm generates 1 food/sec
+      "stonePerSecond": 0.0,
+      "manaPerSecond": 0.0,
+
+      // Resource cap
+      "maxStoredGold": 0,
+      "maxStoredWood": 0,
+      "maxStoredFood": 500,  // Can store up to 500 food
+      "maxStoredStone": 0,
+      "maxStoredMana": 0,
+
+      // Collection
+      "autoCollect": true,  // Auto-add to player resources
+      "requiresCollection": false,
+      "collectionInterval": 0.0
+    },
+
+    // Worker-based generation
+    "workerGeneration": {
+      "requiresWorker": false,
+      "workerCapacity": 0,  // How many workers can work here
+      "generationPerWorker": {
+        "goldPerSecond": 0.0,
+        "woodPerSecond": 0.0,
+        "foodPerSecond": 0.0,
+        "stonePerSecond": 0.0,
+        "manaPerSecond": 0.0
+      },
+      "workerEfficiency": 1.0,  // Multiplier for worker output
+      "diminishingReturns": false,  // Each worker less efficient
+      "efficiencyPerWorker": [1.0, 0.9, 0.8]  // 100%, 90%, 80%
+    },
+
+    // Timed generation (periodic collection)
+    "timedGeneration": {
+      "enabled": false,
+      "generationInterval": 0.0,  // Seconds between generations
+      "amountPerInterval": {
+        "gold": 0,
+        "wood": 0,
+        "food": 0,
+        "stone": 0,
+        "mana": 0
+      }
+    },
+
+    // Upkeep cost (some buildings have maintenance)
+    "upkeep": {
+      "enabled": false,
+      "goldPerSecond": 0.0,
+      "manaPerSecond": 0.0
+    }
+  },
+
+  // =============================================================================
+  // RESOURCE BONUS
+  // =============================================================================
+  // Some resource buildings provide bonuses to gatherers
+  "resourceBonus": {
+    "providesBonus": false,
+    "bonusType": "gather_rate",  // Options: "gather_rate", "carry_capacity", "gather_speed"
+    "bonusAmount": 0.0,
+    "bonusRadius": 0.0,
+    "affectsResourceType": []  // Which resources get bonus
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 100,
+    "wood": 50,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "buildTime": 30,
+  "requiredBuilding": "town_hall",
+  "requiredAge": 0,
+  "requiredTech": null,
+
+  // =============================================================================
+  // HOUSING & POPULATION
+  // =============================================================================
+  "providesPopulation": 0,  // Resource buildings usually don't provide housing
+  "populationCapacity": 0,
+  "requiresPopulation": 0,  // Population needed to operate
+
+  // =============================================================================
+  // PRODUCTION QUEUE
+  // =============================================================================
+  // Resource buildings don't produce units/techs
+  "productionQueue": [],
+
+  // =============================================================================
+  // GARRISON & DEFENSE
+  // =============================================================================
+  "garrisonCapacity": 0,
+  "canGarrison": false,
+  "garrisonTypes": [],
+  "garrisonHeal": false,
+  "garrisonHealRate": 0.0,
+
+  "attackCapability": {
+    "canAttack": false,
+    "damage": 0,
+    "attackSpeed": 0,
+    "attackRange": 0,
+    "attackType": "normal",
+    "targetAir": false,
+    "targetGround": false
+  },
+
+  // =============================================================================
+  // BUILDING FEATURES
+  // =============================================================================
+  "isUnique": false,
+  "canRally": false,
+  "canUpgrade": true,  // Can upgrade to better versions
+  "upgradesTo": "advanced_farm",
+  "upgradeCost": {
+    "gold": 150,
+    "wood": 100,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+  "upgradeTime": 40,
+
+  // Building flags
+  "isPermanent": true,
+  "isMilitary": false,
+  "isEconomic": true,
+  "requiresPower": false,  // Some games have power mechanics
+  "providesPower": false,
+
+  // =============================================================================
+  // TECHNOLOGY & RESEARCH
+  // =============================================================================
+  "availableUpgrades": [
+    {
+      "id": "improved_harvesting",
+      "name": "Improved Harvesting",
+      "description": "Increases food generation by 25%",
+      "cost": {
+        "gold": 100,
+        "wood": 50
+      },
+      "researchTime": 30
+    }
+  ],
+
+  // =============================================================================
+  // DESTRUCTION & REPAIR
+  // =============================================================================
+  "destruction": {
+    "canBeDestroyed": true,
+    "debrisType": "wood",
+    "resourcesOnDestroy": {
+      "gold": 20,  // Salvage value
+      "wood": 10
+    },
+    "leavesRuins": false,
+    "ruinsDuration": 0.0
+  },
+
+  "repair": {
+    "canBeRepaired": true,
+    "repairCostMultiplier": 0.5,  // 50% of original cost per HP
+    "repairSpeed": 10.0,  // HP per second when repairing
+    "autoRepair": false,
+    "autoRepairThreshold": 0.0
+  },
+
+  // =============================================================================
+  // AURA & EFFECTS
+  // =============================================================================
+  "aura": {
+    "hasAura": false,
+    "auraRadius": 0.0,
+    "auraType": null,
+    "auraEffects": []
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/buildings/farm.fbx",
+    "icon": "textures/icons/buildings/farm.png",
+    "portrait": "textures/portraits/farm.png",
+
+    // Construction stages
+    "constructionStages": 4,
+    "constructionModels": [
+      "models/buildings/farm_stage1.fbx",
+      "models/buildings/farm_stage2.fbx",
+      "models/buildings/farm_stage3.fbx",
+      "models/buildings/farm_complete.fbx"
+    ],
+
+    // Damage states
+    "hasDestructionAnimation": true,
+    "destructionStages": 3,
+    "damageThreshold": 0.5,  // Show damage at 50% HP
+    "smokeWhenDamaged": true,
+    "fireWhenCritical": true,
+    "criticalHealthPercent": 0.25,
+
+    // Effects
+    "idleEffect": "effects/farm_ambient.fx",  // Crops swaying
+    "constructionEffect": "effects/construction.fx",
+    "destructionEffect": "effects/building_collapse.fx",
+    "fireEffect": "effects/building_fire.fx",
+    "smokeEffect": "effects/building_smoke.fx",
+
+    // Visual features
+    "scale": 1.0,
+    "shadowSize": 3.0,
+    "teamColorParts": ["roof"],
+    "nightLighting": false,
+    "glowAtNight": false
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/buildings/farm/select1.wav"
+    ],
+    "construct": "sounds/construction/build_loop.wav",
+    "complete": "sounds/construction/complete.wav",
+    "destroy": "sounds/destruction/building_collapse.wav",
+    "damaged": "sounds/destruction/wood_crack.wav",
+    "repair": "sounds/construction/repair_loop.wav",
+
+    // Resource-specific sounds
+    "ambient": "sounds/ambient/farm_ambient.wav",
+    "resourceGeneration": "sounds/resources/food_harvest.wav"
+  },
+
+  // =============================================================================
+  // EFFICIENCY & ECONOMICS
+  // =============================================================================
+  "economics": {
+    "constructionCost": 150,  // Total gold equivalent
+    "generationRate": 1.0,  // Resources per second
+    "paybackTime": 150,  // Seconds to pay for itself
+    "lifetimeValue": 36000,  // Value over 10 minutes (600 food)
+    "roi": 240  // 24000% return on investment
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "gold_mine" could inherit from this with:
+  // - resourceGeneration.resourceType: "gold"
+  // - workerGeneration.requiresWorker: true
+  // - workerGeneration.workerCapacity: 5
+  // - placement.requiresNearby: "gold_vein"
+
+  // An "advanced_farm" could inherit with:
+  // - passiveGeneration.foodPerSecond: 1.5
+  // - cost.gold: 200
+  // - health: 800
+
+  "variants": {
+    "lumber_mill": {
+      "parentArchetype": "resource_building_archetype",
+      "resourceType": "wood",
+      "passiveGeneration": {
+        "woodPerSecond": 0.8
+      },
+      "providesBonus": true,
+      "bonusType": "gather_rate",
+      "bonusAmount": 0.2,
+      "bonusRadius": 10.0,
+      "affectsResourceType": ["wood"]
+    },
+    "mana_well": {
+      "parentArchetype": "resource_building_archetype",
+      "resourceType": "mana",
+      "tier": 2,
+      "passiveGeneration": {
+        "manaPerSecond": 0.5
+      },
+      "cost": {
+        "gold": 200,
+        "wood": 100
+      },
+      "requiredAge": 1
+    }
+  },
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for resource-generating buildings. Essential for economy.",
+    "economicRole": "Primary resource generation. Build multiple for scaling economy.",
+    "tacticalConsideration": "Protect from raids. Place efficiently near town center.",
+    "optimalCount": "5-10 farms, 3-5 lumber mills, 2-3 gold mines (depends on map)"
+  }
+}

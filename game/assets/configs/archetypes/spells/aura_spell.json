@@ -1,0 +1,235 @@
+{
+  "$schema": "../../../schemas/spell_archetype.schema.json",
+
+  // =============================================================================
+  // AURA SPELL ARCHETYPE
+  // =============================================================================
+  // This archetype represents a passive or toggled aura that continuously affects
+  // nearby units.
+  // Behavior composition:
+  // - TargetingBehavior: Aura (continuous area around caster or fixed point)
+  // - EffectBehavior: Buff (allies) or Debuff (enemies)
+  // - ProjectileBehavior: None (continuous effect)
+  // - ResourceBehavior: Passive (no cost) or Toggle (mana drain)
+  //
+  // Use this as a base template for spells like:
+  // - Devotion Aura, Thorns Aura, Command Aura, Unholy Aura, etc.
+  // =============================================================================
+
+  "id": "aura_spell_archetype",
+  "name": "Aura Spell Template",
+  "description": "A continuous aura that provides buffs to nearby allied units while the caster is alive.",
+
+  "category": "support",
+  "element": "holy",
+  "tier": 2,
+
+  // =============================================================================
+  // TARGETING BEHAVIOR
+  // =============================================================================
+  "targetType": "self",  // Auras are self-cast
+
+  // Aura affects units around the caster
+  "targetFilters": {
+    "canTargetEnemies": false,
+    "canTargetAllies": true,
+    "canTargetSelf": true,  // Does caster benefit from their own aura?
+    "canTargetGround": false,
+    "canTargetAir": true,
+    "canTargetBuildings": false,  // Usually only affects units
+    "canTargetOrganic": true,
+    "canTargetMechanical": true,
+    "requiresLineOfSight": false,  // Auras typically ignore LOS
+    "ignoreInvulnerable": true
+  },
+
+  // Auras don't have cast range - they use auraRadius
+  "castRange": 0.0,
+
+  // =============================================================================
+  // AURA BEHAVIOR
+  // =============================================================================
+  "aura": {
+    "radius": 8.0,  // How far the aura extends
+    "updateInterval": 0.5,  // How often to check for units entering/leaving (seconds)
+    "persistAfterLeaving": 2.0,  // Buff lingers for 2s after leaving aura
+    "visualRadius": 8.0,  // Visual indicator size
+    "showVisualRadius": true,
+
+    // Aura types:
+    // - "passive": Always active, no cost
+    // - "toggle": Can be turned on/off
+    // - "conditional": Only active under certain conditions
+    "auraType": "passive",
+
+    // For toggle auras
+    "toggleCost": {
+      "activationManaCost": 50,
+      "manaPerSecond": 5,  // Continuous drain
+      "canToggleOff": true
+    },
+
+    // For conditional auras
+    "activationConditions": {
+      "healthAbove": 0.0,  // Only active if caster has > 0% health (always)
+      "manaAbove": 0.0,
+      "inCombat": false,
+      "requiresBuff": null,
+      "timeOfDay": null  // e.g., "day" or "night"
+    }
+  },
+
+  // =============================================================================
+  // EFFECT BEHAVIOR
+  // =============================================================================
+  // Auras apply buffs/debuffs to affected units
+  "effects": [
+    {
+      "type": "buff",
+      "buffId": "divine_protection",
+      "duration": 0.0,  // 0 = permanent while in aura
+      "stackable": false,
+
+      // Stat modifications
+      "statModifiers": {
+        "armor": {
+          "type": "flat",  // Options: "flat", "percent", "multiply"
+          "value": 3
+        },
+        "magicResist": {
+          "type": "flat",
+          "value": 2
+        },
+        "healthRegen": {
+          "type": "flat",
+          "value": 1.5
+        }
+      }
+    }
+  ],
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  // Auras have no projectile
+  "projectile": {
+    "type": "none"
+  },
+
+  "areaOfEffect": 0.0,  // Use aura.radius instead
+
+  // =============================================================================
+  // RESOURCE BEHAVIOR
+  // =============================================================================
+  // Passive auras have no cast cost
+  "castTime": 0.0,
+  "cooldown": 0.0,
+  "manaCost": 0,
+
+  "canBeInterrupted": false,
+  "interruptOnDamage": false,
+  "interruptOnMove": false,
+
+  // =============================================================================
+  // AURA STACKING
+  // =============================================================================
+  // What happens when multiple auras of same type overlap?
+  "stacking": {
+    "stackWithSelf": false,  // Multiple casters with same aura
+    "stackWithOthers": true,  // Different auras providing same stats
+    "stackingType": "highest"  // Options: "highest", "sum", "multiply"
+  },
+
+  // =============================================================================
+  // REQUIREMENTS & AVAILABILITY
+  // =============================================================================
+  "requiredAge": 1,
+  "requiredBuilding": "temple",
+  "requiredTech": "holy_devotion",
+
+  "learnCost": {
+    "gold": 150,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 75
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "icon": "textures/icons/spells/devotion_aura.png",
+    "castAnimation": null,  // Passive, no cast animation
+    "castEffect": null,
+    "channelEffect": "effects/holy_aura.fx",  // Continuous effect on caster
+    "buffEffect": "effects/holy_buff.fx",  // Effect on each buffed unit
+    "aoeCursorDecal": null,
+    "auraRing": "effects/holy_aura_ring.fx",  // Ring showing aura radius
+    "auraColor": "#FFD700"  // Golden color
+  },
+
+  "sounds": {
+    "cast": null,
+    "travel": null,
+    "impact": null,
+    "auraActive": "sounds/spells/holy_aura_loop.wav",  // Looping ambient sound
+    "unitEntersAura": "sounds/spells/buff_gained.wav",
+    "unitLeavesAura": "sounds/spells/buff_lost.wav"
+  },
+
+  // =============================================================================
+  // LEVELING (for hero abilities)
+  // =============================================================================
+  // Auras can be leveled to increase effectiveness
+  "leveling": {
+    "maxLevel": 3,
+    "levelScaling": [
+      {
+        "level": 1,
+        "auraRadius": 8.0,
+        "statModifiers": {
+          "armor": 3,
+          "magicResist": 2,
+          "healthRegen": 1.5
+        }
+      },
+      {
+        "level": 2,
+        "auraRadius": 10.0,
+        "statModifiers": {
+          "armor": 5,
+          "magicResist": 3,
+          "healthRegen": 2.5
+        }
+      },
+      {
+        "level": 3,
+        "auraRadius": 12.0,
+        "statModifiers": {
+          "armor": 7,
+          "magicResist": 5,
+          "healthRegen": 3.5
+        }
+      }
+    ]
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "damage_aura" could inherit from this with:
+  // - targetFilters.canTargetEnemies: true
+  // - targetFilters.canTargetAllies: false
+  // - effects[0].type: "debuff"
+  // - effects[0].statModifiers: { "healthRegen": -2 }
+  // - element: "shadow"
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for passive aura effects. Excellent for support heroes and army buffs.",
+    "tacticalUse": "Keep caster alive and near allies. Position to maximize units in aura."
+  }
+}

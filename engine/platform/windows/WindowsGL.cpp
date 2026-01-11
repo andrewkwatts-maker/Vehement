@@ -8,6 +8,7 @@
 #ifdef NOVA_PLATFORM_WINDOWS
 
 #include <Windows.h>
+#include <glad/gl.h>
 #include <GL/gl.h>
 #include <cstring>
 

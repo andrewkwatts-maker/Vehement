@@ -1,0 +1,30 @@
+std::string UIWindow::AddTab(const TabData& tabData) {
+    TabData tab;
+    tab.id = tabData.id;
+    tab.title = tabData.title;
+    tab.htmlPath = tabData.htmlPath;
+    if (tab.id.empty()) {
+        tab.id = "tab_" + std::to_string(m_tabs.size());
+    }
+
+    // Load tab content if path provided
+    if (!tab.htmlPath.empty()) {
+        auto& renderer = m_manager->GetRenderer();
+        std::ifstream file(tab.htmlPath);
+        if (file.is_open()) {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            tab.content = renderer.ParseHTML(buffer.str());
+        }
+    }
+
+    m_tabs.push_back(std::move(tab));
+
+    // Set as active if first tab
+    if (m_tabs.size() == 1) {
+        SetActiveTab(m_tabs[0].id);
+    }
+
+    UpdateTitleBar();
+    return m_tabs.back().id;
+}

@@ -1,0 +1,188 @@
+#version 460 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// ============================================================================
+// ReSTIR Final Shading Pass
+// ============================================================================
+// Takes the final reservoirs (after temporal and spatial reuse) and evaluates
+// the selected light samples to produce the final shaded output.
+//
+// This is where we actually compute the lighting contribution using the
+// carefully selected and resampled lights from the previous passes.
+//
+// The magic: Each pixel has only evaluated 1 light, but that light was chosen
+// from potentially thousands of candidates through RIS + temporal + spatial reuse!
+// ============================================================================
+
+// Reservoir structure
+struct Reservoir {
+    int lightIndex;
+    float weightSum;
+    float W;
+    int M;
+    vec3 padding;
+};
+
+// Light structure
+struct GPULight {
+    vec4 position;
+    vec4 direction;
+    vec4 color;
+    vec4 params;
+};
+
+// Input G-buffers
+layout(rgba32f, binding = 0) uniform image2D u_gBufferPosition;
+layout(rgba16f, binding = 1) uniform image2D u_gBufferNormal;
+layout(rgba8, binding = 2) uniform image2D u_gBufferAlbedo;
+
+// Output
+layout(rgba16f, binding = 3) uniform image2D u_outputColor;
+
+// Reservoir buffer
+layout(std430, binding = 0) buffer ReservoirBuffer {
+    Reservoir reservoirs[];
+};
+
+// Light data
+layout(std430, binding = 2) buffer LightBuffer {
+    GPULight lights[];
+};
+
+// Uniforms
+uniform int u_lightCount = 0;
+uniform vec2 u_resolution = vec2(1920.0, 1080.0);
+uniform bool u_biasCorrection = true;
+uniform float u_rayOffset = 0.001;
+
+// ============================================================================
+// Light Evaluation
+// ============================================================================
+
+vec3 EvaluateLight(GPULight light, vec3 position, vec3 normal, vec3 albedo) {
+    int lightType = int(light.params.y);
+
+    if (lightType == 0) {  // Point light
+        vec3 lightDir = light.position.xyz - position;
+        float dist = length(lightDir);
+        if (dist > light.position.w) return vec3(0.0);
+
+        lightDir /= dist;
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        if (NdotL < 0.001) return vec3(0.0);
+
+        float attenuation = 1.0 / (dist * dist + 1.0);
+        float rangeFalloff = 1.0 - smoothstep(light.position.w * 0.8, light.position.w, dist);
+        return light.color.rgb * light.color.a * NdotL * attenuation * rangeFalloff * albedo;
+
+    } else if (lightType == 1) {  // Spot light
+        vec3 lightDir = light.position.xyz - position;
+        float dist = length(lightDir);
+        if (dist > light.position.w) return vec3(0.0);
+
+        lightDir /= dist;
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        if (NdotL < 0.001) return vec3(0.0);
+
+        float spotAngle = dot(-lightDir, normalize(light.direction.xyz));
+        float innerCone = cos(light.direction.w);
+        float outerCone = cos(light.params.x);
+        float spotFalloff = smoothstep(outerCone, innerCone, spotAngle);
+        if (spotFalloff < 0.001) return vec3(0.0);
+
+        float attenuation = 1.0 / (dist * dist + 1.0);
+        float rangeFalloff = 1.0 - smoothstep(light.position.w * 0.8, light.position.w, dist);
+        return light.color.rgb * light.color.a * NdotL * attenuation * rangeFalloff * spotFalloff * albedo;
+
+    } else if (lightType == 2) {  // Directional light
+        vec3 lightDir = -normalize(light.direction.xyz);
+        float NdotL = max(dot(normal, lightDir), 0.0);
+        if (NdotL < 0.001) return vec3(0.0);
+        return light.color.rgb * light.color.a * NdotL * albedo;
+    }
+
+    return vec3(0.0);
+}
+
+// ============================================================================
+// Shadow/Visibility Test (Optional Bias Correction)
+// ============================================================================
+
+// Simple visibility test - in a full implementation, this would cast shadow rays
+// For now, we assume full visibility (shadows can be added via shadow maps separately)
+float ComputeVisibility(vec3 position, vec3 normal, GPULight light) {
+    if (!u_biasCorrection) return 1.0;
+
+    // Offset position along normal to prevent self-intersection
+    vec3 rayOrigin = position + normal * u_rayOffset;
+
+    // In a full path tracer, we would:
+    // 1. Cast a ray from rayOrigin to light position
+    // 2. Check for intersections with scene geometry
+    // 3. Return 0.0 if occluded, 1.0 if visible
+    //
+    // For this implementation, we'll integrate with existing shadow systems
+    // or assume visibility (shadows are typically handled separately)
+
+    return 1.0;
+}
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    // Bounds check
+    if (pixelCoord.x >= int(u_resolution.x) || pixelCoord.y >= int(u_resolution.y)) return;
+
+    // Load G-buffer data
+    vec3 position = imageLoad(u_gBufferPosition, pixelCoord).xyz;
+    vec3 normal = imageLoad(u_gBufferNormal, pixelCoord).xyz;
+    vec3 albedo = imageLoad(u_gBufferAlbedo, pixelCoord).rgb;
+
+    // Early out for sky/background
+    if (length(normal) < 0.1) {
+        // Output black or sky color
+        imageStore(u_outputColor, pixelCoord, vec4(0.0, 0.0, 0.0, 1.0));
+        return;
+    }
+
+    normal = normalize(normal);
+
+    // Load reservoir for this pixel
+    int bufferIdx = pixelCoord.y * int(u_resolution.x) + pixelCoord.x;
+    Reservoir reservoir = reservoirs[bufferIdx];
+
+    // Check if reservoir has a valid sample
+    if (reservoir.M == 0 || reservoir.lightIndex < 0 || reservoir.W <= 0.0) {
+        // No valid light sample - output ambient/black
+        vec3 ambient = albedo * 0.03; // Minimal ambient lighting
+        imageStore(u_outputColor, pixelCoord, vec4(ambient, 1.0));
+        return;
+    }
+
+    // Get the selected light
+    GPULight selectedLight = lights[reservoir.lightIndex];
+
+    // Evaluate light contribution
+    vec3 contribution = EvaluateLight(selectedLight, position, normal, albedo);
+
+    // Apply visibility (shadow rays)
+    float visibility = ComputeVisibility(position, normal, selectedLight);
+    contribution *= visibility;
+
+    // Apply reservoir weight W for unbiased estimation
+    vec3 finalColor = contribution * reservoir.W;
+
+    // Clamp to prevent fireflies
+    finalColor = min(finalColor, vec3(10.0));
+
+    // Add minimal ambient term
+    vec3 ambient = albedo * 0.03;
+    finalColor += ambient;
+
+    // Store final color
+    imageStore(u_outputColor, pixelCoord, vec4(finalColor, 1.0));
+}

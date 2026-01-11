@@ -1,0 +1,131 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "special_building",
+  "id": "cryptid_shadow_pool",
+  "name": "Shadow Pool",
+  "description": "Dark pool of shadows where stealth and transformation cryptids emerge. Trains Wendigo, Skinwalker, and Shadow Walker units.",
+  "race": "cryptids",
+  "category": "military",
+  "tier": 3,
+
+  "size": {
+    "width": 3,
+    "height": 3
+  },
+
+  "health": 1050,
+  "armor": 2,
+
+  "cost": {
+    "gold": 300,
+    "wood": 100
+  },
+
+  "buildTime": 50,
+  "requiredBuilding": "cryptid_totem_circle",
+  "requiredAge": 2,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [
+    {
+      "unitId": "cryptid_wendigo",
+      "priority": 1
+    },
+    {
+      "unitId": "cryptid_skinwalker",
+      "priority": 2
+    },
+    {
+      "unitId": "cryptid_shadow_walker",
+      "priority": 3
+    }
+  ],
+
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0,
+    "foodPerSecond": 0,
+    "stonePerSecond": 0,
+    "manaPerSecond": 0.4,
+    "requiresWorker": false,
+    "workerCapacity": 0
+  },
+
+  "garrisonCapacity": 0,
+
+  "attackCapability": {
+    "canAttack": false,
+    "damage": 0,
+    "attackSpeed": 0,
+    "attackRange": 0,
+    "attackType": "normal",
+    "targetAir": false,
+    "targetGround": false
+  },
+
+  "isUnique": false,
+  "maxCount": 3,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "passiveAbilities": [
+    {
+      "id": "veil_of_shadows",
+      "name": "Veil of Shadows",
+      "description": "All stealth units trained here have 30% longer stealth duration and 20% faster restealth",
+      "effects": [
+        {
+          "stat": "stealthDuration",
+          "multiplier": 1.30,
+          "target": "trained_stealth_units"
+        },
+        {
+          "stat": "restealthSpeed",
+          "multiplier": 1.20,
+          "target": "trained_stealth_units"
+        }
+      ]
+    },
+    {
+      "id": "shadow_concealment",
+      "name": "Shadow Concealment",
+      "description": "The building itself is invisible to enemies beyond 8 units",
+      "invisibleBeyond": 8.0
+    },
+    {
+      "id": "dark_empowerment",
+      "name": "Dark Empowerment",
+      "description": "Nearby stealth units deal 25% bonus damage from stealth",
+      "radius": 12.0,
+      "effects": [
+        {
+          "stat": "stealthDamageBonus",
+          "multiplier": 1.25,
+          "condition": "hasStealth"
+        }
+      ],
+      "targetType": "friendly"
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/cryptids/buildings/shadow_pool.obj",
+    "icon": "textures/races/cryptids/icons/buildings/shadow_pool.png",
+    "textures": {
+      "diffuse": "textures/races/cryptids/buildings/shadow_pool_diffuse.png",
+      "normal": "textures/races/cryptids/buildings/shadow_pool_normal.png",
+      "emissive": "textures/races/cryptids/buildings/shadow_pool_emissive.png"
+    },
+    "constructionStages": 2,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "damageThreshold": 0.5,
+    "particleEffects": {
+      "shadow_mist": "particles/cryptids/shadow_mist.particle",
+      "dark_wisps": "particles/cryptids/dark_wisps.particle"
+    }
+  },
+
+  "visionRange": 10.0
+}

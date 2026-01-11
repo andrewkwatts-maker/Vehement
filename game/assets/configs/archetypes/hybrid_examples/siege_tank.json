@@ -1,0 +1,81 @@
+{
+  "$schema": "../archetype_schema.json",
+  "id": "siege_tank_deployed",
+  "name": "Siege Tank (Deployed)",
+  "description": "Heavy siege weapon in deployed mode with extreme range and damage",
+  "type": "building",
+
+  "parentArchetypes": [
+    "defense_building"
+  ],
+
+  "behaviors": [
+    {
+      "type": "DefenseBehavior",
+      "config": {
+        "armor": 5.0,
+        "healthRegen": 0.0,
+        "hasAttack": true,
+        "attackRange": 25.0,
+        "attackDamage": 150.0,
+        "attackSpeed": 0.4,
+        "attackType": "siege_cannon",
+        "minRange": 3.0,
+        "splashRadius": 2.5,
+        "splashDamagePercent": 75,
+        "canAttackGround": true,
+        "canAttackAir": false,
+        "requiresGroundTarget": false
+      }
+    },
+    {
+      "type": "MobileBuildingBehavior",
+      "config": {
+        "mobilityMode": "DeploySystem",
+        "moveSpeed": 0.0,
+        "packTime": 4.0,
+        "unpackTime": 0.0,
+        "canFunctionWhileMoving": false,
+        "canAttackWhileMoving": false,
+        "targetFormId": "siege_tank_mobile",
+        "packAbilityName": "Siege Mode (Off)",
+        "description": "Pack up to move (4s)"
+      }
+    },
+    {
+      "type": "TransformationBehavior",
+      "config": {
+        "transformationType": "BuildingToUnit",
+        "targetFormId": "siege_tank_mobile",
+        "transformTime": 4.0,
+        "transformDuration": 0.0,
+        "canTransformInCombat": true,
+        "preservesHealth": true,
+        "preservesMana": true,
+        "transformCost": {},
+        "cooldown": 0.0
+      }
+    }
+  ],
+
+  "stats": {
+    "health": 300.0,
+    "armor": 5.0,
+    "sightRange": 15.0,
+    "buildTime": 0.0,
+    "foodCost": 0
+  },
+
+  "properties": {
+    "modelPath": "models/units/siege_tank_deployed_sdf.json",
+    "iconPath": "icons/units/siege_tank_deployed.png",
+    "soundSet": "siege_tank",
+    "footprintSize": [2, 2],
+    "selectionPriority": "building",
+    "description_extended": "In Siege Mode, the tank is immobile but gains massive range and damage. Takes 4 seconds to pack up into mobile mode. Vulnerable to close-range units due to minimum range requirement.",
+    "vulnerabilities": {
+      "melee": 1.5,
+      "fast_units": 2.0
+    }
+  }
+}

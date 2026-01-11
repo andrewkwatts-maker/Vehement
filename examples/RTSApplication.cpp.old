@@ -1,0 +1,533 @@
+#include "RTSApplication.hpp"
+#include "SettingsMenu.hpp"
+
+#include "core/Engine.hpp"
+#include "core/Window.hpp"
+#include "graphics/Renderer.hpp"
+#include "graphics/Mesh.hpp"
+#include "graphics/Shader.hpp"
+#include "graphics/debug/DebugDraw.hpp"
+#include "input/InputManager.hpp"
+#include "scene/FlyCamera.hpp"
+
+// Game mode subsystems
+// TODO: Re-enable these includes once game library is built
+// #include "game/src/rts/modes/SoloGameMode.hpp"
+// #include "game/src/editor/ingame/InGameEditor.hpp"
+
+#include <imgui.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <spdlog/spdlog.h>
+
+static const char* BASIC_VERTEX_SHADER = R"(
+#version 460 core
+
+layout(location = 0) in vec3 a_Position;
+layout(location = 1) in vec3 a_Normal;
+layout(location = 2) in vec2 a_TexCoord;
+
+uniform mat4 u_ProjectionView;
+uniform mat4 u_Model;
+
+out vec3 v_WorldPos;
+out vec3 v_Normal;
+out vec2 v_TexCoord;
+
+void main() {
+    vec4 worldPos = u_Model * vec4(a_Position, 1.0);
+    v_WorldPos = worldPos.xyz;
+    v_Normal = mat3(transpose(inverse(u_Model))) * a_Normal;
+    v_TexCoord = a_TexCoord;
+    gl_Position = u_ProjectionView * worldPos;
+}
+)";
+
+static const char* BASIC_FRAGMENT_SHADER = R"(
+#version 460 core
+
+in vec3 v_WorldPos;
+in vec3 v_Normal;
+in vec2 v_TexCoord;
+
+uniform vec3 u_LightDirection;
+uniform vec3 u_LightColor;
+uniform float u_AmbientStrength;
+uniform vec3 u_ObjectColor;
+uniform vec3 u_ViewPos;
+
+out vec4 FragColor;
+
+void main() {
+    vec3 norm = normalize(v_Normal);
+    vec3 lightDir = normalize(-u_LightDirection);
+
+    // Ambient
+    vec3 ambient = u_AmbientStrength * u_LightColor;
+
+    // Diffuse
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * u_LightColor;
+
+    // Specular
+    vec3 viewDir = normalize(u_ViewPos - v_WorldPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    vec3 specular = 0.5 * spec * u_LightColor;
+
+    vec3 result = (ambient + diffuse + specular) * u_ObjectColor;
+    FragColor = vec4(result, 1.0);
+}
+)";
+
+RTSApplication::RTSApplication() = default;
+
+RTSApplication::~RTSApplication() = default;
+
+bool RTSApplication::Initialize() {
+    spdlog::info("Initializing RTS Application");
+
+    // Create camera
+    m_camera = std::make_unique<Nova::FlyCamera>();
+    m_camera->SetPerspective(45.0f, Nova::Engine::Instance().GetWindow().GetAspectRatio(), 0.1f, 1000.0f);
+    m_camera->LookAt(glm::vec3(10, 10, 10), glm::vec3(0, 0, 0));
+
+    // Create shader
+    m_basicShader = std::make_shared<Nova::Shader>();
+    if (!m_basicShader->LoadFromSource(BASIC_VERTEX_SHADER, BASIC_FRAGMENT_SHADER)) {
+        spdlog::error("Failed to create basic shader");
+        return false;
+    }
+
+    // Create primitive meshes
+    m_cubeMesh = Nova::Mesh::CreateCube(1.0f);
+    m_sphereMesh = Nova::Mesh::CreateSphere(0.5f, 32);
+    m_planeMesh = Nova::Mesh::CreatePlane(20.0f, 20.0f, 10, 10);
+
+    // Initialize settings menu
+    m_settingsMenu = std::make_unique<SettingsMenu>();
+    m_settingsMenu->Initialize(&Nova::Engine::Instance().GetInput(), &Nova::Engine::Instance().GetWindow());
+
+    // Note: Subsystems (solo game mode, editor, etc.) are initialized lazily when their modes are entered
+    // This avoids unnecessary initialization and allows for better resource management
+
+    spdlog::info("RTS Application initialized");
+    return true;
+}
+
+void RTSApplication::Update(float deltaTime) {
+    auto& engine = Nova::Engine::Instance();
+    auto& input = engine.GetInput();
+
+    // Only update camera if not in main menu
+    if (m_currentMode != GameMode::MainMenu) {
+        m_camera->Update(input, deltaTime);
+
+        // Toggle cursor lock with Tab
+        if (input.IsKeyPressed(Nova::Key::Tab)) {
+            bool locked = !input.IsCursorLocked();
+            input.SetCursorLocked(locked);
+        }
+    } else {
+        // In main menu, ensure cursor is not locked
+        if (input.IsCursorLocked()) {
+            input.SetCursorLocked(false);
+        }
+    }
+
+    // Escape to return to main menu or quit
+    if (input.IsKeyPressed(Nova::Key::Escape)) {
+        if (m_currentMode == GameMode::MainMenu) {
+            engine.RequestShutdown();
+        } else {
+            ReturnToMainMenu();
+        }
+    }
+
+    // Update rotation
+    m_rotationAngle += deltaTime * 45.0f;
+
+    // Update active subsystems based on current mode
+    switch (m_currentMode) {
+        case GameMode::Solo:
+            // TODO: Solo game mode update will be integrated once game library is built
+            // if (m_soloGameMode) {
+            //     m_soloGameMode->Update(deltaTime);
+            // }
+            break;
+
+
+        case GameMode::MainMenu:
+        case GameMode::Online:
+        case GameMode::Campaign:
+            // No subsystem updates needed
+            break;
+    }
+}
+
+void RTSApplication::Render() {
+    auto& engine = Nova::Engine::Instance();
+    auto& renderer = engine.GetRenderer();
+    auto& debugDraw = renderer.GetDebugDraw();
+
+    // Render mode-specific 3D content
+    if (m_currentMode == GameMode::Editor && m_standaloneEditor) {
+        // Editor renders its own 3D view
+        m_standaloneEditor->Render3D(renderer, *m_camera);
+    } else {
+        // Default demo scene for other modes
+        // Draw grid
+        debugDraw.AddGrid(10, 1.0f, glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
+        debugDraw.AddTransform(glm::mat4(1.0f), 2.0f);
+
+        // Draw demo objects
+        m_basicShader->Bind();
+        m_basicShader->SetMat4("u_ProjectionView", m_camera->GetProjectionView());
+        m_basicShader->SetVec3("u_LightDirection", m_lightDirection);
+        m_basicShader->SetVec3("u_LightColor", m_lightColor);
+        m_basicShader->SetFloat("u_AmbientStrength", m_ambientStrength);
+        m_basicShader->SetVec3("u_ViewPos", m_camera->GetPosition());
+
+        // Draw rotating cube
+        glm::mat4 cubeTransform = glm::translate(glm::mat4(1.0f), glm::vec3(3, 1, 0));
+        cubeTransform = glm::rotate(cubeTransform, glm::radians(m_rotationAngle), glm::vec3(0, 1, 0));
+        m_basicShader->SetMat4("u_Model", cubeTransform);
+        m_basicShader->SetVec3("u_ObjectColor", glm::vec3(0.8f, 0.2f, 0.2f));
+        m_cubeMesh->Draw();
+
+        // Draw sphere
+        glm::mat4 sphereTransform = glm::translate(glm::mat4(1.0f), glm::vec3(-3, 0.5f, 0));
+        m_basicShader->SetMat4("u_Model", sphereTransform);
+        m_basicShader->SetVec3("u_ObjectColor", glm::vec3(0.2f, 0.8f, 0.2f));
+        m_sphereMesh->Draw();
+
+        // Draw ground plane
+        glm::mat4 planeTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
+        m_basicShader->SetMat4("u_Model", planeTransform);
+        m_basicShader->SetVec3("u_ObjectColor", glm::vec3(0.5f, 0.5f, 0.6f));
+        m_planeMesh->Draw();
+    }
+}
+
+void RTSApplication::OnImGui() {
+    auto& engine = Nova::Engine::Instance();
+    auto& window = engine.GetWindow();
+
+    // Render different UI based on current mode
+    switch (m_currentMode) {
+        case GameMode::MainMenu:
+            RenderMainMenu();
+            break;
+        case GameMode::Solo:
+            RenderOnlineGame();
+            break;
+        case GameMode::Editor:
+            RenderEditor();
+            break;
+        case GameMode::Campaign:
+            RenderCampaign();
+            break;
+    }
+
+    // Render settings menu if open
+    if (m_showSettings) {
+        m_settingsMenu->Render(&m_showSettings);
+    }
+}
+
+void RTSApplication::RenderMainMenu() {
+    auto& window = Nova::Engine::Instance().GetWindow();
+    ImVec2 windowSize = ImVec2(static_cast<float>(window.GetWidth()), static_cast<float>(window.GetHeight()));
+
+    // Full screen overlay for main menu
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(windowSize);
+    ImGui::Begin("MainMenu", nullptr,
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse |
+        ImGuiWindowFlags_NoCollapse);
+
+    // Center the menu
+    ImGui::SetCursorPosY(windowSize.y * 0.25f);
+
+    // Title
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]); // Use default font, but larger
+    float titleSize = 48.0f;
+    const char* title = "RTS GAME - NOVA3D ENGINE";
+    float titleWidth = ImGui::CalcTextSize(title).x * 2.0f; // Approximate larger size
+    ImGui::SetCursorPosX((windowSize.x - titleWidth) * 0.5f);
+    ImGui::SetWindowFontScale(2.0f);
+    ImGui::Text("%s", title);
+    ImGui::SetWindowFontScale(1.0f);
+    ImGui::PopFont();
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // Menu buttons
+    float buttonWidth = 300.0f;
+    float buttonHeight = 50.0f;
+    float centerX = (windowSize.x - buttonWidth) * 0.5f;
+
+    ImGui::SetCursorPosX(centerX);
+    if (ImGui::Button("Solo Play", ImVec2(buttonWidth, buttonHeight))) {
+        StartSoloGame();
+    }
+
+    ImGui::SetCursorPosX(centerX);
+    if (ImGui::Button("Online Multiplayer", ImVec2(buttonWidth, buttonHeight))) {
+        StartOnlineGame();
+    }
+
+    ImGui::SetCursorPosX(centerX);
+    if (ImGui::Button("Campaign", ImVec2(buttonWidth, buttonHeight))) {
+        m_showRaceSelection = true;
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::SetCursorPosX(centerX);
+    if (ImGui::Button("Settings", ImVec2(buttonWidth, buttonHeight))) {
+        OpenSettings();
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if (ImGui::Button("Exit", ImVec2(buttonWidth, buttonHeight))) {
+        Nova::Engine::Instance().RequestShutdown();
+    }
+
+    ImGui::End();
+
+    // Race selection popup
+    if (m_showRaceSelection) {
+        ImGui::OpenPopup("Select Race");
+        ImVec2 popupSize(500, 400);
+        ImGui::SetNextWindowPos(ImVec2((windowSize.x - popupSize.x) * 0.5f, (windowSize.y - popupSize.y) * 0.5f));
+        ImGui::SetNextWindowSize(popupSize);
+
+        if (ImGui::BeginPopupModal("Select Race", &m_showRaceSelection, ImGuiWindowFlags_NoResize)) {
+            ImGui::Text("Choose your race for the campaign:");
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            for (int i = 0; i < NUM_RACES; i++) {
+                if (ImGui::Selectable(RACE_NAMES[i], m_selectedRace == i, 0, ImVec2(0, 30))) {
+                    m_selectedRace = i;
+                }
+
+                // Display race description
+                if (m_selectedRace == i) {
+                    ImGui::Indent();
+                    ImGui::TextWrapped("Campaign missions for the %s faction.", RACE_NAMES[i]);
+                    ImGui::Unindent();
+                }
+            }
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            float buttonW = 120.0f;
+            ImGui::SetCursorPosX((popupSize.x - buttonW * 2 - 20) * 0.5f);
+            if (ImGui::Button("Start Campaign", ImVec2(buttonW, 30))) {
+                StartCampaign(m_selectedRace);
+                m_showRaceSelection = false;
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(buttonW, 30))) {
+                m_showRaceSelection = false;
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+}
+
+void RTSApplication::RenderSoloGame() {
+    ImGui::Begin("Solo Game");
+
+    ImGui::Text("Solo Play Mode - 1v1 Match");
+    ImGui::Separator();
+
+    // TODO: Display actual solo game mode info once game library is integrated
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Solo game mode is being implemented...");
+    ImGui::Text("This will include:");
+    ImGui::BulletText("Procedurally generated 1v1 maps");
+    ImGui::BulletText("Resource placement (trees, rocks, gold)");
+    ImGui::BulletText("AI opponent with decision tree logic");
+    ImGui::BulletText("Full RTS input controls");
+
+    /*
+    if (m_soloGameMode) {
+        const auto& config = m_soloGameMode->GetConfig();
+        ImGui::Text("Map: %dx%d  |  Seed: %llu", config.mapWidth, config.mapHeight, config.seed);
+        const auto& spawns = m_soloGameMode->GetPlayerSpawns();
+        ImGui::Text("Players: %zu spawned", spawns.size());
+        const auto& resources = m_soloGameMode->GetResourceNodes();
+        ImGui::Text("Resources: %zu nodes placed", resources.size());
+        ImGui::Spacing();
+        ImGui::Text("Starting Resources:");
+        ImGui::Text("  Food: %d  Wood: %d  Stone: %d  Metal: %d",
+                    config.startingFood, config.startingWood,
+                    config.startingStone, config.startingMetal);
+    } else {
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Solo game mode not initialized!");
+    }
+    */
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Text("Camera Position: %.1f, %.1f, %.1f",
+                m_camera->GetPosition().x, m_camera->GetPosition().y, m_camera->GetPosition().z);
+
+    ImGui::Spacing();
+    ImGui::Text("Controls:");
+    ImGui::BulletText("WASD - Move camera");
+    ImGui::BulletText("Right Mouse + Drag - Look around");
+    ImGui::BulletText("Tab - Toggle cursor lock");
+    ImGui::BulletText("Shift - Sprint");
+    ImGui::BulletText("Escape - Return to Main Menu");
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    if (ImGui::Button("Return to Main Menu")) {
+        ReturnToMainMenu();
+    }
+
+    ImGui::End();
+}
+
+void RTSApplication::RenderOnlineGame() {
+    ImGui::Begin("Online Multiplayer");
+
+    ImGui::Text("Online Multiplayer Mode");
+    ImGui::Separator();
+
+    ImGui::TextWrapped("Online multiplayer features will be implemented here, including:");
+    ImGui::BulletText("Matchmaking");
+    ImGui::BulletText("Lobby system");
+    ImGui::BulletText("Player synchronization");
+    ImGui::BulletText("Leaderboards");
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    if (ImGui::Button("Return to Main Menu")) {
+        ReturnToMainMenu();
+            ReturnToMainMenu();
+        }
+        ImGui::End();
+    }
+}
+
+void RTSApplication::RenderCampaign() {
+    ImGui::Begin("Campaign");
+
+    ImGui::Text("Campaign Mode - %s", RACE_NAMES[m_selectedRace]);
+    ImGui::Separator();
+
+    ImGui::TextWrapped("Campaign missions for the %s faction.", RACE_NAMES[m_selectedRace]);
+
+    ImGui::Spacing();
+    ImGui::Text("Available Missions:");
+
+    // Display sample missions
+    for (int i = 1; i <= 7; i++) {
+        ImGui::PushID(i);
+        if (ImGui::Button(("Mission " + std::to_string(i)).c_str(), ImVec2(200, 30))) {
+            spdlog::info("Starting mission {} for {}", i, RACE_NAMES[m_selectedRace]);
+        }
+        ImGui::PopID();
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    if (ImGui::Button("Return to Main Menu")) {
+        ReturnToMainMenu();
+    }
+
+    ImGui::End();
+}
+
+void RTSApplication::StartSoloGame() {
+    spdlog::info("Starting Solo Game");
+
+    // TODO: Full solo game mode integration requires building game library
+    // This will be implemented once World, TileMap, TerrainGenerator, etc. are compiled
+    /*
+    if (!m_soloGameMode) {
+        m_soloGameMode = std::make_unique<Vehement::SoloGameMode>();
+        if (!m_soloGameMode->Initialize()) {
+            spdlog::error("Failed to initialize solo game mode");
+            return;
+        }
+    }
+
+    auto& renderer = Nova::Engine::Instance().GetRenderer();
+    if (!m_soloGameMode->GenerateMap(renderer)) {
+        spdlog::error("Failed to generate solo game map");
+        return;
+    }
+
+    spdlog::info("Solo game map generated successfully");
+    */
+
+        if (!m_standaloneEditor->Initialize()) {
+            spdlog::error("Failed to initialize standalone editor");
+            return;
+        }
+    }
+
+    m_currentMode = GameMode::Editor;
+}
+
+void RTSApplication::StartCampaign(int raceIndex) {
+    spdlog::info("Starting Campaign for race: {}", RACE_NAMES[raceIndex]);
+    m_selectedRace = raceIndex;
+    m_currentMode = GameMode::Campaign;
+}
+
+void RTSApplication::OpenSettings() {
+    spdlog::info("Opening Settings");
+    m_showSettings = true;
+    m_currentMode = GameMode::MainMenu;
+}
+
+void RTSApplication::Shutdown() {
+    spdlog::info("Shutting down RTS Application");
+
+    // Shutdown subsystems
+    if (m_standaloneEditor) {
+        m_standaloneEditor->Shutdown();
+        m_standaloneEditor.reset();
+    }
+    if (m_settingsMenu) {
+        m_settingsMenu->Shutdown();
+        m_settingsMenu.reset();
+    }
+    // TODO: Uncomment when game/editor libraries are integrated
+    // if (m_inGameEditor) {
+    //     m_inGameEditor->Shutdown();
+    //     m_inGameEditor.reset();
+    // }
+    // if (m_soloGameMode) {
+    //     m_soloGameMode->Shutdown();
+    //     m_soloGameMode.reset();
+    // }
+
+    // Cleanup original resources
+    m_camera.reset();
+    m_cubeMesh.reset();
+    m_sphereMesh.reset();
+    m_planeMesh.reset();
+    m_basicShader.reset();
+}

@@ -2,6 +2,7 @@
 #include "UIWindow.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
 #include <regex>
@@ -1205,7 +1206,7 @@ void HTMLRenderer::DrawLine(float x1, float y1, float x2, float y2, float width,
 }
 
 void HTMLRenderer::PushClipRect(float x, float y, float width, float height) {
-    m_clipStack.push_back({x, y, width, height});
+    m_clipStack.push_back(std::array<float, 4>{x, y, width, height});
 
     DrawCommand cmd;
     cmd.type = DrawCommand::Type::Clip;

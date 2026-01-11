@@ -1,0 +1,176 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying",
+  "id": "undead_wraith",
+  "name": "Wraith",
+  "description": "Ethereal spirits of tortured souls. Wraiths phase through physical obstacles and drain life from their victims.",
+  "race": "undead",
+  "category": "flying",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 340,
+    "healthRegen": 0,
+    "mana": 200,
+    "manaRegen": 1.5,
+    "damage": 22,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.6,
+    "attackRange": 2.0,
+    "armor": 0,
+    "magicResist": 40,
+    "moveSpeed": 5.5,
+    "flyHeight": 3.0
+  },
+
+  "cost": {
+    "gold": 240,
+    "mana": 50,
+    "corpses": 2
+  },
+
+  "trainTime": 35,
+  "populationCost": 3,
+  "requiredBuilding": "undead_tomb",
+  "requiredAge": 2,
+
+  "armorType": "ethereal",
+  "attackType": "magic",
+
+  "bonusVs": [
+    {
+      "category": "caster",
+      "multiplier": 1.4
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "ethereal_form",
+      "name": "Ethereal Form",
+      "description": "Take 50% reduced damage from physical attacks and can phase through units and obstacles",
+      "type": "passive",
+      "physicalDamageReduction": 0.50,
+      "canPhase": true,
+      "ignoresCollision": true
+    },
+    {
+      "id": "life_drain",
+      "name": "Life Drain",
+      "description": "Each attack drains 30% of damage dealt as health",
+      "type": "passive",
+      "lifestealPercent": 0.30
+    },
+    {
+      "id": "possession",
+      "name": "Possession",
+      "description": "Take control of target enemy unit for 10 seconds (max 1 active)",
+      "type": "active",
+      "hotkey": "P",
+      "cooldown": 45.0,
+      "manaCost": 150,
+      "range": 8.0,
+      "duration": 10.0,
+      "targetType": "enemy_unit",
+      "excludes": ["hero", "massive", "undead"],
+      "maxPossessed": 1
+    },
+    {
+      "id": "spectral_curse",
+      "name": "Spectral Curse",
+      "description": "Curse target enemy, reducing their armor by 5 and magic resist by 25% for 12 seconds",
+      "type": "active",
+      "hotkey": "C",
+      "cooldown": 20.0,
+      "manaCost": 80,
+      "range": 10.0,
+      "duration": 12.0,
+      "effects": [
+        {
+          "stat": "armor",
+          "value": -5
+        },
+        {
+          "stat": "magicResist",
+          "value": -0.25,
+          "type": "percent"
+        }
+      ]
+    },
+    {
+      "id": "haunt",
+      "name": "Haunt",
+      "description": "Become invisible for 8 seconds or until attacking",
+      "type": "active",
+      "hotkey": "H",
+      "cooldown": 25.0,
+      "manaCost": 60,
+      "duration": 8.0,
+      "breaksOnAttack": true,
+      "effects": [
+        {
+          "stat": "invisible",
+          "value": 1.0
+        }
+      ]
+    }
+  ],
+
+  "upgrades": ["wraith_essence", "spectral_enhancement", "undead_magic_damage_1"],
+
+  "visuals": {
+    "model": "models/races/undead/units/wraith.obj",
+    "portrait": "textures/races/undead/portraits/wraith.png",
+    "icon": "textures/races/undead/icons/wraith.png",
+    "scale": 1.2,
+    "textures": {
+      "diffuse": "textures/races/undead/units/wraith_diffuse.png",
+      "normal": "textures/races/undead/units/wraith_normal.png",
+      "emissive": "textures/races/undead/units/wraith_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/undead/wraith/idle.anim",
+      "fly": "animations/undead/wraith/fly.anim",
+      "attack": "animations/undead/wraith/attack.anim",
+      "possess": "animations/undead/wraith/possess.anim",
+      "curse": "animations/undead/wraith/curse.anim",
+      "death": "animations/undead/wraith/death.anim"
+    },
+    "effects": {
+      "aura": "effects/wraith_aura.fx",
+      "trail": "effects/spectral_trail.fx"
+    },
+    "opacity": 0.7
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/wraith/select_1.wav", "sounds/undead/wraith/wail_1.wav"],
+    "move": ["sounds/undead/wraith/move_1.wav", "sounds/undead/wraith/whisper.wav"],
+    "attack": ["sounds/undead/wraith/attack.wav"],
+    "possess": ["sounds/undead/wraith/possess.wav"],
+    "death": ["sounds/undead/wraith/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.35,
+    "height": 2.0,
+    "mass": 5.0,
+    "ethereal": true
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/ethereal_assassin.bt",
+    "profile": "assassin",
+    "aggroRange": 14.0,
+    "priorityTargets": ["caster", "ranged", "hero"],
+    "fearless": true,
+    "usePossession": true,
+    "preferredDistance": 2.0
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": false,
+    "dissipates": true
+  }
+}

@@ -1,0 +1,389 @@
+{
+  "$schema": "../../../schemas/unit_archetype.schema.json",
+
+  // =============================================================================
+  // FLYING UNIT ARCHETYPE
+  // =============================================================================
+  // This archetype represents a flying unit.
+  // Behavior composition:
+  // - MovementBehavior: Flying (can pass over terrain and units)
+  // - CombatBehavior: Ranged or Melee
+  // - StatsComponent: Flying height, can be targeted by anti-air
+  //
+  // Use this as a base template for units like:
+  // - Gryphon Rider, Dragon, Gargoyle, Flying Machine, etc.
+  // =============================================================================
+
+  "id": "flying_unit_archetype",
+  "name": "Flying Unit Template",
+  "description": "An aerial combat unit that can fly over terrain and units. Excellent mobility and scouting, vulnerable to anti-air.",
+
+  "category": "air",
+  "tier": 2,
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "baseStats": {
+    // Survivability - moderate
+    "health": 120,
+    "healthRegen": 0.4,
+    "mana": 0,
+    "manaRegen": 0,
+
+    // Offensive stats
+    "damage": 16,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.1,
+    "attackRange": 6,  // Can be melee (1.5) or ranged
+
+    // Defensive stats - usually light armor
+    "armor": 1,
+    "magicResist": 0,
+
+    // Mobility - excellent speed
+    "moveSpeed": 7.0,  // Flying units are typically faster
+    "turnSpeed": 540,  // Can turn quickly
+    "acceleration": 15.0,
+
+    // Perception
+    "sightRange": 14,  // Excellent vision from air
+    "detectionRange": 10,
+
+    // Critical hits
+    "critChance": 0.1,
+    "critMultiplier": 2.0
+  },
+
+  // =============================================================================
+  // COMBAT BEHAVIOR
+  // =============================================================================
+  "combat": {
+    "attackType": "normal",  // Or "pierce" for ranged flyers
+    "armorType": "light",
+
+    "attackAnimation": {
+      "windupTime": 0.35,
+      "backswingTime": 0.55,
+      "totalDuration": 0.91
+    },
+
+    // Flying units often have bonuses vs other air
+    "bonusVs": [
+      {
+        "category": "air",
+        "multiplier": 1.5
+      },
+      {
+        "category": "unarmored",
+        "multiplier": 1.2
+      }
+    ],
+
+    "penaltyVs": [
+      {
+        "category": "heavy",
+        "multiplier": 0.8
+      }
+    ],
+
+    "cleave": {
+      "enabled": false
+    },
+
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR (if ranged)
+  // =============================================================================
+  "projectile": {
+    "type": "instant",  // Or "ballistic" for ranged
+    "speed": 20.0,
+    "arc": 0.0,  // Flat trajectory from air
+    "maxTravelDistance": 8.0,
+
+    "piercing": false,
+    "canBeBlocked": false,  // Air attacks not blocked by terrain
+    "canBeDodged": true,
+    "canMiss": true,
+    "missChance": 0.05,
+
+    "visualModel": null,
+    "impactEffect": "effects/air_attack_impact.fx",
+    "projectileSize": 0.2
+  },
+
+  // =============================================================================
+  // MOVEMENT BEHAVIOR
+  // =============================================================================
+  "movement": {
+    "movementType": "flying",
+
+    // Flight capabilities
+    "canMoveOnLand": true,  // Can fly over land
+    "canMoveOnWater": true,  // Can fly over water
+    "canMoveOnLava": true,   // Can fly over lava
+    "canClimbCliffs": true,   // Ignores cliffs
+    "canPassThroughUnits": true,  // Can fly over units
+
+    "collisionRadius": 0.6,
+    "pushPriority": 1,  // Flying units don't push/get pushed
+
+    "pathfindingType": "flying",
+    "unitSize": "medium",
+
+    // Flying-specific
+    "flyingHeight": 3.0,  // Height above ground
+    "canLand": false,  // Some flying units can land
+    "landedStats": null,  // Different stats when landed
+
+    // Hover behavior
+    "hoverInPlace": true,
+    "hoverAnimation": true,
+    "hoverBobAmount": 0.2,  // Vertical bobbing distance
+    "hoverBobSpeed": 1.0
+  },
+
+  // =============================================================================
+  // FLYING VULNERABILITIES
+  // =============================================================================
+  "flyingVulnerabilities": {
+    // Extra damage from anti-air
+    "antiAirMultiplier": 1.5,
+
+    // Cyclone/tornado effects
+    "vulnerableToWindEffects": true,
+    "windEffectMultiplier": 2.0,
+
+    // Web/net effects ground flying units
+    "canBeGrounded": true,
+    "groundedDuration": 5.0,
+    "groundedStats": {
+      "moveSpeed": 0.0,
+      "canAttack": false,
+      "armorMultiplier": 0.5  // More vulnerable when grounded
+    },
+
+    // Lightning effects
+    "vulnerableToLightning": true,
+    "lightningMultiplier": 1.5
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 200,
+    "wood": 50,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "trainTime": 45,  // Longer training time
+  "populationCost": 2,  // Flying units often cost more pop
+
+  "requiredBuilding": "aviary",
+  "requiredAge": 1,  // Usually tier 2+
+  "requiredTech": null,
+
+  // =============================================================================
+  // ABILITIES & UPGRADES
+  // =============================================================================
+  "abilities": [
+    {
+      "id": "aerial_reconnaissance",
+      "unlockedByDefault": true,
+      "description": "Share vision with nearby allies"
+    }
+  ],
+
+  "upgrades": [
+    "air_attack_1",
+    "air_attack_2",
+    "air_armor_1",
+    "air_armor_2",
+    "flight_speed_1"
+  ],
+
+  // =============================================================================
+  // UNIT CAPABILITIES
+  // =============================================================================
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+
+  // Attack behavior
+  "canAttackGround": true,
+  "canAttackAir": true,
+  "canAttackWhileMoving": true,  // Flying units can often attack while moving
+  "requiresFacing": true,
+
+  // Transport capabilities (some flyers can carry units)
+  "canTransport": false,
+  "transportCapacity": 0,
+  "canTransportType": [],
+
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": true,
+  "isMechanical": false,
+  "isUndead": false,
+
+  // =============================================================================
+  // FORMATIONS
+  // =============================================================================
+  "formation": {
+    "preferredPosition": "any",  // Flies independently
+    "formationSpacing": 2.0,  // More spacing for flyers
+    "maintainFormation": false,  // Usually don't use formations
+    "flyingFormation": true,
+    "formationHeight": 3.0  // Staggered heights
+  },
+
+  // =============================================================================
+  // AI BEHAVIOR
+  // =============================================================================
+  "ai": {
+    "aggroRange": 16,  // Long aggro from superior position
+    "returnToPosition": true,
+    "acquisitionRange": 14,
+
+    "targetPriority": [
+      {
+        "type": "air",  // Counter enemy air
+        "weight": 2.0
+      },
+      {
+        "type": "ranged",  // Harass enemy ranged
+        "weight": 1.5
+      },
+      {
+        "type": "weakest",
+        "weight": 1.2
+      }
+    ],
+
+    "fleeAtHealthPercent": 0.25,  // Flee at 25% health
+    "pursuitRange": 20,  // Can chase far
+
+    // Flying-specific AI
+    "maintainHeight": true,
+    "avoidAntiAir": true,  // Avoid units with anti-air
+    "avoidAntiAirRange": 12.0,
+    "hitAndRun": true,  // Attack and retreat
+    "harassPriority": 0.8  // Prioritize harassment
+  },
+
+  // =============================================================================
+  // EXPERIENCE & LEVELING
+  // =============================================================================
+  "experience": {
+    "canGainExperience": false,
+    "experienceValue": 80,  // Worth more XP
+    "bountyGold": 20,  // Worth more gold
+    "bountyMultiplier": 1.0
+  },
+
+  // =============================================================================
+  // SCOUTING
+  // =============================================================================
+  "scouting": {
+    "isScout": true,
+    "revealsStealthed": false,
+    "visionBonus": 1.4,  // 40% more vision
+    "sharesVision": true,  // Shares vision with allies
+    "visionShareRadius": 15.0
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/units/gryphon_rider.fbx",
+    "portrait": "textures/portraits/gryphon_rider.png",
+    "icon": "textures/icons/units/gryphon_rider.png",
+    "scale": 1.2,  // Slightly larger
+
+    "animations": {
+      "idle": "anim_fly_idle",
+      "walk": "anim_fly",  // Flying animation
+      "attack": "anim_fly_attack",
+      "death": "anim_death_fall",  // Fall from sky
+      "decay": null,  // Flying units don't leave corpses
+      "build": null,
+      "gather": null,
+      "spell": null,
+      "takeoff": "anim_takeoff",
+      "land": "anim_land"
+    },
+
+    "deathEffect": "effects/air_unit_crash.fx",
+    "bloodType": "none",  // Often no blood
+    "shadowSize": 1.5,  // Large shadow on ground
+    "shadowType": "projected",  // Projects shadow below
+    "selectionScale": 1.2,
+
+    "teamColorParts": ["saddle", "rider_armor"],
+
+    // Flight effects
+    "wingTrailEffect": "effects/wing_trail.fx",
+    "engineEffect": null  // For mechanical flyers
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/units/gryphon/select1.wav",
+      "sounds/units/gryphon/screech.wav"
+    ],
+    "move": [
+      "sounds/units/gryphon/move1.wav"
+    ],
+    "attack": [
+      "sounds/units/gryphon/attack1.wav",
+      "sounds/units/gryphon/attack2.wav"
+    ],
+    "death": [
+      "sounds/units/gryphon/death1.wav"
+    ],
+    "ready": [
+      "sounds/units/gryphon/ready.wav"
+    ],
+
+    // Flying sounds
+    "ambient": "sounds/units/gryphon/wing_flap_loop.wav",
+    "attackImpact": "sounds/impacts/claw_hit.wav",
+    "crashLand": "sounds/impacts/crash.wav"
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "dragon" could inherit from this with:
+  // - baseStats.health: 400
+  // - baseStats.damage: 30
+  // - combat.splash.enabled: true (breath weapon)
+  // - flyingHeight: 5.0
+  // - tier: 3
+  // - populationCost: 4
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for flying units. Superior mobility and vision, vulnerable to anti-air.",
+    "tacticalUse": "Scout, harass, intercept enemy air. Avoid anti-air units. Use mobility advantage.",
+    "counters": ["other_air", "ranged", "isolated_units"],
+    "counteredBy": ["anti_air", "mages", "towers"]
+  }
+}

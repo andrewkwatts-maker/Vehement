@@ -1,0 +1,350 @@
+{
+    "id": "stalker",
+    "name": "Stalker",
+    "race": "aliens",
+    "type": "unit",
+    "category": "ranged",
+    "description": "Ranged warriors piloting agile mechanical walkers with particle disruptors and Blink teleportation.",
+
+    "stats": {
+        "health": 80,
+        "shield": 80,
+        "armor": 1,
+        "damage": 13,
+        "attackSpeed": 1.44,
+        "moveSpeed": 413,
+        "attackRange": 600
+    },
+
+    "costs": {
+        "minerals": 125,
+        "vespene": 50,
+        "supply": 2,
+        "buildTime": 42.0
+    },
+
+    "sdfModel": {
+        "name": "stalker_model",
+        "bounds": { "min": [-0.8, 0.0, -0.8], "max": [0.8, 2.2, 0.8] },
+        "primitives": [
+            {
+                "id": "body_core",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.25, 0.2, 0.2] },
+                "transform": { "position": [0.0, 1.5, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.7, "roughness": 0.35, "emissive": [0.0, 0.03, 0.06] },
+                "operation": "Union"
+            },
+            {
+                "id": "body_shell_top",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.3, 0.15, 0.22] },
+                "transform": { "position": [0.0, 1.65, -0.02], "rotation": [-0.1, 0.0, 0.0, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.75, "roughness": 0.3, "emissive": [0.02, 0.04, 0.08] },
+                "operation": "SmoothUnion",
+                "smoothness": 0.04
+            },
+            {
+                "id": "cockpit",
+                "type": "Sphere",
+                "params": { "radius": 0.12 },
+                "transform": { "position": [0.0, 1.7, 0.15], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.8, 0.6] },
+                "material": { "baseColor": [0.2, 0.7, 1.0, 0.9], "metallic": 0.1, "roughness": 0.15, "emissive": [0.25, 0.6, 0.9] },
+                "operation": "Union"
+            },
+            {
+                "id": "energy_core",
+                "type": "Sphere",
+                "params": { "radius": 0.08 },
+                "transform": { "position": [0.0, 1.5, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.3, 0.8, 1.0, 1.0], "metallic": 0.0, "roughness": 0.1, "emissive": [0.4, 0.85, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "weapon_mount_left",
+                "type": "RoundedBox",
+                "params": { "size": [0.08, 0.1, 0.2], "radius": 0.02 },
+                "transform": { "position": [-0.3, 1.6, 0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.8, "roughness": 0.3 },
+                "operation": "Union"
+            },
+            {
+                "id": "weapon_mount_right",
+                "type": "RoundedBox",
+                "params": { "size": [0.08, 0.1, 0.2], "radius": 0.02 },
+                "transform": { "position": [0.3, 1.6, 0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.8, "roughness": 0.3 },
+                "operation": "Union"
+            },
+            {
+                "id": "weapon_barrel_left",
+                "type": "Cylinder",
+                "params": { "radius": 0.025, "height": 0.25 },
+                "transform": { "position": [-0.3, 1.6, 0.3], "rotation": [0.707, 0.0, 0.0, 0.707], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.15, 0.12, 0.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "weapon_barrel_right",
+                "type": "Cylinder",
+                "params": { "radius": 0.025, "height": 0.25 },
+                "transform": { "position": [0.3, 1.6, 0.3], "rotation": [0.707, 0.0, 0.0, 0.707], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.6, 0.55, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.15, 0.12, 0.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "weapon_glow_left",
+                "type": "Sphere",
+                "params": { "radius": 0.03 },
+                "transform": { "position": [-0.3, 1.6, 0.42], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.3, 0.7, 1.0, 1.0], "metallic": 0.0, "roughness": 0.1, "emissive": [0.4, 0.8, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "weapon_glow_right",
+                "type": "Sphere",
+                "params": { "radius": 0.03 },
+                "transform": { "position": [0.3, 1.6, 0.42], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.3, 0.7, 1.0, 1.0], "metallic": 0.0, "roughness": 0.1, "emissive": [0.4, 0.8, 1.0] },
+                "operation": "Union"
+            },
+            {
+                "id": "leg_hip_fl",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.06, 0.05, 0.08] },
+                "transform": { "position": [-0.2, 1.35, 0.15], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.7, "roughness": 0.35 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02
+            },
+            {
+                "id": "leg_hip_fr",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.06, 0.05, 0.08] },
+                "transform": { "position": [0.2, 1.35, 0.15], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.7, "roughness": 0.35 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02
+            },
+            {
+                "id": "leg_hip_bl",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.06, 0.05, 0.08] },
+                "transform": { "position": [-0.2, 1.35, -0.15], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.7, "roughness": 0.35 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02
+            },
+            {
+                "id": "leg_hip_br",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.06, 0.05, 0.08] },
+                "transform": { "position": [0.2, 1.35, -0.15], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.22, 0.35, 1.0], "metallic": 0.7, "roughness": 0.35 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02
+            },
+            {
+                "id": "leg_upper_fl",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.5 },
+                "transform": { "position": [-0.35, 1.0, 0.3], "rotation": [0.3, 0.0, -0.2, 0.93], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_fl"
+            },
+            {
+                "id": "leg_upper_fr",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.5 },
+                "transform": { "position": [0.35, 1.0, 0.3], "rotation": [0.3, 0.0, 0.2, 0.93], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_fr"
+            },
+            {
+                "id": "leg_upper_bl",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.5 },
+                "transform": { "position": [-0.35, 1.0, -0.3], "rotation": [-0.3, 0.0, -0.2, 0.93], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_bl"
+            },
+            {
+                "id": "leg_upper_br",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.5 },
+                "transform": { "position": [0.35, 1.0, -0.3], "rotation": [-0.3, 0.0, 0.2, 0.93], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_br"
+            },
+            {
+                "id": "leg_lower_fl",
+                "type": "Capsule",
+                "params": { "radius": 0.025, "height": 0.6 },
+                "transform": { "position": [-0.5, 0.4, 0.45], "rotation": [-0.15, 0.0, -0.1, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_fl"
+            },
+            {
+                "id": "leg_lower_fr",
+                "type": "Capsule",
+                "params": { "radius": 0.025, "height": 0.6 },
+                "transform": { "position": [0.5, 0.4, 0.45], "rotation": [-0.15, 0.0, 0.1, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_fr"
+            },
+            {
+                "id": "leg_lower_bl",
+                "type": "Capsule",
+                "params": { "radius": 0.025, "height": 0.6 },
+                "transform": { "position": [-0.5, 0.4, -0.45], "rotation": [0.15, 0.0, -0.1, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_bl"
+            },
+            {
+                "id": "leg_lower_br",
+                "type": "Capsule",
+                "params": { "radius": 0.025, "height": 0.6 },
+                "transform": { "position": [0.5, 0.4, -0.45], "rotation": [0.15, 0.0, 0.1, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.12, 0.18, 0.3, 1.0], "metallic": 0.75, "roughness": 0.35 },
+                "operation": "Union",
+                "bone": "leg_br"
+            },
+            {
+                "id": "foot_fl",
+                "type": "Cone",
+                "params": { "radius1": 0.01, "radius2": 0.04, "height": 0.1 },
+                "transform": { "position": [-0.55, 0.05, 0.55], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.5] },
+                "material": { "baseColor": [0.6, 0.55, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.1, 0.08, 0.0] },
+                "operation": "Union",
+                "bone": "leg_fl"
+            },
+            {
+                "id": "foot_fr",
+                "type": "Cone",
+                "params": { "radius1": 0.01, "radius2": 0.04, "height": 0.1 },
+                "transform": { "position": [0.55, 0.05, 0.55], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.5] },
+                "material": { "baseColor": [0.6, 0.55, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.1, 0.08, 0.0] },
+                "operation": "Union",
+                "bone": "leg_fr"
+            },
+            {
+                "id": "foot_bl",
+                "type": "Cone",
+                "params": { "radius1": 0.01, "radius2": 0.04, "height": 0.1 },
+                "transform": { "position": [-0.55, 0.05, -0.55], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.5] },
+                "material": { "baseColor": [0.6, 0.55, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.1, 0.08, 0.0] },
+                "operation": "Union",
+                "bone": "leg_bl"
+            },
+            {
+                "id": "foot_br",
+                "type": "Cone",
+                "params": { "radius1": 0.01, "radius2": 0.04, "height": 0.1 },
+                "transform": { "position": [0.55, 0.05, -0.55], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.5] },
+                "material": { "baseColor": [0.6, 0.55, 0.2, 1.0], "metallic": 0.85, "roughness": 0.25, "emissive": [0.1, 0.08, 0.0] },
+                "operation": "Union",
+                "bone": "leg_br"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "body", "parent": "root", "position": [0.0, 1.5, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "leg_fl", "parent": "body", "position": [-0.2, -0.15, 0.15], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "leg_fr", "parent": "body", "position": [0.2, -0.15, 0.15], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "leg_bl", "parent": "body", "position": [-0.2, -0.15, -0.15], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "leg_br", "parent": "body", "position": [0.2, -0.15, -0.15], "rotation": [0.0, 0.0, 0.0, 1.0] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 2.5, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "body": { "position": [0.0, 1.5, 0.0] } } },
+                { "time": 1.25, "bones": { "body": { "position": [0.0, 1.53, 0.0] } } },
+                { "time": 2.5, "bones": { "body": { "position": [0.0, 1.5, 0.0] } } }
+            ]
+        },
+        "walk": {
+            "duration": 0.6, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "body": { "position": [0.0, 1.5, 0.0] }, "leg_fl": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "leg_br": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "leg_fr": { "rotation": [-0.2, 0.0, 0.0, 0.98] }, "leg_bl": { "rotation": [-0.2, 0.0, 0.0, 0.98] } } },
+                { "time": 0.15, "bones": { "body": { "position": [0.0, 1.55, 0.0] }, "leg_fl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_br": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_fr": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_bl": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.3, "bones": { "body": { "position": [0.0, 1.5, 0.0] }, "leg_fl": { "rotation": [-0.2, 0.0, 0.0, 0.98] }, "leg_br": { "rotation": [-0.2, 0.0, 0.0, 0.98] }, "leg_fr": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "leg_bl": { "rotation": [0.2, 0.0, 0.0, 0.98] } } },
+                { "time": 0.45, "bones": { "body": { "position": [0.0, 1.55, 0.0] }, "leg_fl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_br": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_fr": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_bl": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.6, "bones": { "body": { "position": [0.0, 1.5, 0.0] }, "leg_fl": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "leg_br": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "leg_fr": { "rotation": [-0.2, 0.0, 0.0, 0.98] }, "leg_bl": { "rotation": [-0.2, 0.0, 0.0, 0.98] } } }
+            ]
+        },
+        "attack": {
+            "duration": 1.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "body": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.3, "bones": { "body": { "rotation": [-0.05, 0.0, 0.0, 0.999] } } },
+                { "time": 0.5, "bones": { "body": { "rotation": [0.05, 0.0, 0.0, 0.999] } }, "events": ["fire_projectile"] },
+                { "time": 1.0, "bones": { "body": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+            ]
+        },
+        "blink_out": {
+            "duration": 0.3, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "scale": [1.0, 1.0, 1.0] } } },
+                { "time": 0.15, "bones": { "root": { "scale": [1.2, 1.2, 0.2] } } },
+                { "time": 0.3, "bones": { "root": { "scale": [0.0, 0.0, 0.0] } } }
+            ]
+        },
+        "blink_in": {
+            "duration": 0.3, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "scale": [0.0, 0.0, 0.0] } } },
+                { "time": 0.15, "bones": { "root": { "scale": [1.2, 1.2, 0.2] } } },
+                { "time": 0.3, "bones": { "root": { "scale": [1.0, 1.0, 1.0] } } }
+            ]
+        },
+        "death": {
+            "duration": 1.5, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.5, "bones": { "root": { "position": [0.0, -0.3, 0.0], "rotation": [0.15, 0.0, 0.15, 0.98] } } },
+                { "time": 1.5, "bones": { "root": { "position": [0.0, -1.0, 0.2], "rotation": [0.5, 0.0, 0.2, 0.84] } } }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "walk", "condition": "isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "blink_out", "condition": "isBlinking" }, { "to": "death", "condition": "isDead" }] },
+            "walk": { "animation": "walk", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "blink_out", "condition": "isBlinking" }, { "to": "death", "condition": "isDead" }] },
+            "attack": { "animation": "attack", "transitions": [{ "to": "idle", "condition": "animationComplete && !isMoving" }, { "to": "walk", "condition": "animationComplete && isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "blink_out": { "animation": "blink_out", "transitions": [{ "to": "blink_in", "condition": "animationComplete" }] },
+            "blink_in": { "animation": "blink_in", "transitions": [{ "to": "idle", "condition": "animationComplete && !isMoving" }, { "to": "walk", "condition": "animationComplete && isMoving" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "blink", "name": "Blink", "description": "Instantly teleport to target location.", "hotkey": "B", "cooldown": 7.0, "range": 8.0 }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "stalker_warp_in" }, { "type": "spawn_effect", "effect": "warp_in_flash", "duration": 1.0 }] },
+        "on_attack": { "actions": [{ "type": "play_animation", "animation": "attack" }, { "type": "play_sound", "sound": "particle_disruptor_fire" }, { "type": "spawn_projectile", "projectile": "particle_disruptor_bolt" }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "stalker_death" }, { "type": "spawn_effect", "effect": "mechanical_explosion" }] }
+    },
+
+    "effects": {
+        "warp_in_flash": { "type": "flash", "color": [0.3, 0.7, 1.0, 0.8], "duration": 1.0 },
+        "blink_effect": { "type": "distortion", "radius": 1.5, "duration": 0.3, "color": [0.4, 0.7, 1.0, 0.6] },
+        "mechanical_explosion": { "type": "explosion", "radius": 1.5, "color": [0.3, 0.6, 0.9, 0.7], "particles": { "type": "metal_fragments", "count": 35, "color": [0.4, 0.5, 0.6, 1.0] } }
+    }
+}

@@ -1,0 +1,309 @@
+{
+    "id": "shadow_stalker",
+    "name": "Shadow Stalker",
+    "race": "vampires",
+    "type": "unit",
+    "category": "assassin",
+    "description": "Ethereal assassins that move through shadows. They can become invisible and deliver devastating backstab attacks.",
+
+    "stats": {
+        "health": 320,
+        "armor": 2,
+        "damage": 35,
+        "attackSpeed": 1.6,
+        "moveSpeed": 320,
+        "attackRange": 90,
+        "lifeSteal": 0.15,
+        "nightBonus": 0.75,
+        "backstabMultiplier": 2.0
+    },
+
+    "costs": {
+        "gold": 165,
+        "lumber": 25,
+        "food": 2,
+        "buildTime": 28.0
+    },
+
+    "sdfModel": {
+        "name": "shadow_stalker_model",
+        "bounds": { "min": [-0.5, 0.0, -0.5], "max": [0.5, 1.85, 0.5] },
+        "primitives": [
+            {
+                "id": "torso",
+                "type": "Capsule",
+                "params": { "radius": 0.09, "height": 0.28 },
+                "transform": { "position": [0.0, 1.08, 0.0], "rotation": [0.02, 0.0, 0.0, 0.9998], "scale": [1.0, 1.0, 0.8] },
+                "material": { "baseColor": [0.05, 0.03, 0.05, 1.0], "metallic": 0.4, "roughness": 0.6 },
+                "operation": "Union"
+            },
+            {
+                "id": "shadow_cloak",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.14, 0.18, 0.1] },
+                "transform": { "position": [0.0, 1.05, -0.02], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.02, 0.01, 0.03, 0.85], "metallic": 0.2, "roughness": 0.9 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.03
+            },
+            {
+                "id": "cloak_lower",
+                "type": "Cone",
+                "params": { "radius1": 0.02, "radius2": 0.2, "height": 0.5 },
+                "transform": { "position": [0.0, 0.65, -0.05], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.7] },
+                "material": { "baseColor": [0.02, 0.01, 0.03, 0.8], "metallic": 0.15, "roughness": 0.95 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.04
+            },
+            {
+                "id": "hood",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.1, 0.12, 0.11] },
+                "transform": { "position": [0.0, 1.42, -0.02], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.02, 0.01, 0.03, 1.0], "metallic": 0.15, "roughness": 0.9 },
+                "operation": "Union"
+            },
+            {
+                "id": "hood_void",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.06, 0.08, 0.08] },
+                "transform": { "position": [0.0, 1.4, 0.04], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.0, 0.0, 0.0, 1.0], "metallic": 0.0, "roughness": 1.0 },
+                "operation": "Subtraction"
+            },
+            {
+                "id": "eye_left",
+                "type": "Sphere",
+                "params": { "radius": 0.012 },
+                "transform": { "position": [-0.025, 1.41, 0.07], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.5, 1.0] },
+                "material": { "baseColor": [0.8, 0.0, 0.3, 1.0], "metallic": 0.0, "roughness": 0.1, "emissive": [0.6, 0.0, 0.25] },
+                "operation": "Union"
+            },
+            {
+                "id": "eye_right",
+                "type": "Sphere",
+                "params": { "radius": 0.012 },
+                "transform": { "position": [0.025, 1.41, 0.07], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.5, 1.0] },
+                "material": { "baseColor": [0.8, 0.0, 0.3, 1.0], "metallic": 0.0, "roughness": 0.1, "emissive": [0.6, 0.0, 0.25] },
+                "operation": "Union"
+            },
+            {
+                "id": "arm_left",
+                "type": "Capsule",
+                "params": { "radius": 0.028, "height": 0.35 },
+                "transform": { "position": [-0.14, 0.92, 0.0], "rotation": [0.0, 0.0, 0.18, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.03, 0.02, 0.04, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "arm_right",
+                "type": "Capsule",
+                "params": { "radius": 0.028, "height": 0.35 },
+                "transform": { "position": [0.14, 0.92, 0.0], "rotation": [0.0, 0.0, -0.18, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.03, 0.02, 0.04, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "hand_left",
+                "type": "Sphere",
+                "params": { "radius": 0.022 },
+                "transform": { "position": [-0.2, 0.68, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [0.8, 1.3, 0.6] },
+                "material": { "baseColor": [0.6, 0.55, 0.5, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "hand_right",
+                "type": "Sphere",
+                "params": { "radius": 0.022 },
+                "transform": { "position": [0.2, 0.68, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [0.8, 1.3, 0.6] },
+                "material": { "baseColor": [0.6, 0.55, 0.5, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "leg_left",
+                "type": "Capsule",
+                "params": { "radius": 0.04, "height": 0.42 },
+                "transform": { "position": [-0.055, 0.38, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.85] },
+                "material": { "baseColor": [0.03, 0.02, 0.04, 1.0], "metallic": 0.25, "roughness": 0.75 },
+                "operation": "Union",
+                "bone": "leg_l"
+            },
+            {
+                "id": "leg_right",
+                "type": "Capsule",
+                "params": { "radius": 0.04, "height": 0.42 },
+                "transform": { "position": [0.055, 0.38, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.85] },
+                "material": { "baseColor": [0.03, 0.02, 0.04, 1.0], "metallic": 0.25, "roughness": 0.75 },
+                "operation": "Union",
+                "bone": "leg_r"
+            },
+            {
+                "id": "boot_left",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.035, 0.03, 0.07] },
+                "transform": { "position": [-0.055, 0.03, 0.02], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.02, 0.01, 0.03, 1.0], "metallic": 0.3, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "leg_l"
+            },
+            {
+                "id": "boot_right",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.035, 0.03, 0.07] },
+                "transform": { "position": [0.055, 0.03, 0.02], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.02, 0.01, 0.03, 1.0], "metallic": 0.3, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "leg_r"
+            },
+            {
+                "id": "dagger_left_blade",
+                "type": "RoundedBox",
+                "params": { "size": [0.01, 0.22, 0.004], "radius": 0.002 },
+                "transform": { "position": [-0.22, 0.78, 0.05], "rotation": [0.3, 0.0, 0.1, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.18, 1.0], "metallic": 0.9, "roughness": 0.15 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "dagger_left_hilt",
+                "type": "Cylinder",
+                "params": { "radius": 0.01, "height": 0.06 },
+                "transform": { "position": [-0.2, 0.65, 0.03], "rotation": [0.3, 0.0, 0.1, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.08, 0.05, 0.1, 1.0], "metallic": 0.4, "roughness": 0.5 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "dagger_right_blade",
+                "type": "RoundedBox",
+                "params": { "size": [0.01, 0.22, 0.004], "radius": 0.002 },
+                "transform": { "position": [0.22, 0.78, 0.05], "rotation": [0.3, 0.0, -0.1, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.15, 0.12, 0.18, 1.0], "metallic": 0.9, "roughness": 0.15 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "dagger_right_hilt",
+                "type": "Cylinder",
+                "params": { "radius": 0.01, "height": 0.06 },
+                "transform": { "position": [0.2, 0.65, 0.03], "rotation": [0.3, 0.0, -0.1, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.08, 0.05, 0.1, 1.0], "metallic": 0.4, "roughness": 0.5 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "shadow_wisps_1",
+                "type": "Sphere",
+                "params": { "radius": 0.03 },
+                "transform": { "position": [-0.15, 0.9, -0.12], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.5, 0.5, 1.0] },
+                "material": { "baseColor": [0.1, 0.02, 0.15, 0.5], "metallic": 0.0, "roughness": 1.0, "emissive": [0.05, 0.0, 0.08] },
+                "operation": "Union",
+                "bone": "shadow_effect"
+            },
+            {
+                "id": "shadow_wisps_2",
+                "type": "Sphere",
+                "params": { "radius": 0.025 },
+                "transform": { "position": [0.12, 1.0, -0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.3, 0.6, 1.0] },
+                "material": { "baseColor": [0.1, 0.02, 0.15, 0.4], "metallic": 0.0, "roughness": 1.0, "emissive": [0.05, 0.0, 0.08] },
+                "operation": "Union",
+                "bone": "shadow_effect"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "spine", "parent": "root", "position": [0.0, 0.8, 0.0], "rotation": [0.02, 0.0, 0.0, 0.9998] },
+            { "name": "chest", "parent": "spine", "position": [0.0, 0.25, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "head", "parent": "chest", "position": [0.0, 0.35, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "arm_l", "parent": "chest", "position": [-0.1, 0.0, 0.0], "rotation": [0.0, 0.0, 0.15, 0.99] },
+            { "name": "arm_r", "parent": "chest", "position": [0.1, 0.0, 0.0], "rotation": [0.0, 0.0, -0.15, 0.99] },
+            { "name": "leg_l", "parent": "root", "position": [-0.055, 0.6, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "leg_r", "parent": "root", "position": [0.055, 0.6, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "shadow_effect", "parent": "spine", "position": [0.0, 0.0, -0.1], "rotation": [0.0, 0.0, 0.0, 1.0] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 2.5, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] }, "shadow_effect": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 1.25, "bones": { "spine": { "rotation": [0.03, 0.0, 0.0, 0.9995] }, "shadow_effect": { "rotation": [0.0, 0.15, 0.0, 0.99] } } },
+                { "time": 2.5, "bones": { "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] }, "shadow_effect": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+            ]
+        },
+        "walk": {
+            "duration": 0.65, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "leg_l": { "rotation": [0.35, 0.0, 0.0, 0.94] }, "leg_r": { "rotation": [-0.35, 0.0, 0.0, 0.94] }, "arm_l": { "rotation": [-0.2, 0.0, 0.15, 0.97] }, "arm_r": { "rotation": [0.2, 0.0, -0.15, 0.97] } } },
+                { "time": 0.325, "bones": { "root": { "position": [0.0, 0.02, 0.0] }, "leg_l": { "rotation": [-0.35, 0.0, 0.0, 0.94] }, "leg_r": { "rotation": [0.35, 0.0, 0.0, 0.94] }, "arm_l": { "rotation": [0.2, 0.0, 0.15, 0.97] }, "arm_r": { "rotation": [-0.2, 0.0, -0.15, 0.97] } } },
+                { "time": 0.65, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "leg_l": { "rotation": [0.35, 0.0, 0.0, 0.94] }, "leg_r": { "rotation": [-0.35, 0.0, 0.0, 0.94] }, "arm_l": { "rotation": [-0.2, 0.0, 0.15, 0.97] }, "arm_r": { "rotation": [0.2, 0.0, -0.15, 0.97] } } }
+            ]
+        },
+        "attack": {
+            "duration": 0.7, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "chest": { "rotation": [0.0, -0.2, 0.0, 0.98] }, "arm_l": { "rotation": [-0.3, 0.0, 0.4, 0.86] }, "arm_r": { "rotation": [-0.3, 0.0, -0.4, 0.86] } } },
+                { "time": 0.2, "bones": { "chest": { "rotation": [-0.1, -0.25, 0.0, 0.96] }, "arm_l": { "rotation": [-0.5, 0.0, 0.5, 0.71] }, "arm_r": { "rotation": [-0.5, 0.0, -0.5, 0.71] } } },
+                { "time": 0.35, "bones": { "chest": { "rotation": [0.1, 0.2, 0.0, 0.97] }, "arm_l": { "rotation": [0.4, 0.0, 0.2, 0.89] }, "arm_r": { "rotation": [0.4, 0.0, -0.2, 0.89] } }, "events": ["dagger_hit"] },
+                { "time": 0.7, "bones": { "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.15, 0.99] }, "arm_r": { "rotation": [0.0, 0.0, -0.15, 0.99] } } }
+            ]
+        },
+        "backstab": {
+            "duration": 0.9, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.2, "bones": { "root": { "position": [0.0, 0.0, 0.3] }, "chest": { "rotation": [-0.15, 0.0, 0.0, 0.99] } }, "events": ["shadow_step_effect"] },
+                { "time": 0.4, "bones": { "root": { "position": [0.0, 0.0, 0.4] }, "chest": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "arm_l": { "rotation": [0.5, 0.0, 0.3, 0.81] }, "arm_r": { "rotation": [0.5, 0.0, -0.3, 0.81] } }, "events": ["backstab_hit", "critical_damage"] },
+                { "time": 0.9, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.15, 0.99] }, "arm_r": { "rotation": [0.0, 0.0, -0.15, 0.99] } } }
+            ]
+        },
+        "stealth": {
+            "duration": 0.8, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] } }, "opacity": 1.0 },
+                { "time": 0.4, "bones": { "spine": { "rotation": [0.1, 0.0, 0.0, 0.995] } }, "opacity": 0.5, "events": ["shadow_cloak_effect"] },
+                { "time": 0.8, "bones": { "spine": { "rotation": [0.15, 0.0, 0.0, 0.99] } }, "opacity": 0.1 }
+            ]
+        },
+        "death": {
+            "duration": 1.4, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.5, "bones": { "root": { "position": [0.0, -0.15, 0.1], "rotation": [0.2, 0.0, 0.1, 0.97] } } },
+                { "time": 1.4, "bones": { "root": { "position": [0.0, -0.6, 0.2], "rotation": [0.55, 0.0, 0.1, 0.83] } }, "events": ["shadow_dissolve"] }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "walk", "condition": "isMoving" }, { "to": "attack", "condition": "isAttacking && !isStealthed" }, { "to": "backstab", "condition": "isAttacking && isStealthed" }, { "to": "stealth", "condition": "useStealth" }, { "to": "death", "condition": "isDead" }] },
+            "walk": { "animation": "walk", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "attack", "condition": "isAttacking && !isStealthed" }, { "to": "backstab", "condition": "isAttacking && isStealthed" }, { "to": "death", "condition": "isDead" }] },
+            "attack": { "animation": "attack", "transitions": [{ "to": "idle", "condition": "animationComplete && !isMoving" }, { "to": "walk", "condition": "animationComplete && isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "backstab": { "animation": "backstab", "transitions": [{ "to": "idle", "condition": "animationComplete" }, { "to": "death", "condition": "isDead" }] },
+            "stealth": { "animation": "stealth", "transitions": [{ "to": "idle", "condition": "!isStealthed" }, { "to": "backstab", "condition": "isAttacking" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "shadow_cloak", "name": "Shadow Cloak", "description": "Become invisible. First attack from stealth deals double damage.", "cooldown": 20.0, "duration": 15.0, "manaCost": 0, "hotkey": "Q" },
+        { "id": "shadow_step", "name": "Shadow Step", "description": "Teleport behind target enemy, striking them from behind.", "cooldown": 12.0, "range": 400, "manaCost": 30, "hotkey": "W" },
+        { "id": "assassinate", "name": "Assassinate", "description": "Passive: Attacks from behind deal 100% bonus damage.", "passive": true, "backstabBonus": 1.0 }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "shadow_stalker_ready" }, { "type": "spawn_effect", "effect": "shadow_coalesce" }] },
+        "on_attack": { "actions": [{ "type": "play_animation", "animation": "attack" }, { "type": "play_sound", "sound": "dagger_slash" }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "shadow_stalker_death" }, { "type": "spawn_effect", "effect": "shadow_disperse" }] }
+    }
+}

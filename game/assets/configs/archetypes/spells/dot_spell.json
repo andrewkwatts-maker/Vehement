@@ -1,0 +1,266 @@
+{
+  "$schema": "../../../schemas/spell_archetype.schema.json",
+
+  // =============================================================================
+  // DAMAGE OVER TIME (DOT) SPELL ARCHETYPE
+  // =============================================================================
+  // This archetype represents a spell that applies damage over a duration.
+  // Behavior composition:
+  // - TargetingBehavior: SingleTarget or Area
+  // - EffectBehavior: Damage (duration + tick interval)
+  // - ProjectileBehavior: Linear, Homing, or None
+  // - ResourceBehavior: Moderate mana cost, good mana efficiency over time
+  //
+  // Use this as a base template for spells like:
+  // - Immolation, Poison, Corruption, Ignite, Curse of Agony, etc.
+  // =============================================================================
+
+  "id": "dot_spell_archetype",
+  "name": "Damage Over Time Spell Template",
+  "description": "A spell that applies a damaging debuff, dealing periodic damage over a duration. Excellent for sustained damage and mana efficiency.",
+
+  "category": "damage",
+  "element": "shadow",
+  "tier": 1,
+
+  // =============================================================================
+  // TARGETING BEHAVIOR
+  // =============================================================================
+  "targetType": "unit",
+
+  "targetFilters": {
+    "canTargetEnemies": true,
+    "canTargetAllies": false,
+    "canTargetSelf": false,
+    "canTargetGround": false,
+    "canTargetAir": true,
+    "canTargetBuildings": true,  // DoTs often work on buildings
+    "canTargetOrganic": true,
+    "canTargetMechanical": false,  // Poison doesn't affect mechanical
+    "requiresLineOfSight": true,
+    "ignoreInvulnerable": true,
+    "immuneToDoT": false  // Some units might be immune to DoTs
+  },
+
+  "castRange": 10.0,
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  "projectile": {
+    "type": "linear",
+    "speed": 18.0,
+    "maxTravelDistance": 12.0,
+    "piercing": false,
+    "canBeBlocked": true,
+    "visualModel": "effects/shadow_bolt.fx",
+    "trailEffect": "effects/shadow_trail.fx",
+    "impactEffect": "effects/shadow_impact.fx",
+    "projectileSize": 0.3
+  },
+
+  "areaOfEffect": 0.0,  // Single target DoT
+
+  // =============================================================================
+  // EFFECT BEHAVIOR
+  // =============================================================================
+  "effects": [
+    {
+      // Optional small instant damage on application
+      "type": "damage",
+      "damageType": "magic",
+      "baseDamage": 20,  // Small upfront damage
+      "scalingFactor": 0.5,
+      "scalingStat": "spellPower",
+      "canCrit": true,
+      "critBonusFromCaster": true,
+      "variance": 0.1
+    },
+    {
+      // Main DoT effect
+      "type": "dot",
+      "damageType": "magic",
+      "dotSubtype": "shadow",  // Options: "poison", "bleed", "burn", "shadow", "disease"
+
+      // Damage configuration
+      "totalDamage": 120,  // Total damage over full duration
+      "duration": 8.0,     // How long the DoT lasts
+      "tickInterval": 2.0, // Damage applied every 2 seconds
+
+      // Or specify damage per tick directly:
+      "damagePerTick": 30,  // 30 damage every 2 seconds
+      "scalingFactor": 1.0,
+      "scalingStat": "spellPower",
+
+      // DoT can crit on each tick
+      "canCrit": false,  // Usually DoTs don't crit per tick
+      "canCritOnApplication": true,  // But can crit when first applied (affects all ticks)
+
+      // Stacking behavior
+      "stackable": true,
+      "maxStacks": 3,
+      "stackingType": "refresh",  // Options: "refresh", "extend", "separate"
+      "refreshable": true,
+
+      // Each stack increases damage
+      "stackingBehavior": {
+        "damagePerStack": 1.0,  // Multiplier per stack (1.0 = additive)
+        "durationPerStack": 0.0  // Additional duration per stack
+      }
+    }
+  ],
+
+  // =============================================================================
+  // DOT MECHANICS
+  // =============================================================================
+  "dotMechanics": {
+    // Dispel resistance
+    "dispelType": "magic",  // What type of dispel can remove it
+    "dispelResistance": 0.0,  // Chance to resist dispel (0-1)
+
+    // DoT spreading (plague effects)
+    "canSpread": false,
+    "spreadRadius": 0.0,
+    "spreadChance": 0.0,
+    "spreadOnDeath": false,
+
+    // Pandemic mechanic (refreshing early keeps some duration)
+    "pandemic": {
+      "enabled": true,
+      "maxCarryover": 0.3  // Can carry over up to 30% of remaining duration
+    },
+
+    // Accelerate mechanic (consume DoT for burst)
+    "canAccelerate": false,
+    "accelerateMultiplier": 1.5,  // Deal 150% of remaining damage instantly
+
+    // Special DoT behaviors
+    "breakOnDamage": false,  // Some DoTs break when target takes direct damage
+    "breakOnMove": false,
+    "breakOnCast": false,
+
+    // Visibility
+    "hiddenFromTarget": false  // Some DoTs are hidden curses
+  },
+
+  // =============================================================================
+  // RESOURCE BEHAVIOR
+  // =============================================================================
+  "castTime": 0.6,
+  "cooldown": 4.0,  // Can maintain on multiple targets
+  "manaCost": 45,   // Low cost for high efficiency
+
+  "canBeInterrupted": true,
+  "interruptOnDamage": false,
+  "interruptOnMove": true,
+
+  // =============================================================================
+  // MANA EFFICIENCY
+  // =============================================================================
+  // DoTs are designed to be mana efficient
+  "efficiency": {
+    "totalDamage": 140,  // 20 instant + 120 over time
+    "manaCost": 45,
+    "damagePerMana": 3.11,  // Excellent efficiency
+    "castTime": 0.6,
+    "dps": 17.5  // 140 damage over 8 seconds
+  },
+
+  // =============================================================================
+  // REQUIREMENTS & AVAILABILITY
+  // =============================================================================
+  "requiredAge": 0,
+  "requiredBuilding": "shadow_temple",
+  "requiredTech": null,
+
+  "learnCost": {
+    "gold": 50,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 25
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "icon": "textures/icons/spells/shadow_word_pain.png",
+    "castAnimation": "anim_cast_curse",
+    "castEffect": "effects/cast_shadow.fx",
+    "channelEffect": null,
+    "buffEffect": "effects/dot_shadow.fx",  // Visual on afflicted unit
+    "tickEffect": "effects/shadow_tick.fx",  // Visual per damage tick
+    "aoeCursorDecal": null,
+    "stackEffect": "effects/shadow_stacks.fx",  // Changes with stacks
+
+    // Visual intensity based on stacks
+    "stackVisuals": true,
+    "maxVisualIntensity": 3.0
+  },
+
+  "sounds": {
+    "cast": "sounds/spells/curse_cast.wav",
+    "travel": "sounds/spells/shadow_travel.wav",
+    "impact": "sounds/spells/curse_applied.wav",
+    "tick": "sounds/spells/shadow_tick.wav",  // Sound per damage tick
+    "expire": "sounds/spells/curse_fade.wav",
+    "dispelled": "sounds/spells/curse_dispelled.wav"
+  },
+
+  // =============================================================================
+  // SYNERGIES
+  // =============================================================================
+  // DoTs often synergize with other abilities
+  "synergies": {
+    "amplifiedBy": [
+      "vulnerability_curse",  // Other spells that increase DoT damage
+      "shadow_mastery"
+    ],
+    "triggersEffects": [
+      "shadow_embrace"  // Proc effects when DoT ticks
+    ]
+  },
+
+  // =============================================================================
+  // AOE DOT VARIANT
+  // =============================================================================
+  "variants": {
+    "plague_cloud": {
+      "parentArchetype": "dot_spell_archetype",
+      "name": "Plague Cloud",
+      "targetType": "point",
+      "areaOfEffect": 4.0,
+      "maxTargets": 8,
+      "dotMechanics": {
+        "canSpread": true,
+        "spreadRadius": 3.0,
+        "spreadChance": 0.3,
+        "spreadOnDeath": true
+      },
+      "manaCost": 100,
+      "cooldown": 12.0,
+      "tier": 2
+    }
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "bleed" DoT could inherit from this with:
+  // - dotSubtype: "bleed"
+  // - damageType: "physical"
+  // - stackable: true, maxStacks: 5
+  // - appliedByAttacks: true (applied on hit)
+  // - element: "physical"
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for damage-over-time spells. Excellent mana efficiency and multi-target damage.",
+    "tacticalUse": "Apply to multiple targets before combat. Maintain on high-value targets. Stack for increased damage.",
+    "strengths": "Mana efficient, multi-target, sustained damage, good against healing",
+    "weaknesses": "No burst damage, can be dispelled, requires time to deal full damage"
+  }
+}

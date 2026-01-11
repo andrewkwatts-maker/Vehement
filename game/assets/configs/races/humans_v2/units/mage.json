@@ -1,0 +1,164 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "id": "human_mage",
+  "name": "Mage",
+  "description": "Wielders of arcane power trained in the Valorheim Academy. Their devastating spells can turn the tide of battle through fire, ice, and lightning.",
+  "race": "humans",
+  "category": "caster",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 280,
+    "healthRegen": 0.5,
+    "mana": 400,
+    "manaRegen": 2.5,
+    "damage": 18,
+    "damageVariance": 0.25,
+    "attackSpeed": 1.8,
+    "attackRange": 10.0,
+    "armor": 0,
+    "magicResist": 30,
+    "moveSpeed": 4.5,
+    "sightRange": 14,
+    "spellPower": 100
+  },
+
+  "cost": {
+    "gold": 280,
+    "food": 3
+  },
+
+  "trainTime": 40,
+  "populationCost": 2,
+  "requiredBuilding": "human_mage_tower",
+  "requiredAge": 2,
+
+  "armorType": "light",
+  "attackType": "magic",
+
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+
+  "abilities": [
+    {
+      "id": "fireball",
+      "name": "Fireball",
+      "description": "Hurl a ball of fire dealing 120 damage to target and 60 splash damage",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 8.0,
+      "manaCost": 75,
+      "range": 14.0,
+      "damage": 120,
+      "splashDamage": 60,
+      "splashRadius": 3.0,
+      "damageType": "fire"
+    },
+    {
+      "id": "blizzard",
+      "name": "Blizzard",
+      "description": "Call down waves of ice dealing 40 damage per second for 6 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 20.0,
+      "manaCost": 120,
+      "range": 16.0,
+      "radius": 5.0,
+      "duration": 6.0,
+      "damagePerTick": 40,
+      "tickRate": 1.0,
+      "slowPercent": 0.30,
+      "damageType": "frost"
+    },
+    {
+      "id": "polymorph",
+      "name": "Polymorph",
+      "description": "Transform an enemy unit into a harmless sheep for 15 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 25.0,
+      "manaCost": 80,
+      "range": 12.0,
+      "duration": 15.0,
+      "targetType": "enemy_unit",
+      "excludes": ["hero", "massive", "mechanical"]
+    },
+    {
+      "id": "arcane_brilliance",
+      "name": "Arcane Brilliance",
+      "description": "Increase mana regeneration of nearby friendly units by 100% for 30 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 60.0,
+      "manaCost": 100,
+      "radius": 12.0,
+      "duration": 30.0,
+      "effects": [
+        {
+          "stat": "manaRegen",
+          "value": 1.0,
+          "type": "percent"
+        }
+      ],
+      "requiredUpgrade": "upgrade_arcane_brilliance"
+    }
+  ],
+
+  "projectile": {
+    "id": "arcane_bolt",
+    "model": "models/projectiles/arcane_bolt.obj",
+    "speed": 25.0,
+    "lifetime": 3.0,
+    "gravity": 0.0,
+    "trailEffect": "effects/arcane_trail.fx",
+    "impactEffect": "effects/arcane_impact.fx"
+  },
+
+  "upgrades": ["mage_spell_power", "mage_mana"],
+
+  "visuals": {
+    "model": "models/races/humans/units/mage.obj",
+    "portrait": "textures/races/humans/portraits/mage.png",
+    "icon": "textures/races/humans/icons/mage.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/humans/units/mage_diffuse.png",
+      "normal": "textures/races/humans/units/mage_normal.png"
+    },
+    "animations": {
+      "idle": "animations/humans/mage/idle.anim",
+      "walk": "animations/humans/mage/walk.anim",
+      "run": "animations/humans/mage/run.anim",
+      "attack": "animations/humans/mage/attack.anim",
+      "cast_fireball": "animations/humans/mage/cast_fire.anim",
+      "cast_blizzard": "animations/humans/mage/cast_ice.anim",
+      "cast_polymorph": "animations/humans/mage/cast_arcane.anim",
+      "death": "animations/humans/mage/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/humans/mage/select_1.wav", "sounds/humans/mage/select_2.wav"],
+    "move": ["sounds/humans/mage/ack_1.wav", "sounds/humans/mage/ack_2.wav"],
+    "attack": ["sounds/arcane_bolt.wav"],
+    "cast": ["sounds/fireball_cast.wav"],
+    "death": ["sounds/humans/mage/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.28,
+    "height": 1.75,
+    "mass": 65.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/caster.bt",
+    "profile": "caster",
+    "aggroRange": 10.0,
+    "preferredDistance": 12.0,
+    "manaConservationThreshold": 0.2,
+    "priorityAbilities": ["blizzard", "fireball"]
+  }
+}

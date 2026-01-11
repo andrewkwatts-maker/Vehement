@@ -1,0 +1,40 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+
+/**
+ * @file rtx_shadow.rahit
+ * @brief Shadow Ray Any Hit Shader
+ *
+ * Handles semi-transparent materials in shadow rays.
+ * For fully opaque objects, this shader is skipped.
+ */
+
+// Shadow ray payload
+layout(location = 1) rayPayloadInNV bool shadowed;
+
+// Hit attributes
+hitAttributeNV vec3 attribs;
+
+// Material data (for alpha testing)
+layout(binding = 9, set = 0) buffer Materials {
+    vec4 albedo;
+    vec4 emission;
+    float metallic;
+    float roughness;
+    float ior;
+    int albedoTexture;
+    int normalTexture;
+    int metallicRoughnessTexture;
+    int emissionTexture;
+    int _pad0;
+} materials[];
+
+void main() {
+    // For now, treat all hits as opaque
+    // In full implementation, we would:
+    // 1. Sample alpha from texture
+    // 2. Perform alpha test
+    // 3. Call ignoreIntersectionNV() if transparent
+
+    shadowed = true;
+}

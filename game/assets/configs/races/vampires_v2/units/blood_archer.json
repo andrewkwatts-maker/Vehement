@@ -1,0 +1,199 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "ranged_unit",
+  "id": "vampire_blood_archer",
+  "name": "Blood Archer",
+  "description": "Vampire archers who fire blood-tipped arrows that curse and weaken enemies. Their projectiles drain life and apply debilitating effects.",
+  "race": "vampires",
+  "category": "ranged",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 280,
+    "healthRegen": 0.8,
+    "mana": 75,
+    "manaRegen": 0.8,
+    "damage": 20,
+    "damageVariance": 0.20,
+    "attackSpeed": 1.2,
+    "attackRange": 10,
+    "armor": 1,
+    "magicResist": 12,
+    "moveSpeed": 5.8,
+    "sightRange": 14,
+    "detectionRange": 10,
+    "critChance": 0.18,
+    "critMultiplier": 1.85
+  },
+
+  "cost": {
+    "gold": 180,
+    "blood": 35,
+    "wood": 20,
+    "food": 2
+  },
+
+  "trainTime": 32,
+  "populationCost": 2,
+  "requiredBuilding": "dark_chapel",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "pierce",
+
+  "bonusVs": [
+    {
+      "category": "air",
+      "multiplier": 1.60
+    },
+    {
+      "category": "unarmored",
+      "multiplier": 1.30
+    }
+  ],
+
+  "penaltyVs": [
+    {
+      "category": "heavy",
+      "multiplier": 0.60
+    }
+  ],
+
+  "projectile": {
+    "type": "ballistic",
+    "speed": 28.0,
+    "arc": 0.25,
+    "maxTravelDistance": 12.0,
+    "piercing": false,
+    "canBeBlocked": true,
+    "canBeDodged": true,
+    "canMiss": true,
+    "missChance": 0.05,
+    "visualModel": "models/projectiles/blood_arrow.fbx",
+    "trailEffect": "effects/vampires/blood_trail.fx",
+    "impactEffect": "effects/vampires/blood_arrow_impact.fx",
+    "projectileSize": 0.12
+  },
+
+  "abilities": [
+    {
+      "id": "blood_curse_arrows",
+      "name": "Blood Curse Arrows",
+      "description": "Arrows apply a curse reducing enemy armor by 2 and healing by 50% for 6 seconds",
+      "type": "passive",
+      "onHitDebuff": {
+        "type": "blood_curse",
+        "armor": -2,
+        "healingReduction": 0.50,
+        "duration": 6.0
+      }
+    },
+    {
+      "id": "vampiric_shot",
+      "name": "Vampiric Shot",
+      "description": "Fire an arrow that drains 40% of damage dealt as health",
+      "type": "passive",
+      "lifesteal": 0.40
+    },
+    {
+      "id": "volley_of_blood",
+      "name": "Volley of Blood",
+      "description": "Fire 5 arrows in rapid succession at random targets in area",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 40,
+      "cooldown": 18.0,
+      "range": 10.0,
+      "radius": 4.0,
+      "arrows": 5,
+      "damagePerArrow": 0.70
+    },
+    {
+      "id": "shadow_step",
+      "name": "Shadow Step",
+      "description": "Blink backwards 4 units, becoming briefly untargetable",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 25,
+      "cooldown": 15.0,
+      "distance": 4.0,
+      "direction": "backwards",
+      "untargetableDuration": 0.5
+    },
+    {
+      "id": "night_vision",
+      "name": "Night Vision",
+      "description": "At night: +3 range, +25% crit chance, can see invisible units",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "attackRange": 3.0,
+          "critChance": 0.25,
+          "truesight": true
+        }
+      }
+    }
+  ],
+
+  "upgrades": ["vampire_ranged_1", "vampire_ranged_2", "blood_tipped_arrows", "cursed_quiver"],
+
+  "visuals": {
+    "model": "models/races/vampires/units/blood_archer.obj",
+    "portrait": "textures/races/vampires/portraits/blood_archer.png",
+    "icon": "textures/races/vampires/icons/blood_archer.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/vampires/units/blood_archer_diffuse.png",
+      "normal": "textures/races/vampires/units/blood_archer_normal.png",
+      "specular": "textures/races/vampires/units/blood_archer_specular.png"
+    },
+    "animations": {
+      "idle": "animations/vampires/blood_archer/idle.anim",
+      "walk": "animations/vampires/blood_archer/walk.anim",
+      "attack": "animations/vampires/blood_archer/shoot.anim",
+      "ability_volley": "animations/vampires/blood_archer/volley.anim",
+      "ability_step": "animations/vampires/blood_archer/shadow_step.anim",
+      "death": "animations/vampires/blood_archer/death.anim"
+    },
+    "particleEffects": {
+      "bloodCurse": "effects/vampires/blood_curse.fx",
+      "volley": "effects/vampires/blood_volley.fx",
+      "shadowStep": "effects/vampires/shadow_blink.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/blood_archer/select_1.wav"],
+    "move": ["sounds/vampires/blood_archer/ack_1.wav"],
+    "attack": ["sounds/bow_release_dark.wav"],
+    "death": ["sounds/vampires/blood_archer/death.wav"],
+    "ability_volley": ["sounds/vampires/blood_volley.wav"],
+    "ability_step": ["sounds/vampires/shadow_step.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.30,
+    "height": 1.75,
+    "mass": 75.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/vampire_ranged.bt",
+    "profile": "ranged_kiting",
+    "aggroRange": 15.0,
+    "priorityTargets": ["air", "ranged", "casters"],
+    "useAbilities": true,
+    "maintainDistance": true,
+    "optimalRange": 9.0,
+    "minRange": 6.0,
+    "useEscapeAbility": true
+  },
+
+  "metadata": {
+    "loreDescription": "Blood Archers are vampires who have perfected the dark art of cursed archery. Their blood-tipped arrows carry debilitating hexes that weaken and drain their victims.",
+    "tacticalRole": "Ranged DPS with debuffs. Excellent vs air and light units. Use Shadow Step to escape melee threats.",
+    "strengths": ["Long range", "Debuffs", "Anti-air", "Night combat"],
+    "weaknesses": ["Low armor", "Vulnerable to dive", "Weak vs heavy armor"]
+  }
+}

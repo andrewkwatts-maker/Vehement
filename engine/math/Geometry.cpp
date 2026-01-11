@@ -129,7 +129,8 @@ constexpr float kEpsilon = 1e-6f;
     const glm::vec3& centerA, float radiusA,
     const glm::vec3& centerB, float radiusB) noexcept {
 
-    const float dist2 = glm::distance2(centerA, centerB);
+    const glm::vec3 diff = centerA - centerB;
+    const float dist2 = glm::dot(diff, diff);
     const float radiusSum = radiusA + radiusB;
     return dist2 <= radiusSum * radiusSum;
 }
@@ -165,14 +166,15 @@ constexpr float kEpsilon = 1e-6f;
  * @brief Calculate the squared distance from a point to a line segment
  */
 [[nodiscard]] float DistanceToSegmentSquared(const glm::vec3& point, const glm::vec3& a, const glm::vec3& b) noexcept {
-    return glm::distance2(point, ClosestPointOnSegment(point, a, b));
+    const glm::vec3 diff = point - ClosestPointOnSegment(point, a, b);
+    return glm::dot(diff, diff);
 }
-
 /**
  * @brief Test if a point is inside a sphere
  */
 [[nodiscard]] bool PointInSphere(const glm::vec3& point, const glm::vec3& center, float radius) noexcept {
-    return glm::distance2(point, center) <= radius * radius;
+    const glm::vec3 diff = point - center;
+    return glm::dot(diff, diff) <= radius * radius;
 }
 
 /**

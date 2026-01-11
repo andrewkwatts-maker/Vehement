@@ -1,0 +1,344 @@
+{
+    "id": "meat_wagon",
+    "name": "Meat Wagon",
+    "race": "undead",
+    "type": "unit",
+    "category": "siege",
+    "description": "Gruesome siege engine that hurls diseased corpses at enemy buildings. Collects and transports corpses for necromancers.",
+
+    "stats": {
+        "health": 380,
+        "armor": 2,
+        "damage": 60,
+        "attackSpeed": 3.0,
+        "moveSpeed": 200,
+        "attackRange": 1000,
+        "splashRadius": 150,
+        "bonusVsBuildings": 2.0
+    },
+
+    "costs": {
+        "gold": 230,
+        "lumber": 50,
+        "food": 4,
+        "buildTime": 35.0
+    },
+
+    "sdfModel": {
+        "name": "meat_wagon_model",
+        "bounds": { "min": [-0.8, 0.0, -1.2], "max": [0.8, 1.5, 1.2] },
+        "primitives": [
+            {
+                "id": "chassis_base",
+                "type": "RoundedBox",
+                "params": { "size": [0.8, 0.2, 1.4], "radius": 0.05 },
+                "transform": { "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.25, 0.2, 0.15, 1.0], "metallic": 0.2, "roughness": 0.8 },
+                "operation": "Union"
+            },
+            {
+                "id": "meat_container",
+                "type": "RoundedBox",
+                "params": { "size": [0.7, 0.4, 0.8], "radius": 0.03 },
+                "transform": { "position": [0.0, 0.7, -0.2], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.3, 0.25, 0.18, 1.0], "metallic": 0.1, "roughness": 0.85 },
+                "operation": "Union"
+            },
+            {
+                "id": "meat_pile",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.3, 0.2, 0.35] },
+                "transform": { "position": [0.0, 0.95, -0.2], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.2, 0.18, 1.0], "metallic": 0.0, "roughness": 0.7 },
+                "operation": "Union"
+            },
+            {
+                "id": "corpse_arm_1",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.2 },
+                "transform": { "position": [-0.2, 1.0, -0.15], "rotation": [0.3, 0.5, 0.2, 0.79], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.45, 0.35, 1.0], "metallic": 0.0, "roughness": 0.8 },
+                "operation": "Union"
+            },
+            {
+                "id": "corpse_leg_1",
+                "type": "Capsule",
+                "params": { "radius": 0.035, "height": 0.25 },
+                "transform": { "position": [0.15, 1.05, -0.35], "rotation": [-0.2, 0.3, -0.4, 0.84], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.45, 0.4, 0.3, 1.0], "metallic": 0.0, "roughness": 0.8 },
+                "operation": "Union"
+            },
+            {
+                "id": "corpse_head",
+                "type": "Sphere",
+                "params": { "radius": 0.08 },
+                "transform": { "position": [0.2, 1.08, -0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [0.9, 1.0, 0.9] },
+                "material": { "baseColor": [0.5, 0.48, 0.4, 1.0], "metallic": 0.0, "roughness": 0.75 },
+                "operation": "Union"
+            },
+            {
+                "id": "blood_drip_1",
+                "type": "Capsule",
+                "params": { "radius": 0.015, "height": 0.1 },
+                "transform": { "position": [-0.3, 0.55, -0.2], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.08, 0.05, 1.0], "metallic": 0.0, "roughness": 0.5 },
+                "operation": "Union"
+            },
+            {
+                "id": "blood_drip_2",
+                "type": "Capsule",
+                "params": { "radius": 0.012, "height": 0.08 },
+                "transform": { "position": [0.25, 0.52, -0.3], "rotation": [0.0, 0.0, 0.1, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.08, 0.05, 1.0], "metallic": 0.0, "roughness": 0.5 },
+                "operation": "Union"
+            },
+            {
+                "id": "catapult_arm",
+                "type": "Capsule",
+                "params": { "radius": 0.05, "height": 0.8 },
+                "transform": { "position": [0.0, 0.9, 0.4], "rotation": [-0.4, 0.0, 0.0, 0.92], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.3, 0.25, 0.18, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union",
+                "bone": "catapult_arm"
+            },
+            {
+                "id": "catapult_bucket",
+                "type": "Sphere",
+                "params": { "radius": 0.15 },
+                "transform": { "position": [0.0, 1.35, 0.75], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.6, 1.0] },
+                "material": { "baseColor": [0.35, 0.3, 0.2, 1.0], "metallic": 0.4, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "catapult_arm"
+            },
+            {
+                "id": "catapult_bucket_gore",
+                "type": "Sphere",
+                "params": { "radius": 0.1 },
+                "transform": { "position": [0.0, 1.4, 0.75], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.5, 1.0] },
+                "material": { "baseColor": [0.5, 0.15, 0.1, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "catapult_arm"
+            },
+            {
+                "id": "frame_left",
+                "type": "Capsule",
+                "params": { "radius": 0.04, "height": 0.7 },
+                "transform": { "position": [-0.35, 0.65, 0.45], "rotation": [-0.15, 0.0, 0.0, 0.99], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.25, 0.2, 0.15, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union"
+            },
+            {
+                "id": "frame_right",
+                "type": "Capsule",
+                "params": { "radius": 0.04, "height": 0.7 },
+                "transform": { "position": [0.35, 0.65, 0.45], "rotation": [-0.15, 0.0, 0.0, 0.99], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.25, 0.2, 0.15, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union"
+            },
+            {
+                "id": "frame_cross",
+                "type": "Capsule",
+                "params": { "radius": 0.03, "height": 0.6 },
+                "transform": { "position": [0.0, 0.95, 0.55], "rotation": [0.0, 0.0, 0.7, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.25, 0.2, 0.15, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union"
+            },
+            {
+                "id": "wheel_left_front",
+                "type": "Cylinder",
+                "params": { "radius": 0.25, "height": 0.08 },
+                "transform": { "position": [-0.5, 0.25, 0.5], "rotation": [0.0, 0.0, 0.7, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.18, 0.12, 1.0], "metallic": 0.2, "roughness": 0.8 },
+                "operation": "Union",
+                "bone": "wheel_lf"
+            },
+            {
+                "id": "wheel_right_front",
+                "type": "Cylinder",
+                "params": { "radius": 0.25, "height": 0.08 },
+                "transform": { "position": [0.5, 0.25, 0.5], "rotation": [0.0, 0.0, 0.7, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.18, 0.12, 1.0], "metallic": 0.2, "roughness": 0.8 },
+                "operation": "Union",
+                "bone": "wheel_rf"
+            },
+            {
+                "id": "wheel_left_back",
+                "type": "Cylinder",
+                "params": { "radius": 0.3, "height": 0.1 },
+                "transform": { "position": [-0.52, 0.3, -0.5], "rotation": [0.0, 0.0, 0.7, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.18, 0.12, 1.0], "metallic": 0.2, "roughness": 0.8 },
+                "operation": "Union",
+                "bone": "wheel_lb"
+            },
+            {
+                "id": "wheel_right_back",
+                "type": "Cylinder",
+                "params": { "radius": 0.3, "height": 0.1 },
+                "transform": { "position": [0.52, 0.3, -0.5], "rotation": [0.0, 0.0, 0.7, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.18, 0.12, 1.0], "metallic": 0.2, "roughness": 0.8 },
+                "operation": "Union",
+                "bone": "wheel_rb"
+            },
+            {
+                "id": "wheel_spoke_lb",
+                "type": "Capsule",
+                "params": { "radius": 0.02, "height": 0.5 },
+                "transform": { "position": [-0.52, 0.3, -0.5], "rotation": [0.0, 0.0, 0.7, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.25, 0.2, 0.15, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union",
+                "bone": "wheel_lb"
+            },
+            {
+                "id": "wheel_spoke_rb",
+                "type": "Capsule",
+                "params": { "radius": 0.02, "height": 0.5 },
+                "transform": { "position": [0.52, 0.3, -0.5], "rotation": [0.0, 0.0, 0.7, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.25, 0.2, 0.15, 1.0], "metallic": 0.3, "roughness": 0.7 },
+                "operation": "Union",
+                "bone": "wheel_rb"
+            },
+            {
+                "id": "hook_front_left",
+                "type": "Torus",
+                "params": { "majorRadius": 0.06, "minorRadius": 0.015 },
+                "transform": { "position": [-0.35, 0.55, 0.7], "rotation": [0.5, 0.0, 0.5, 0.71], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.4, 0.38, 0.35, 1.0], "metallic": 0.7, "roughness": 0.4 },
+                "operation": "Union"
+            },
+            {
+                "id": "hook_front_right",
+                "type": "Torus",
+                "params": { "majorRadius": 0.06, "minorRadius": 0.015 },
+                "transform": { "position": [0.35, 0.55, 0.7], "rotation": [0.5, 0.0, -0.5, 0.71], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.4, 0.38, 0.35, 1.0], "metallic": 0.7, "roughness": 0.4 },
+                "operation": "Union"
+            },
+            {
+                "id": "chain_left",
+                "type": "Torus",
+                "params": { "majorRadius": 0.03, "minorRadius": 0.008 },
+                "transform": { "position": [-0.4, 0.48, 0.0], "rotation": [0.7, 0.0, 0.0, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.28, 1.0], "metallic": 0.7, "roughness": 0.5 },
+                "operation": "Union"
+            },
+            {
+                "id": "chain_right",
+                "type": "Torus",
+                "params": { "majorRadius": 0.03, "minorRadius": 0.008 },
+                "transform": { "position": [0.4, 0.48, 0.0], "rotation": [0.7, 0.0, 0.0, 0.7], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.32, 0.28, 1.0], "metallic": 0.7, "roughness": 0.5 },
+                "operation": "Union"
+            },
+            {
+                "id": "skull_decor_front",
+                "type": "Sphere",
+                "params": { "radius": 0.08 },
+                "transform": { "position": [0.0, 0.5, 0.75], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [0.85, 1.0, 0.9] },
+                "material": { "baseColor": [0.85, 0.8, 0.7, 1.0], "metallic": 0.0, "roughness": 0.5 },
+                "operation": "Union"
+            },
+            {
+                "id": "skull_decor_eye_left",
+                "type": "Sphere",
+                "params": { "radius": 0.015 },
+                "transform": { "position": [-0.025, 0.52, 0.82], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.0, 0.8, 0.2, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.0, 1.6, 0.4] },
+                "operation": "Union"
+            },
+            {
+                "id": "skull_decor_eye_right",
+                "type": "Sphere",
+                "params": { "radius": 0.015 },
+                "transform": { "position": [0.025, 0.52, 0.82], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.0, 0.8, 0.2, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.0, 1.6, 0.4] },
+                "operation": "Union"
+            },
+            {
+                "id": "disease_cloud",
+                "type": "Sphere",
+                "params": { "radius": 0.6 },
+                "transform": { "position": [0.0, 0.8, -0.2], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.2, 0.6, 1.0] },
+                "material": { "baseColor": [0.3, 0.45, 0.2, 0.15], "metallic": 0.0, "roughness": 0.2, "emissive": [0.02, 0.03, 0.01] },
+                "operation": "Union"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "chassis", "parent": "root", "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "catapult_arm", "parent": "chassis", "position": [0.0, 0.5, 0.4], "rotation": [-0.35, 0.0, 0.0, 0.94] },
+            { "name": "wheel_lf", "parent": "chassis", "position": [-0.5, -0.15, 0.5], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "wheel_rf", "parent": "chassis", "position": [0.5, -0.15, 0.5], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "wheel_lb", "parent": "chassis", "position": [-0.52, -0.1, -0.5], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "wheel_rb", "parent": "chassis", "position": [0.52, -0.1, -0.5], "rotation": [0.0, 0.0, 0.0, 1.0] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 2.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "chassis": { "position": [0.0, 0.4, 0.0] }, "catapult_arm": { "rotation": [-0.35, 0.0, 0.0, 0.94] } } },
+                { "time": 1.0, "bones": { "chassis": { "position": [0.0, 0.42, 0.0] }, "catapult_arm": { "rotation": [-0.36, 0.0, 0.0, 0.93] } } },
+                { "time": 2.0, "bones": { "chassis": { "position": [0.0, 0.4, 0.0] }, "catapult_arm": { "rotation": [-0.35, 0.0, 0.0, 0.94] } } }
+            ]
+        },
+        "move": {
+            "duration": 0.5, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "chassis": { "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.02, 0.9998] }, "wheel_lf": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wheel_rf": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wheel_lb": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wheel_rb": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.125, "bones": { "chassis": { "position": [0.0, 0.42, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] }, "wheel_lf": { "rotation": [0.38, 0.0, 0.0, 0.93] }, "wheel_rf": { "rotation": [0.38, 0.0, 0.0, 0.93] }, "wheel_lb": { "rotation": [0.38, 0.0, 0.0, 0.93] }, "wheel_rb": { "rotation": [0.38, 0.0, 0.0, 0.93] } } },
+                { "time": 0.25, "bones": { "chassis": { "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, -0.02, 0.9998] }, "wheel_lf": { "rotation": [0.7, 0.0, 0.0, 0.71] }, "wheel_rf": { "rotation": [0.7, 0.0, 0.0, 0.71] }, "wheel_lb": { "rotation": [0.7, 0.0, 0.0, 0.71] }, "wheel_rb": { "rotation": [0.7, 0.0, 0.0, 0.71] } } },
+                { "time": 0.375, "bones": { "chassis": { "position": [0.0, 0.42, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] }, "wheel_lf": { "rotation": [0.93, 0.0, 0.0, 0.38] }, "wheel_rf": { "rotation": [0.93, 0.0, 0.0, 0.38] }, "wheel_lb": { "rotation": [0.93, 0.0, 0.0, 0.38] }, "wheel_rb": { "rotation": [0.93, 0.0, 0.0, 0.38] } } },
+                { "time": 0.5, "bones": { "chassis": { "position": [0.0, 0.4, 0.0], "rotation": [0.0, 0.0, 0.02, 0.9998] }, "wheel_lf": { "rotation": [1.0, 0.0, 0.0, 0.0] }, "wheel_rf": { "rotation": [1.0, 0.0, 0.0, 0.0] }, "wheel_lb": { "rotation": [1.0, 0.0, 0.0, 0.0] }, "wheel_rb": { "rotation": [1.0, 0.0, 0.0, 0.0] } } }
+            ]
+        },
+        "attack": {
+            "duration": 2.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "catapult_arm": { "rotation": [-0.35, 0.0, 0.0, 0.94] } } },
+                { "time": 0.3, "bones": { "catapult_arm": { "rotation": [-0.5, 0.0, 0.0, 0.87] } } },
+                { "time": 0.6, "bones": { "catapult_arm": { "rotation": [-0.6, 0.0, 0.0, 0.8] } } },
+                { "time": 0.8, "bones": { "catapult_arm": { "rotation": [0.5, 0.0, 0.0, 0.87] } }, "events": ["corpse_launch"] },
+                { "time": 1.2, "bones": { "catapult_arm": { "rotation": [0.3, 0.0, 0.0, 0.95] } } },
+                { "time": 1.6, "bones": { "catapult_arm": { "rotation": [-0.2, 0.0, 0.0, 0.98] } } },
+                { "time": 2.0, "bones": { "catapult_arm": { "rotation": [-0.35, 0.0, 0.0, 0.94] } } }
+            ]
+        },
+        "death": {
+            "duration": 2.0, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.5, "bones": { "root": { "position": [0.0, -0.1, 0.0], "rotation": [0.0, 0.0, 0.15, 0.99] } } },
+                { "time": 1.0, "bones": { "root": { "position": [0.0, -0.2, 0.1], "rotation": [0.1, 0.0, 0.3, 0.95] } } },
+                { "time": 1.5, "bones": { "root": { "position": [0.0, -0.3, 0.15], "rotation": [0.15, 0.0, 0.4, 0.9] } }, "events": ["wagon_collapse"] },
+                { "time": 2.0, "bones": { "root": { "position": [0.0, -0.4, 0.2], "rotation": [0.2, 0.0, 0.45, 0.87] } } }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "move", "condition": "isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "death", "condition": "isDead" }] },
+            "move": { "animation": "move", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "death", "condition": "isDead" }] },
+            "attack": { "animation": "attack", "transitions": [{ "to": "idle", "condition": "animationComplete && !isMoving" }, { "to": "move", "condition": "animationComplete && isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "get_corpse", "name": "Get Corpse", "description": "Picks up a nearby corpse for later use.", "hotkey": "G", "isToggle": false, "corpseCapacity": 8 },
+        { "id": "drop_corpse", "name": "Drop Corpse", "description": "Drops all carried corpses at the current location.", "hotkey": "D", "isToggle": false },
+        { "id": "exhume_corpses", "name": "Exhume Corpses", "description": "Generates corpses over time when stationary.", "hotkey": "E", "isToggle": true, "corpseInterval": 15.0, "isUpgrade": true },
+        { "id": "disease_cloud", "name": "Disease Cloud", "description": "Attacks leave a cloud of disease that damages enemies over time.", "hotkey": "", "isToggle": false, "isPassive": true, "damagePerSecond": 1.5, "duration": 90.0, "isUpgrade": true }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "meat_wagon_ready" }, { "type": "random_say", "texts": ["The wagon is loaded.", "Flesh for the master.", "Ready to deliver."], "chance": 1.0 }] },
+        "on_attack": { "actions": [{ "type": "play_animation", "animation": "attack" }, { "type": "play_sound", "sound": "catapult_launch" }, { "type": "spawn_projectile", "projectile": "diseased_corpse" }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "wagon_destruction" }, { "type": "spawn_particles", "effect": "wood_debris" }, { "type": "spawn_corpses", "count": 4 }] }
+    }
+}

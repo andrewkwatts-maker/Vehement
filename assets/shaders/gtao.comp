@@ -1,0 +1,126 @@
+#version 460 core
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// Output
+layout(rgba16f, binding = 0) uniform image2D u_outputAO;
+
+// Input textures
+uniform sampler2D u_depthTexture;
+uniform sampler2D u_normalTexture;
+uniform sampler2D u_noiseTexture;
+
+// Uniforms
+uniform mat4 u_projection;
+uniform mat4 u_invProjection;
+uniform vec2 u_screenSize;
+uniform vec2 u_noiseScale;
+uniform int u_numDirections;
+uniform int u_numSteps;
+uniform float u_radius;
+uniform float u_intensity;
+uniform float u_bias;
+
+const float PI = 3.14159265359;
+const float HALF_PI = PI * 0.5;
+
+// Reconstruct view space position from depth
+vec3 reconstructViewPosition(vec2 uv, float depth) {
+    vec4 clipPos = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec4 viewPos = u_invProjection * clipPos;
+    return viewPos.xyz / viewPos.w;
+}
+
+// Compute horizon angle
+float computeHorizonAngle(vec3 position, vec3 direction, vec3 normal, float stepSize) {
+    float maxAngle = -HALF_PI;
+
+    for (int step = 1; step <= u_numSteps; step++) {
+        vec2 sampleOffset = direction.xy * stepSize * float(step);
+        vec2 sampleUV = (gl_GlobalInvocationID.xy + sampleOffset) / u_screenSize;
+
+        if (sampleUV.x < 0.0 || sampleUV.x > 1.0 || sampleUV.y < 0.0 || sampleUV.y > 1.0) {
+            continue;
+        }
+
+        float sampleDepth = texture(u_depthTexture, sampleUV).r;
+        vec3 samplePos = reconstructViewPosition(sampleUV, sampleDepth);
+
+        vec3 horizon = samplePos - position;
+        float horizonLength = length(horizon);
+        horizon /= horizonLength;
+
+        // Calculate angle between sample direction and tangent plane
+        float angle = asin(clamp(dot(horizon, normal), -1.0, 1.0)) - u_bias;
+
+        // Falloff based on distance
+        float falloff = 1.0 - smoothstep(0.0, u_radius, horizonLength);
+        angle = mix(-HALF_PI, angle, falloff);
+
+        maxAngle = max(maxAngle, angle);
+    }
+
+    return maxAngle;
+}
+
+// Ground Truth Ambient Occlusion
+float computeGTAO(vec3 position, vec3 normal, vec2 noise) {
+    float ao = 0.0;
+
+    // Sample directions around hemisphere
+    for (int i = 0; i < u_numDirections; i++) {
+        float angle = (float(i) + noise.x) * (PI / float(u_numDirections));
+        vec3 direction = vec3(cos(angle), sin(angle), 0.0);
+
+        // Rotate direction by random angle
+        float randomAngle = noise.y * 2.0 * PI;
+        mat2 rotation = mat2(cos(randomAngle), -sin(randomAngle),
+                            sin(randomAngle), cos(randomAngle));
+        direction.xy = rotation * direction.xy;
+
+        // Compute horizon angles
+        float stepSize = u_radius / float(u_numSteps);
+        float h1 = computeHorizonAngle(position, direction, normal, stepSize);
+        float h2 = computeHorizonAngle(position, -direction, normal, stepSize);
+
+        // Integrate between horizon angles
+        vec3 bentNormal = normal;
+        float sinH1 = sin(h1);
+        float sinH2 = sin(h2);
+        float cosH1 = cos(h1);
+        float cosH2 = cos(h2);
+
+        // Simplified integration
+        float a = 0.25 * ((cosH1 + cosH2) - (sinH1 * h1 + sinH2 * h2));
+        ao += a;
+    }
+
+    ao /= float(u_numDirections);
+    ao = 1.0 - ao * u_intensity;
+
+    return clamp(ao, 0.0, 1.0);
+}
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 uv = vec2(pixelCoord) / u_screenSize;
+
+    // Sample depth and normal
+    float depth = texture(u_depthTexture, uv).r;
+    if (depth >= 1.0) {
+        // Sky
+        imageStore(u_outputAO, pixelCoord, vec4(1.0));
+        return;
+    }
+
+    vec3 normal = normalize(texture(u_normalTexture, uv).xyz * 2.0 - 1.0);
+    vec3 position = reconstructViewPosition(uv, depth);
+
+    // Sample noise
+    vec2 noise = texture(u_noiseTexture, uv * u_noiseScale).xy;
+
+    // Compute AO
+    float ao = computeGTAO(position, normal, noise);
+
+    imageStore(u_outputAO, pixelCoord, vec4(ao, ao, ao, 1.0));
+}

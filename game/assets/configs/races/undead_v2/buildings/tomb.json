@@ -1,0 +1,137 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "id": "undead_tomb",
+  "name": "Tomb of Souls",
+  "description": "Ancient crypts housing restless spirits. Trains advanced undead units including wraiths, banshees, and skeleton archers.",
+  "race": "undead",
+  "category": "military",
+  "tier": 2,
+
+  "size": {
+    "width": 4,
+    "height": 4
+  },
+
+  "health": 1300,
+  "armor": 5,
+  "magicResist": 25,
+
+  "cost": {
+    "gold": 300,
+    "wood": 150,
+    "stone": 100
+  },
+
+  "buildTime": 75,
+  "requiredBuilding": "undead_necropolis",
+  "requiredAge": 1,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "undead_skeleton_archer",
+      "requiredAge": 1
+    },
+    {
+      "type": "unit",
+      "id": "undead_wraith",
+      "requiredAge": 2
+    },
+    {
+      "type": "unit",
+      "id": "undead_banshee",
+      "requiredAge": 2
+    }
+  ],
+
+  "resourceGeneration": {
+    "manaPerSecond": 0.5,
+    "requiresWorker": false
+  },
+
+  "garrisonCapacity": 0,
+
+  "attackCapability": {
+    "canAttack": false
+  },
+
+  "abilities": [
+    {
+      "id": "spirit_link",
+      "name": "Spirit Link",
+      "description": "Link up to 3 nearby units, distributing damage equally among them",
+      "type": "active",
+      "hotkey": "L",
+      "cooldown": 45.0,
+      "manaCost": 100,
+      "range": 10.0,
+      "maxTargets": 3,
+      "duration": 20.0,
+      "damageDistribution": true
+    },
+    {
+      "id": "ethereal_sanctuary",
+      "name": "Ethereal Sanctuary",
+      "description": "Nearby ethereal units gain +25% magic resistance",
+      "type": "passive",
+      "auraRadius": 15.0,
+      "effects": [
+        {
+          "stat": "magicResist",
+          "value": 0.25,
+          "type": "percent",
+          "scope": "ethereal"
+        }
+      ]
+    }
+  ],
+
+  "aura": {
+    "id": "tomb_aura",
+    "name": "Spectral Power",
+    "radius": 15.0,
+    "effects": [
+      {
+        "stat": "moveSpeed",
+        "value": 0.15,
+        "type": "percent",
+        "scope": "undead_flying"
+      }
+    ]
+  },
+
+  "isUnique": false,
+  "maxCount": 8,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "visuals": {
+    "model": "models/races/undead/buildings/tomb.obj",
+    "icon": "textures/races/undead/icons/buildings/tomb.png",
+    "textures": {
+      "diffuse": "textures/races/undead/buildings/tomb_diffuse.png",
+      "normal": "textures/races/undead/buildings/tomb_normal.png",
+      "emissive": "textures/races/undead/buildings/tomb_emissive.png"
+    },
+    "constructionStages": 3,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "blightWhenDamaged": true,
+    "damageThreshold": 0.5
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/tomb/select.wav"],
+    "complete": ["sounds/undead/tomb/complete.wav"],
+    "destroyed": ["sounds/undead/tomb/destroyed.wav"]
+  },
+
+  "visionRange": 12.0,
+
+  "blightProperties": {
+    "createsBlight": false,
+    "requiresBlight": true
+  }
+}

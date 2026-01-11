@@ -50,7 +50,7 @@ glm::vec3 Random::InUnitSphere() {
             Range(-1.0f, 1.0f),
             Range(-1.0f, 1.0f)
         );
-    } while (glm::length2(p) >= 1.0f);
+    } while (glm::dot(p, p) >= 1.0f);
     return p;
 }
 
@@ -70,7 +70,7 @@ glm::vec2 Random::InUnitCircle() {
     glm::vec2 p;
     do {
         p = glm::vec2(Range(-1.0f, 1.0f), Range(-1.0f, 1.0f));
-    } while (glm::length2(p) >= 1.0f);
+    } while (glm::dot(p, p) >= 1.0f);
     return p;
 }
 

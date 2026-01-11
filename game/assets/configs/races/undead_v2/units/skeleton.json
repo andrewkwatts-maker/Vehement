@@ -1,0 +1,139 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "infantry",
+  "id": "undead_skeleton",
+  "name": "Skeleton Warrior",
+  "description": "Reanimated bones held together by dark magic. Fragile but requiring no sustenance, skeletons form endless legions of the unliving.",
+  "race": "undead",
+  "category": "infantry",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 280,
+    "healthRegen": 0,
+    "damage": 10,
+    "damageVariance": 0.1,
+    "attackSpeed": 1.4,
+    "attackRange": 1.2,
+    "armor": 2,
+    "magicResist": 5,
+    "moveSpeed": 4.5,
+    "critChance": 0.05,
+    "critMultiplier": 1.5
+  },
+
+  "cost": {
+    "gold": 120,
+    "corpses": 1
+  },
+
+  "trainTime": 20,
+  "populationCost": 1,
+  "requiredBuilding": "undead_graveyard",
+  "requiredAge": 0,
+
+  "armorType": "light",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "worker",
+      "multiplier": 1.5
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "undead_fortitude",
+      "name": "Undead Fortitude",
+      "description": "20% chance to survive a killing blow with 1 HP, then crumble to bones after 3 seconds",
+      "type": "passive",
+      "procChance": 0.20,
+      "survivalDuration": 3.0
+    },
+    {
+      "id": "reassemble",
+      "name": "Reassemble",
+      "description": "When killed, has 15% chance to reassemble from nearby bones after 8 seconds",
+      "type": "passive",
+      "procChance": 0.15,
+      "reviveDelay": 8.0,
+      "reviveHealthPercent": 0.30
+    },
+    {
+      "id": "bone_shield",
+      "name": "Bone Shield",
+      "description": "Raise a shield of bones, gaining 4 armor and immunity to critical hits for 6 seconds",
+      "type": "active",
+      "hotkey": "D",
+      "cooldown": 20.0,
+      "manaCost": 0,
+      "duration": 6.0,
+      "effects": [
+        {
+          "stat": "armor",
+          "value": 4
+        },
+        {
+          "stat": "critImmunity",
+          "value": 1.0
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.70
+        }
+      ]
+    }
+  ],
+
+  "upgrades": ["undead_melee_damage_1", "undead_armor_1", "skeleton_reinforcement"],
+
+  "visuals": {
+    "model": "models/races/undead/units/skeleton.obj",
+    "portrait": "textures/races/undead/portraits/skeleton.png",
+    "icon": "textures/races/undead/icons/skeleton.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/undead/units/skeleton_diffuse.png",
+      "normal": "textures/races/undead/units/skeleton_normal.png"
+    },
+    "animations": {
+      "idle": "animations/undead/skeleton/idle.anim",
+      "walk": "animations/undead/skeleton/walk.anim",
+      "run": "animations/undead/skeleton/run.anim",
+      "attack": "animations/undead/skeleton/attack.anim",
+      "defend": "animations/undead/skeleton/defend.anim",
+      "death": "animations/undead/skeleton/death.anim",
+      "reassemble": "animations/undead/skeleton/reassemble.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/skeleton/select_1.wav", "sounds/undead/skeleton/select_2.wav"],
+    "move": ["sounds/undead/skeleton/move_1.wav", "sounds/undead/skeleton/move_2.wav"],
+    "attack": ["sounds/bone_rattle.wav"],
+    "death": ["sounds/undead/skeleton/death.wav"],
+    "ready": ["sounds/bone_clatter.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.30,
+    "height": 1.75,
+    "mass": 45.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/melee_undead.bt",
+    "profile": "aggressive",
+    "aggroRange": 12.0,
+    "priorityTargets": ["worker", "ranged"],
+    "fearless": true
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": false,
+    "dropsBones": true,
+    "boneAmount": 1
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "spawner_building",
+  "id": "vampire_castle",
+  "name": "Vampire Castle",
+  "description": "The seat of vampire power. A dark fortress that trains thralls, houses vampire nobility, and radiates shadow magic across the land.",
+  "race": "vampires",
+  "category": "main_hall",
+  "tier": 0,
+
+  "size": {
+    "width": 6,
+    "height": 6,
+    "footprintShape": "square"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "canPlaceOnWater": false,
+    "requiresFlatTerrain": true,
+    "minDistanceFromOther": 3.0,
+    "requiresShadow": true,
+    "shadowRequirement": 0.30,
+    "blocksPathing": true,
+    "providesVision": true,
+    "nightVisionBonus": 1.50
+  },
+
+  "health": 2500,
+  "healthRegen": 2.0,
+  "armor": 8,
+  "magicResist": 15,
+
+  "spawner": {
+    "queueSize": 6,
+    "simultaneousProduction": 2,
+    "queueType": "sequential",
+    "hasRallyPoint": true,
+    "rallyPointRange": 60.0,
+    "productionSpeedMultiplier": 1.0,
+    "nightProductionBonus": 0.25
+  },
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "vampire_thrall",
+      "hotkey": "T"
+    },
+    {
+      "type": "unit",
+      "id": "vampire_blood_knight",
+      "hotkey": "K",
+      "requiredAge": 1
+    },
+    {
+      "type": "unit",
+      "id": "vampire_lord",
+      "hotkey": "L",
+      "requiredAge": 2,
+      "requiredTech": "vampire_nobility"
+    },
+    {
+      "type": "unit",
+      "id": "vampire_ancient",
+      "hotkey": "A",
+      "requiredAge": 3,
+      "requiredTech": "ancient_bloodline"
+    }
+  ],
+
+  "resourceGeneration": {
+    "resourceType": "blood",
+    "passiveGeneration": {
+      "bloodPerSecond": 0.5,
+      "maxStoredBlood": 200,
+      "autoCollect": true
+    },
+    "nightBonus": {
+      "bloodPerSecond": 1.0
+    }
+  },
+
+  "cost": {
+    "gold": 400,
+    "wood": 300,
+    "stone": 200
+  },
+
+  "buildTime": 120,
+  "providesPopulation": 10,
+
+  "canUpgrade": true,
+  "upgradesTo": "vampire_citadel",
+  "upgradeCost": {
+    "gold": 800,
+    "wood": 400,
+    "stone": 500,
+    "blood": 200
+  },
+  "upgradeTime": 150,
+
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 18.0,
+    "auraType": "shadow_dominion",
+    "auraEffects": [
+      {
+        "affect": "vampire_units",
+        "bonus": {
+          "healthRegen": 1.0,
+          "armor": 1,
+          "nightBonus": 2.0
+        }
+      },
+      {
+        "affect": "enemy_units",
+        "debuff": {
+          "attackSpeed": -0.10,
+          "moveSpeed": -0.10
+        }
+      }
+    ]
+  },
+
+  "garrisonCapacity": 10,
+  "canGarrison": true,
+  "garrisonTypes": ["infantry", "ranged"],
+  "garrisonHeal": true,
+  "garrisonHealRate": 3.0,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 35,
+    "attackSpeed": 0.8,
+    "attackRange": 10,
+    "attackType": "siege",
+    "targetAir": true,
+    "targetGround": true,
+    "projectileType": "blood_bolt",
+    "garrisonAttackBonus": 5
+  },
+
+  "visuals": {
+    "model": "models/races/vampires/buildings/castle.obj",
+    "icon": "textures/races/vampires/icons/castle.png",
+    "portrait": "textures/races/vampires/portraits/castle.png",
+    "constructionStages": 6,
+    "teamColorParts": ["banners", "roof_accents"],
+    "nightLighting": true,
+    "glowAtNight": true,
+    "glowColor": "#8B0000",
+    "particleEffects": {
+      "aura": "effects/vampires/shadow_aura.fx",
+      "night": "effects/vampires/castle_night.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/castle/select.wav"],
+    "construct": "sounds/construction/dark_build.wav",
+    "complete": "sounds/vampires/castle/complete.wav",
+    "ambient": "sounds/ambient/dark_castle.wav"
+  },
+
+  "metadata": {
+    "loreDescription": "Ancient strongholds of vampire lords, these dark castles have stood for centuries. They pulse with shadow magic, granting power to the undead while sapping the strength of the living.",
+    "strategicRole": "Main base. Trains core units. Provides aura and garrison. Must be built in shadowed areas.",
+    "placement": "Requires 30% shadow coverage. Place near blood resources."
+  }
+}

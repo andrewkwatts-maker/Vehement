@@ -1,0 +1,221 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "id": "undead_lich",
+  "name": "Lich",
+  "description": "Ancient sorcerers who transcended death to achieve immortality. Liches command devastating frost and death magic.",
+  "race": "undead",
+  "category": "hero",
+  "tier": 4,
+
+  "baseStats": {
+    "health": 650,
+    "healthRegen": 1.5,
+    "mana": 800,
+    "manaRegen": 5.0,
+    "damage": 38,
+    "damageVariance": 0.35,
+    "attackSpeed": 1.7,
+    "attackRange": 12.0,
+    "armor": 2,
+    "magicResist": 45,
+    "moveSpeed": 4.5,
+    "sightRange": 16,
+    "spellPower": 180
+  },
+
+  "cost": {
+    "gold": 600,
+    "mana": 200,
+    "corpses": 10
+  },
+
+  "trainTime": 90,
+  "populationCost": 5,
+  "requiredBuilding": "undead_black_citadel",
+  "requiredAge": 3,
+
+  "armorType": "hero",
+  "attackType": "hero_magic",
+
+  "isHero": true,
+  "maxLevel": 10,
+  "experienceToLevel": [100, 250, 500, 900, 1500, 2300, 3300, 4500, 6000],
+
+  "abilities": [
+    {
+      "id": "frost_nova",
+      "name": "Frost Nova",
+      "description": "Release a wave of frost dealing 200 damage and freezing enemies for 2 seconds in a large radius",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 12.0,
+      "manaCost": 150,
+      "radius": 8.0,
+      "damage": 200,
+      "freezeDuration": 2.0,
+      "damageType": "frost"
+    },
+    {
+      "id": "frost_armor",
+      "name": "Frost Armor",
+      "description": "Encase target in ice, granting 6 armor and slowing attackers by 40% for 20 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 16.0,
+      "manaCost": 90,
+      "range": 14.0,
+      "duration": 20.0,
+      "targetType": "friendly_unit",
+      "effects": [
+        {
+          "stat": "armor",
+          "value": 6
+        },
+        {
+          "stat": "returnSlow",
+          "value": 0.40
+        }
+      ]
+    },
+    {
+      "id": "dark_ritual",
+      "name": "Dark Ritual",
+      "description": "Sacrifice target friendly undead to restore 300 mana and gain 50 spell power for 30 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 45.0,
+      "manaCost": 0,
+      "range": 8.0,
+      "targetType": "friendly_undead",
+      "manaGain": 300,
+      "duration": 30.0,
+      "effects": [
+        {
+          "stat": "spellPower",
+          "value": 50
+        }
+      ],
+      "killsTarget": true
+    },
+    {
+      "id": "death_and_decay",
+      "name": "Death and Decay",
+      "description": "Call down waves of death energy dealing 60 damage per second for 10 seconds and creating blight",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 35.0,
+      "manaCost": 250,
+      "range": 18.0,
+      "radius": 7.0,
+      "duration": 10.0,
+      "damagePerTick": 60,
+      "tickRate": 1.0,
+      "createsBlight": true,
+      "damageType": "dark",
+      "requiredLevel": 6
+    },
+    {
+      "id": "phylactery",
+      "name": "Phylactery",
+      "description": "Upon death, revive after 10 seconds at your phylactery (Necropolis) with 50% health (30 minute cooldown)",
+      "type": "passive",
+      "reviveDelay": 10.0,
+      "reviveHealthPercent": 0.50,
+      "reviveLocation": "necropolis",
+      "cooldown": 1800.0
+    },
+    {
+      "id": "mastery_of_death",
+      "name": "Mastery of Death",
+      "description": "Nearby undead units gain +3 armor and +20% spell resistance",
+      "type": "passive",
+      "auraRadius": 15.0,
+      "targetRace": "undead",
+      "effects": [
+        {
+          "stat": "armor",
+          "value": 3
+        },
+        {
+          "stat": "magicResist",
+          "value": 0.20,
+          "type": "percent"
+        }
+      ]
+    }
+  ],
+
+  "projectile": {
+    "id": "frost_bolt",
+    "model": "models/projectiles/frost_bolt.obj",
+    "speed": 30.0,
+    "lifetime": 3.5,
+    "gravity": 0.0,
+    "trailEffect": "effects/frost_trail.fx",
+    "impactEffect": "effects/frost_impact.fx"
+  },
+
+  "upgrades": ["lich_empowerment", "frost_mastery", "phylactery_enhancement"],
+
+  "visuals": {
+    "model": "models/races/undead/units/lich.obj",
+    "portrait": "textures/races/undead/portraits/lich.png",
+    "icon": "textures/races/undead/icons/lich.png",
+    "scale": 1.2,
+    "textures": {
+      "diffuse": "textures/races/undead/units/lich_diffuse.png",
+      "normal": "textures/races/undead/units/lich_normal.png",
+      "emissive": "textures/races/undead/units/lich_emissive.png",
+      "specular": "textures/races/undead/units/lich_specular.png"
+    },
+    "animations": {
+      "idle": "animations/undead/lich/idle.anim",
+      "walk": "animations/undead/lich/walk.anim",
+      "run": "animations/undead/lich/float.anim",
+      "attack": "animations/undead/lich/attack.anim",
+      "cast_nova": "animations/undead/lich/frost_nova.anim",
+      "cast_armor": "animations/undead/lich/frost_armor.anim",
+      "cast_ritual": "animations/undead/lich/dark_ritual.anim",
+      "cast_decay": "animations/undead/lich/death_decay.anim",
+      "death": "animations/undead/lich/death.anim",
+      "revive": "animations/undead/lich/revive.anim"
+    },
+    "effects": {
+      "aura": "effects/lich_aura.fx",
+      "float": "effects/float_particles.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/lich/select_1.wav", "sounds/undead/lich/select_2.wav"],
+    "move": ["sounds/undead/lich/move_1.wav", "sounds/undead/lich/move_2.wav"],
+    "attack": ["sounds/frost_bolt.wav"],
+    "cast": ["sounds/undead/lich/cast.wav"],
+    "nova": ["sounds/frost_explosion.wav"],
+    "decay": ["sounds/death_and_decay.wav"],
+    "death": ["sounds/undead/lich/death.wav"],
+    "revive": ["sounds/undead/lich/revive.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.35,
+    "height": 2.0,
+    "mass": 75.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/hero_caster.bt",
+    "profile": "hero_caster",
+    "aggroRange": 12.0,
+    "preferredDistance": 12.0,
+    "priorityAbilities": ["death_and_decay", "frost_nova", "dark_ritual"],
+    "retreatThreshold": 0.25
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": false,
+    "hasRevive": true,
+    "phylactery": true
+  }
+}

@@ -1,0 +1,349 @@
+{
+  "$schema": "../../../schemas/tech_tree.schema.json",
+  "id": "vampire_tech_tree",
+  "name": "Vampire Technology Tree",
+  "description": "The dark path from mortal thrall to ancient vampire lord. Unlock the powers of blood magic, transformation, and eternal night.",
+  "race": "vampires",
+
+  "progressionPaths": {
+    "mortal_to_vampire": {
+      "name": "The Embrace",
+      "description": "Transformation from mortal thrall to vampire",
+      "stages": [
+        {
+          "name": "Mortal Thrall",
+          "units": ["vampire_thrall"],
+          "buildings": ["vampire_castle", "blood_altar"],
+          "tier": 0
+        },
+        {
+          "name": "Fledgling Vampire",
+          "units": ["vampire_nosferatu", "vampire_blood_knight", "vampire_blood_archer"],
+          "buildings": ["vampire_crypt", "dark_chapel"],
+          "tier": 1,
+          "requiredTech": ["the_embrace"]
+        },
+        {
+          "name": "True Vampire",
+          "units": ["vampire_lord", "vampire_giant_bat", "vampire_werewolf", "vampire_blood_mage"],
+          "buildings": ["tower_of_night", "forbidden_library"],
+          "tier": 2,
+          "requiredTech": ["vampire_nobility", "lycanthropy", "blood_magic_mastery"]
+        },
+        {
+          "name": "Elder Vampire",
+          "units": ["vampire_ancient", "vampire_night_stalker", "vampire_countess"],
+          "buildings": ["vampire_citadel"],
+          "tier": 3,
+          "requiredTech": ["ancient_bloodline", "shadow_mastery", "dark_nobility"]
+        }
+      ]
+    }
+  },
+
+  "technologies": [
+    {
+      "id": "the_embrace",
+      "name": "The Embrace",
+      "description": "Learn to create new vampires from mortals. Unlocks vampire transformation.",
+      "category": "core",
+      "tier": 0,
+      "cost": {
+        "gold": 100,
+        "blood": 50
+      },
+      "researchTime": 60,
+      "requiredBuilding": "vampire_castle",
+      "effects": {
+        "unlocks": ["vampire_crypt", "vampire_blood_knight", "vampire_nosferatu"]
+      }
+    },
+    {
+      "id": "blood_magic_mastery",
+      "name": "Blood Magic Mastery",
+      "description": "Master the art of blood sorcery. Unlocks blood mages and advanced blood rituals.",
+      "category": "magic",
+      "tier": 2,
+      "cost": {
+        "gold": 300,
+        "blood": 150,
+        "mana": 100
+      },
+      "researchTime": 90,
+      "requiredBuilding": "forbidden_library",
+      "requiredAge": 1,
+      "effects": {
+        "unlocks": ["vampire_blood_mage"],
+        "bonuses": {
+          "blood_magic_power": 0.25,
+          "spell_cost_reduction": 0.15
+        }
+      }
+    },
+    {
+      "id": "vampire_nobility",
+      "name": "Vampire Nobility",
+      "description": "Embrace the aristocratic vampire traditions. Unlocks vampire lords and noble abilities.",
+      "category": "military",
+      "tier": 2,
+      "cost": {
+        "gold": 400,
+        "blood": 200
+      },
+      "researchTime": 120,
+      "requiredBuilding": "vampire_castle",
+      "requiredAge": 2,
+      "effects": {
+        "unlocks": ["vampire_lord"],
+        "bonuses": {
+          "vampire_melee_damage": 0.15,
+          "vampire_armor": 2
+        }
+      }
+    },
+    {
+      "id": "ancient_bloodline",
+      "name": "Ancient Bloodline",
+      "description": "Awaken the most ancient and powerful vampires. Unlocks Ancient Vampires.",
+      "category": "ultimate",
+      "tier": 3,
+      "cost": {
+        "gold": 800,
+        "blood": 400,
+        "mana": 200
+      },
+      "researchTime": 180,
+      "requiredBuilding": "vampire_castle",
+      "requiredAge": 3,
+      "requiredTech": "vampire_nobility",
+      "effects": {
+        "unlocks": ["vampire_ancient"],
+        "bonuses": {
+          "all_vampire_stats": 0.20,
+          "night_bonus_multiplier": 1.50
+        }
+      }
+    },
+    {
+      "id": "lycanthropy",
+      "name": "Curse of Lycanthropy",
+      "description": "Enslave werewolves to your will. Unlocks werewolf units.",
+      "category": "military",
+      "tier": 2,
+      "cost": {
+        "gold": 250,
+        "blood": 120,
+        "mana": 80
+      },
+      "researchTime": 100,
+      "requiredBuilding": "vampire_crypt",
+      "requiredAge": 1,
+      "effects": {
+        "unlocks": ["vampire_werewolf"],
+        "bonuses": {
+          "werewolf_pack_bonus": 0.15
+        }
+      }
+    },
+    {
+      "id": "shadow_mastery",
+      "name": "Shadow Mastery",
+      "description": "Master the shadows themselves. Unlocks night stalkers and shadow abilities.",
+      "category": "stealth",
+      "tier": 3,
+      "cost": {
+        "gold": 500,
+        "blood": 250,
+        "mana": 150
+      },
+      "researchTime": 150,
+      "requiredBuilding": "tower_of_night",
+      "requiredAge": 2,
+      "effects": {
+        "unlocks": ["vampire_night_stalker"],
+        "bonuses": {
+          "stealth_duration": 0.50,
+          "night_damage_bonus": 0.20,
+          "shadow_area_expanded": 1.30
+        }
+      }
+    },
+    {
+      "id": "dark_nobility",
+      "name": "Dark Nobility",
+      "description": "Embrace the seductive power of vampire nobility. Unlocks vampire countesses.",
+      "category": "magic",
+      "tier": 3,
+      "cost": {
+        "gold": 450,
+        "blood": 220,
+        "mana": 120
+      },
+      "researchTime": 140,
+      "requiredBuilding": "vampire_castle",
+      "requiredAge": 2,
+      "effects": {
+        "unlocks": ["vampire_countess"],
+        "bonuses": {
+          "charm_duration": 0.40,
+          "conversion_rate": 0.25
+        }
+      }
+    },
+    {
+      "id": "vampire_melee_1",
+      "name": "Crimson Blades",
+      "description": "+2 damage for vampire melee units",
+      "category": "upgrade",
+      "tier": 1,
+      "cost": {
+        "gold": 150,
+        "blood": 50
+      },
+      "researchTime": 45,
+      "requiredBuilding": "vampire_crypt",
+      "effects": {
+        "bonuses": {
+          "vampire_melee_damage": 2
+        }
+      }
+    },
+    {
+      "id": "vampire_melee_2",
+      "name": "Blood-Forged Steel",
+      "description": "+3 damage for vampire melee units",
+      "category": "upgrade",
+      "tier": 2,
+      "cost": {
+        "gold": 250,
+        "blood": 100
+      },
+      "researchTime": 60,
+      "requiredBuilding": "vampire_crypt",
+      "requiredTech": "vampire_melee_1",
+      "effects": {
+        "bonuses": {
+          "vampire_melee_damage": 3
+        }
+      }
+    },
+    {
+      "id": "vampire_armor_1",
+      "name": "Reinforced Plate",
+      "description": "+2 armor for vampire melee units",
+      "category": "upgrade",
+      "tier": 1,
+      "cost": {
+        "gold": 150,
+        "stone": 100
+      },
+      "researchTime": 45,
+      "requiredBuilding": "vampire_crypt",
+      "effects": {
+        "bonuses": {
+          "vampire_melee_armor": 2
+        }
+      }
+    },
+    {
+      "id": "vampire_ranged_1",
+      "name": "Blood-Tipped Arrows",
+      "description": "+2 damage for vampire ranged units",
+      "category": "upgrade",
+      "tier": 1,
+      "cost": {
+        "gold": 150,
+        "wood": 100,
+        "blood": 40
+      },
+      "researchTime": 45,
+      "requiredBuilding": "dark_chapel",
+      "effects": {
+        "bonuses": {
+          "vampire_ranged_damage": 2,
+          "curse_duration": 2
+        }
+      }
+    },
+    {
+      "id": "night_empowerment",
+      "name": "Night Empowerment",
+      "description": "All vampire units gain +20% bonuses at night (stacks with existing night bonuses)",
+      "category": "core",
+      "tier": 2,
+      "cost": {
+        "gold": 300,
+        "blood": 150,
+        "mana": 100
+      },
+      "researchTime": 90,
+      "requiredBuilding": "tower_of_night",
+      "requiredAge": 1,
+      "effects": {
+        "bonuses": {
+          "night_bonus_multiplier": 1.20
+        }
+      }
+    },
+    {
+      "id": "blood_efficiency",
+      "name": "Blood Efficiency",
+      "description": "Blood resource generation +30%, blood costs reduced by 15%",
+      "category": "economic",
+      "tier": 1,
+      "cost": {
+        "gold": 200,
+        "blood": 80
+      },
+      "researchTime": 60,
+      "requiredBuilding": "blood_altar",
+      "effects": {
+        "bonuses": {
+          "blood_generation": 0.30,
+          "blood_cost_reduction": 0.15
+        }
+      }
+    }
+  ],
+
+  "upgradePaths": {
+    "melee_progression": {
+      "name": "Vampire Warrior Path",
+      "units": [
+        "vampire_thrall → vampire_nosferatu → vampire_blood_knight → vampire_lord → vampire_ancient"
+      ]
+    },
+    "magic_progression": {
+      "name": "Blood Magic Path",
+      "units": [
+        "vampire_thrall → vampire_blood_mage → vampire_countess → vampire_ancient"
+      ]
+    },
+    "stealth_progression": {
+      "name": "Shadow Assassin Path",
+      "units": [
+        "vampire_thrall → vampire_nosferatu → vampire_night_stalker"
+      ]
+    },
+    "beast_progression": {
+      "name": "Bestial Path",
+      "units": [
+        "vampire_bat_swarm → vampire_giant_bat",
+        "vampire_thrall → vampire_werewolf"
+      ]
+    }
+  },
+
+  "metadata": {
+    "designPhilosophy": "Vampires progress from enslaved mortals to godlike elder vampires through the embrace and centuries of power accumulation. The race emphasizes night combat, blood magic, life drain, and transformation.",
+    "keyMechanics": [
+      "Day/Night Cycle: All vampires are stronger at night, weaker during day",
+      "Blood Resource: Primary resource for vampire units and abilities",
+      "Life Drain: Vampires sustain themselves by draining enemy life",
+      "Transformation: Many units can transform (bat, mist, werewolf)",
+      "Shadow Requirement: Buildings require shadow/darkness to function optimally",
+      "Thrall Conversion: Can convert enemies into vampire thralls"
+    ],
+    "playstyle": "Aggressive nighttime raids, defensive during day. Heavy emphasis on life drain sustain and transformations. Unique blood economy requires constant combat or sacrifices."
+  }
+}

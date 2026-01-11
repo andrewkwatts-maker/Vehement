@@ -1,0 +1,186 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "ranged_unit_archetype",
+  "id": "naga_sea_archer",
+  "name": "Sea Archer",
+  "description": "Naga archer wielding a coral bow that fires crystalline harpoons. Deadly accurate in and out of water.",
+
+  "category": "ranged",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 90,
+    "healthRegen": 0.4,
+    "mana": 30,
+    "manaRegen": 0.6,
+    "damage": 16,
+    "damageVariance": 0.22,
+    "attackSpeed": 1.1,
+    "attackRange": 10,
+    "armor": 0,
+    "magicResist": 1,
+    "moveSpeed": 5.8,
+    "turnSpeed": 400,
+    "acceleration": 13.0,
+    "sightRange": 13,
+    "detectionRange": 10,
+    "critChance": 0.18,
+    "critMultiplier": 2.0
+  },
+
+  "combat": {
+    "attackType": "pierce",
+    "armorType": "light",
+
+    "attackAnimation": {
+      "windupTime": 0.35,
+      "backswingTime": 0.55,
+      "totalDuration": 0.91
+    },
+
+    "bonusVs": [
+      {
+        "category": "air",
+        "multiplier": 1.6,
+        "flatBonus": 3
+      },
+      {
+        "category": "unarmored",
+        "multiplier": 1.3
+      }
+    ],
+
+    "penaltyVs": [
+      {
+        "category": "heavy",
+        "multiplier": 0.45
+      },
+      {
+        "category": "fortified",
+        "multiplier": 0.4
+      }
+    ]
+  },
+
+  "projectile": {
+    "type": "ballistic",
+    "speed": 28.0,
+    "arc": 0.2,
+    "maxTravelDistance": 13.0,
+
+    "piercing": false,
+    "maxPierceTargets": 0,
+    "canBeBlocked": true,
+    "canBeDodged": true,
+    "canMiss": true,
+    "missChance": 0.03,
+
+    "visualModel": "models/projectiles/naga/crystal_harpoon.fbx",
+    "trailEffect": "effects/harpoon_water_trail.fx",
+    "impactEffect": "effects/harpoon_impact.fx",
+    "projectileSize": 0.12,
+
+    "sticksInTarget": true,
+    "sticksInGround": true
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 0.42,
+    "pushPriority": 3,
+    "pathfindingType": "amphibious",
+    "unitSize": "small",
+
+    "canKite": true,
+    "kiteEfficiency": 0.85,
+
+    "waterMovementMultiplier": 1.55,
+    "landMovementMultiplier": 0.85
+  },
+
+  "cost": {
+    "gold": 90,
+    "wood": 35,
+    "food": 0,
+    "stone": 0,
+    "mana": 8
+  },
+
+  "trainTime": 28,
+  "populationCost": 1,
+  "requiredBuilding": "tidal_temple",
+  "requiredAge": 0,
+
+  "abilities": [
+    {
+      "id": "harpoon_net",
+      "name": "Harpoon Net",
+      "description": "Fires a weighted net that roots target for 3 seconds",
+      "manaCost": 20,
+      "cooldown": 15,
+      "range": 10
+    }
+  ],
+
+  "upgrades": [
+    "naga_ranged_attack_1",
+    "naga_ranged_attack_2",
+    "naga_ranged_attack_3",
+    "naga_armor_1",
+    "crystal_harpoons"
+  ],
+
+  "visuals": {
+    "model": "models/units/naga/sea_archer.fbx",
+    "portrait": "textures/portraits/naga/sea_archer.png",
+    "icon": "textures/icons/units/naga/sea_archer.png",
+    "scale": 1.0,
+
+    "animations": {
+      "idle": "anim_idle_bow",
+      "walk": "anim_swim",
+      "attack": "anim_shoot_harpoon",
+      "death": "anim_death"
+    },
+
+    "teamColorParts": ["fin_crest", "bow_wrap"],
+    "glowAtNight": true,
+    "glowColor": "#00CCFF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.65,
+      "pulseSpeed": 2.2
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/sea_archer/select1.wav", "sounds/units/naga/sea_archer/select2.wav"],
+    "move": ["sounds/units/naga/sea_archer/move1.wav"],
+    "attack": ["sounds/units/naga/sea_archer/shoot1.wav", "sounds/units/naga/sea_archer/shoot2.wav"],
+    "death": ["sounds/units/naga/sea_archer/death1.wav"],
+    "projectileLaunch": "sounds/projectiles/harpoon_fire.wav"
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "healthRegen": 1.5,
+        "moveSpeed": 1.55,
+        "attackRange": 1.1,
+        "accuracy": 1.15
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Naga ranged unit. Excellent vs air and light armor. Bonus accuracy in water."
+  }
+}

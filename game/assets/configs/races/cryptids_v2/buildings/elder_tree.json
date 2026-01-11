@@ -1,0 +1,147 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "advanced_building",
+  "id": "cryptid_elder_tree",
+  "name": "Elder Tree",
+  "description": "Ancient sentient tree of immense power. The Elder Tree trains elite Thunderbird units and provides powerful nature buffs to all cryptids.",
+  "race": "cryptids",
+  "category": "elite",
+  "tier": 3,
+
+  "size": {
+    "width": 4,
+    "height": 4
+  },
+
+  "health": 2500,
+  "armor": 6,
+
+  "cost": {
+    "gold": 400,
+    "wood": 300
+  },
+
+  "buildTime": 70,
+  "requiredBuilding": "cryptid_sacred_grove",
+  "requiredAge": 2,
+
+  "providesPopulation": 5,
+
+  "productionQueue": [
+    {
+      "unitId": "cryptid_thunderbird",
+      "priority": 1
+    }
+  ],
+
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0.3,
+    "foodPerSecond": 0.2,
+    "stonePerSecond": 0,
+    "manaPerSecond": 0.8,
+    "requiresWorker": false,
+    "workerCapacity": 0
+  },
+
+  "garrisonCapacity": 0,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 45,
+    "attackSpeed": 3.0,
+    "attackRange": 10.0,
+    "attackType": "magic",
+    "targetAir": true,
+    "targetGround": true,
+    "projectileType": "nature_bolt"
+  },
+
+  "isUnique": true,
+  "maxCount": 1,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "passiveAbilities": [
+    {
+      "id": "roots_of_power",
+      "name": "Roots of Power",
+      "description": "All friendly units gain +15% health and +1 health regeneration per second globally",
+      "globalEffect": true,
+      "effects": [
+        {
+          "stat": "maxHealth",
+          "multiplier": 1.15
+        },
+        {
+          "stat": "healthRegen",
+          "value": 1.0
+        }
+      ],
+      "targetType": "friendly"
+    },
+    {
+      "id": "ancient_protection",
+      "name": "Ancient Protection",
+      "description": "Units within 25 units gain +5 armor and cannot be slowed below 70% movement speed",
+      "radius": 25.0,
+      "effects": [
+        {
+          "stat": "armor",
+          "value": 5
+        }
+      ],
+      "slowResistance": 0.70,
+      "targetType": "friendly"
+    },
+    {
+      "id": "life_force",
+      "name": "Life Force",
+      "description": "While the Elder Tree stands, all cryptid buildings regenerate 2% max health per second",
+      "globalEffect": true,
+      "effects": [
+        {
+          "stat": "healthRegenPercent",
+          "value": 0.02,
+          "target": "buildings"
+        }
+      ]
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "entangling_roots_mass",
+      "name": "Mass Entanglement",
+      "description": "Roots all enemies in large area for 5 seconds and deals damage over time",
+      "type": "active",
+      "cooldown": 90.0,
+      "radius": 10.0,
+      "duration": 5.0,
+      "rootDuration": 5.0,
+      "damagePerSecond": 30,
+      "manaCost": 0
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/cryptids/buildings/elder_tree.obj",
+    "icon": "textures/races/cryptids/icons/buildings/elder_tree.png",
+    "textures": {
+      "diffuse": "textures/races/cryptids/buildings/elder_tree_diffuse.png",
+      "normal": "textures/races/cryptids/buildings/elder_tree_normal.png",
+      "emissive": "textures/races/cryptids/buildings/elder_tree_emissive.png"
+    },
+    "constructionStages": 3,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "damageThreshold": 0.3,
+    "particleEffects": {
+      "life_aura": "particles/cryptids/life_aura.particle",
+      "falling_leaves": "particles/cryptids/leaves.particle",
+      "roots": "particles/cryptids/roots_glow.particle"
+    }
+  },
+
+  "visionRange": 15.0
+}

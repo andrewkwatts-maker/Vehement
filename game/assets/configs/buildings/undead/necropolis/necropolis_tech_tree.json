@@ -1,0 +1,362 @@
+{
+  "buildingId": "undead_necropolis",
+  "nodes": [
+    {
+      "id": "corpse_preservation",
+      "name": "Corpse Preservation",
+      "description": "Learn to preserve corpses longer, increasing storage capacity by 50%",
+      "type": 1,
+      "iconPath": "icons/tech/undead/corpse_preservation.png",
+      "treePosition": [0, 0],
+      "requiredBuildingLevel": 1,
+      "prerequisites": [],
+      "cost": {
+        "gold": 100,
+        "corpses": 5
+      },
+      "researchTime": 30.0,
+      "effects": [
+        {
+          "target": "storage:corpses",
+          "effectType": "multiply",
+          "value": 1.5
+        }
+      ]
+    },
+    {
+      "id": "basic_necromancy",
+      "name": "Basic Necromancy",
+      "description": "Unlock skeleton warrior production at graveyards",
+      "type": 1,
+      "iconPath": "icons/tech/undead/basic_necromancy.png",
+      "treePosition": [1, 0],
+      "requiredBuildingLevel": 1,
+      "prerequisites": [],
+      "cost": {
+        "gold": 150,
+        "corpses": 3
+      },
+      "researchTime": 40.0,
+      "effects": [
+        {
+          "target": "unit:undead_skeleton",
+          "effectType": "unlock",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "id": "advanced_necromancy",
+      "name": "Advanced Necromancy",
+      "description": "Unlock zombie production and reduce corpse costs by 1",
+      "type": 1,
+      "iconPath": "icons/tech/undead/advanced_necromancy.png",
+      "treePosition": [2, 0],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["basic_necromancy"],
+      "cost": {
+        "gold": 250,
+        "corpses": 10
+      },
+      "researchTime": 60.0,
+      "effects": [
+        {
+          "target": "unit:undead_zombie",
+          "effectType": "unlock",
+          "value": 1.0
+        },
+        {
+          "target": "unit:undead_*",
+          "effectType": "reduce_cost",
+          "resource": "corpses",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "spirit_summoning",
+      "name": "Spirit Summoning",
+      "description": "Unlock wraith and banshee production at tombs",
+      "type": 1,
+      "iconPath": "icons/tech/undead/spirit_summoning.png",
+      "treePosition": [3, 0],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["advanced_necromancy"],
+      "cost": {
+        "gold": 400,
+        "mana": 100,
+        "corpses": 15
+      },
+      "researchTime": 90.0,
+      "effects": [
+        {
+          "target": "unit:undead_wraith",
+          "effectType": "unlock",
+          "value": 1.0
+        },
+        {
+          "target": "unit:undead_banshee",
+          "effectType": "unlock",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "id": "lich_ascension",
+      "name": "Lich Ascension",
+      "description": "Unlock lich production - the ultimate necromantic power",
+      "type": 1,
+      "iconPath": "icons/tech/undead/lich_ascension.png",
+      "treePosition": [4, 0],
+      "requiredBuildingLevel": 4,
+      "prerequisites": ["spirit_summoning"],
+      "cost": {
+        "gold": 800,
+        "mana": 300,
+        "corpses": 30
+      },
+      "researchTime": 150.0,
+      "effects": [
+        {
+          "target": "unit:undead_lich",
+          "effectType": "unlock",
+          "value": 1.0
+        },
+        {
+          "target": "unit:undead_lich",
+          "effectType": "multiply_stat",
+          "stat": "spellPower",
+          "value": 1.15
+        }
+      ]
+    },
+    {
+      "id": "blight_mastery",
+      "name": "Blight Mastery",
+      "description": "Blight spreads 50% faster and covers 25% more area",
+      "type": 2,
+      "iconPath": "icons/tech/undead/blight_mastery.png",
+      "treePosition": [0, 1],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["corpse_preservation"],
+      "cost": {
+        "gold": 200,
+        "mana": 50
+      },
+      "researchTime": 50.0,
+      "effects": [
+        {
+          "target": "blight:spread_rate",
+          "effectType": "multiply",
+          "value": 1.5
+        },
+        {
+          "target": "blight:radius",
+          "effectType": "multiply",
+          "value": 1.25
+        }
+      ]
+    },
+    {
+      "id": "unholy_ground",
+      "name": "Unholy Ground",
+      "description": "Undead units on blight regenerate 50% faster",
+      "type": 2,
+      "iconPath": "icons/tech/undead/unholy_ground.png",
+      "treePosition": [1, 1],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["blight_mastery"],
+      "cost": {
+        "gold": 250,
+        "mana": 75
+      },
+      "researchTime": 60.0,
+      "effects": [
+        {
+          "target": "unit:undead_*",
+          "effectType": "multiply_stat",
+          "stat": "healthRegen",
+          "value": 1.5,
+          "condition": "on_blight"
+        }
+      ]
+    },
+    {
+      "id": "dark_harvest",
+      "name": "Dark Harvest",
+      "description": "Acolytes gather corpses 30% faster and can carry +1 corpse",
+      "type": 2,
+      "iconPath": "icons/tech/undead/dark_harvest.png",
+      "treePosition": [0, 2],
+      "requiredBuildingLevel": 1,
+      "prerequisites": [],
+      "cost": {
+        "gold": 100,
+        "wood": 50
+      },
+      "researchTime": 35.0,
+      "effects": [
+        {
+          "target": "unit:undead_acolyte",
+          "effectType": "multiply_stat",
+          "stat": "gatheringRate.corpses",
+          "value": 1.3
+        },
+        {
+          "target": "unit:undead_acolyte",
+          "effectType": "add",
+          "stat": "carryCapacity.corpses",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "corpse_generation",
+      "name": "Corpse Generation",
+      "description": "Necropolis slowly generates 1 corpse every 60 seconds",
+      "type": 2,
+      "iconPath": "icons/tech/undead/corpse_generation.png",
+      "treePosition": [1, 2],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["dark_harvest", "corpse_preservation"],
+      "cost": {
+        "gold": 300,
+        "mana": 100
+      },
+      "researchTime": 80.0,
+      "effects": [
+        {
+          "target": "building:undead_necropolis",
+          "effectType": "enable",
+          "value": 1.0,
+          "data": {
+            "feature": "corpse_generation",
+            "rate": 60.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "skeletal_mastery",
+      "name": "Skeletal Mastery",
+      "description": "Skeleton warriors gain +15% attack speed and +2 armor",
+      "type": 2,
+      "iconPath": "icons/tech/undead/skeletal_mastery.png",
+      "treePosition": [2, 1],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["basic_necromancy"],
+      "cost": {
+        "gold": 200,
+        "corpses": 8
+      },
+      "researchTime": 55.0,
+      "effects": [
+        {
+          "target": "unit:undead_skeleton",
+          "effectType": "multiply_stat",
+          "stat": "attackSpeed",
+          "value": 1.15
+        },
+        {
+          "target": "unit:undead_skeleton",
+          "effectType": "add",
+          "stat": "armor",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "plague_enhancement",
+      "name": "Plague Enhancement",
+      "description": "Disease damage increased by 50% and duration increased by 3 seconds",
+      "type": 2,
+      "iconPath": "icons/tech/undead/plague_enhancement.png",
+      "treePosition": [3, 1],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["advanced_necromancy"],
+      "cost": {
+        "gold": 350,
+        "mana": 125
+      },
+      "researchTime": 75.0,
+      "effects": [
+        {
+          "target": "effect:plague",
+          "effectType": "multiply",
+          "stat": "damage",
+          "value": 1.5
+        },
+        {
+          "target": "effect:plague",
+          "effectType": "add",
+          "stat": "duration",
+          "value": 3.0
+        }
+      ]
+    },
+    {
+      "id": "death_knight_training",
+      "name": "Death Knight Training",
+      "description": "Unlock death knight production at the Black Citadel",
+      "type": 1,
+      "iconPath": "icons/tech/undead/death_knight.png",
+      "treePosition": [4, 1],
+      "requiredBuildingLevel": 5,
+      "prerequisites": ["lich_ascension"],
+      "cost": {
+        "gold": 700,
+        "mana": 250,
+        "corpses": 25
+      },
+      "researchTime": 120.0,
+      "effects": [
+        {
+          "target": "unit:undead_death_knight",
+          "effectType": "unlock",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "id": "ethereal_enhancement",
+      "name": "Ethereal Enhancement",
+      "description": "Wraiths and banshees gain +20% magic damage and +10% magic resist",
+      "type": 2,
+      "iconPath": "icons/tech/undead/ethereal_enhancement.png",
+      "treePosition": [3, 2],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["spirit_summoning"],
+      "cost": {
+        "gold": 400,
+        "mana": 150
+      },
+      "researchTime": 85.0,
+      "effects": [
+        {
+          "target": "unit:undead_wraith",
+          "effectType": "multiply_stat",
+          "stat": "damage",
+          "value": 1.2
+        },
+        {
+          "target": "unit:undead_banshee",
+          "effectType": "multiply_stat",
+          "stat": "damage",
+          "value": 1.2
+        },
+        {
+          "target": "unit:undead_wraith",
+          "effectType": "add",
+          "stat": "magicResist",
+          "value": 10
+        },
+        {
+          "target": "unit:undead_banshee",
+          "effectType": "add",
+          "stat": "magicResist",
+          "value": 10
+        }
+      ]
+    }
+  ]
+}

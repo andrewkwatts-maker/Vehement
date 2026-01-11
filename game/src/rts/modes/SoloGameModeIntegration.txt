@@ -1,0 +1,240 @@
+===============================================================================
+Solo Game Mode Integration Guide for RTSApplication
+===============================================================================
+
+This guide shows how to integrate the SoloGameMode class into RTSApplication.cpp
+
+STEP 1: Update RTSApplication.hpp
+===============================================================================
+
+Add forward declaration after line 13:
+
+```cpp
+class SettingsMenu;
+
+namespace Vehement {
+    class SoloGameMode;
+}
+```
+
+Add member variable after line 61 (after m_planeMesh):
+
+```cpp
+    // Game modes
+    std::unique_ptr<Vehement::SoloGameMode> m_soloGameMode;
+```
+
+STEP 2: Update RTSApplication.cpp
+===============================================================================
+
+Add include at the top:
+
+```cpp
+#include "../game/src/rts/modes/SoloGameMode.hpp"
+```
+
+Update StartSoloGame() method (replace the existing implementation):
+
+```cpp
+void RTSApplication::StartSoloGame() {
+    spdlog::info("Starting Solo Game");
+
+    // Create and initialize solo game mode
+    if (!m_soloGameMode) {
+        m_soloGameMode = std::make_unique<Vehement::SoloGameMode>();
+    }
+
+    // Configure solo game
+    Vehement::SoloGameConfig config;
+    config.mapWidth = 128;
+    config.mapHeight = 128;
+    config.treeDensity = 0.15f;
+    config.rockDensity = 0.08f;
+    config.goldDensity = 0.03f;
+
+    // Initialize the game mode
+    if (!m_soloGameMode->Initialize(config)) {
+        spdlog::error("Failed to initialize solo game mode");
+        return;
+    }
+
+    // Generate the 1v1 map
+    auto& engine = Nova::Engine::Instance();
+    auto& renderer = engine.GetRenderer();
+
+    if (!m_soloGameMode->GenerateMap(renderer)) {
+        spdlog::error("Failed to generate solo game map");
+        return;
+    }
+
+    // Position camera above player 1 spawn
+    glm::vec3 spawnPos = m_soloGameMode->GetPlayerSpawnPosition(0);
+    m_camera->LookAt(
+        spawnPos + glm::vec3(15, 20, 15),  // Camera position above and behind
+        spawnPos                             // Look at spawn
+    );
+
+    m_currentMode = GameMode::Solo;
+    spdlog::info("Solo game started successfully");
+}
+```
+
+Update Update() method (add after line 135):
+
+```cpp
+void RTSApplication::Update(float deltaTime) {
+    // ... existing code ...
+
+    // Update solo game mode if active
+    if (m_currentMode == GameMode::Solo && m_soloGameMode) {
+        m_soloGameMode->Update(deltaTime);
+    }
+
+    // ... rest of existing code ...
+}
+```
+
+Update Render() method (replace the demo objects section):
+
+```cpp
+void RTSApplication::Render() {
+    auto& engine = Nova::Engine::Instance();
+    auto& renderer = engine.GetRenderer();
+    auto& debugDraw = renderer.GetDebugDraw();
+
+    // Set camera
+    renderer.SetCamera(m_camera.get());
+
+    // Draw grid
+    debugDraw.AddGrid(10, 1.0f, glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
+    debugDraw.AddTransform(glm::mat4(1.0f), 2.0f);
+
+    // Render solo game world if active
+    if (m_currentMode == GameMode::Solo && m_soloGameMode && m_soloGameMode->IsMapGenerated()) {
+        m_soloGameMode->Render(*m_camera);
+    } else {
+        // Draw demo objects for other modes
+        m_basicShader->Bind();
+        m_basicShader->SetMat4("u_ProjectionView", m_camera->GetProjectionView());
+        m_basicShader->SetVec3("u_LightDirection", m_lightDirection);
+        m_basicShader->SetVec3("u_LightColor", m_lightColor);
+        m_basicShader->SetFloat("u_AmbientStrength", m_ambientStrength);
+        m_basicShader->SetVec3("u_ViewPos", m_camera->GetPosition());
+
+        // ... existing demo object rendering code ...
+    }
+}
+```
+
+Update Shutdown() method:
+
+```cpp
+void RTSApplication::Shutdown() {
+    spdlog::info("Shutting down RTS Application");
+
+    // Shutdown solo game mode
+    if (m_soloGameMode) {
+        m_soloGameMode->Shutdown();
+        m_soloGameMode.reset();
+    }
+
+    m_camera.reset();
+    m_cubeMesh.reset();
+    m_sphereMesh.reset();
+    m_planeMesh.reset();
+    m_basicShader.reset();
+}
+```
+
+Update RenderSoloGame() UI to show game info:
+
+```cpp
+void RTSApplication::RenderSoloGame() {
+    ImGui::Begin("Solo Game");
+
+    ImGui::Text("Solo Play Mode - 1v1 Human vs AI");
+    ImGui::Separator();
+
+    if (m_soloGameMode && m_soloGameMode->IsMapGenerated()) {
+        ImGui::Text("Map Size: %dx%d",
+            m_soloGameMode->GetConfig().mapWidth,
+            m_soloGameMode->GetConfig().mapHeight);
+        ImGui::Text("Resources Placed: %d nodes",
+            (int)m_soloGameMode->GetResourceNodes().size());
+
+        ImGui::Spacing();
+        ImGui::Text("Player Spawns:");
+        for (const auto& spawn : m_soloGameMode->GetPlayerSpawns()) {
+            ImGui::BulletText("Player %d: (%.1f, %.1f)",
+                spawn.playerId,
+                spawn.position.x,
+                spawn.position.z);
+        }
+    } else {
+        ImGui::Text("Generating map...");
+    }
+
+    ImGui::Spacing();
+    ImGui::Text("Camera Position: %.1f, %.1f, %.1f",
+                m_camera->GetPosition().x,
+                m_camera->GetPosition().y,
+                m_camera->GetPosition().z);
+
+    ImGui::Spacing();
+    ImGui::Text("Controls:");
+    ImGui::BulletText("WASD - Move camera");
+    ImGui::BulletText("Right Mouse + Drag - Look around");
+    ImGui::BulletText("Tab - Toggle cursor lock");
+    ImGui::BulletText("Shift - Sprint");
+    ImGui::BulletText("Escape - Return to Main Menu");
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    if (ImGui::Button("Return to Main Menu")) {
+        ReturnToMainMenu();
+        if (m_soloGameMode) {
+            m_soloGameMode->Shutdown();
+        }
+    }
+
+    ImGui::End();
+}
+```
+
+STEP 3: Update CMakeLists.txt
+===============================================================================
+
+Add the new source files to the game library:
+
+In H:/Github/Old3DEngine/game/CMakeLists.txt, add:
+
+```cmake
+# RTS game modes
+game/src/rts/modes/SoloGameMode.hpp
+game/src/rts/modes/SoloGameMode.cpp
+```
+
+STEP 4: Build and Run
+===============================================================================
+
+1. Regenerate CMake build files:
+   cd H:/Github/Old3DEngine/build
+   cmake ..
+
+2. Build the project:
+   cmake --build . --config Release
+
+3. Run the RTS application:
+   ./bin/Release/RTSApp.exe
+
+4. Click "Solo Play" from the main menu
+
+5. You should see:
+   - A flat 128x128 tile map with grass and dirt
+   - Trees, rocks, and gold deposits scattered across the map
+   - Two player spawn points on opposite corners
+   - Camera positioned above Player 1's spawn point
+   - UI showing map information and resource counts
+
+===============================================================================

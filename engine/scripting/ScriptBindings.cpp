@@ -370,7 +370,7 @@ void ScriptBindings::RegisterWorldQueries(pybind11::module_& m) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             auto entities = ctx->FindEntitiesInRadius(x, y, z, radius);
             for (uint32_t id : entities) {
-                result.append(id);
+                result.push_back(id);
             }
         }
         return result;
@@ -381,7 +381,7 @@ void ScriptBindings::RegisterWorldQueries(pybind11::module_& m) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             auto entities = ctx->FindEntitiesInRadius(pos.x, pos.y, pos.z, radius);
             for (uint32_t id : entities) {
-                result.append(id);
+                result.push_back(id);
             }
         }
         return result;

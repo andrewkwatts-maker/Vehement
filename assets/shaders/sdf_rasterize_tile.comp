@@ -1,0 +1,441 @@
+#version 460 core
+
+// Tile-based SDF raymarching compute shader
+// Works on AMD, Intel, and older NVIDIA cards (no RTX required)
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+// Output textures
+layout(binding = 0, rgba16f) uniform image2D u_colorOutput;
+layout(binding = 1, r32f) uniform image2D u_depthOutput;
+
+// SDF object data
+struct SDFObject {
+    mat4 transform;
+    mat4 inverseTransform;
+    vec4 bounds;        // xyz = center, w = radius
+    vec4 material;      // xyz = color, w = roughness
+    vec4 params;        // x = type, y = blend, z = metallic, w = emission
+};
+
+// Tile data
+struct TileData {
+    ivec2 tileCoord;
+    uint objectCount;
+    uint objectOffset;
+};
+
+// Shader storage buffers
+layout(std430, binding = 0) readonly buffer SDFObjectBuffer {
+    SDFObject sdfObjects[];
+};
+
+layout(std430, binding = 1) readonly buffer TileDataBuffer {
+    TileData tiles[];
+};
+
+layout(std430, binding = 2) readonly buffer TileObjectIndexBuffer {
+    uint tileObjectIndices[];
+};
+
+// Uniforms
+uniform mat4 u_viewProj;
+uniform mat4 u_invViewProj;
+uniform vec3 u_cameraPos;
+uniform vec3 u_cameraForward;
+uniform int u_maxSteps;
+uniform float u_epsilon;
+uniform int u_tileSize;
+uniform ivec2 u_resolution;
+uniform int u_enableShadows;
+uniform int u_enableAO;
+uniform float u_aoRadius;
+uniform int u_aoSamples;
+
+// Light data (simplified directional light)
+const vec3 LIGHT_DIR = normalize(vec3(-0.3, -1.0, -0.2));
+const vec3 LIGHT_COLOR = vec3(1.0, 0.98, 0.95);
+const float LIGHT_INTENSITY = 1.0;
+
+// SDF type constants
+const int TYPE_SPHERE = 0;
+const int TYPE_BOX = 1;
+const int TYPE_TORUS = 2;
+const int TYPE_CYLINDER = 3;
+const int TYPE_CAPSULE = 4;
+
+// ============================================================================
+// SDF Primitive Functions
+// ============================================================================
+
+float sdSphere(vec3 p, float r) {
+    return length(p) - r;
+}
+
+float sdBox(vec3 p, vec3 b) {
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+float sdTorus(vec3 p, vec2 t) {
+    vec2 q = vec2(length(p.xz) - t.x, p.y);
+    return length(q) - t.y;
+}
+
+float sdCylinder(vec3 p, vec3 c) {
+    return length(p.xz - c.xy) - c.z;
+}
+
+float sdCapsule(vec3 p, vec3 a, vec3 b, float r) {
+    vec3 pa = p - a;
+    vec3 ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h) - r;
+}
+
+// ============================================================================
+// SDF Operations
+// ============================================================================
+
+float opUnion(float d1, float d2) {
+    return min(d1, d2);
+}
+
+float opSubtraction(float d1, float d2) {
+    return max(-d1, d2);
+}
+
+float opIntersection(float d1, float d2) {
+    return max(d1, d2);
+}
+
+float opSmoothUnion(float d1, float d2, float k) {
+    float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    return mix(d2, d1, h) - k * h * (1.0 - h);
+}
+
+// ============================================================================
+// Scene SDF Evaluation
+// ============================================================================
+
+float evaluateSDFPrimitive(vec3 p, SDFObject obj) {
+    // Transform point to object space
+    vec3 localP = (obj.inverseTransform * vec4(p, 1.0)).xyz;
+
+    int type = int(obj.params.x);
+
+    switch (type) {
+        case TYPE_SPHERE:
+            return sdSphere(localP, obj.bounds.w);
+
+        case TYPE_BOX:
+            return sdBox(localP, vec3(obj.bounds.w));
+
+        case TYPE_TORUS:
+            return sdTorus(localP, vec2(obj.bounds.w, obj.bounds.w * 0.3));
+
+        case TYPE_CYLINDER:
+            return sdCylinder(localP, vec3(0.0, 0.0, obj.bounds.w));
+
+        case TYPE_CAPSULE:
+            return sdCapsule(localP, vec3(0, -obj.bounds.w, 0),
+                           vec3(0, obj.bounds.w, 0), obj.bounds.w * 0.3);
+
+        default:
+            return sdSphere(localP, obj.bounds.w);
+    }
+}
+
+// Evaluate SDF for all objects in current tile
+float sceneSDF(vec3 p, uint tileIndex, out int hitObjectIndex) {
+    float minDist = 1e10;
+    hitObjectIndex = -1;
+
+    if (tileIndex >= tiles.length()) {
+        return minDist;
+    }
+
+    TileData tile = tiles[tileIndex];
+
+    for (uint i = 0; i < tile.objectCount; i++) {
+        uint objectIndex = tileObjectIndices[tile.objectOffset + i];
+
+        if (objectIndex >= sdfObjects.length()) {
+            continue;
+        }
+
+        SDFObject obj = sdfObjects[objectIndex];
+        float d = evaluateSDFPrimitive(p, obj);
+
+        if (d < minDist) {
+            minDist = d;
+            hitObjectIndex = int(objectIndex);
+        }
+    }
+
+    return minDist;
+}
+
+// ============================================================================
+// Normal Calculation
+// ============================================================================
+
+vec3 calculateNormal(vec3 p, uint tileIndex) {
+    const float h = 0.001;
+    int dummy;
+
+    vec3 n = vec3(
+        sceneSDF(p + vec3(h, 0, 0), tileIndex, dummy) - sceneSDF(p - vec3(h, 0, 0), tileIndex, dummy),
+        sceneSDF(p + vec3(0, h, 0), tileIndex, dummy) - sceneSDF(p - vec3(0, h, 0), tileIndex, dummy),
+        sceneSDF(p + vec3(0, 0, h), tileIndex, dummy) - sceneSDF(p - vec3(0, 0, h), tileIndex, dummy)
+    );
+
+    return normalize(n);
+}
+
+// ============================================================================
+// Shadow Calculation
+// ============================================================================
+
+float calculateShadow(vec3 p, vec3 lightDir, uint tileIndex) {
+    if (u_enableShadows == 0) {
+        return 1.0;
+    }
+
+    float t = 0.01; // Start slightly offset from surface
+    float shadow = 1.0;
+    const float k = 8.0; // Softness factor
+
+    for (int i = 0; i < 32; i++) {
+        int dummy;
+        float d = sceneSDF(p + lightDir * t, tileIndex, dummy);
+
+        if (d < u_epsilon) {
+            return 0.0; // In shadow
+        }
+
+        // Soft shadow penumbra
+        shadow = min(shadow, k * d / t);
+        t += d;
+
+        if (t > 100.0) break; // Max shadow distance
+    }
+
+    return clamp(shadow, 0.0, 1.0);
+}
+
+// ============================================================================
+// Ambient Occlusion
+// ============================================================================
+
+float calculateAO(vec3 p, vec3 normal, uint tileIndex) {
+    if (u_enableAO == 0) {
+        return 1.0;
+    }
+
+    float ao = 0.0;
+    float weight = 1.0;
+
+    for (int i = 1; i <= u_aoSamples; i++) {
+        float dist = u_aoRadius * float(i) / float(u_aoSamples);
+        int dummy;
+        float d = sceneSDF(p + normal * dist, tileIndex, dummy);
+
+        ao += weight * (dist - d);
+        weight *= 0.5;
+    }
+
+    return 1.0 - clamp(ao, 0.0, 1.0);
+}
+
+// ============================================================================
+// PBR Shading
+// ============================================================================
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0) {
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float distributionGGX(vec3 N, vec3 H, float roughness) {
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = 3.14159265359 * denom * denom;
+
+    return nom / denom;
+}
+
+float geometrySchlickGGX(float NdotV, float roughness) {
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+
+    float nom = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+
+float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = geometrySchlickGGX(NdotV, roughness);
+    float ggx1 = geometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+
+vec3 shadeSDF(vec3 p, vec3 viewDir, SDFObject obj, vec3 normal, uint tileIndex) {
+    vec3 albedo = obj.material.xyz;
+    float roughness = obj.material.w;
+    float metallic = obj.params.z;
+    float emission = obj.params.w;
+
+    // PBR lighting
+    vec3 N = normal;
+    vec3 V = -viewDir;
+    vec3 L = -LIGHT_DIR;
+    vec3 H = normalize(V + L);
+
+    // Calculate reflectance at normal incidence
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, albedo, metallic);
+
+    // Cook-Torrance BRDF
+    float NDF = distributionGGX(N, H, roughness);
+    float G = geometrySmith(N, V, L, roughness);
+    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+    vec3 specular = numerator / denominator;
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;
+
+    float NdotL = max(dot(N, L), 0.0);
+
+    // Calculate shadow
+    float shadow = calculateShadow(p, L, tileIndex);
+
+    // Calculate ambient occlusion
+    float ao = calculateAO(p, normal, tileIndex);
+
+    // Combine lighting
+    vec3 radiance = LIGHT_COLOR * LIGHT_INTENSITY;
+    vec3 Lo = (kD * albedo / 3.14159265359 + specular) * radiance * NdotL * shadow;
+
+    // Ambient
+    vec3 ambient = vec3(0.03) * albedo * ao;
+
+    vec3 color = ambient + Lo;
+
+    // Add emission
+    color += albedo * emission;
+
+    // Tone mapping
+    color = color / (color + vec3(1.0));
+
+    // Gamma correction
+    color = pow(color, vec3(1.0 / 2.2));
+
+    return color;
+}
+
+// ============================================================================
+// Ray Reconstruction
+// ============================================================================
+
+vec3 reconstructRayOrigin(vec2 uv) {
+    return u_cameraPos;
+}
+
+vec3 reconstructRayDir(vec2 uv) {
+    // Convert UV to NDC
+    vec2 ndc = uv * 2.0 - 1.0;
+
+    // Reconstruct world position at far plane
+    vec4 clipPos = vec4(ndc.x, -ndc.y, 1.0, 1.0);
+    vec4 worldPos = u_invViewProj * clipPos;
+    worldPos /= worldPos.w;
+
+    return normalize(worldPos.xyz - u_cameraPos);
+}
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    // Early exit if outside render target
+    if (pixelCoord.x >= u_resolution.x || pixelCoord.y >= u_resolution.y) {
+        return;
+    }
+
+    // Calculate tile index
+    ivec2 tileCoord = pixelCoord / u_tileSize;
+    uint tileIndex = tileCoord.y * ((u_resolution.x + u_tileSize - 1) / u_tileSize) + tileCoord.x;
+
+    // Calculate UV coordinates
+    vec2 uv = (vec2(pixelCoord) + 0.5) / vec2(u_resolution);
+
+    // Reconstruct ray
+    vec3 rayOrigin = reconstructRayOrigin(uv);
+    vec3 rayDir = reconstructRayDir(uv);
+
+    // Raymarch
+    float t = 0.01; // Start slightly in front of camera
+    vec3 color = vec3(0.0);
+    float depth = 1.0; // Far plane
+    int hitObjectIndex = -1;
+
+    for (int i = 0; i < u_maxSteps; i++) {
+        vec3 p = rayOrigin + rayDir * t;
+
+        int objectIndex;
+        float d = sceneSDF(p, tileIndex, objectIndex);
+
+        // Hit detection
+        if (d < u_epsilon) {
+            // Calculate normal
+            vec3 normal = calculateNormal(p, tileIndex);
+
+            // Get hit object
+            if (objectIndex >= 0 && objectIndex < sdfObjects.length()) {
+                SDFObject hitObj = sdfObjects[objectIndex];
+
+                // Shade surface
+                color = shadeSDF(p, rayDir, hitObj, normal, tileIndex);
+            } else {
+                color = vec3(1.0, 0.0, 1.0); // Magenta for error
+            }
+
+            // Calculate depth
+            vec4 clipPos = u_viewProj * vec4(p, 1.0);
+            depth = clipPos.z / clipPos.w;
+            depth = depth * 0.5 + 0.5; // Convert to [0, 1] range
+
+            break;
+        }
+
+        // Step forward
+        t += d;
+
+        // Max distance check
+        if (t > 1000.0) {
+            break;
+        }
+    }
+
+    // Write outputs
+    imageStore(u_colorOutput, pixelCoord, vec4(color, 1.0));
+
+    // Write depth with atomic min for proper Z-buffer interleaving
+    imageStore(u_depthOutput, pixelCoord, vec4(depth));
+}

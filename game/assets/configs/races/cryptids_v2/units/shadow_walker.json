@@ -1,0 +1,158 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "stealth_infantry",
+  "id": "cryptid_shadow_walker",
+  "name": "Shadow Walker",
+  "description": "Humanoid shadow creature that phases between dimensions. Shadow Walkers can walk through walls and units, appearing suddenly to strike from unexpected angles.",
+  "race": "cryptids",
+  "category": "stealth",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 300,
+    "healthRegen": 0.7,
+    "damage": 30,
+    "damageVariance": 0.12,
+    "attackSpeed": 1.5,
+    "attackRange": 1.3,
+    "armor": 0,
+    "magicResist": 35,
+    "moveSpeed": 6.2,
+    "critChance": 0.20,
+    "critMultiplier": 2.5
+  },
+
+  "cost": {
+    "gold": 200,
+    "wood": 30,
+    "food": 2
+  },
+
+  "trainTime": 28,
+  "populationCost": 2,
+  "requiredBuilding": "cryptid_shadow_pool",
+  "requiredAge": 1,
+
+  "armorType": "unarmored",
+  "attackType": "chaos",
+
+  "bonusVs": [
+    {
+      "category": "caster",
+      "multiplier": 1.7
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "phase_shift",
+      "name": "Phase Shift",
+      "description": "Can walk through units, buildings, and terrain. Becomes invisible when not moving for 2 seconds",
+      "type": "passive",
+      "phaseThrough": true,
+      "stealthWhenStationary": true,
+      "stealthDelay": 2.0,
+      "ignoresCollision": true
+    },
+    {
+      "id": "shadow_strike",
+      "name": "Shadow Strike",
+      "description": "Teleport behind target enemy and strike for 200% damage, applying silence for 3 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 15.0,
+      "range": 7.0,
+      "damageMultiplier": 2.0,
+      "silenceDuration": 3.0,
+      "teleportBehind": true
+    },
+    {
+      "id": "dark_embrace",
+      "name": "Dark Embrace",
+      "description": "Takes 50% reduced damage from physical attacks but 25% increased magic damage",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "physicalDamageReduction",
+          "value": 0.50
+        },
+        {
+          "stat": "magicDamageTaken",
+          "multiplier": 1.25
+        }
+      ]
+    },
+    {
+      "id": "veil_of_darkness",
+      "name": "Veil of Darkness",
+      "description": "Create a shroud of darkness reducing enemy vision by 70% in area for 8 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 25.0,
+      "radius": 6.0,
+      "duration": 8.0,
+      "effects": [
+        {
+          "stat": "sightRange",
+          "multiplier": 0.30
+        }
+      ],
+      "targetType": "area"
+    }
+  ],
+
+  "upgrades": ["shadow_mastery", "void_touch"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/shadow_walker.obj",
+    "portrait": "textures/races/cryptids/portraits/shadow_walker.png",
+    "icon": "textures/races/cryptids/icons/shadow_walker.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/shadow_walker_diffuse.png",
+      "normal": "textures/races/cryptids/units/shadow_walker_normal.png",
+      "emissive": "textures/races/cryptids/units/shadow_walker_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/shadow_walker/idle.anim",
+      "walk": "animations/cryptids/shadow_walker/glide.anim",
+      "run": "animations/cryptids/shadow_walker/phase.anim",
+      "attack": "animations/cryptids/shadow_walker/strike.anim",
+      "teleport": "animations/cryptids/shadow_walker/teleport.anim",
+      "stealth": "animations/cryptids/shadow_walker/fade.anim",
+      "death": "animations/cryptids/shadow_walker/dissolve.anim"
+    },
+    "particleEffects": {
+      "shadow_trail": "particles/cryptids/shadow_trail.particle",
+      "phase_shimmer": "particles/cryptids/phase_shimmer.particle",
+      "darkness": "particles/cryptids/darkness_aura.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/shadow_walker/whisper_1.wav", "sounds/cryptids/shadow_walker/whisper_2.wav"],
+    "move": ["sounds/cryptids/shadow_walker/void.wav"],
+    "attack": ["sounds/cryptids/shadow_walker/slash.wav"],
+    "teleport": ["sounds/cryptids/shadow_walker/phase.wav"],
+    "death": ["sounds/cryptids/shadow_walker/fade.wav"],
+    "ready": ["sounds/cryptids/shadow_walker/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.3,
+    "height": 1.8,
+    "mass": 45.0,
+    "nonSolid": true
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/phase_assassin.bt",
+    "profile": "assassin",
+    "aggroRange": 11.0,
+    "priorityTargets": ["caster", "ranged", "hero"],
+    "useShadowStrike": true,
+    "maintainStealth": true,
+    "preferBacklines": true
+  }
+}

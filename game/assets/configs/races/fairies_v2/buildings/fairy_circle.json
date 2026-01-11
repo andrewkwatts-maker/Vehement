@@ -1,0 +1,144 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "spawner_building",
+  "id": "fairy_circle",
+  "name": "Fairy Circle",
+  "description": "A ring of enchanted mushrooms where mystics and enchanters train. This sacred circle empowers spellcasters and provides anti-magic protection.",
+  "race": "fairies",
+  "category": "magic_building",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 900,
+    "healthRegen": 2.5,
+    "armor": 3,
+    "magicResist": 40,
+    "sightRange": 13
+  },
+
+  "cost": {
+    "gold": 220,
+    "wood": 80,
+    "mana": 120
+  },
+
+  "buildTime": 55,
+  "footprint": {
+    "width": 4,
+    "height": 4
+  },
+
+  "requiredBuilding": "fairy_ancient_tree",
+  "requiredAge": 1,
+
+  "trainsUnits": [
+    "fairy_nymph",
+    "fairy_will_o_wisp",
+    "fairy_dusk_ranger"
+  ],
+
+  "generatesResources": {
+    "mana": 1.0
+  },
+
+  "abilities": [
+    {
+      "id": "anti_magic_shell_aura",
+      "name": "Anti-Magic Barrier",
+      "description": "Passive aura granting +15 magic resist to nearby allies",
+      "type": "passive",
+      "auraRadius": 12.0,
+      "effects": [
+        {
+          "stat": "magicResist",
+          "value": 15,
+          "type": "flat"
+        }
+      ]
+    },
+    {
+      "id": "arcane_sanctum",
+      "name": "Arcane Sanctum",
+      "description": "Create a zone that increases spell power by 30% for 20 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 60.0,
+      "radius": 10.0,
+      "duration": 20.0,
+      "effects": [
+        {
+          "stat": "spellPower",
+          "value": 0.3,
+          "type": "percent"
+        }
+      ]
+    },
+    {
+      "id": "dispel_magic",
+      "name": "Mass Dispel",
+      "description": "Remove all negative effects from friendly units or positive effects from enemies in area",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 45.0,
+      "range": 12.0,
+      "radius": 6.0
+    }
+  ],
+
+  "researchesTech": [
+    "fairy_enchantment_mastery",
+    "fairy_illusion_magic",
+    "fairy_polymorph",
+    "fairy_mana_efficiency",
+    "fairy_spell_power"
+  ],
+
+  "upgrades": [
+    {
+      "id": "elder_circle",
+      "name": "Elder Fairy Circle",
+      "description": "Increases mana generation and spell power aura",
+      "cost": {
+        "gold": 300,
+        "mana": 200
+      },
+      "upgradeTime": 60,
+      "statBonuses": {
+        "manaGeneration": 1.0,
+        "magicResist": 10
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/buildings/fairy_circle.obj",
+    "portrait": "textures/races/fairies/portraits/fairy_circle.png",
+    "icon": "textures/races/fairies/icons/fairy_circle.png",
+    "scale": 1.2,
+    "textures": {
+      "diffuse": "textures/races/fairies/buildings/fairy_circle_diffuse.png",
+      "emissive": "textures/races/fairies/buildings/fairy_circle_glow.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/buildings/circle_pulse.anim",
+      "build": "animations/fairies/buildings/circle_form.anim",
+      "death": "animations/fairies/buildings/circle_fade.anim"
+    },
+    "auraEffect": "effects/arcane_circle.fx",
+    "mushroomGlowEffect": "effects/mushroom_glow.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/buildings/circle_hum.wav"],
+    "build": ["sounds/fairies/buildings/circle_form.wav"],
+    "complete": ["sounds/fairies/buildings/circle_complete.wav"],
+    "death": ["sounds/fairies/buildings/circle_disperse.wav"],
+    "ambient": "sounds/fairies/buildings/magical_hum.wav"
+  },
+
+  "requirements": {
+    "terrain": ["grass", "forest"],
+    "nearWater": false,
+    "clearArea": true
+  }
+}

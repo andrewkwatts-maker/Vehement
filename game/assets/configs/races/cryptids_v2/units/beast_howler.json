@@ -1,0 +1,174 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "support",
+  "id": "cryptid_beast_howler",
+  "name": "Beast Howler",
+  "description": "Wolf-like cryptid pack leader that empowers allies with primal howls. Beast Howlers coordinate attacks and inspire nearby cryptids.",
+  "race": "cryptids",
+  "category": "support",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 400,
+    "healthRegen": 1.0,
+    "damage": 18,
+    "damageVariance": 0.14,
+    "attackSpeed": 1.4,
+    "attackRange": 1.3,
+    "armor": 3,
+    "magicResist": 15,
+    "moveSpeed": 5.5,
+    "critChance": 0.12,
+    "critMultiplier": 1.9
+  },
+
+  "cost": {
+    "gold": 180,
+    "wood": 20,
+    "food": 2
+  },
+
+  "trainTime": 26,
+  "populationCost": 2,
+  "requiredBuilding": "cryptid_totem_circle",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "normal",
+
+  "abilities": [
+    {
+      "id": "pack_leader",
+      "name": "Pack Leader",
+      "description": "Nearby friendly units gain 20% attack damage and 15% attack speed",
+      "type": "passive",
+      "radius": 10.0,
+      "effects": [
+        {
+          "stat": "attackDamage",
+          "multiplier": 1.20
+        },
+        {
+          "stat": "attackSpeed",
+          "multiplier": 1.15
+        }
+      ],
+      "targetType": "friendly"
+    },
+    {
+      "id": "war_howl",
+      "name": "War Howl",
+      "description": "Unleashes a rallying howl that grants nearby allies 40% attack speed and 25% movement speed for 10 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 30.0,
+      "radius": 12.0,
+      "duration": 10.0,
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "multiplier": 1.40
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 1.25
+        }
+      ],
+      "targetType": "friendly"
+    },
+    {
+      "id": "coordinated_strike",
+      "name": "Coordinated Strike",
+      "description": "Mark a target. Friendly units attacking it deal 30% bonus damage for 8 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 20.0,
+      "range": 10.0,
+      "duration": 8.0,
+      "effects": [
+        {
+          "stat": "damageDealtToTarget",
+          "multiplier": 1.30
+        }
+      ],
+      "targetType": "enemy"
+    },
+    {
+      "id": "hunters_mark",
+      "name": "Hunter's Mark",
+      "description": "Attacks reveal enemy units for 5 seconds, showing them to all allies",
+      "type": "passive",
+      "onAttackEffect": true,
+      "revealsTarget": true,
+      "revealDuration": 5.0
+    },
+    {
+      "id": "feral_instinct",
+      "name": "Feral Instinct",
+      "description": "When allies near this unit kill an enemy, all nearby allies gain 15% movement speed for 5 seconds",
+      "type": "passive",
+      "trigger": "onNearbyAllyKill",
+      "radius": 8.0,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "multiplier": 1.15,
+          "duration": 5.0
+        }
+      ]
+    }
+  ],
+
+  "upgrades": ["alpha_howler", "pack_tactics"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/beast_howler.obj",
+    "portrait": "textures/races/cryptids/portraits/beast_howler.png",
+    "icon": "textures/races/cryptids/icons/beast_howler.png",
+    "scale": 1.2,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/beast_howler_diffuse.png",
+      "normal": "textures/races/cryptids/units/beast_howler_normal.png",
+      "specular": "textures/races/cryptids/units/beast_howler_specular.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/beast_howler/idle.anim",
+      "walk": "animations/cryptids/beast_howler/walk.anim",
+      "run": "animations/cryptids/beast_howler/run.anim",
+      "attack": "animations/cryptids/beast_howler/bite.anim",
+      "howl": "animations/cryptids/beast_howler/howl.anim",
+      "death": "animations/cryptids/beast_howler/death.anim"
+    },
+    "particleEffects": {
+      "pack_aura": "particles/cryptids/pack_aura.particle",
+      "howl_waves": "particles/cryptids/howl_waves.particle",
+      "feral_glow": "particles/cryptids/feral_glow.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/beast_howler/growl_1.wav", "sounds/cryptids/beast_howler/growl_2.wav"],
+    "move": ["sounds/cryptids/beast_howler/pant.wav"],
+    "attack": ["sounds/cryptids/beast_howler/bite.wav"],
+    "howl": ["sounds/cryptids/beast_howler/howl.wav"],
+    "death": ["sounds/cryptids/beast_howler/death.wav"],
+    "ready": ["sounds/cryptids/beast_howler/bark.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.4,
+    "height": 1.6,
+    "mass": 90.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/pack_leader.bt",
+    "profile": "support",
+    "aggroRange": 10.0,
+    "priorityTargets": ["infantry", "cavalry"],
+    "stayWithAllies": true,
+    "useHowlInBattle": true,
+    "markHighValueTargets": true
+  }
+}

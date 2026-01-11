@@ -1,0 +1,2345 @@
+#include "StandaloneEditor.hpp"
+#include "AssetBrowser.hpp"
+#include "EditorCommand.hpp"
+#include "ModernUI.hpp"
+#include "WorldMapEditor.hpp"
+#include "LocalMapEditor.hpp"
+#include "PCGGraphEditor.hpp"
+#include "core/Engine.hpp"
+#include "core/Window.hpp"
+#include "graphics/Renderer.hpp"
+#include "graphics/debug/DebugDraw.hpp"
+#include "input/InputManager.hpp"
+
+#include <imgui.h>
+#include <spdlog/spdlog.h>
+#include <algorithm>
+
+StandaloneEditor::StandaloneEditor() = default;
+StandaloneEditor::~StandaloneEditor() = default;
+
+bool StandaloneEditor::Initialize() {
+    if (m_initialized) {
+        return true;
+    }
+
+    spdlog::info("Initializing Standalone Editor");
+
+    // Apply custom theme
+    ApplyEditorTheme();
+
+    // Setup default panel layout
+    SetupDefaultLayout();
+
+    // Create default map
+    NewMap(m_mapWidth, m_mapHeight);
+
+    // Initialize command history for undo/redo
+    m_commandHistory = std::make_unique<CommandHistory>();
+
+    // Initialize asset browser
+    m_assetBrowser = std::make_unique<AssetBrowser>();
+    if (!m_assetBrowser->Initialize(m_assetDirectory)) {
+        spdlog::warn("AssetBrowser initialization failed, but continuing with editor startup");
+    }
+
+    m_initialized = true;
+    spdlog::info("Standalone Editor initialized");
+    return true;
+}
+
+void StandaloneEditor::SetupDefaultLayout() {
+    m_panelLayouts.clear();
+
+    // Default layout:
+    // - Viewport: Center (fills remaining space)
+    // - Tools: Left side
+    // - Content Browser: Bottom
+    // - Details: Right side
+    // - Material Editor: Floating (hidden by default)
+    // - Engine Stats: Floating (shown if debug enabled)
+
+    m_panelLayouts.push_back({PanelID::Viewport, DockZone::Center, 1.0f, true});
+    m_panelLayouts.push_back({PanelID::Tools, DockZone::Left, 1.0f, true});
+    m_panelLayouts.push_back({PanelID::ContentBrowser, DockZone::Bottom, 1.0f, true});
+    m_panelLayouts.push_back({PanelID::Details, DockZone::Right, 1.0f, true});
+    m_panelLayouts.push_back({PanelID::MaterialEditor, DockZone::Floating, 1.0f, false});
+    m_panelLayouts.push_back({PanelID::EngineStats, DockZone::Floating, 1.0f, false});
+}
+
+void StandaloneEditor::ApplyEditorTheme() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImVec4* colors = style.Colors;
+
+    // Inspired by mystical dark theme with gold/purple/blue accents
+    // Base colors - deep dark with slight warmth
+    colors[ImGuiCol_Text]                   = ImVec4(0.95f, 0.95f, 0.98f, 1.00f);
+    colors[ImGuiCol_TextDisabled]           = ImVec4(0.50f, 0.50f, 0.55f, 1.00f);
+    colors[ImGuiCol_WindowBg]               = ImVec4(0.08f, 0.08f, 0.12f, 0.95f);
+    colors[ImGuiCol_ChildBg]                = ImVec4(0.10f, 0.10f, 0.14f, 0.90f);
+    colors[ImGuiCol_PopupBg]                = ImVec4(0.10f, 0.10f, 0.15f, 0.95f);
+
+    // Borders - subtle gold glow
+    colors[ImGuiCol_Border]                 = ImVec4(0.60f, 0.50f, 0.20f, 0.40f);
+    colors[ImGuiCol_BorderShadow]           = ImVec4(0.00f, 0.00f, 0.00f, 0.50f);
+
+    // Frame backgrounds - nested panels
+    colors[ImGuiCol_FrameBg]                = ImVec4(0.15f, 0.15f, 0.20f, 0.85f);
+    colors[ImGuiCol_FrameBgHovered]         = ImVec4(0.25f, 0.20f, 0.35f, 0.90f);  // Purple tint
+    colors[ImGuiCol_FrameBgActive]          = ImVec4(0.30f, 0.25f, 0.45f, 0.95f);
+
+    // Title bars - gold gradient feeling
+    colors[ImGuiCol_TitleBg]                = ImVec4(0.15f, 0.12f, 0.08f, 1.00f);
+    colors[ImGuiCol_TitleBgActive]          = ImVec4(0.35f, 0.28f, 0.12f, 1.00f);  // Gold
+    colors[ImGuiCol_TitleBgCollapsed]       = ImVec4(0.12f, 0.10f, 0.08f, 0.85f);
+
+    // Menu bar
+    colors[ImGuiCol_MenuBarBg]              = ImVec4(0.12f, 0.12f, 0.16f, 1.00f);
+
+    // Scrollbar
+    colors[ImGuiCol_ScrollbarBg]            = ImVec4(0.10f, 0.10f, 0.14f, 0.90f);
+    colors[ImGuiCol_ScrollbarGrab]          = ImVec4(0.40f, 0.35f, 0.20f, 0.80f);
+    colors[ImGuiCol_ScrollbarGrabHovered]   = ImVec4(0.55f, 0.48f, 0.25f, 0.90f);
+    colors[ImGuiCol_ScrollbarGrabActive]    = ImVec4(0.70f, 0.60f, 0.30f, 1.00f);
+
+    // Check marks and sliders - cyan accent
+    colors[ImGuiCol_CheckMark]              = ImVec4(0.00f, 0.80f, 0.82f, 1.00f);  // Cyan
+    colors[ImGuiCol_SliderGrab]             = ImVec4(0.50f, 0.45f, 0.25f, 1.00f);
+    colors[ImGuiCol_SliderGrabActive]       = ImVec4(0.75f, 0.65f, 0.35f, 1.00f);
+
+    // Buttons - purple/blue gradient feeling
+    colors[ImGuiCol_Button]                 = ImVec4(0.25f, 0.20f, 0.35f, 0.80f);  // Purple
+    colors[ImGuiCol_ButtonHovered]          = ImVec4(0.35f, 0.28f, 0.50f, 0.90f);
+    colors[ImGuiCol_ButtonActive]           = ImVec4(0.45f, 0.35f, 0.65f, 1.00f);
+
+    // Headers - collapsible sections
+    colors[ImGuiCol_Header]                 = ImVec4(0.28f, 0.23f, 0.38f, 0.75f);
+    colors[ImGuiCol_HeaderHovered]          = ImVec4(0.35f, 0.28f, 0.48f, 0.85f);
+    colors[ImGuiCol_HeaderActive]           = ImVec4(0.42f, 0.33f, 0.58f, 0.95f);
+
+    // Separators
+    colors[ImGuiCol_Separator]              = ImVec4(0.50f, 0.45f, 0.25f, 0.30f);
+    colors[ImGuiCol_SeparatorHovered]       = ImVec4(0.65f, 0.58f, 0.32f, 0.50f);
+    colors[ImGuiCol_SeparatorActive]        = ImVec4(0.80f, 0.70f, 0.40f, 0.70f);
+
+    // Resize grip
+    colors[ImGuiCol_ResizeGrip]             = ImVec4(0.40f, 0.35f, 0.20f, 0.40f);
+    colors[ImGuiCol_ResizeGripHovered]      = ImVec4(0.55f, 0.48f, 0.25f, 0.60f);
+    colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.70f, 0.60f, 0.30f, 0.90f);
+
+    // Tabs
+    colors[ImGuiCol_Tab]                    = ImVec4(0.18f, 0.15f, 0.12f, 0.90f);
+    colors[ImGuiCol_TabHovered]             = ImVec4(0.38f, 0.30f, 0.15f, 0.95f);
+    colors[ImGuiCol_TabActive]              = ImVec4(0.35f, 0.28f, 0.12f, 1.00f);
+    colors[ImGuiCol_TabUnfocused]           = ImVec4(0.15f, 0.12f, 0.10f, 0.85f);
+    colors[ImGuiCol_TabUnfocusedActive]     = ImVec4(0.25f, 0.20f, 0.10f, 0.90f);
+
+    // Table
+    colors[ImGuiCol_TableHeaderBg]          = ImVec4(0.20f, 0.18f, 0.15f, 1.00f);
+    colors[ImGuiCol_TableBorderStrong]      = ImVec4(0.45f, 0.40f, 0.22f, 1.00f);
+    colors[ImGuiCol_TableBorderLight]       = ImVec4(0.30f, 0.27f, 0.18f, 1.00f);
+    colors[ImGuiCol_TableRowBg]             = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_TableRowBgAlt]          = ImVec4(1.00f, 1.00f, 1.00f, 0.03f);
+
+    // Text selection
+    colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.45f, 0.35f, 0.60f, 0.45f);
+
+    // Drag and drop
+    colors[ImGuiCol_DragDropTarget]         = ImVec4(0.00f, 0.80f, 0.82f, 0.90f);  // Cyan
+
+    // Nav highlight
+    colors[ImGuiCol_NavHighlight]           = ImVec4(0.65f, 0.55f, 0.30f, 1.00f);
+    colors[ImGuiCol_NavWindowingHighlight]  = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg]      = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+
+    // Modal
+    colors[ImGuiCol_ModalWindowDimBg]       = ImVec4(0.10f, 0.10f, 0.15f, 0.60f);
+
+    // Style adjustments - more compact
+    style.WindowPadding                     = ImVec2(8, 8);
+    style.FramePadding                      = ImVec2(5, 3);
+    style.CellPadding                       = ImVec2(4, 2);
+    style.ItemSpacing                       = ImVec2(8, 4);
+    style.ItemInnerSpacing                  = ImVec2(4, 4);
+    style.TouchExtraPadding                 = ImVec2(0, 0);
+    style.IndentSpacing                     = 18;
+    style.ScrollbarSize                     = 14;
+    style.GrabMinSize                       = 10;
+
+    // Borders and rounding - subtle glow effect
+    style.WindowBorderSize                  = 1;
+    style.ChildBorderSize                   = 1;
+    style.PopupBorderSize                   = 1;
+    style.FrameBorderSize                   = 1;
+    style.TabBorderSize                     = 0;
+
+    style.WindowRounding                    = 6;
+    style.ChildRounding                     = 4;
+    style.FrameRounding                     = 4;
+    style.PopupRounding                     = 4;
+    style.ScrollbarRounding                 = 8;
+    style.GrabRounding                      = 4;
+    style.LogSliderDeadzone                 = 4;
+    style.TabRounding                       = 4;
+
+    // Window title alignment
+    style.WindowTitleAlign                  = ImVec2(0.5f, 0.5f);
+    style.WindowMenuButtonPosition          = ImGuiDir_Right;
+    style.ColorButtonPosition               = ImGuiDir_Right;
+
+    // Misc
+    style.Alpha                             = 1.0f;
+    style.DisabledAlpha                     = 0.5f;
+    style.AntiAliasedLines                  = true;
+    style.AntiAliasedLinesUseTex            = true;
+    style.AntiAliasedFill                   = true;
+}
+
+void StandaloneEditor::Shutdown() {
+    spdlog::info("Shutting down Standalone Editor");
+    m_initialized = false;
+}
+
+void StandaloneEditor::Update(float deltaTime) {
+    if (!m_initialized) {
+        return;
+    }
+
+    // Update camera
+    auto& input = Nova::Engine::Instance().GetInput();
+
+    // Camera rotation with arrow keys
+    if (input.IsKeyDown(Nova::Key::Left)) {
+        m_cameraAngle -= deltaTime * 90.0f;
+    }
+    if (input.IsKeyDown(Nova::Key::Right)) {
+        m_cameraAngle += deltaTime * 90.0f;
+    }
+
+    // Camera zoom with Page Up/Down
+    if (input.IsKeyDown(Nova::Key::PageUp)) {
+        m_cameraDistance = std::max(5.0f, m_cameraDistance - deltaTime * 20.0f);
+    }
+    if (input.IsKeyDown(Nova::Key::PageDown)) {
+        m_cameraDistance = std::min(100.0f, m_cameraDistance + deltaTime * 20.0f);
+    }
+
+    // Calculate camera position
+    float rad = glm::radians(m_cameraAngle);
+    m_editorCameraPos.x = m_cameraDistance * cos(rad);
+    m_editorCameraPos.z = m_cameraDistance * sin(rad);
+    m_editorCameraPos.y = m_cameraDistance * 0.7f;
+
+    // Tool keyboard shortcuts (only when not typing in text fields)
+    if (!ImGui::GetIO().WantTextInput) {
+        // Help shortcut
+        if (input.IsKeyPressed(Nova::Key::F1)) {
+            m_showControlsDialog = true;
+        }
+
+        // Edit mode shortcuts
+        if (input.IsKeyPressed(Nova::Key::Q)) {
+            SetEditMode(EditMode::ObjectSelect);
+            m_transformTool = TransformTool::None;
+        }
+        if (input.IsKeyPressed(Nova::Key::Num1)) {
+            SetEditMode(EditMode::TerrainPaint);
+        }
+        if (input.IsKeyPressed(Nova::Key::Num2)) {
+            SetEditMode(EditMode::TerrainSculpt);
+        }
+
+        // Transform tool shortcuts (only in ObjectSelect mode)
+        if (m_editMode == EditMode::ObjectSelect) {
+            if (input.IsKeyPressed(Nova::Key::W)) {
+                SetTransformTool((m_transformTool == TransformTool::Move) ? TransformTool::None : TransformTool::Move);
+            }
+            if (input.IsKeyPressed(Nova::Key::E)) {
+                SetTransformTool((m_transformTool == TransformTool::Rotate) ? TransformTool::None : TransformTool::Rotate);
+            }
+            if (input.IsKeyPressed(Nova::Key::R)) {
+                SetTransformTool((m_transformTool == TransformTool::Scale) ? TransformTool::None : TransformTool::Scale);
+            }
+        }
+
+        // Brush size adjustment
+        if (m_editMode == EditMode::TerrainPaint || m_editMode == EditMode::TerrainSculpt) {
+            if (input.IsKeyPressed(Nova::Key::LeftBracket)) {
+                m_brushSize = std::max(1, m_brushSize - 1);
+            }
+            if (input.IsKeyPressed(Nova::Key::RightBracket)) {
+                m_brushSize = std::min(20, m_brushSize + 1);
+            }
+        }
+    }
+    
+    // Object selection with mouse click
+    if (m_editMode == EditMode::ObjectSelect) {
+        if (input.IsMouseButtonPressed(Nova::MouseButton::Left)) {
+            if (!ImGui::GetIO().WantCaptureMouse) {
+                auto mousePos = input.GetMousePosition();
+                SelectObjectAtScreenPos(static_cast<int>(mousePos.x), static_cast<int>(mousePos.y));
+            }
+        }
+        // Clear selection with Escape or Delete
+        if (input.IsKeyPressed(Nova::Key::Escape)) {
+            ClearSelection();
+        }
+        if (input.IsKeyPressed(Nova::Key::Delete)) {
+            DeleteSelectedObjects();
+        }
+    }
+}
+
+void StandaloneEditor::RenderUI() {
+    // Render menu bar
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("New Map", "Ctrl+N")) {
+                m_showNewMapDialog = true;
+            }
+            if (ImGui::MenuItem("Open Map", "Ctrl+O")) {
+                m_showLoadMapDialog = true;
+            }
+            if (ImGui::MenuItem("Save Map", "Ctrl+S")) {
+                if (!m_currentMapPath.empty()) {
+                    SaveMap(m_currentMapPath);
+                } else {
+                    m_showSaveMapDialog = true;
+                }
+            }
+            if (ImGui::MenuItem("Save Map As", "Ctrl+Shift+S")) {
+                m_showSaveMapDialog = true;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Exit Editor", "Esc")) {
+                // Will be handled by RTSApplication
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Edit")) {
+            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, false)) {}
+            if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false)) {}
+            ImGui::Separator();
+            if (ImGui::MenuItem("Map Properties")) {}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("View")) {
+            // Toggle panel visibility
+            for (auto& layout : m_panelLayouts) {
+                ImGui::MenuItem(GetPanelName(layout.id), nullptr, &layout.isVisible);
+            }
+            ImGui::Separator();
+            ImGui::MenuItem("Show Grid", nullptr, &m_showGrid);
+            ImGui::MenuItem("Show Gizmos", nullptr, &m_showGizmos);
+            ImGui::MenuItem("Snap to Grid", nullptr, &m_snapToGrid);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Tools")) {
+            // Edit Mode Tools
+            if (ImGui::MenuItem("Object Select", "Q", m_editMode == EditMode::ObjectSelect)) {
+                SetEditMode(EditMode::ObjectSelect);
+                m_transformTool = TransformTool::None;
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Transform Tools");
+
+            if (ImGui::MenuItem("Move", "W", m_transformTool == TransformTool::Move)) {
+                SetTransformTool(TransformTool::Move);
+            }
+            if (ImGui::MenuItem("Rotate", "E", m_transformTool == TransformTool::Rotate)) {
+                SetTransformTool(TransformTool::Rotate);
+            }
+            if (ImGui::MenuItem("Scale", "R", m_transformTool == TransformTool::Scale)) {
+                SetTransformTool(TransformTool::Scale);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Terrain Tools");
+
+            if (ImGui::MenuItem("Terrain Paint", "1", m_editMode == EditMode::TerrainPaint)) {
+                SetEditMode(EditMode::TerrainPaint);
+            }
+            if (ImGui::MenuItem("Terrain Sculpt", "2", m_editMode == EditMode::TerrainSculpt)) {
+                SetEditMode(EditMode::TerrainSculpt);
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::BeginMenu("Tool Settings")) {
+                ImGui::Text("Brush Settings");
+                ImGui::Separator();
+
+                ImGui::SliderInt("Brush Size", &m_brushSize, 1, 100);
+                ImGui::SliderFloat("Brush Strength", &m_brushStrength, 0.1f, 10.0f);
+
+                ImGui::Spacing();
+                ImGui::Text("Brush Falloff");
+                if (ImGui::RadioButton("Linear", m_brushFalloff == BrushFalloff::Linear)) {
+                    m_brushFalloff = BrushFalloff::Linear;
+                }
+                if (ImGui::RadioButton("Smooth", m_brushFalloff == BrushFalloff::Smooth)) {
+                    m_brushFalloff = BrushFalloff::Smooth;
+                }
+                if (ImGui::RadioButton("Spherical", m_brushFalloff == BrushFalloff::Spherical)) {
+                    m_brushFalloff = BrushFalloff::Spherical;
+                }
+
+                ImGui::EndMenu();
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Material Editor", nullptr, m_editMode == EditMode::MaterialEdit)) {
+                SetEditMode(EditMode::MaterialEdit);
+                // Show material editor as floating window
+                for (auto& layout : m_panelLayouts) {
+                    if (layout.id == PanelID::MaterialEditor) {
+                        layout.isVisible = true;
+                        break;
+                    }
+                }
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Help")) {
+            if (ImGui::MenuItem("Controls", "F1")) {
+                m_showControlsDialog = true;
+            }
+            if (ImGui::MenuItem("About")) {
+                m_showAboutDialog = true;
+            }
+            ImGui::EndMenu();
+        }
+
+        // Stats display on the right side of menu bar
+        float menuBarHeight = ImGui::GetFrameHeight();
+        float statsWidth = 200.0f;
+        ImGui::SameLine(ImGui::GetWindowWidth() - statsWidth - 10);
+
+        // FPS display (always visible)
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
+        // Expandable stats dropdown
+        ImGui::SameLine();
+        if (ImGui::BeginMenu("Stats")) {
+            ImGui::Text("Performance");
+            ImGui::Separator();
+            ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+            ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
+            ImGui::Separator();
+            ImGui::Text("Debug Overlays");
+            static bool showDebugOverlay = false;
+            static bool showProfiler = false;
+            static bool showMemory = false;
+            ImGui::Checkbox("Show Debug Overlay", &showDebugOverlay);
+            ImGui::Checkbox("Show Profiler", &showProfiler);
+            ImGui::Checkbox("Show Memory Stats", &showMemory);
+
+            ImGui::Separator();
+            ImGui::Text("Time Distribution");
+            static bool showRenderTime = false;
+            static bool showUpdateTime = false;
+            static bool showPhysicsTime = false;
+            ImGui::Checkbox("Render Time", &showRenderTime);
+            ImGui::Checkbox("Update Time", &showUpdateTime);
+            ImGui::Checkbox("Physics Time", &showPhysicsTime);
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+
+    // Render docking layout system
+    RenderDockingLayout();
+
+    // Dialogs (always on top)
+    if (m_showNewMapDialog) ShowNewMapDialog();
+    if (m_showLoadMapDialog) ShowLoadMapDialog();
+    if (m_showSaveMapDialog) ShowSaveMapDialog();
+    if (m_showAboutDialog) ShowAboutDialog();
+    if (m_showControlsDialog) ShowControlsDialog();
+}
+
+void StandaloneEditor::Render3D(Nova::Renderer& renderer, const Nova::Camera& camera) {
+    if (!m_initialized) {
+        return;
+    }
+
+    auto& debugDraw = renderer.GetDebugDraw();
+
+    // Draw grid if enabled
+    if (m_showGrid) {
+        debugDraw.AddGrid(m_mapWidth, m_gridSize, glm::vec4(0.5f, 0.5f, 0.5f, 0.5f));
+    }
+
+    // Draw terrain tiles (simple colored quads for now)
+    for (int y = 0; y < m_mapHeight; ++y) {
+        for (int x = 0; x < m_mapWidth; ++x) {
+            int index = y * m_mapWidth + x;
+            float height = m_terrainHeights[index];
+
+            glm::vec3 pos(x * m_gridSize, height, y * m_gridSize);
+            glm::vec4 color(0.2f, 0.6f, 0.2f, 1.0f); // Green for grass
+
+            // Simple tile visualization
+            debugDraw.AddAABB(pos, glm::vec3(m_gridSize * 0.45f, 0.05f, m_gridSize * 0.45f), color);
+        }
+    }
+
+    // Draw selected object bounds
+    if (m_selectedObjectIndex >= 0) {
+        debugDraw.AddAABB(m_selectedObjectPosition, glm::vec3(0.5f), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+    }
+}
+
+void StandaloneEditor::ProcessInput() {
+    // Input processing will be handled in Update for now
+}
+
+void StandaloneEditor::SetEditMode(EditMode mode) {
+    m_editMode = mode;
+    spdlog::info("Editor mode changed to: {}", static_cast<int>(mode));
+}
+
+void StandaloneEditor::SetTransformTool(TransformTool tool) {
+    // Can only use transform tools in ObjectSelect mode
+    if (m_editMode == EditMode::ObjectSelect) {
+        m_transformTool = tool;
+        spdlog::info("Transform tool changed to: {}", static_cast<int>(tool));
+    }
+}
+
+void StandaloneEditor::NewMap(int width, int height) {
+    spdlog::info("Creating new map: {}x{}", width, height);
+
+    m_mapWidth = width;
+    m_mapHeight = height;
+
+    // Initialize terrain data
+    int numTiles = width * height;
+    m_terrainTiles.resize(numTiles, 0);  // 0 = grass
+    m_terrainHeights.resize(numTiles, 0.0f);  // Flat terrain
+
+    m_currentMapPath.clear();
+    spdlog::info("New map created");
+}
+
+bool StandaloneEditor::LoadMap(const std::string& path) {
+    spdlog::info("Loading map from: {}", path);
+    // TODO: Implement map loading
+    spdlog::warn("Map loading not yet implemented");
+    return false;
+}
+
+bool StandaloneEditor::SaveMap(const std::string& path) {
+    spdlog::info("Saving map to: {}", path);
+    // TODO: Implement map saving
+    spdlog::warn("Map saving not yet implemented");
+    return false;
+}
+
+// UI Rendering Functions
+
+void StandaloneEditor::RenderAssetBrowser() {
+    ImGui::Begin("Asset Browser", &m_showAssetBrowser);
+
+    ImGui::Text("Assets Directory: %s", m_assetDirectory.c_str());
+    ImGui::Separator();
+
+    // Simple folder tree
+    if (ImGui::TreeNode("Textures")) {
+        ImGui::Selectable("grass.png");
+        ImGui::Selectable("dirt.png");
+        ImGui::Selectable("stone.png");
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Models")) {
+        ImGui::Selectable("tree.fbx");
+        ImGui::Selectable("rock.fbx");
+        ImGui::Selectable("building.fbx");
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Materials")) {
+        ImGui::Selectable("grass_material.mat");
+        ImGui::Selectable("stone_material.mat");
+        ImGui::TreePop();
+    }
+
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderTerrainPanel() {
+    ImGui::Begin("Terrain Editor", &m_showTerrainPanel);
+
+    ImGui::Text("Terrain Tools");
+    ImGui::Separator();
+
+    ImGui::Text("Brush Type:");
+    if (ImGui::RadioButton("Grass", m_selectedBrush == TerrainBrush::Grass)) m_selectedBrush = TerrainBrush::Grass;
+    if (ImGui::RadioButton("Dirt", m_selectedBrush == TerrainBrush::Dirt)) m_selectedBrush = TerrainBrush::Dirt;
+    if (ImGui::RadioButton("Stone", m_selectedBrush == TerrainBrush::Stone)) m_selectedBrush = TerrainBrush::Stone;
+    if (ImGui::RadioButton("Sand", m_selectedBrush == TerrainBrush::Sand)) m_selectedBrush = TerrainBrush::Sand;
+    if (ImGui::RadioButton("Water", m_selectedBrush == TerrainBrush::Water)) m_selectedBrush = TerrainBrush::Water;
+
+    ImGui::Separator();
+    ImGui::Text("Sculpting:");
+    if (ImGui::RadioButton("Raise", m_selectedBrush == TerrainBrush::Raise)) m_selectedBrush = TerrainBrush::Raise;
+    if (ImGui::RadioButton("Lower", m_selectedBrush == TerrainBrush::Lower)) m_selectedBrush = TerrainBrush::Lower;
+
+    ImGui::Separator();
+    ImGui::SliderInt("Brush Size", &m_brushSize, 1, 10);
+    ImGui::SliderFloat("Strength", &m_brushStrength, 0.1f, 2.0f);
+
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderObjectPanel() {
+    ImGui::Begin("Object Placement", &m_showObjectPanel);
+
+    ImGui::Text("Place Objects");
+    ImGui::Separator();
+
+    if (ImGui::TreeNode("Nature")) {
+        if (ImGui::Selectable("Tree")) {}
+        if (ImGui::Selectable("Rock")) {}
+        if (ImGui::Selectable("Bush")) {}
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Buildings")) {
+        if (ImGui::Selectable("House")) {}
+        if (ImGui::Selectable("Tower")) {}
+        if (ImGui::Selectable("Wall")) {}
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNode("Units")) {
+        if (ImGui::Selectable("Worker")) {}
+        if (ImGui::Selectable("Soldier")) {}
+        ImGui::TreePop();
+    }
+
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderMaterialPanel() {
+    ImGui::Begin("Material Editor", &m_showMaterialPanel);
+
+    ImGui::Text("Material Properties");
+    ImGui::Separator();
+
+    ImGui::Text("(Material editor UI goes here)");
+
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderPropertiesPanel() {
+    ImGui::Begin("Properties", &m_showPropertiesPanel);
+
+    if (m_selectedObjectIndex >= 0) {
+        ImGui::Text("Selected Object");
+        ImGui::Separator();
+
+        ImGui::DragFloat3("Position", &m_selectedObjectPosition.x, 0.1f);
+        ImGui::DragFloat3("Rotation", &m_selectedObjectRotation.x, 1.0f);
+        ImGui::DragFloat3("Scale", &m_selectedObjectScale.x, 0.1f);
+    } else {
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No object selected");
+    }
+
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderToolsPanel() {
+    ImGui::Begin("Tools", &m_showPropertiesPanel);
+
+    ImGui::Text("Edit Tools");
+    ImGui::Separator();
+
+    if (ImGui::Button("Select\n[Q]", ImVec2(90, 50))) {
+        SetEditMode(EditMode::ObjectSelect);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Move\n[W]", ImVec2(90, 50))) {
+        // Set move tool
+    }
+
+    if (ImGui::Button("Rotate\n[E]", ImVec2(90, 50))) {
+        // Set rotate tool
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Scale\n[R]", ImVec2(90, 50))) {
+        // Set scale tool
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Text("Terrain Tools");
+    ImGui::Separator();
+
+    if (ImGui::Button("Paint\n[1]", ImVec2(90, 50))) {
+        SetEditMode(EditMode::TerrainPaint);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Sculpt\n[2]", ImVec2(90, 50))) {
+        SetEditMode(EditMode::TerrainSculpt);
+    }
+
+    if (ImGui::Button("Smooth\n[3]", ImVec2(90, 50))) {
+        // Set smooth tool
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Flatten\n[4]", ImVec2(90, 50))) {
+        // Set flatten tool
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Text("Placement Tools");
+    ImGui::Separator();
+
+    if (ImGui::Button("Place Object\n[5]", ImVec2(90, 50))) {
+        SetEditMode(EditMode::ObjectPlace);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Paint Foliage\n[6]", ImVec2(90, 50))) {
+        // Set foliage paint tool
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Text("Brush Settings");
+    ImGui::Separator();
+
+    ImGui::SliderInt("Size", &m_brushSize, 1, 20);
+    ImGui::SliderFloat("Strength", &m_brushStrength, 0.1f, 5.0f);
+    ImGui::Checkbox("Snap to Grid", &m_snapToGrid);
+
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderContentBrowser() {
+    ImGui::Begin("Content Browser");
+
+    ImGui::BeginChild("ContentToolbar", ImVec2(0, 30), ImGuiChildFlags_Border);
+    if (ImGui::Button("Import")) {}
+    ImGui::SameLine();
+    if (ImGui::Button("New Folder")) {}
+    ImGui::SameLine();
+    ImGui::Text("Path: /Assets/");
+    ImGui::EndChild();
+
+    ImGui::BeginChild("ContentArea", ImVec2(0, 0), ImGuiChildFlags_Border);
+
+    // Folder/File tree on left
+    ImGui::BeginChild("Folders", ImVec2(200, 0), ImGuiChildFlags_Border);
+    ImGui::Text("Folders");
+    ImGui::Separator();
+
+    if (ImGui::TreeNode("Assets")) {
+        if (ImGui::TreeNode("Textures")) {
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Materials")) {
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Models")) {
+            if (ImGui::TreeNode("Trees")) {
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Rocks")) {
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Buildings")) {
+                ImGui::TreePop();
+            }
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Sounds")) {
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Scripts")) {
+            ImGui::TreePop();
+        }
+        ImGui::TreePop();
+    }
+
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    // Content grid on right
+    ImGui::BeginChild("ContentGrid", ImVec2(0, 0), ImGuiChildFlags_Border);
+
+    ImGui::Text("Content");
+    ImGui::Separator();
+
+    // Display items as grid of thumbnails
+    float thumbnailSize = 64.0f;
+    float cellSize = thumbnailSize + 10.0f;
+    int columns = (int)((ImGui::GetContentRegionAvail().x) / cellSize);
+    if (columns < 1) columns = 1;
+
+    const char* items[] = {
+        "tree_oak.fbx", "tree_pine.fbx", "rock_01.fbx", "rock_02.fbx",
+        "grass_texture.png", "dirt_texture.png", "building_01.fbx", "wall_01.fbx"
+    };
+
+    for (int i = 0; i < 8; i++) {
+        ImGui::BeginGroup();
+        ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize));
+        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+            spdlog::info("Double-clicked: {}", items[i]);
+        }
+        ImGui::Text("%s", items[i]);
+        ImGui::EndGroup();
+
+        if ((i + 1) % columns != 0) ImGui::SameLine();
+    }
+
+    ImGui::EndChild();
+
+    ImGui::EndChild();
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderDetailsPanel() {
+    ImGui::Begin("Details");
+
+    if (m_selectedObjectIndex >= 0) {
+        ImGui::Text("Selected Object Properties");
+        ImGui::Separator();
+
+        ImGui::Text("Transform");
+        if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::DragFloat3("Location", &m_selectedObjectPosition.x, 0.1f);
+            ImGui::DragFloat3("Rotation", &m_selectedObjectRotation.x, 1.0f);
+            ImGui::DragFloat3("Scale", &m_selectedObjectScale.x, 0.01f);
+        }
+
+        if (ImGui::CollapsingHeader("Rendering")) {
+            static bool castShadows = true;
+            static bool receiveShadows = true;
+            static int renderLayer = 0;
+
+            ImGui::Checkbox("Cast Shadows", &castShadows);
+            ImGui::Checkbox("Receive Shadows", &receiveShadows);
+            ImGui::SliderInt("Render Layer", &renderLayer, 0, 31);
+        }
+
+        if (ImGui::CollapsingHeader("Physics")) {
+            static bool enablePhysics = false;
+            static float mass = 1.0f;
+
+            ImGui::Checkbox("Enable Physics", &enablePhysics);
+            if (enablePhysics) {
+                ImGui::DragFloat("Mass", &mass, 0.1f, 0.1f, 1000.0f);
+            }
+        }
+
+        if (ImGui::CollapsingHeader("Tags & Layers")) {
+            static char tag[64] = "Default";
+            ImGui::InputText("Tag", tag, 64);
+        }
+    } else {
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No object selected");
+        ImGui::Separator();
+
+        ImGui::Text("Scene Settings");
+        if (ImGui::CollapsingHeader("Environment", ImGuiTreeNodeFlags_DefaultOpen)) {
+            static float ambientIntensity = 0.2f;
+            static float skyboxRotation = 0.0f;
+
+            ImGui::SliderFloat("Ambient Intensity", &ambientIntensity, 0.0f, 1.0f);
+            ImGui::SliderFloat("Skybox Rotation", &skyboxRotation, 0.0f, 360.0f);
+        }
+
+        if (ImGui::CollapsingHeader("Lighting")) {
+            static glm::vec3 sunDirection(-0.5f, -1.0f, -0.5f);
+            static glm::vec3 sunColor(1.0f, 0.95f, 0.9f);
+
+            ImGui::DragFloat3("Sun Direction", &sunDirection.x, 0.01f, -1.0f, 1.0f);
+            ImGui::ColorEdit3("Sun Color", &sunColor.x);
+        }
+    }
+
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderViewportControls() {
+    // Viewport controls as overlay within viewport window
+    ImGui::SetNextWindowBgAlpha(0.7f);
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+
+    ImGui::SetCursorPos(ImVec2(windowSize.x - 220, 10));
+    ImGui::BeginChild("ViewportControls", ImVec2(210, 0), ImGuiChildFlags_Border);
+
+    ImGui::Text("Viewport");
+    ImGui::Separator();
+
+    // Projection mode
+    static int projectionMode = 0;
+    ImGui::Text("Projection:");
+    ImGui::RadioButton("Perspective", &projectionMode, 0); ImGui::SameLine();
+    ImGui::RadioButton("Orthographic", &projectionMode, 1);
+
+    ImGui::Separator();
+
+    // View mode
+    static int viewMode = 0;
+    ImGui::Text("View:");
+    if (ImGui::Button("Free")) viewMode = 0;
+    ImGui::SameLine();
+    if (ImGui::Button("Top (Z)")) viewMode = 1;
+    if (ImGui::Button("Front (Y)")) viewMode = 2;
+    ImGui::SameLine();
+    if (ImGui::Button("Right (X)")) viewMode = 3;
+
+    ImGui::Separator();
+
+    // Render mode
+    static int renderMode = 0;
+    ImGui::Text("Shading:");
+    ImGui::RadioButton("Lit", &renderMode, 0);
+    ImGui::RadioButton("Unlit", &renderMode, 1);
+    ImGui::RadioButton("Wireframe", &renderMode, 2);
+
+    ImGui::Separator();
+
+    // Viewport options
+    ImGui::Checkbox("Grid", &m_showGrid);
+    ImGui::Checkbox("Gizmos", &m_showGizmos);
+
+    ImGui::EndChild();
+}
+
+void StandaloneEditor::RenderStatusBar() {
+    auto& window = Nova::Engine::Instance().GetWindow();
+    ImVec2 windowSize(static_cast<float>(window.GetWidth()), 25.0f);
+
+    ImGui::SetNextWindowPos(ImVec2(0, window.GetHeight() - 25.0f));
+    ImGui::SetNextWindowSize(windowSize);
+
+    ImGui::Begin("StatusBar", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
+
+    ImGui::Text("Map: %dx%d | Mode: %s | Camera: (%.1f, %.1f, %.1f)",
+        m_mapWidth, m_mapHeight,
+        m_editMode == EditMode::TerrainPaint ? "Paint" :
+        m_editMode == EditMode::TerrainSculpt ? "Sculpt" :
+        m_editMode == EditMode::ObjectPlace ? "Place" :
+        m_editMode == EditMode::ObjectSelect ? "Select" : "None",
+        m_editorCameraPos.x, m_editorCameraPos.y, m_editorCameraPos.z);
+
+    ImGui::End();
+}
+
+// Dialog Functions
+
+void StandaloneEditor::ShowNewMapDialog() {
+    ImGui::OpenPopup("New Map");
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("New Map", &m_showNewMapDialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static int width = 64;
+        static int height = 64;
+
+        ImGui::InputInt("Width", &width);
+        ImGui::InputInt("Height", &height);
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Create", ImVec2(120, 0))) {
+            NewMap(width, height);
+            m_showNewMapDialog = false;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            m_showNewMapDialog = false;
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void StandaloneEditor::ShowLoadMapDialog() {
+    ImGui::OpenPopup("Load Map");
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Load Map", &m_showLoadMapDialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Select a map file to load:");
+        ImGui::Separator();
+
+        // Simple file list
+        for (const auto& file : m_recentFiles) {
+            if (ImGui::Selectable(file.c_str())) {
+                LoadMap(file);
+                m_showLoadMapDialog = false;
+            }
+        }
+
+        ImGui::Separator();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            m_showLoadMapDialog = false;
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void StandaloneEditor::ShowSaveMapDialog() {
+    ImGui::OpenPopup("Save Map");
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Save Map", &m_showSaveMapDialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static char filename[256] = "untitled.map";
+
+        ImGui::InputText("Filename", filename, sizeof(filename));
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Save", ImVec2(120, 0))) {
+            SaveMap(filename);
+            m_showSaveMapDialog = false;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            m_showSaveMapDialog = false;
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void StandaloneEditor::ShowAboutDialog() {
+    ImGui::OpenPopup("About Editor");
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("About Editor", &m_showAboutDialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Nova3D RTS Editor");
+        ImGui::Text("Version 1.0");
+        ImGui::Separator();
+        ImGui::Text("A standalone level editor for creating");
+        ImGui::Text("custom maps and scenarios.");
+        ImGui::Separator();
+
+        if (ImGui::Button("Close", ImVec2(120, 0))) {
+            m_showAboutDialog = false;
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void StandaloneEditor::ShowControlsDialog() {
+    ImGui::OpenPopup("Editor Controls");
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Editor Controls", &m_showControlsDialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Keyboard Shortcuts");
+        ImGui::Separator();
+
+        // Edit Modes
+        ImGui::Text("Edit Modes:");
+        ImGui::BulletText("Q - Object Select Mode");
+        ImGui::BulletText("1 - Terrain Paint Mode");
+        ImGui::BulletText("2 - Terrain Sculpt Mode");
+
+        ImGui::Spacing();
+
+        // Transform Tools
+        ImGui::Text("Transform Tools (in Object Select mode):");
+        ImGui::BulletText("W - Toggle Move Tool");
+        ImGui::BulletText("E - Toggle Rotate Tool");
+        ImGui::BulletText("R - Toggle Scale Tool");
+
+        ImGui::Spacing();
+
+        // Camera Controls
+        ImGui::Text("Camera Controls:");
+        ImGui::BulletText("Arrow Keys - Rotate Camera");
+        ImGui::BulletText("Page Up/Down - Zoom In/Out");
+
+        ImGui::Spacing();
+
+        // Brush Controls
+        ImGui::Text("Brush Controls (in Terrain modes):");
+        ImGui::BulletText("[ - Decrease Brush Size");
+        ImGui::BulletText("] - Increase Brush Size");
+
+        ImGui::Spacing();
+
+        // Selection Controls
+        ImGui::Text("Selection Controls:");
+        ImGui::BulletText("Left Click - Select Object");
+        ImGui::BulletText("Escape - Clear Selection");
+        ImGui::BulletText("Delete - Delete Selected Objects");
+
+        ImGui::Spacing();
+
+        // File Operations
+        ImGui::Text("File Operations:");
+        ImGui::BulletText("Ctrl+N - New Map");
+        ImGui::BulletText("Ctrl+O - Open Map");
+        ImGui::BulletText("Ctrl+S - Save Map");
+        ImGui::BulletText("Ctrl+Shift+S - Save Map As");
+
+        ImGui::Spacing();
+
+        // Help
+        ImGui::Text("Help:");
+        ImGui::BulletText("F1 - Show this dialog");
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Close", ImVec2(120, 0))) {
+            m_showControlsDialog = false;
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+// Terrain editing functions (stubs for now)
+
+void StandaloneEditor::PaintTerrain(int x, int y) {
+    // TODO: Implement terrain painting
+}
+
+void StandaloneEditor::SculptTerrain(int x, int y, float strength) {
+    // TODO: Implement terrain sculpting
+}
+
+// Object editing functions (stubs for now)
+
+void StandaloneEditor::PlaceObject(const glm::vec3& position, const std::string& objectType) {
+    // TODO: Implement object placement
+}
+
+void StandaloneEditor::SelectObject(const glm::vec3& rayOrigin, const glm::vec3& rayDir) {
+    // TODO: Implement object selection
+}
+
+void StandaloneEditor::TransformSelectedObject() {
+    // TODO: Implement object transformation
+}
+
+void StandaloneEditor::DeleteSelectedObject() {
+    // TODO: Implement object deletion
+}
+
+// ========================================
+// Docking System Implementation
+// ========================================
+
+const char* StandaloneEditor::GetPanelName(PanelID panel) {
+    switch (panel) {
+        case PanelID::Viewport: return "Viewport";
+        case PanelID::Tools: return "Tools";
+        case PanelID::ContentBrowser: return "Content Browser";
+        case PanelID::Details: return "Details";
+        case PanelID::MaterialEditor: return "Material Editor";
+        case PanelID::EngineStats: return "Engine Stats";
+        default: return "Unknown";
+    }
+}
+
+StandaloneEditor::DockZone StandaloneEditor::GetDropZone(ImVec2 mousePos, ImVec2 windowPos, ImVec2 windowSize) {
+    // Calculate relative mouse position
+    ImVec2 relPos(mousePos.x - windowPos.x, mousePos.y - windowPos.y);
+
+    // Check if mouse is within window bounds
+    if (relPos.x < 0 || relPos.y < 0 || relPos.x > windowSize.x || relPos.y > windowSize.y) {
+        return DockZone::None;
+    }
+
+    float normalizedX = relPos.x / windowSize.x;
+    float normalizedY = relPos.y / windowSize.y;
+
+    // Priority order: Top > Bottom > Left > Right > Center
+
+    // Top zone (excluding left/right corners)
+    if (normalizedY < m_dropZoneMargin && normalizedX > m_dropZoneMargin && normalizedX < (1.0f - m_dropZoneMargin)) {
+        return DockZone::Top;
+    }
+
+    // Bottom zone (excluding left/right corners)
+    if (normalizedY > (1.0f - m_dropZoneMargin) && normalizedX > m_dropZoneMargin && normalizedX < (1.0f - m_dropZoneMargin)) {
+        return DockZone::Bottom;
+    }
+
+    // Left zone
+    if (normalizedX < m_dropZoneMargin) {
+        return DockZone::Left;
+    }
+
+    // Right zone
+    if (normalizedX > (1.0f - m_dropZoneMargin)) {
+        return DockZone::Right;
+    }
+
+    // Center (default)
+    return DockZone::Center;
+}
+
+void StandaloneEditor::DrawDropIndicator(DockZone zone, ImVec2 pos, ImVec2 size) {
+    if (zone == DockZone::None || zone == DockZone::Floating) {
+        return;
+    }
+
+    ImDrawList* drawList = ImGui::GetForegroundDrawList();
+    ImVec2 dropPos = pos;
+    ImVec2 dropSize = size;
+
+    // Calculate drop zone rectangle based on zone type
+    switch (zone) {
+        case DockZone::Left:
+            dropSize.x = m_leftZoneWidth;
+            break;
+        case DockZone::Right:
+            dropPos.x = pos.x + size.x - m_rightZoneWidth;
+            dropSize.x = m_rightZoneWidth;
+            break;
+        case DockZone::Top:
+            dropSize.y = m_topZoneHeight;
+            break;
+        case DockZone::Bottom:
+            dropPos.y = pos.y + size.y - m_bottomZoneHeight;
+            dropSize.y = m_bottomZoneHeight;
+            break;
+        case DockZone::Center:
+            // Adjust for docked panels
+            dropPos.x += m_leftZoneWidth;
+            dropPos.y += m_topZoneHeight;
+            dropSize.x -= (m_leftZoneWidth + m_rightZoneWidth);
+            dropSize.y -= (m_topZoneHeight + m_bottomZoneHeight);
+            break;
+        default:
+            break;
+    }
+
+    // Draw semi-transparent overlay with gold border
+    ImU32 fillColor = IM_COL32(100, 80, 30, 100);   // Gold tint
+    ImU32 borderColor = IM_COL32(200, 160, 60, 200); // Bright gold
+
+    drawList->AddRectFilled(dropPos, ImVec2(dropPos.x + dropSize.x, dropPos.y + dropSize.y), fillColor);
+    drawList->AddRect(dropPos, ImVec2(dropPos.x + dropSize.x, dropPos.y + dropSize.y), borderColor, 0.0f, 0, 3.0f);
+}
+
+void StandaloneEditor::RenderDockingLayout() {
+    auto& window = Nova::Engine::Instance().GetWindow();
+    ImVec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+    ImVec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+
+    // Account for menu bar
+    float menuBarHeight = ImGui::GetFrameHeight();
+    viewportPos.y += menuBarHeight;
+    viewportSize.y -= menuBarHeight;
+
+    // Calculate zone boundaries
+    ImVec2 leftPos = viewportPos;
+    ImVec2 leftSize(m_leftZoneWidth, viewportSize.y - m_bottomZoneHeight);
+
+    ImVec2 rightPos(viewportPos.x + viewportSize.x - m_rightZoneWidth, viewportPos.y);
+    ImVec2 rightSize(m_rightZoneWidth, viewportSize.y - m_bottomZoneHeight);
+
+    ImVec2 topPos(viewportPos.x + m_leftZoneWidth, viewportPos.y);
+    ImVec2 topSize(viewportSize.x - m_leftZoneWidth - m_rightZoneWidth, m_topZoneHeight);
+
+    ImVec2 bottomPos(viewportPos.x, viewportPos.y + viewportSize.y - m_bottomZoneHeight);
+    ImVec2 bottomSize(viewportSize.x, m_bottomZoneHeight);
+
+    ImVec2 centerPos(viewportPos.x + m_leftZoneWidth, viewportPos.y + m_topZoneHeight);
+    ImVec2 centerSize(
+        viewportSize.x - m_leftZoneWidth - m_rightZoneWidth,
+        viewportSize.y - m_topZoneHeight - m_bottomZoneHeight
+    );
+
+    // Render panels in their zones
+    for (const auto& layout : m_panelLayouts) {
+        if (!layout.isVisible) continue;
+
+        switch (layout.zone) {
+            case DockZone::Left:
+                RenderPanel(layout.id, leftPos, leftSize);
+                break;
+            case DockZone::Right:
+                RenderPanel(layout.id, rightPos, rightSize);
+                break;
+            case DockZone::Top:
+                RenderPanel(layout.id, topPos, topSize);
+                break;
+            case DockZone::Bottom:
+                RenderPanel(layout.id, bottomPos, bottomSize);
+                break;
+            case DockZone::Center:
+                RenderPanel(layout.id, centerPos, centerSize);
+                break;
+            case DockZone::Floating:
+                // Render as regular window (no fixed position/size)
+                ImGui::Begin(GetPanelName(layout.id));
+                RenderPanelContent(layout.id);
+                ImGui::End();
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Draw drop indicators when dragging
+    if (m_isDraggingPanel && m_hoveredZone != DockZone::None) {
+        DrawDropIndicator(m_hoveredZone, viewportPos, viewportSize);
+    }
+}
+
+void StandaloneEditor::RenderPanel(PanelID panel, ImVec2 pos, ImVec2 size) {
+    ImGui::SetNextWindowPos(pos);
+    ImGui::SetNextWindowSize(size);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+    // Allow dragging from title bar to undock
+    if (ImGui::Begin(GetPanelName(panel), nullptr, flags)) {
+        // Check if window is being dragged
+        if (ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+            ImVec2 mousePos = ImGui::GetMousePos();
+            ImVec2 windowPos = ImGui::GetWindowPos();
+
+            // Only start dragging if dragging from title bar
+            if (mousePos.y < windowPos.y + ImGui::GetTextLineHeightWithSpacing() + 10) {
+                m_isDraggingPanel = true;
+                m_draggedPanel = panel;
+
+                // Get drop zone under mouse
+                auto& window = Nova::Engine::Instance().GetWindow();
+                ImVec2 viewportPos = ImGui::GetMainViewport()->WorkPos;
+                ImVec2 viewportSize = ImGui::GetMainViewport()->WorkSize;
+                m_hoveredZone = GetDropZone(mousePos, viewportPos, viewportSize);
+            }
+        }
+
+        // Stop dragging on mouse release
+        if (m_isDraggingPanel && !ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            // Update panel zone if dropped in valid zone
+            if (m_hoveredZone != DockZone::None) {
+                for (auto& layout : m_panelLayouts) {
+                    if (layout.id == m_draggedPanel) {
+                        layout.zone = m_hoveredZone;
+                        break;
+                    }
+                }
+            }
+            m_isDraggingPanel = false;
+            m_hoveredZone = DockZone::None;
+        }
+
+        RenderPanelContent(panel);
+    }
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderPanelContent(PanelID panel) {
+    switch (panel) {
+        case PanelID::Viewport:
+            RenderViewportControls();
+            break;
+        case PanelID::Tools:
+            RenderUnifiedToolsPanel();
+            break;
+        case PanelID::ContentBrowser:
+            RenderUnifiedContentBrowser();
+            break;
+        case PanelID::Details:
+            RenderDetailsContent();
+            break;
+        case PanelID::MaterialEditor:
+            RenderMaterialEditorContent();
+            break;
+        case PanelID::EngineStats:
+            RenderEngineStatsContent();
+            break;
+    }
+}
+
+void StandaloneEditor::RenderUnifiedToolsPanel() {
+    // Merged Tools + Terrain Editor
+
+    if (ImGui::CollapsingHeader("Edit Tools", ImGuiTreeNodeFlags_DefaultOpen)) {
+        float buttonWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f - 2;
+
+        if (ImGui::Button("Select [Q]", ImVec2(buttonWidth, 40))) {
+            SetEditMode(EditMode::ObjectSelect);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Move [W]", ImVec2(buttonWidth, 40))) {
+            // Set move tool
+        }
+
+        if (ImGui::Button("Rotate [E]", ImVec2(buttonWidth, 40))) {
+            // Set rotate tool
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Scale [R]", ImVec2(buttonWidth, 40))) {
+            // Set scale tool
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Terrain Tools", ImGuiTreeNodeFlags_DefaultOpen)) {
+        float buttonWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f - 2;
+
+        if (ImGui::Button("Paint [1]", ImVec2(buttonWidth, 40))) {
+            SetEditMode(EditMode::TerrainPaint);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Sculpt [2]", ImVec2(buttonWidth, 40))) {
+            SetEditMode(EditMode::TerrainSculpt);
+        }
+
+        if (ImGui::Button("Smooth [3]", ImVec2(buttonWidth, 40))) {
+            // Set smooth tool
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Flatten [4]", ImVec2(buttonWidth, 40))) {
+            // Set flatten tool
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        ImGui::Text("Brush Type:");
+        if (ImGui::RadioButton("Grass", m_selectedBrush == TerrainBrush::Grass)) m_selectedBrush = TerrainBrush::Grass;
+        if (ImGui::RadioButton("Dirt", m_selectedBrush == TerrainBrush::Dirt)) m_selectedBrush = TerrainBrush::Dirt;
+        if (ImGui::RadioButton("Stone", m_selectedBrush == TerrainBrush::Stone)) m_selectedBrush = TerrainBrush::Stone;
+        if (ImGui::RadioButton("Sand", m_selectedBrush == TerrainBrush::Sand)) m_selectedBrush = TerrainBrush::Sand;
+        if (ImGui::RadioButton("Water", m_selectedBrush == TerrainBrush::Water)) m_selectedBrush = TerrainBrush::Water;
+    }
+
+    if (ImGui::CollapsingHeader("Placement Tools")) {
+        float buttonWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f - 2;
+
+        if (ImGui::Button("Place Object [5]", ImVec2(buttonWidth, 40))) {
+            SetEditMode(EditMode::ObjectPlace);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Foliage [6]", ImVec2(buttonWidth, 40))) {
+            // Set foliage paint tool
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Brush Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::SliderInt("Size", &m_brushSize, 1, 20);
+        ImGui::SliderFloat("Strength", &m_brushStrength, 0.1f, 5.0f);
+        ImGui::Checkbox("Snap to Grid", &m_snapToGrid);
+    }
+}
+
+void StandaloneEditor::RenderUnifiedContentBrowser() {
+    if (!m_assetBrowser) {
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "AssetBrowser not initialized");
+        return;
+    }
+
+    // Toolbar with navigation and actions
+    ImGui::BeginChild("ContentToolbar", ImVec2(0, 35), ImGuiChildFlags_Border);
+
+    // Navigation buttons
+    if (ImGui::Button("<")) {
+        m_assetBrowser->NavigateBack();
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Back");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(">")) {
+        m_assetBrowser->NavigateForward();
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Forward");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("^")) {
+        m_assetBrowser->NavigateToParent();
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Up");
+    }
+
+    ImGui::SameLine();
+    ImGui::Separator();
+    ImGui::SameLine();
+
+    // Action buttons
+    if (ImGui::Button("Refresh")) {
+        m_assetBrowser->Refresh();
+    }
+    ImGui::SameLine();
+
+    static char newFolderName[128] = "";
+    static bool showNewFolderPopup = false;
+
+    if (ImGui::Button("New Folder")) {
+        showNewFolderPopup = true;
+        memset(newFolderName, 0, sizeof(newFolderName));
+    }
+
+    ImGui::SameLine();
+    ImGui::Separator();
+    ImGui::SameLine();
+
+    // Current path display
+    std::string currentDir = m_assetBrowser->GetCurrentDirectory();
+    ImGui::Text("Path: %s", currentDir.c_str());
+
+    ImGui::EndChild();
+
+    // New folder popup
+    if (showNewFolderPopup) {
+        ImGui::OpenPopup("New Folder");
+    }
+
+    if (ImGui::BeginPopupModal("New Folder", &showNewFolderPopup, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Enter folder name:");
+        ImGui::InputText("##foldername", newFolderName, sizeof(newFolderName));
+
+        if (ImGui::Button("Create", ImVec2(120, 0))) {
+            if (strlen(newFolderName) > 0) {
+                if (m_assetBrowser->CreateFolder(newFolderName)) {
+                    spdlog::info("Created folder: {}", newFolderName);
+                }
+            }
+            showNewFolderPopup = false;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            showNewFolderPopup = false;
+        }
+
+        ImGui::EndPopup();
+    }
+
+    // Search bar
+    ImGui::BeginChild("SearchBar", ImVec2(0, 30), ImGuiChildFlags_Border);
+    static char searchBuffer[256] = "";
+    ImGui::SetNextItemWidth(-1);
+    if (ImGui::InputTextWithHint("##search", "Search assets...", searchBuffer, sizeof(searchBuffer))) {
+        m_assetBrowser->SetSearchFilter(searchBuffer);
+    }
+    ImGui::EndChild();
+
+    ImGui::BeginChild("ContentArea", ImVec2(0, 0), ImGuiChildFlags_None);
+
+    // Left side: Directory tree
+    ImGui::BeginChild("Folders", ImVec2(200, 0), ImGuiChildFlags_Border);
+    ImGui::Text("Folders");
+    ImGui::Separator();
+
+    // Render directory tree
+    const auto& dirTree = m_assetBrowser->GetDirectoryTree();
+    std::string rootDir = m_assetBrowser->GetRootDirectory();
+
+    if (ImGui::TreeNodeEx(rootDir.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+        // Render subdirectories recursively
+        for (const auto& dir : dirTree) {
+            if (ImGui::Selectable(dir.name.c_str())) {
+                m_assetBrowser->NavigateToDirectory(dir.path);
+            }
+        }
+        ImGui::TreePop();
+    }
+
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    // Right side: Content grid with thumbnails
+    ImGui::BeginChild("ContentGrid", ImVec2(0, 0), ImGuiChildFlags_Border);
+
+    ImGui::Text("Content");
+    ImGui::Separator();
+
+    // Get filtered assets
+    auto assets = m_assetBrowser->GetFilteredAssets();
+
+    // Display as grid
+    float thumbnailSize = 80.0f;
+    float cellSize = thumbnailSize + 30.0f;
+    int columns = std::max(1, (int)(ImGui::GetContentRegionAvail().x / cellSize));
+
+    int itemIndex = 0;
+    static std::string contextMenuPath = "";
+    static bool showContextMenu = false;
+
+    for (const auto& asset : assets) {
+        ImGui::PushID(itemIndex);
+
+        ImGui::BeginGroup();
+
+        // Get thumbnail or draw colored placeholder
+        auto& thumbnailCache = m_assetBrowser->GetThumbnailCache();
+        ImTextureID thumbnail = thumbnailCache.GetThumbnail(asset.path, asset.type);
+        ImVec4 typeColor = thumbnailCache.GetTypeColor(asset.type);
+
+        // Draw thumbnail button with colored background
+        ImGui::PushStyleColor(ImGuiCol_Button, typeColor);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(typeColor.x * 1.2f, typeColor.y * 1.2f, typeColor.z * 1.2f, typeColor.w));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(typeColor.x * 1.4f, typeColor.y * 1.4f, typeColor.z * 1.4f, typeColor.w));
+
+        bool clicked = ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize));
+
+        ImGui::PopStyleColor(3);
+
+        // Handle double-click for directories
+        if (asset.isDirectory && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+            m_assetBrowser->NavigateToDirectory(asset.path);
+        }
+
+        // Handle single click for files
+        if (!asset.isDirectory && clicked) {
+            m_assetBrowser->SetSelectedAsset(asset.path);
+            spdlog::info("Selected asset: {}", asset.path);
+        }
+
+        // Context menu on right-click
+        if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+            contextMenuPath = asset.path;
+            showContextMenu = true;
+        }
+
+        // Display asset name (truncate if too long)
+        std::string displayName = asset.name;
+        if (displayName.length() > 15) {
+            displayName = displayName.substr(0, 12) + "...";
+        }
+
+        ImVec2 textSize = ImGui::CalcTextSize(displayName.c_str());
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (thumbnailSize - textSize.x) * 0.5f);
+        ImGui::TextWrapped("%s", displayName.c_str());
+
+        // Show tooltip with full name
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            ImGui::Text("%s", asset.name.c_str());
+            ImGui::Text("Type: %s", asset.type.c_str());
+            if (!asset.isDirectory) {
+                ImGui::Text("Size: %llu bytes", asset.fileSize);
+            }
+            ImGui::EndTooltip();
+        }
+
+        ImGui::EndGroup();
+        ImGui::PopID();
+
+        // Layout in columns
+        if ((itemIndex + 1) % columns != 0 && itemIndex < (int)assets.size() - 1) {
+            ImGui::SameLine();
+        }
+
+        itemIndex++;
+    }
+
+    // Context menu
+    if (showContextMenu) {
+        ImGui::OpenPopup("AssetContextMenu");
+        showContextMenu = false;
+    }
+
+    static char renameBuffer[256] = "";
+    static bool showRenamePopup = false;
+
+    if (ImGui::BeginPopup("AssetContextMenu")) {
+        ImGui::Text("Asset: %s", contextMenuPath.c_str());
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Rename")) {
+            // Extract filename from path
+            size_t lastSlash = contextMenuPath.find_last_of("/\\");
+            std::string filename = (lastSlash != std::string::npos) ?
+                contextMenuPath.substr(lastSlash + 1) : contextMenuPath;
+            strncpy(renameBuffer, filename.c_str(), sizeof(renameBuffer) - 1);
+            showRenamePopup = true;
+        }
+
+        if (ImGui::MenuItem("Delete")) {
+            if (m_assetBrowser->DeleteAsset(contextMenuPath)) {
+                spdlog::info("Deleted asset: {}", contextMenuPath);
+            }
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Refresh")) {
+            m_assetBrowser->Refresh();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    // Rename popup
+    if (showRenamePopup) {
+        ImGui::OpenPopup("Rename Asset");
+    }
+
+    if (ImGui::BeginPopupModal("Rename Asset", &showRenamePopup, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Enter new name:");
+        ImGui::InputText("##rename", renameBuffer, sizeof(renameBuffer));
+
+        if (ImGui::Button("Rename", ImVec2(120, 0))) {
+            if (strlen(renameBuffer) > 0) {
+                // Build new path
+                size_t lastSlash = contextMenuPath.find_last_of("/\\");
+                std::string newPath = (lastSlash != std::string::npos) ?
+                    contextMenuPath.substr(0, lastSlash + 1) + renameBuffer : renameBuffer;
+
+                if (m_assetBrowser->RenameAsset(contextMenuPath, newPath)) {
+                    spdlog::info("Renamed asset: {} -> {}", contextMenuPath, newPath);
+                }
+            }
+            showRenamePopup = false;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            showRenamePopup = false;
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+    ImGui::EndChild();
+}
+
+void StandaloneEditor::RenderDetailsContent() {
+    if (m_selectedObjectIndex >= 0) {
+        ImGui::Text("Selected Object");
+        ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::DragFloat3("Position", &m_selectedObjectPosition.x, 0.1f);
+            ImGui::DragFloat3("Rotation", &m_selectedObjectRotation.x, 1.0f);
+            ImGui::DragFloat3("Scale", &m_selectedObjectScale.x, 0.01f);
+        }
+
+        if (ImGui::CollapsingHeader("Rendering")) {
+            static bool castShadows = true;
+            static bool receiveShadows = true;
+            ImGui::Checkbox("Cast Shadows", &castShadows);
+            ImGui::Checkbox("Receive Shadows", &receiveShadows);
+        }
+
+        if (ImGui::CollapsingHeader("Physics")) {
+            static bool enablePhysics = false;
+            static float mass = 1.0f;
+            ImGui::Checkbox("Enable Physics", &enablePhysics);
+            if (enablePhysics) {
+                ImGui::DragFloat("Mass", &mass, 0.1f);
+            }
+        }
+    } else {
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No object selected");
+        ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("Scene Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+            static float ambientIntensity = 0.2f;
+            ImGui::SliderFloat("Ambient", &ambientIntensity, 0.0f, 1.0f);
+        }
+
+        if (ImGui::CollapsingHeader("Lighting")) {
+            static float sunDirection[3] = {-0.5f, -1.0f, -0.5f};
+            ImGui::DragFloat3("Sun Dir", sunDirection, 0.01f, -1.0f, 1.0f);
+        }
+    }
+}
+
+void StandaloneEditor::RenderMaterialEditorContent() {
+    ImGui::Text("Material Editor");
+    ImGui::Separator();
+    ImGui::TextWrapped("Material editor UI goes here...");
+}
+
+void StandaloneEditor::RenderEngineStatsContent() {
+    ImGui::Text("Engine Statistics");
+    ImGui::Separator();
+    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::Text("Frame: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+}
+
+// ========================================
+// Edit Menu and Map Properties Implementation
+// ========================================
+
+void StandaloneEditor::ShowMapPropertiesDialog() {
+    ImGui::OpenPopup("Map Properties");
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Map Properties", &m_showMapPropertiesDialog, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::SetNextItemWidth(400);
+        
+        // Map Name and Description
+        ImGui::Text("Map Information");
+        ImGui::Separator();
+        
+        static char nameBuf[256];
+        static char descBuf[1024];
+        static bool initialized = false;
+        
+        if (!initialized) {
+            strncpy(nameBuf, m_mapName.c_str(), sizeof(nameBuf) - 1);
+            strncpy(descBuf, m_mapDescription.c_str(), sizeof(descBuf) - 1);
+            initialized = true;
+        }
+        
+        ImGui::InputText("Name", nameBuf, sizeof(nameBuf));
+        ImGui::InputTextMultiline("Description", descBuf, sizeof(descBuf), ImVec2(400, 60));
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        
+        // Lighting Settings
+        ImGui::Text("Lighting");
+        ImGui::Separator();
+        
+        static glm::vec3 ambientLight = m_mapAmbientLight;
+        static glm::vec3 directionalLight = m_mapDirectionalLight;
+        
+        ImGui::ColorEdit3("Ambient Light", &ambientLight.x);
+        ImGui::ColorEdit3("Directional Light", &directionalLight.x);
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        
+        // Fog Settings
+        ImGui::Text("Fog");
+        ImGui::Separator();
+        
+        static glm::vec3 fogColor = m_mapFogColor;
+        static float fogDensity = m_mapFogDensity;
+        
+        ImGui::ColorEdit3("Fog Color", &fogColor.x);
+        ImGui::SliderFloat("Fog Density", &fogDensity, 0.0f, 0.1f, "%.4f");
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        
+        // Skybox Selection
+        ImGui::Text("Environment");
+        ImGui::Separator();
+        
+        static int currentSkybox = 0;
+        const char* skyboxes[] = { "default", "desert", "snow", "space" };
+        
+        // Find current skybox index
+        for (int i = 0; i < 4; i++) {
+            if (m_mapSkybox == skyboxes[i]) {
+                currentSkybox = i;
+                break;
+            }
+        }
+        
+        ImGui::Combo("Skybox", &currentSkybox, skyboxes, 4);
+        
+        ImGui::Spacing();
+        ImGui::Separator();
+        
+        // Buttons
+        ImGui::Spacing();
+        
+        if (ModernUI::GlowButton("Apply", ImVec2(120, 0))) {
+            // Apply changes
+            m_mapName = nameBuf;
+            m_mapDescription = descBuf;
+            m_mapAmbientLight = ambientLight;
+            m_mapDirectionalLight = directionalLight;
+            m_mapFogColor = fogColor;
+            m_mapFogDensity = fogDensity;
+            m_mapSkybox = skyboxes[currentSkybox];
+            
+            m_showMapPropertiesDialog = false;
+            initialized = false;
+            
+            spdlog::info("Map properties updated");
+        }
+        
+        ImGui::SameLine();
+        
+        if (ModernUI::GlowButton("Cancel", ImVec2(120, 0))) {
+            m_showMapPropertiesDialog = false;
+            initialized = false;
+        }
+        
+        ImGui::EndPopup();
+    }
+}
+
+// ========================================
+// New Object Selection and Manipulation System
+// ========================================
+
+void StandaloneEditor::SelectObjectAtScreenPos(int x, int y) {
+    // TODO: Implement proper ray-casting from screen to world
+    // For now, this is a placeholder that demonstrates the API
+    spdlog::info("Attempting to select object at screen position ({}, {})", x, y);
+    
+    // Placeholder: Select first object if any exist
+    if (!m_sceneObjects.size()) {
+        SelectObjectByIndex(0, false);
+    }
+}
+
+void StandaloneEditor::SelectObjectByIndex(int index, bool addToSelection) {
+    if (index < 0 || index >= static_cast<int>(m_sceneObjects.size())) {
+        spdlog::warn("Invalid object index: {}", index);
+        return;
+    }
+    
+    if (addToSelection) {
+        // Multi-selection mode
+        m_isMultiSelectMode = true;
+        auto it = std::find(m_selectedObjectIndices.begin(), m_selectedObjectIndices.end(), index);
+        if (it == m_selectedObjectIndices.end()) {
+            m_selectedObjectIndices.push_back(index);
+        }
+    } else {
+        // Single selection mode
+        m_selectedObjectIndices.clear();
+        m_selectedObjectIndices.push_back(index);
+        m_isMultiSelectMode = false;
+    }
+    
+    m_selectedObjectIndex = index;
+    
+    // Update transform values
+    auto& obj = m_sceneObjects[index];
+    m_selectedObjectPosition = obj.position;
+    m_selectedObjectRotation = obj.rotation;
+    m_selectedObjectScale = obj.scale;
+    
+    spdlog::info("Selected object: {}", obj.name);
+}
+
+void StandaloneEditor::ClearSelection() {
+    m_selectedObjectIndex = -1;
+    m_selectedObjectIndices.clear();
+    m_isMultiSelectMode = false;
+    spdlog::info("Selection cleared");
+}
+
+void StandaloneEditor::DeleteSelectedObjects() {
+    if (m_selectedObjectIndices.empty() && m_selectedObjectIndex < 0) {
+        spdlog::warn("No objects selected for deletion");
+        return;
+    }
+    
+    // Collect indices to delete
+    std::vector<int> indicesToDelete;
+    if (!m_selectedObjectIndices.empty()) {
+        indicesToDelete = m_selectedObjectIndices;
+    } else if (m_selectedObjectIndex >= 0) {
+        indicesToDelete.push_back(m_selectedObjectIndex);
+    }
+    
+    // Sort in descending order to avoid index shifting issues
+    std::sort(indicesToDelete.rbegin(), indicesToDelete.rend());
+    
+    // Delete objects
+    for (int index : indicesToDelete) {
+        if (index >= 0 && index < static_cast<int>(m_sceneObjects.size())) {
+            spdlog::info("Deleting object: {}", m_sceneObjects[index].name);
+            m_sceneObjects.erase(m_sceneObjects.begin() + index);
+        }
+    }
+    
+    // Clear selection
+    ClearSelection();
+}
+
+// ========================================
+// Transform Gizmo Rendering
+// ========================================
+
+void StandaloneEditor::RenderSelectionOutline() {
+    if (m_selectedObjectIndex < 0 || m_selectedObjectIndex >= static_cast<int>(m_sceneObjects.size())) {
+        return;
+    }
+    
+    // TODO: Get DebugDraw from renderer
+    // For now, this is a placeholder
+    auto& obj = m_sceneObjects[m_selectedObjectIndex];
+    
+    // Cyan outline color
+    glm::vec4 outlineColor(0.0f, 0.8f, 0.82f, 1.0f);
+    
+    // Calculate AABB from bounding box
+    glm::vec3 aabbMin = obj.position + obj.boundingBoxMin * obj.scale;
+    glm::vec3 aabbMax = obj.position + obj.boundingBoxMax * obj.scale;
+    
+    // Note: Actual rendering will be done through DebugDraw in Render3D()
+}
+
+void StandaloneEditor::RenderTransformGizmo() {
+    if (m_selectedObjectIndex < 0) {
+        return;
+    }
+    
+    if (m_editMode != EditMode::ObjectSelect) {
+        return;
+    }
+    
+    auto& obj = m_sceneObjects[m_selectedObjectIndex];
+    
+    switch (m_transformTool) {
+        case TransformTool::Move:
+            RenderMoveGizmo(obj.position);
+            break;
+        case TransformTool::Rotate:
+            RenderRotateGizmo(obj.position, obj.rotation);
+            break;
+        case TransformTool::Scale:
+            RenderScaleGizmo(obj.position, obj.scale);
+            break;
+        case TransformTool::None:
+        default:
+            break;
+    }
+}
+
+void StandaloneEditor::RenderMoveGizmo(const glm::vec3& position) {
+    // TODO: Render move arrows (X/Y/Z) using DebugDraw
+    // Red arrow for X axis
+    // Green arrow for Y axis
+    // Blue arrow for Z axis
+    
+    // Placeholder for implementation
+    float arrowLength = 2.0f;
+    
+    // Note: Actual rendering will be done through DebugDraw
+    // debugDraw.AddArrow(position, position + glm::vec3(arrowLength, 0, 0), glm::vec4(1, 0, 0, 1));
+    // debugDraw.AddArrow(position, position + glm::vec3(0, arrowLength, 0), glm::vec4(0, 1, 0, 1));
+    // debugDraw.AddArrow(position, position + glm::vec3(0, 0, arrowLength), glm::vec4(0, 0, 1, 1));
+}
+
+void StandaloneEditor::RenderRotateGizmo(const glm::vec3& position, const glm::vec3& rotation) {
+    // TODO: Render rotation circles using DebugDraw
+    // Red circle for X axis rotation
+    // Green circle for Y axis rotation
+    // Blue circle for Z axis rotation
+    
+    // Placeholder for implementation
+    float circleRadius = 1.5f;
+    
+    // Note: Actual rendering will be done through DebugDraw
+    // debugDraw.AddCircle(position, circleRadius, glm::vec3(1, 0, 0), glm::vec4(1, 0, 0, 1));
+    // debugDraw.AddCircle(position, circleRadius, glm::vec3(0, 1, 0), glm::vec4(0, 1, 0, 1));
+    // debugDraw.AddCircle(position, circleRadius, glm::vec3(0, 0, 1), glm::vec4(0, 0, 1, 1));
+}
+
+void StandaloneEditor::RenderScaleGizmo(const glm::vec3& position, const glm::vec3& scale) {
+    // TODO: Render scale boxes using DebugDraw
+    // Red box for X axis
+    // Green box for Y axis
+    // Blue box for Z axis
+    
+    // Placeholder for implementation
+    float handleSize = 0.2f;
+    
+    // Note: Actual rendering will be done through DebugDraw
+    // debugDraw.AddBox(...);
+}
+
+// ========================================
+// Helper Methods
+// ========================================
+
+glm::vec3 StandaloneEditor::ScreenToWorldRay(int screenX, int screenY) {
+    // TODO: Implement proper screen-to-world ray casting
+    // This requires camera projection and view matrices
+    
+    // Placeholder: Return a ray pointing down from above
+    return glm::vec3(0.0f, -1.0f, 0.0f);
+}
+
+bool StandaloneEditor::RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDir,
+                                          const glm::vec3& aabbMin, const glm::vec3& aabbMax,
+                                          float& distance) {
+    // Ray-AABB intersection using slab method
+    glm::vec3 invDir = 1.0f / rayDir;
+    
+    float tmin = (aabbMin.x - rayOrigin.x) * invDir.x;
+    float tmax = (aabbMax.x - rayOrigin.x) * invDir.x;
+    
+    if (tmin > tmax) std::swap(tmin, tmax);
+    
+    float tymin = (aabbMin.y - rayOrigin.y) * invDir.y;
+    float tymax = (aabbMax.y - rayOrigin.y) * invDir.y;
+    
+    if (tymin > tymax) std::swap(tymin, tymax);
+    
+    if ((tmin > tymax) || (tymin > tmax)) {
+        return false;
+    }
+    
+    if (tymin > tmin) tmin = tymin;
+    if (tymax < tmax) tmax = tymax;
+    
+    float tzmin = (aabbMin.z - rayOrigin.z) * invDir.z;
+    float tzmax = (aabbMax.z - rayOrigin.z) * invDir.z;
+    
+    if (tzmin > tzmax) std::swap(tzmin, tzmax);
+    
+    if ((tmin > tzmax) || (tzmin > tmax)) {
+        return false;
+    }
+    
+    if (tzmin > tmin) tmin = tzmin;
+    if (tzmax < tmax) tmax = tzmax;
+    
+    distance = tmin;
+    return true;
+}
+
+// ========================================
+// Debug Overlay Implementations
+// ========================================
+
+void StandaloneEditor::RenderDebugOverlay() {
+    if (!m_showDebugOverlay) return;
+
+    float currentFPS = ImGui::GetIO().Framerate;
+    float currentFrameTime = 1000.0f / currentFPS;
+
+    m_fpsHistory.push_back(currentFPS);
+    m_frameTimeHistory.push_back(currentFrameTime);
+
+    if (m_fpsHistory.size() > m_historyMaxSize) {
+        m_fpsHistory.erase(m_fpsHistory.begin());
+    }
+    if (m_frameTimeHistory.size() > m_historyMaxSize) {
+        m_frameTimeHistory.erase(m_frameTimeHistory.begin());
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(10, 60), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(350, 250), ImGuiCond_FirstUseEver);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
+    if (ImGui::Begin("Debug Overlay", &m_showDebugOverlay, flags)) {
+        ImGui::TextColored(ImVec4(0.0f, 0.8f, 0.82f, 1.0f), "Performance Metrics");
+        ImGui::Separator();
+
+        ImGui::Text("FPS: %.1f", currentFPS);
+
+        if (!m_fpsHistory.empty()) {
+            ImGui::PlotLines("##FPS", m_fpsHistory.data(), (int)m_fpsHistory.size(),
+                           0, "FPS History", 0.0f, 144.0f, ImVec2(320, 60));
+        }
+
+        ImGui::Spacing();
+        ImGui::Text("Frame Time: %.3f ms", currentFrameTime);
+
+        if (!m_frameTimeHistory.empty()) {
+            ImGui::PlotLines("##FrameTime", m_frameTimeHistory.data(), (int)m_frameTimeHistory.size(),
+                           0, "Frame Time (ms)", 0.0f, 33.3f, ImVec2(320, 60));
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Text("Map Size: %dx%d", m_mapWidth, m_mapHeight);
+        ImGui::Text("Camera Position: (%.1f, %.1f, %.1f)",
+                   m_editorCameraPos.x, m_editorCameraPos.y, m_editorCameraPos.z);
+
+        if (m_selectedObjectIndex >= 0) {
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.0f, 0.8f, 0.82f, 1.0f), "Selected Object");
+            ImGui::Text("Position: (%.1f, %.1f, %.1f)",
+                       m_selectedObjectPosition.x, m_selectedObjectPosition.y, m_selectedObjectPosition.z);
+        }
+    }
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderProfiler() {
+    if (!m_showProfiler) return;
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 360, 60), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(350, 280), ImGuiCond_FirstUseEver);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
+    if (ImGui::Begin("Profiler", &m_showProfiler, flags)) {
+        ImGui::TextColored(ImVec4(0.65f, 0.55f, 0.30f, 1.0f), "CPU Timing");
+        ImGui::Separator();
+
+        // Placeholder values - will be replaced with actual profiling data
+        float updateTime = 3.1f;
+        float renderTime = 8.2f;
+        float totalTime = 16.7f;
+
+        ImGui::Text("Update");
+        ImGui::SameLine(120);
+        ImGui::ProgressBar(updateTime / 16.7f, ImVec2(-1, 0), "");
+        ImGui::SameLine();
+        ImGui::Text("%.2f ms", updateTime);
+
+        ImGui::Text("Render");
+        ImGui::SameLine(120);
+        ImGui::ProgressBar(renderTime / 16.7f, ImVec2(-1, 0), "");
+        ImGui::SameLine();
+        ImGui::Text("%.2f ms", renderTime);
+
+        ImGui::Separator();
+        ImGui::Text("Total");
+        ImGui::SameLine(120);
+        ImGui::ProgressBar(totalTime / 33.3f, ImVec2(-1, 0), "");
+        ImGui::SameLine();
+        ImGui::Text("%.2f ms", totalTime);
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Text("Average (60 frames)");
+        ImGui::Text("  Update: 3.05 ms");
+        ImGui::Text("  Render: 8.15 ms");
+        ImGui::Text("  Total:  16.52 ms");
+
+        ImGui::Spacing();
+        ImGui::Text("Min / Max");
+        ImGui::Text("  Update: 2.8 / 4.2 ms");
+        ImGui::Text("  Render: 7.1 / 12.5 ms");
+        ImGui::Text("  Total:  14.2 / 22.1 ms");
+    }
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderMemoryStats() {
+    if (!m_showMemoryStats) return;
+
+    ImGui::SetNextWindowPos(ImVec2(10, ImGui::GetIO().DisplaySize.y - 240), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(350, 230), ImGuiCond_FirstUseEver);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
+    if (ImGui::Begin("Memory Stats", &m_showMemoryStats, flags)) {
+        ImGui::TextColored(ImVec4(0.45f, 0.35f, 0.65f, 1.0f), "Memory Usage");
+        ImGui::Separator();
+
+        // Calculate actual terrain memory usage
+        size_t terrainTilesBytes = m_terrainTiles.size() * sizeof(int);
+        size_t terrainHeightsBytes = m_terrainHeights.size() * sizeof(float);
+        float terrainDataMB = (terrainTilesBytes + terrainHeightsBytes) / (1024.0f * 1024.0f);
+
+        // Placeholder values for other memory categories
+        float textureMemMB = 156.0f;
+        float meshMemMB = 45.0f;
+        float totalVRAM = 201.0f + terrainDataMB;
+        float maxVRAM = 8192.0f;
+        float systemRAM = 2100.0f;
+        float maxSystemRAM = 16000.0f;
+
+        ImGui::Text("Texture Memory");
+        ImGui::ProgressBar(textureMemMB / maxVRAM, ImVec2(-1, 0));
+        ImGui::SameLine();
+        ImGui::Text("%.0f MB", textureMemMB);
+
+        ImGui::Spacing();
+        ImGui::Text("Mesh Memory");
+        ImGui::ProgressBar(meshMemMB / maxVRAM, ImVec2(-1, 0));
+        ImGui::SameLine();
+        ImGui::Text("%.0f MB", meshMemMB);
+
+        ImGui::Spacing();
+        ImGui::Text("Terrain Data");
+        ImGui::ProgressBar(terrainDataMB / maxVRAM, ImVec2(-1, 0));
+        ImGui::SameLine();
+        ImGui::Text("%.2f MB (%d tiles)", terrainDataMB, (int)m_terrainTiles.size());
+
+        ImGui::Separator();
+        ImGui::Text("Total VRAM");
+        ImGui::ProgressBar(totalVRAM / maxVRAM, ImVec2(-1, 0));
+        ImGui::SameLine();
+        ImGui::Text("%.0f / %.0f MB", totalVRAM, maxVRAM);
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Text("System RAM");
+        ImGui::ProgressBar(systemRAM / maxSystemRAM, ImVec2(-1, 0));
+        ImGui::SameLine();
+        ImGui::Text("%.1f / %.0f GB", systemRAM / 1000.0f, maxSystemRAM / 1000.0f);
+    }
+    ImGui::End();
+}
+
+void StandaloneEditor::RenderTimeDistribution() {
+    if (!m_showRenderTime && !m_showUpdateTime && !m_showPhysicsTime) return;
+
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 260, ImGui::GetIO().DisplaySize.y - 180), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(250, 170), ImGuiCond_FirstUseEver);
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize;
+    if (ImGui::Begin("Time Distribution", nullptr, flags)) {
+        ImGui::TextColored(ImVec4(0.95f, 0.95f, 0.98f, 1.0f), "Frame Breakdown");
+        ImGui::Separator();
+
+        // Placeholder values - will be replaced with actual profiling data
+        float renderMs = 8.2f;
+        float updateMs = 3.1f;
+        float physicsMs = 1.3f;
+        float totalMs = renderMs + updateMs + physicsMs;
+
+        float renderPercent = (renderMs / totalMs) * 100.0f;
+        float updatePercent = (updateMs / totalMs) * 100.0f;
+        float physicsPercent = (physicsMs / totalMs) * 100.0f;
+
+        auto GetTimeColor = [](float ms) -> ImVec4 {
+            if (ms < 16.0f) return ImVec4(0.0f, 0.8f, 0.2f, 1.0f);      // Green - good
+            else if (ms < 33.0f) return ImVec4(0.9f, 0.9f, 0.0f, 1.0f); // Yellow - warning
+            else return ImVec4(0.9f, 0.1f, 0.1f, 1.0f);                 // Red - bad
+        };
+
+        if (m_showRenderTime) {
+            ImGui::TextColored(GetTimeColor(renderMs), "Render:");
+            ImGui::SameLine(80);
+            ImGui::Text("%.1f ms (%.0f%%)", renderMs, renderPercent);
+        }
+
+        if (m_showUpdateTime) {
+            ImGui::TextColored(GetTimeColor(updateMs), "Update:");
+            ImGui::SameLine(80);
+            ImGui::Text("%.1f ms (%.0f%%)", updateMs, updatePercent);
+        }
+
+        if (m_showPhysicsTime) {
+            ImGui::TextColored(GetTimeColor(physicsMs), "Physics:");
+            ImGui::SameLine(80);
+            ImGui::Text("%.1f ms (%.0f%%)", physicsMs, physicsPercent);
+        }
+
+        ImGui::Separator();
+        ImGui::TextColored(GetTimeColor(totalMs), "Total:");
+        ImGui::SameLine(80);
+        ImGui::Text("%.1f ms", totalMs);
+    }
+    ImGui::End();
+}

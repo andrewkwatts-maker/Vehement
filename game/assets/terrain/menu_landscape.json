@@ -1,0 +1,633 @@
+{
+  "version": "1.0",
+  "name": "Cinematic Fantasy Landscape",
+  "description": "Procedurally generated terrain for RTS main menu background with painterly atmospheric perspective",
+
+  "camera": {
+    "position": [-2.0, 4.5, 8.0],
+    "target": [-4.0, 2.0, 3.0],
+    "fov": 52.0,
+    "comment": "Cinematic angle focused on hero position"
+  },
+
+  "hero_platform": {
+    "position": [-4.0, 0.0, 3.0],
+    "radius": 2.5,
+    "height": 0.0,
+    "flatten_radius": 3.0,
+    "comment": "Flat area for hero to stand, seamlessly blended into terrain"
+  },
+
+  "world": {
+    "size": 500.0,
+    "resolution": 1024,
+    "heightScale": 60.0,
+    "seed": 42873,
+    "lodLevels": 5,
+    "lodDistances": [50.0, 100.0, 200.0, 350.0, 500.0]
+  },
+
+  "terrain_generation": {
+    "comment": "Multi-layer terrain generation using procedural nodes",
+
+    "base_terrain": {
+      "type": "PerlinNoise",
+      "frequency": 0.003,
+      "octaves": 6,
+      "persistence": 0.52,
+      "lacunarity": 2.1,
+      "amplitude": 25.0,
+      "offset": 0.0,
+      "description": "Base rolling hills with gentle undulation"
+    },
+
+    "mountain_layer": {
+      "type": "RidgeNoise",
+      "frequency": 0.0012,
+      "octaves": 5,
+      "persistence": 0.45,
+      "lacunarity": 2.3,
+      "amplitude": 45.0,
+      "sharpness": 0.7,
+      "offset": 0.3,
+      "distance_falloff": {
+        "center": [-150.0, 0.0],
+        "max_distance": 400.0,
+        "falloff_power": 1.8
+      },
+      "description": "Distant mountain ranges with sharp peaks"
+    },
+
+    "detail_layer": {
+      "type": "SimplexNoise",
+      "frequency": 0.025,
+      "octaves": 4,
+      "persistence": 0.6,
+      "lacunarity": 2.0,
+      "amplitude": 3.5,
+      "offset": 0.0,
+      "description": "Fine detail for natural terrain variation"
+    },
+
+    "valley_carving": {
+      "type": "Voronoi",
+      "scale": 0.008,
+      "randomness": 0.85,
+      "amplitude": -8.0,
+      "blend_mode": "subtract",
+      "mask_strength": 0.6,
+      "description": "Valleys and natural drainage patterns"
+    },
+
+    "erosion": {
+      "hydraulic": {
+        "enabled": true,
+        "iterations": 50000,
+        "rainAmount": 0.008,
+        "evaporation": 0.015,
+        "sedimentCapacity": 3.5,
+        "erosionStrength": 0.25,
+        "depositionStrength": 0.2,
+        "description": "Natural water erosion for realistic valleys and streams"
+      },
+      "thermal": {
+        "enabled": true,
+        "iterations": 5000,
+        "talusAngle": 42.0,
+        "strength": 0.15,
+        "description": "Slope-based erosion for realistic rock faces"
+      }
+    },
+
+    "hero_platform_carving": {
+      "enabled": true,
+      "type": "radial_flatten",
+      "center": [-4.0, 3.0],
+      "inner_radius": 2.5,
+      "outer_radius": 4.5,
+      "target_height": 0.0,
+      "blend_curve": "smoothstep",
+      "description": "Carve flat platform for hero, smoothly blended"
+    }
+  },
+
+  "features": {
+    "path": {
+      "enabled": true,
+      "type": "spline",
+      "width": 1.2,
+      "points": [
+        [-4.0, 3.0],
+        [-8.0, -2.0],
+        [-15.0, -8.0],
+        [-25.0, -15.0]
+      ],
+      "height_offset": 0.1,
+      "smoothness": 0.9,
+      "description": "Winding path leading from hero position into distance"
+    },
+
+    "rocks": {
+      "enabled": true,
+      "placement_rules": {
+        "density": 0.015,
+        "min_slope": 15.0,
+        "max_slope": 65.0,
+        "height_range": [2.0, 45.0],
+        "cluster_size": 3.5,
+        "cluster_probability": 0.4
+      },
+      "variations": [
+        {
+          "type": "boulder_large",
+          "scale_range": [0.8, 2.5],
+          "weight": 0.3
+        },
+        {
+          "type": "boulder_medium",
+          "scale_range": [0.4, 1.2],
+          "weight": 0.5
+        },
+        {
+          "type": "rock_small",
+          "scale_range": [0.2, 0.6],
+          "weight": 0.2
+        }
+      ]
+    },
+
+    "vegetation": {
+      "enabled": true,
+      "grass_clusters": {
+        "density": 0.08,
+        "min_slope": 0.0,
+        "max_slope": 35.0,
+        "height_range": [-5.0, 25.0],
+        "scale_variation": [0.6, 1.4],
+        "color_variation": 0.15
+      },
+      "tree_clusters": {
+        "density": 0.012,
+        "min_slope": 0.0,
+        "max_slope": 30.0,
+        "height_range": [-2.0, 20.0],
+        "cluster_size": 5.0,
+        "cluster_probability": 0.6,
+        "types": [
+          {"name": "pine", "weight": 0.4},
+          {"name": "oak", "weight": 0.35},
+          {"name": "birch", "weight": 0.25}
+        ]
+      },
+      "bushes": {
+        "density": 0.025,
+        "min_slope": 0.0,
+        "max_slope": 40.0,
+        "height_range": [-3.0, 22.0],
+        "scale_range": [0.5, 1.5]
+      }
+    },
+
+    "water": {
+      "enabled": true,
+      "river": {
+        "enabled": false,
+        "comment": "Disabled for menu scene - can be enabled for gameplay"
+      },
+      "lake": {
+        "enabled": true,
+        "position": [-45.0, -20.0],
+        "water_level": -1.5,
+        "radius": 25.0,
+        "shore_blend": 3.0,
+        "depth_max": 8.0,
+        "description": "Distant lake in mid-ground, adds depth"
+      }
+    }
+  },
+
+  "materials": {
+    "comment": "Painterly color palette with atmospheric perspective",
+
+    "color_layers": [
+      {
+        "name": "foreground_grass",
+        "height_range": [-5.0, 15.0],
+        "slope_range": [0.0, 25.0],
+        "distance_range": [0.0, 50.0],
+        "base_color": [0.25, 0.55, 0.20],
+        "shadow_color": [0.12, 0.28, 0.10],
+        "highlight_color": [0.45, 0.75, 0.35],
+        "detail_scale": 0.8,
+        "saturation": 1.0,
+        "description": "Rich, saturated green for nearby grass"
+      },
+      {
+        "name": "foreground_dirt",
+        "height_range": [-5.0, 15.0],
+        "slope_range": [25.0, 90.0],
+        "distance_range": [0.0, 50.0],
+        "base_color": [0.42, 0.32, 0.22],
+        "shadow_color": [0.20, 0.15, 0.10],
+        "highlight_color": [0.65, 0.52, 0.38],
+        "detail_scale": 0.9,
+        "saturation": 0.85
+      },
+      {
+        "name": "midground_grass",
+        "height_range": [-5.0, 25.0],
+        "slope_range": [0.0, 30.0],
+        "distance_range": [50.0, 150.0],
+        "base_color": [0.28, 0.52, 0.25],
+        "shadow_color": [0.15, 0.30, 0.15],
+        "highlight_color": [0.42, 0.68, 0.38],
+        "detail_scale": 0.6,
+        "saturation": 0.75,
+        "blue_shift": 0.08,
+        "description": "Slightly desaturated, blue-shifted for distance"
+      },
+      {
+        "name": "mountain_rock",
+        "height_range": [25.0, 100.0],
+        "slope_range": [35.0, 90.0],
+        "distance_range": [0.0, 500.0],
+        "base_color": [0.45, 0.42, 0.38],
+        "shadow_color": [0.18, 0.18, 0.20],
+        "highlight_color": [0.72, 0.68, 0.60],
+        "detail_scale": 0.7,
+        "saturation": 0.5
+      },
+      {
+        "name": "distant_mountains",
+        "height_range": [15.0, 100.0],
+        "slope_range": [0.0, 90.0],
+        "distance_range": [150.0, 500.0],
+        "base_color": [0.52, 0.58, 0.68],
+        "shadow_color": [0.28, 0.32, 0.42],
+        "highlight_color": [0.75, 0.78, 0.85],
+        "detail_scale": 0.3,
+        "saturation": 0.35,
+        "blue_shift": 0.25,
+        "description": "Blue-grey atmospheric haze for distant peaks"
+      },
+      {
+        "name": "snow_peaks",
+        "height_range": [45.0, 100.0],
+        "slope_range": [0.0, 45.0],
+        "distance_range": [0.0, 500.0],
+        "base_color": [0.92, 0.94, 0.98],
+        "shadow_color": [0.68, 0.72, 0.82],
+        "highlight_color": [0.98, 0.99, 1.00],
+        "detail_scale": 0.5,
+        "saturation": 0.15,
+        "blue_shift": 0.15,
+        "description": "Snow on highest peaks"
+      },
+      {
+        "name": "path",
+        "special": "path_material",
+        "base_color": [0.38, 0.35, 0.28],
+        "shadow_color": [0.18, 0.16, 0.12],
+        "highlight_color": [0.55, 0.50, 0.42],
+        "detail_scale": 1.0,
+        "saturation": 0.6
+      },
+      {
+        "name": "water",
+        "special": "water_material",
+        "base_color": [0.15, 0.32, 0.45],
+        "shadow_color": [0.08, 0.18, 0.28],
+        "highlight_color": [0.65, 0.78, 0.88],
+        "detail_scale": 0.0,
+        "saturation": 0.8,
+        "reflectivity": 0.6,
+        "transparency": 0.3
+      }
+    ],
+
+    "blend_rules": {
+      "height_blend": 2.5,
+      "slope_blend": 5.0,
+      "distance_blend": 10.0,
+      "noise_variation": 0.15
+    }
+  },
+
+  "atmospheric_perspective": {
+    "enabled": true,
+    "comment": "Key to cinematic painterly look - desaturation and color shift with distance",
+
+    "distance_fog": {
+      "enabled": true,
+      "color": [0.68, 0.75, 0.88],
+      "density": 0.0015,
+      "start_distance": 80.0,
+      "end_distance": 400.0,
+      "height_falloff": 0.03,
+      "description": "Blue-tinted atmospheric haze"
+    },
+
+    "color_grading": {
+      "distance_desaturation": {
+        "start": 50.0,
+        "end": 300.0,
+        "amount": 0.7,
+        "curve": "smoothstep"
+      },
+      "distance_blue_shift": {
+        "start": 50.0,
+        "end": 300.0,
+        "amount": 0.3,
+        "target_hue": 210.0,
+        "curve": "smoothstep"
+      },
+      "distance_value_shift": {
+        "start": 100.0,
+        "end": 400.0,
+        "amount": 0.15,
+        "direction": "lighter",
+        "curve": "linear"
+      }
+    },
+
+    "detail_reduction": {
+      "enabled": true,
+      "near_detail": 1.0,
+      "far_detail": 0.15,
+      "transition_start": 60.0,
+      "transition_end": 250.0,
+      "description": "Reduce texture detail and normal strength with distance"
+    },
+
+    "aerial_perspective": {
+      "enabled": true,
+      "scattering_color": [0.72, 0.80, 0.95],
+      "scattering_strength": 0.4,
+      "height_influence": 0.6,
+      "description": "Light scattering effect for distant mountains"
+    }
+  },
+
+  "lighting": {
+    "comment": "Match hero lighting for visual consistency",
+
+    "primary_light": {
+      "type": "directional",
+      "direction": [-0.4, -1.1, -0.6],
+      "color": [1.0, 0.92, 0.78],
+      "intensity": 1.2,
+      "description": "Golden afternoon/evening light"
+    },
+
+    "ambient": {
+      "color": [0.55, 0.62, 0.75],
+      "intensity": 0.42,
+      "description": "Cool blue ambient from sky"
+    },
+
+    "rim_light": {
+      "enabled": true,
+      "direction": [0.3, 0.8, 0.4],
+      "color": [0.95, 0.88, 0.72],
+      "intensity": 0.6,
+      "power": 3.0,
+      "description": "Subtle rim lighting on mountain peaks and hills"
+    },
+
+    "shadows": {
+      "enabled": true,
+      "cascade_count": 4,
+      "cascade_distances": [20.0, 60.0, 150.0, 400.0],
+      "softness": 0.7,
+      "bias": 0.002,
+      "description": "Soft shadows for realistic depth"
+    },
+
+    "ambient_occlusion": {
+      "enabled": true,
+      "radius": 2.5,
+      "strength": 0.8,
+      "samples": 16,
+      "description": "Contact shadows in valleys and crevices"
+    }
+  },
+
+  "post_processing": {
+    "comment": "Cinematic color grading for fantasy atmosphere",
+
+    "color_grading": {
+      "exposure": 1.05,
+      "contrast": 1.15,
+      "saturation": 1.08,
+      "gamma": 1.0,
+      "temperature": 15,
+      "tint": -5,
+      "description": "Warm, slightly oversaturated fantasy look"
+    },
+
+    "tone_mapping": {
+      "type": "filmic",
+      "shoulder_strength": 0.22,
+      "linear_strength": 0.30,
+      "linear_angle": 0.10,
+      "toe_strength": 0.20,
+      "toe_numerator": 0.01,
+      "toe_denominator": 0.30,
+      "white_point": 11.2
+    },
+
+    "depth_of_field": {
+      "enabled": true,
+      "focus_distance": 12.0,
+      "focus_range": 8.0,
+      "bokeh_size": 2.5,
+      "quality": "medium",
+      "description": "Subtle DoF to draw attention to hero area"
+    },
+
+    "bloom": {
+      "enabled": true,
+      "threshold": 0.85,
+      "intensity": 0.35,
+      "radius": 4.0,
+      "description": "Gentle bloom on highlights"
+    },
+
+    "vignette": {
+      "enabled": true,
+      "intensity": 0.25,
+      "smoothness": 0.6,
+      "color": [0.02, 0.02, 0.05]
+    }
+  },
+
+  "performance": {
+    "sdf_terrain": {
+      "enabled": true,
+      "resolution": 512,
+      "world_size": 500.0,
+      "max_height": 60.0,
+      "octree_levels": 6,
+      "use_octree": true,
+      "sparse_storage": true
+    },
+
+    "lod": {
+      "enabled": true,
+      "num_levels": 5,
+      "distances": [50.0, 100.0, 200.0, 350.0, 500.0],
+      "triangle_reduction": [1.0, 0.5, 0.25, 0.1, 0.05],
+      "detail_fade": [1.0, 0.8, 0.5, 0.25, 0.1]
+    },
+
+    "occlusion_culling": {
+      "enabled": true,
+      "hiz_resolution": 1024,
+      "cull_vegetation": true,
+      "cull_rocks": true
+    },
+
+    "streaming": {
+      "enabled": false,
+      "comment": "Static menu scene - no streaming needed"
+    }
+  },
+
+  "visual_scripting_graph": {
+    "comment": "Node graph definition for procedural generation pipeline",
+    "nodes": [
+      {
+        "id": "noise_base",
+        "type": "PerlinNoise",
+        "position": [100, 100],
+        "parameters": {
+          "frequency": 0.003,
+          "octaves": 6,
+          "persistence": 0.52,
+          "lacunarity": 2.1
+        }
+      },
+      {
+        "id": "noise_mountains",
+        "type": "Ridge",
+        "position": [100, 250],
+        "parameters": {
+          "sharpness": 0.7,
+          "offset": 0.3
+        }
+      },
+      {
+        "id": "noise_detail",
+        "type": "SimplexNoise",
+        "position": [100, 400],
+        "parameters": {
+          "frequency": 0.025,
+          "octaves": 4,
+          "persistence": 0.6,
+          "lacunarity": 2.0
+        }
+      },
+      {
+        "id": "blend_1",
+        "type": "Blend",
+        "position": [400, 175],
+        "parameters": {
+          "blend": 0.6,
+          "blendMode": "add"
+        }
+      },
+      {
+        "id": "blend_2",
+        "type": "Blend",
+        "position": [550, 250],
+        "parameters": {
+          "blend": 0.3,
+          "blendMode": "add"
+        }
+      },
+      {
+        "id": "erosion_hydraulic",
+        "type": "HydraulicErosion",
+        "position": [700, 200],
+        "parameters": {
+          "iterations": 50000,
+          "rainAmount": 0.008,
+          "evaporation": 0.015,
+          "sedimentCapacity": 3.5,
+          "erosionStrength": 0.25,
+          "depositionStrength": 0.2
+        }
+      },
+      {
+        "id": "erosion_thermal",
+        "type": "ThermalErosion",
+        "position": [850, 200],
+        "parameters": {
+          "iterations": 5000,
+          "talusAngle": 42.0,
+          "strength": 0.15
+        }
+      },
+      {
+        "id": "slope_map",
+        "type": "Slope",
+        "position": [1000, 100],
+        "parameters": {
+          "scale": 1.0
+        }
+      },
+      {
+        "id": "vegetation",
+        "type": "VegetationPlacement",
+        "position": [1150, 50],
+        "parameters": {
+          "density": 0.08,
+          "minSlope": 0.0,
+          "maxSlope": 35.0
+        }
+      },
+      {
+        "id": "rocks",
+        "type": "ResourcePlacement",
+        "position": [1150, 200],
+        "parameters": {
+          "resourceType": "rocks",
+          "density": 0.015,
+          "minSlope": 15.0,
+          "maxSlope": 65.0,
+          "clusterSize": 3.5
+        }
+      },
+      {
+        "id": "output",
+        "type": "Output",
+        "position": [1300, 200]
+      }
+    ],
+    "connections": [
+      {"from": "noise_base.value", "to": "blend_1.inputA"},
+      {"from": "noise_mountains.ridgedHeightmap", "to": "blend_1.inputB"},
+      {"from": "blend_1.result", "to": "blend_2.inputA"},
+      {"from": "noise_detail.value", "to": "blend_2.inputB"},
+      {"from": "blend_2.result", "to": "erosion_hydraulic.heightmap"},
+      {"from": "erosion_hydraulic.erodedHeightmap", "to": "erosion_thermal.heightmap"},
+      {"from": "erosion_thermal.erodedHeightmap", "to": "slope_map.heightmap"},
+      {"from": "erosion_thermal.erodedHeightmap", "to": "output.heightmap"},
+      {"from": "slope_map.slopeMap", "to": "vegetation.heightmap"},
+      {"from": "slope_map.slopeMap", "to": "rocks.heightmap"},
+      {"from": "vegetation.vegetationMap", "to": "output.vegetation"},
+      {"from": "rocks.resourceMap", "to": "output.details"}
+    ]
+  },
+
+  "metadata": {
+    "author": "Claude AI",
+    "created": "2025-12-05",
+    "version": "1.0",
+    "engine_version": "Nova 0.1",
+    "target_fps": 60,
+    "target_platform": "PC",
+    "estimated_memory_mb": 256,
+    "generation_time_estimate_ms": 2500
+  }
+}

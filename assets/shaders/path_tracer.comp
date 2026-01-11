@@ -1,0 +1,476 @@
+#version 460 core
+
+// ============================================================================
+// Path Tracer Compute Shader - Physically Based Rendering
+// Features: Multiple bounces, refraction, dispersion, caustics
+// Target: 120 FPS @ 1080p with 1-2 SPP + temporal accumulation
+// ============================================================================
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Output images
+layout(rgba32f, binding = 0) uniform image2D u_outputImage;
+layout(rgba32f, binding = 1) uniform image2D u_accumulationBuffer;
+layout(rgba32f, binding = 2) uniform image2D u_albedoBuffer;    // For denoising
+layout(rgba32f, binding = 3) uniform image2D u_normalBuffer;    // For denoising
+layout(r32f, binding = 4) uniform image2D u_depthBuffer;        // For denoising
+
+// Camera uniforms
+uniform mat4 u_invViewProj;
+uniform vec3 u_cameraPos;
+uniform vec3 u_cameraDir;
+uniform float u_fov;
+
+// Render settings
+uniform int u_frameCount;
+uniform int u_maxBounces;
+uniform int u_samplesPerPixel;
+uniform bool u_enableDispersion;
+uniform bool u_enableReSTIR;
+uniform vec3 u_envColor;
+uniform float u_time;
+
+// Scene data - SDF primitives
+struct SDFPrimitive {
+    vec4 positionRadius;     // xyz = position, w = radius/size
+    vec4 color;              // rgb + alpha
+    vec4 materialProps;      // x = type, y = roughness, z = metallic, w = ior
+    vec4 dispersionProps;    // x = cauchyB, y = cauchyC, z/w = unused
+    mat4 transform;
+    mat4 inverseTransform;
+};
+
+layout(std430, binding = 0) buffer SDFBuffer {
+    SDFPrimitive primitives[];
+};
+
+uniform int u_primitiveCount;
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const float PI = 3.14159265359;
+const float TWO_PI = 6.28318530718;
+const float INV_PI = 0.31830988618;
+const float EPSILON = 0.001;
+const float MAX_DIST = 100.0;
+const int MAX_STEPS = 128;
+
+// Material types
+const int MAT_DIFFUSE = 0;
+const int MAT_METAL = 1;
+const int MAT_DIELECTRIC = 2;
+const int MAT_EMISSIVE = 3;
+
+// ============================================================================
+// Random Number Generation (PCG Hash)
+// ============================================================================
+
+uint g_seed;
+
+uint pcg_hash(uint seed) {
+    uint state = seed * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+void initRandom(uvec2 pixelCoord, int frame) {
+    g_seed = pixelCoord.x + pixelCoord.y * 1920u + uint(frame) * 719393u;
+}
+
+float random01() {
+    g_seed = pcg_hash(g_seed);
+    return float(g_seed) / 4294967296.0;
+}
+
+vec2 random2D() {
+    return vec2(random01(), random01());
+}
+
+vec3 randomInUnitSphere() {
+    for (int i = 0; i < 10; i++) {
+        vec3 p = vec3(random01(), random01(), random01()) * 2.0 - 1.0;
+        if (dot(p, p) < 1.0) return p;
+    }
+    return vec3(0.0, 1.0, 0.0);
+}
+
+vec3 randomUnitVector() {
+    return normalize(randomInUnitSphere());
+}
+
+vec3 randomInHemisphere(vec3 normal) {
+    vec3 inUnitSphere = randomInUnitSphere();
+    return dot(inUnitSphere, normal) > 0.0 ? inUnitSphere : -inUnitSphere;
+}
+
+float randomWavelength() {
+    return 380.0 + random01() * 400.0; // 380-780nm (visible spectrum)
+}
+
+// ============================================================================
+// Wavelength to RGB Conversion
+// ============================================================================
+
+vec3 wavelengthToRGB(float wavelength) {
+    float r = 0.0, g = 0.0, b = 0.0;
+
+    if (wavelength >= 380.0 && wavelength < 440.0) {
+        r = -(wavelength - 440.0) / (440.0 - 380.0);
+        b = 1.0;
+    } else if (wavelength >= 440.0 && wavelength < 490.0) {
+        g = (wavelength - 440.0) / (490.0 - 440.0);
+        b = 1.0;
+    } else if (wavelength >= 490.0 && wavelength < 510.0) {
+        g = 1.0;
+        b = -(wavelength - 510.0) / (510.0 - 490.0);
+    } else if (wavelength >= 510.0 && wavelength < 580.0) {
+        r = (wavelength - 510.0) / (580.0 - 510.0);
+        g = 1.0;
+    } else if (wavelength >= 580.0 && wavelength < 645.0) {
+        r = 1.0;
+        g = -(wavelength - 645.0) / (645.0 - 580.0);
+    } else if (wavelength >= 645.0 && wavelength <= 780.0) {
+        r = 1.0;
+    }
+
+    // Intensity fall-off near vision limits
+    float factor = 1.0;
+    if (wavelength >= 380.0 && wavelength < 420.0) {
+        factor = 0.3 + 0.7 * (wavelength - 380.0) / (420.0 - 380.0);
+    } else if (wavelength >= 700.0 && wavelength <= 780.0) {
+        factor = 0.3 + 0.7 * (780.0 - wavelength) / (780.0 - 700.0);
+    }
+
+    return vec3(r, g, b) * factor;
+}
+
+// ============================================================================
+// IOR with Dispersion (Cauchy's Equation)
+// ============================================================================
+
+float getIOR(float baseIOR, float cauchyB, float wavelength) {
+    // n(λ) = A + B/λ²
+    // wavelength in micrometers
+    float lambda = wavelength / 1000.0;
+    return baseIOR + cauchyB / (lambda * lambda);
+}
+
+// ============================================================================
+// SDF Evaluation
+// ============================================================================
+
+float sdSphere(vec3 p, float radius) {
+    return length(p) - radius;
+}
+
+float sdBox(vec3 p, vec3 size) {
+    vec3 q = abs(p) - size;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+float sdTorus(vec3 p, float majorRadius, float minorRadius) {
+    vec2 q = vec2(length(p.xz) - majorRadius, p.y);
+    return length(q) - minorRadius;
+}
+
+// Scene SDF evaluation
+struct HitInfo {
+    float dist;
+    int primitiveIndex;
+    vec3 color;
+    vec4 materialProps;
+    vec4 dispersionProps;
+};
+
+HitInfo sceneSDF(vec3 p) {
+    HitInfo hit;
+    hit.dist = MAX_DIST;
+    hit.primitiveIndex = -1;
+
+    for (int i = 0; i < u_primitiveCount; i++) {
+        // Transform point to local space
+        vec3 localP = (primitives[i].inverseTransform * vec4(p, 1.0)).xyz;
+
+        // Evaluate SDF (sphere for now)
+        float d = sdSphere(localP, primitives[i].positionRadius.w);
+
+        if (d < hit.dist) {
+            hit.dist = d;
+            hit.primitiveIndex = i;
+            hit.color = primitives[i].color.rgb;
+            hit.materialProps = primitives[i].materialProps;
+            hit.dispersionProps = primitives[i].dispersionProps;
+        }
+    }
+
+    return hit;
+}
+
+// Calculate normal using gradient
+vec3 calculateNormal(vec3 p) {
+    const float h = 0.0001;
+    vec2 k = vec2(1, -1);
+    return normalize(
+        k.xyy * sceneSDF(p + k.xyy * h).dist +
+        k.yyx * sceneSDF(p + k.yyx * h).dist +
+        k.yxy * sceneSDF(p + k.yxy * h).dist +
+        k.xxx * sceneSDF(p + k.xxx * h).dist
+    );
+}
+
+// ============================================================================
+// Raymarching
+// ============================================================================
+
+struct RayHit {
+    bool hit;
+    vec3 point;
+    vec3 normal;
+    float dist;
+    vec3 color;
+    vec4 materialProps;
+    vec4 dispersionProps;
+    bool frontFace;
+};
+
+RayHit raymarch(vec3 origin, vec3 dir) {
+    RayHit result;
+    result.hit = false;
+
+    float t = 0.0;
+    for (int step = 0; step < MAX_STEPS; step++) {
+        vec3 p = origin + dir * t;
+        HitInfo hit = sceneSDF(p);
+
+        if (hit.dist < EPSILON) {
+            result.hit = true;
+            result.point = p;
+            result.normal = calculateNormal(p);
+            result.dist = t;
+            result.color = hit.color;
+            result.materialProps = hit.materialProps;
+            result.dispersionProps = hit.dispersionProps;
+            result.frontFace = dot(dir, result.normal) < 0.0;
+            if (!result.frontFace) {
+                result.normal = -result.normal;
+            }
+            return result;
+        }
+
+        if (t > MAX_DIST) break;
+        t += hit.dist;
+    }
+
+    return result;
+}
+
+// ============================================================================
+// Fresnel and Refraction
+// ============================================================================
+
+// Schlick's approximation
+float schlick(float cosine, float ior) {
+    float r0 = (1.0 - ior) / (1.0 + ior);
+    r0 = r0 * r0;
+    return r0 + (1.0 - r0) * pow(1.0 - cosine, 5.0);
+}
+
+// Snell's law refraction
+vec3 refract_custom(vec3 v, vec3 n, float etai_over_etat) {
+    float cos_theta = min(dot(-v, n), 1.0);
+    vec3 r_out_perp = etai_over_etat * (v + cos_theta * n);
+    vec3 r_out_parallel = -sqrt(abs(1.0 - dot(r_out_perp, r_out_perp))) * n;
+    return r_out_perp + r_out_parallel;
+}
+
+// ============================================================================
+// Path Tracing
+// ============================================================================
+
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+    float wavelength;
+};
+
+vec3 trace(Ray ray) {
+    vec3 throughput = vec3(1.0);
+    vec3 radiance = vec3(0.0);
+
+    // G-buffer for first hit (denoising)
+    vec3 firstAlbedo = vec3(0.0);
+    vec3 firstNormal = vec3(0.0);
+    float firstDepth = 0.0;
+
+    for (int bounce = 0; bounce < u_maxBounces; bounce++) {
+        RayHit hit = raymarch(ray.origin, ray.direction);
+
+        if (!hit.hit) {
+            // Sky contribution
+            float t = 0.5 * (ray.direction.y + 1.0);
+            vec3 skyColor = mix(vec3(1.0), u_envColor, t);
+            radiance += throughput * skyColor;
+            break;
+        }
+
+        // Store G-buffer on first bounce
+        if (bounce == 0) {
+            firstAlbedo = hit.color;
+            firstNormal = hit.normal * 0.5 + 0.5; // Encode to [0,1]
+            firstDepth = hit.dist;
+        }
+
+        int matType = int(hit.materialProps.x);
+        float roughness = hit.materialProps.y;
+        float metallic = hit.materialProps.z;
+        float ior = hit.materialProps.w;
+
+        // Emissive materials
+        if (matType == MAT_EMISSIVE) {
+            radiance += throughput * hit.color * 10.0;
+            break;
+        }
+
+        // Scatter ray based on material type
+        vec3 newOrigin;
+        vec3 newDir;
+
+        if (matType == MAT_DIFFUSE) {
+            // Lambertian diffuse
+            newOrigin = hit.point + hit.normal * EPSILON;
+            newDir = normalize(hit.normal + randomUnitVector());
+            throughput *= hit.color;
+
+            // Add ambient
+            radiance += throughput * hit.color * 0.05;
+
+        } else if (matType == MAT_METAL) {
+            // Specular reflection with roughness
+            vec3 reflected = reflect(ray.direction, hit.normal);
+            newOrigin = hit.point + hit.normal * EPSILON;
+            newDir = normalize(reflected + roughness * randomInUnitSphere());
+
+            if (dot(newDir, hit.normal) <= 0.0) {
+                break; // Absorbed
+            }
+
+            throughput *= hit.color * (1.0 - roughness * 0.5);
+
+        } else if (matType == MAT_DIELECTRIC) {
+            // Glass/water with refraction and dispersion
+            float actualIOR = ior;
+
+            // Apply dispersion
+            if (u_enableDispersion) {
+                float cauchyB = hit.dispersionProps.x;
+                actualIOR = getIOR(ior, cauchyB, ray.wavelength);
+            }
+
+            float etai_over_etat = hit.frontFace ? (1.0 / actualIOR) : actualIOR;
+
+            vec3 unitDir = normalize(ray.direction);
+            float cos_theta = min(dot(-unitDir, hit.normal), 1.0);
+            float sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+
+            bool cannotRefract = etai_over_etat * sin_theta > 1.0;
+
+            if (cannotRefract || schlick(cos_theta, etai_over_etat) > random01()) {
+                // Reflect
+                newDir = reflect(unitDir, hit.normal);
+                newOrigin = hit.point + hit.normal * EPSILON;
+            } else {
+                // Refract
+                newDir = refract_custom(unitDir, hit.normal, etai_over_etat);
+                newOrigin = hit.point - hit.normal * EPSILON;
+            }
+
+            throughput *= vec3(0.95); // Slight absorption
+        }
+
+        // Russian roulette path termination
+        if (bounce > 3) {
+            float p = max(throughput.r, max(throughput.g, throughput.b));
+            if (random01() > p) break;
+            throughput /= p;
+        }
+
+        ray.origin = newOrigin;
+        ray.direction = newDir;
+    }
+
+    return radiance;
+}
+
+// ============================================================================
+// Main
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 resolution = vec2(imageSize(u_outputImage));
+
+    if (pixelCoord.x >= resolution.x || pixelCoord.y >= resolution.y) {
+        return;
+    }
+
+    // Initialize RNG
+    initRandom(uvec2(pixelCoord), u_frameCount);
+
+    vec3 color = vec3(0.0);
+    vec3 albedo = vec3(0.0);
+    vec3 normal = vec3(0.0);
+    float depth = 0.0;
+
+    for (int s = 0; s < u_samplesPerPixel; s++) {
+        // Jittered pixel sampling
+        vec2 jitter = random2D() - 0.5;
+        vec2 uv = (vec2(pixelCoord) + jitter + 0.5) / resolution;
+        uv = uv * 2.0 - 1.0;
+        uv.y = -uv.y; // Flip Y
+
+        // Generate ray from camera
+        vec4 clipPos = vec4(uv, -1.0, 1.0);
+        vec4 viewPos = u_invViewProj * clipPos;
+        vec3 worldPos = viewPos.xyz / viewPos.w;
+
+        Ray ray;
+        ray.origin = u_cameraPos;
+        ray.direction = normalize(worldPos - u_cameraPos);
+        ray.wavelength = u_enableDispersion ? randomWavelength() : 550.0;
+
+        vec3 radiance = trace(ray);
+
+        // Apply wavelength to RGB conversion if using dispersion
+        if (u_enableDispersion) {
+            radiance *= wavelengthToRGB(ray.wavelength);
+        }
+
+        color += radiance;
+    }
+
+    color /= float(u_samplesPerPixel);
+
+    // Temporal accumulation
+    if (u_frameCount > 0) {
+        vec3 prevColor = imageLoad(u_accumulationBuffer, pixelCoord).rgb;
+        float blend = 1.0 / float(u_frameCount + 1);
+        color = mix(prevColor, color, blend);
+    }
+
+    // Store accumulated color
+    imageStore(u_accumulationBuffer, pixelCoord, vec4(color, 1.0));
+
+    // Tone mapping (Reinhard) and gamma correction
+    vec3 finalColor = color / (color + vec3(1.0));
+    finalColor = pow(finalColor, vec3(1.0 / 2.2));
+
+    // Store final output
+    imageStore(u_outputImage, pixelCoord, vec4(finalColor, 1.0));
+
+    // Store G-buffer (for denoising)
+    imageStore(u_albedoBuffer, pixelCoord, vec4(albedo, 1.0));
+    imageStore(u_normalBuffer, pixelCoord, vec4(normal, 1.0));
+    imageStore(u_depthBuffer, pixelCoord, vec4(depth));
+}

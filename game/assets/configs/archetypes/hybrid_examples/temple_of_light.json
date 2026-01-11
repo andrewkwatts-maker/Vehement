@@ -1,0 +1,134 @@
+{
+  "$schema": "../archetype_schema.json",
+  "id": "temple_of_light",
+  "name": "Temple of Light",
+  "description": "Holy building that trains priests, generates mana, and provides protective aura",
+  "type": "building",
+
+  "parentArchetypes": [
+    "spawner_building",
+    "resource_building"
+  ],
+
+  "behaviors": [
+    {
+      "type": "SpawnerBehavior",
+      "config": {
+        "spawnableUnits": [
+          "priest",
+          "paladin",
+          "cleric"
+        ],
+        "queueSize": 5,
+        "canTrainMultiple": false,
+        "rallyPoint": [0, 0, 0],
+        "spawnOffset": [3, 0, 0]
+      }
+    },
+    {
+      "type": "ResourceGenerationBehavior",
+      "config": {
+        "generationRates": {
+          "mana": 1.0,
+          "faith": 0.5
+        },
+        "storageCapacity": {
+          "mana": 500.0,
+          "faith": 100.0
+        },
+        "requiresWorkers": false
+      }
+    },
+    {
+      "type": "BuildingAuraBehavior",
+      "config": {
+        "auraName": "Divine Protection",
+        "radius": 15.0,
+        "affectsAllies": true,
+        "affectsEnemies": false,
+        "requiresPower": true,
+        "statModifiers": {
+          "armor": 3.0,
+          "magicResist": 25.0,
+          "healthRegen": 1.0
+        },
+        "grantedAbilities": [],
+        "visualEffect": "golden_light_rays",
+        "description": "+3 armor, +25% magic resist, +1 HP/s to nearby allies"
+      }
+    },
+    {
+      "type": "DefenseBehavior",
+      "config": {
+        "armor": 8.0,
+        "healthRegen": 2.0,
+        "hasAttack": false,
+        "garrisonCapacity": 6,
+        "garrisonBonusAttack": 0,
+        "garrisonBonusArmor": 1.0
+      }
+    },
+    {
+      "type": "HousingBehavior",
+      "config": {
+        "populationProvided": 0,
+        "populationUsed": 0,
+        "allowedUnitTypes": []
+      }
+    }
+  ],
+
+  "stats": {
+    "health": 1800.0,
+    "armor": 8.0,
+    "sightRange": 14.0,
+    "buildTime": 90.0,
+    "foodCost": 0
+  },
+
+  "properties": {
+    "modelPath": "models/buildings/temple_of_light_sdf.json",
+    "iconPath": "icons/buildings/temple.png",
+    "soundSet": "temple",
+    "footprintSize": [4, 4],
+    "selectionPriority": "building",
+    "description_extended": "The Temple of Light serves as both a holy training ground and a beacon of divine power. It trains priests and paladins, generates mana for spellcasters, and emanates a Divine Protection aura that strengthens nearby allies.",
+    "auraActive": true,
+    "canToggleAura": true,
+    "auraCost": {
+      "mana": 0.5
+    }
+  },
+
+  "costs": {
+    "wood": 200,
+    "gold": 150,
+    "stone": 100
+  },
+
+  "upgrades": [
+    {
+      "id": "blessed_ground",
+      "name": "Blessed Ground",
+      "description": "Increases aura radius by 50%",
+      "cost": {
+        "gold": 200,
+        "faith": 50
+      },
+      "effects": {
+        "auraRadius": 1.5
+      }
+    },
+    {
+      "id": "divine_favor",
+      "name": "Divine Favor",
+      "description": "Doubles mana generation rate",
+      "cost": {
+        "gold": 150
+      },
+      "effects": {
+        "manaGeneration": 2.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "fairy_will_o_wisp",
+  "name": "Will-o'-Wisp",
+  "description": "Ethereal spirits of misleading light. Will-o'-Wisps lure enemies into danger, drain life, and can temporarily possess enemy units.",
+  "race": "fairies",
+  "category": "air",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 140,
+    "healthRegen": 0.8,
+    "mana": 200,
+    "manaRegen": 2.5,
+    "damage": 18,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.6,
+    "attackRange": 6,
+    "armor": 0,
+    "magicResist": 35,
+    "moveSpeed": 8.0,
+    "sightRange": 14,
+    "spellPower": 40
+  },
+
+  "cost": {
+    "gold": 160,
+    "mana": 80,
+    "food": 2
+  },
+
+  "trainTime": 28,
+  "populationCost": 2,
+  "requiredBuilding": "fairy_circle",
+  "requiredAge": 1,
+
+  "armorType": "unarmored",
+  "attackType": "magic",
+  "movementType": "flying",
+  "flyingHeight": 2.0,
+
+  "projectile": {
+    "id": "spirit_bolt",
+    "type": "homing",
+    "speed": 20.0,
+    "model": "models/projectiles/spirit_bolt.obj",
+    "trailEffect": "effects/spirit_trail.fx",
+    "impactEffect": "effects/spirit_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "life_drain",
+      "name": "Life Drain",
+      "description": "Channel to drain 20 health per second from target, healing self for 50% of damage",
+      "type": "channeled",
+      "hotkey": "Q",
+      "cooldown": 10.0,
+      "manaCostPerSecond": 15,
+      "range": 8.0,
+      "drainPerSecond": 20,
+      "healPercent": 0.5,
+      "maxChannelTime": 5.0
+    },
+    {
+      "id": "possess",
+      "name": "Possession",
+      "description": "Possess target enemy for 8 seconds, controlling their actions",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 45.0,
+      "manaCost": 120,
+      "range": 7.0,
+      "duration": 8.0,
+      "excludes": ["hero", "massive", "mechanical", "undead"]
+    },
+    {
+      "id": "lure",
+      "name": "Misleading Light",
+      "description": "Create an illusion that taunts enemies to attack it for 6 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 25.0,
+      "manaCost": 60,
+      "range": 10.0,
+      "duration": 6.0,
+      "illusionHealth": 100
+    }
+  ],
+
+  "canBecomeInvisible": true,
+  "invisibilityDelay": 3.0,
+
+  "visuals": {
+    "model": "models/races/fairies/units/will_o_wisp.obj",
+    "portrait": "textures/races/fairies/portraits/will_o_wisp.png",
+    "icon": "textures/races/fairies/icons/will_o_wisp.png",
+    "scale": 0.5,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/will_o_wisp_diffuse.png",
+      "emissive": "textures/races/fairies/units/will_o_wisp_glow.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/will_o_wisp/float.anim",
+      "walk": "animations/fairies/will_o_wisp/float.anim",
+      "attack": "animations/fairies/will_o_wisp/drain.anim",
+      "death": "animations/fairies/will_o_wisp/dissipate.anim",
+      "cast": "animations/fairies/will_o_wisp/possess.anim"
+    },
+    "glowEffect": "effects/will_o_wisp_glow.fx",
+    "trailEffect": "effects/will_o_wisp_trail.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/will_o_wisp/whisper_1.wav", "sounds/fairies/will_o_wisp/whisper_2.wav"],
+    "move": ["sounds/fairies/will_o_wisp/hum.wav"],
+    "attack": ["sounds/fairies/will_o_wisp/drain.wav"],
+    "death": ["sounds/fairies/will_o_wisp/fade.wav"],
+    "ready": ["sounds/fairies/will_o_wisp/ready.wav"]
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.25,
+    "mass": 2.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/disruptor.bt",
+    "profile": "caster",
+    "aggroRange": 12.0,
+    "preferredDistance": 7.0,
+    "manaConservationThreshold": 0.3,
+    "priorityAbilities": ["possess", "life_drain"]
+  }
+}

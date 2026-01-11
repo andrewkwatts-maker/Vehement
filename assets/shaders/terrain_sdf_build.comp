@@ -1,0 +1,152 @@
+#version 460 core
+
+// Compute shader to build SDF from heightmap
+// Converts 2.5D heightfield into full 3D signed distance field
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+
+// Output SDF texture (3D)
+layout(r32f, binding = 0) uniform image3D u_sdfOutput;
+
+// Input heightmap
+uniform sampler2D u_heightmap;
+
+// Material output (optional)
+layout(r8ui, binding = 1) uniform uimage3D u_materialOutput;
+
+// World space parameters
+uniform vec3 u_worldMin;
+uniform vec3 u_worldMax;
+uniform ivec3 u_resolution;
+uniform float u_maxHeight;
+
+// Quality settings
+uniform bool u_highQuality;         // Use gradient-based distance estimation
+uniform bool u_storeMaterials;      // Output material IDs
+
+// =============================================================================
+// Heightmap Sampling
+// =============================================================================
+
+float sampleHeightmap(vec2 uv) {
+    uv = clamp(uv, 0.0, 1.0);
+    return texture(u_heightmap, uv).r * u_maxHeight;
+}
+
+vec3 sampleHeightmapNormal(vec2 uv, float delta) {
+    float h = sampleHeightmap(uv);
+    float hL = sampleHeightmap(uv + vec2(-delta, 0.0));
+    float hR = sampleHeightmap(uv + vec2(delta, 0.0));
+    float hD = sampleHeightmap(uv + vec2(0.0, -delta));
+    float hU = sampleHeightmap(uv + vec2(0.0, delta));
+
+    vec3 tangentX = vec3(delta * 2.0, hR - hL, 0.0);
+    vec3 tangentZ = vec3(0.0, hU - hD, delta * 2.0);
+
+    return normalize(cross(tangentZ, tangentX));
+}
+
+// =============================================================================
+// SDF Calculation
+// =============================================================================
+
+float terrainSDF(vec3 worldPos) {
+    // Convert to heightmap UV
+    vec2 uv = (worldPos.xz - u_worldMin.xz) / (u_worldMax.xz - u_worldMin.xz);
+
+    // Out of bounds check
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+        return 1000.0;  // Far outside
+    }
+
+    float terrainHeight = sampleHeightmap(uv);
+
+    // Simple signed distance: y - height(x,z)
+    float signedDist = worldPos.y - terrainHeight;
+
+    if (u_highQuality) {
+        // Improved distance estimate using terrain gradient
+        // This provides more accurate distances on slopes
+
+        const float delta = 1.0 / 256.0;  // Heightmap texel size
+        vec3 normal = sampleHeightmapNormal(uv, delta);
+
+        // Project signed distance along normal direction
+        // This accounts for terrain slope
+        float normalizedDist = signedDist / max(normal.y, 0.1);
+
+        return normalizedDist;
+    }
+
+    return signedDist;
+}
+
+// =============================================================================
+// Material Classification
+// =============================================================================
+
+uint classifyMaterial(vec3 worldPos, float height, vec2 uv) {
+    float normalizedHeight = height / u_maxHeight;
+
+    // Sample slope from heightmap normal
+    vec3 normal = sampleHeightmapNormal(uv, 1.0 / 256.0);
+    float slope = 1.0 - normal.y;  // 0 = flat, 1 = vertical
+
+    // Material classification based on height and slope
+    // 0: Grass, 1: Rock, 2: Sand, 3: Snow, 4: Dirt, 5: Water, 6: Ice, 7: Lava
+
+    if (normalizedHeight < 0.1) {
+        return 5u;  // Water
+    }
+    else if (normalizedHeight < 0.15) {
+        return 2u;  // Sand (beach)
+    }
+    else if (slope > 0.6) {
+        return 1u;  // Rock (steep slopes)
+    }
+    else if (normalizedHeight < 0.5) {
+        return 0u;  // Grass (low-mid elevation, flat)
+    }
+    else if (normalizedHeight < 0.7) {
+        // Mix of grass and rock based on slope
+        return slope > 0.3 ? 1u : 0u;
+    }
+    else if (normalizedHeight < 0.85) {
+        return 1u;  // Rock (high elevation)
+    }
+    else {
+        return 3u;  // Snow (peaks)
+    }
+}
+
+// =============================================================================
+// Main
+// =============================================================================
+
+void main() {
+    ivec3 voxelCoord = ivec3(gl_GlobalInvocationID);
+
+    // Bounds check
+    if (any(greaterThanEqual(voxelCoord, u_resolution))) {
+        return;
+    }
+
+    // Convert voxel coordinate to world position
+    vec3 voxelSize = (u_worldMax - u_worldMin) / vec3(u_resolution);
+    vec3 worldPos = u_worldMin + (vec3(voxelCoord) + 0.5) * voxelSize;
+
+    // Calculate signed distance
+    float sdfValue = terrainSDF(worldPos);
+
+    // Store SDF value
+    imageStore(u_sdfOutput, voxelCoord, vec4(sdfValue, 0, 0, 0));
+
+    // Optionally store material ID
+    if (u_storeMaterials && sdfValue < 0.5) {  // Only for near-surface voxels
+        vec2 uv = (worldPos.xz - u_worldMin.xz) / (u_worldMax.xz - u_worldMin.xz);
+        float height = sampleHeightmap(uv);
+        uint materialID = classifyMaterial(worldPos, height, uv);
+
+        imageStore(u_materialOutput, voxelCoord, uvec4(materialID, 0, 0, 0));
+    }
+}

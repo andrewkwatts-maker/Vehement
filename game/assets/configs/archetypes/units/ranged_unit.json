@@ -1,0 +1,355 @@
+{
+  "$schema": "../../../schemas/unit_archetype.schema.json",
+
+  // =============================================================================
+  // RANGED UNIT ARCHETYPE
+  // =============================================================================
+  // This archetype represents a ranged attacker unit.
+  // Behavior composition:
+  // - MovementBehavior: Ground movement
+  // - CombatBehavior: Ranged, Pierce damage
+  // - StatsComponent: Lower health/armor, high attack range
+  //
+  // Use this as a base template for units like:
+  // - Archer, Crossbowman, Rifleman, Musketeer, etc.
+  // =============================================================================
+
+  "id": "ranged_unit_archetype",
+  "name": "Ranged Unit Template",
+  "description": "A ranged combat unit that attacks from distance. Effective against light armor and air units, but fragile in melee.",
+
+  "category": "ranged",
+  "tier": 1,
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "baseStats": {
+    // Survivability - lower than melee
+    "health": 80,
+    "healthRegen": 0.3,
+    "mana": 0,
+    "manaRegen": 0,
+
+    // Offensive stats - good damage, high range
+    "damage": 14,
+    "damageVariance": 0.2,  // Higher variance for ranged
+    "attackSpeed": 1.0,
+    "attackRange": 9,  // Long range
+
+    // Defensive stats - low armor
+    "armor": 0,
+    "magicResist": 0,
+
+    // Mobility - decent speed
+    "moveSpeed": 5.5,
+    "turnSpeed": 360,
+    "acceleration": 12.0,
+
+    // Perception
+    "sightRange": 12,  // Longer sight than melee
+    "detectionRange": 8,
+
+    // Critical hits
+    "critChance": 0.15,  // Higher crit chance
+    "critMultiplier": 1.75
+  },
+
+  // =============================================================================
+  // COMBAT BEHAVIOR
+  // =============================================================================
+  "combat": {
+    "attackType": "pierce",
+    "armorType": "light",
+
+    // Attack animation and timing
+    "attackAnimation": {
+      "windupTime": 0.4,  // Draw bow time
+      "backswingTime": 0.6,  // Time after releasing arrow
+      "totalDuration": 1.0
+    },
+
+    // Pierce damage is strong vs light armor, weak vs heavy
+    "bonusVs": [
+      {
+        "category": "air",
+        "multiplier": 1.5,
+        "flatBonus": 2
+      },
+      {
+        "category": "unarmored",
+        "multiplier": 1.25
+      }
+    ],
+
+    "penaltyVs": [
+      {
+        "category": "heavy",
+        "multiplier": 0.5
+      },
+      {
+        "category": "fortified",
+        "multiplier": 0.5
+      }
+    ],
+
+    // No cleave for ranged
+    "cleave": {
+      "enabled": false
+    },
+
+    // No splash by default
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  // Ranged units fire projectiles
+  "projectile": {
+    "type": "ballistic",  // Options: "ballistic", "linear", "homing", "instant"
+    "speed": 25.0,
+    "arc": 0.3,  // Arcing trajectory (0 = flat, 1 = high arc)
+    "maxTravelDistance": 12.0,
+
+    // Projectile interactions
+    "piercing": false,
+    "maxPierceTargets": 0,
+    "canBeBlocked": true,  // Trees/terrain can block
+    "canBeDodged": true,  // Fast units might dodge
+    "canMiss": true,  // Attacks can miss moving targets
+    "missChance": 0.05,  // Base 5% miss chance
+
+    // Visual
+    "visualModel": "models/projectiles/arrow.fbx",
+    "trailEffect": null,
+    "impactEffect": "effects/arrow_impact.fx",
+    "projectileSize": 0.1,
+
+    // Impact behavior
+    "sticksInTarget": true,  // Arrows stick in units
+    "sticksInGround": true
+  },
+
+  // =============================================================================
+  // MOVEMENT BEHAVIOR
+  // =============================================================================
+  "movement": {
+    "movementType": "ground",
+
+    "canMoveOnLand": true,
+    "canMoveOnWater": false,
+    "canMoveOnLava": false,
+    "canClimbCliffs": false,
+    "canPassThroughUnits": false,
+
+    "collisionRadius": 0.4,  // Slightly smaller than melee
+    "pushPriority": 3,  // Lower priority than melee
+
+    "pathfindingType": "ground",
+    "unitSize": "small",
+
+    // Kiting behavior
+    "canKite": true,  // Can attack while moving away
+    "kiteEfficiency": 0.8  // 80% effective while kiting
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 80,
+    "wood": 30,  // Arrows/bolts require wood
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "trainTime": 25,
+  "populationCost": 1,
+
+  "requiredBuilding": "archery_range",
+  "requiredAge": 0,
+  "requiredTech": null,
+
+  // =============================================================================
+  // ABILITIES & UPGRADES
+  // =============================================================================
+  "abilities": [
+    {
+      "id": "flaming_arrows",
+      "unlockedByDefault": false,
+      "requiredLevel": 0,
+      "requiredTech": "fire_arrows_tech"
+    }
+  ],
+
+  "upgrades": [
+    "ranged_attack_1",
+    "ranged_attack_2",
+    "ranged_attack_3",
+    "ranged_armor_1",
+    "ranged_armor_2",
+    "ranged_armor_3",
+    "ranged_range_1",  // Ranged units can upgrade range
+    "attack_speed_1"
+  ],
+
+  // =============================================================================
+  // UNIT CAPABILITIES
+  // =============================================================================
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+
+  // Attack behavior
+  "canAttackGround": true,
+  "canAttackAir": true,
+  "canAttackWhileMoving": false,  // Must stop to shoot
+  "requiresFacing": true,  // Must face target to attack
+
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": true,
+  "isMechanical": false,
+  "isUndead": false,
+
+  // =============================================================================
+  // FORMATIONS
+  // =============================================================================
+  "formation": {
+    "preferredPosition": "back",  // Stay behind melee units
+    "formationSpacing": 1.5,  // More spacing for ranged
+    "maintainFormation": true,
+    "fallBackWhenApproached": true,  // Back away from melee
+    "fallBackDistance": 3.0
+  },
+
+  // =============================================================================
+  // AI BEHAVIOR
+  // =============================================================================
+  "ai": {
+    "aggroRange": 15,  // Longer aggro range
+    "returnToPosition": true,
+    "acquisitionRange": 12,
+
+    // Target priority
+    "targetPriority": [
+      {
+        "type": "air",  // Prioritize air units
+        "weight": 2.0
+      },
+      {
+        "type": "ranged",  // Counter enemy ranged
+        "weight": 1.5
+      },
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+
+    "fleeAtHealthPercent": 0.0,
+    "pursuitRange": 12,
+
+    // Kiting behavior
+    "maintainDistance": true,
+    "optimalRange": 8.0,  // Try to stay at this range
+    "minRange": 5.0  // Back away if closer than this
+  },
+
+  // =============================================================================
+  // EXPERIENCE & LEVELING
+  // =============================================================================
+  "experience": {
+    "canGainExperience": false,
+    "experienceValue": 40,
+    "bountyGold": 8,
+    "bountyMultiplier": 1.0
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/units/archer.fbx",
+    "portrait": "textures/portraits/archer.png",
+    "icon": "textures/icons/units/archer.png",
+    "scale": 1.0,
+
+    "animations": {
+      "idle": "anim_idle",
+      "walk": "anim_walk",
+      "attack": "anim_shoot",  // Shooting animation
+      "death": "anim_death",
+      "decay": "anim_decay",
+      "build": null,
+      "gather": null,
+      "spell": null,
+      "attackWalk": "anim_shoot_walk"  // Attack while moving
+    },
+
+    "deathEffect": "effects/unit_death.fx",
+    "bloodType": "red",
+    "shadowSize": 0.8,
+    "selectionScale": 1.0,
+
+    "teamColorParts": ["quiver", "cloak"]
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/units/archer/select1.wav",
+      "sounds/units/archer/select2.wav"
+    ],
+    "move": [
+      "sounds/units/archer/move1.wav",
+      "sounds/units/archer/move2.wav"
+    ],
+    "attack": [
+      "sounds/units/archer/shoot1.wav",
+      "sounds/units/archer/shoot2.wav"
+    ],
+    "death": [
+      "sounds/units/archer/death1.wav"
+    ],
+    "ready": [
+      "sounds/units/archer/ready.wav"
+    ],
+
+    "footsteps": "sounds/footsteps/leather.wav",
+    "attackImpact": "sounds/impacts/arrow_hit.wav",
+    "projectileLaunch": "sounds/projectiles/arrow_fire.wav",
+    "projectileTravel": "sounds/projectiles/arrow_whoosh.wav"
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "crossbowman" could inherit from this with:
+  // - damage: 18 (higher damage)
+  // - attackSpeed: 0.8 (slower)
+  // - projectile.speed: 35.0 (faster projectile)
+  // - projectile.arc: 0.1 (flatter trajectory)
+  // - projectile.piercing: true
+  // - cost.gold: 100
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for ranged units. High damage output, fragile, excellent vs air.",
+    "tacticalUse": "Keep behind melee units. Focus fire on high-value targets. Counter air units.",
+    "counters": ["air", "light_armor", "casters"],
+    "counteredBy": ["cavalry", "assassins", "siege"]
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "fairy_pixie",
+  "name": "Pixie",
+  "description": "Tiny, mischievous fairy scouts with incredible speed and the ability to become invisible. Perfect for reconnaissance and harassment.",
+  "race": "fairies",
+  "category": "air",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 60,
+    "healthRegen": 0.4,
+    "mana": 100,
+    "manaRegen": 1.0,
+    "damage": 8,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.5,
+    "attackRange": 5,
+    "armor": 0,
+    "magicResist": 10,
+    "moveSpeed": 8.5,
+    "sightRange": 16,
+    "detectionRange": 12
+  },
+
+  "cost": {
+    "gold": 80,
+    "wood": 20,
+    "mana": 20,
+    "food": 1
+  },
+
+  "trainTime": 18,
+  "populationCost": 1,
+  "requiredBuilding": "fairy_grove",
+  "requiredAge": 0,
+
+  "armorType": "unarmored",
+  "attackType": "pierce",
+  "movementType": "flying",
+  "flyingHeight": 2.5,
+
+  "abilities": [
+    {
+      "id": "invisibility",
+      "name": "Pixie Dust Invisibility",
+      "description": "Become invisible for 20 seconds or until attacking",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 45.0,
+      "manaCost": 50,
+      "duration": 20.0
+    },
+    {
+      "id": "faerie_fire",
+      "name": "Faerie Fire",
+      "description": "Mark target revealing invisible units and reducing armor by 3 for 8 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 12.0,
+      "manaCost": 35,
+      "range": 8.0,
+      "duration": 8.0,
+      "effects": [
+        {
+          "stat": "armor",
+          "value": -3,
+          "type": "flat"
+        }
+      ]
+    }
+  ],
+
+  "scouting": {
+    "isScout": true,
+    "revealsStealthed": true,
+    "visionBonus": 1.6,
+    "sharesVision": true,
+    "visionShareRadius": 18.0
+  },
+
+  "visuals": {
+    "model": "models/races/fairies/units/pixie.obj",
+    "portrait": "textures/races/fairies/portraits/pixie.png",
+    "icon": "textures/races/fairies/icons/pixie.png",
+    "scale": 0.5,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/pixie_diffuse.png",
+      "emissive": "textures/races/fairies/units/pixie_wings.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/pixie/hover.anim",
+      "walk": "animations/fairies/pixie/fly.anim",
+      "attack": "animations/fairies/pixie/shoot.anim",
+      "death": "animations/fairies/pixie/fall.anim",
+      "cast": "animations/fairies/pixie/cast.anim"
+    },
+    "wingTrailEffect": "effects/pixie_dust.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/pixie/giggle_1.wav", "sounds/fairies/pixie/giggle_2.wav"],
+    "move": ["sounds/fairies/pixie/ack_1.wav", "sounds/fairies/pixie/ack_2.wav"],
+    "attack": ["sounds/fairies/pixie/shoot.wav"],
+    "death": ["sounds/fairies/pixie/death.wav"],
+    "ready": ["sounds/fairies/pixie/ready.wav"]
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.25,
+    "mass": 3.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/scout.bt",
+    "profile": "scout",
+    "aggroRange": 12.0,
+    "fleeThreshold": 0.4,
+    "preferredDistance": 5.0
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "mystic_unit",
+  "id": "vampire_blood_mage",
+  "name": "Blood Mage",
+  "description": "Masters of blood magic who drain life, curse enemies, and empower allies with dark rituals. Can sacrifice health for devastating spells.",
+  "race": "vampires",
+  "category": "spellcaster",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 280,
+    "healthRegen": 0.8,
+    "mana": 250,
+    "manaRegen": 2.0,
+    "damage": 12,
+    "damageVariance": 0.10,
+    "attackSpeed": 1.0,
+    "attackRange": 8,
+    "spellPower": 35,
+    "armor": 0,
+    "magicResist": 18,
+    "moveSpeed": 4.8,
+    "sightRange": 12,
+    "detectionRange": 10,
+    "spellCritChance": 0.15,
+    "spellCritMultiplier": 2.2
+  },
+
+  "cost": {
+    "gold": 300,
+    "blood": 70,
+    "mana": 50,
+    "food": 3
+  },
+
+  "trainTime": 50,
+  "populationCost": 3,
+  "requiredBuilding": "forbidden_library",
+  "requiredAge": 2,
+
+  "armorType": "unarmored",
+  "attackType": "magic",
+
+  "projectile": {
+    "type": "linear",
+    "speed": 20.0,
+    "visualModel": "effects/blood_bolt.fx",
+    "impactEffect": "effects/vampires/blood_magic_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "blood_bolt",
+      "name": "Blood Bolt",
+      "description": "Fire a bolt of blood magic dealing 80 damage and healing caster for 40% of damage",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 40,
+      "cooldown": 6.0,
+      "range": 9.0,
+      "damage": 80,
+      "lifesteal": 0.40
+    },
+    {
+      "id": "blood_sacrifice",
+      "name": "Blood Sacrifice",
+      "description": "Sacrifice 25% max health to deal 200 magic damage in area and restore 100 mana",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 0,
+      "cooldown": 20.0,
+      "healthCost": 0.25,
+      "range": 8.0,
+      "radius": 3.5,
+      "damage": 200,
+      "manaGain": 100
+    },
+    {
+      "id": "blood_pact_aura",
+      "name": "Blood Pact",
+      "description": "Aura: Nearby vampire units gain 15% lifesteal and +10% spell power",
+      "type": "aura",
+      "radius": 9.0,
+      "affects": ["vampire_units"],
+      "bonuses": {
+        "lifesteal": 0.15,
+        "spellPower": 0.10
+      }
+    },
+    {
+      "id": "exsanguinate",
+      "name": "Exsanguinate",
+      "description": "Drain target's blood over 6 seconds, dealing 150 total damage and healing for 100% of damage",
+      "type": "active",
+      "hotkey": "E",
+      "manaCost": 70,
+      "cooldown": 25.0,
+      "range": 7.0,
+      "channelTime": 6.0,
+      "totalDamage": 150,
+      "healingPercent": 1.0,
+      "canBeInterrupted": true
+    },
+    {
+      "id": "crimson_surge",
+      "name": "Crimson Surge",
+      "description": "When casting spells with health cost, gain 30% spell power for 5 seconds",
+      "type": "passive",
+      "trigger": "health_cost_spell",
+      "duration": 5.0,
+      "spellPowerBonus": 0.30
+    },
+    {
+      "id": "night_power",
+      "name": "Night Power",
+      "description": "At night: +40% spell power, +50% mana regen, spells cost 20% less mana",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "spellPower": 1.40,
+          "manaRegen": 1.50,
+          "manaCostReduction": 0.20
+        }
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/vampires/units/blood_mage.obj",
+    "portrait": "textures/races/vampires/portraits/blood_mage.png",
+    "icon": "textures/races/vampires/icons/blood_mage.png",
+    "scale": 1.0,
+    "animations": {
+      "idle": "animations/vampires/blood_mage/idle.anim",
+      "walk": "animations/vampires/blood_mage/walk.anim",
+      "cast_bolt": "animations/vampires/blood_mage/cast_bolt.anim",
+      "cast_sacrifice": "animations/vampires/blood_mage/sacrifice.anim",
+      "cast_drain": "animations/vampires/blood_mage/drain.anim",
+      "death": "animations/vampires/blood_mage/death.anim"
+    },
+    "particleEffects": {
+      "aura": "effects/vampires/blood_pact_aura.fx",
+      "casting": "effects/vampires/blood_magic.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/blood_mage/select.wav"],
+    "move": ["sounds/vampires/blood_mage/move.wav"],
+    "castStart": ["sounds/vampires/blood_magic.wav"],
+    "death": ["sounds/vampires/blood_mage/death.wav"]
+  }
+}

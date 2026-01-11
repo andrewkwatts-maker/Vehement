@@ -5,6 +5,7 @@
 #include <memory>
 #include <array>
 #include <cstdint>
+#include <string>
 #include <glm/glm.hpp>
 
 namespace Nova {
@@ -272,6 +273,8 @@ public:
         float baseDistance,
         float maxDistance);
 
+    // Null mesh for returning when nothing found
+    static std::shared_ptr<Mesh> s_nullMesh;
 private:
     std::unordered_map<uint32_t, LODGroup> m_groups;
     uint32_t m_nextGroupID = 1;
@@ -291,8 +294,6 @@ private:
     // Apply hysteresis to prevent LOD popping
     int ApplyHysteresis(const LODGroup& group, int newLevel, float distance) const;
 
-    // Null mesh for returning when nothing found
-    static std::shared_ptr<Mesh> s_nullMesh;
 };
 
 /**

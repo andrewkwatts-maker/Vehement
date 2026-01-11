@@ -1,0 +1,269 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "mystic_unit_archetype",
+  "id": "naga_coral_mage",
+  "name": "Coral Mage",
+  "description": "Naga spellcaster who channels the power of water and coral. Commands tides and summons aquatic creatures.",
+
+  "category": "spellcaster",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 75,
+    "healthRegen": 0.3,
+    "mana": 250,
+    "manaRegen": 2.0,
+    "damage": 10,
+    "damageVariance": 0.15,
+    "attackSpeed": 0.85,
+    "attackRange": 8,
+    "spellPower": 30,
+    "healingPower": 15,
+    "armor": 0,
+    "magicResist": 4,
+    "moveSpeed": 4.8,
+    "turnSpeed": 300,
+    "acceleration": 9.0,
+    "sightRange": 12,
+    "detectionRange": 10,
+    "spellCritChance": 0.12,
+    "spellCritMultiplier": 2.2
+  },
+
+  "combat": {
+    "attackType": "magic",
+    "armorType": "unarmored",
+
+    "bonusVs": [
+      {
+        "category": "heavy",
+        "multiplier": 1.4
+      }
+    ]
+  },
+
+  "spellcaster": {
+    "spells": [
+      {
+        "spellId": "water_bolt",
+        "name": "Water Bolt",
+        "description": "Fires a bolt of pressurized water",
+        "unlockedByDefault": true,
+        "manaCost": 15,
+        "cooldown": 2,
+        "damage": 40,
+        "range": 9
+      },
+      {
+        "spellId": "healing_tide",
+        "name": "Healing Tide",
+        "description": "Heals target ally for 80 health",
+        "unlockedByDefault": true,
+        "manaCost": 40,
+        "cooldown": 8,
+        "healing": 80,
+        "range": 10
+      },
+      {
+        "spellId": "whirlpool",
+        "name": "Whirlpool",
+        "description": "Creates a whirlpool that pulls and damages enemies",
+        "unlockedByDefault": false,
+        "requiredLevel": 2,
+        "manaCost": 80,
+        "cooldown": 30,
+        "damage": 15,
+        "damagePerSecond": true,
+        "duration": 5,
+        "range": 11,
+        "aoe": 4
+      },
+      {
+        "spellId": "summon_water_elemental",
+        "name": "Summon Water Elemental",
+        "description": "Summons a water elemental to fight for 45 seconds",
+        "unlockedByDefault": false,
+        "requiredTech": "elemental_binding",
+        "manaCost": 100,
+        "cooldown": 60,
+        "duration": 45
+      }
+    ],
+
+    "manaPool": {
+      "baseMax": 250,
+      "regenRate": 2.0,
+      "regenDelay": 2.5,
+      "combatRegenMultiplier": 0.6
+    },
+
+    "castingBehavior": {
+      "canCastWhileMoving": false,
+      "movementCancelsCast": true,
+      "damageCancelsCast": false,
+      "globalCooldown": 0.5
+    }
+  },
+
+  "projectile": {
+    "type": "linear",
+    "speed": 22.0,
+    "arc": 0.0,
+    "maxTravelDistance": 10.0,
+    "canBeBlocked": false,
+    "canBeDodged": false,
+    "canMiss": false,
+    "visualModel": "effects/water_bolt.fx",
+    "trailEffect": "effects/water_trail.fx",
+    "impactEffect": "effects/water_splash.fx"
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 0.4,
+    "pushPriority": 2,
+    "pathfindingType": "amphibious",
+    "unitSize": "small",
+
+    "waterMovementMultiplier": 1.5,
+    "landMovementMultiplier": 0.8
+  },
+
+  "cost": {
+    "gold": 160,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 80
+  },
+
+  "trainTime": 42,
+  "populationCost": 2,
+  "requiredBuilding": "pearl_sanctuary",
+  "requiredAge": 1,
+  "requiredTech": "water_magic",
+
+  "upgrades": [
+    "spell_power_1",
+    "spell_power_2",
+    "mana_pool_1",
+    "mana_pool_2",
+    "tidal_mastery"
+  ],
+
+  "formation": {
+    "preferredPosition": "back",
+    "formationSpacing": 2.5,
+    "maintainFormation": true,
+    "fallBackWhenApproached": true,
+    "fallBackDistance": 5.0
+  },
+
+  "ai": {
+    "aggroRange": 14,
+    "targetPriority": [
+      {
+        "type": "caster",
+        "weight": 2.0
+      },
+      {
+        "type": "wounded",
+        "weight": 1.8
+      },
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+    "fleeAtHealthPercent": 0.35,
+    "spellUsage": {
+      "useSpellsInCombat": true,
+      "conserveMana": true,
+      "manaReservePercent": 0.25,
+      "prioritizeBuffs": true
+    }
+  },
+
+  "experience": {
+    "canGainExperience": true,
+    "maxLevel": 5,
+    "experienceValue": 120,
+    "bountyGold": 18,
+
+    "levelUpBonuses": {
+      "health": 12,
+      "mana": 40,
+      "spellPower": 6,
+      "manaRegen": 0.4
+    }
+  },
+
+  "visuals": {
+    "model": "models/units/naga/coral_mage.fbx",
+    "portrait": "textures/portraits/naga/coral_mage.png",
+    "icon": "textures/icons/units/naga/coral_mage.png",
+    "scale": 1.0,
+
+    "animations": {
+      "idle": "anim_idle_staff",
+      "walk": "anim_swim_staff",
+      "attack": "anim_cast_bolt",
+      "death": "anim_death",
+      "spell_cast": "anim_cast_spell",
+      "spell_channel": "anim_channel_water",
+      "meditate": "anim_meditate_water"
+    },
+
+    "teamColorParts": ["robes", "staff_crystal"],
+    "glowAtNight": true,
+    "glowColor": "#00EEFF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.85,
+      "pulseSpeed": 1.8
+    },
+    "castingGlow": "effects/water_casting_glow.fx",
+    "manaAura": "effects/water_mana_aura.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/coral_mage/select1.wav"],
+    "move": ["sounds/units/naga/coral_mage/move1.wav"],
+    "attack": ["sounds/units/naga/coral_mage/cast_bolt.wav"],
+    "death": ["sounds/units/naga/coral_mage/death1.wav"],
+    "castStart": "sounds/spells/water_cast_start.wav",
+    "castComplete": "sounds/spells/water_cast_complete.wav"
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "healthRegen": 2.0,
+        "manaRegen": 2.5,
+        "spellPower": 1.25,
+        "castSpeed": 1.15
+      },
+      "atDepth": {
+        "deepWater": {
+          "manaRegen": 3.5,
+          "spellPower": 1.4
+        }
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Water mage. Damage, healing, summons. Devastating in water with spell power bonuses.",
+    "tacticalUse": "Backline support. Use whirlpool on grouped enemies. Heal frontline. Summon elementals.",
+    "counters": ["grouped_enemies", "heavy_armor"],
+    "counteredBy": ["assassins", "mana_burn", "silence"]
+  }
+}

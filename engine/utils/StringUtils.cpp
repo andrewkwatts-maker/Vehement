@@ -67,8 +67,8 @@ constexpr std::string_view kWhitespace = " \t\n\r\f\v";
 
     result = parts[0];
     for (size_t i = 1; i < parts.size(); ++i) {
-        result.append(delimiter);
-        result.append(parts[i]);
+        result.push_back(delimiter);
+        result.push_back(parts[i]);
     }
 
     return result;
@@ -158,11 +158,11 @@ constexpr std::string_view kWhitespace = " \t\n\r\f\v";
     size_t prevPos = 0;
 
     while ((pos = str.find(from, prevPos)) != std::string_view::npos) {
-        result.append(str.substr(prevPos, pos - prevPos));
-        result.append(to);
+        result.push_back(str.substr(prevPos, pos - prevPos));
+        result.push_back(to);
         prevPos = pos + from.size();
     }
-    result.append(str.substr(prevPos));
+    result.push_back(str.substr(prevPos));
 
     return result;
 }
@@ -178,9 +178,9 @@ constexpr std::string_view kWhitespace = " \t\n\r\f\v";
 
     std::string result;
     result.reserve(str.size() - from.size() + to.size());
-    result.append(str.substr(0, pos));
-    result.append(to);
-    result.append(str.substr(pos + from.size()));
+    result.push_back(str.substr(0, pos));
+    result.push_back(to);
+    result.push_back(str.substr(pos + from.size()));
     return result;
 }
 
@@ -260,7 +260,7 @@ constexpr std::string_view kWhitespace = " \t\n\r\f\v";
     std::string result;
     result.reserve(str.size() * count);
     for (size_t i = 0; i < count; ++i) {
-        result.append(str);
+        result.push_back(str);
     }
     return result;
 }

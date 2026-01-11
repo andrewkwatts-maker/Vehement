@@ -225,7 +225,10 @@ void UIWindow::SetCallback(std::function<void(ModalResult, const std::string&)> 
 }
 
 std::string UIWindow::AddTab(const TabData& tabData) {
-    TabData tab = tabData;
+    TabData tab;
+    tab.id = tabData.id;
+    tab.title = tabData.title;
+    tab.htmlPath = tabData.htmlPath;
     if (tab.id.empty()) {
         tab.id = "tab_" + std::to_string(m_tabs.size());
     }

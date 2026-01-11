@@ -1,0 +1,278 @@
+#version 460 core
+
+// ============================================================================
+// SVGF (Spatiotemporal Variance-Guided Filtering)
+// Reference: "Spatiotemporal Variance-Guided Filtering" (Schied et al. 2017)
+//
+// Multi-pass edge-aware denoiser for Monte Carlo rendering
+// Pass 1: Temporal accumulation + variance estimation
+// Pass 2: Edge-stopping A-Trous wavelet filtering
+// ============================================================================
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Input/Output buffers
+layout(rgba32f, binding = 0) uniform image2D u_noisyInput;      // Noisy radiance
+layout(rgba32f, binding = 1) uniform image2D u_denoisedOutput;  // Denoised output
+layout(rgba32f, binding = 2) uniform image2D u_historyBuffer;   // Previous frame
+layout(rgba32f, binding = 3) uniform image2D u_varianceBuffer;  // Variance estimation
+layout(rgba32f, binding = 4) uniform image2D u_momentsBuffer;   // Temporal moments
+
+// G-buffer
+layout(rgba32f, binding = 5) uniform image2D u_albedoBuffer;
+layout(rgba32f, binding = 6) uniform image2D u_normalBuffer;
+layout(r32f, binding = 7) uniform image2D u_depthBuffer;
+layout(rgba32f, binding = 8) uniform image2D u_motionBuffer;
+
+// Camera matrices for reprojection
+uniform mat4 u_viewProj;
+uniform mat4 u_prevViewProj;
+uniform mat4 u_invViewProj;
+
+// Settings
+uniform int u_frameCount;
+uniform int u_denoisePass;          // 0 = temporal, 1-5 = spatial passes
+uniform float u_phiColor;           // Color weight (1.0-10.0)
+uniform float u_phiNormal;          // Normal weight (32.0-128.0)
+uniform float u_phiDepth;           // Depth weight (0.1-1.0)
+uniform float u_temporalAlpha;      // Temporal blend (0.1-0.2)
+uniform bool u_enableVarianceClipping;
+
+const float PI = 3.14159265359;
+
+// ============================================================================
+// A-Trous Wavelet Kernel (5x5)
+// ============================================================================
+
+const int KERNEL_SIZE = 5;
+const float KERNEL[KERNEL_SIZE] = float[](
+    1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0
+);
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+float luminance(vec3 rgb) {
+    return dot(rgb, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// Edge-stopping weight functions
+float computeNormalWeight(vec3 n1, vec3 n2, float sigma) {
+    float angle = max(0.0, dot(n1, n2));
+    return pow(angle, sigma);
+}
+
+float computeDepthWeight(float d1, float d2, float sigma) {
+    return exp(-abs(d1 - d2) / sigma);
+}
+
+float computeColorWeight(vec3 c1, vec3 c2, float sigma) {
+    return exp(-length(c1 - c2) / sigma);
+}
+
+// ============================================================================
+// Temporal Accumulation (Pass 0)
+// ============================================================================
+
+vec4 temporalAccumulation(ivec2 coord) {
+    vec2 resolution = vec2(imageSize(u_noisyInput));
+
+    // Load current frame
+    vec4 current = imageLoad(u_noisyInput, coord);
+    vec3 currentColor = current.rgb;
+
+    // Load G-buffer
+    vec3 normal = imageLoad(u_normalBuffer, coord).xyz * 2.0 - 1.0;
+    float depth = imageLoad(u_depthBuffer, coord).r;
+    vec3 albedo = imageLoad(u_albedoBuffer, coord).rgb;
+
+    // First frame - no history
+    if (u_frameCount == 0) {
+        // Initialize moments
+        float luminanceVal = luminance(currentColor);
+        vec2 moments = vec2(luminanceVal, luminanceVal * luminanceVal);
+        imageStore(u_momentsBuffer, coord, vec4(moments, 0.0, 1.0));
+        imageStore(u_varianceBuffer, coord, vec4(0.0));
+        return current;
+    }
+
+    // Reproject to previous frame
+    vec4 motion = imageLoad(u_motionBuffer, coord);
+    vec2 prevUV = (vec2(coord) + 0.5) / resolution + motion.xy;
+    ivec2 prevCoord = ivec2(prevUV * resolution);
+
+    // Check bounds
+    bool validHistory = prevCoord.x >= 0 && prevCoord.x < resolution.x &&
+                        prevCoord.y >= 0 && prevCoord.y < resolution.y;
+
+    vec3 historyColor = vec3(0.0);
+    vec2 historyMoments = vec2(0.0);
+    float historyLength = 0.0;
+
+    if (validHistory) {
+        // Load history
+        historyColor = imageLoad(u_historyBuffer, prevCoord).rgb;
+        vec4 momentData = imageLoad(u_momentsBuffer, prevCoord);
+        historyMoments = momentData.xy;
+        historyLength = momentData.w;
+
+        // Validate history (surface consistency)
+        vec3 prevNormal = imageLoad(u_normalBuffer, prevCoord).xyz * 2.0 - 1.0;
+        float prevDepth = imageLoad(u_depthBuffer, prevCoord).r;
+
+        float normalSimilarity = dot(normalize(normal), normalize(prevNormal));
+        float depthDiff = abs(depth - prevDepth);
+
+        if (normalSimilarity < 0.9 || depthDiff > 0.1) {
+            validHistory = false;
+        }
+    }
+
+    // Temporal blend
+    float alpha = validHistory ? u_temporalAlpha : 1.0;
+    vec3 blendedColor = mix(historyColor, currentColor, alpha);
+
+    // Update temporal moments
+    float currentLuminance = luminance(currentColor);
+    vec2 currentMoments = vec2(currentLuminance, currentLuminance * currentLuminance);
+
+    vec2 blendedMoments;
+    if (validHistory) {
+        blendedMoments = mix(historyMoments, currentMoments, alpha);
+        historyLength = min(historyLength + 1.0, 64.0);
+    } else {
+        blendedMoments = currentMoments;
+        historyLength = 1.0;
+    }
+
+    // Variance clamping (neighborhood clipping)
+    if (u_enableVarianceClipping && validHistory) {
+        // Compute neighborhood statistics (3x3)
+        vec3 colorSum = vec3(0.0);
+        vec3 colorSqSum = vec3(0.0);
+        int count = 0;
+
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                ivec2 sampleCoord = coord + ivec2(dx, dy);
+                if (sampleCoord.x >= 0 && sampleCoord.x < resolution.x &&
+                    sampleCoord.y >= 0 && sampleCoord.y < resolution.y) {
+                    vec3 sampleColor = imageLoad(u_noisyInput, sampleCoord).rgb;
+                    colorSum += sampleColor;
+                    colorSqSum += sampleColor * sampleColor;
+                    count++;
+                }
+            }
+        }
+
+        vec3 colorMean = colorSum / float(count);
+        vec3 colorM2 = colorSqSum / float(count);
+        vec3 colorStdDev = sqrt(max(vec3(0.0), colorM2 - colorMean * colorMean));
+
+        // Clamp history to neighborhood bounds
+        vec3 colorMin = colorMean - 1.5 * colorStdDev;
+        vec3 colorMax = colorMean + 1.5 * colorStdDev;
+        blendedColor = clamp(blendedColor, colorMin, colorMax);
+    }
+
+    // Estimate variance
+    float variance = max(0.0, blendedMoments.y - blendedMoments.x * blendedMoments.x);
+    variance /= max(historyLength, 1.0);
+
+    // Store results
+    imageStore(u_momentsBuffer, coord, vec4(blendedMoments, 0.0, historyLength));
+    imageStore(u_varianceBuffer, coord, vec4(variance));
+
+    return vec4(blendedColor, 1.0);
+}
+
+// ============================================================================
+// A-Trous Wavelet Spatial Filter (Passes 1-5)
+// ============================================================================
+
+vec4 spatialFilter(ivec2 coord, int stepSize) {
+    vec2 resolution = vec2(imageSize(u_noisyInput));
+
+    // Load center pixel
+    vec3 centerColor = imageLoad(u_noisyInput, coord).rgb;
+    vec3 centerNormal = imageLoad(u_normalBuffer, coord).xyz * 2.0 - 1.0;
+    float centerDepth = imageLoad(u_depthBuffer, coord).r;
+    float centerVariance = imageLoad(u_varianceBuffer, coord).r;
+
+    // Skip sky
+    if (centerDepth >= 1.0) {
+        return vec4(centerColor, 1.0);
+    }
+
+    // Adaptive kernel size based on variance
+    float sigma_l = max(u_phiColor, 0.001) * sqrt(max(centerVariance, 0.0));
+
+    vec3 sumColor = vec3(0.0);
+    float sumWeight = 0.0;
+
+    // Apply 5x5 kernel with stride
+    for (int y = -2; y <= 2; y++) {
+        for (int x = -2; x <= 2; x++) {
+            ivec2 sampleCoord = coord + ivec2(x, y) * stepSize;
+
+            // Bounds check
+            if (sampleCoord.x < 0 || sampleCoord.x >= resolution.x ||
+                sampleCoord.y < 0 || sampleCoord.y >= resolution.y) {
+                continue;
+            }
+
+            // Load sample
+            vec3 sampleColor = imageLoad(u_noisyInput, sampleCoord).rgb;
+            vec3 sampleNormal = imageLoad(u_normalBuffer, sampleCoord).xyz * 2.0 - 1.0;
+            float sampleDepth = imageLoad(u_depthBuffer, sampleCoord).r;
+
+            // Compute edge-stopping weights
+            float wNormal = computeNormalWeight(centerNormal, sampleNormal, u_phiNormal);
+            float wDepth = computeDepthWeight(centerDepth, sampleDepth, u_phiDepth);
+            float wColor = computeColorWeight(centerColor, sampleColor, sigma_l);
+
+            // Kernel weight
+            float wKernel = KERNEL[abs(x)] * KERNEL[abs(y)];
+
+            // Combined weight
+            float weight = wKernel * wNormal * wDepth * wColor;
+
+            sumColor += sampleColor * weight;
+            sumWeight += weight;
+        }
+    }
+
+    // Normalize
+    vec3 filteredColor = sumWeight > 0.0 ? sumColor / sumWeight : centerColor;
+
+    return vec4(filteredColor, 1.0);
+}
+
+// ============================================================================
+// Main
+// ============================================================================
+
+void main() {
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 resolution = vec2(imageSize(u_noisyInput));
+
+    if (coord.x >= resolution.x || coord.y >= resolution.y) {
+        return;
+    }
+
+    vec4 result;
+
+    if (u_denoisePass == 0) {
+        // Temporal accumulation pass
+        result = temporalAccumulation(coord);
+        imageStore(u_historyBuffer, coord, result);
+    } else {
+        // Spatial filtering passes (A-Trous wavelet)
+        // Step size doubles each pass: 1, 2, 4, 8, 16
+        int stepSize = 1 << (u_denoisePass - 1);
+        result = spatialFilter(coord, stepSize);
+    }
+
+    imageStore(u_denoisedOutput, coord, result);
+}

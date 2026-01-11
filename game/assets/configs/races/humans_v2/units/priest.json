@@ -1,0 +1,166 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "id": "human_priest",
+  "name": "Priest",
+  "description": "Holy servants of the Light who channel divine power to heal allies and smite the unholy. Essential for sustained military campaigns.",
+  "race": "humans",
+  "category": "support",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 200,
+    "healthRegen": 0.5,
+    "mana": 250,
+    "manaRegen": 1.5,
+    "damage": 8,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.8,
+    "attackRange": 8.0,
+    "armor": 0,
+    "magicResist": 20,
+    "moveSpeed": 4.5,
+    "sightRange": 12
+  },
+
+  "cost": {
+    "gold": 180,
+    "food": 2
+  },
+
+  "trainTime": 32,
+  "populationCost": 2,
+  "requiredBuilding": "human_church",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "holy",
+
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+
+  "bonusVs": [
+    {
+      "category": "undead",
+      "multiplier": 2.0
+    },
+    {
+      "category": "demon",
+      "multiplier": 1.5
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "heal",
+      "name": "Heal",
+      "description": "Restore 75 health to a friendly unit",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 1.5,
+      "manaCost": 25,
+      "range": 10.0,
+      "targetType": "friendly_unit",
+      "healAmount": 75,
+      "autoCast": true
+    },
+    {
+      "id": "dispel_magic",
+      "name": "Dispel Magic",
+      "description": "Remove magical buffs from enemies or debuffs from allies in target area",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 8.0,
+      "manaCost": 50,
+      "range": 12.0,
+      "radius": 4.0,
+      "targetType": "ground"
+    },
+    {
+      "id": "inner_fire",
+      "name": "Inner Fire",
+      "description": "Buff a friendly unit with +10% damage and +3 armor for 60 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 4.0,
+      "manaCost": 35,
+      "range": 10.0,
+      "duration": 60.0,
+      "targetType": "friendly_unit",
+      "effects": [
+        {
+          "stat": "attackDamage",
+          "value": 0.10,
+          "type": "percent"
+        },
+        {
+          "stat": "armor",
+          "value": 3,
+          "type": "flat"
+        }
+      ],
+      "autoCast": true
+    },
+    {
+      "id": "devotion_aura",
+      "name": "Devotion Aura",
+      "description": "Nearby friendly units regenerate health 50% faster",
+      "type": "aura",
+      "radius": 8.0,
+      "effects": [
+        {
+          "stat": "healthRegen",
+          "value": 0.50,
+          "type": "percent"
+        }
+      ],
+      "requiredUpgrade": "upgrade_devotion_aura"
+    }
+  ],
+
+  "upgrades": ["priest_mana", "priest_healing"],
+
+  "visuals": {
+    "model": "models/races/humans/units/priest.obj",
+    "portrait": "textures/races/humans/portraits/priest.png",
+    "icon": "textures/races/humans/icons/priest.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/humans/units/priest_diffuse.png",
+      "normal": "textures/races/humans/units/priest_normal.png"
+    },
+    "animations": {
+      "idle": "animations/humans/priest/idle.anim",
+      "walk": "animations/humans/priest/walk.anim",
+      "run": "animations/humans/priest/run.anim",
+      "cast": "animations/humans/priest/cast.anim",
+      "heal": "animations/humans/priest/heal.anim",
+      "attack": "animations/humans/priest/attack.anim",
+      "death": "animations/humans/priest/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/humans/priest/select_1.wav", "sounds/humans/priest/select_2.wav"],
+    "move": ["sounds/humans/priest/ack_1.wav", "sounds/humans/priest/ack_2.wav"],
+    "attack": ["sounds/holy_cast.wav"],
+    "cast": ["sounds/heal.wav"],
+    "death": ["sounds/humans/priest/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.28,
+    "height": 1.75,
+    "mass": 70.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/healer.bt",
+    "profile": "support",
+    "aggroRange": 6.0,
+    "healPriority": true,
+    "stayBehindThreshold": 0.8,
+    "fleeThreshold": 0.4
+  }
+}

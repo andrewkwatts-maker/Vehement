@@ -1,0 +1,100 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "vampire_night_stalker",
+  "name": "Night Stalker",
+  "description": "Elite vampire assassins who exist only in shadow. Invisible at night, they hunt down high-value targets with ruthless efficiency.",
+  "race": "vampires",
+  "category": "melee",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 420,
+    "healthRegen": 1.8,
+    "mana": 120,
+    "damage": 38,
+    "damageVariance": 0.18,
+    "attackSpeed": 2.0,
+    "attackRange": 1.3,
+    "armor": 3,
+    "magicResist": 20,
+    "moveSpeed": 7.2,
+    "sightRange": 15,
+    "detectionRange": 16,
+    "critChance": 0.35,
+    "critMultiplier": 3.0
+  },
+
+  "cost": {
+    "gold": 320,
+    "blood": 80,
+    "mana": 40,
+    "food": 4
+  },
+
+  "trainTime": 55,
+  "populationCost": 3,
+  "requiredBuilding": "tower_of_night",
+  "requiredAge": 2,
+  "requiredTech": "shadow_mastery",
+
+  "armorType": "light",
+  "attackType": "hero",
+
+  "abilities": [
+    {
+      "id": "permanent_stealth_night",
+      "name": "Shadow Walker",
+      "description": "Permanently invisible at night. Can only be detected by truesight. Breaking stealth grants bonus damage.",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "permanentStealth": true,
+          "backstabDamage": 2.50
+        }
+      }
+    },
+    {
+      "id": "execute",
+      "name": "Execute",
+      "description": "Instantly kill targets below 20% health (does not work on heroes)",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 50,
+      "cooldown": 15.0,
+      "range": 2.0,
+      "executeThreshold": 0.20,
+      "excludes": ["hero"]
+    },
+    {
+      "id": "shadow_strike",
+      "name": "Shadow Strike",
+      "description": "Blink behind target and deal 200% damage with guaranteed crit",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 60,
+      "cooldown": 20.0,
+      "range": 8.0,
+      "damageMultiplier": 2.0,
+      "guaranteedCrit": true,
+      "blinkBehind": true
+    },
+    {
+      "id": "hunter_instinct",
+      "name": "Hunter's Instinct",
+      "description": "Deal 100% bonus damage to isolated enemies and enemies below 50% health",
+      "type": "passive",
+      "bonusVs": [
+        {"condition": "isolated", "multiplier": 2.0},
+        {"condition": "wounded", "threshold": 0.50, "multiplier": 2.0}
+      ]
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/vampires/units/night_stalker.obj",
+    "portrait": "textures/races/vampires/portraits/night_stalker.png",
+    "icon": "textures/races/vampires/icons/night_stalker.png",
+    "scale": 1.0
+  }
+}

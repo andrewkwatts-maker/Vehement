@@ -1,0 +1,75 @@
+# CMakeLists.txt Integration for Instance Property System
+
+# Add these source files to your engine library target
+
+# Engine sources (add to engine/CMakeLists.txt or main CMakeLists.txt)
+set(INSTANCE_SYSTEM_SOURCES
+    engine/scene/InstanceData.cpp
+    engine/scene/InstanceData.hpp
+    engine/scene/InstanceManager.cpp
+    engine/scene/InstanceManager.hpp
+)
+
+# Editor sources (add to examples/CMakeLists.txt or StandaloneEditor target)
+set(PROPERTY_EDITOR_SOURCES
+    examples/PropertyEditor.cpp
+    examples/PropertyEditor.hpp
+    examples/InstancePropertyEditor.cpp
+    examples/InstancePropertyEditor.hpp
+)
+
+# Example integration for existing CMakeLists.txt:
+
+# If you have an engine library:
+add_library(engine STATIC
+    # ... existing engine sources ...
+    ${INSTANCE_SYSTEM_SOURCES}
+)
+
+# If you have a StandaloneEditor executable:
+add_executable(StandaloneEditor
+    # ... existing editor sources ...
+    ${PROPERTY_EDITOR_SOURCES}
+    examples/InstanceSystem_IntegrationExample.cpp  # Optional, for reference
+)
+
+# Link dependencies
+target_link_libraries(engine PUBLIC
+    glm::glm
+    nlohmann_json::nlohmann_json
+    spdlog::spdlog
+)
+
+target_link_libraries(StandaloneEditor PRIVATE
+    engine
+    imgui
+)
+
+# Include directories
+target_include_directories(engine PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine
+)
+
+target_include_directories(StandaloneEditor PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/examples
+)
+
+# If nlohmann_json is not found, add it via FetchContent:
+include(FetchContent)
+
+FetchContent_Declare(
+    json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.2
+)
+
+FetchContent_MakeAvailable(json)
+
+# Copy assets to build directory (optional)
+add_custom_command(TARGET StandaloneEditor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:StandaloneEditor>/assets
+    COMMENT "Copying assets to build directory"
+)

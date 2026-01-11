@@ -1,0 +1,131 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "id": "undead_cursed_tower",
+  "name": "Cursed Tower",
+  "description": "A defensive spire that fires cursed bolts and weakens nearby enemies. Can be upgraded with spirit guardians.",
+  "race": "undead",
+  "category": "defense",
+  "tier": 1,
+
+  "size": {
+    "width": 2,
+    "height": 2
+  },
+
+  "health": 800,
+  "armor": 8,
+  "magicResist": 30,
+
+  "cost": {
+    "gold": 150,
+    "wood": 80,
+    "stone": 60
+  },
+
+  "buildTime": 40,
+  "requiredBuilding": "undead_necropolis",
+  "requiredAge": 0,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [],
+
+  "resourceGeneration": {
+    "requiresWorker": false
+  },
+
+  "garrisonCapacity": 3,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 28,
+    "attackSpeed": 1.2,
+    "attackRange": 16.0,
+    "attackType": "magic",
+    "damageType": "dark",
+    "targetAir": true,
+    "targetGround": true,
+    "multishot": 2,
+    "multishotRange": 3.0
+  },
+
+  "abilities": [
+    {
+      "id": "curse_of_weakness",
+      "name": "Curse of Weakness",
+      "description": "Attacks apply a curse reducing enemy armor by 3 for 5 seconds",
+      "type": "passive",
+      "curseEffect": true,
+      "armorReduction": 3,
+      "duration": 5.0
+    },
+    {
+      "id": "spirit_guardians",
+      "name": "Spirit Guardians",
+      "description": "Summon 2 wraith guardians to defend the tower for 30 seconds",
+      "type": "active",
+      "hotkey": "G",
+      "cooldown": 90.0,
+      "manaCost": 150,
+      "summonCount": 2,
+      "summonUnit": "wraith_guardian",
+      "summonDuration": 30.0
+    },
+    {
+      "id": "garrison_boost",
+      "name": "Garrison Boost",
+      "description": "Each garrisoned unit increases attack damage by 10",
+      "type": "passive",
+      "damagePerGarrison": 10
+    }
+  ],
+
+  "aura": {
+    "id": "cursed_tower_aura",
+    "name": "Dread Aura",
+    "radius": 12.0,
+    "effects": [
+      {
+        "stat": "attackSpeed",
+        "value": -0.15,
+        "type": "percent",
+        "scope": "enemy"
+      }
+    ]
+  },
+
+  "isUnique": false,
+  "maxCount": 20,
+  "canRally": false,
+  "canUpgrade": true,
+  "upgradesTo": "undead_spirit_tower",
+
+  "visuals": {
+    "model": "models/races/undead/buildings/cursed_tower.obj",
+    "icon": "textures/races/undead/icons/buildings/cursed_tower.png",
+    "textures": {
+      "diffuse": "textures/races/undead/buildings/cursed_tower_diffuse.png",
+      "normal": "textures/races/undead/buildings/cursed_tower_normal.png",
+      "emissive": "textures/races/undead/buildings/cursed_tower_emissive.png"
+    },
+    "constructionStages": 3,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "blightWhenDamaged": true,
+    "damageThreshold": 0.5
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/cursed_tower/select.wav"],
+    "attack": ["sounds/cursed_bolt.wav"],
+    "complete": ["sounds/undead/cursed_tower/complete.wav"],
+    "destroyed": ["sounds/undead/cursed_tower/destroyed.wav"]
+  },
+
+  "visionRange": 18.0,
+
+  "blightProperties": {
+    "createsBlight": false,
+    "requiresBlight": false
+  }
+}

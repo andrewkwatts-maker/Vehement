@@ -1,0 +1,152 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "fairy_phoenix",
+  "name": "Phoenix",
+  "description": "Legendary fire birds that burst with flame magic. Phoenixes can resurrect once upon death, deal fire damage in an aura, and launch devastating fireballs.",
+  "race": "fairies",
+  "category": "air",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 320,
+    "healthRegen": 1.2,
+    "mana": 250,
+    "manaRegen": 2.0,
+    "damage": 25,
+    "damageVariance": 0.18,
+    "attackSpeed": 1.3,
+    "attackRange": 6,
+    "armor": 3,
+    "magicResist": 30,
+    "moveSpeed": 7.5,
+    "sightRange": 15,
+    "spellPower": 70
+  },
+
+  "cost": {
+    "gold": 350,
+    "mana": 150,
+    "food": 5
+  },
+
+  "trainTime": 55,
+  "populationCost": 4,
+  "requiredBuilding": "fairy_ancient_tree",
+  "requiredAge": 2,
+
+  "armorType": "light",
+  "attackType": "magic",
+  "movementType": "flying",
+  "flyingHeight": 5.0,
+
+  "projectile": {
+    "id": "flame_bolt",
+    "type": "linear",
+    "speed": 26.0,
+    "model": "models/projectiles/flame_bolt.obj",
+    "trailEffect": "effects/fire_trail.fx",
+    "impactEffect": "effects/fire_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "flame_aura",
+      "name": "Immolation Aura",
+      "description": "Passive aura dealing 8 fire damage per second to nearby enemies",
+      "type": "passive",
+      "auraRadius": 4.0,
+      "damagePerSecond": 8,
+      "damageType": "fire"
+    },
+    {
+      "id": "phoenix_fire",
+      "name": "Phoenix Fire",
+      "description": "Launch a fireball that bounces between enemies up to 5 times, dealing 100 damage each",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 12.0,
+      "manaCost": 80,
+      "range": 10.0,
+      "damage": 100,
+      "maxBounces": 5,
+      "bounceRange": 5.0,
+      "damageType": "fire"
+    },
+    {
+      "id": "rebirth",
+      "name": "Rebirth",
+      "description": "Upon death, resurrect with 50% health and mana (once per Phoenix)",
+      "type": "passive",
+      "resurrectHealthPercent": 0.5,
+      "resurrectManaPercent": 0.5,
+      "resurrectTime": 3.0,
+      "usesPerLife": 1
+    },
+    {
+      "id": "flame_strike",
+      "name": "Flame Strike",
+      "description": "Call down a pillar of flame dealing 150 damage in area",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 20.0,
+      "manaCost": 120,
+      "range": 12.0,
+      "radius": 3.5,
+      "damage": 150,
+      "damageType": "fire",
+      "castTime": 1.5
+    }
+  ],
+
+  "immunities": [
+    "fire"
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/phoenix.obj",
+    "portrait": "textures/races/fairies/portraits/phoenix.png",
+    "icon": "textures/races/fairies/icons/phoenix.png",
+    "scale": 1.3,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/phoenix_diffuse.png",
+      "emissive": "textures/races/fairies/units/phoenix_fire.png",
+      "normal": "textures/races/fairies/units/phoenix_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/phoenix/hover.anim",
+      "walk": "animations/fairies/phoenix/fly.anim",
+      "attack": "animations/fairies/phoenix/breathe_fire.anim",
+      "death": "animations/fairies/phoenix/death.anim",
+      "resurrect": "animations/fairies/phoenix/rebirth.anim",
+      "cast": "animations/fairies/phoenix/cast.anim"
+    },
+    "wingTrailEffect": "effects/phoenix_trail.fx",
+    "auraEffect": "effects/flame_aura.fx",
+    "glowEffect": "effects/phoenix_glow.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/phoenix/select_1.wav", "sounds/fairies/phoenix/screech.wav"],
+    "move": ["sounds/fairies/phoenix/ack_1.wav"],
+    "attack": ["sounds/fairies/phoenix/fire.wav"],
+    "death": ["sounds/fairies/phoenix/death.wav"],
+    "resurrect": ["sounds/fairies/phoenix/rebirth.wav"],
+    "ready": ["sounds/fairies/phoenix/ready.wav"]
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.7,
+    "mass": 50.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/aggressive_caster_flyer.bt",
+    "profile": "caster",
+    "aggroRange": 14.0,
+    "preferredDistance": 7.0,
+    "manaConservationThreshold": 0.2,
+    "priorityAbilities": ["phoenix_fire", "flame_strike"]
+  }
+}

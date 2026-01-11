@@ -1,0 +1,134 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "vampire_werewolf",
+  "name": "Werewolf",
+  "description": "Cursed shapeshifters enslaved by vampires. Transform between human and wolf forms, gaining massive power under the full moon.",
+  "race": "vampires",
+  "category": "melee",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 520,
+    "healthRegen": 2.0,
+    "mana": 80,
+    "manaRegen": 0.6,
+    "damage": 26,
+    "damageVariance": 0.20,
+    "attackSpeed": 1.6,
+    "attackRange": 1.4,
+    "armor": 4,
+    "magicResist": 10,
+    "moveSpeed": 6.0,
+    "sightRange": 13,
+    "detectionRange": 15,
+    "critChance": 0.18,
+    "critMultiplier": 2.1
+  },
+
+  "cost": {
+    "gold": 280,
+    "blood": 60,
+    "food": 4
+  },
+
+  "trainTime": 45,
+  "populationCost": 3,
+  "requiredBuilding": "vampire_crypt",
+  "requiredAge": 1,
+  "requiredTech": "lycanthropy",
+
+  "armorType": "medium",
+  "attackType": "normal",
+
+  "abilities": [
+    {
+      "id": "wolf_form",
+      "name": "Wolf Form",
+      "description": "Transform into a massive wolf. +50% damage, +40% attack speed, +25% movement speed. Lasts 20 seconds.",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 50,
+      "cooldown": 35.0,
+      "duration": 20.0,
+      "transformStats": {
+        "damage": 1.50,
+        "attackSpeed": 1.40,
+        "moveSpeed": 1.25,
+        "model": "werewolf_beast"
+      }
+    },
+    {
+      "id": "pack_tactics",
+      "name": "Pack Tactics",
+      "description": "Gain +10% damage for each nearby werewolf (max 4 stacks)",
+      "type": "passive",
+      "stacksWith": "vampire_werewolf",
+      "radius": 5.0,
+      "maxStacks": 4,
+      "damagePerStack": 0.10
+    },
+    {
+      "id": "savage_bite",
+      "name": "Savage Bite",
+      "description": "Bite attack dealing 150% damage and applying bleeding (15 damage/sec for 6s)",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 30,
+      "cooldown": 12.0,
+      "damageMultiplier": 1.50,
+      "bleedDamage": 15,
+      "bleedDuration": 6.0
+    },
+    {
+      "id": "regeneration",
+      "name": "Regeneration",
+      "description": "When below 50% health, gain +5 health regen. Doubled at night.",
+      "type": "passive",
+      "trigger": {
+        "healthThreshold": 0.50,
+        "healthRegen": 5.0
+      },
+      "nightBonus": {
+        "healthRegen": 10.0
+      }
+    },
+    {
+      "id": "moonlight_fury",
+      "name": "Moonlight Fury",
+      "description": "At night: +30% damage, +20% attack speed, +3 armor, abilities cost 25% less",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "damage": 1.30,
+          "attackSpeed": 1.20,
+          "armor": 3,
+          "manaCostReduction": 0.25
+        }
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/vampires/units/werewolf_human.obj",
+    "portrait": "textures/races/vampires/portraits/werewolf.png",
+    "icon": "textures/races/vampires/icons/werewolf.png",
+    "scale": 1.05,
+    "animations": {
+      "idle": "animations/vampires/werewolf/idle.anim",
+      "walk": "animations/vampires/werewolf/walk.anim",
+      "attack": "animations/vampires/werewolf/attack.anim",
+      "transform": "animations/vampires/werewolf/transform.anim",
+      "beast_idle": "animations/vampires/werewolf/beast_idle.anim",
+      "beast_attack": "animations/vampires/werewolf/beast_attack.anim",
+      "death": "animations/vampires/werewolf/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/werewolf/select.wav"],
+    "attack": ["sounds/vampires/werewolf/growl.wav"],
+    "transform": ["sounds/vampires/werewolf/howl.wav"],
+    "death": ["sounds/vampires/werewolf/death.wav"]
+  }
+}

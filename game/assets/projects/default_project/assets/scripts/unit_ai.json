@@ -1,0 +1,95 @@
+{
+  "type": "visual_script",
+  "version": "1.0",
+  "name": "Unit AI Behavior",
+  "description": "Simple AI behavior tree for units: patrol, attack, flee",
+  "author": "Nova3D Team",
+  "tags": ["ai", "behavior-tree", "unit"],
+
+  "nodes": [
+    {
+      "id": "root",
+      "type": "Selector",
+      "position": [0, 0],
+      "children": ["flee_check", "attack_check", "patrol"]
+    },
+    {
+      "id": "flee_check",
+      "type": "Sequence",
+      "position": [- 200, 100],
+      "children": ["health_low", "flee_action"]
+    },
+    {
+      "id": "health_low",
+      "type": "Condition",
+      "position": [-200, 200],
+      "parameters": {
+        "condition": "health < maxHealth * 0.3"
+      }
+    },
+    {
+      "id": "flee_action",
+      "type": "Action",
+      "position": [-200, 300],
+      "parameters": {
+        "action": "FleeFromEnemy",
+        "speed": 1.5,
+        "safeDistance": 20.0
+      }
+    },
+    {
+      "id": "attack_check",
+      "type": "Sequence",
+      "position": [0, 100],
+      "children": ["enemy_nearby", "attack_action"]
+    },
+    {
+      "id": "enemy_nearby",
+      "type": "Condition",
+      "position": [0, 200],
+      "parameters": {
+        "condition": "GetNearestEnemy(attackRange) != null"
+      }
+    },
+    {
+      "id": "attack_action",
+      "type": "Action",
+      "position": [0, 300],
+      "parameters": {
+        "action": "AttackEnemy",
+        "target": "GetNearestEnemy(attackRange)",
+        "cooldown": 1.0
+      }
+    },
+    {
+      "id": "patrol",
+      "type": "Action",
+      "position": [200, 100],
+      "parameters": {
+        "action": "Patrol",
+        "waypoints": "patrolWaypoints",
+        "speed": 1.0,
+        "waitTime": 2.0
+      }
+    }
+  ],
+
+  "variables": {
+    "health": {
+      "type": "float",
+      "default": 100.0
+    },
+    "maxHealth": {
+      "type": "float",
+      "default": 100.0
+    },
+    "attackRange": {
+      "type": "float",
+      "default": 10.0
+    },
+    "patrolWaypoints": {
+      "type": "vec3[]",
+      "default": []
+    }
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "main_hall",
+  "id": "undead_necropolis",
+  "name": "Necropolis",
+  "description": "The dark heart of the undead empire. The Necropolis trains acolytes, stores corpses, and spreads blight across the land.",
+  "race": "undead",
+  "category": "main_hall",
+  "tier": 1,
+
+  "size": {
+    "width": 5,
+    "height": 5
+  },
+
+  "health": 1800,
+  "armor": 8,
+  "magicResist": 20,
+
+  "cost": {
+    "gold": 450,
+    "wood": 200
+  },
+
+  "buildTime": 140,
+  "requiredAge": 0,
+
+  "providesPopulation": 12,
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "undead_acolyte",
+      "requiredAge": 0
+    },
+    {
+      "type": "tech",
+      "id": "age_up_2",
+      "requiredAge": 0
+    },
+    {
+      "type": "tech",
+      "id": "age_up_3",
+      "requiredAge": 1
+    }
+  ],
+
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0,
+    "corpseStorage": 20,
+    "manaPerSecond": 0.5,
+    "requiresWorker": false
+  },
+
+  "garrisonCapacity": 10,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 18,
+    "attackSpeed": 0.8,
+    "attackRange": 14.0,
+    "attackType": "magic",
+    "damageType": "dark",
+    "targetAir": true,
+    "targetGround": true
+  },
+
+  "abilities": [
+    {
+      "id": "blight_aura",
+      "name": "Blight Aura",
+      "description": "Spreads corrupted blight in a 25 unit radius, creating blighted ground that buffs undead",
+      "type": "passive",
+      "auraRadius": 25.0,
+      "createsBlight": true,
+      "blightGrowthRate": 0.5
+    },
+    {
+      "id": "corpse_repository",
+      "name": "Corpse Repository",
+      "description": "Stores up to 20 corpses for creating undead units",
+      "type": "passive",
+      "corpseStorage": 20
+    },
+    {
+      "id": "phylactery_anchor",
+      "name": "Phylactery Anchor",
+      "description": "Liches revive at this location when killed",
+      "type": "passive",
+      "isPhylactery": true
+    },
+    {
+      "id": "sacrificial_pit",
+      "name": "Sacrificial Pit",
+      "description": "Sacrifice a garrisoned unit to restore 500 health to the Necropolis",
+      "type": "active",
+      "hotkey": "S",
+      "cooldown": 60.0,
+      "requiresGarrison": true,
+      "healAmount": 500
+    }
+  ],
+
+  "aura": {
+    "id": "necropolis_aura",
+    "name": "Dark Power",
+    "radius": 25.0,
+    "effects": [
+      {
+        "stat": "manaRegen",
+        "value": 0.5,
+        "scope": "undead_caster"
+      },
+      {
+        "stat": "healthRegen",
+        "value": 1.0,
+        "scope": "undead",
+        "requiresBlight": true
+      }
+    ]
+  },
+
+  "isUnique": false,
+  "maxCount": 2,
+  "canRally": true,
+  "canUpgrade": true,
+  "upgradesTo": "undead_halls_of_the_dead",
+
+  "visuals": {
+    "model": "models/races/undead/buildings/necropolis.obj",
+    "icon": "textures/races/undead/icons/buildings/necropolis.png",
+    "textures": {
+      "diffuse": "textures/races/undead/buildings/necropolis_diffuse.png",
+      "normal": "textures/races/undead/buildings/necropolis_normal.png",
+      "emissive": "textures/races/undead/buildings/necropolis_emissive.png"
+    },
+    "constructionStages": 4,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "blightWhenDamaged": true,
+    "damageThreshold": 0.5
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/necropolis/select.wav"],
+    "attack": ["sounds/dark_bolt.wav"],
+    "complete": ["sounds/undead/necropolis/complete.wav"],
+    "destroyed": ["sounds/undead/necropolis/destroyed.wav"]
+  },
+
+  "visionRange": 16.0,
+
+  "blightProperties": {
+    "createsBlight": true,
+    "blightRadius": 25.0,
+    "blightGrowthRate": 0.5,
+    "requiresBlight": false
+  }
+}

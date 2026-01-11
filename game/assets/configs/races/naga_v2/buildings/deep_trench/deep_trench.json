@@ -1,0 +1,144 @@
+{
+  "$schema": "../../../../../schemas/building_archetype.schema.json",
+
+  "parentArchetype": "spawner_building_archetype",
+  "id": "naga_deep_trench",
+  "name": "Deep Trench",
+  "description": "Entrance to the abyssal depths. Trains elite deep-sea units and researches advanced technologies.",
+
+  "category": "military_advanced",
+  "tier": 2,
+
+  "size": {"width": 4, "height": 4, "footprintShape": "circle"},
+
+  "placement": {
+    "requiresLand": false,
+    "canPlaceOnWater": true,
+    "requiresDeepWater": true,  // Must be in deep water!
+    "waterDepthMinimum": 10.0,
+    "minDistanceFromOther": 5.0
+  },
+
+  "health": 1500,
+  "healthRegen": 2.5,
+  "armor": 6,
+  "magicResist": 4,
+
+  "spawner": {
+    "queueSize": 5,
+    "simultaneousProduction": 1,
+    "productionSpeedMultiplier": 1.0,
+    "productionSpeedInDeepWater": 1.5
+  },
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "naga_serpent_guard",
+      "name": "Serpent Guard",
+      "requiredAge": 1,
+      "requiredTech": "coral_forging",
+      "hotkey": "G"
+    },
+    {
+      "type": "unit",
+      "id": "naga_electric_eel",
+      "name": "Electric Eel",
+      "requiredAge": 1,
+      "requiredTech": "electric_cultivation",
+      "hotkey": "E"
+    },
+    {
+      "type": "unit",
+      "id": "naga_depth_stalker",
+      "name": "Depth Stalker",
+      "requiredAge": 2,
+      "requiredTech": "abyssal_hunting",
+      "hotkey": "D"
+    },
+    {
+      "type": "tech",
+      "id": "coral_forging",
+      "name": "Coral Forging",
+      "description": "Unlocks Serpent Guards",
+      "cost": {"gold": 200, "stone": 100, "mana": 100},
+      "researchTime": 50
+    },
+    {
+      "type": "tech",
+      "id": "abyssal_hunting",
+      "name": "Abyssal Hunting",
+      "description": "Unlocks Depth Stalkers",
+      "cost": {"gold": 300, "mana": 200},
+      "researchTime": 70
+    }
+  ],
+
+  "cost": {
+    "gold": 350,
+    "stone": 200,
+    "mana": 150
+  },
+
+  "buildTime": 80,
+  "requiredBuilding": "naga_coral_reef",
+  "requiredAge": 1,
+
+  "providesPopulation": 8,
+
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 15.0,
+    "auraType": "deep_sea",
+    "auraEffects": [
+      {
+        "type": "armor",
+        "value": 2,
+        "affectsNagaOnly": true,
+        "onlyInDeepWater": true
+      }
+    ]
+  },
+
+  "visuals": {
+    "model": "models/buildings/naga/deep_trench.fbx",
+    "icon": "textures/icons/buildings/naga/deep_trench.png",
+    "glowAtNight": true,
+    "glowColor": "#4400FF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.9,
+      "patterns": ["trench_glow", "abyssal_runes"]
+    }
+  },
+
+  "modularBuilding": {
+    "enabled": true,
+    "maxComponents": 6,
+    "allowedComponents": [
+      "pressure_chamber_component",
+      "abyssal_gate_component",
+      "deep_current_component"
+    ]
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "abyssal": true,
+    "requiresDeepWater": true,
+    "environmentalBonuses": {
+      "atDepth": {
+        "deepWater": {
+          "productionSpeed": 1.5,
+          "healthRegen": 3.0,
+          "auraRadius": 1.3
+        }
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Advanced military building. Must be in deep water. Trains elite abyssal units."
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "resource_building",
+  "id": "fairy_ethereal_vault",
+  "name": "Ethereal Vault",
+  "description": "A shimmering repository for magical essence. Stores large amounts of mana and gold while providing passive resource generation bonuses to nearby buildings.",
+  "race": "fairies",
+  "category": "resource_building",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 1000,
+    "healthRegen": 2.0,
+    "armor": 8,
+    "magicResist": 25,
+    "sightRange": 12
+  },
+
+  "cost": {
+    "gold": 250,
+    "wood": 80,
+    "mana": 100
+  },
+
+  "buildTime": 50,
+  "footprint": {
+    "width": 4,
+    "height": 4
+  },
+
+  "requiredBuilding": "fairy_ancient_tree",
+  "requiredAge": 1,
+
+  "storageCapacity": {
+    "gold": 1000,
+    "mana": 1500
+  },
+
+  "generatesResources": {
+    "gold": 0.5,
+    "mana": 1.0
+  },
+
+  "abilities": [
+    {
+      "id": "resource_amplification",
+      "name": "Resource Amplification",
+      "description": "Passive aura increasing resource generation by 20% for nearby buildings",
+      "type": "passive",
+      "auraRadius": 15.0,
+      "resourceGenerationBonus": 0.2
+    },
+    {
+      "id": "transmute",
+      "name": "Transmute Resources",
+      "description": "Convert 200 gold to 100 mana or vice versa",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 30.0,
+      "goldToMana": {
+        "goldCost": 200,
+        "manaGain": 100
+      },
+      "manaToGold": {
+        "manaCost": 100,
+        "goldGain": 200
+      }
+    },
+    {
+      "id": "mana_surge",
+      "name": "Mana Surge",
+      "description": "Instantly grant 500 mana to all players on team",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 180.0,
+      "manaGrant": 500,
+      "teamwide": true
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "expanded_vault",
+      "name": "Expanded Vault",
+      "description": "Double storage capacity and increase generation by 50%",
+      "cost": {
+        "gold": 300,
+        "mana": 200
+      },
+      "upgradeTime": 60,
+      "statBonuses": {
+        "goldStorage": 1000,
+        "manaStorage": 1500,
+        "goldGeneration": 0.25,
+        "manaGeneration": 0.5
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/buildings/ethereal_vault.obj",
+    "portrait": "textures/races/fairies/portraits/ethereal_vault.png",
+    "icon": "textures/races/fairies/icons/ethereal_vault.png",
+    "scale": 1.3,
+    "textures": {
+      "diffuse": "textures/races/fairies/buildings/vault_diffuse.png",
+      "emissive": "textures/races/fairies/buildings/vault_glow.png",
+      "normal": "textures/races/fairies/buildings/vault_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/buildings/vault_float.anim",
+      "build": "animations/fairies/buildings/vault_materialize.anim",
+      "death": "animations/fairies/buildings/vault_shatter.anim"
+    },
+    "auraEffect": "effects/mana_mist.fx",
+    "floatingCrystalsEffect": "effects/floating_crystals.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/buildings/vault_chime.wav"],
+    "build": ["sounds/fairies/buildings/vault_build.wav"],
+    "complete": ["sounds/fairies/buildings/vault_complete.wav"],
+    "death": ["sounds/fairies/buildings/vault_shatter.wav"],
+    "ambient": "sounds/fairies/buildings/vault_ambient.wav"
+  },
+
+  "requirements": {
+    "terrain": ["grass", "forest"],
+    "nearWater": false,
+    "clearArea": true
+  }
+}

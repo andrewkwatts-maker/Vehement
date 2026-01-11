@@ -1,0 +1,235 @@
+{
+    "id": "ui.templates.unit_card",
+    "type": "ui",
+    "name": "Unit Card",
+    "description": "Displays information about a selected unit",
+
+    "props": [
+        { "name": "unit", "type": "UnitData*", "required": true },
+        { "name": "showDetails", "type": "bool", "default": true },
+        { "name": "compact", "type": "bool", "default": false }
+    ],
+
+    "slots": [
+        { "name": "actions", "required": false },
+        { "name": "abilities", "required": false }
+    ],
+
+    "template": {
+        "tag": "panel",
+        "class": "unit-card",
+        "style": {
+            "display": "flex",
+            "flexDirection": "column",
+            "width": "280px",
+            "padding": "12px",
+            "backgroundColor": "rgba(20, 25, 35, 0.95)",
+            "borderRadius": "8px",
+            "border": "1px solid #3a4a5a"
+        },
+        "children": [
+            {
+                "tag": "div",
+                "class": "unit-header",
+                "style": {
+                    "display": "flex",
+                    "alignItems": "center",
+                    "gap": "12px",
+                    "marginBottom": "12px"
+                },
+                "children": [
+                    {
+                        "tag": "img",
+                        "class": "unit-portrait",
+                        ":src": "unit.portrait",
+                        "style": {
+                            "width": "64px",
+                            "height": "64px",
+                            "borderRadius": "4px",
+                            "border": "2px solid #4a5a6a"
+                        }
+                    },
+                    {
+                        "tag": "div",
+                        "class": "unit-info",
+                        "style": {
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "flex": "1"
+                        },
+                        "children": [
+                            {
+                                "tag": "text",
+                                "class": "unit-name",
+                                ":text": "unit.name",
+                                "style": {
+                                    "fontSize": "16px",
+                                    "fontWeight": "bold",
+                                    "color": "#ffffff"
+                                }
+                            },
+                            {
+                                "tag": "text",
+                                "class": "unit-type",
+                                ":text": "unit.typeName",
+                                "style": {
+                                    "fontSize": "12px",
+                                    "color": "#8899aa"
+                                }
+                            },
+                            {
+                                "tag": "text",
+                                "class": "unit-level",
+                                ":text": "unit.levelText",
+                                ":visible": "unit.isHero",
+                                "style": {
+                                    "fontSize": "11px",
+                                    "color": "#ffcc00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "tag": "div",
+                "class": "unit-stats",
+                "style": {
+                    "display": "flex",
+                    "flexDirection": "column",
+                    "gap": "8px"
+                },
+                "children": [
+                    {
+                        "tag": "div",
+                        "class": "stat-row health-bar",
+                        "children": [
+                            {
+                                "tag": "label",
+                                "text": "HP",
+                                "style": { "width": "30px", "color": "#66ff66" }
+                            },
+                            {
+                                "tag": "progress",
+                                ":value": "unit.healthPercent",
+                                "style": {
+                                    "flex": "1",
+                                    "height": "16px"
+                                },
+                                "attrs": {
+                                    "fillColor": "#44aa44"
+                                }
+                            },
+                            {
+                                "tag": "text",
+                                ":text": "unit.healthText",
+                                "style": { "width": "60px", "textAlign": "right", "fontSize": "12px" }
+                            }
+                        ]
+                    },
+                    {
+                        "tag": "div",
+                        "class": "stat-row mana-bar",
+                        ":visible": "unit.hasMana",
+                        "children": [
+                            {
+                                "tag": "label",
+                                "text": "MP",
+                                "style": { "width": "30px", "color": "#6666ff" }
+                            },
+                            {
+                                "tag": "progress",
+                                ":value": "unit.manaPercent",
+                                "style": {
+                                    "flex": "1",
+                                    "height": "16px"
+                                },
+                                "attrs": {
+                                    "fillColor": "#4444aa"
+                                }
+                            },
+                            {
+                                "tag": "text",
+                                ":text": "unit.manaText",
+                                "style": { "width": "60px", "textAlign": "right", "fontSize": "12px" }
+                            }
+                        ]
+                    },
+                    {
+                        "tag": "div",
+                        "class": "stat-grid",
+                        ":visible": "showDetails",
+                        "style": {
+                            "display": "grid",
+                            "gridTemplateColumns": "1fr 1fr",
+                            "gap": "4px",
+                            "marginTop": "8px"
+                        },
+                        "children": [
+                            {
+                                "tag": "div",
+                                "class": "stat-item",
+                                "children": [
+                                    { "tag": "img", "attrs": { "src": "icons/damage.png" }, "style": { "width": "16px" } },
+                                    { "tag": "text", ":text": "unit.damage", "style": { "marginLeft": "4px" } }
+                                ]
+                            },
+                            {
+                                "tag": "div",
+                                "class": "stat-item",
+                                "children": [
+                                    { "tag": "img", "attrs": { "src": "icons/armor.png" }, "style": { "width": "16px" } },
+                                    { "tag": "text", ":text": "unit.armor", "style": { "marginLeft": "4px" } }
+                                ]
+                            },
+                            {
+                                "tag": "div",
+                                "class": "stat-item",
+                                "children": [
+                                    { "tag": "img", "attrs": { "src": "icons/speed.png" }, "style": { "width": "16px" } },
+                                    { "tag": "text", ":text": "unit.moveSpeed", "style": { "marginLeft": "4px" } }
+                                ]
+                            },
+                            {
+                                "tag": "div",
+                                "class": "stat-item",
+                                "children": [
+                                    { "tag": "img", "attrs": { "src": "icons/range.png" }, "style": { "width": "16px" } },
+                                    { "tag": "text", ":text": "unit.attackRange", "style": { "marginLeft": "4px" } }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "tag": "slot",
+                "attrs": { "name": "abilities" }
+            },
+            {
+                "tag": "slot",
+                "attrs": { "name": "actions" }
+            }
+        ]
+    },
+
+    "styles": {
+        ".unit-card": {
+            "boxShadow": "0 4px 12px rgba(0,0,0,0.5)"
+        },
+        ".unit-card:hover": {
+            "borderColor": "#5a7a9a"
+        },
+        ".stat-row": {
+            "display": "flex",
+            "alignItems": "center",
+            "gap": "8px"
+        },
+        ".stat-item": {
+            "display": "flex",
+            "alignItems": "center",
+            "fontSize": "12px",
+            "color": "#aabbcc"
+        }
+    }
+}

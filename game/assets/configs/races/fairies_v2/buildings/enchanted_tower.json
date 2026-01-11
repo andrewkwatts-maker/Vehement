@@ -1,0 +1,153 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "defense_building",
+  "id": "fairy_enchanted_tower",
+  "name": "Enchanted Tower",
+  "description": "A crystalline tower that fires magical bolts at enemies. Can be upgraded with elemental aspects for different damage types and effects.",
+  "race": "fairies",
+  "category": "defense_building",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 700,
+    "healthRegen": 1.5,
+    "armor": 10,
+    "magicResist": 30,
+    "sightRange": 16,
+    "attackDamage": 35,
+    "attackSpeed": 1.5,
+    "attackRange": 13
+  },
+
+  "cost": {
+    "gold": 150,
+    "wood": 50,
+    "mana": 60
+  },
+
+  "buildTime": 40,
+  "footprint": {
+    "width": 3,
+    "height": 3
+  },
+
+  "requiredBuilding": "fairy_ancient_tree",
+  "requiredAge": 0,
+
+  "attackType": "magic",
+  "targetsPriority": ["air", "caster", "closest"],
+
+  "projectile": {
+    "id": "arcane_bolt",
+    "type": "homing",
+    "speed": 30.0,
+    "model": "models/projectiles/arcane_bolt.obj",
+    "trailEffect": "effects/arcane_trail.fx",
+    "impactEffect": "effects/arcane_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "feedback",
+      "name": "Feedback",
+      "description": "Passive: Attacks burn 20 mana from target, dealing 0.5 damage per mana burned",
+      "type": "passive",
+      "manaBurn": 20,
+      "damagePerMana": 0.5
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "fire_aspect",
+      "name": "Fire Aspect",
+      "description": "Attacks deal fire damage and splash in small radius",
+      "cost": {
+        "gold": 120,
+        "mana": 80
+      },
+      "upgradeTime": 35,
+      "statBonuses": {
+        "attackDamage": 10
+      },
+      "attackType": "fire",
+      "splashRadius": 2.0
+    },
+    {
+      "id": "frost_aspect",
+      "name": "Frost Aspect",
+      "description": "Attacks slow enemies by 40% for 2 seconds",
+      "cost": {
+        "gold": 120,
+        "mana": 80
+      },
+      "upgradeTime": 35,
+      "attackType": "frost",
+      "slowPercent": 0.4,
+      "slowDuration": 2.0
+    },
+    {
+      "id": "lightning_aspect",
+      "name": "Lightning Aspect",
+      "description": "Attacks chain to 3 additional targets",
+      "cost": {
+        "gold": 150,
+        "mana": 100
+      },
+      "upgradeTime": 40,
+      "attackType": "lightning",
+      "chainCount": 3,
+      "chainRange": 5.0,
+      "chainDamageReduction": 0.3
+    },
+    {
+      "id": "fortified_tower",
+      "name": "Fortified Tower",
+      "description": "+400 health, +5 armor, +2 attack range",
+      "cost": {
+        "gold": 200,
+        "stone": 150
+      },
+      "upgradeTime": 50,
+      "statBonuses": {
+        "health": 400,
+        "armor": 5,
+        "attackRange": 2
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/buildings/enchanted_tower.obj",
+    "portrait": "textures/races/fairies/portraits/enchanted_tower.png",
+    "icon": "textures/races/fairies/icons/enchanted_tower.png",
+    "scale": 1.5,
+    "textures": {
+      "diffuse": "textures/races/fairies/buildings/tower_diffuse.png",
+      "emissive": "textures/races/fairies/buildings/tower_glow.png",
+      "normal": "textures/races/fairies/buildings/tower_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/buildings/tower_pulse.anim",
+      "build": "animations/fairies/buildings/tower_grow.anim",
+      "attack": "animations/fairies/buildings/tower_shoot.anim",
+      "death": "animations/fairies/buildings/tower_shatter.anim"
+    },
+    "crystalGlowEffect": "effects/crystal_glow.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/buildings/tower_hum.wav"],
+    "build": ["sounds/fairies/buildings/tower_build.wav"],
+    "complete": ["sounds/fairies/buildings/tower_complete.wav"],
+    "attack": ["sounds/fairies/buildings/tower_shoot.wav"],
+    "death": ["sounds/fairies/buildings/tower_shatter.wav"],
+    "ambient": "sounds/fairies/buildings/crystal_hum.wav"
+  },
+
+  "requirements": {
+    "terrain": ["grass", "forest", "stone"],
+    "nearWater": false,
+    "clearArea": true
+  }
+}

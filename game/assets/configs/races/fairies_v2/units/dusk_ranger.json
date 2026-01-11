@@ -1,0 +1,164 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "ranged_unit_archetype",
+  "id": "fairy_dusk_ranger",
+  "name": "Dusk Ranger",
+  "description": "Elite shadow archers who strike from stealth. Dusk Rangers can become invisible, deal massive critical damage, and mark targets for bonus damage.",
+  "race": "fairies",
+  "category": "ranged",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 180,
+    "healthRegen": 0.6,
+    "mana": 150,
+    "manaRegen": 1.5,
+    "damage": 32,
+    "damageVariance": 0.25,
+    "attackSpeed": 1.1,
+    "attackRange": 11,
+    "armor": 1,
+    "magicResist": 15,
+    "moveSpeed": 6.0,
+    "sightRange": 16,
+    "critChance": 0.30,
+    "critMultiplier": 2.5
+  },
+
+  "cost": {
+    "gold": 260,
+    "wood": 80,
+    "mana": 60,
+    "food": 3
+  },
+
+  "trainTime": 42,
+  "populationCost": 2,
+  "requiredBuilding": "fairy_circle",
+  "requiredAge": 2,
+
+  "armorType": "light",
+  "attackType": "pierce",
+  "movementType": "ground",
+
+  "projectile": {
+    "id": "shadow_arrow",
+    "type": "ballistic",
+    "speed": 35.0,
+    "arc": 0.15,
+    "model": "models/projectiles/shadow_arrow.obj",
+    "trailEffect": "effects/shadow_trail.fx",
+    "impactEffect": "effects/shadow_impact.fx",
+    "piercing": true,
+    "maxPierceTargets": 3
+  },
+
+  "abilities": [
+    {
+      "id": "shadow_cloak",
+      "name": "Shadow Cloak",
+      "description": "Become invisible. First attack from stealth deals 3x damage",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 30.0,
+      "manaCost": 50,
+      "backstabMultiplier": 3.0
+    },
+    {
+      "id": "hunter_mark",
+      "name": "Hunter's Mark",
+      "description": "Mark target increasing all damage taken by 25% for 12 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 15.0,
+      "manaCost": 40,
+      "range": 14.0,
+      "duration": 12.0,
+      "damageAmplification": 0.25
+    },
+    {
+      "id": "volley",
+      "name": "Shadow Volley",
+      "description": "Fire a volley of arrows in target area, hitting all enemies for 60 damage",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 20.0,
+      "manaCost": 80,
+      "range": 12.0,
+      "radius": 4.0,
+      "damage": 60,
+      "arrowCount": 20
+    },
+    {
+      "id": "phase_arrow",
+      "name": "Phase Arrow",
+      "description": "Fire an arrow that phases through terrain and units, hitting target directly",
+      "type": "toggle",
+      "hotkey": "R",
+      "manaCostPerAttack": 15,
+      "ignoresObstacles": true,
+      "ignoresArmor": true
+    }
+  ],
+
+  "bonusVs": [
+    {
+      "category": "air",
+      "multiplier": 1.6
+    },
+    {
+      "category": "caster",
+      "multiplier": 1.4
+    }
+  ],
+
+  "canBecomeInvisible": true,
+  "invisibilityDelay": 2.0,
+
+  "visuals": {
+    "model": "models/races/fairies/units/dusk_ranger.obj",
+    "portrait": "textures/races/fairies/portraits/dusk_ranger.png",
+    "icon": "textures/races/fairies/icons/dusk_ranger.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/dusk_ranger_diffuse.png",
+      "normal": "textures/races/fairies/units/dusk_ranger_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/dusk_ranger/idle.anim",
+      "walk": "animations/fairies/dusk_ranger/walk.anim",
+      "run": "animations/fairies/dusk_ranger/run.anim",
+      "attack": "animations/fairies/dusk_ranger/shoot.anim",
+      "death": "animations/fairies/dusk_ranger/death.anim",
+      "cast": "animations/fairies/dusk_ranger/cast.anim",
+      "stealth": "animations/fairies/dusk_ranger/vanish.anim"
+    },
+    "cloakEffect": "effects/shadow_cloak.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/dusk_ranger/select_1.wav", "sounds/fairies/dusk_ranger/select_2.wav"],
+    "move": ["sounds/fairies/dusk_ranger/ack_1.wav"],
+    "attack": ["sounds/fairies/dusk_ranger/shoot.wav"],
+    "death": ["sounds/fairies/dusk_ranger/death.wav"],
+    "stealth": ["sounds/fairies/dusk_ranger/vanish.wav"],
+    "ready": ["sounds/fairies/dusk_ranger/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.3,
+    "height": 1.75,
+    "mass": 60.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/assassin_ranged.bt",
+    "profile": "ranged_assassin",
+    "aggroRange": 16.0,
+    "preferredDistance": 10.0,
+    "fleeThreshold": 0.3,
+    "useStealthOpener": true,
+    "priorityAbilities": ["shadow_cloak", "hunter_mark"]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "$schema": "../../../../../schemas/building_archetype.schema.json",
+
+  "parentArchetype": "spawner_building_archetype",
+  "id": "naga_abyssal_nexus",
+  "name": "Abyssal Nexus",
+  "description": "Portal to the deepest trenches. Summons legendary sea monsters like Leviathans and Kraken Spawn.",
+
+  "category": "legendary",
+  "tier": 3,
+
+  "size": {"width": 5, "height": 5, "footprintShape": "circle"},
+
+  "placement": {
+    "requiresLand": false,
+    "canPlaceOnWater": true,
+    "requiresDeepWater": true,
+    "waterDepthMinimum": 15.0,
+    "minDistanceFromOther": 10.0
+  },
+
+  "health": 2500,
+  "healthRegen": 4.0,
+  "armor": 10,
+  "magicResist": 8,
+
+  "spawner": {
+    "queueSize": 3,
+    "simultaneousProduction": 1,
+    "productionSpeedMultiplier": 1.0,
+    "productionSpeedInDeepWater": 1.4
+  },
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "naga_kraken_spawn",
+      "name": "Kraken Spawn",
+      "requiredAge": 2,
+      "requiredTech": "kraken_binding",
+      "hotkey": "K"
+    },
+    {
+      "type": "unit",
+      "id": "naga_leviathan",
+      "name": "Leviathan",
+      "requiredAge": 2,
+      "requiredTech": "leviathan_summoning",
+      "hotkey": "L"
+    },
+    {
+      "type": "tech",
+      "id": "kraken_binding",
+      "name": "Kraken Binding",
+      "description": "Unlocks Kraken Spawn",
+      "cost": {"gold": 400, "mana": 300},
+      "researchTime": 90
+    },
+    {
+      "type": "tech",
+      "id": "leviathan_summoning",
+      "name": "Leviathan Summoning",
+      "description": "Unlocks Leviathan",
+      "cost": {"gold": 600, "stone": 200, "mana": 500},
+      "researchTime": 120
+    }
+  ],
+
+  "cost": {
+    "gold": 600,
+    "stone": 400,
+    "mana": 500
+  },
+
+  "buildTime": 150,
+  "requiredBuilding": "naga_deep_trench",
+  "requiredAge": 2,
+
+  "isUnique": true,
+  "maxCount": 1,
+
+  "providesPopulation": 15,
+
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 25.0,
+    "auraType": "abyssal_power",
+    "auraEffects": [
+      {
+        "type": "damage",
+        "value": 0.15,
+        "affectsNagaOnly": true
+      },
+      {
+        "type": "health_regen",
+        "value": 2.0,
+        "affectsNagaOnly": true
+      }
+    ]
+  },
+
+  "visuals": {
+    "model": "models/buildings/naga/abyssal_nexus.fbx",
+    "icon": "textures/icons/buildings/naga/abyssal_nexus.png",
+    "scale": 1.5,
+    "glowAtNight": true,
+    "glowColor": "#2200FF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 1.0,
+      "patterns": ["portal_glow", "abyssal_energy", "deep_runes"],
+      "color": "deep_blue_purple"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/buildings/naga/nexus/select1.wav"],
+    "ambient": "sounds/ambient/abyssal_portal.wav",
+    "trainComplete": "sounds/buildings/naga/nexus/monster_emerge.wav"
+  },
+
+  "modularBuilding": {
+    "enabled": true,
+    "maxComponents": 8,
+    "allowedComponents": [
+      "portal_anchor_component",
+      "abyssal_seal_component",
+      "monster_pen_component",
+      "deep_current_amplifier_component"
+    ]
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "abyssal": true,
+    "legendary": true,
+    "requiresDeepWater": true,
+    "environmentalBonuses": {
+      "atDepth": {
+        "deepWater": {
+          "productionSpeed": 1.4,
+          "healthRegen": 5.0,
+          "auraRadius": 1.5
+        }
+      }
+    }
+  },
+
+  "strategic": {
+    "importance": "legendary",
+    "targetPriority": 0.95,
+    "defenseValue": 9,
+    "militaryValue": 10
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Legendary building. Limited to 1. Summons Leviathan and Kraken. Must be in deep water. Powerful aura."
+  }
+}

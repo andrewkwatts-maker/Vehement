@@ -1,0 +1,180 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "vampire_nosferatu",
+  "name": "Nosferatu",
+  "description": "Feral, monstrous vampires that have embraced their bestial nature. Fast, vicious, and capable of climbing walls. They strike from shadows with savage claws.",
+  "race": "vampires",
+  "category": "melee",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 320,
+    "healthRegen": 1.2,
+    "mana": 0,
+    "damage": 22,
+    "damageVariance": 0.25,
+    "attackSpeed": 1.8,
+    "attackRange": 1.2,
+    "armor": 2,
+    "magicResist": 10,
+    "moveSpeed": 6.5,
+    "sightRange": 14,
+    "detectionRange": 12,
+    "critChance": 0.20,
+    "critMultiplier": 2.25
+  },
+
+  "cost": {
+    "gold": 150,
+    "blood": 30,
+    "food": 2
+  },
+
+  "trainTime": 28,
+  "populationCost": 2,
+  "requiredBuilding": "vampire_crypt",
+  "requiredAge": 0,
+
+  "armorType": "light",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "unarmored",
+      "multiplier": 1.50
+    }
+  ],
+
+  "penaltyVs": [
+    {
+      "category": "heavy",
+      "multiplier": 0.75
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "shadow_stealth",
+      "name": "Shadow Stealth",
+      "description": "Becomes invisible when in shadows or at night. Broken by attacking or taking damage.",
+      "type": "passive",
+      "stealthCondition": {
+        "inShadow": true,
+        "atNight": true
+      },
+      "stealthBrokenBy": ["attack", "damage"]
+    },
+    {
+      "id": "wall_crawl",
+      "name": "Wall Crawler",
+      "description": "Can climb walls and cliffs. Ignores terrain obstacles.",
+      "type": "passive",
+      "canClimbWalls": true,
+      "canClimbCliffs": true,
+      "climbSpeed": 4.0
+    },
+    {
+      "id": "savage_leap",
+      "name": "Savage Leap",
+      "description": "Leap to target location, dealing 80 damage on landing and stunning enemies for 1.5s",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 0,
+      "cooldown": 12.0,
+      "range": 8.0,
+      "damage": 80,
+      "stunDuration": 1.5,
+      "radius": 2.5
+    },
+    {
+      "id": "frenzy",
+      "name": "Frenzy",
+      "description": "Below 30% health, gain 50% attack speed and 30% movement speed",
+      "type": "passive",
+      "trigger": {
+        "healthThreshold": 0.30,
+        "effects": {
+          "attackSpeed": 1.50,
+          "moveSpeed": 1.30
+        }
+      }
+    },
+    {
+      "id": "night_hunter",
+      "name": "Night Hunter",
+      "description": "At night: +20% damage, +15% crit chance, can see stealthed units",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "damage": 1.20,
+          "critChance": 0.15,
+          "truesight": true
+        }
+      }
+    }
+  ],
+
+  "upgrades": ["nosferatu_claws", "shadow_mastery", "vampire_agility"],
+
+  "visuals": {
+    "model": "models/races/vampires/units/nosferatu.obj",
+    "portrait": "textures/races/vampires/portraits/nosferatu.png",
+    "icon": "textures/races/vampires/icons/nosferatu.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/vampires/units/nosferatu_diffuse.png",
+      "normal": "textures/races/vampires/units/nosferatu_normal.png",
+      "specular": "textures/races/vampires/units/nosferatu_specular.png"
+    },
+    "animations": {
+      "idle": "animations/vampires/nosferatu/idle.anim",
+      "walk": "animations/vampires/nosferatu/walk.anim",
+      "run": "animations/vampires/nosferatu/run.anim",
+      "attack": "animations/vampires/nosferatu/attack_claw.anim",
+      "ability_leap": "animations/vampires/nosferatu/leap.anim",
+      "climb": "animations/vampires/nosferatu/climb.anim",
+      "stealth": "animations/vampires/nosferatu/stealth.anim",
+      "death": "animations/vampires/nosferatu/death.anim"
+    },
+    "particleEffects": {
+      "stealth": "effects/vampires/shadow_stealth.fx",
+      "leap": "effects/vampires/savage_leap.fx",
+      "frenzy": "effects/vampires/frenzy.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/nosferatu/select_1.wav", "sounds/vampires/nosferatu/hiss_1.wav"],
+    "move": ["sounds/vampires/nosferatu/growl_1.wav", "sounds/vampires/nosferatu/growl_2.wav"],
+    "attack": ["sounds/claw_slash.wav"],
+    "death": ["sounds/vampires/nosferatu/death_shriek.wav"],
+    "ready": ["sounds/vampires/nosferatu/ready.wav"],
+    "ability_leap": ["sounds/vampires/leap.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.35,
+    "height": 1.7,
+    "mass": 85.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/vampire_assassin.bt",
+    "profile": "stealth_aggressive",
+    "aggroRange": 14.0,
+    "priorityTargets": ["ranged", "casters", "isolated"],
+    "useAbilities": true,
+    "preferNighttime": true,
+    "useStealth": true,
+    "flankingBonus": 1.5
+  },
+
+  "metadata": {
+    "loreDescription": "Nosferatu are vampires who have devolved into savage, predatory creatures. They lurk in shadows, scaling walls with spider-like agility, and strike with inhuman speed and ferocity.",
+    "tacticalRole": "Stealth assassin and flanker. Excels at night raids and infiltration. Use terrain to your advantage.",
+    "strengths": ["Stealth", "Mobility", "Burst damage", "Night combat"],
+    "weaknesses": ["Low armor", "Weak vs heavy units", "Vulnerable when revealed"]
+  }
+}

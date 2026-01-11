@@ -1,0 +1,122 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit",
+  "id": "vampire_giant_bat",
+  "name": "Vampire Bat",
+  "description": "Giant vampire bats ridden by lesser vampires. Can transform between bat and humanoid forms mid-combat.",
+  "race": "vampires",
+  "category": "air",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 380,
+    "healthRegen": 1.2,
+    "mana": 100,
+    "manaRegen": 1.0,
+    "damage": 24,
+    "damageVariance": 0.18,
+    "attackSpeed": 1.4,
+    "attackRange": 1.8,
+    "armor": 3,
+    "magicResist": 15,
+    "moveSpeed": 7.0,
+    "sightRange": 14,
+    "detectionRange": 12,
+    "critChance": 0.12,
+    "critMultiplier": 2.0
+  },
+
+  "cost": {
+    "gold": 250,
+    "blood": 50,
+    "food": 3
+  },
+
+  "trainTime": 40,
+  "populationCost": 3,
+  "requiredBuilding": "dark_chapel",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "normal",
+
+  "movement": {
+    "movementType": "flying",
+    "flyingHeight": 4.0,
+    "canLand": true
+  },
+
+  "abilities": [
+    {
+      "id": "bat_form_vampire",
+      "name": "Bat Form",
+      "description": "Flying form. +30% movement speed, can attack air units, reduced melee damage",
+      "type": "form",
+      "isDefault": true,
+      "stats": {
+        "moveSpeed": 1.30,
+        "canAttackAir": true,
+        "damage": 0.85
+      }
+    },
+    {
+      "id": "vampire_form_bat",
+      "name": "Vampire Form",
+      "description": "Transform to ground vampire. +25% damage, cannot attack air, loses flight",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 0,
+      "cooldown": 3.0,
+      "transformTime": 2.0,
+      "transformsTo": "vampire_bat_grounded",
+      "reversible": true
+    },
+    {
+      "id": "sonic_screech",
+      "name": "Sonic Screech",
+      "description": "AoE ability dealing 60 damage and silencing enemies for 3 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 50,
+      "cooldown": 20.0,
+      "range": 6.0,
+      "radius": 4.0,
+      "damage": 60,
+      "silenceDuration": 3.0
+    },
+    {
+      "id": "night_predator",
+      "name": "Night Predator",
+      "description": "At night: +25% damage, +15% movement speed, +2 armor",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "damage": 1.25,
+          "moveSpeed": 1.15,
+          "armor": 2
+        }
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/vampires/units/vampire_bat.obj",
+    "portrait": "textures/races/vampires/portraits/vampire_bat.png",
+    "icon": "textures/races/vampires/icons/vampire_bat.png",
+    "scale": 1.3,
+    "animations": {
+      "idle": "animations/vampires/vampire_bat/fly_idle.anim",
+      "walk": "animations/vampires/vampire_bat/fly.anim",
+      "attack": "animations/vampires/vampire_bat/attack.anim",
+      "ability_screech": "animations/vampires/vampire_bat/screech.anim",
+      "transform": "animations/vampires/vampire_bat/transform.anim",
+      "death": "animations/vampires/vampire_bat/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/vampire_bat/select.wav"],
+    "attack": ["sounds/vampires/vampire_bat/attack.wav"],
+    "ability_screech": ["sounds/vampires/sonic_screech.wav"]
+  }
+}

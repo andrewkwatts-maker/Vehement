@@ -1,0 +1,39 @@
+// Keyboard shortcuts to add after line 210 (after camera zoom code)
+
+    // Tool keyboard shortcuts (only when not typing in text fields)
+    if (!ImGui::GetIO().WantTextInput) {
+        // Edit mode shortcuts
+        if (input.IsKeyPressed(Nova::Key::Q)) {
+            SetEditMode(EditMode::ObjectSelect);
+            m_transformTool = TransformTool::None;
+        }
+        if (input.IsKeyPressed(Nova::Key::Num1)) {
+            SetEditMode(EditMode::TerrainPaint);
+        }
+        if (input.IsKeyPressed(Nova::Key::Num2)) {
+            SetEditMode(EditMode::TerrainSculpt);
+        }
+
+        // Transform tool shortcuts (only in ObjectSelect mode)
+        if (m_editMode == EditMode::ObjectSelect) {
+            if (input.IsKeyPressed(Nova::Key::W)) {
+                m_transformTool = (m_transformTool == TransformTool::Move) ? TransformTool::None : TransformTool::Move;
+            }
+            if (input.IsKeyPressed(Nova::Key::E)) {
+                m_transformTool = (m_transformTool == TransformTool::Rotate) ? TransformTool::None : TransformTool::Rotate;
+            }
+            if (input.IsKeyPressed(Nova::Key::R)) {
+                m_transformTool = (m_transformTool == TransformTool::Scale) ? TransformTool::None : TransformTool::Scale;
+            }
+        }
+
+        // Brush size adjustment
+        if (m_editMode == EditMode::TerrainPaint || m_editMode == EditMode::TerrainSculpt) {
+            if (input.IsKeyPressed(Nova::Key::LeftBracket)) {
+                m_brushSize = std::max(1, m_brushSize - 1);
+            }
+            if (input.IsKeyPressed(Nova::Key::RightBracket)) {
+                m_brushSize = std::min(20, m_brushSize + 1);
+            }
+        }
+    }

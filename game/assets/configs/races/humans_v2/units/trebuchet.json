@@ -1,0 +1,179 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "id": "human_trebuchet",
+  "name": "Trebuchet",
+  "description": "The ultimate siege weapon, capable of hurling massive projectiles across incredible distances. A single trebuchet can level an entire fortress given enough time.",
+  "race": "humans",
+  "category": "siege",
+  "tier": 4,
+
+  "baseStats": {
+    "health": 800,
+    "healthRegen": 0.0,
+    "damage": 200,
+    "damageVariance": 0.1,
+    "attackSpeed": 6.0,
+    "attackRange": 40.0,
+    "minAttackRange": 15.0,
+    "armor": 8,
+    "magicResist": 5,
+    "moveSpeed": 1.5,
+    "sightRange": 20
+  },
+
+  "cost": {
+    "gold": 550,
+    "wood": 350
+  },
+
+  "trainTime": 90,
+  "populationCost": 5,
+  "requiredBuilding": "human_siege_workshop",
+  "requiredAge": 3,
+  "maxCount": 3,
+
+  "armorType": "fortified",
+  "attackType": "siege",
+  "movementType": "ground",
+
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+
+  "bonusVs": [
+    {
+      "category": "building",
+      "multiplier": 3.0
+    },
+    {
+      "category": "wall",
+      "multiplier": 3.0
+    },
+    {
+      "category": "tower",
+      "multiplier": 3.0
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "diseased_corpse",
+      "name": "Diseased Corpse",
+      "description": "Launch a diseased corpse that creates a poison cloud dealing 50 damage per second for 8 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 60.0,
+      "range": 40.0,
+      "radius": 6.0,
+      "damagePerSecond": 50,
+      "duration": 8.0,
+      "damageType": "poison"
+    },
+    {
+      "id": "explosive_barrel",
+      "name": "Explosive Barrel",
+      "description": "Launch a barrel of explosives that detonates on impact for 300 damage",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 45.0,
+      "range": 40.0,
+      "damage": 300,
+      "splashRadius": 6.0,
+      "damageType": "fire",
+      "requiredUpgrade": "upgrade_explosive_ammunition"
+    },
+    {
+      "id": "scatter_shot",
+      "name": "Scatter Shot",
+      "description": "Fire multiple smaller projectiles covering a large area",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 35.0,
+      "range": 35.0,
+      "projectileCount": 5,
+      "damagePerProjectile": 60,
+      "spreadRadius": 8.0
+    },
+    {
+      "id": "ground_attack",
+      "name": "Ground Attack",
+      "description": "Target the ground to attack a specific area without requiring enemy vision",
+      "type": "active",
+      "hotkey": "G",
+      "targetType": "ground",
+      "requiresVision": false
+    }
+  ],
+
+  "projectile": {
+    "id": "trebuchet_boulder",
+    "model": "models/projectiles/massive_boulder.obj",
+    "speed": 15.0,
+    "lifetime": 8.0,
+    "gravity": 2.0,
+    "arcHeight": 25.0,
+    "trailEffect": "effects/massive_boulder_trail.fx",
+    "impactEffect": "effects/massive_boulder_impact.fx"
+  },
+
+  "splashDamage": 1.0,
+  "splashRadius": 5.0,
+
+  "setup": {
+    "required": true,
+    "setupTime": 5.0,
+    "packupTime": 4.0,
+    "canAttackWhileMoving": false
+  },
+
+  "vulnerabilities": {
+    "fire": 1.75,
+    "melee": 1.5,
+    "cavalry": 2.0
+  },
+
+  "upgrades": ["siege_damage", "siege_range"],
+
+  "visuals": {
+    "model": "models/races/humans/units/trebuchet.obj",
+    "portrait": "textures/races/humans/portraits/trebuchet.png",
+    "icon": "textures/races/humans/icons/trebuchet.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/humans/units/trebuchet_diffuse.png",
+      "normal": "textures/races/humans/units/trebuchet_normal.png"
+    },
+    "animations": {
+      "idle": "animations/humans/trebuchet/idle.anim",
+      "move": "animations/humans/trebuchet/move.anim",
+      "setup": "animations/humans/trebuchet/setup.anim",
+      "packup": "animations/humans/trebuchet/packup.anim",
+      "attack": "animations/humans/trebuchet/fire.anim",
+      "reload": "animations/humans/trebuchet/reload.anim",
+      "death": "animations/humans/trebuchet/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/humans/trebuchet/select.wav"],
+    "move": ["sounds/wheels_rolling_heavy.wav"],
+    "attack": ["sounds/trebuchet_fire.wav"],
+    "death": ["sounds/wood_destruction_large.wav"],
+    "ready": ["sounds/siege_setup_heavy.wav"]
+  },
+
+  "collision": {
+    "type": "box",
+    "halfExtents": [3.0, 4.0, 3.0],
+    "mass": 3000.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/long_range_siege.bt",
+    "profile": "siege",
+    "aggroRange": 35.0,
+    "priorityTargets": ["castle", "keep", "tower", "wall", "building"],
+    "maintainMaxDistance": true,
+    "fleeFromMelee": true
+  }
+}

@@ -1,0 +1,445 @@
+{
+  "$schema": "../../../schemas/unit_archetype.schema.json",
+
+  // =============================================================================
+  // MYSTIC/SPELLCASTER UNIT ARCHETYPE
+  // =============================================================================
+  // This archetype represents a spellcasting unit with mana.
+  // Behavior composition:
+  // - MovementBehavior: Ground movement
+  // - SpellcasterBehavior: Mana pool, spell casting
+  // - CombatBehavior: Magic damage (optional auto-attack)
+  // - StatsComponent: Low health, high mana
+  //
+  // Use this as a base template for units like:
+  // - Mage, Priest, Shaman, Warlock, Sorcerer, etc.
+  // =============================================================================
+
+  "id": "mystic_unit_archetype",
+  "name": "Mystic Unit Template",
+  "description": "A spellcasting unit with mana and powerful magical abilities. Fragile but devastating with proper support.",
+
+  "category": "spellcaster",
+  "tier": 2,
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "baseStats": {
+    // Survivability - very low health
+    "health": 60,
+    "healthRegen": 0.25,
+
+    // Mana pool - high mana for casting
+    "mana": 200,
+    "manaRegen": 1.5,  // Good mana regeneration
+
+    // Offensive stats - weak auto-attack, strong spells
+    "damage": 8,
+    "damageVariance": 0.1,
+    "attackSpeed": 0.9,
+    "attackRange": 7,  // Ranged magic attack
+
+    // Spell power
+    "spellPower": 25,  // Base spell power for scaling
+    "healingPower": 0,  // For healer variants
+
+    // Defensive stats - very low armor
+    "armor": 0,
+    "magicResist": 2,  // Some magic resistance
+
+    // Mobility - slow movement
+    "moveSpeed": 4.5,  // Slower than most units
+    "turnSpeed": 270,
+    "acceleration": 8.0,
+
+    // Perception
+    "sightRange": 11,
+    "detectionRange": 9,
+
+    // Spell crits
+    "critChance": 0.05,
+    "critMultiplier": 1.5,
+    "spellCritChance": 0.1,  // Separate spell crit chance
+    "spellCritMultiplier": 2.0
+  },
+
+  // =============================================================================
+  // COMBAT BEHAVIOR
+  // =============================================================================
+  "combat": {
+    "attackType": "magic",
+    "armorType": "unarmored",
+
+    "attackAnimation": {
+      "windupTime": 0.5,  // Casting animation
+      "backswingTime": 0.6,
+      "totalDuration": 1.11
+    },
+
+    // Magic attacks bypass armor
+    "bonusVs": [
+      {
+        "category": "heavy",  // Magic good vs heavy armor
+        "multiplier": 1.3
+      }
+    ],
+
+    "penaltyVs": [
+      {
+        "category": "magic_resistant",
+        "multiplier": 0.7
+      }
+    ],
+
+    "cleave": {
+      "enabled": false
+    },
+
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  // =============================================================================
+  // SPELLCASTER BEHAVIOR
+  // =============================================================================
+  "spellcaster": {
+    // Spell list
+    "spells": [
+      {
+        "spellId": "magic_missile",
+        "unlockedByDefault": true,
+        "hotkey": "Q"
+      },
+      {
+        "spellId": "mana_shield",
+        "unlockedByDefault": true,
+        "hotkey": "W"
+      },
+      {
+        "spellId": "arcane_explosion",
+        "unlockedByDefault": false,
+        "requiredLevel": 3,
+        "hotkey": "E"
+      },
+      {
+        "spellId": "polymorph",
+        "unlockedByDefault": false,
+        "requiredTech": "advanced_arcane",
+        "hotkey": "R"
+      }
+    ],
+
+    // Mana management
+    "manaPool": {
+      "baseMax": 200,
+      "regenRate": 1.5,
+      "regenDelay": 3.0,  // Delay after casting before regen resumes
+      "combatRegenMultiplier": 0.5  // 50% regen in combat
+    },
+
+    // Casting behavior
+    "castingBehavior": {
+      "canCastWhileMoving": false,
+      "movementCancelsCast": true,
+      "damageCancelsCast": false,
+      "globalCooldown": 0.5,  // GCD between all spells
+      "canQueueSpells": true,
+      "maxQueuedSpells": 2
+    },
+
+    // Spell power scaling
+    "spellScaling": {
+      "basePower": 25,
+      "powerPerLevel": 5,
+      "powerFromInt": 0.5,  // If using INT stat
+      "critDamageBonus": 1.0  // +100% on spell crit
+    },
+
+    // Mana conservation
+    "manaEfficiency": {
+      "baseCostReduction": 0.0,
+      "critRefundPercent": 0.0,  // Mana refunded on crit
+      "canOvercharge": false,  // Spend extra mana for more power
+      "overchargeCost": 0.0,
+      "overchargePower": 0.0
+    }
+  },
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR (for auto-attacks)
+  // =============================================================================
+  "projectile": {
+    "type": "linear",
+    "speed": 18.0,
+    "arc": 0.0,
+    "maxTravelDistance": 9.0,
+
+    "piercing": false,
+    "canBeBlocked": false,  // Magic projectiles ignore obstacles
+    "canBeDodged": false,
+    "canMiss": false,  // Magic never misses
+
+    "visualModel": "effects/magic_bolt.fx",
+    "trailEffect": "effects/magic_trail.fx",
+    "impactEffect": "effects/magic_impact.fx",
+    "projectileSize": 0.25
+  },
+
+  // =============================================================================
+  // MOVEMENT BEHAVIOR
+  // =============================================================================
+  "movement": {
+    "movementType": "ground",
+
+    "canMoveOnLand": true,
+    "canMoveOnWater": false,
+    "canMoveOnLava": false,
+    "canClimbCliffs": false,
+    "canPassThroughUnits": false,
+
+    "collisionRadius": 0.4,
+    "pushPriority": 2,  // Low priority
+
+    "pathfindingType": "ground",
+    "unitSize": "small",
+
+    // Spellcasters often have teleport/blink
+    "canTeleport": false,
+    "teleportRange": 0.0,
+    "teleportCooldown": 0.0
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 150,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 50  // Requires mana to train
+  },
+
+  "trainTime": 40,
+  "populationCost": 2,
+
+  "requiredBuilding": "arcane_sanctum",
+  "requiredAge": 1,
+  "requiredTech": "arcane_studies",
+
+  // =============================================================================
+  // ABILITIES & UPGRADES
+  // =============================================================================
+  "abilities": [
+    {
+      "id": "arcane_intellect",
+      "unlockedByDefault": true,
+      "description": "Passive mana regeneration aura"
+    }
+  ],
+
+  "upgrades": [
+    "spell_power_1",
+    "spell_power_2",
+    "mana_pool_1",
+    "mana_pool_2",
+    "mana_regen_1",
+    "spell_cost_reduction_1",
+    "magic_armor_1"
+  ],
+
+  // =============================================================================
+  // UNIT CAPABILITIES
+  // =============================================================================
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+
+  "canCastSpells": true,
+  "canDispel": true,  // Can dispel magic effects
+  "canDetectInvisible": true,  // True sight
+  "detectionRadius": 8.0,
+
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": true,
+  "isMechanical": false,
+  "isUndead": false,
+
+  // =============================================================================
+  // FORMATIONS
+  // =============================================================================
+  "formation": {
+    "preferredPosition": "back",  // Stay safe in backline
+    "formationSpacing": 2.0,  // Spread out to avoid AoE
+    "maintainFormation": true,
+    "fallBackWhenApproached": true,
+    "fallBackDistance": 4.0
+  },
+
+  // =============================================================================
+  // AI BEHAVIOR
+  // =============================================================================
+  "ai": {
+    "aggroRange": 14,
+    "returnToPosition": true,
+    "acquisitionRange": 11,
+
+    "targetPriority": [
+      {
+        "type": "caster",  // Counter enemy casters
+        "weight": 2.0
+      },
+      {
+        "type": "weakest",
+        "weight": 1.5
+      },
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+
+    "fleeAtHealthPercent": 0.3,  // Flee at 30% health
+    "pursuitRange": 8,  // Don't chase far
+
+    // Spell AI
+    "spellUsage": {
+      "useSpellsInCombat": true,
+      "conserveMana": true,
+      "manaReservePercent": 0.2,  // Keep 20% mana in reserve
+      "prioritizeBuffs": true,
+      "dispelPriority": "high"
+    },
+
+    "maintainDistance": true,
+    "optimalRange": 6.0,
+    "minRange": 4.0
+  },
+
+  // =============================================================================
+  // EXPERIENCE & LEVELING
+  // =============================================================================
+  "experience": {
+    "canGainExperience": true,  // Casters can level up
+    "maxLevel": 5,
+    "experienceValue": 100,
+    "bountyGold": 15,
+    "bountyMultiplier": 1.0,
+
+    // Stat gains per level
+    "levelUpBonuses": {
+      "health": 10,
+      "mana": 30,
+      "spellPower": 5,
+      "manaRegen": 0.3
+    }
+  },
+
+  // =============================================================================
+  // MANA BURN VULNERABILITY
+  // =============================================================================
+  "manaBurn": {
+    "vulnerableToManaBurn": true,
+    "manaLossMultiplier": 1.0,
+    "takeDamageFromManaBurn": true,  // Takes damage = mana lost
+    "manaBurnDamageMultiplier": 0.5  // 50% of mana lost as damage
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/units/mage.fbx",
+    "portrait": "textures/portraits/mage.png",
+    "icon": "textures/icons/units/mage.png",
+    "scale": 0.95,
+
+    "animations": {
+      "idle": "anim_idle_staff",
+      "walk": "anim_walk",
+      "attack": "anim_cast_attack",
+      "death": "anim_death",
+      "decay": "anim_decay",
+      "build": null,
+      "gather": null,
+      "spell_cast": "anim_cast_spell",
+      "spell_channel": "anim_channel",
+      "meditate": "anim_meditate"  // When regenerating mana
+    },
+
+    "deathEffect": "effects/mage_death.fx",
+    "bloodType": "none",  // Magical dissipation
+    "shadowSize": 0.8,
+    "selectionScale": 1.0,
+
+    "teamColorParts": ["robes", "staff_gem"],
+
+    // Spell effects
+    "castingGlow": "effects/casting_glow.fx",
+    "manaAura": "effects/mana_aura.fx",
+    "lowManaEffect": "effects/mana_low.fx"  // Visual when low mana
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/units/mage/select1.wav",
+      "sounds/units/mage/select2.wav"
+    ],
+    "move": [
+      "sounds/units/mage/move1.wav",
+      "sounds/units/mage/move2.wav"
+    ],
+    "attack": [
+      "sounds/units/mage/cast_attack.wav"
+    ],
+    "death": [
+      "sounds/units/mage/death1.wav"
+    ],
+    "ready": [
+      "sounds/units/mage/ready.wav"
+    ],
+
+    // Spell sounds
+    "castStart": "sounds/spells/cast_start.wav",
+    "castComplete": "sounds/spells/cast_complete.wav",
+    "outOfMana": "sounds/units/mage/no_mana.wav",
+    "footsteps": "sounds/footsteps/cloth.wav",
+    "ambient": "sounds/ambient/magical_hum.wav"
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "priest" could inherit from this with:
+  // - spells: healing spells instead of damage
+  // - healingPower: 20
+  // - spellPower: 15
+  // - supportRole: true
+
+  // A "necromancer" could inherit with:
+  // - spells: summon undead, curses
+  // - canRaiseDead: true
+  // - element: "shadow"
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for spellcasting units. High damage potential, requires mana management.",
+    "tacticalUse": "Keep in backline. Manage mana. Use spells strategically. Protect at all costs.",
+    "strengths": "AoE damage, crowd control, utility, counters heavy armor",
+    "weaknesses": "Fragile, mana dependent, slow, vulnerable to assassination",
+    "counters": ["heavy_armor", "grouped_enemies"],
+    "counteredBy": ["assassins", "cavalry", "mana_burn"]
+  }
+}

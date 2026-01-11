@@ -1,0 +1,284 @@
+{
+  "buildingId": "undead_graveyard",
+  "nodes": [
+    {
+      "id": "mass_grave",
+      "name": "Mass Grave",
+      "description": "Increase corpse storage capacity by 10",
+      "type": 2,
+      "iconPath": "icons/tech/undead/mass_grave.png",
+      "treePosition": [0, 0],
+      "requiredBuildingLevel": 1,
+      "prerequisites": [],
+      "cost": {
+        "gold": 75,
+        "wood": 50
+      },
+      "researchTime": 25.0,
+      "effects": [
+        {
+          "target": "building:undead_graveyard",
+          "effectType": "add",
+          "stat": "corpseStorage",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "cursed_earth",
+      "name": "Cursed Earth",
+      "description": "Graveyards spread blight 20% faster",
+      "type": 2,
+      "iconPath": "icons/tech/undead/cursed_earth.png",
+      "treePosition": [1, 0],
+      "requiredBuildingLevel": 1,
+      "prerequisites": [],
+      "cost": {
+        "gold": 100,
+        "mana": 25
+      },
+      "researchTime": 30.0,
+      "effects": [
+        {
+          "target": "building:undead_graveyard",
+          "effectType": "multiply",
+          "stat": "blightGrowthRate",
+          "value": 1.2
+        }
+      ]
+    },
+    {
+      "id": "skeleton_reinforcement",
+      "name": "Skeleton Reinforcement",
+      "description": "Skeletons gain +50 health and cost 10 less gold",
+      "type": 2,
+      "iconPath": "icons/tech/undead/skeleton_reinforcement.png",
+      "treePosition": [0, 1],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["mass_grave"],
+      "cost": {
+        "gold": 150,
+        "corpses": 5
+      },
+      "researchTime": 45.0,
+      "effects": [
+        {
+          "target": "unit:undead_skeleton",
+          "effectType": "add",
+          "stat": "health",
+          "value": 50
+        },
+        {
+          "target": "unit:undead_skeleton",
+          "effectType": "reduce_cost",
+          "resource": "gold",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "rapid_decomposition",
+      "name": "Rapid Decomposition",
+      "description": "Graveyards generate corpses 50% faster",
+      "type": 2,
+      "iconPath": "icons/tech/undead/rapid_decomposition.png",
+      "treePosition": [1, 1],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["cursed_earth"],
+      "cost": {
+        "gold": 200,
+        "mana": 75
+      },
+      "researchTime": 50.0,
+      "effects": [
+        {
+          "target": "building:undead_graveyard",
+          "effectType": "multiply",
+          "stat": "corpseGenerationRate",
+          "value": 1.5
+        }
+      ]
+    },
+    {
+      "id": "zombie_plague",
+      "name": "Zombie Plague",
+      "description": "Zombies deal +3 plague damage per second and slow by an additional 10%",
+      "type": 2,
+      "iconPath": "icons/tech/undead/zombie_plague.png",
+      "treePosition": [2, 0],
+      "requiredBuildingLevel": 2,
+      "prerequisites": [],
+      "cost": {
+        "gold": 250,
+        "mana": 100
+      },
+      "researchTime": 60.0,
+      "effects": [
+        {
+          "target": "unit:undead_zombie",
+          "effectType": "add",
+          "stat": "diseasePerSecond",
+          "value": 3
+        },
+        {
+          "target": "unit:undead_zombie",
+          "effectType": "add",
+          "stat": "slowPercent",
+          "value": 0.10
+        }
+      ]
+    },
+    {
+      "id": "ghoul_pack_tactics",
+      "name": "Ghoul Pack Tactics",
+      "description": "Ghouls gain +15% damage for each nearby ghoul (max 3 stacks)",
+      "type": 2,
+      "iconPath": "icons/tech/undead/ghoul_pack.png",
+      "treePosition": [2, 1],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["zombie_plague"],
+      "cost": {
+        "gold": 300,
+        "corpses": 10
+      },
+      "researchTime": 65.0,
+      "effects": [
+        {
+          "target": "unit:undead_ghoul",
+          "effectType": "enable",
+          "value": 1.0,
+          "data": {
+            "feature": "pack_tactics",
+            "damagePerAlly": 0.15,
+            "maxStacks": 3,
+            "radius": 5.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "corpse_efficiency",
+      "name": "Corpse Efficiency",
+      "description": "All units cost 1 less corpse to produce (minimum 0)",
+      "type": 2,
+      "iconPath": "icons/tech/undead/corpse_efficiency.png",
+      "treePosition": [0, 2],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["skeleton_reinforcement", "rapid_decomposition"],
+      "cost": {
+        "gold": 350,
+        "mana": 125
+      },
+      "researchTime": 75.0,
+      "effects": [
+        {
+          "target": "unit:undead_*",
+          "effectType": "reduce_cost",
+          "resource": "corpses",
+          "value": 1,
+          "minimum": 0
+        }
+      ]
+    },
+    {
+      "id": "mass_resurrection",
+      "name": "Mass Resurrection",
+      "description": "Graveyard's mass resurrection ability raises 8 skeletons instead of 5",
+      "type": 2,
+      "iconPath": "icons/tech/undead/mass_resurrection.png",
+      "treePosition": [1, 2],
+      "requiredBuildingLevel": 4,
+      "prerequisites": ["corpse_efficiency"],
+      "cost": {
+        "gold": 400,
+        "mana": 150,
+        "corpses": 15
+      },
+      "researchTime": 90.0,
+      "effects": [
+        {
+          "target": "building:undead_graveyard",
+          "effectType": "set",
+          "stat": "massResurrectionCount",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "undead_resilience",
+      "name": "Undead Resilience",
+      "description": "All graveyard units gain +1 armor and +10% magic resistance",
+      "type": 2,
+      "iconPath": "icons/tech/undead/undead_resilience.png",
+      "treePosition": [2, 2],
+      "requiredBuildingLevel": 4,
+      "prerequisites": ["ghoul_pack_tactics"],
+      "cost": {
+        "gold": 450,
+        "mana": 175
+      },
+      "researchTime": 85.0,
+      "effects": [
+        {
+          "target": "unit:undead_skeleton",
+          "effectType": "add",
+          "stat": "armor",
+          "value": 1
+        },
+        {
+          "target": "unit:undead_zombie",
+          "effectType": "add",
+          "stat": "armor",
+          "value": 1
+        },
+        {
+          "target": "unit:undead_ghoul",
+          "effectType": "add",
+          "stat": "armor",
+          "value": 1
+        },
+        {
+          "target": "unit:undead_skeleton",
+          "effectType": "multiply_stat",
+          "stat": "magicResist",
+          "value": 1.10
+        },
+        {
+          "target": "unit:undead_zombie",
+          "effectType": "multiply_stat",
+          "stat": "magicResist",
+          "value": 1.10
+        },
+        {
+          "target": "unit:undead_ghoul",
+          "effectType": "multiply_stat",
+          "stat": "magicResist",
+          "value": 1.10
+        }
+      ]
+    },
+    {
+      "id": "eternal_servitude",
+      "name": "Eternal Servitude",
+      "description": "Reduce all unit training time at graveyards by 20%",
+      "type": 2,
+      "iconPath": "icons/tech/undead/eternal_servitude.png",
+      "treePosition": [1, 3],
+      "requiredBuildingLevel": 5,
+      "prerequisites": ["mass_resurrection"],
+      "cost": {
+        "gold": 500,
+        "mana": 200
+      },
+      "researchTime": 100.0,
+      "effects": [
+        {
+          "target": "building:undead_graveyard",
+          "effectType": "multiply",
+          "stat": "trainingSpeed",
+          "value": 1.20
+        }
+      ]
+    }
+  ]
+}

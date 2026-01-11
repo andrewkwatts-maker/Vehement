@@ -1,0 +1,159 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "siege",
+  "id": "undead_bone_horror",
+  "name": "Bone Horror",
+  "description": "Towering constructs of fused skeletons that hurl bone fragments at enemies. Each kill adds bones to its mass, growing stronger.",
+  "race": "undead",
+  "category": "siege",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 720,
+    "healthRegen": 0,
+    "damage": 35,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.2,
+    "attackRange": 14.0,
+    "armor": 3,
+    "magicResist": 15,
+    "moveSpeed": 3.5,
+    "sightRange": 15
+  },
+
+  "cost": {
+    "gold": 320,
+    "wood": 50,
+    "corpses": 4
+  },
+
+  "trainTime": 50,
+  "populationCost": 4,
+  "requiredBuilding": "undead_boneyard",
+  "requiredAge": 2,
+
+  "armorType": "medium",
+  "attackType": "siege",
+
+  "bonusVs": [
+    {
+      "category": "building",
+      "multiplier": 2.5
+    },
+    {
+      "category": "grouped",
+      "multiplier": 1.8
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "bone_barrage",
+      "name": "Bone Barrage",
+      "description": "Hurl a cluster of bones dealing 60 damage to all enemies in a 4 unit radius",
+      "type": "active",
+      "hotkey": "B",
+      "cooldown": 10.0,
+      "manaCost": 0,
+      "range": 14.0,
+      "radius": 4.0,
+      "damage": 60,
+      "damageType": "pierce"
+    },
+    {
+      "id": "consume_bones",
+      "name": "Consume Bones",
+      "description": "Absorb nearby bones and corpses, gaining +25 max health and +2 damage per corpse (max 10 stacks)",
+      "type": "passive",
+      "bonusPerCorpse": {
+        "health": 25,
+        "damage": 2
+      },
+      "maxStacks": 10,
+      "absorptionRadius": 3.0
+    },
+    {
+      "id": "skeletal_reconstruction",
+      "name": "Skeletal Reconstruction",
+      "description": "Regenerate 3% max health per second when out of combat for 5 seconds",
+      "type": "passive",
+      "regenPercent": 0.03,
+      "outOfCombatDuration": 5.0
+    },
+    {
+      "id": "brittle_bones",
+      "name": "Brittle Bones",
+      "description": "When destroyed, collapse into 8 bone fragments that can be gathered by acolytes or consumed by other bone horrors",
+      "type": "passive",
+      "onDeath": true,
+      "dropBoneFragments": 8
+    }
+  ],
+
+  "projectile": {
+    "id": "bone_shard",
+    "model": "models/projectiles/bone_shard.obj",
+    "speed": 32.0,
+    "lifetime": 2.5,
+    "gravity": 6.0,
+    "trailEffect": "effects/bone_trail.fx",
+    "impactEffect": "effects/bone_impact.fx"
+  },
+
+  "upgrades": ["bone_horror_enhancement", "skeletal_mass", "undead_siege_damage"],
+
+  "visuals": {
+    "model": "models/races/undead/units/bone_horror.obj",
+    "portrait": "textures/races/undead/portraits/bone_horror.png",
+    "icon": "textures/races/undead/icons/bone_horror.png",
+    "scale": 1.8,
+    "textures": {
+      "diffuse": "textures/races/undead/units/bone_horror_diffuse.png",
+      "normal": "textures/races/undead/units/bone_horror_normal.png"
+    },
+    "animations": {
+      "idle": "animations/undead/bone_horror/idle.anim",
+      "walk": "animations/undead/bone_horror/walk.anim",
+      "attack": "animations/undead/bone_horror/attack.anim",
+      "barrage": "animations/undead/bone_horror/barrage.anim",
+      "consume": "animations/undead/bone_horror/consume.anim",
+      "death": "animations/undead/bone_horror/death.anim"
+    },
+    "dynamicScale": {
+      "basedOn": "consume_bones_stacks",
+      "minScale": 1.8,
+      "maxScale": 2.5
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/bone_horror/select_1.wav", "sounds/bone_rattle.wav"],
+    "move": ["sounds/undead/bone_horror/move.wav"],
+    "attack": ["sounds/undead/bone_horror/attack.wav"],
+    "consume": ["sounds/bone_crunch.wav"],
+    "death": ["sounds/undead/bone_horror/collapse.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.8,
+    "height": 3.0,
+    "mass": 400.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/siege_ranged.bt",
+    "profile": "siege",
+    "aggroRange": 14.0,
+    "priorityTargets": ["building", "grouped"],
+    "fearless": true,
+    "seekBones": true,
+    "preferredDistance": 12.0
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": false,
+    "dropsBones": true,
+    "boneAmount": 8
+  }
+}

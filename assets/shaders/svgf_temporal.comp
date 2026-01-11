@@ -1,0 +1,155 @@
+#version 460 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// ============================================================================
+// SVGF Temporal Accumulation Pass
+// ============================================================================
+// Accumulates samples across frames to reduce noise. Uses motion vectors to
+// reproject previous frame's samples and blends them with current frame.
+//
+// We track:
+// - Accumulated color (exponential moving average)
+// - First and second moments (for variance estimation)
+// - History length (number of accumulated frames)
+//
+// Disocclusions are detected via geometry tests (depth, normal changes).
+// ============================================================================
+
+// Input: Current frame noisy color
+layout(rgba16f, binding = 0) uniform image2D u_noisyColor;
+layout(rgba32f, binding = 1) uniform image2D u_gBufferPosition;
+layout(rgba16f, binding = 2) uniform image2D u_gBufferNormal;
+layout(r32f, binding = 3) uniform image2D u_gBufferDepth;
+layout(rg16f, binding = 4) uniform image2D u_motionVectors;
+
+// History: Previous frame data (read)
+layout(rgba16f, binding = 5) uniform image2D u_prevAccumulatedColor;
+layout(rg32f, binding = 6) uniform image2D u_prevAccumulatedMoments;
+
+// History length (read/write)
+layout(r16f, binding = 7) uniform image2D u_historyLength;
+
+// Output: Current frame accumulated data (write)
+layout(rgba16f, binding = 8) uniform image2D u_currAccumulatedColor;
+layout(rg32f, binding = 9) uniform image2D u_currAccumulatedMoments;
+layout(rgba16f, binding = 10) uniform image2D u_integratedColor;
+
+// Uniforms
+uniform int u_frameCount = 0;
+uniform vec2 u_resolution = vec2(1920.0, 1080.0);
+uniform float u_alpha = 0.1;
+uniform float u_maxM = 32.0;
+uniform float u_depthThreshold = 0.05;
+uniform float u_normalThreshold = 0.95;
+
+// ============================================================================
+// Luminance
+// ============================================================================
+
+float Luminance(vec3 color) {
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// ============================================================================
+// Temporal Validation
+// ============================================================================
+
+bool IsValidTemporalSample(vec3 currPos, vec3 currNormal, float currDepth,
+                          vec3 prevPos, vec3 prevNormal, float prevDepth) {
+    // Check depth similarity
+    float depthDiff = abs(currDepth - prevDepth) / max(currDepth, 0.001);
+    if (depthDiff > u_depthThreshold) return false;
+
+    // Check normal similarity
+    float normalSimilarity = dot(normalize(currNormal), normalize(prevNormal));
+    if (normalSimilarity < u_normalThreshold) return false;
+
+    return true;
+}
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    if (pixelCoord.x >= int(u_resolution.x) || pixelCoord.y >= int(u_resolution.y)) return;
+
+    // Load current frame data
+    vec3 currColor = imageLoad(u_noisyColor, pixelCoord).rgb;
+    vec3 currPos = imageLoad(u_gBufferPosition, pixelCoord).xyz;
+    vec3 currNormal = imageLoad(u_gBufferNormal, pixelCoord).xyz;
+    float currDepth = imageLoad(u_gBufferDepth, pixelCoord).r;
+
+    // Early out for background
+    if (length(currNormal) < 0.1 || currDepth <= 0.0) {
+        imageStore(u_currAccumulatedColor, pixelCoord, vec4(currColor, 1.0));
+        imageStore(u_currAccumulatedMoments, pixelCoord, vec4(0.0));
+        imageStore(u_historyLength, pixelCoord, vec4(0.0));
+        imageStore(u_integratedColor, pixelCoord, vec4(currColor, 1.0));
+        return;
+    }
+
+    // Compute luminance for current sample
+    float currLuminance = Luminance(currColor);
+
+    // Initialize accumulated values
+    vec3 accumulatedColor = currColor;
+    float accumulatedM1 = currLuminance;  // First moment (mean)
+    float accumulatedM2 = currLuminance * currLuminance;  // Second moment
+    float historyLen = 1.0;
+
+    // First frame - no temporal history
+    if (u_frameCount > 0) {
+        // Read motion vector and reproject
+        vec2 motionVector = imageLoad(u_motionVectors, pixelCoord).xy;
+        vec2 prevUV = (vec2(pixelCoord) + 0.5) / u_resolution - motionVector;
+        ivec2 prevPixelCoord = ivec2(prevUV * u_resolution);
+
+        // Check bounds
+        if (prevPixelCoord.x >= 0 && prevPixelCoord.x < int(u_resolution.x) &&
+            prevPixelCoord.y >= 0 && prevPixelCoord.y < int(u_resolution.y)) {
+
+            // Load previous frame geometry
+            vec3 prevPos = imageLoad(u_gBufferPosition, prevPixelCoord).xyz;
+            vec3 prevNormal = imageLoad(u_gBufferNormal, prevPixelCoord).xyz;
+            float prevDepth = imageLoad(u_gBufferDepth, prevPixelCoord).r;
+
+            // Validate temporal sample
+            if (length(prevNormal) > 0.1 && prevDepth > 0.0 &&
+                IsValidTemporalSample(currPos, currNormal, currDepth,
+                                     prevPos, prevNormal, prevDepth)) {
+
+                // Load previous history
+                vec3 prevColor = imageLoad(u_prevAccumulatedColor, prevPixelCoord).rgb;
+                vec2 prevMoments = imageLoad(u_prevAccumulatedMoments, prevPixelCoord).rg;
+                float prevHistoryLen = imageLoad(u_historyLength, prevPixelCoord).r;
+
+                // Exponential moving average
+                float alpha = max(u_alpha, 1.0 / (prevHistoryLen + 1.0));
+                alpha = min(alpha, 1.0);
+
+                // Blend color
+                accumulatedColor = mix(prevColor, currColor, alpha);
+
+                // Update moments
+                float prevM1 = prevMoments.r;
+                float prevM2 = prevMoments.g;
+                accumulatedM1 = mix(prevM1, currLuminance, alpha);
+                accumulatedM2 = mix(prevM2, currLuminance * currLuminance, alpha);
+
+                // Increment history length (clamped)
+                historyLen = min(prevHistoryLen + 1.0, u_maxM);
+            }
+        }
+    }
+
+    // Store accumulated data
+    imageStore(u_currAccumulatedColor, pixelCoord, vec4(accumulatedColor, 1.0));
+    imageStore(u_currAccumulatedMoments, pixelCoord, vec4(accumulatedM1, accumulatedM2, 0.0, 0.0));
+    imageStore(u_historyLength, pixelCoord, vec4(historyLen, 0.0, 0.0, 0.0));
+
+    // Store integrated color (for next stage)
+    imageStore(u_integratedColor, pixelCoord, vec4(accumulatedColor, 1.0));
+}

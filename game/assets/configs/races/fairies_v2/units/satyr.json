@@ -1,0 +1,126 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "fairy_satyr",
+  "name": "Satyr",
+  "description": "Wild warriors of the forest with a mix of melee prowess and enchantment magic. Satyrs can taunt enemies and inspire nearby allies with their pipes.",
+  "race": "fairies",
+  "category": "melee",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 240,
+    "healthRegen": 0.8,
+    "mana": 120,
+    "manaRegen": 1.2,
+    "damage": 22,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.2,
+    "attackRange": 1.5,
+    "armor": 4,
+    "magicResist": 15,
+    "moveSpeed": 5.5,
+    "sightRange": 11,
+    "critChance": 0.12,
+    "critMultiplier": 1.9
+  },
+
+  "cost": {
+    "gold": 160,
+    "wood": 40,
+    "mana": 25,
+    "food": 3
+  },
+
+  "trainTime": 32,
+  "populationCost": 2,
+  "requiredBuilding": "fairy_grove",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "normal",
+  "movementType": "ground",
+
+  "abilities": [
+    {
+      "id": "war_stomp",
+      "name": "War Stomp",
+      "description": "Stomp the ground, stunning nearby enemies for 2 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 18.0,
+      "manaCost": 50,
+      "radius": 3.5,
+      "duration": 2.0,
+      "damage": 15
+    },
+    {
+      "id": "pipes_of_vigor",
+      "name": "Pipes of Vigor",
+      "description": "Play enchanted pipes, increasing attack speed of nearby allies by 25% for 12 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 35.0,
+      "manaCost": 60,
+      "radius": 10.0,
+      "duration": 12.0,
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "value": 0.25,
+          "type": "percent"
+        }
+      ]
+    }
+  ],
+
+  "bonusVs": [
+    {
+      "category": "light",
+      "multiplier": 1.3
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/satyr.obj",
+    "portrait": "textures/races/fairies/portraits/satyr.png",
+    "icon": "textures/races/fairies/icons/satyr.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/satyr_diffuse.png",
+      "normal": "textures/races/fairies/units/satyr_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/satyr/idle.anim",
+      "walk": "animations/fairies/satyr/walk.anim",
+      "run": "animations/fairies/satyr/run.anim",
+      "attack": "animations/fairies/satyr/attack.anim",
+      "death": "animations/fairies/satyr/death.anim",
+      "cast": "animations/fairies/satyr/play_pipes.anim",
+      "stomp": "animations/fairies/satyr/stomp.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/satyr/select_1.wav", "sounds/fairies/satyr/select_2.wav"],
+    "move": ["sounds/fairies/satyr/ack_1.wav", "sounds/fairies/satyr/ack_2.wav"],
+    "attack": ["sounds/fairies/satyr/attack.wav"],
+    "death": ["sounds/fairies/satyr/death.wav"],
+    "cast": ["sounds/fairies/satyr/pipes.wav"],
+    "ready": ["sounds/fairies/satyr/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.4,
+    "height": 1.8,
+    "mass": 80.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/melee.bt",
+    "profile": "aggressive",
+    "aggroRange": 12.0,
+    "fleeThreshold": 0.2
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "assassin",
+  "id": "cryptid_wendigo",
+  "name": "Wendigo",
+  "description": "Terrifying skeletal cryptid of ice and hunger. Wendigos are masters of stealth, stalking prey invisibly through winter forests before striking with devastating power.",
+  "race": "cryptids",
+  "category": "stealth",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 420,
+    "healthRegen": 1.0,
+    "damage": 42,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.4,
+    "attackRange": 1.5,
+    "armor": 2,
+    "magicResist": 30,
+    "moveSpeed": 6.0,
+    "critChance": 0.25,
+    "critMultiplier": 3.0
+  },
+
+  "cost": {
+    "gold": 280,
+    "wood": 50,
+    "food": 4
+  },
+
+  "trainTime": 40,
+  "populationCost": 3,
+  "requiredBuilding": "cryptid_shadow_pool",
+  "requiredAge": 2,
+
+  "armorType": "light",
+  "attackType": "chaos",
+
+  "bonusVs": [
+    {
+      "category": "hero",
+      "multiplier": 1.8
+    },
+    {
+      "category": "caster",
+      "multiplier": 1.6
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "permanent_stealth",
+      "name": "Winter Shroud",
+      "description": "Remains invisible when not attacking. Breaking stealth to attack grants 100% bonus damage on first strike",
+      "type": "passive",
+      "permanentStealth": true,
+      "stealthBreakDamageBonus": 1.0,
+      "restealthDelay": 4.0
+    },
+    {
+      "id": "ice_walk",
+      "name": "Ice Walk",
+      "description": "Leaves no tracks and can walk through units. Immune to slowing effects",
+      "type": "passive",
+      "phaseThrough": true,
+      "immuneToSlow": true,
+      "leavesNoTracks": true
+    },
+    {
+      "id": "cannibalize",
+      "name": "Cannibalize",
+      "description": "Consume a corpse to restore 50% max health and gain 30% damage for 15 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 20.0,
+      "requiresCorpse": true,
+      "corpseRange": 2.0,
+      "healPercent": 0.50,
+      "effects": [
+        {
+          "stat": "damage",
+          "multiplier": 1.30,
+          "duration": 15.0
+        }
+      ]
+    },
+    {
+      "id": "freezing_touch",
+      "name": "Freezing Touch",
+      "description": "Attacks apply a freezing debuff that slows by 30% and reduces armor by 5, stacking up to 3 times",
+      "type": "passive",
+      "onAttackEffect": true,
+      "maxStacks": 3,
+      "stackDuration": 8.0,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.70,
+          "perStack": true
+        },
+        {
+          "stat": "armor",
+          "value": -5,
+          "perStack": true
+        }
+      ]
+    },
+    {
+      "id": "hunger_of_the_damned",
+      "name": "Hunger of the Damned",
+      "description": "Enter a ravenous state for 8 seconds, gaining 80% attack speed and lifesteal but becoming visible",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 45.0,
+      "duration": 8.0,
+      "breaksStealthPermament": false,
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "multiplier": 1.80
+        }
+      ],
+      "lifesteal": 0.4
+    }
+  ],
+
+  "upgrades": ["wendigo_eternal_hunger", "frost_wraith"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/wendigo.obj",
+    "portrait": "textures/races/cryptids/portraits/wendigo.png",
+    "icon": "textures/races/cryptids/icons/wendigo.png",
+    "scale": 1.3,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/wendigo_diffuse.png",
+      "normal": "textures/races/cryptids/units/wendigo_normal.png",
+      "emissive": "textures/races/cryptids/units/wendigo_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/wendigo/idle.anim",
+      "walk": "animations/cryptids/wendigo/stalk.anim",
+      "run": "animations/cryptids/wendigo/sprint.anim",
+      "attack": "animations/cryptids/wendigo/slash.anim",
+      "stealth": "animations/cryptids/wendigo/invisible.anim",
+      "cannibalize": "animations/cryptids/wendigo/feed.anim",
+      "death": "animations/cryptids/wendigo/death.anim"
+    },
+    "particleEffects": {
+      "frost_trail": "particles/cryptids/frost_trail.particle",
+      "stealth_shimmer": "particles/cryptids/stealth_shimmer.particle",
+      "blue_glow": "particles/cryptids/blue_glow.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/wendigo/whisper_1.wav", "sounds/cryptids/wendigo/whisper_2.wav"],
+    "move": ["sounds/cryptids/wendigo/breath.wav"],
+    "attack": ["sounds/cryptids/wendigo/screech.wav"],
+    "cannibalize": ["sounds/cryptids/wendigo/feed.wav"],
+    "death": ["sounds/cryptids/wendigo/death.wav"],
+    "ready": ["sounds/cryptids/wendigo/howl.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.35,
+    "height": 2.2,
+    "mass": 75.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/stealth_assassin.bt",
+    "profile": "assassin",
+    "aggroRange": 14.0,
+    "priorityTargets": ["hero", "caster", "ranged"],
+    "maintainStealth": true,
+    "preferBackstabs": true,
+    "useCannibalizeWhenLow": true,
+    "fleeThreshold": 0.2
+  }
+}

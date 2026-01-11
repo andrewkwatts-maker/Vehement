@@ -1,0 +1,120 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "barracks",
+  "id": "cryptid_sacred_grove",
+  "name": "Sacred Grove",
+  "description": "Ancient forest sanctuary where flying cryptids roost and nature magic flows. Trains Mothman and Jersey Devil units.",
+  "race": "cryptids",
+  "category": "military",
+  "tier": 2,
+
+  "size": {
+    "width": 3,
+    "height": 3
+  },
+
+  "health": 1200,
+  "armor": 3,
+
+  "cost": {
+    "gold": 200,
+    "wood": 150
+  },
+
+  "buildTime": 40,
+  "requiredBuilding": "cryptid_den",
+  "requiredAge": 1,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [
+    {
+      "unitId": "cryptid_mothman",
+      "priority": 1
+    },
+    {
+      "unitId": "cryptid_jersey_devil",
+      "priority": 2
+    }
+  ],
+
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0,
+    "foodPerSecond": 0,
+    "stonePerSecond": 0,
+    "manaPerSecond": 0.3,
+    "requiresWorker": false,
+    "workerCapacity": 0
+  },
+
+  "garrisonCapacity": 0,
+
+  "attackCapability": {
+    "canAttack": false,
+    "damage": 0,
+    "attackSpeed": 0,
+    "attackRange": 0,
+    "attackType": "normal",
+    "targetAir": false,
+    "targetGround": false
+  },
+
+  "isUnique": false,
+  "maxCount": 10,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "passiveAbilities": [
+    {
+      "id": "healing_grove",
+      "name": "Healing Grove",
+      "description": "Friendly units within 15 units regenerate 1% max health per second",
+      "radius": 15.0,
+      "effects": [
+        {
+          "stat": "healthRegenPercent",
+          "value": 0.01
+        }
+      ],
+      "targetType": "friendly"
+    },
+    {
+      "id": "nature_blessing",
+      "name": "Nature's Blessing",
+      "description": "Flying units trained here gain +10% health and +5% movement speed permanently",
+      "effects": [
+        {
+          "stat": "maxHealth",
+          "multiplier": 1.10,
+          "target": "trained_flying_units"
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 1.05,
+          "target": "trained_flying_units"
+        }
+      ]
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/cryptids/buildings/sacred_grove.obj",
+    "icon": "textures/races/cryptids/icons/buildings/sacred_grove.png",
+    "textures": {
+      "diffuse": "textures/races/cryptids/buildings/sacred_grove_diffuse.png",
+      "normal": "textures/races/cryptids/buildings/sacred_grove_normal.png",
+      "emissive": "textures/races/cryptids/buildings/sacred_grove_emissive.png"
+    },
+    "constructionStages": 2,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "damageThreshold": 0.5,
+    "particleEffects": {
+      "healing_aura": "particles/cryptids/nature_healing.particle",
+      "fireflies": "particles/cryptids/fireflies.particle"
+    }
+  },
+
+  "visionRange": 10.0
+}

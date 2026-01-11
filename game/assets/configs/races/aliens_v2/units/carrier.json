@@ -1,0 +1,138 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "alien_carrier",
+  "name": "Carrier",
+  "description": "Massive capital ships that deploy autonomous Interceptors to attack enemies. Carriers can build up to 8 Interceptors, making them formidable fleet commanders.",
+  "race": "aliens",
+  "category": "air",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 250,
+    "healthRegen": 0,
+    "shield": 150,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+
+    "damage": 0,
+    "attackSpeed": 0,
+    "attackRange": 8,
+
+    "armor": 2,
+    "shieldArmor": 0,
+    "magicResist": 0,
+
+    "moveSpeed": 2.62,
+    "turnSpeed": 720,
+    "acceleration": 500,
+
+    "sightRange": 11,
+    "detectionRange": 0
+  },
+
+  "combat": {
+    "attackType": "summon",
+    "armorType": "armored"
+  },
+
+  "movement": {
+    "movementType": "flying",
+    "flyingHeight": 5.0,
+    "collisionRadius": 1.25,
+    "unitSize": "massive"
+  },
+
+  "cost": {
+    "minerals": 350,
+    "vespene": 250,
+    "supply": 6
+  },
+
+  "trainTime": 120,
+  "populationCost": 6,
+  "requiredBuilding": "alien_stargate",
+  "requiredTech": "fleet_beacon",
+
+  "abilities": [
+    {
+      "id": "build_interceptors",
+      "name": "Build Interceptors",
+      "description": "Build Interceptors that automatically attack nearby enemies. Max 8 Interceptors.",
+      "type": "autocast",
+      "hotkey": "I",
+      "cooldown": 0.0,
+      "range": 0,
+      "cost": {
+        "minerals": 15
+      },
+      "buildTime": 6.0,
+      "maxInterceptors": 8,
+      "unlockedByDefault": true,
+      "effects": [
+        {
+          "type": "build_interceptor",
+          "maxCount": 8,
+          "cost": 15,
+          "buildTime": 6.0
+        }
+      ]
+    },
+    {
+      "id": "release_interceptors",
+      "name": "Release Interceptors",
+      "description": "Passive: Interceptors automatically attack enemies within 8 range",
+      "type": "passive",
+      "unlockedByDefault": true,
+      "effects": [
+        {
+          "type": "summon_attack",
+          "summonType": "interceptor",
+          "attackRange": 8.0,
+          "leashRange": 14.0
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_air_weapons_1",
+    "alien_air_weapons_2",
+    "alien_air_weapons_3",
+    "alien_air_armor_1",
+    "alien_air_armor_2",
+    "alien_air_armor_3",
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "graviton_catapult"
+  ],
+
+  "canAttackGround": true,
+  "canAttackAir": true,
+
+  "attributes": {
+    "isBiological": false,
+    "isPsionic": false,
+    "isLight": false,
+    "isArmored": true,
+    "isMassive": true,
+    "isMechanical": true,
+    "cargoSize": 8,
+    "canBeWarped": false
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/carrier.fbx",
+    "portrait": "textures/races/aliens/portraits/carrier.png",
+    "icon": "textures/races/aliens/icons/carrier.png",
+    "scale": 2.5,
+    "shieldEffect": "effects/shield_shimmer.fx"
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 1.25,
+    "mass": 500.0
+  }
+}

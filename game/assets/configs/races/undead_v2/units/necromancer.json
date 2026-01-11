@@ -1,0 +1,206 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "id": "undead_necromancer",
+  "name": "Necromancer",
+  "description": "Masters of death magic who command the undead. Necromancers raise corpses, curse enemies, and drain life force.",
+  "race": "undead",
+  "category": "caster",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 320,
+    "healthRegen": 0.75,
+    "mana": 500,
+    "manaRegen": 3.5,
+    "damage": 24,
+    "damageVariance": 0.3,
+    "attackSpeed": 1.6,
+    "attackRange": 11.0,
+    "armor": 0,
+    "magicResist": 25,
+    "moveSpeed": 4.3,
+    "sightRange": 14,
+    "spellPower": 120
+  },
+
+  "cost": {
+    "gold": 350,
+    "mana": 100,
+    "corpses": 3
+  },
+
+  "trainTime": 50,
+  "populationCost": 3,
+  "requiredBuilding": "undead_black_citadel",
+  "requiredAge": 2,
+
+  "armorType": "light",
+  "attackType": "magic",
+
+  "abilities": [
+    {
+      "id": "raise_dead",
+      "name": "Raise Dead",
+      "description": "Raise up to 4 skeletons from nearby corpses for 45 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 15.0,
+      "manaCost": 75,
+      "range": 12.0,
+      "radius": 5.0,
+      "maxSummons": 4,
+      "summonUnit": "undead_skeleton",
+      "summonDuration": 45.0,
+      "requiresCorpse": true
+    },
+    {
+      "id": "death_coil",
+      "name": "Death Coil",
+      "description": "Hurl death energy dealing 180 damage to enemies or healing 180 to undead allies",
+      "type": "active",
+      "hotkey": "D",
+      "cooldown": 8.0,
+      "manaCost": 80,
+      "range": 14.0,
+      "damage": 180,
+      "healAmount": 180,
+      "damageType": "dark",
+      "canTargetUndead": true
+    },
+    {
+      "id": "unholy_frenzy",
+      "name": "Unholy Frenzy",
+      "description": "Increase target undead's attack speed by 75% for 12 seconds, but they lose 2% health per second",
+      "type": "active",
+      "hotkey": "F",
+      "cooldown": 18.0,
+      "manaCost": 60,
+      "range": 10.0,
+      "duration": 12.0,
+      "targetRace": "undead",
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "value": 0.75,
+          "type": "percent"
+        },
+        {
+          "stat": "healthDrain",
+          "value": 0.02,
+          "perSecond": true
+        }
+      ]
+    },
+    {
+      "id": "cripple",
+      "name": "Cripple",
+      "description": "Curse target reducing movement speed by 50%, attack speed by 40%, and damage by 30% for 10 seconds",
+      "type": "active",
+      "hotkey": "C",
+      "cooldown": 12.0,
+      "manaCost": 100,
+      "range": 12.0,
+      "duration": 10.0,
+      "targetType": "enemy_unit",
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "value": -0.50,
+          "type": "percent"
+        },
+        {
+          "stat": "attackSpeed",
+          "value": -0.40,
+          "type": "percent"
+        },
+        {
+          "stat": "damage",
+          "value": -0.30,
+          "type": "percent"
+        }
+      ]
+    },
+    {
+      "id": "vampiric_aura",
+      "name": "Vampiric Aura",
+      "description": "Nearby undead units gain 20% lifesteal",
+      "type": "passive",
+      "auraRadius": 12.0,
+      "targetRace": "undead",
+      "effects": [
+        {
+          "stat": "lifesteal",
+          "value": 0.20
+        }
+      ]
+    }
+  ],
+
+  "projectile": {
+    "id": "shadow_bolt",
+    "model": "models/projectiles/shadow_bolt.obj",
+    "speed": 28.0,
+    "lifetime": 3.0,
+    "gravity": 0.0,
+    "trailEffect": "effects/shadow_trail.fx",
+    "impactEffect": "effects/shadow_impact.fx"
+  },
+
+  "upgrades": ["necromancer_mastery", "undead_magic_damage_1", "raise_dead_enhancement"],
+
+  "visuals": {
+    "model": "models/races/undead/units/necromancer.obj",
+    "portrait": "textures/races/undead/portraits/necromancer.png",
+    "icon": "textures/races/undead/icons/necromancer.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/undead/units/necromancer_diffuse.png",
+      "normal": "textures/races/undead/units/necromancer_normal.png",
+      "emissive": "textures/races/undead/units/necromancer_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/undead/necromancer/idle.anim",
+      "walk": "animations/undead/necromancer/walk.anim",
+      "run": "animations/undead/necromancer/run.anim",
+      "attack": "animations/undead/necromancer/attack.anim",
+      "cast_raise": "animations/undead/necromancer/raise_dead.anim",
+      "cast_coil": "animations/undead/necromancer/death_coil.anim",
+      "cast_curse": "animations/undead/necromancer/curse.anim",
+      "death": "animations/undead/necromancer/death.anim"
+    },
+    "effects": {
+      "aura": "effects/vampiric_aura.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/necromancer/select_1.wav", "sounds/undead/necromancer/select_2.wav"],
+    "move": ["sounds/undead/necromancer/move_1.wav", "sounds/undead/necromancer/move_2.wav"],
+    "attack": ["sounds/shadow_bolt.wav"],
+    "cast": ["sounds/undead/necromancer/cast.wav"],
+    "raise": ["sounds/undead/necromancer/raise_dead.wav"],
+    "death": ["sounds/undead/necromancer/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.30,
+    "height": 1.85,
+    "mass": 70.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/necromancer.bt",
+    "profile": "summoner",
+    "aggroRange": 10.0,
+    "preferredDistance": 11.0,
+    "priorityAbilities": ["raise_dead", "death_coil", "cripple"],
+    "seekCorpses": true,
+    "summonThreshold": 2
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": true,
+    "corpseDecayTime": 45.0
+  }
+}

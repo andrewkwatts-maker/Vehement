@@ -1,0 +1,187 @@
+{
+    "id": "peasant",
+    "name": "Peasant",
+    "race": "humans",
+    "type": "unit",
+    "category": "worker",
+    "description": "Basic worker unit. Can gather resources and construct buildings.",
+
+    "stats": {
+        "health": 220,
+        "armor": 0,
+        "damage": 5,
+        "attackSpeed": 1.0,
+        "moveSpeed": 190,
+        "buildSpeed": 1.0,
+        "harvestSpeed": 1.0
+    },
+
+    "costs": {
+        "gold": 75,
+        "food": 1,
+        "buildTime": 15.0
+    },
+
+    "sdfModel": {
+        "name": "peasant_model",
+        "bounds": { "min": [-0.4, 0.0, -0.4], "max": [0.4, 1.7, 0.4] },
+        "primitives": [
+            {
+                "id": "torso",
+                "type": "Capsule",
+                "params": { "radius": 0.12, "height": 0.3 },
+                "transform": { "position": [0.0, 1.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.8] },
+                "material": { "baseColor": [0.6, 0.5, 0.35, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union"
+            },
+            {
+                "id": "head",
+                "type": "Sphere",
+                "params": { "radius": 0.09 },
+                "transform": { "position": [0.0, 1.35, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.1, 1.0] },
+                "material": { "baseColor": [0.9, 0.75, 0.6, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union"
+            },
+            {
+                "id": "hat",
+                "type": "Cone",
+                "params": { "radius1": 0.02, "radius2": 0.12, "height": 0.1 },
+                "transform": { "position": [0.0, 1.45, 0.0], "rotation": [3.14159, 0.0, 0.0, 0.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.4, 0.25, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union"
+            },
+            {
+                "id": "arm_left",
+                "type": "Capsule",
+                "params": { "radius": 0.035, "height": 0.35 },
+                "transform": { "position": [-0.15, 0.9, 0.0], "rotation": [0.0, 0.0, 0.15, 0.99], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.9, 0.75, 0.6, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "arm_right",
+                "type": "Capsule",
+                "params": { "radius": 0.035, "height": 0.35 },
+                "transform": { "position": [0.15, 0.9, 0.0], "rotation": [0.0, 0.0, -0.15, 0.99], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.9, 0.75, 0.6, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "leg_left",
+                "type": "Capsule",
+                "params": { "radius": 0.04, "height": 0.4 },
+                "transform": { "position": [-0.06, 0.45, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.45, 0.35, 0.25, 1.0], "metallic": 0.0, "roughness": 0.8 },
+                "operation": "Union",
+                "bone": "leg_l"
+            },
+            {
+                "id": "leg_right",
+                "type": "Capsule",
+                "params": { "radius": 0.04, "height": 0.4 },
+                "transform": { "position": [0.06, 0.45, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.45, 0.35, 0.25, 1.0], "metallic": 0.0, "roughness": 0.8 },
+                "operation": "Union",
+                "bone": "leg_r"
+            },
+            {
+                "id": "pickaxe_handle",
+                "type": "Cylinder",
+                "params": { "radius": 0.015, "height": 0.5 },
+                "transform": { "position": [0.25, 0.85, 0.0], "rotation": [0.0, 0.0, -0.3, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.4, 0.3, 0.2, 1.0], "metallic": 0.1, "roughness": 0.7 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "pickaxe_head",
+                "type": "RoundedBox",
+                "params": { "size": [0.08, 0.03, 0.015], "radius": 0.005 },
+                "transform": { "position": [0.35, 1.1, 0.0], "rotation": [0.0, 0.0, -0.3, 0.95], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.5, 0.5, 0.55, 1.0], "metallic": 0.7, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_r"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "spine", "parent": "root", "position": [0.0, 0.7, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "head", "parent": "spine", "position": [0.0, 0.45, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "arm_l", "parent": "spine", "position": [-0.12, 0.25, 0.0], "rotation": [0.0, 0.0, 0.1, 0.995] },
+            { "name": "arm_r", "parent": "spine", "position": [0.12, 0.25, 0.0], "rotation": [0.0, 0.0, -0.1, 0.995] },
+            { "name": "leg_l", "parent": "root", "position": [-0.06, 0.65, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "leg_r", "parent": "root", "position": [0.06, 0.65, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 2.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 1.0, "bones": { "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] } } },
+                { "time": 2.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+            ]
+        },
+        "walk": {
+            "duration": 0.8, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "leg_l": { "rotation": [0.25, 0.0, 0.0, 0.97] }, "leg_r": { "rotation": [-0.25, 0.0, 0.0, 0.97] }, "arm_l": { "rotation": [-0.15, 0.0, 0.1, 0.99] }, "arm_r": { "rotation": [0.15, 0.0, -0.1, 0.99] } } },
+                { "time": 0.4, "bones": { "leg_l": { "rotation": [-0.25, 0.0, 0.0, 0.97] }, "leg_r": { "rotation": [0.25, 0.0, 0.0, 0.97] }, "arm_l": { "rotation": [0.15, 0.0, 0.1, 0.99] }, "arm_r": { "rotation": [-0.15, 0.0, -0.1, 0.99] } } },
+                { "time": 0.8, "bones": { "leg_l": { "rotation": [0.25, 0.0, 0.0, 0.97] }, "leg_r": { "rotation": [-0.25, 0.0, 0.0, 0.97] }, "arm_l": { "rotation": [-0.15, 0.0, 0.1, 0.99] }, "arm_r": { "rotation": [0.15, 0.0, -0.1, 0.99] } } }
+            ]
+        },
+        "harvest": {
+            "duration": 1.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "arm_r": { "rotation": [-0.3, 0.0, -0.3, 0.9] }, "spine": { "rotation": [0.1, 0.0, 0.0, 0.995] } } },
+                { "time": 0.5, "bones": { "arm_r": { "rotation": [0.4, 0.0, -0.5, 0.77] }, "spine": { "rotation": [0.2, 0.0, 0.0, 0.98] } }, "events": ["hit_resource"] },
+                { "time": 1.0, "bones": { "arm_r": { "rotation": [-0.3, 0.0, -0.3, 0.9] }, "spine": { "rotation": [0.1, 0.0, 0.0, 0.995] } } }
+            ]
+        },
+        "build": {
+            "duration": 1.2, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "arm_r": { "rotation": [-0.2, 0.0, -0.4, 0.89] }, "arm_l": { "rotation": [0.1, 0.0, 0.3, 0.95] } } },
+                { "time": 0.6, "bones": { "arm_r": { "rotation": [0.3, 0.0, -0.5, 0.81] }, "arm_l": { "rotation": [-0.1, 0.0, 0.4, 0.91] } }, "events": ["hammer_hit"] },
+                { "time": 1.2, "bones": { "arm_r": { "rotation": [-0.2, 0.0, -0.4, 0.89] }, "arm_l": { "rotation": [0.1, 0.0, 0.3, 0.95] } } }
+            ]
+        },
+        "death": {
+            "duration": 1.2, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.6, "bones": { "root": { "position": [0.0, -0.3, 0.1], "rotation": [0.3, 0.0, 0.0, 0.95] } } },
+                { "time": 1.2, "bones": { "root": { "position": [0.0, -0.6, 0.2], "rotation": [0.6, 0.0, 0.0, 0.8] } } }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "walk", "condition": "isMoving" }, { "to": "harvest", "condition": "isHarvesting" }, { "to": "build", "condition": "isBuilding" }, { "to": "death", "condition": "isDead" }] },
+            "walk": { "animation": "walk", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "harvest": { "animation": "harvest", "transitions": [{ "to": "idle", "condition": "!isHarvesting" }, { "to": "death", "condition": "isDead" }] },
+            "build": { "animation": "build", "transitions": [{ "to": "idle", "condition": "!isBuilding" }, { "to": "death", "condition": "isDead" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "gather", "name": "Gather", "description": "Gather gold or lumber from resources.", "targetType": "resource" },
+        { "id": "build", "name": "Build", "description": "Construct a building.", "targetType": "building_placement" },
+        { "id": "repair", "name": "Repair", "description": "Repair a damaged building or mechanical unit.", "targetType": "friendly_building" }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "peasant_ready" }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "peasant_death" }] },
+        "on_select": { "actions": [{ "type": "random_say", "texts": ["Yes?", "What?", "Hm?", "Ready to work!"], "chance": 1.0 }] }
+    }
+}

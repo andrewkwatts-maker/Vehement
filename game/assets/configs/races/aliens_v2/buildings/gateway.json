@@ -1,0 +1,164 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "spawner_building_archetype",
+  "id": "alien_gateway",
+  "name": "Gateway",
+  "description": "Warps in ground units for the Alien army. Can be upgraded to a Warp Gate to instantly warp in units anywhere within pylon power.",
+  "race": "aliens",
+  "category": "military",
+  "tier": 1,
+
+  "size": {
+    "width": 3,
+    "height": 3,
+    "footprintShape": "square"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "requiresFlatTerrain": true,
+    "minDistanceFromOther": 1.5,
+    "blocksPathing": true,
+    "requiresPower": true
+  },
+
+  "health": 500,
+  "healthRegen": 0,
+  "shield": 500,
+  "shieldRegen": 2.0,
+  "shieldRegenDelay": 10.0,
+  "armor": 1,
+  "shieldArmor": 0,
+
+  "spawner": {
+    "queueSize": 5,
+    "simultaneousProduction": 1,
+    "queueType": "sequential",
+    "hasRallyPoint": true,
+    "rallyPointRange": 50.0,
+    "spawnOffset": {
+      "x": 2.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "spawnAnimation": "anim_warp_in",
+    "spawnEffect": "effects/unit_warp_in.fx",
+    "spawnSound": "sounds/aliens/gateway/unit_complete.wav",
+    "productionSpeedMultiplier": 1.0
+  },
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "alien_zealot",
+      "name": "Zealot",
+      "hotkey": "Z"
+    },
+    {
+      "type": "unit",
+      "id": "alien_stalker",
+      "name": "Stalker",
+      "requiredTech": "cybernetics_core",
+      "hotkey": "S"
+    },
+    {
+      "type": "unit",
+      "id": "alien_sentry",
+      "name": "Sentry",
+      "requiredTech": "cybernetics_core",
+      "hotkey": "E"
+    },
+    {
+      "type": "unit",
+      "id": "alien_adept",
+      "name": "Adept",
+      "requiredTech": "cybernetics_core",
+      "hotkey": "A"
+    },
+    {
+      "type": "unit",
+      "id": "alien_high_templar",
+      "name": "High Templar",
+      "requiredTech": "templar_archives",
+      "hotkey": "T"
+    },
+    {
+      "type": "unit",
+      "id": "alien_dark_templar",
+      "name": "Dark Templar",
+      "requiredTech": "dark_shrine",
+      "hotkey": "D"
+    },
+    {
+      "type": "upgrade",
+      "id": "transform_to_warp_gate",
+      "name": "Transform to Warp Gate",
+      "requiredTech": "warp_gate_research",
+      "hotkey": "W"
+    }
+  ],
+
+  "cost": {
+    "minerals": 150,
+    "vespene": 0
+  },
+
+  "buildTime": 65,
+  "requiredBuilding": "alien_nexus",
+  "requiredAge": 0,
+
+  "providesPopulation": 0,
+
+  "canRally": true,
+  "canUpgrade": true,
+  "upgradesTo": "alien_warp_gate",
+  "upgradeCost": {
+    "minerals": 0,
+    "vespene": 0
+  },
+  "upgradeTime": 10,
+  "upgradeBenefits": {
+    "description": "Can warp in units instantly anywhere within pylon power",
+    "instantProduction": true,
+    "requiresPowerField": true
+  },
+
+  "abilities": [],
+
+  "requiresPower": true,
+  "providesPower": false,
+
+  "visuals": {
+    "model": "models/races/aliens/buildings/gateway.fbx",
+    "icon": "textures/races/aliens/icons/buildings/gateway.png",
+    "portrait": "textures/races/aliens/portraits/gateway.png",
+    "constructionStages": 3,
+    "hasDestructionAnimation": true,
+    "scale": 1.0,
+    "shadowSize": 3.0,
+    "teamColorParts": ["energy_field"],
+    "shieldEffect": "effects/building_shield.fx",
+    "warpEffect": "effects/gateway_warp.fx",
+    "idleEffect": "effects/gateway_idle.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/aliens/gateway/select1.wav"
+    ],
+    "construct": "sounds/aliens/gateway/warp_in.wav",
+    "complete": "sounds/aliens/gateway/complete.wav",
+    "destroy": "sounds/aliens/gateway/destroy.wav",
+    "trainStart": "sounds/aliens/gateway/train_start.wav",
+    "trainComplete": "sounds/aliens/gateway/unit_complete.wav",
+    "ambient": "sounds/aliens/gateway/ambient.wav"
+  },
+
+  "strategic": {
+    "importance": "high",
+    "targetPriority": 0.7,
+    "militaryValue": 9
+  },
+
+  "visionRange": 8.0
+}

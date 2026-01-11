@@ -1,0 +1,139 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "cavalry",
+  "id": "fairy_unicorn",
+  "name": "Unicorn",
+  "description": "Majestic magical beings of pure light. Unicorns are powerful melee combatants with healing abilities and magic immunity. Their horn can dispel enchantments and purify corruption.",
+  "race": "fairies",
+  "category": "cavalry",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 350,
+    "healthRegen": 2.0,
+    "mana": 250,
+    "manaRegen": 2.5,
+    "damage": 28,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.1,
+    "attackRange": 1.5,
+    "armor": 5,
+    "magicResist": 50,
+    "moveSpeed": 6.0,
+    "sightRange": 12,
+    "healingPower": 40
+  },
+
+  "cost": {
+    "gold": 300,
+    "wood": 50,
+    "mana": 100,
+    "food": 5
+  },
+
+  "trainTime": 50,
+  "populationCost": 4,
+  "requiredBuilding": "fairy_moonwell",
+  "requiredAge": 2,
+
+  "armorType": "heavy",
+  "attackType": "magic",
+  "movementType": "ground",
+
+  "abilities": [
+    {
+      "id": "healing_aura",
+      "name": "Healing Aura",
+      "description": "Passive aura healing nearby allies for 5 health per second",
+      "type": "passive",
+      "auraRadius": 7.0,
+      "healingPerSecond": 5.0
+    },
+    {
+      "id": "purifying_light",
+      "name": "Purifying Light",
+      "description": "Dispel all negative effects from target ally and heal for 150",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 12.0,
+      "manaCost": 70,
+      "range": 8.0,
+      "healing": 150
+    },
+    {
+      "id": "horn_charge",
+      "name": "Horn Charge",
+      "description": "Charge forward impaling enemies, dealing 80 damage and stunning for 1.5 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 25.0,
+      "manaCost": 80,
+      "chargeDistance": 10.0,
+      "damage": 80,
+      "stunDuration": 1.5
+    },
+    {
+      "id": "magic_immunity",
+      "name": "Spell Immunity",
+      "description": "Become immune to magic for 5 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 60.0,
+      "manaCost": 100,
+      "duration": 5.0
+    }
+  ],
+
+  "immunities": [
+    "polymorph",
+    "charm",
+    "mind_control"
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/unicorn.obj",
+    "portrait": "textures/races/fairies/portraits/unicorn.png",
+    "icon": "textures/races/fairies/icons/unicorn.png",
+    "scale": 1.2,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/unicorn_diffuse.png",
+      "emissive": "textures/races/fairies/units/unicorn_glow.png",
+      "normal": "textures/races/fairies/units/unicorn_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/unicorn/idle.anim",
+      "walk": "animations/fairies/unicorn/walk.anim",
+      "run": "animations/fairies/unicorn/gallop.anim",
+      "attack": "animations/fairies/unicorn/horn_strike.anim",
+      "death": "animations/fairies/unicorn/death.anim",
+      "cast": "animations/fairies/unicorn/heal.anim",
+      "charge": "animations/fairies/unicorn/charge.anim"
+    },
+    "auraEffect": "effects/holy_aura.fx",
+    "glowEffect": "effects/unicorn_glow.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/unicorn/select_1.wav", "sounds/fairies/unicorn/whinny.wav"],
+    "move": ["sounds/fairies/unicorn/ack_1.wav", "sounds/fairies/unicorn/hooves.wav"],
+    "attack": ["sounds/fairies/unicorn/attack.wav"],
+    "death": ["sounds/fairies/unicorn/death.wav"],
+    "cast": ["sounds/fairies/unicorn/heal.wav"],
+    "ready": ["sounds/fairies/unicorn/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.6,
+    "height": 2.2,
+    "mass": 150.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/healer_cavalry.bt",
+    "profile": "support_melee",
+    "aggroRange": 11.0,
+    "healPriority": 0.6,
+    "fleeThreshold": 0.25
+  }
+}

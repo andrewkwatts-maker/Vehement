@@ -1,0 +1,194 @@
+{
+    "name": "Unit Damage Handler",
+    "description": "Handles damage events for units, updating health and triggering effects",
+    "version": "1.0",
+    "nodes": [
+        {
+            "id": "node_0",
+            "typeId": "SubscribeEvent",
+            "displayName": "On Damage Received",
+            "position": [100, 100],
+            "channel": "unit.damage.received"
+        },
+        {
+            "id": "node_1",
+            "typeId": "GetProperty",
+            "displayName": "Get Current Health",
+            "position": [350, 80],
+            "binding": "unit.stats.health"
+        },
+        {
+            "id": "node_2",
+            "typeId": "GetProperty",
+            "displayName": "Get Armor",
+            "position": [350, 180],
+            "binding": "unit.stats.armor"
+        },
+        {
+            "id": "node_3",
+            "typeId": "Subtract",
+            "displayName": "Calculate Damage Reduction",
+            "position": [550, 130],
+            "inputs": {
+                "a": "damageAmount",
+                "b": "armor"
+            }
+        },
+        {
+            "id": "node_4",
+            "typeId": "Clamp",
+            "displayName": "Clamp Damage",
+            "position": [750, 130],
+            "inputs": {
+                "min": 1,
+                "max": 9999
+            }
+        },
+        {
+            "id": "node_5",
+            "typeId": "Subtract",
+            "displayName": "Calculate New Health",
+            "position": [950, 100],
+            "inputs": {
+                "a": "currentHealth",
+                "b": "finalDamage"
+            }
+        },
+        {
+            "id": "node_6",
+            "typeId": "Clamp",
+            "displayName": "Clamp Health",
+            "position": [1150, 100],
+            "inputs": {
+                "min": 0,
+                "max": "maxHealth"
+            }
+        },
+        {
+            "id": "node_7",
+            "typeId": "SetProperty",
+            "displayName": "Set Health",
+            "position": [1350, 100],
+            "binding": "unit.stats.health"
+        },
+        {
+            "id": "node_8",
+            "typeId": "Compare",
+            "displayName": "Is Dead?",
+            "position": [1350, 250],
+            "operation": "LessEqual",
+            "inputs": {
+                "a": "newHealth",
+                "b": 0
+            }
+        },
+        {
+            "id": "node_9",
+            "typeId": "Branch",
+            "displayName": "Check Death",
+            "position": [1550, 200]
+        },
+        {
+            "id": "node_10",
+            "typeId": "PublishEvent",
+            "displayName": "Trigger Death",
+            "position": [1750, 150],
+            "channel": "unit.death"
+        },
+        {
+            "id": "node_11",
+            "typeId": "PublishEvent",
+            "displayName": "Trigger Damage Effect",
+            "position": [1750, 300],
+            "channel": "unit.effects.damage"
+        }
+    ],
+    "connections": [
+        {
+            "sourceNode": "node_0",
+            "sourcePort": "exec",
+            "targetNode": "node_7",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_0",
+            "sourcePort": "data",
+            "targetNode": "node_3",
+            "targetPort": "a"
+        },
+        {
+            "sourceNode": "node_1",
+            "sourcePort": "value",
+            "targetNode": "node_5",
+            "targetPort": "a"
+        },
+        {
+            "sourceNode": "node_2",
+            "sourcePort": "value",
+            "targetNode": "node_3",
+            "targetPort": "b"
+        },
+        {
+            "sourceNode": "node_3",
+            "sourcePort": "result",
+            "targetNode": "node_4",
+            "targetPort": "value"
+        },
+        {
+            "sourceNode": "node_4",
+            "sourcePort": "result",
+            "targetNode": "node_5",
+            "targetPort": "b"
+        },
+        {
+            "sourceNode": "node_5",
+            "sourcePort": "result",
+            "targetNode": "node_6",
+            "targetPort": "value"
+        },
+        {
+            "sourceNode": "node_6",
+            "sourcePort": "result",
+            "targetNode": "node_7",
+            "targetPort": "value"
+        },
+        {
+            "sourceNode": "node_6",
+            "sourcePort": "result",
+            "targetNode": "node_8",
+            "targetPort": "a"
+        },
+        {
+            "sourceNode": "node_7",
+            "sourcePort": "exec",
+            "targetNode": "node_9",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_8",
+            "sourcePort": "result",
+            "targetNode": "node_9",
+            "targetPort": "condition"
+        },
+        {
+            "sourceNode": "node_9",
+            "sourcePort": "true",
+            "targetNode": "node_10",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_9",
+            "sourcePort": "false",
+            "targetNode": "node_11",
+            "targetPort": "exec"
+        }
+    ],
+    "variables": {
+        "damageMultiplier": 1.0
+    },
+    "metadata": {
+        "author": "Nova Engine",
+        "tags": ["combat", "damage", "unit"],
+        "category": "gameplay"
+    }
+}

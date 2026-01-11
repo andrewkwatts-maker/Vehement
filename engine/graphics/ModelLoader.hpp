@@ -61,8 +61,9 @@ public:
      */
     static void ClearCache();
 
-private:
+    // Texture cache for reusing loaded textures
     static std::unordered_map<std::string, std::shared_ptr<Texture>> s_textureCache;
+
 };
 
 } // namespace Nova

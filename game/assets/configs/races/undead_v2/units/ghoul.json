@@ -1,0 +1,158 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "infantry",
+  "id": "undead_ghoul",
+  "name": "Ghoul",
+  "description": "Swift flesh-eating horrors that feast on the dead. Ghouls gain strength from consuming corpses and can burrow underground.",
+  "race": "undead",
+  "category": "infantry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 380,
+    "healthRegen": 0,
+    "damage": 18,
+    "damageVariance": 0.25,
+    "attackSpeed": 1.8,
+    "attackRange": 1.2,
+    "armor": 1,
+    "magicResist": 10,
+    "moveSpeed": 6.2,
+    "critChance": 0.15,
+    "critMultiplier": 2.0
+  },
+
+  "cost": {
+    "gold": 160,
+    "corpses": 1
+  },
+
+  "trainTime": 25,
+  "populationCost": 2,
+  "requiredBuilding": "undead_graveyard",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "ranged",
+      "multiplier": 1.4
+    },
+    {
+      "category": "caster",
+      "multiplier": 1.6
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "cannibalize",
+      "name": "Cannibalize",
+      "description": "Consume a nearby corpse to restore 150 health over 5 seconds",
+      "type": "active",
+      "hotkey": "C",
+      "cooldown": 15.0,
+      "channelTime": 5.0,
+      "range": 2.0,
+      "targetType": "corpse",
+      "healAmount": 150,
+      "consumesCorpse": true
+    },
+    {
+      "id": "frenzy",
+      "name": "Frenzy",
+      "description": "Each attack increases attack speed by 10%, stacks up to 5 times, lasts 4 seconds",
+      "type": "passive",
+      "stacksPerHit": 1,
+      "maxStacks": 5,
+      "attackSpeedPerStack": 0.10,
+      "duration": 4.0
+    },
+    {
+      "id": "burrow",
+      "name": "Burrow",
+      "description": "Burrow underground becoming invisible and invulnerable for up to 8 seconds",
+      "type": "active",
+      "hotkey": "B",
+      "cooldown": 30.0,
+      "duration": 8.0,
+      "maxDuration": 8.0,
+      "effects": [
+        {
+          "stat": "invisible",
+          "value": 1.0
+        },
+        {
+          "stat": "invulnerable",
+          "value": 1.0
+        },
+        {
+          "stat": "cannotAttack",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "id": "corpse_sense",
+      "name": "Corpse Sense",
+      "description": "Detect corpses within 20 units and gain 15% movement speed when moving toward them",
+      "type": "passive",
+      "detectionRange": 20.0,
+      "moveSpeedBonus": 0.15
+    }
+  ],
+
+  "upgrades": ["ghoul_claws", "undead_melee_damage_1", "burrow_speed"],
+
+  "visuals": {
+    "model": "models/races/undead/units/ghoul.obj",
+    "portrait": "textures/races/undead/portraits/ghoul.png",
+    "icon": "textures/races/undead/icons/ghoul.png",
+    "scale": 1.1,
+    "textures": {
+      "diffuse": "textures/races/undead/units/ghoul_diffuse.png",
+      "normal": "textures/races/undead/units/ghoul_normal.png"
+    },
+    "animations": {
+      "idle": "animations/undead/ghoul/idle.anim",
+      "walk": "animations/undead/ghoul/walk.anim",
+      "run": "animations/undead/ghoul/run.anim",
+      "attack": "animations/undead/ghoul/attack.anim",
+      "cannibalize": "animations/undead/ghoul/feast.anim",
+      "burrow": "animations/undead/ghoul/burrow.anim",
+      "unburrow": "animations/undead/ghoul/unburrow.anim",
+      "death": "animations/undead/ghoul/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/ghoul/select_1.wav", "sounds/undead/ghoul/growl_1.wav"],
+    "move": ["sounds/undead/ghoul/move_1.wav", "sounds/undead/ghoul/move_2.wav"],
+    "attack": ["sounds/undead/ghoul/attack.wav"],
+    "feast": ["sounds/undead/ghoul/feast.wav"],
+    "death": ["sounds/undead/ghoul/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.32,
+    "height": 1.6,
+    "mass": 60.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/assassin_undead.bt",
+    "profile": "assassin",
+    "aggroRange": 15.0,
+    "priorityTargets": ["caster", "ranged", "worker"],
+    "fearless": true,
+    "seekCorpses": true
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": true,
+    "corpseDecayTime": 20.0
+  }
+}

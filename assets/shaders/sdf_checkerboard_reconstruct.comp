@@ -1,0 +1,221 @@
+#version 460 core
+
+// Checkerboard Reconstruction for SDF Rendering
+// Renders at half resolution in checkerboard pattern, then upsamples
+// Provides 2x performance boost with minimal quality loss
+// Features:
+// - Spatial reconstruction filter
+// - Temporal stabilization
+// - Edge-aware upsampling
+// - Sub-pixel detail preservation
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// =============================================================================
+// Output Images (Full Resolution)
+// =============================================================================
+
+layout(rgba16f, binding = 0) writeonly uniform image2D u_fullResColor;
+layout(rgba16f, binding = 1) writeonly uniform image2D u_fullResNormal;
+layout(r32f, binding = 2) writeonly uniform image2D u_fullResDepth;
+
+// =============================================================================
+// Input Images (Checkerboard Pattern)
+// =============================================================================
+
+layout(rgba16f, binding = 3) readonly uniform image2D u_checkerColor;
+layout(rgba16f, binding = 4) readonly uniform image2D u_checkerNormal;
+layout(r32f, binding = 5) readonly uniform image2D u_checkerDepth;
+layout(r8ui, binding = 6) readonly uniform uimage2D u_checkerMask;  // Which pixels are valid
+
+// =============================================================================
+// Previous Frame (for Temporal Stabilization)
+// =============================================================================
+
+uniform sampler2D u_prevFullColor;
+uniform sampler2D u_prevFullDepth;
+
+// =============================================================================
+// Uniforms
+// =============================================================================
+
+uniform int u_frameIndex;                // For checkerboard alternation
+uniform bool u_useTemporalStabilization;
+uniform float u_edgeThreshold;           // Depth discontinuity threshold
+uniform float u_spatialFilterRadius;     // Reconstruction kernel size
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+// Check if pixel should be traced in current frame (checkerboard pattern)
+bool isActivePixel(ivec2 coord, int frameIndex) {
+    int sum = coord.x + coord.y;
+    return (sum % 2) == (frameIndex % 2);
+}
+
+// Calculate edge weight based on depth discontinuity
+float edgeWeight(float centerDepth, float sampleDepth) {
+    if (centerDepth > 900.0 || sampleDepth > 900.0) {
+        return 0.0;  // Invalid depth
+    }
+
+    float depthDiff = abs(centerDepth - sampleDepth);
+    float threshold = u_edgeThreshold * centerDepth;
+
+    // Exponential falloff for edges
+    return exp(-depthDiff / threshold);
+}
+
+// Bilateral filter weight (depth + spatial)
+float bilateralWeight(vec2 offset, float centerDepth, float sampleDepth) {
+    // Spatial weight (Gaussian)
+    float spatialWeight = exp(-dot(offset, offset) / (2.0 * u_spatialFilterRadius * u_spatialFilterRadius));
+
+    // Depth weight (edge-aware)
+    float depthWeight = edgeWeight(centerDepth, sampleDepth);
+
+    return spatialWeight * depthWeight;
+}
+
+// =============================================================================
+// Reconstruction Patterns
+// =============================================================================
+
+// 5-tap cross pattern for reconstruction
+const ivec2 CROSS_OFFSETS[5] = ivec2[](
+    ivec2(0, 0),   // Center
+    ivec2(-1, 0),  // Left
+    ivec2(1, 0),   // Right
+    ivec2(0, -1),  // Top
+    ivec2(0, 1)    // Bottom
+);
+
+// 9-tap box pattern for higher quality
+const ivec2 BOX_OFFSETS[9] = ivec2[](
+    ivec2(-1, -1), ivec2(0, -1), ivec2(1, -1),
+    ivec2(-1, 0),  ivec2(0, 0),  ivec2(1, 0),
+    ivec2(-1, 1),  ivec2(0, 1),  ivec2(1, 1)
+);
+
+// =============================================================================
+// Main Reconstruction
+// =============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 screenSize = imageSize(u_fullResColor);
+
+    if (any(greaterThanEqual(pixelCoord, screenSize))) {
+        return;
+    }
+
+    // Check if this pixel has direct sample in checkerboard
+    bool hasDirectSample = isActivePixel(pixelCoord, u_frameIndex);
+
+    if (hasDirectSample) {
+        // Pixel was traced this frame - use direct value
+        vec4 color = imageLoad(u_checkerColor, pixelCoord);
+        vec4 normal = imageLoad(u_checkerNormal, pixelCoord);
+        float depth = imageLoad(u_checkerDepth, pixelCoord).r;
+
+        imageStore(u_fullResColor, pixelCoord, color);
+        imageStore(u_fullResNormal, pixelCoord, normal);
+        imageStore(u_fullResDepth, pixelCoord, vec4(depth, 0, 0, 0));
+    } else {
+        // Pixel needs reconstruction from neighbors
+
+        // Sample neighbors with bilateral filter
+        vec3 colorAccum = vec3(0.0);
+        vec3 normalAccum = vec3(0.0);
+        float depthAccum = 0.0;
+        float weightSum = 0.0;
+
+        // First, try to find closest valid depth
+        float closestDepth = 1000.0;
+        for (int i = 0; i < 5; i++) {
+            ivec2 sampleCoord = pixelCoord + CROSS_OFFSETS[i];
+
+            // Check bounds
+            if (any(lessThan(sampleCoord, ivec2(0))) ||
+                any(greaterThanEqual(sampleCoord, screenSize))) {
+                continue;
+            }
+
+            float sampleDepth = imageLoad(u_checkerDepth, sampleCoord).r;
+            if (sampleDepth < closestDepth && sampleDepth < 900.0) {
+                closestDepth = sampleDepth;
+            }
+        }
+
+        // If no valid depth found, use sky
+        if (closestDepth > 900.0) {
+            vec3 skyColor = vec3(0.5, 0.7, 1.0) * 0.3;
+            imageStore(u_fullResColor, pixelCoord, vec4(skyColor, 1.0));
+            imageStore(u_fullResNormal, pixelCoord, vec4(0.5, 0.5, 1.0, 1.0));
+            imageStore(u_fullResDepth, pixelCoord, vec4(1000.0, 0, 0, 0));
+            return;
+        }
+
+        // Reconstruct using bilateral filter
+        for (int i = 0; i < 9; i++) {
+            ivec2 sampleCoord = pixelCoord + BOX_OFFSETS[i];
+
+            // Check bounds
+            if (any(lessThan(sampleCoord, ivec2(0))) ||
+                any(greaterThanEqual(sampleCoord, screenSize))) {
+                continue;
+            }
+
+            // Only sample from valid checkerboard pixels
+            if (!isActivePixel(sampleCoord, u_frameIndex)) {
+                continue;
+            }
+
+            vec4 sampleColor = imageLoad(u_checkerColor, sampleCoord);
+            vec4 sampleNormal = imageLoad(u_checkerNormal, sampleCoord);
+            float sampleDepth = imageLoad(u_checkerDepth, sampleCoord).r;
+
+            // Calculate bilateral weight
+            vec2 offset = vec2(BOX_OFFSETS[i]);
+            float weight = bilateralWeight(offset, closestDepth, sampleDepth);
+
+            if (weight > 0.001) {
+                colorAccum += sampleColor.rgb * weight;
+                normalAccum += sampleNormal.xyz * weight;
+                depthAccum += sampleDepth * weight;
+                weightSum += weight;
+            }
+        }
+
+        // Normalize
+        if (weightSum > 0.001) {
+            vec3 reconstructedColor = colorAccum / weightSum;
+            vec3 reconstructedNormal = normalize(normalAccum / weightSum);
+            float reconstructedDepth = depthAccum / weightSum;
+
+            // Optional: Temporal stabilization
+            if (u_useTemporalStabilization) {
+                vec2 uv = (vec2(pixelCoord) + 0.5) / vec2(screenSize);
+                vec3 prevColor = texture(u_prevFullColor, uv).rgb;
+                float prevDepth = texture(u_prevFullDepth, uv).r;
+
+                // Blend with previous frame if depths are similar
+                float depthDiff = abs(reconstructedDepth - prevDepth);
+                if (depthDiff < u_edgeThreshold * reconstructedDepth) {
+                    reconstructedColor = mix(reconstructedColor, prevColor, 0.3);
+                }
+            }
+
+            imageStore(u_fullResColor, pixelCoord, vec4(reconstructedColor, 1.0));
+            imageStore(u_fullResNormal, pixelCoord, vec4(reconstructedNormal, 1.0));
+            imageStore(u_fullResDepth, pixelCoord, vec4(reconstructedDepth, 0, 0, 0));
+        } else {
+            // Fallback - shouldn't happen
+            vec3 skyColor = vec3(0.5, 0.7, 1.0) * 0.3;
+            imageStore(u_fullResColor, pixelCoord, vec4(skyColor, 1.0));
+            imageStore(u_fullResNormal, pixelCoord, vec4(0.5, 0.5, 1.0, 1.0));
+            imageStore(u_fullResDepth, pixelCoord, vec4(1000.0, 0, 0, 0));
+        }
+    }
+}

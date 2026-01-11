@@ -1,0 +1,150 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "cavalry",
+  "id": "human_griffon_rider",
+  "name": "Griffon Rider",
+  "description": "Elite warriors who soar into battle on the backs of mighty griffons. Their aerial superiority allows them to strike anywhere on the battlefield.",
+  "race": "humans",
+  "category": "air",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 650,
+    "healthRegen": 1.0,
+    "damage": 32,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.4,
+    "attackRange": 2.5,
+    "armor": 3,
+    "magicResist": 15,
+    "moveSpeed": 9.0,
+    "sightRange": 16,
+    "critChance": 0.12,
+    "critMultiplier": 2.0
+  },
+
+  "cost": {
+    "gold": 380,
+    "wood": 50,
+    "food": 4
+  },
+
+  "trainTime": 45,
+  "populationCost": 3,
+  "requiredBuilding": "human_gryphon_aviary",
+  "requiredAge": 2,
+
+  "armorType": "medium",
+  "attackType": "normal",
+  "movementType": "air",
+
+  "canAttackAir": true,
+  "canAttackGround": true,
+
+  "bonusVs": [
+    {
+      "category": "siege",
+      "multiplier": 1.5
+    },
+    {
+      "category": "ranged",
+      "multiplier": 1.25
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "dive_attack",
+      "name": "Dive Attack",
+      "description": "Dive from the sky dealing 150% damage and stunning for 1.5 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 12.0,
+      "damageMultiplier": 1.50,
+      "stunDuration": 1.5,
+      "requiresFlight": true
+    },
+    {
+      "id": "talon_strike",
+      "name": "Talon Strike",
+      "description": "The griffon slashes with its talons, dealing damage to up to 3 targets",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 8.0,
+      "maxTargets": 3,
+      "damage": 45
+    },
+    {
+      "id": "screech",
+      "name": "Screech",
+      "description": "Unleash a terrifying screech that reduces enemy attack damage by 25% for 6 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 20.0,
+      "radius": 8.0,
+      "duration": 6.0,
+      "effects": [
+        {
+          "stat": "attackDamage",
+          "value": -0.25
+        }
+      ],
+      "targetType": "enemy"
+    }
+  ],
+
+  "flight": {
+    "height": 8.0,
+    "canLand": true,
+    "landingSpeedMultiplier": 0.6,
+    "ignoreTerrain": true,
+    "ignoreWalls": true
+  },
+
+  "upgrades": ["griffon_weapons", "griffon_armor"],
+
+  "visuals": {
+    "model": "models/races/humans/units/griffon_rider.obj",
+    "portrait": "textures/races/humans/portraits/griffon_rider.png",
+    "icon": "textures/races/humans/icons/griffon_rider.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/humans/units/griffon_rider_diffuse.png",
+      "normal": "textures/races/humans/units/griffon_rider_normal.png"
+    },
+    "animations": {
+      "idle": "animations/humans/griffon_rider/idle.anim",
+      "fly": "animations/humans/griffon_rider/fly.anim",
+      "glide": "animations/humans/griffon_rider/glide.anim",
+      "attack": "animations/humans/griffon_rider/attack.anim",
+      "dive": "animations/humans/griffon_rider/dive.anim",
+      "land": "animations/humans/griffon_rider/land.anim",
+      "takeoff": "animations/humans/griffon_rider/takeoff.anim",
+      "death": "animations/humans/griffon_rider/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/humans/griffon_rider/select_1.wav", "sounds/humans/griffon_rider/select_2.wav"],
+    "move": ["sounds/humans/griffon_rider/ack_1.wav", "sounds/humans/griffon_rider/ack_2.wav"],
+    "attack": ["sounds/griffon_attack.wav"],
+    "death": ["sounds/humans/griffon_rider/death.wav"],
+    "ready": ["sounds/wing_flap_large.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.6,
+    "height": 2.0,
+    "mass": 350.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/flying_melee.bt",
+    "profile": "aggressive",
+    "aggroRange": 14.0,
+    "priorityTargets": ["siege", "ranged", "caster"],
+    "useDiveAttack": true,
+    "diveDistanceMin": 6.0
+  }
+}

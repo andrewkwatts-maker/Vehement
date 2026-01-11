@@ -1,0 +1,173 @@
+{
+  "$schema": "../../../schemas/spell_archetype.schema.json",
+
+  // =============================================================================
+  // AREA OF EFFECT (AOE) SPELL ARCHETYPE
+  // =============================================================================
+  // This archetype represents a ground-targeted area damage spell.
+  // Behavior composition:
+  // - TargetingBehavior: Area (ground point targeting)
+  // - EffectBehavior: Damage (instant AoE damage)
+  // - ProjectileBehavior: None (instant effect at target location)
+  // - ResourceBehavior: Higher mana cost for area damage
+  //
+  // Use this as a base template for spells like:
+  // - Meteor, Earthquake, Flame Strike, Blizzard (instant variant), etc.
+  // =============================================================================
+
+  "id": "aoe_spell_archetype",
+  "name": "Area of Effect Spell Template",
+  "description": "A ground-targeted spell that deals instant damage to all units within a circular area.",
+
+  "category": "damage",
+  "element": "fire",
+  "tier": 2,
+
+  // =============================================================================
+  // TARGETING BEHAVIOR
+  // =============================================================================
+  "targetType": "point",  // Ground targeting, not unit targeting
+
+  "targetFilters": {
+    "canTargetEnemies": true,
+    "canTargetAllies": false,  // Set to true for friendly fire
+    "canTargetSelf": false,
+    "canTargetGround": true,  // Required for point targeting
+    "canTargetAir": true,
+    "canTargetBuildings": true,  // AoE typically damages buildings
+    "canTargetOrganic": true,
+    "canTargetMechanical": true,
+    "requiresLineOfSight": true,
+    "ignoreInvulnerable": true
+  },
+
+  "castRange": 15.0,  // How far can you target from caster
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  // No projectile - instant effect at target location
+  "projectile": {
+    "type": "instant",  // Effect appears immediately at target
+    "visualDelay": 0.5,  // Small delay for visual effect before damage
+    "warningIndicator": true,  // Show AoE circle before damage
+    "warningDuration": 0.5
+  },
+
+  // =============================================================================
+  // AREA OF EFFECT
+  // =============================================================================
+  // Large circular area
+  "areaOfEffect": 5.0,  // Radius in game units
+
+  // AoE damage falloff
+  "aoeFalloff": {
+    "enabled": true,
+    "falloffType": "linear",  // Options: "linear", "quadratic", "none"
+    "edgeDamagePercent": 0.5  // Damage at edge is 50% of center damage
+  },
+
+  // Maximum targets hit (0 = unlimited)
+  "maxTargets": 0,
+
+  // =============================================================================
+  // EFFECT BEHAVIOR
+  // =============================================================================
+  "effects": [
+    {
+      "type": "damage",
+      "damageType": "magic",
+      "baseDamage": 150,
+      "scalingFactor": 1.8,
+      "scalingStat": "spellPower",
+      "canCrit": true,
+      "critBonusFromCaster": true,
+      "variance": 0.15
+    },
+    {
+      // Secondary effect - applies to all damaged units
+      "type": "debuff",
+      "debuffId": "burning",
+      "duration": 4.0,
+      "stackable": false
+    }
+  ],
+
+  // =============================================================================
+  // RESOURCE BEHAVIOR
+  // =============================================================================
+  "castTime": 1.2,  // Longer cast time for powerful AoE
+  "cooldown": 12.0,  // Long cooldown for area damage
+  "manaCost": 120,   // High mana cost
+
+  "canBeInterrupted": true,
+  "interruptOnDamage": false,
+  "interruptOnMove": true,
+
+  // =============================================================================
+  // REQUIREMENTS & AVAILABILITY
+  // =============================================================================
+  "requiredAge": 1,
+  "requiredBuilding": "mage_tower",
+  "requiredTech": "advanced_pyromancy",
+
+  "learnCost": {
+    "gold": 200,
+    "wood": 50,
+    "food": 0,
+    "stone": 0,
+    "mana": 100
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "icon": "textures/icons/spells/meteor.png",
+    "castAnimation": "anim_cast_heavy",
+    "castEffect": "effects/cast_fire_heavy.fx",
+    "channelEffect": null,
+    "buffEffect": null,
+    "aoeCursorDecal": "effects/aoe_circle_fire.png",  // Shows during targeting
+    "impactEffect": "effects/meteor_impact.fx",
+    "persistentEffect": "effects/fire_ground.fx",  // Lingers after impact
+    "persistentDuration": 2.0
+  },
+
+  "sounds": {
+    "cast": "sounds/spells/meteor_cast.wav",
+    "travel": "sounds/spells/meteor_incoming.wav",
+    "impact": "sounds/spells/meteor_impact.wav",
+    "hitEnemy": "sounds/spells/spell_hit_multiple.wav"
+  },
+
+  // =============================================================================
+  // CAMERA EFFECTS
+  // =============================================================================
+  // Powerful AoE spells can shake the camera
+  "cameraEffects": {
+    "screenShake": {
+      "enabled": true,
+      "intensity": 0.6,
+      "duration": 0.5,
+      "radius": 20.0  // Only shake if near impact
+    }
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "small_meteor" could inherit from this with:
+  // - parentArchetype: "aoe_spell_archetype"
+  // - areaOfEffect: 3.0
+  // - baseDamage: 100
+  // - manaCost: 80
+  // - tier: 1
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for instant area damage spells with ground targeting"
+  }
+}

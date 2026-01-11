@@ -1,0 +1,127 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "worker",
+  "id": "fairy_wisp",
+  "name": "Wisp",
+  "description": "A glowing spirit of light that serves as the primary worker for fairy settlements. Wisps gather resources, construct buildings, and emanate a soft glow that regenerates mana for nearby allies.",
+  "race": "fairies",
+  "category": "worker",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 35,
+    "healthRegen": 0.3,
+    "mana": 50,
+    "manaRegen": 0.5,
+    "damage": 3,
+    "attackSpeed": 1.2,
+    "attackRange": 1,
+    "armor": 0,
+    "magicResist": 5,
+    "moveSpeed": 5.5,
+    "sightRange": 10
+  },
+
+  "cost": {
+    "gold": 60,
+    "mana": 10,
+    "food": 1
+  },
+
+  "trainTime": 12,
+  "requiredBuilding": "fairy_ancient_tree",
+
+  "movementType": "flying",
+  "flyingHeight": 1.5,
+
+  "canGather": true,
+  "canBuild": true,
+  "canRepair": true,
+
+  "gatheringRates": {
+    "gold": 8,
+    "wood": 10,
+    "stone": 6,
+    "food": 9,
+    "mana": 5
+  },
+
+  "carryCapacity": {
+    "gold": 8,
+    "wood": 12,
+    "stone": 8,
+    "food": 10,
+    "mana": 10
+  },
+
+  "constructionSpeed": 1.1,
+  "repairRate": 4.0,
+
+  "abilities": [
+    {
+      "id": "mana_glow",
+      "name": "Mana Glow",
+      "description": "Passive aura that regenerates +0.3 mana/sec for units within 6 units",
+      "type": "passive",
+      "auraRadius": 6.0,
+      "effects": [
+        {
+          "stat": "manaRegen",
+          "value": 0.3,
+          "type": "flat"
+        }
+      ]
+    },
+    {
+      "id": "phase_shift",
+      "name": "Phase Shift",
+      "description": "Become incorporeal for 3 seconds, avoiding damage but unable to act",
+      "type": "active",
+      "cooldown": 30.0,
+      "manaCost": 25,
+      "duration": 3.0
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/wisp.obj",
+    "portrait": "textures/races/fairies/portraits/wisp.png",
+    "icon": "textures/races/fairies/icons/wisp.png",
+    "scale": 0.6,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/wisp_diffuse.png",
+      "emissive": "textures/races/fairies/units/wisp_glow.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/wisp/float.anim",
+      "walk": "animations/fairies/wisp/fly.anim",
+      "attack": "animations/fairies/wisp/zap.anim",
+      "death": "animations/fairies/wisp/dissipate.anim",
+      "gather": "animations/fairies/wisp/gather.anim",
+      "build": "animations/fairies/wisp/build.anim"
+    },
+    "glowEffect": "effects/wisp_glow.fx",
+    "trailEffect": "effects/wisp_trail.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/wisp/chime_1.wav", "sounds/fairies/wisp/chime_2.wav"],
+    "move": ["sounds/fairies/wisp/whisper_1.wav", "sounds/fairies/wisp/whisper_2.wav"],
+    "attack": ["sounds/fairies/wisp/zap.wav"],
+    "death": ["sounds/fairies/wisp/fade.wav"],
+    "ready": ["sounds/fairies/wisp/ready.wav"]
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.3,
+    "mass": 5.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/worker.bt",
+    "profile": "passive",
+    "fleeThreshold": 0.5,
+    "autoGather": true
+  }
+}

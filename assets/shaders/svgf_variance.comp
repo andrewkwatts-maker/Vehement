@@ -1,0 +1,119 @@
+#version 460 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// ============================================================================
+// SVGF Variance Estimation Pass
+// ============================================================================
+// Estimates local variance to guide the wavelet filter. Areas with high
+// variance need more filtering, while areas with low variance can use
+// smaller kernels to preserve detail.
+//
+// We compute variance from accumulated moments:
+// variance = E[X^2] - E[X]^2 = M2 - M1^2
+// ============================================================================
+
+// Inputs
+layout(rgba16f, binding = 0) uniform image2D u_integratedColor;
+layout(rg32f, binding = 1) uniform image2D u_accumulatedMoments;
+layout(r16f, binding = 2) uniform image2D u_historyLength;
+layout(rgba32f, binding = 3) uniform image2D u_gBufferPosition;
+layout(rgba16f, binding = 4) uniform image2D u_gBufferNormal;
+
+// Output
+layout(r16f, binding = 5) uniform image2D u_variance;
+
+// Uniforms
+uniform vec2 u_resolution = vec2(1920.0, 1080.0);
+uniform int u_kernelSize = 3;  // 3x3 or 5x5
+uniform float u_varianceBoost = 1.0;
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+float Luminance(vec3 color) {
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    if (pixelCoord.x >= int(u_resolution.x) || pixelCoord.y >= int(u_resolution.y)) return;
+
+    // Load center pixel data
+    vec3 centerColor = imageLoad(u_integratedColor, pixelCoord).rgb;
+    vec3 centerNormal = imageLoad(u_gBufferNormal, pixelCoord).xyz;
+    vec2 centerMoments = imageLoad(u_accumulatedMoments, pixelCoord).rg;
+    float centerHistoryLen = imageLoad(u_historyLength, pixelCoord).r;
+
+    // Early out for background
+    if (length(centerNormal) < 0.1) {
+        imageStore(u_variance, pixelCoord, vec4(0.0));
+        return;
+    }
+
+    centerNormal = normalize(centerNormal);
+
+    // Compute variance from moments
+    // variance = E[X^2] - E[X]^2
+    float M1 = centerMoments.r;  // First moment (mean)
+    float M2 = centerMoments.g;  // Second moment
+    float variance = max(0.0, M2 - M1 * M1);
+
+    // If we have enough history, use the accumulated variance
+    // Otherwise, estimate from spatial neighborhood
+    if (centerHistoryLen < 4.0) {
+        // Compute spatial variance estimate (for low-history pixels)
+        int halfKernel = u_kernelSize / 2;
+        float sum = 0.0;
+        float sumSq = 0.0;
+        float count = 0.0;
+
+        for (int dy = -halfKernel; dy <= halfKernel; dy++) {
+            for (int dx = -halfKernel; dx <= halfKernel; dx++) {
+                ivec2 sampleCoord = pixelCoord + ivec2(dx, dy);
+
+                // Bounds check
+                if (sampleCoord.x < 0 || sampleCoord.x >= int(u_resolution.x) ||
+                    sampleCoord.y < 0 || sampleCoord.y >= int(u_resolution.y)) {
+                    continue;
+                }
+
+                vec3 sampleColor = imageLoad(u_integratedColor, sampleCoord).rgb;
+                vec3 sampleNormal = imageLoad(u_gBufferNormal, sampleCoord).xyz;
+
+                // Only include similar surfaces
+                if (length(sampleNormal) < 0.1) continue;
+                sampleNormal = normalize(sampleNormal);
+
+                float normalSimilarity = dot(centerNormal, sampleNormal);
+                if (normalSimilarity < 0.9) continue;
+
+                float sampleLuminance = Luminance(sampleColor);
+                sum += sampleLuminance;
+                sumSq += sampleLuminance * sampleLuminance;
+                count += 1.0;
+            }
+        }
+
+        if (count > 1.0) {
+            float mean = sum / count;
+            float meanSq = sumSq / count;
+            float spatialVariance = max(0.0, meanSq - mean * mean);
+
+            // Blend temporal and spatial variance based on history length
+            float blend = centerHistoryLen / 4.0;
+            variance = mix(spatialVariance, variance, blend);
+        }
+    }
+
+    // Apply variance boost
+    variance *= u_varianceBoost;
+
+    // Store variance
+    imageStore(u_variance, pixelCoord, vec4(variance, 0.0, 0.0, 0.0));
+}

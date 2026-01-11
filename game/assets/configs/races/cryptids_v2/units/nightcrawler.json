@@ -1,0 +1,150 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "light_infantry",
+  "id": "cryptid_nightcrawler",
+  "name": "Nightcrawler",
+  "description": "Mysterious pale cryptid that stalks at night. Nightcrawlers are extremely fast ambush predators that excel in darkness.",
+  "race": "cryptids",
+  "category": "infantry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 280,
+    "healthRegen": 0.6,
+    "damage": 26,
+    "damageVariance": 0.16,
+    "attackSpeed": 2.0,
+    "attackRange": 1.2,
+    "armor": 1,
+    "magicResist": 12,
+    "moveSpeed": 7.0,
+    "critChance": 0.22,
+    "critMultiplier": 2.3
+  },
+
+  "cost": {
+    "gold": 150,
+    "food": 2
+  },
+
+  "trainTime": 22,
+  "populationCost": 2,
+  "requiredBuilding": "cryptid_hunting_grounds",
+  "requiredAge": 1,
+
+  "armorType": "light",
+  "attackType": "piercing",
+
+  "bonusVs": [
+    {
+      "category": "light",
+      "multiplier": 1.4
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "nocturnal_predator",
+      "name": "Nocturnal Predator",
+      "description": "Gains 50% attack speed, 40% movement speed, and stealth during night",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "multiplier": 1.50,
+          "condition": "isNight"
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 1.40,
+          "condition": "isNight"
+        }
+      ],
+      "stealthAtNight": true
+    },
+    {
+      "id": "stalk",
+      "name": "Stalk",
+      "description": "Gains 100% movement speed when moving toward enemy units while stealthed",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "multiplier": 2.0,
+          "condition": "movingTowardEnemyWhileStealth"
+        }
+      ]
+    },
+    {
+      "id": "ambush",
+      "name": "Ambush",
+      "description": "Attacks from stealth deal 250% damage and silence for 2 seconds",
+      "type": "passive",
+      "stealthBreakDamageBonus": 1.5,
+      "silenceDuration": 2.0
+    },
+    {
+      "id": "shadow_leap",
+      "name": "Shadow Leap",
+      "description": "Leap to target dealing damage and entering stealth for 3 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 12.0,
+      "range": 6.0,
+      "damageMultiplier": 1.3,
+      "stealthDuration": 3.0
+    }
+  ],
+
+  "upgrades": ["nightcrawler_speed", "enhanced_night_vision"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/nightcrawler.obj",
+    "portrait": "textures/races/cryptids/portraits/nightcrawler.png",
+    "icon": "textures/races/cryptids/icons/nightcrawler.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/nightcrawler_diffuse.png",
+      "normal": "textures/races/cryptids/units/nightcrawler_normal.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/nightcrawler/idle.anim",
+      "walk": "animations/cryptids/nightcrawler/stalk.anim",
+      "run": "animations/cryptids/nightcrawler/sprint.anim",
+      "attack": "animations/cryptids/nightcrawler/slash.anim",
+      "leap": "animations/cryptids/nightcrawler/leap.anim",
+      "stealth": "animations/cryptids/nightcrawler/fade.anim",
+      "death": "animations/cryptids/nightcrawler/death.anim"
+    },
+    "particleEffects": {
+      "shadow_aura": "particles/cryptids/shadow_aura.particle",
+      "night_glow": "particles/cryptids/pale_glow.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/nightcrawler/click_1.wav", "sounds/cryptids/nightcrawler/click_2.wav"],
+    "move": ["sounds/cryptids/nightcrawler/pad.wav"],
+    "attack": ["sounds/cryptids/nightcrawler/slash.wav"],
+    "leap": ["sounds/cryptids/nightcrawler/screech.wav"],
+    "death": ["sounds/cryptids/nightcrawler/death.wav"],
+    "ready": ["sounds/cryptids/nightcrawler/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.25,
+    "height": 1.7,
+    "mass": 55.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/night_ambusher.bt",
+    "profile": "aggressive",
+    "aggroRange": 12.0,
+    "priorityTargets": ["light", "ranged", "low_health"],
+    "preferNightAttacks": true,
+    "useStealthApproach": true,
+    "useLeapForGap": true
+  }
+}

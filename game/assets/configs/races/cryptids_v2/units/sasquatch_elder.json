@@ -1,0 +1,183 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "caster",
+  "id": "cryptid_sasquatch_elder",
+  "name": "Sasquatch Elder",
+  "description": "Ancient bigfoot shaman wielding nature magic. Sasquatch Elders command the forest itself, healing allies and calling upon nature's wrath.",
+  "race": "cryptids",
+  "category": "caster",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 450,
+    "healthRegen": 1.2,
+    "mana": 400,
+    "manaRegen": 2.5,
+    "damage": 24,
+    "damageVariance": 0.1,
+    "attackSpeed": 1.2,
+    "attackRange": 6.0,
+    "armor": 2,
+    "magicResist": 40,
+    "moveSpeed": 4.0,
+    "sightRange": 12,
+    "critChance": 0.05,
+    "critMultiplier": 1.5
+  },
+
+  "cost": {
+    "gold": 350,
+    "wood": 80,
+    "food": 4
+  },
+
+  "trainTime": 50,
+  "populationCost": 3,
+  "requiredBuilding": "cryptid_totem_circle",
+  "requiredAge": 2,
+
+  "armorType": "light",
+  "attackType": "magic",
+
+  "abilities": [
+    {
+      "id": "nature_heal",
+      "name": "Nature's Blessing",
+      "description": "Heals target friendly unit for 150 health and grants regeneration for 10 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 8.0,
+      "range": 8.0,
+      "manaCost": 60,
+      "healAmount": 150,
+      "effects": [
+        {
+          "stat": "healthRegen",
+          "value": 5.0,
+          "duration": 10.0
+        }
+      ],
+      "targetType": "friendly"
+    },
+    {
+      "id": "entangling_roots",
+      "name": "Entangling Roots",
+      "description": "Roots all enemies in area for 4 seconds and deals damage over time",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 18.0,
+      "range": 10.0,
+      "radius": 4.0,
+      "manaCost": 100,
+      "duration": 4.0,
+      "rootDuration": 4.0,
+      "damagePerSecond": 15,
+      "targetType": "area"
+    },
+    {
+      "id": "spirit_of_the_forest",
+      "name": "Spirit of the Forest",
+      "description": "Summons forest spirits that heal nearby allies for 3% max health per second",
+      "type": "passive",
+      "radius": 10.0,
+      "effects": [
+        {
+          "stat": "healthRegenPercent",
+          "value": 0.03
+        }
+      ],
+      "targetType": "friendly"
+    },
+    {
+      "id": "bark_skin",
+      "name": "Bark Skin",
+      "description": "Grants target ally +8 armor and 40% magic resistance for 15 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 20.0,
+      "range": 8.0,
+      "manaCost": 80,
+      "duration": 15.0,
+      "effects": [
+        {
+          "stat": "armor",
+          "value": 8
+        },
+        {
+          "stat": "magicResist",
+          "value": 40
+        }
+      ],
+      "targetType": "friendly"
+    },
+    {
+      "id": "force_of_nature",
+      "name": "Force of Nature",
+      "description": "Summons 3 treants to fight for 60 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 120.0,
+      "manaCost": 200,
+      "summonCount": 3,
+      "summonUnit": "cryptid_treant",
+      "summonDuration": 60.0
+    }
+  ],
+
+  "upgrades": ["elder_wisdom", "nature_mastery", "ancient_power"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/sasquatch_elder.obj",
+    "portrait": "textures/races/cryptids/portraits/sasquatch_elder.png",
+    "icon": "textures/races/cryptids/icons/sasquatch_elder.png",
+    "scale": 1.5,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/sasquatch_elder_diffuse.png",
+      "normal": "textures/races/cryptids/units/sasquatch_elder_normal.png",
+      "emissive": "textures/races/cryptids/units/sasquatch_elder_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/sasquatch_elder/idle.anim",
+      "walk": "animations/cryptids/sasquatch_elder/walk.anim",
+      "run": "animations/cryptids/sasquatch_elder/run.anim",
+      "attack": "animations/cryptids/sasquatch_elder/cast.anim",
+      "heal": "animations/cryptids/sasquatch_elder/heal.anim",
+      "roots": "animations/cryptids/sasquatch_elder/roots.anim",
+      "summon": "animations/cryptids/sasquatch_elder/summon.anim",
+      "death": "animations/cryptids/sasquatch_elder/death.anim"
+    },
+    "particleEffects": {
+      "nature_aura": "particles/cryptids/nature_aura.particle",
+      "healing_glow": "particles/cryptids/healing_glow.particle",
+      "roots": "particles/cryptids/roots.particle",
+      "staff_glow": "particles/cryptids/staff_glow.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/sasquatch_elder/select_1.wav", "sounds/cryptids/sasquatch_elder/select_2.wav"],
+    "move": ["sounds/cryptids/sasquatch_elder/ack.wav"],
+    "attack": ["sounds/cryptids/sasquatch_elder/cast.wav"],
+    "heal": ["sounds/cryptids/sasquatch_elder/heal.wav"],
+    "death": ["sounds/cryptids/sasquatch_elder/death.wav"],
+    "ready": ["sounds/cryptids/sasquatch_elder/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.45,
+    "height": 2.3,
+    "mass": 160.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/support_caster.bt",
+    "profile": "support",
+    "aggroRange": 8.0,
+    "priorityTargets": ["infantry", "cavalry"],
+    "maintainDistance": 5.0,
+    "healPriority": "low_health",
+    "useRootsOnGroups": true,
+    "useSummonInLargeBattles": true
+  }
+}

@@ -1,0 +1,323 @@
+#version 460 core
+
+// ============================================================================
+// ReSTIR (Reservoir-based Spatio-Temporal Importance Resampling)
+// Reference: "Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting"
+//
+// Reduces variance by reusing samples across space and time
+// Allows 1-2 samples per pixel to achieve high quality output
+// ============================================================================
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Input/Output images
+layout(rgba32f, binding = 0) uniform image2D u_currentRadiance;   // Current frame radiance
+layout(rgba32f, binding = 1) uniform image2D u_outputRadiance;    // Resampled output
+layout(rgba32f, binding = 2) uniform image2D u_prevReservoirs;    // Previous frame reservoirs
+layout(rgba32f, binding = 3) uniform image2D u_currReservoirs;    // Current frame reservoirs
+
+// G-buffer for reprojection
+layout(rgba32f, binding = 4) uniform image2D u_normalBuffer;
+layout(r32f, binding = 5) uniform image2D u_depthBuffer;
+layout(rgba32f, binding = 6) uniform image2D u_motionBuffer;
+
+// Camera matrices
+uniform mat4 u_viewProj;
+uniform mat4 u_prevViewProj;
+uniform mat4 u_invViewProj;
+uniform vec3 u_cameraPos;
+
+// Settings
+uniform int u_frameCount;
+uniform float u_temporalWeight;        // 0.95 typical
+uniform int u_spatialSamples;          // 4-8 typical
+uniform float u_spatialRadius;         // 16-32 pixels
+uniform bool u_enableSpatial;
+uniform bool u_enableTemporal;
+
+// ============================================================================
+// Random Number Generation
+// ============================================================================
+
+uint g_seed;
+
+uint pcg_hash(uint seed) {
+    uint state = seed * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+void initRandom(uvec2 pixelCoord, int frame) {
+    g_seed = pixelCoord.x + pixelCoord.y * 1920u + uint(frame) * 719393u;
+}
+
+float random01() {
+    g_seed = pcg_hash(g_seed);
+    return float(g_seed) / 4294967296.0;
+}
+
+vec2 random2D() {
+    return vec2(random01(), random01());
+}
+
+// ============================================================================
+// Reservoir Structure
+// ============================================================================
+
+struct Reservoir {
+    vec3 radiance;      // Selected sample radiance
+    float weight;       // Reservoir weight (sum of weights)
+    int M;              // Number of samples seen
+    float targetPDF;    // Target PDF of selected sample
+};
+
+Reservoir createReservoir() {
+    Reservoir r;
+    r.radiance = vec3(0.0);
+    r.weight = 0.0;
+    r.M = 0;
+    r.targetPDF = 0.0;
+    return r;
+}
+
+// Encode/decode reservoir to vec4
+vec4 encodeReservoir(Reservoir r) {
+    return vec4(r.radiance, r.weight);
+}
+
+Reservoir decodeReservoir(vec4 data) {
+    Reservoir r;
+    r.radiance = data.rgb;
+    r.weight = data.a;
+    r.M = 1; // Approximate
+    r.targetPDF = length(r.radiance) + 0.001; // Approximate
+    return r;
+}
+
+// ============================================================================
+// Reservoir Operations
+// ============================================================================
+
+// Update reservoir with new sample (streaming RIS)
+bool updateReservoir(inout Reservoir r, vec3 radiance, float weight, float targetPDF) {
+    r.weight += weight;
+    r.M++;
+
+    float p = weight / max(r.weight, 0.0001);
+    if (random01() < p) {
+        r.radiance = radiance;
+        r.targetPDF = targetPDF;
+        return true;
+    }
+    return false;
+}
+
+// Combine two reservoirs
+void combineReservoirs(inout Reservoir dst, Reservoir src, float srcJacobian) {
+    if (src.M == 0) return;
+
+    float weight = src.targetPDF * src.weight * float(src.M);
+    updateReservoir(dst, src.radiance, weight * srcJacobian, src.targetPDF);
+}
+
+// Finalize reservoir weight
+float finalizeReservoir(inout Reservoir r) {
+    if (r.M > 0 && r.targetPDF > 0.0) {
+        return (r.weight / float(r.M)) / r.targetPDF;
+    }
+    return 0.0;
+}
+
+// ============================================================================
+// Reprojection and Validation
+// ============================================================================
+
+// Reproject current pixel to previous frame
+bool reprojectPixel(ivec2 coord, out ivec2 prevCoord) {
+    vec2 resolution = vec2(imageSize(u_currentRadiance));
+
+    // Load motion vector if available
+    vec4 motion = imageLoad(u_motionBuffer, coord);
+    if (motion.a > 0.5) {
+        // Use pre-computed motion vector
+        vec2 prevUV = (vec2(coord) + 0.5) / resolution + motion.xy;
+        prevCoord = ivec2(prevUV * resolution);
+    } else {
+        // Manual reprojection using depth
+        float depth = imageLoad(u_depthBuffer, coord).r;
+        if (depth >= 1.0) return false;
+
+        vec2 uv = (vec2(coord) + 0.5) / resolution;
+        vec4 clipPos = vec4(uv * 2.0 - 1.0, depth, 1.0);
+        vec4 worldPos = u_invViewProj * clipPos;
+        worldPos /= worldPos.w;
+
+        vec4 prevClipPos = u_prevViewProj * worldPos;
+        prevClipPos /= prevClipPos.w;
+        vec2 prevUV = prevClipPos.xy * 0.5 + 0.5;
+        prevCoord = ivec2(prevUV * resolution);
+    }
+
+    // Check bounds
+    if (prevCoord.x < 0 || prevCoord.x >= resolution.x ||
+        prevCoord.y < 0 || prevCoord.y >= resolution.y) {
+        return false;
+    }
+
+    return true;
+}
+
+// Validate reservoir reuse (check surface consistency)
+bool validateReservoirReuse(ivec2 srcCoord, ivec2 dstCoord, float maxNormalAngle, float maxDepthDiff) {
+    vec2 resolution = vec2(imageSize(u_normalBuffer));
+
+    // Check bounds
+    if (srcCoord.x < 0 || srcCoord.x >= resolution.x ||
+        srcCoord.y < 0 || srcCoord.y >= resolution.y) {
+        return false;
+    }
+
+    // Compare normals
+    vec3 srcNormal = imageLoad(u_normalBuffer, srcCoord).xyz * 2.0 - 1.0;
+    vec3 dstNormal = imageLoad(u_normalBuffer, dstCoord).xyz * 2.0 - 1.0;
+
+    if (length(srcNormal) < 0.1 || length(dstNormal) < 0.1) {
+        return false; // Invalid normal
+    }
+
+    float normalDot = dot(normalize(srcNormal), normalize(dstNormal));
+    if (normalDot < cos(maxNormalAngle)) {
+        return false; // Normal too different
+    }
+
+    // Compare depths
+    float srcDepth = imageLoad(u_depthBuffer, srcCoord).r;
+    float dstDepth = imageLoad(u_depthBuffer, dstCoord).r;
+
+    if (abs(srcDepth - dstDepth) > maxDepthDiff) {
+        return false; // Depth too different
+    }
+
+    return true;
+}
+
+// ============================================================================
+// Temporal Resampling
+// ============================================================================
+
+Reservoir temporalResample(ivec2 coord, Reservoir currReservoir) {
+    if (!u_enableTemporal || u_frameCount == 0) {
+        return currReservoir;
+    }
+
+    // Reproject to previous frame
+    ivec2 prevCoord;
+    if (!reprojectPixel(coord, prevCoord)) {
+        return currReservoir;
+    }
+
+    // Validate surface consistency
+    if (!validateReservoirReuse(prevCoord, coord, radians(25.0), 0.1)) {
+        return currReservoir;
+    }
+
+    // Load previous reservoir
+    vec4 prevData = imageLoad(u_prevReservoirs, prevCoord);
+    Reservoir prevReservoir = decodeReservoir(prevData);
+
+    // Combine with current
+    Reservoir combined = currReservoir;
+    combineReservoirs(combined, prevReservoir, u_temporalWeight);
+
+    // Clamp history
+    combined.M = min(combined.M, 20); // Limit history
+
+    return combined;
+}
+
+// ============================================================================
+// Spatial Resampling
+// ============================================================================
+
+Reservoir spatialResample(ivec2 coord, Reservoir temporalReservoir) {
+    if (!u_enableSpatial) {
+        return temporalReservoir;
+    }
+
+    Reservoir spatialReservoir = temporalReservoir;
+
+    // Sample neighbors
+    for (int i = 0; i < u_spatialSamples; i++) {
+        // Random offset in disk
+        float angle = random01() * 6.28318530718;
+        float radius = sqrt(random01()) * u_spatialRadius;
+        vec2 offset = vec2(cos(angle), sin(angle)) * radius;
+
+        ivec2 neighborCoord = coord + ivec2(offset);
+
+        // Validate neighbor
+        if (!validateReservoirReuse(neighborCoord, coord, radians(25.0), 0.1)) {
+            continue;
+        }
+
+        // Load neighbor reservoir
+        vec4 neighborData = imageLoad(u_currReservoirs, neighborCoord);
+        Reservoir neighborReservoir = decodeReservoir(neighborData);
+
+        // Combine with spatial reservoir
+        combineReservoirs(spatialReservoir, neighborReservoir, 1.0);
+    }
+
+    return spatialReservoir;
+}
+
+// ============================================================================
+// Main
+// ============================================================================
+
+void main() {
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    vec2 resolution = vec2(imageSize(u_currentRadiance));
+
+    if (coord.x >= resolution.x || coord.y >= resolution.y) {
+        return;
+    }
+
+    // Initialize RNG
+    initRandom(uvec2(coord), u_frameCount);
+
+    // Load current radiance
+    vec4 currentRadiance = imageLoad(u_currentRadiance, coord);
+
+    // Create initial reservoir from current sample
+    Reservoir currReservoir = createReservoir();
+    float targetPDF = length(currentRadiance.rgb) + 0.001; // Luminance as PDF
+    updateReservoir(currReservoir, currentRadiance.rgb, targetPDF, targetPDF);
+
+    // Temporal resampling (reuse from previous frame)
+    Reservoir temporalReservoir = temporalResample(coord, currReservoir);
+
+    // Store intermediate reservoir
+    imageStore(u_currReservoirs, coord, encodeReservoir(temporalReservoir));
+
+    // Memory barrier for spatial pass
+    memoryBarrierImage();
+    barrier();
+
+    // Spatial resampling (reuse from neighbors)
+    Reservoir finalReservoir = spatialResample(coord, temporalReservoir);
+
+    // Finalize and compute output
+    float weight = finalizeReservoir(finalReservoir);
+    vec3 outputRadiance = finalReservoir.radiance * weight;
+
+    // Clamp output to prevent fireflies
+    float maxLuminance = 10.0;
+    float luminance = dot(outputRadiance, vec3(0.2126, 0.7152, 0.0722));
+    if (luminance > maxLuminance) {
+        outputRadiance *= maxLuminance / luminance;
+    }
+
+    // Store output
+    imageStore(u_outputRadiance, coord, vec4(outputRadiance, 1.0));
+}

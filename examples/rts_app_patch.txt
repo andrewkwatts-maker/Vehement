@@ -1,0 +1,25 @@
+After line 1 (#include "RTSApplication.hpp"), add:
+#include "SettingsMenu.hpp"
+
+In Initialize() function, after line "m_planeMesh = Nova::Mesh::CreatePlane(20.0f, 20.0f, 10, 10);", add:
+    // Initialize settings menu
+    m_settingsMenu = std::make_unique<SettingsMenu>();
+    m_settingsMenu->Initialize(&Nova::Engine::Instance().GetInput(), &Nova::Engine::Instance().GetWindow());
+
+In RenderMainMenu() function, after the "Level Editor" button (line ~257), add:
+    ImGui::SetCursorPosX(centerX);
+    if (ImGui::Button("Settings", ImVec2(buttonWidth, buttonHeight))) {
+        OpenSettings();
+    }
+
+In OnImGui() function, after the switch statement closes (line ~199), add:
+    // Render settings menu if open
+    if (m_showSettings) {
+        m_settingsMenu->Render(&m_showSettings);
+    }
+
+At the end of the file, before Shutdown(), add new function:
+void RTSApplication::OpenSettings() {
+    spdlog::info("Opening Settings");
+    m_showSettings = true;
+}

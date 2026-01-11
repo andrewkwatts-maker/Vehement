@@ -1,0 +1,191 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "melee_unit_archetype",
+  "id": "naga_riptide",
+  "name": "Riptide",
+  "description": "Lightning-fast naga striker. Darts through water like a torpedo, overwhelming enemies with speed.",
+
+  "category": "melee",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 120,
+    "healthRegen": 0.5,
+    "mana": 50,
+    "manaRegen": 1.0,
+    "damage": 11,
+    "damageVariance": 0.2,
+    "attackSpeed": 1.8,  // Very fast attacks
+    "attackRange": 1.5,
+    "armor": 1,
+    "magicResist": 1,
+    "moveSpeed": 7.0,  // Fastest Naga unit
+    "turnSpeed": 480,
+    "acceleration": 18.0,
+    "sightRange": 12,
+    "detectionRange": 10,
+    "critChance": 0.15,
+    "critMultiplier": 2.5
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "light",
+
+    "attackAnimation": {
+      "windupTime": 0.15,
+      "backswingTime": 0.25,
+      "totalDuration": 0.56
+    },
+
+    "bonusVs": [
+      {
+        "category": "ranged",
+        "multiplier": 1.5
+      },
+      {
+        "category": "caster",
+        "multiplier": 1.6
+      }
+    ]
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 0.5,
+    "pushPriority": 7,
+    "pathfindingType": "amphibious",
+    "unitSize": "medium",
+
+    "waterMovementMultiplier": 1.8,  // 80% faster in water!
+    "landMovementMultiplier": 0.75,
+
+    "canCharge": true,
+    "chargeSpeed": 12.0,
+    "chargeDuration": 2.0,
+    "chargeStunDuration": 0.5
+  },
+
+  "cost": {
+    "gold": 120,
+    "wood": 10,
+    "food": 0,
+    "stone": 0,
+    "mana": 15
+  },
+
+  "trainTime": 26,
+  "populationCost": 2,
+  "requiredBuilding": "tidal_temple",
+  "requiredAge": 1,
+
+  "abilities": [
+    {
+      "id": "riptide_dash",
+      "name": "Riptide Dash",
+      "description": "Dashes forward in a burst of water, dealing damage to all enemies passed",
+      "manaCost": 25,
+      "cooldown": 10,
+      "effect": "Dash 10 units, deal 30 damage to enemies in path"
+    },
+    {
+      "id": "evasion",
+      "name": "Evasion",
+      "description": "Passive: 20% chance to dodge attacks",
+      "passive": true
+    }
+  ],
+
+  "upgrades": [
+    "naga_melee_attack_1",
+    "naga_melee_attack_2",
+    "speed_mastery",
+    "dual_blades"
+  ],
+
+  "formation": {
+    "preferredPosition": "middle",
+    "formationSpacing": 1.0,
+    "maintainFormation": false  // Flanking unit
+  },
+
+  "ai": {
+    "aggroRange": 15,
+    "targetPriority": [
+      {
+        "type": "caster",
+        "weight": 2.5
+      },
+      {
+        "type": "ranged",
+        "weight": 2.0
+      },
+      {
+        "type": "weakest",
+        "weight": 1.5
+      }
+    ],
+    "pursuitRange": 20
+  },
+
+  "visuals": {
+    "model": "models/units/naga/riptide.fbx",
+    "portrait": "textures/portraits/naga/riptide.png",
+    "icon": "textures/icons/units/naga/riptide.png",
+    "scale": 0.98,
+
+    "animations": {
+      "idle": "anim_idle_ready",
+      "walk": "anim_swift_swim",
+      "attack": "anim_dual_strike",
+      "death": "anim_death",
+      "special": "anim_dash"
+    },
+
+    "teamColorParts": ["blade_wraps", "tail_fin"],
+    "glowAtNight": true,
+    "glowColor": "#44DDFF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.8,
+      "pulseSpeed": 3.5  // Fast pulse for speed
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/riptide/select1.wav"],
+    "move": ["sounds/units/naga/riptide/move1.wav"],
+    "attack": ["sounds/units/naga/riptide/attack1.wav", "sounds/units/naga/riptide/attack2.wav"],
+    "death": ["sounds/units/naga/riptide/death1.wav"]
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "healthRegen": 1.5,
+        "moveSpeed": 1.8,
+        "attackSpeed": 1.2,
+        "evasion": 0.2
+      },
+      "onLand": {
+        "moveSpeed": 0.75,
+        "attackSpeed": 0.9
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Fast assassin unit. Hunt down ranged/casters. Incredible speed in water.",
+    "tacticalUse": "Flank and eliminate backline units. Use riptide dash to close gaps quickly.",
+    "counters": ["ranged", "casters", "light_armor"],
+    "counteredBy": ["area_damage", "crowd_control"]
+  }
+}

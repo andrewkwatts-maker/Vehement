@@ -1,0 +1,439 @@
+{
+  "$schema": "../../../schemas/unit_archetype.schema.json",
+
+  // =============================================================================
+  // WORKER UNIT ARCHETYPE
+  // =============================================================================
+  // This archetype represents a resource-gathering worker unit.
+  // Behavior composition:
+  // - MovementBehavior: Ground movement
+  // - WorkerBehavior: Can gather resources, build structures, repair
+  // - CombatBehavior: Weak combat capability
+  //
+  // Use this as a base template for units like:
+  // - Peasant, Peon, Villager, Serf, Worker, etc.
+  // =============================================================================
+
+  "id": "worker_unit_archetype",
+  "name": "Worker Unit Template",
+  "description": "A civilian worker unit that gathers resources, constructs buildings, and performs repairs. Essential for economy but weak in combat.",
+
+  "category": "worker",
+  "tier": 0,
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "baseStats": {
+    // Survivability - low health, no armor
+    "health": 40,
+    "healthRegen": 0.2,
+    "mana": 0,
+    "manaRegen": 0,
+
+    // Offensive stats - very weak combat
+    "damage": 3,  // Can fight but shouldn't
+    "damageVariance": 0.1,
+    "attackSpeed": 0.8,  // Slow attacks
+    "attackRange": 1.0,  // Melee only
+
+    // Defensive stats - none
+    "armor": 0,
+    "magicResist": 0,
+
+    // Mobility - decent speed for gathering
+    "moveSpeed": 5.5,
+    "turnSpeed": 360,
+    "acceleration": 10.0,
+
+    // Perception
+    "sightRange": 9,
+    "detectionRange": 6,
+
+    // No crits
+    "critChance": 0.0,
+    "critMultiplier": 1.0
+  },
+
+  // =============================================================================
+  // COMBAT BEHAVIOR
+  // =============================================================================
+  "combat": {
+    "attackType": "normal",
+    "armorType": "unarmored",
+
+    "attackAnimation": {
+      "windupTime": 0.4,
+      "backswingTime": 0.6,
+      "totalDuration": 1.25
+    },
+
+    // Workers are bad at fighting
+    "bonusVs": [],
+    "penaltyVs": [],
+
+    "cleave": {
+      "enabled": false
+    },
+
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  // =============================================================================
+  // WORKER BEHAVIOR
+  // =============================================================================
+  "worker": {
+    // Gathering capabilities
+    "canGatherGold": true,
+    "canGatherWood": true,
+    "canGatherFood": true,
+    "canGatherStone": true,
+    "canGatherMana": false,
+
+    // Gathering rates (per second when at resource)
+    "gatherRates": {
+      "gold": 10,
+      "wood": 10,
+      "food": 10,
+      "stone": 8,  // Usually slower
+      "mana": 0
+    },
+
+    // Carrying capacity
+    "carryCapacity": {
+      "gold": 10,
+      "wood": 10,
+      "food": 10,
+      "stone": 10,
+      "mana": 0
+    },
+
+    // Gathering behavior
+    "gatherAnimation": {
+      "gold": "anim_mine",
+      "wood": "anim_chop",
+      "food": "anim_gather",
+      "stone": "anim_quarry"
+    },
+
+    "gatherTime": {
+      "gold": 5.0,  // Time to fill inventory
+      "wood": 5.0,
+      "food": 4.0,  // Faster for food
+      "stone": 6.0   // Slower for stone
+    },
+
+    "returnTime": 2.0,  // Average time to return resources
+    "autoReturn": true,  // Automatically return when full
+
+    // Gathering tools/effects
+    "gatherTools": {
+      "gold": "models/tools/pickaxe.fbx",
+      "wood": "models/tools/axe.fbx",
+      "food": "models/tools/basket.fbx",
+      "stone": "models/tools/sledgehammer.fbx"
+    },
+
+    "gatherEffects": {
+      "gold": "effects/mining.fx",
+      "wood": "effects/woodchips.fx",
+      "food": null,
+      "stone": "effects/stone_dust.fx"
+    }
+  },
+
+  // =============================================================================
+  // BUILDING BEHAVIOR
+  // =============================================================================
+  "builder": {
+    "canBuild": true,
+    "buildSpeed": 1.0,  // Multiplier for build time
+    "buildRange": 2.0,  // How close to be to build
+
+    // Buildings this worker can construct
+    "canBuildTypes": [
+      "barracks",
+      "farm",
+      "lumber_mill",
+      "blacksmith",
+      "archery_range",
+      "stable",
+      "tower",
+      "wall",
+      "gate"
+    ],
+
+    // Building animation
+    "buildAnimation": "anim_build",
+    "buildEffect": "effects/construction.fx",
+    "buildSound": "sounds/construction/hammer.wav",
+
+    // Multiple workers building together
+    "collaborativeBuild": true,
+    "maxBuildersPerBuilding": 5,
+    "buildSpeedBonus": 0.8  // Each extra worker adds 80% speed
+  },
+
+  // =============================================================================
+  // REPAIR BEHAVIOR
+  // =============================================================================
+  "repair": {
+    "canRepair": true,
+    "repairSpeed": 5.0,  // HP repaired per second
+    "repairRange": 2.0,
+
+    // Repair costs (percent of original cost per HP)
+    "repairCostPercent": {
+      "gold": 0.4,
+      "wood": 0.4,
+      "stone": 0.4
+    },
+
+    // What can be repaired
+    "canRepairBuildings": true,
+    "canRepairUnits": false,  // Workers don't repair units
+    "canRepairMechanical": true,
+    "canRepairOrganic": false,
+
+    "repairAnimation": "anim_repair",
+    "repairEffect": "effects/repair.fx",
+    "repairSound": "sounds/repair/hammer.wav"
+  },
+
+  // =============================================================================
+  // MOVEMENT BEHAVIOR
+  // =============================================================================
+  "movement": {
+    "movementType": "ground",
+
+    "canMoveOnLand": true,
+    "canMoveOnWater": false,
+    "canMoveOnLava": false,
+    "canClimbCliffs": false,
+    "canPassThroughUnits": false,
+
+    "collisionRadius": 0.4,
+    "pushPriority": 2,  // Low priority
+
+    "pathfindingType": "ground",
+    "unitSize": "small",
+
+    // Workers carry resources visually
+    "visualCarryWeight": true,
+    "slowWhenCarrying": true,
+    "carrySpeedMultiplier": 0.9  // 10% slower when carrying
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 50,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "trainTime": 15,
+  "populationCost": 1,
+
+  "requiredBuilding": "town_hall",
+  "requiredAge": 0,
+  "requiredTech": null,
+
+  // =============================================================================
+  // ABILITIES & UPGRADES
+  // =============================================================================
+  "abilities": [],
+
+  "upgrades": [
+    "gather_gold_1",
+    "gather_gold_2",
+    "gather_wood_1",
+    "gather_wood_2",
+    "worker_speed_1",
+    "worker_carry_capacity_1"
+  ],
+
+  // =============================================================================
+  // UNIT CAPABILITIES
+  // =============================================================================
+  "canGather": true,
+  "canBuild": true,
+  "canRepair": true,
+  "canAttack": true,  // Can attack but weak
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": false,  // Workers don't patrol
+  "canStop": true,
+
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": true,
+  "isMechanical": false,
+  "isUndead": false,
+
+  // Worker flags
+  "isCivilian": true,
+  "priorityTarget": false,  // Not high priority in combat
+  "canBeConverted": true,  // Can be converted by priests
+
+  // =============================================================================
+  // FORMATIONS
+  // =============================================================================
+  "formation": {
+    "preferredPosition": "none",  // Workers don't use formations
+    "formationSpacing": 0.0,
+    "maintainFormation": false
+  },
+
+  // =============================================================================
+  // AI BEHAVIOR
+  // =============================================================================
+  "ai": {
+    "aggroRange": 6,  // Short aggro range
+    "returnToPosition": true,
+    "acquisitionRange": 5,
+
+    "targetPriority": [
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+
+    "fleeAtHealthPercent": 0.5,  // Flee at 50% health
+    "pursuitRange": 0,  // Don't chase
+
+    // Worker AI
+    "autoGather": true,
+    "gatherPriority": [
+      "gold",
+      "wood",
+      "food",
+      "stone"
+    ],
+    "autoRepair": false,
+    "repairThreshold": 0.7,  // Auto-repair below 70% HP
+
+    "avoidCombat": true,
+    "fleeFromEnemies": true,
+    "fleeDistance": 8.0
+  },
+
+  // =============================================================================
+  // EXPERIENCE & LEVELING
+  // =============================================================================
+  "experience": {
+    "canGainExperience": false,
+    "experienceValue": 5,  // Very low XP
+    "bountyGold": 2,  // Low bounty
+    "bountyMultiplier": 1.0
+  },
+
+  // =============================================================================
+  // ECONOMIC VALUE
+  // =============================================================================
+  "economic": {
+    "goldGatherPerMinute": 120,  // Expected gold/minute
+    "totalEconomicValue": 12000,  // Lifetime economic value
+    "paybackTime": 25  // Seconds to pay for itself
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/units/peasant.fbx",
+    "portrait": "textures/portraits/peasant.png",
+    "icon": "textures/icons/units/peasant.png",
+    "scale": 0.9,  // Slightly smaller
+
+    "animations": {
+      "idle": "anim_idle",
+      "walk": "anim_walk",
+      "attack": "anim_attack_tool",
+      "death": "anim_death",
+      "decay": "anim_decay",
+      "build": "anim_build",
+      "gather_gold": "anim_mine",
+      "gather_wood": "anim_chop",
+      "gather_food": "anim_gather",
+      "gather_stone": "anim_quarry",
+      "repair": "anim_repair",
+      "carry": "anim_walk_carry"
+    },
+
+    "deathEffect": "effects/unit_death.fx",
+    "bloodType": "red",
+    "shadowSize": 0.8,
+    "selectionScale": 0.9,
+
+    "teamColorParts": ["tunic"],
+
+    // Show carried resources
+    "resourceVisuals": {
+      "gold": "models/resources/gold_sack.fbx",
+      "wood": "models/resources/wood_bundle.fbx",
+      "food": "models/resources/food_basket.fbx",
+      "stone": "models/resources/stone_block.fbx"
+    }
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/units/peasant/select1.wav",
+      "sounds/units/peasant/select2.wav",
+      "sounds/units/peasant/select3.wav"
+    ],
+    "move": [
+      "sounds/units/peasant/move1.wav",
+      "sounds/units/peasant/move2.wav"
+    ],
+    "attack": [
+      "sounds/units/peasant/attack1.wav"
+    ],
+    "death": [
+      "sounds/units/peasant/death1.wav"
+    ],
+    "ready": [
+      "sounds/units/peasant/ready.wav"
+    ],
+
+    // Worker-specific sounds
+    "gather": {
+      "gold": "sounds/gathering/mining.wav",
+      "wood": "sounds/gathering/chop.wav",
+      "food": "sounds/gathering/rustle.wav",
+      "stone": "sounds/gathering/quarry.wav"
+    },
+    "build": "sounds/construction/build_loop.wav",
+    "repair": "sounds/construction/repair_loop.wav",
+    "footsteps": "sounds/footsteps/cloth.wav"
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // An "advanced_worker" could inherit from this with:
+  // - gatherRates: all +2
+  // - carryCapacity: all +5
+  // - buildSpeed: 1.2
+  // - cost.gold: 75
+  // - requiredAge: 1
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for worker units. Essential for economy - gathering, building, repairing.",
+    "tacticalUse": "Protect workers! Keep gathering efficiently. Balance worker count with army.",
+    "economicRole": "Foundation of economy. More workers = faster development.",
+    "optimalCount": "12-20 for early game, 30-50 late game"
+  }
+}

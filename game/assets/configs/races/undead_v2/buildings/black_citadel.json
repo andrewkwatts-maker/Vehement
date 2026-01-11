@@ -1,0 +1,175 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "id": "undead_black_citadel",
+  "name": "Black Citadel",
+  "description": "The pinnacle of dark sorcery. Trains powerful necromancers, liches, and death knights. The ultimate symbol of undead power.",
+  "race": "undead",
+  "category": "military",
+  "tier": 3,
+
+  "size": {
+    "width": 5,
+    "height": 5
+  },
+
+  "health": 2200,
+  "armor": 10,
+  "magicResist": 40,
+
+  "cost": {
+    "gold": 500,
+    "wood": 250,
+    "stone": 300,
+    "mana": 200
+  },
+
+  "buildTime": 120,
+  "requiredBuilding": "undead_necropolis",
+  "requiredAge": 2,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "undead_necromancer",
+      "requiredAge": 2
+    },
+    {
+      "type": "unit",
+      "id": "undead_lich",
+      "requiredAge": 3
+    },
+    {
+      "type": "unit",
+      "id": "undead_death_knight",
+      "requiredAge": 3
+    }
+  ],
+
+  "resourceGeneration": {
+    "manaPerSecond": 1.0,
+    "corpseStorage": 30,
+    "requiresWorker": false
+  },
+
+  "garrisonCapacity": 0,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 35,
+    "attackSpeed": 0.9,
+    "attackRange": 16.0,
+    "attackType": "magic",
+    "damageType": "dark",
+    "targetAir": true,
+    "targetGround": true,
+    "splashDamage": 20,
+    "splashRadius": 3.0
+  },
+
+  "abilities": [
+    {
+      "id": "dark_ascension",
+      "name": "Dark Ascension",
+      "description": "Nearby hero units gain +15% spell power and +10% damage",
+      "type": "passive",
+      "auraRadius": 25.0,
+      "effects": [
+        {
+          "stat": "spellPower",
+          "value": 0.15,
+          "type": "percent",
+          "scope": "hero"
+        },
+        {
+          "stat": "damage",
+          "value": 0.10,
+          "type": "percent",
+          "scope": "hero"
+        }
+      ]
+    },
+    {
+      "id": "ritual_of_doom",
+      "name": "Ritual of Doom",
+      "description": "Sacrifice 10 corpses to summon a powerful bone colossus for 120 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 180.0,
+      "corpseCost": 10,
+      "summonUnit": "bone_colossus",
+      "summonDuration": 120.0
+    },
+    {
+      "id": "nexus_of_power",
+      "name": "Nexus of Power",
+      "description": "Increases mana regeneration of all friendly units by 1.0",
+      "type": "passive",
+      "globalEffect": true,
+      "effects": [
+        {
+          "stat": "manaRegen",
+          "value": 1.0,
+          "scope": "friendly"
+        }
+      ]
+    }
+  ],
+
+  "aura": {
+    "id": "black_citadel_aura",
+    "name": "Supreme Dark Power",
+    "radius": 25.0,
+    "effects": [
+      {
+        "stat": "spellPower",
+        "value": 20,
+        "scope": "undead_caster"
+      },
+      {
+        "stat": "healthRegen",
+        "value": 2.0,
+        "scope": "undead"
+      }
+    ]
+  },
+
+  "isUnique": true,
+  "maxCount": 1,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "visuals": {
+    "model": "models/races/undead/buildings/black_citadel.obj",
+    "icon": "textures/races/undead/icons/buildings/black_citadel.png",
+    "textures": {
+      "diffuse": "textures/races/undead/buildings/black_citadel_diffuse.png",
+      "normal": "textures/races/undead/buildings/black_citadel_normal.png",
+      "emissive": "textures/races/undead/buildings/black_citadel_emissive.png",
+      "specular": "textures/races/undead/buildings/black_citadel_specular.png"
+    },
+    "constructionStages": 5,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "blightWhenDamaged": true,
+    "damageThreshold": 0.5
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/black_citadel/select.wav"],
+    "attack": ["sounds/dark_blast.wav"],
+    "complete": ["sounds/undead/black_citadel/complete.wav"],
+    "destroyed": ["sounds/undead/black_citadel/destroyed.wav"],
+    "ritual": ["sounds/undead/black_citadel/ritual.wav"]
+  },
+
+  "visionRange": 18.0,
+
+  "blightProperties": {
+    "createsBlight": true,
+    "blightRadius": 30.0,
+    "blightGrowthRate": 0.8,
+    "requiresBlight": false
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "siege",
+  "id": "undead_abomination",
+  "name": "Abomination",
+  "description": "Massive constructs of stitched corpses and metal. These lumbering behemoths spread disease and excel at destroying buildings.",
+  "race": "undead",
+  "category": "siege",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 950,
+    "healthRegen": 1.5,
+    "damage": 45,
+    "damageVariance": 0.25,
+    "attackSpeed": 0.8,
+    "attackRange": 2.0,
+    "armor": 6,
+    "magicResist": 25,
+    "moveSpeed": 2.8,
+    "sightRange": 10
+  },
+
+  "cost": {
+    "gold": 400,
+    "wood": 100,
+    "corpses": 5
+  },
+
+  "trainTime": 60,
+  "populationCost": 5,
+  "requiredBuilding": "undead_boneyard",
+  "requiredAge": 2,
+
+  "armorType": "heavy",
+  "attackType": "siege",
+
+  "bonusVs": [
+    {
+      "category": "building",
+      "multiplier": 3.0
+    },
+    {
+      "category": "fortified",
+      "multiplier": 2.5
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "disease_cloud",
+      "name": "Disease Cloud",
+      "description": "Emanate a cloud of plague dealing 8 damage per second to nearby enemies and reducing healing by 75%",
+      "type": "passive",
+      "auraRadius": 5.0,
+      "damagePerSecond": 8,
+      "healingReduction": 0.75,
+      "damageType": "plague"
+    },
+    {
+      "id": "cleaver_attack",
+      "name": "Meat Cleaver",
+      "description": "Attacks hit all enemies in front dealing 100% damage",
+      "type": "passive",
+      "cleaveAngle": 90,
+      "cleaveRange": 3.0,
+      "cleavePercent": 1.0
+    },
+    {
+      "id": "disease_explosion",
+      "name": "Disease Explosion",
+      "description": "Explode dealing 200 damage and spreading plague in a large radius",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 120.0,
+      "manaCost": 0,
+      "radius": 8.0,
+      "damage": 200,
+      "applyDisease": "plague",
+      "diseaseDuration": 15.0,
+      "selfDamagePercent": 0.25
+    },
+    {
+      "id": "cannibalize_corpse",
+      "name": "Cannibalize",
+      "description": "Consume a corpse to restore 250 health over 8 seconds",
+      "type": "active",
+      "hotkey": "C",
+      "cooldown": 20.0,
+      "channelTime": 8.0,
+      "range": 2.5,
+      "targetType": "corpse",
+      "healAmount": 250,
+      "consumesCorpse": true
+    },
+    {
+      "id": "massive",
+      "name": "Massive",
+      "description": "Immune to slows, stuns, and knockbacks",
+      "type": "passive",
+      "immuneToCC": true
+    }
+  ],
+
+  "upgrades": ["abomination_enhancement", "disease_mastery", "undead_siege_damage"],
+
+  "visuals": {
+    "model": "models/races/undead/units/abomination.obj",
+    "portrait": "textures/races/undead/portraits/abomination.png",
+    "icon": "textures/races/undead/icons/abomination.png",
+    "scale": 2.0,
+    "textures": {
+      "diffuse": "textures/races/undead/units/abomination_diffuse.png",
+      "normal": "textures/races/undead/units/abomination_normal.png",
+      "emissive": "textures/races/undead/units/abomination_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/undead/abomination/idle.anim",
+      "walk": "animations/undead/abomination/walk.anim",
+      "attack": "animations/undead/abomination/attack.anim",
+      "cannibalize": "animations/undead/abomination/feast.anim",
+      "explode": "animations/undead/abomination/explode.anim",
+      "death": "animations/undead/abomination/death.anim"
+    },
+    "effects": {
+      "diseaseAura": "effects/plague_cloud.fx",
+      "explosion": "effects/plague_explosion.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/abomination/select_1.wav", "sounds/undead/abomination/roar.wav"],
+    "move": ["sounds/undead/abomination/move.wav"],
+    "attack": ["sounds/undead/abomination/attack.wav"],
+    "explode": ["sounds/plague_explosion.wav"],
+    "death": ["sounds/undead/abomination/death.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 1.2,
+    "height": 3.5,
+    "mass": 800.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/siege_undead.bt",
+    "profile": "siege",
+    "aggroRange": 8.0,
+    "priorityTargets": ["building", "fortified"],
+    "fearless": true,
+    "seekCorpses": true
+  },
+
+  "deathBehavior": {
+    "leavesCorpse": true,
+    "corpseDecayTime": 60.0,
+    "explosionOnDeath": false,
+    "corpseCount": 3
+  }
+}

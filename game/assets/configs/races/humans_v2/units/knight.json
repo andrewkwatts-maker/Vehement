@@ -1,0 +1,127 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "cavalry",
+  "id": "human_knight",
+  "name": "Knight",
+  "description": "Noble warriors mounted on warhorses, knights are the pride of Valorheim. Their devastating charges can break enemy lines.",
+  "race": "humans",
+  "category": "cavalry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 800,
+    "healthRegen": 1.0,
+    "damage": 28,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.6,
+    "attackRange": 1.8,
+    "armor": 6,
+    "magicResist": 12,
+    "moveSpeed": 7.5,
+    "critChance": 0.12,
+    "critMultiplier": 2.0
+  },
+
+  "cost": {
+    "gold": 350,
+    "food": 5
+  },
+
+  "trainTime": 40,
+  "populationCost": 3,
+  "requiredBuilding": "human_stable",
+  "requiredAge": 1,
+
+  "armorType": "heavy",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "ranged",
+      "multiplier": 1.5
+    },
+    {
+      "category": "siege",
+      "multiplier": 1.25
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "charge",
+      "name": "Charge",
+      "description": "Charge at an enemy dealing 250% damage and stunning for 1 second",
+      "type": "active",
+      "hotkey": "C",
+      "cooldown": 8.0,
+      "range": 20.0,
+      "minRange": 5.0,
+      "damageMultiplier": 2.5,
+      "stunDuration": 1.0,
+      "speedBonus": 0.50
+    },
+    {
+      "id": "trample",
+      "name": "Trample",
+      "description": "Deal damage to all enemies the knight rides through during charge",
+      "type": "passive",
+      "trampleDamage": 15,
+      "requiredUpgrade": "upgrade_trample"
+    },
+    {
+      "id": "splash_attack",
+      "name": "Splash Attack",
+      "description": "Attacks deal 25% damage to nearby enemies",
+      "type": "passive",
+      "splashDamage": 0.25,
+      "splashRadius": 2.0
+    }
+  ],
+
+  "upgrades": ["cavalry_armor_1", "cavalry_damage_1", "knight_barding"],
+
+  "visuals": {
+    "model": "models/races/humans/units/knight.obj",
+    "portrait": "textures/races/humans/portraits/knight.png",
+    "icon": "textures/races/humans/icons/knight.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/humans/units/knight_diffuse.png",
+      "normal": "textures/races/humans/units/knight_normal.png",
+      "specular": "textures/races/humans/units/knight_specular.png"
+    },
+    "animations": {
+      "idle": "animations/humans/knight/idle.anim",
+      "walk": "animations/humans/knight/walk.anim",
+      "run": "animations/humans/knight/run.anim",
+      "charge": "animations/humans/knight/charge.anim",
+      "attack": "animations/humans/knight/attack.anim",
+      "death": "animations/humans/knight/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/humans/knight/select_1.wav", "sounds/humans/knight/select_2.wav"],
+    "move": ["sounds/humans/knight/ack_1.wav", "sounds/humans/knight/ack_2.wav"],
+    "attack": ["sounds/lance_impact.wav"],
+    "charge": ["sounds/horse_charge.wav"],
+    "death": ["sounds/humans/knight/death.wav"],
+    "ready": ["sounds/horse_gallop_heavy.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.5,
+    "height": 2.2,
+    "mass": 450.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/cavalry.bt",
+    "profile": "aggressive",
+    "aggroRange": 12.0,
+    "priorityTargets": ["ranged", "siege", "caster"],
+    "useCharge": true,
+    "chargeDistanceMin": 8.0
+  }
+}

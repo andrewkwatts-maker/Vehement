@@ -1,0 +1,196 @@
+#version 460 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// ============================================================================
+// SVGF À-Trous Wavelet Filter
+// ============================================================================
+// Edge-preserving filter using the à-trous ("with holes") wavelet algorithm.
+// This is a separable filter that progressively increases kernel size while
+// maintaining edge-stopping functions to prevent blur across discontinuities.
+//
+// Key features:
+// - Exponentially growing kernel size (1, 2, 4, 8, 16 pixels)
+// - Edge-stopping based on normal, depth, and color differences
+// - Variance-guided filtering (more filtering in high-variance areas)
+// - Preserves geometric details while removing noise
+//
+// Iterations: 5 passes turn a 3x3 kernel into 16x16 effective coverage!
+// ============================================================================
+
+// Inputs
+layout(rgba16f, binding = 0) uniform image2D u_inputColor;
+layout(r16f, binding = 1) uniform image2D u_variance;
+layout(r16f, binding = 2) uniform image2D u_historyLength;
+layout(rgba32f, binding = 3) uniform image2D u_gBufferPosition;
+layout(rgba16f, binding = 4) uniform image2D u_gBufferNormal;
+layout(r32f, binding = 5) uniform image2D u_gBufferDepth;
+
+// Output
+layout(rgba16f, binding = 6) uniform image2D u_outputColor;
+
+// Uniforms
+uniform vec2 u_resolution = vec2(1920.0, 1080.0);
+uniform int u_iteration = 0;  // 0-4 for 5-pass filtering
+uniform float u_phiColor = 10.0;
+uniform float u_phiNormal = 128.0;
+uniform float u_phiDepth = 1.0;
+uniform float u_sigmaLuminance = 4.0;
+uniform bool u_useVarianceGuidance = true;
+uniform bool u_adaptiveKernel = true;
+
+// ============================================================================
+// À-Trous Kernel
+// ============================================================================
+
+// 3x3 wavelet kernel (Gaussian-like weights)
+const float kernel[3][3] = {
+    {1.0/16.0, 2.0/16.0, 1.0/16.0},
+    {2.0/16.0, 4.0/16.0, 2.0/16.0},
+    {1.0/16.0, 2.0/16.0, 1.0/16.0}
+};
+
+// Kernel offsets for 3x3
+const ivec2 offsets[9] = ivec2[](
+    ivec2(-1, -1), ivec2(0, -1), ivec2(1, -1),
+    ivec2(-1,  0), ivec2(0,  0), ivec2(1,  0),
+    ivec2(-1,  1), ivec2(0,  1), ivec2(1,  1)
+);
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+float Luminance(vec3 color) {
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// ============================================================================
+// Edge-Stopping Functions
+// ============================================================================
+
+// Normal-based edge weight
+float ComputeNormalWeight(vec3 centerNormal, vec3 sampleNormal) {
+    float cosTheta = max(0.0, dot(centerNormal, sampleNormal));
+    return pow(cosTheta, u_phiNormal);
+}
+
+// Depth-based edge weight
+float ComputeDepthWeight(float centerDepth, float sampleDepth, vec3 centerNormal, vec3 offset) {
+    // Plane-distance test: how far is sample from center's tangent plane?
+    float expectedDepth = centerDepth + dot(centerNormal, offset);
+    float depthDiff = abs(sampleDepth - expectedDepth);
+    return exp(-depthDiff * u_phiDepth);
+}
+
+// Luminance-based edge weight (for color discontinuities)
+float ComputeLuminanceWeight(float centerLuminance, float sampleLuminance, float variance) {
+    float diff = abs(centerLuminance - sampleLuminance);
+
+    // Variance-guided threshold
+    float sigma = u_sigmaLuminance;
+    if (u_useVarianceGuidance) {
+        sigma = max(u_sigmaLuminance, sqrt(variance) * u_phiColor);
+    }
+
+    return exp(-diff / max(sigma, 0.0001));
+}
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    if (pixelCoord.x >= int(u_resolution.x) || pixelCoord.y >= int(u_resolution.y)) return;
+
+    // Load center pixel data
+    vec3 centerColor = imageLoad(u_inputColor, pixelCoord).rgb;
+    vec3 centerPosition = imageLoad(u_gBufferPosition, pixelCoord).xyz;
+    vec3 centerNormal = imageLoad(u_gBufferNormal, pixelCoord).xyz;
+    float centerDepth = imageLoad(u_gBufferDepth, pixelCoord).r;
+    float centerVariance = imageLoad(u_variance, pixelCoord).r;
+    float centerHistoryLen = imageLoad(u_historyLength, pixelCoord).r;
+
+    // Early out for background
+    if (length(centerNormal) < 0.1 || centerDepth <= 0.0) {
+        imageStore(u_outputColor, pixelCoord, vec4(centerColor, 1.0));
+        return;
+    }
+
+    centerNormal = normalize(centerNormal);
+    float centerLuminance = Luminance(centerColor);
+
+    // Compute step size (exponential growth: 1, 2, 4, 8, 16)
+    int stepSize = 1 << u_iteration;
+
+    // Adaptive kernel size based on variance
+    float kernelScale = 1.0;
+    if (u_adaptiveKernel && u_useVarianceGuidance) {
+        // More variance = larger kernel
+        kernelScale = mix(1.0, 2.0, min(centerVariance / 10.0, 1.0));
+    }
+
+    // Also scale kernel based on history length (less history = more filtering)
+    if (u_adaptiveKernel) {
+        float historyFactor = clamp(centerHistoryLen / 8.0, 0.2, 1.0);
+        kernelScale /= historyFactor;
+    }
+
+    // Accumulate weighted samples
+    vec3 sumColor = vec3(0.0);
+    float sumWeight = 0.0;
+
+    // Apply à-trous filter
+    for (int i = 0; i < 9; i++) {
+        ivec2 offset = offsets[i] * stepSize * int(kernelScale);
+        ivec2 sampleCoord = pixelCoord + offset;
+
+        // Bounds check
+        if (sampleCoord.x < 0 || sampleCoord.x >= int(u_resolution.x) ||
+            sampleCoord.y < 0 || sampleCoord.y >= int(u_resolution.y)) {
+            continue;
+        }
+
+        // Load sample data
+        vec3 sampleColor = imageLoad(u_inputColor, sampleCoord).rgb;
+        vec3 samplePosition = imageLoad(u_gBufferPosition, sampleCoord).xyz;
+        vec3 sampleNormal = imageLoad(u_gBufferNormal, sampleCoord).xyz;
+        float sampleDepth = imageLoad(u_gBufferDepth, sampleCoord).r;
+
+        // Skip background samples
+        if (length(sampleNormal) < 0.1 || sampleDepth <= 0.0) continue;
+
+        sampleNormal = normalize(sampleNormal);
+        float sampleLuminance = Luminance(sampleColor);
+
+        // Compute edge-stopping weights
+        float wNormal = ComputeNormalWeight(centerNormal, sampleNormal);
+
+        vec3 offsetWorld = samplePosition - centerPosition;
+        float wDepth = ComputeDepthWeight(centerDepth, sampleDepth, centerNormal, offsetWorld);
+
+        float wLuminance = ComputeLuminanceWeight(centerLuminance, sampleLuminance, centerVariance);
+
+        // Combine weights
+        float edgeStoppingWeight = wNormal * wDepth * wLuminance;
+
+        // Get kernel weight (from 3x3 Gaussian kernel)
+        int kx = (i % 3);
+        int ky = (i / 3);
+        float kernelWeight = kernel[ky][kx];
+
+        // Final weight
+        float weight = kernelWeight * edgeStoppingWeight;
+
+        // Accumulate
+        sumColor += sampleColor * weight;
+        sumWeight += weight;
+    }
+
+    // Normalize
+    vec3 filteredColor = sumColor / max(sumWeight, 0.0001);
+
+    // Store result
+    imageStore(u_outputColor, pixelCoord, vec4(filteredColor, 1.0));
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "spawner_building",
+  "id": "fairy_star_sanctum",
+  "name": "Star Sanctum",
+  "description": "A celestial temple where the most powerful fairy units are trained. The Star Sanctum channels starlight for powerful abilities.",
+  "race": "fairies",
+  "category": "elite_building",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 1400,
+    "healthRegen": 3.5,
+    "armor": 7,
+    "magicResist": 35,
+    "sightRange": 15
+  },
+
+  "cost": {
+    "gold": 400,
+    "wood": 150,
+    "mana": 250
+  },
+
+  "buildTime": 70,
+  "footprint": {
+    "width": 5,
+    "height": 5
+  },
+
+  "requiredBuilding": "fairy_moonwell",
+  "requiredAge": 2,
+
+  "trainsUnits": [
+    "fairy_unicorn",
+    "fairy_treant",
+    "fairy_dragon"
+  ],
+
+  "generatesResources": {
+    "mana": 1.5
+  },
+
+  "abilities": [
+    {
+      "id": "starlight_aura",
+      "name": "Starlight Aura",
+      "description": "Passive aura granting +10% spell power and +5 magic resist to nearby allies",
+      "type": "passive",
+      "auraRadius": 14.0,
+      "effects": [
+        {
+          "stat": "spellPower",
+          "value": 0.1,
+          "type": "percent"
+        },
+        {
+          "stat": "magicResist",
+          "value": 5,
+          "type": "flat"
+        }
+      ]
+    },
+    {
+      "id": "celestial_blessing",
+      "name": "Celestial Blessing",
+      "description": "Grant all units globally +20% damage for 15 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 180.0,
+      "duration": 15.0,
+      "globalEffect": true,
+      "effects": [
+        {
+          "stat": "damage",
+          "value": 0.2,
+          "type": "percent"
+        }
+      ]
+    },
+    {
+      "id": "meteor_shower",
+      "name": "Meteor Shower",
+      "description": "Call down meteors on target area, dealing 200 damage over 5 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 120.0,
+      "range": 20.0,
+      "radius": 7.0,
+      "duration": 5.0,
+      "totalDamage": 200
+    }
+  ],
+
+  "researchesTech": [
+    "fairy_advanced_magic",
+    "fairy_celestial_power",
+    "fairy_starlight_armor",
+    "fairy_cosmic_insight"
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/buildings/star_sanctum.obj",
+    "portrait": "textures/races/fairies/portraits/star_sanctum.png",
+    "icon": "textures/races/fairies/icons/star_sanctum.png",
+    "scale": 2.0,
+    "textures": {
+      "diffuse": "textures/races/fairies/buildings/sanctum_diffuse.png",
+      "emissive": "textures/races/fairies/buildings/sanctum_stars.png",
+      "normal": "textures/races/fairies/buildings/sanctum_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/buildings/sanctum_float.anim",
+      "build": "animations/fairies/buildings/sanctum_form.anim",
+      "death": "animations/fairies/buildings/sanctum_collapse.anim",
+      "cast": "animations/fairies/buildings/sanctum_cast.anim"
+    },
+    "auraEffect": "effects/starlight_aura.fx",
+    "floatingStarsEffect": "effects/floating_stars.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/buildings/sanctum_chime.wav"],
+    "build": ["sounds/fairies/buildings/sanctum_build.wav"],
+    "complete": ["sounds/fairies/buildings/sanctum_complete.wav"],
+    "death": ["sounds/fairies/buildings/sanctum_death.wav"],
+    "cast": ["sounds/fairies/buildings/sanctum_cast.wav"],
+    "ambient": "sounds/fairies/buildings/celestial_ambient.wav"
+  },
+
+  "requirements": {
+    "terrain": ["grass", "forest"],
+    "nearWater": false,
+    "clearArea": true
+  }
+}

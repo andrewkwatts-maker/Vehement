@@ -1,0 +1,96 @@
+{
+  "$schema": "../archetype_schema.json",
+  "id": "siege_tank_mobile",
+  "name": "Siege Tank (Mobile)",
+  "description": "Heavy siege tank in mobile mode with moderate firepower",
+  "type": "unit",
+
+  "parentArchetypes": [
+    "siege_unit"
+  ],
+
+  "behaviors": [
+    {
+      "type": "MovementBehavior",
+      "config": {
+        "movementType": "Ground",
+        "speed": 2.5,
+        "acceleration": 3.0,
+        "turnRate": 90.0,
+        "canPassThroughUnits": false,
+        "pathfindingMode": "vehicle",
+        "collisionRadius": 1.5
+      }
+    },
+    {
+      "type": "CombatBehavior",
+      "config": {
+        "attackType": "Ranged",
+        "damageType": "Siege",
+        "damage": 35.0,
+        "attackRange": 8.0,
+        "attackSpeed": 1.0,
+        "canAttackGround": true,
+        "canAttackAir": false,
+        "projectileSpeed": 15.0,
+        "projectileType": "tank_shell",
+        "splashRadius": 1.0,
+        "splashDamagePercent": 50
+      }
+    },
+    {
+      "type": "MobileBuildingBehavior",
+      "config": {
+        "mobilityMode": "DeploySystem",
+        "moveSpeed": 2.5,
+        "packTime": 0.0,
+        "unpackTime": 3.0,
+        "canFunctionWhileMoving": true,
+        "canAttackWhileMoving": true,
+        "targetFormId": "siege_tank_deployed",
+        "deployAbilityName": "Siege Mode (On)",
+        "description": "Deploy for increased range and damage (3s)"
+      }
+    },
+    {
+      "type": "TransformationBehavior",
+      "config": {
+        "transformationType": "UnitToBuilding",
+        "targetFormId": "siege_tank_deployed",
+        "transformTime": 3.0,
+        "transformDuration": 0.0,
+        "canTransformInCombat": true,
+        "preservesHealth": true,
+        "preservesMana": true,
+        "transformCost": {},
+        "cooldown": 0.0
+      }
+    }
+  ],
+
+  "stats": {
+    "health": 300.0,
+    "healthRegen": 0.0,
+    "armor": 5.0,
+    "moveSpeed": 2.5,
+    "sightRange": 12.0,
+    "buildTime": 60.0,
+    "foodCost": 4,
+    "populationCost": 4
+  },
+
+  "properties": {
+    "modelPath": "models/units/siege_tank_mobile_sdf.json",
+    "iconPath": "icons/units/siege_tank_mobile.png",
+    "soundSet": "siege_tank",
+    "unitSize": "large",
+    "selectionPriority": "unit",
+    "description_extended": "In Tank Mode, the siege tank is mobile and can attack while moving, but with reduced range and damage. Deploy into Siege Mode for devastating long-range firepower.",
+    "tacticalNotes": "Use mobile mode to reposition, then deploy for maximum damage. Toggle between modes based on tactical situation."
+  },
+
+  "costs": {
+    "metal": 200,
+    "gold": 100
+  }
+}

@@ -1,0 +1,345 @@
+#pragma once
+
+#include <vector>
+#include <unordered_map>
+#include <memory>
+#include <array>
+#include <cstdint>
+#include <string>
+#include <glm/glm.hpp>
+
+namespace Nova {
+
+// Forward declarations
+class Mesh;
+class Camera;
+
+/**
+ * @brief Maximum number of LOD levels supported
+ */
+constexpr int MAX_LOD_LEVELS = 8;
+
+/**
+ * @brief Single LOD level data
+ */
+struct LODLevel {
+    std::shared_ptr<Mesh> mesh;
+    float maxDistance = 0.0f;           // Max distance for this LOD
+    float screenSizeThreshold = 0.0f;   // Alternative: screen-space threshold
+    uint32_t triangleCount = 0;
+    float reductionRatio = 1.0f;        // 1.0 = full detail, 0.1 = 10% detail
+
+    bool IsValid() const { return mesh != nullptr; }
+};
+
+/**
+ * @brief LOD group containing multiple detail levels for an object
+ */
+struct LODGroup {
+    uint32_t id = 0;
+    std::string name;
+    std::array<LODLevel, MAX_LOD_LEVELS> levels;
+    int numLevels = 0;
+
+    // Bounds for distance calculation
+    glm::vec3 center{0.0f};
+    float radius = 1.0f;
+
+    // Current state
+    mutable int currentLevel = 0;
+    mutable float lastDistance = 0.0f;
+    mutable bool dirty = true;
+
+    // Fade settings for smooth transitions
+    bool enableFading = false;
+    float fadeRange = 5.0f;            // Distance range for crossfade
+
+    /**
+     * @brief Add a LOD level
+     * @return true if added successfully
+     */
+    bool AddLevel(std::shared_ptr<Mesh> mesh, float maxDistance);
+
+    /**
+     * @brief Get the LOD level for a given distance
+     */
+    int GetLevelForDistance(float distance) const;
+
+    /**
+     * @brief Get the LOD level for a given screen size
+     */
+    int GetLevelForScreenSize(float screenSize) const;
+
+    /**
+     * @brief Get mesh for current LOD level
+     */
+    const std::shared_ptr<Mesh>& GetCurrentMesh() const;
+
+    /**
+     * @brief Get mesh for specified LOD level
+     */
+    const std::shared_ptr<Mesh>& GetMesh(int level) const;
+
+    /**
+     * @brief Calculate fade factor for smooth LOD transitions
+     * @return Fade factor (0-1), or -1 if fading not applicable
+     */
+    float GetFadeFactor(float distance) const;
+};
+
+/**
+ * @brief Configuration for LOD system
+ */
+struct LODConfig {
+    bool enabled = true;
+    std::array<float, MAX_LOD_LEVELS> distances = {50.0f, 100.0f, 200.0f, 400.0f, 800.0f, 1600.0f, 3200.0f, 6400.0f};
+    bool useScreenSizeMetric = false;
+    std::array<float, MAX_LOD_LEVELS> screenSizes = {0.5f, 0.25f, 0.125f, 0.0625f, 0.03f, 0.015f, 0.007f, 0.003f};
+
+    // Bias to prefer lower/higher detail
+    float lodBias = 0.0f;  // Negative = higher detail, positive = lower detail
+
+    // Hysteresis to prevent LOD popping
+    float hysteresis = 1.1f;  // 10% hysteresis
+
+    // Crossfade settings
+    bool enableCrossfade = false;
+    float crossfadeRange = 10.0f;
+
+    // Auto LOD generation
+    bool autoGenerateLODs = false;
+    std::array<float, MAX_LOD_LEVELS> reductionFactors = {1.0f, 0.5f, 0.25f, 0.125f, 0.0625f, 0.03f, 0.015f, 0.007f};
+};
+
+/**
+ * @brief Statistics for LOD system
+ */
+struct LODStats {
+    uint32_t totalGroups = 0;
+    std::array<uint32_t, MAX_LOD_LEVELS> objectsPerLevel = {};
+    uint32_t trianglesSaved = 0;
+    uint32_t trianglesRendered = 0;
+    float avgLODLevel = 0.0f;
+    float lodEfficiency = 0.0f;  // Percentage of triangles saved
+
+    void Reset() {
+        totalGroups = trianglesSaved = trianglesRendered = 0;
+        objectsPerLevel.fill(0);
+        avgLODLevel = lodEfficiency = 0.0f;
+    }
+};
+
+/**
+ * @brief Level of Detail management system
+ *
+ * Manages automatic LOD selection based on distance or screen-space size.
+ * Supports smooth LOD transitions via crossfading.
+ */
+class LODManager {
+public:
+    LODManager();
+    ~LODManager();
+
+    // Non-copyable
+    LODManager(const LODManager&) = delete;
+    LODManager& operator=(const LODManager&) = delete;
+
+    /**
+     * @brief Initialize the LOD system
+     */
+    bool Initialize(const LODConfig& config = LODConfig{});
+
+    /**
+     * @brief Shutdown and cleanup
+     */
+    void Shutdown();
+
+    /**
+     * @brief Update LOD selection for all groups
+     * @param camera The camera to calculate distances from
+     */
+    void Update(const Camera& camera);
+
+    /**
+     * @brief Create a new LOD group
+     * @param name Optional name for the group
+     * @return ID of the created group
+     */
+    uint32_t CreateLODGroup(const std::string& name = "");
+
+    /**
+     * @brief Remove a LOD group
+     */
+    void RemoveLODGroup(uint32_t groupID);
+
+    /**
+     * @brief Get a LOD group by ID
+     */
+    LODGroup* GetLODGroup(uint32_t groupID);
+    const LODGroup* GetLODGroup(uint32_t groupID) const;
+
+    /**
+     * @brief Add a LOD level to a group
+     * @param groupID The group to add to
+     * @param mesh The mesh for this LOD level
+     * @param maxDistance Maximum distance for this LOD (0 = use config default)
+     * @return true if added successfully
+     */
+    bool AddLODLevel(uint32_t groupID, std::shared_ptr<Mesh> mesh, float maxDistance = 0.0f);
+
+    /**
+     * @brief Set group bounds for distance calculation
+     */
+    void SetGroupBounds(uint32_t groupID, const glm::vec3& center, float radius);
+
+    /**
+     * @brief Update group world position (for moving objects)
+     */
+    void UpdateGroupPosition(uint32_t groupID, const glm::vec3& worldPosition);
+
+    /**
+     * @brief Calculate LOD level for a specific distance
+     * @param distance Distance from camera
+     * @return LOD level index
+     */
+    int CalculateLODLevel(float distance) const;
+
+    /**
+     * @brief Calculate LOD level for a specific screen size
+     * @param screenSize Screen-space size (0-1 ratio)
+     * @return LOD level index
+     */
+    int CalculateLODLevelFromScreenSize(float screenSize) const;
+
+    /**
+     * @brief Get the mesh to render for a LOD group
+     * @param groupID The group ID
+     * @param distance Distance from camera (or -1 to use cached)
+     * @return The appropriate mesh, or nullptr if not found
+     */
+    const std::shared_ptr<Mesh>& GetMeshForDistance(uint32_t groupID, float distance = -1.0f);
+
+    /**
+     * @brief Force a specific LOD level for a group
+     */
+    void ForceLODLevel(uint32_t groupID, int level);
+
+    /**
+     * @brief Clear forced LOD level
+     */
+    void ClearForcedLODLevel(uint32_t groupID);
+
+    /**
+     * @brief Get configuration
+     */
+    const LODConfig& GetConfig() const { return m_config; }
+
+    /**
+     * @brief Update configuration
+     */
+    void SetConfig(const LODConfig& config);
+
+    /**
+     * @brief Set LOD bias
+     */
+    void SetLODBias(float bias) { m_config.lodBias = bias; }
+
+    /**
+     * @brief Get statistics
+     */
+    const LODStats& GetStats() const { return m_stats; }
+
+    /**
+     * @brief Get number of LOD groups
+     */
+    size_t GetGroupCount() const { return m_groups.size(); }
+
+    /**
+     * @brief Auto-generate LOD levels for a mesh
+     * @param baseMesh The high-detail mesh
+     * @param numLevels Number of LOD levels to generate
+     * @return Vector of generated meshes
+     */
+    static std::vector<std::shared_ptr<Mesh>> GenerateLODs(
+        const std::shared_ptr<Mesh>& baseMesh,
+        int numLevels,
+        const std::array<float, MAX_LOD_LEVELS>& reductionFactors);
+
+    /**
+     * @brief Calculate optimal LOD distances based on mesh complexity
+     */
+    static std::array<float, MAX_LOD_LEVELS> CalculateOptimalDistances(
+        uint32_t baseTriangleCount,
+        float baseDistance,
+        float maxDistance);
+
+private:
+    std::unordered_map<uint32_t, LODGroup> m_groups;
+    uint32_t m_nextGroupID = 1;
+
+    // Camera data from last update
+    glm::vec3 m_cameraPosition{0.0f};
+    float m_fov = 45.0f;
+    float m_aspectRatio = 16.0f / 9.0f;
+
+    LODConfig m_config;
+    LODStats m_stats;
+    bool m_initialized = false;
+
+    // Helper to calculate screen size from distance and object size
+    float CalculateScreenSize(float objectRadius, float distance) const;
+
+    // Apply hysteresis to prevent LOD popping
+    int ApplyHysteresis(const LODGroup& group, int newLevel, float distance) const;
+
+    // Null mesh for returning when nothing found
+    static std::shared_ptr<Mesh> s_nullMesh;
+};
+
+/**
+ * @brief LOD selection mode
+ */
+enum class LODSelectionMode {
+    Distance,       // Select based on distance from camera
+    ScreenSize,     // Select based on screen-space size
+    Automatic       // Use whichever gives better results
+};
+
+/**
+ * @brief Impostor system for extreme distance LOD
+ *
+ * Renders distant objects as billboards with pre-rendered textures
+ */
+class ImpostorSystem {
+public:
+    struct ImpostorData {
+        uint32_t textureID = 0;
+        int viewAngles = 8;          // Number of pre-rendered views
+        float switchDistance = 500.0f;
+        glm::vec2 size{1.0f};
+    };
+
+    ImpostorSystem();
+    ~ImpostorSystem();
+
+    /**
+     * @brief Generate impostor for a mesh
+     */
+    ImpostorData GenerateImpostor(const Mesh& mesh, int resolution = 256);
+
+    /**
+     * @brief Render impostor billboard
+     */
+    void RenderImpostor(const ImpostorData& data,
+                        const glm::vec3& position,
+                        const glm::vec3& cameraPosition,
+                        const glm::mat4& viewProjection);
+
+private:
+    uint32_t m_framebuffer = 0;
+    uint32_t m_billboardVAO = 0;
+    uint32_t m_billboardVBO = 0;
+    std::shared_ptr<class Shader> m_billboardShader;
+};
+
+} // namespace Nova

@@ -1,0 +1,227 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "ranged_unit_archetype",
+  "id": "naga_kraken_spawn",
+  "name": "Kraken Spawn",
+  "description": "Young kraken with powerful tentacles. Launches tentacle strikes from range and can grapple multiple enemies.",
+
+  "category": "ranged",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 320,
+    "healthRegen": 1.2,
+    "mana": 80,
+    "manaRegen": 1.0,
+    "damage": 22,
+    "damageVariance": 0.18,
+    "attackSpeed": 0.9,
+    "attackRange": 8,
+    "armor": 4,
+    "magicResist": 2,
+    "moveSpeed": 4.5,
+    "turnSpeed": 270,
+    "sightRange": 11,
+    "critChance": 0.12,
+    "critMultiplier": 2.0
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "medium",
+
+    "attackAnimation": {
+      "windupTime": 0.4,
+      "backswingTime": 0.5,
+      "totalDuration": 1.11
+    },
+
+    "bonusVs": [
+      {
+        "category": "ship",
+        "multiplier": 2.5
+      },
+      {
+        "category": "building",
+        "multiplier": 1.5
+      }
+    ],
+
+    "multiAttack": {
+      "enabled": true,
+      "maxTargets": 3,  // Can attack 3 targets simultaneously
+      "damagePerTarget": 0.75  // 75% damage to each
+    }
+  },
+
+  "projectile": {
+    "type": "homing",
+    "speed": 20.0,
+    "arc": 0.1,
+    "maxTravelDistance": 10.0,
+    "homingStrength": 0.8,
+
+    "visualModel": "models/projectiles/naga/tentacle_strike.fbx",
+    "trailEffect": "effects/tentacle_trail.fx",
+    "impactEffect": "effects/tentacle_impact.fx",
+    "projectileSize": 0.3,
+
+    "grabsTarget": true,  // Tentacle pulls target slightly
+    "pullDistance": 1.5
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 0.8,
+    "pushPriority": 7,
+    "pathfindingType": "amphibious",
+    "unitSize": "large",
+
+    "waterMovementMultiplier": 1.7,
+    "landMovementMultiplier": 0.6
+  },
+
+  "cost": {
+    "gold": 280,
+    "wood": 0,
+    "food": 0,
+    "stone": 40,
+    "mana": 120
+  },
+
+  "trainTime": 65,
+  "populationCost": 4,
+  "requiredBuilding": "abyssal_nexus",
+  "requiredAge": 2,
+  "requiredTech": "kraken_binding",
+
+  "abilities": [
+    {
+      "id": "tentacle_grapple",
+      "name": "Tentacle Grapple",
+      "description": "Grapples up to 3 enemies, rooting them and dealing damage over 5 seconds",
+      "manaCost": 40,
+      "cooldown": 18,
+      "duration": 5,
+      "damagePerSecond": 10,
+      "maxTargets": 3,
+      "range": 9
+    },
+    {
+      "id": "ink_cloud",
+      "name": "Ink Cloud",
+      "description": "Releases ink cloud that blinds enemies and grants stealth to self",
+      "manaCost": 30,
+      "cooldown": 25,
+      "duration": 6,
+      "aoeRadius": 5
+    },
+    {
+      "id": "regeneration",
+      "name": "Regeneration",
+      "description": "Passive: Slowly regenerates lost tentacles (health)",
+      "passive": true
+    }
+  ],
+
+  "upgrades": [
+    "kraken_growth",
+    "tentacle_mastery",
+    "crushing_grip"
+  ],
+
+  "formation": {
+    "preferredPosition": "middle",
+    "formationSpacing": 2.0
+  },
+
+  "ai": {
+    "aggroRange": 13,
+    "targetPriority": [
+      {
+        "type": "ship",
+        "weight": 2.5
+      },
+      {
+        "type": "grouped",
+        "weight": 2.0
+      },
+      {
+        "type": "building",
+        "weight": 1.5
+      }
+    ]
+  },
+
+  "experience": {
+    "canGainExperience": true,
+    "maxLevel": 3,
+    "experienceValue": 200,
+    "bountyGold": 80
+  },
+
+  "visuals": {
+    "model": "models/units/naga/kraken_spawn.fbx",
+    "portrait": "textures/portraits/naga/kraken_spawn.png",
+    "icon": "textures/icons/units/naga/kraken_spawn.png",
+    "scale": 1.8,
+
+    "animations": {
+      "idle": "anim_idle_float",
+      "walk": "anim_tentacle_crawl",
+      "attack": "anim_tentacle_strike",
+      "death": "anim_death",
+      "special": "anim_grapple"
+    },
+
+    "teamColorParts": ["beak", "tentacle_suckers"],
+    "glowAtNight": true,
+    "glowColor": "#FF8800",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.8,
+      "pulseSpeed": 1.5,
+      "patterns": ["tentacle_tips", "eye_ring"]
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/kraken/select1.wav"],
+    "move": ["sounds/units/naga/kraken/move1.wav"],
+    "attack": ["sounds/units/naga/kraken/tentacle_strike.wav"],
+    "death": ["sounds/units/naga/kraken/death1.wav"]
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "healthRegen": 2.5,
+        "moveSpeed": 1.7,
+        "attackSpeed": 1.2,
+        "tentacleRange": 1.2
+      },
+      "atDepth": {
+        "deepWater": {
+          "healthRegen": 4.0,
+          "armor": 3,
+          "multiAttackTargets": 5
+        }
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Heavy ranged with multi-target attacks. Grapples and controls enemies. Ship destroyer.",
+    "tacticalUse": "Multi-target DPS. Grapple grouped enemies. Devastating vs ships. Use ink cloud to escape.",
+    "counters": ["ships", "grouped_units", "buildings"],
+    "counteredBy": ["spread_formation", "anti_large", "land_kiting"]
+  }
+}

@@ -360,7 +360,7 @@ void OptimizedRenderer::RenderShadows(const glm::mat4& lightViewProjection) {
             if (item.castsShadow) {
                 RenderItem shadowItem = item;
                 // Would use shadow shader here
-                RenderItem(shadowItem);
+                DrawItem(shadowItem);
             }
         });
 }
@@ -368,7 +368,7 @@ void OptimizedRenderer::RenderShadows(const glm::mat4& lightViewProjection) {
 void OptimizedRenderer::RenderOpaque() {
     m_renderQueue->Execute(RenderPass::Opaque,
         [this](const RenderItem& item) {
-            RenderItem(item);
+            DrawItem(item);
         });
 }
 
@@ -377,13 +377,13 @@ void OptimizedRenderer::RenderTransparent() {
 
     m_renderQueue->Execute(RenderPass::Transparent,
         [this](const RenderItem& item) {
-            RenderItem(item);
+            DrawItem(item);
         });
 
     m_renderer->SetBlending(false);
 }
 
-void OptimizedRenderer::RenderItem(const RenderItem& item) {
+void OptimizedRenderer::DrawItem(const RenderItem& item) {
     if (!item.mesh || !item.material) {
         return;
     }

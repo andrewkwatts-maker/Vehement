@@ -1,0 +1,177 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "vampire_blood_knight",
+  "name": "Blood Knight",
+  "description": "Noble vampires clad in crimson armor. Blood Knights drain the life force of enemies with each strike, growing stronger at night and regenerating rapidly from blood magic.",
+  "race": "vampires",
+  "category": "melee",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 450,
+    "healthRegen": 1.5,
+    "mana": 50,
+    "manaRegen": 0.5,
+    "damage": 18,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.4,
+    "attackRange": 1.5,
+    "armor": 6,
+    "magicResist": 15,
+    "moveSpeed": 5.2,
+    "sightRange": 12,
+    "detectionRange": 10,
+    "critChance": 0.12,
+    "critMultiplier": 2.0
+  },
+
+  "cost": {
+    "gold": 220,
+    "blood": 40,
+    "food": 3
+  },
+
+  "trainTime": 35,
+  "populationCost": 2,
+  "requiredBuilding": "vampire_crypt",
+  "requiredAge": 1,
+
+  "armorType": "heavy",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "unarmored",
+      "multiplier": 1.35
+    },
+    {
+      "category": "light",
+      "multiplier": 1.25
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "life_drain",
+      "name": "Life Drain",
+      "description": "Each attack drains 15% of damage dealt as health. Doubled at night.",
+      "type": "passive",
+      "lifesteal": 0.15,
+      "nightBonus": {
+        "lifesteal": 0.30
+      }
+    },
+    {
+      "id": "night_empowerment",
+      "name": "Night Empowerment",
+      "description": "During night: +25% attack damage, +30% movement speed, +3 health regen",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "damage": 1.25,
+          "moveSpeed": 1.30,
+          "healthRegen": 3.0
+        }
+      }
+    },
+    {
+      "id": "daylight_vulnerability",
+      "name": "Daylight Vulnerability",
+      "description": "During day: -15% damage, -10% movement speed, -50% health regen",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "day": {
+          "damage": 0.85,
+          "moveSpeed": 0.90,
+          "healthRegen": 0.50
+        }
+      }
+    },
+    {
+      "id": "blood_frenzy",
+      "name": "Blood Frenzy",
+      "description": "After killing an enemy, gain 40% attack speed for 8 seconds",
+      "type": "passive",
+      "onKillEffect": {
+        "duration": 8.0,
+        "attackSpeed": 1.40
+      }
+    },
+    {
+      "id": "crimson_strike",
+      "name": "Crimson Strike",
+      "description": "Powerful slash dealing 200% damage and applying bleeding (10 damage/sec for 5s)",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 25,
+      "cooldown": 15.0,
+      "damageMultiplier": 2.0,
+      "applyDebuff": {
+        "type": "bleeding",
+        "damagePerSecond": 10,
+        "duration": 5.0
+      }
+    }
+  ],
+
+  "upgrades": ["vampire_melee_1", "vampire_melee_2", "vampire_armor_1", "blood_knight_plate"],
+
+  "visuals": {
+    "model": "models/races/vampires/units/blood_knight.obj",
+    "portrait": "textures/races/vampires/portraits/blood_knight.png",
+    "icon": "textures/races/vampires/icons/blood_knight.png",
+    "scale": 1.05,
+    "textures": {
+      "diffuse": "textures/races/vampires/units/blood_knight_diffuse.png",
+      "normal": "textures/races/vampires/units/blood_knight_normal.png",
+      "specular": "textures/races/vampires/units/blood_knight_specular.png",
+      "emissive": "textures/races/vampires/units/blood_knight_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/vampires/blood_knight/idle.anim",
+      "walk": "animations/vampires/blood_knight/walk.anim",
+      "run": "animations/vampires/blood_knight/run.anim",
+      "attack": "animations/vampires/blood_knight/attack.anim",
+      "ability_crimson_strike": "animations/vampires/blood_knight/crimson_strike.anim",
+      "death": "animations/vampires/blood_knight/death.anim"
+    },
+    "particleEffects": {
+      "lifeDrain": "effects/vampires/life_drain.fx",
+      "nightEmpowerment": "effects/vampires/night_aura.fx",
+      "bloodFrenzy": "effects/vampires/blood_frenzy.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/blood_knight/select_1.wav", "sounds/vampires/blood_knight/select_2.wav"],
+    "move": ["sounds/vampires/blood_knight/ack_1.wav", "sounds/vampires/blood_knight/ack_2.wav"],
+    "attack": ["sounds/sword_heavy_swing.wav"],
+    "death": ["sounds/vampires/blood_knight/death.wav"],
+    "ready": ["sounds/metal_heavy_hit.wav"],
+    "ability_crimson_strike": ["sounds/vampires/crimson_strike.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.40,
+    "height": 1.9,
+    "mass": 110.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/vampire_melee.bt",
+    "profile": "aggressive",
+    "aggroRange": 12.0,
+    "priorityTargets": ["low_health", "casters", "ranged"],
+    "useAbilities": true,
+    "preferNighttime": true
+  },
+
+  "metadata": {
+    "loreDescription": "Blood Knights are vampire nobility who have mastered both martial prowess and blood magic. They drain the life essence of their foes, becoming unstoppable juggernauts under the pale moonlight.",
+    "tacticalRole": "Frontline tank with sustain. Excels at night combat. Use Crimson Strike on high-value targets.",
+    "strengths": ["High sustain", "Night combat", "Anti-light armor"],
+    "weaknesses": ["Daylight", "Heavy magic damage", "Anti-heal effects"]
+  }
+}

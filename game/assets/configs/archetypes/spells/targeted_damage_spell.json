@@ -1,0 +1,152 @@
+{
+  "$schema": "../../../schemas/spell_archetype.schema.json",
+
+  // =============================================================================
+  // TARGETED DAMAGE SPELL ARCHETYPE
+  // =============================================================================
+  // This archetype represents a single-target damage spell with a linear projectile.
+  // It demonstrates the composition of multiple behaviors:
+  // - TargetingBehavior: SingleTarget (requires an enemy unit as target)
+  // - EffectBehavior: Damage (instant damage on hit)
+  // - ProjectileBehavior: Linear projectile with travel time
+  // - ResourceBehavior: Mana cost and cooldown
+  //
+  // Use this as a base template for spells like:
+  // - Magic Missile, Shadow Bolt, Lightning Bolt, etc.
+  // =============================================================================
+
+  "id": "targeted_damage_spell_archetype",
+  "name": "Targeted Damage Spell Template",
+  "description": "A single-target damage spell that fires a linear projectile at an enemy unit, dealing instant damage on impact.",
+
+  // Category helps organize spells in UI and for filtering
+  "category": "damage",
+
+  // Element determines damage type and visual effects
+  "element": "arcane",
+
+  // Tier affects power scaling and availability
+  "tier": 1,
+
+  // =============================================================================
+  // TARGETING BEHAVIOR
+  // =============================================================================
+  // Defines how the spell selects its target
+  "targetType": "unit",  // Options: "unit", "point", "self", "cone", "line"
+
+  // Target filters - who can be targeted
+  "targetFilters": {
+    "canTargetEnemies": true,
+    "canTargetAllies": false,
+    "canTargetSelf": false,
+    "canTargetGround": false,
+    "canTargetAir": true,
+    "canTargetBuildings": false,
+    "canTargetOrganic": true,
+    "canTargetMechanical": false,
+    "requiresLineOfSight": true,
+    "ignoreInvulnerable": true
+  },
+
+  // Maximum range from caster to target
+  "castRange": 12.0,
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  // Defines how the spell travels to its target
+  "projectile": {
+    "type": "linear",  // Options: "linear", "homing", "arc", "instant", "none"
+    "speed": 20.0,
+    "maxTravelDistance": 15.0,
+    "piercing": false,  // Does projectile continue through targets?
+    "maxPierceTargets": 0,
+    "canBeBlocked": true,  // Can terrain/obstacles block it?
+    "visualModel": "effects/arcane_bolt.fx",
+    "trailEffect": "effects/arcane_trail.fx",
+    "impactEffect": "effects/arcane_impact.fx",
+    "projectileSize": 0.3
+  },
+
+  // =============================================================================
+  // EFFECT BEHAVIOR
+  // =============================================================================
+  // Defines what happens when the spell hits its target
+  "effects": [
+    {
+      "type": "damage",
+      "damageType": "magic",  // Options: "physical", "magic", "pure", "siege"
+      "baseDamage": 80,
+      "scalingFactor": 1.0,  // Multiplier for scaling stat
+      "scalingStat": "spellPower",  // Which stat scales this damage
+      "canCrit": true,
+      "critBonusFromCaster": true,
+      "variance": 0.1  // ±10% damage variance
+    }
+  ],
+
+  // Area of effect (0 = single target only)
+  "areaOfEffect": 0.0,
+
+  // =============================================================================
+  // RESOURCE BEHAVIOR
+  // =============================================================================
+  // Defines casting costs and restrictions
+  "castTime": 0.8,  // Time in seconds before spell fires
+  "cooldown": 5.0,   // Time before spell can be cast again
+  "manaCost": 50,
+
+  // Can cast be interrupted?
+  "canBeInterrupted": true,
+  "interruptOnDamage": false,
+  "interruptOnMove": true,
+
+  // =============================================================================
+  // REQUIREMENTS & AVAILABILITY
+  // =============================================================================
+  "requiredAge": 0,
+  "requiredBuilding": "arcane_sanctum",
+  "requiredTech": null,
+
+  // Cost to learn/unlock this spell
+  "learnCost": {
+    "gold": 75,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 25
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "icon": "textures/icons/spells/arcane_bolt.png",
+    "castAnimation": "anim_cast_arcane",
+    "castEffect": "effects/cast_arcane.fx",
+    "channelEffect": null,
+    "buffEffect": null,
+    "aoeCursorDecal": null
+  },
+
+  "sounds": {
+    "cast": "sounds/spells/arcane_bolt_cast.wav",
+    "travel": "sounds/spells/arcane_bolt_travel.wav",
+    "impact": "sounds/spells/arcane_bolt_impact.wav",
+    "hitEnemy": "sounds/spells/spell_hit.wav"
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // Child archetypes can inherit from this template and override specific values
+  // Example child: "shadow_bolt" could set element: "shadow", change visuals,
+  // and adjust damage values while keeping the same core behaviors
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for all single-target damage spells with projectiles"
+  }
+}

@@ -1,0 +1,35 @@
+glm::vec3 StandaloneEditor::ScreenToWorldRay(int screenX, int screenY) {
+    // Use the camera's ScreenToWorldRay method if available
+    if (m_currentCamera) {
+        auto& window = Nova::Engine::Instance().GetWindow();
+        glm::vec2 screenPos(static_cast<float>(screenX), static_cast<float>(screenY));
+        glm::vec2 screenSize(static_cast<float>(window.GetWidth()), static_cast<float>(window.GetHeight()));
+        return m_currentCamera->ScreenToWorldRay(screenPos, screenSize);
+    }
+
+    // Fallback: Manual implementation using editor camera
+    auto& window = Nova::Engine::Instance().GetWindow();
+    float screenWidth = static_cast<float>(window.GetWidth());
+    float screenHeight = static_cast<float>(window.GetHeight());
+
+    // Convert screen coordinates to NDC (Normalized Device Coordinates)
+    float x = (2.0f * screenX) / screenWidth - 1.0f;
+    float y = 1.0f - (2.0f * screenY) / screenHeight;  // Flip Y axis
+
+    // Create view and projection matrices using editor camera
+    glm::vec3 cameraPos = m_editorCameraPos;
+    glm::vec3 cameraTarget = m_editorCameraTarget;
+    glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, up);
+    float aspectRatio = screenWidth / screenHeight;
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
+
+    // Unproject: screen -> NDC -> clip -> eye -> world
+    glm::vec4 rayClip(x, y, -1.0f, 1.0f);
+    glm::vec4 rayEye = glm::inverse(projection) * rayClip;
+    rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+
+    glm::vec3 rayWorld = glm::vec3(glm::inverse(view) * rayEye);
+    return glm::normalize(rayWorld);
+}

@@ -1,0 +1,285 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "ranged_unit_archetype",
+  "id": "alien_stalker",
+  "name": "Stalker",
+  "description": "Versatile ranged attackers capable of striking both ground and air targets. Stalkers can teleport short distances using Blink, making them excellent for hit-and-run tactics and micro-intensive play.",
+  "race": "aliens",
+  "category": "ranged",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 80,
+    "healthRegen": 0,
+    "shield": 80,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+    "mana": 0,
+    "manaRegen": 0,
+
+    "damage": 13,
+    "damageVariance": 0,
+    "attackSpeed": 1.04,
+    "attackRange": 6,
+
+    "armor": 1,
+    "shieldArmor": 0,
+    "magicResist": 0,
+
+    "moveSpeed": 4.13,
+    "turnSpeed": 999,
+    "acceleration": 999,
+
+    "sightRange": 10,
+    "detectionRange": 0,
+
+    "critChance": 0.10,
+    "critMultiplier": 1.5
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "armored",
+    "attackAnimation": {
+      "windupTime": 0.4,
+      "backswingTime": 0.5,
+      "totalDuration": 0.96
+    },
+    "attacksPerSwing": 2,
+    "bonusVs": [
+      {
+        "category": "armored",
+        "multiplier": 1.0,
+        "flatBonus": 5
+      }
+    ],
+    "penaltyVs": [],
+    "cleave": {
+      "enabled": false
+    },
+    "splash": {
+      "enabled": false
+    }
+  },
+
+  "projectile": {
+    "type": "instant",
+    "speed": 0,
+    "arc": 0.0,
+    "maxTravelDistance": 6.0,
+    "piercing": false,
+    "maxPierceTargets": 0,
+    "canBeBlocked": false,
+    "canBeDodged": false,
+    "canMiss": false,
+    "missChance": 0.0,
+    "visualModel": "models/projectiles/particle_disruptor.fbx",
+    "trailEffect": "effects/particle_beam.fx",
+    "impactEffect": "effects/particle_impact.fx",
+    "projectileSize": 0.2
+  },
+
+  "movement": {
+    "movementType": "ground",
+    "canMoveOnLand": true,
+    "canMoveOnWater": false,
+    "canMoveOnLava": false,
+    "canClimbCliffs": false,
+    "canPassThroughUnits": false,
+    "collisionRadius": 0.5,
+    "pushPriority": 4,
+    "pathfindingType": "ground",
+    "unitSize": "medium",
+    "canKite": true,
+    "kiteEfficiency": 0.9
+  },
+
+  "cost": {
+    "minerals": 125,
+    "vespene": 50,
+    "supply": 2
+  },
+
+  "trainTime": 42,
+  "warpTime": 32,
+  "populationCost": 2,
+  "requiredBuilding": "alien_gateway",
+  "requiredAge": 0,
+  "requiredTech": "cybernetics_core",
+
+  "abilities": [
+    {
+      "id": "blink",
+      "name": "Blink",
+      "description": "Teleport to target location within 8 range. Excellent for repositioning and escaping danger.",
+      "type": "targeted_position",
+      "hotkey": "B",
+      "cooldown": 10.0,
+      "range": 8.0,
+      "requiredTech": "blink_upgrade",
+      "unlockedByDefault": false,
+      "manaCost": 0,
+      "effects": [
+        {
+          "type": "teleport",
+          "range": 8.0,
+          "instantaneous": true,
+          "ignoresTerrain": true
+        },
+        {
+          "type": "visual_effect",
+          "effect": "effects/blink_out.fx",
+          "location": "origin"
+        },
+        {
+          "type": "visual_effect",
+          "effect": "effects/blink_in.fx",
+          "location": "destination"
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_ground_weapons_1",
+    "alien_ground_weapons_2",
+    "alien_ground_weapons_3",
+    "alien_ground_armor_1",
+    "alien_ground_armor_2",
+    "alien_ground_armor_3",
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "blink_upgrade"
+  ],
+
+  "canGather": false,
+  "canBuild": false,
+  "canRepair": false,
+  "canAttack": true,
+  "canMove": true,
+  "canHold": true,
+  "canPatrol": true,
+  "canStop": true,
+  "canAttackGround": true,
+  "canAttackAir": true,
+  "canAttackWhileMoving": false,
+  "requiresFacing": true,
+
+  "isHero": false,
+  "isUnique": false,
+  "isSummoned": false,
+  "isPermanent": true,
+  "isOrganic": true,
+  "isMechanical": false,
+  "isUndead": false,
+  "isPsionic": true,
+
+  "attributes": {
+    "isBiological": true,
+    "isPsionic": true,
+    "isLight": false,
+    "isArmored": true,
+    "isMassive": false,
+    "cargoSize": 2,
+    "canBeWarped": true
+  },
+
+  "formation": {
+    "preferredPosition": "middle",
+    "formationSpacing": 1.5,
+    "maintainFormation": true
+  },
+
+  "ai": {
+    "aggroRange": 14,
+    "returnToPosition": true,
+    "acquisitionRange": 11,
+    "targetPriority": [
+      {
+        "type": "armored",
+        "weight": 2.0
+      },
+      {
+        "type": "air",
+        "weight": 1.5
+      },
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+    "fleeAtHealthPercent": 0.15,
+    "pursuitRange": 12,
+    "maintainDistance": true,
+    "optimalRange": 5.5,
+    "minRange": 3.0,
+    "useAbilities": true,
+    "abilityPriority": ["blink"]
+  },
+
+  "experience": {
+    "canGainExperience": false,
+    "experienceValue": 95,
+    "bountyGold": 18,
+    "bountyMultiplier": 1.0
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/stalker.fbx",
+    "portrait": "textures/races/aliens/portraits/stalker.png",
+    "icon": "textures/races/aliens/icons/stalker.png",
+    "scale": 1.1,
+    "textures": {
+      "diffuse": "textures/races/aliens/units/stalker_diffuse.png",
+      "normal": "textures/races/aliens/units/stalker_normal.png",
+      "emissive": "textures/races/aliens/units/stalker_emissive.png"
+    },
+    "animations": {
+      "idle": "anim_idle",
+      "walk": "anim_walk",
+      "attack": "anim_attack",
+      "blink_out": "anim_blink_out",
+      "blink_in": "anim_blink_in",
+      "death": "anim_death",
+      "decay": "anim_disintegrate"
+    },
+    "deathEffect": "effects/stalker_death.fx",
+    "bloodType": "none",
+    "shadowSize": 1.1,
+    "selectionScale": 1.0,
+    "teamColorParts": ["legs", "weapon_glow"],
+    "shieldEffect": "effects/shield_shimmer.fx"
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/aliens/stalker/select1.wav",
+      "sounds/aliens/stalker/select2.wav",
+      "sounds/aliens/stalker/select3.wav"
+    ],
+    "move": [
+      "sounds/aliens/stalker/move1.wav",
+      "sounds/aliens/stalker/move2.wav"
+    ],
+    "attack": [
+      "sounds/aliens/stalker/attack1.wav",
+      "sounds/aliens/stalker/attack2.wav"
+    ],
+    "death": [
+      "sounds/aliens/stalker/death.wav"
+    ],
+    "ready": [
+      "sounds/aliens/stalker/ready.wav"
+    ],
+    "blink": "sounds/aliens/stalker/blink.wav",
+    "attackImpact": "sounds/impacts/particle_disruptor_hit.wav"
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.5,
+    "height": 2.0,
+    "mass": 120.0
+  }
+}

@@ -266,7 +266,7 @@ public:
     void UpdateCullableBounds(uint32_t id, const AABB& newBounds);
 
 private:
-    void RenderItem(const RenderItem& item);
+    void DrawItem(const RenderItem& item);
     void CollectSceneNode(SceneNode* node, const glm::mat4& parentTransform);
     void UpdatePerformanceStats();
 

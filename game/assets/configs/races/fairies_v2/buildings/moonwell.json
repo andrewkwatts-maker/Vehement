@@ -1,0 +1,144 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "resource_building",
+  "id": "fairy_moonwell",
+  "name": "Moonwell",
+  "description": "A sacred pool of moonlight that generates mana and heals nearby units. The Moonwell provides passive regeneration and can be upgraded with seasonal aspects.",
+  "race": "fairies",
+  "category": "resource_building",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 800,
+    "healthRegen": 2.0,
+    "armor": 5,
+    "magicResist": 25,
+    "sightRange": 12
+  },
+
+  "cost": {
+    "gold": 200,
+    "wood": 100,
+    "mana": 50
+  },
+
+  "buildTime": 50,
+  "footprint": {
+    "width": 4,
+    "height": 4
+  },
+
+  "requiredBuilding": "fairy_ancient_tree",
+  "requiredAge": 0,
+
+  "generatesResources": {
+    "mana": 2.0
+  },
+
+  "storageCapacity": {
+    "mana": 500
+  },
+
+  "abilities": [
+    {
+      "id": "healing_aura",
+      "name": "Moonwell Regeneration",
+      "description": "Passive aura healing nearby allies for 3 health and 1 mana per second",
+      "type": "passive",
+      "auraRadius": 10.0,
+      "healingPerSecond": 3.0,
+      "manaPerSecond": 1.0
+    },
+    {
+      "id": "replenish",
+      "name": "Replenish",
+      "description": "Instantly restore 200 health and 100 mana to target unit (3 charges, recharge over time)",
+      "type": "active",
+      "hotkey": "Q",
+      "charges": 3,
+      "rechargeTime": 60.0,
+      "range": 8.0,
+      "healing": 200,
+      "manaRestored": 100
+    },
+    {
+      "id": "lunar_surge",
+      "name": "Lunar Surge",
+      "description": "Channel moon energy to double mana regeneration for all buildings for 30 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 120.0,
+      "duration": 30.0,
+      "globalEffect": true,
+      "effectType": "manaRegenBoost",
+      "multiplier": 2.0
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "spring_aspect",
+      "name": "Spring Aspect",
+      "description": "+50% healing power, grants health regen aura",
+      "cost": {
+        "gold": 150,
+        "wood": 75,
+        "mana": 100
+      },
+      "upgradeTime": 40,
+      "statBonuses": {
+        "healingMultiplier": 1.5
+      },
+      "grantsAbility": "spring_bloom"
+    },
+    {
+      "id": "winter_aspect",
+      "name": "Winter Aspect",
+      "description": "+100% mana generation, slows nearby enemies",
+      "cost": {
+        "gold": 150,
+        "wood": 75,
+        "mana": 100
+      },
+      "upgradeTime": 40,
+      "statBonuses": {
+        "manaGeneration": 2.0
+      },
+      "grantsAbility": "winter_chill"
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/buildings/moonwell.obj",
+    "portrait": "textures/races/fairies/portraits/moonwell.png",
+    "icon": "textures/races/fairies/icons/moonwell.png",
+    "scale": 1.5,
+    "textures": {
+      "diffuse": "textures/races/fairies/buildings/moonwell_diffuse.png",
+      "normal": "textures/races/fairies/buildings/moonwell_normal.png",
+      "emissive": "textures/races/fairies/buildings/moonwell_glow.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/buildings/moonwell_ripple.anim",
+      "build": "animations/fairies/buildings/moonwell_fill.anim",
+      "death": "animations/fairies/buildings/moonwell_drain.anim"
+    },
+    "auraEffect": "effects/moonlight_aura.fx",
+    "waterEffect": "effects/glowing_water.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/buildings/moonwell_chime.wav"],
+    "build": ["sounds/fairies/buildings/water_fill.wav"],
+    "complete": ["sounds/fairies/buildings/moonwell_complete.wav"],
+    "death": ["sounds/fairies/buildings/water_drain.wav"],
+    "ambient": "sounds/fairies/buildings/water_ambient.wav"
+  },
+
+  "requirements": {
+    "terrain": ["grass", "forest"],
+    "nearWater": true,
+    "waterDistance": 15.0,
+    "clearArea": true
+  }
+}

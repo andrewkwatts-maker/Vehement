@@ -1,0 +1,59 @@
+// FIXED SECTIONS TO ADD AFTER LINE 407:
+
+void RTSApplication::RenderOnlineGame() {
+    ImGui::Begin("Online Multiplayer");
+
+    ImGui::Text("Online Multiplayer Mode");
+    ImGui::Separator();
+
+    ImGui::TextWrapped("Online multiplayer features will be implemented here, including:");
+    ImGui::BulletText("Matchmaking");
+    ImGui::BulletText("Lobby system");
+    ImGui::BulletText("Player synchronization");
+    ImGui::BulletText("Leaderboards");
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
+    if (ImGui::Button("Return to Main Menu")) {
+        ReturnToMainMenu();
+    }
+
+    ImGui::End();
+}
+
+void RTSApplication::StartSoloGame() {
+    spdlog::info("Starting Solo Game");
+
+    // TODO: Full solo game mode integration requires building game library
+    // This will be implemented once World, TileMap, TerrainGenerator, etc. are compiled
+    /*
+    if (!m_soloGameMode) {
+        m_soloGameMode = std::make_unique<Vehement::SoloGameMode>();
+        if (!m_soloGameMode->Initialize()) {
+            spdlog::error("Failed to initialize solo game mode");
+            return;
+        }
+    }
+
+    auto& renderer = Nova::Engine::Instance().GetRenderer();
+    if (!m_soloGameMode->GenerateMap(renderer)) {
+        spdlog::error("Failed to generate solo game map");
+        return;
+    }
+
+    spdlog::info("Solo game map generated successfully");
+    */
+
+    m_currentMode = GameMode::Solo;
+}
+
+void RTSApplication::StartOnlineGame() {
+    spdlog::info("Starting Online Multiplayer");
+    m_currentMode = GameMode::Online;
+}
+
+void RTSApplication::ReturnToMainMenu() {
+    spdlog::info("Returning to Main Menu");
+    m_currentMode = GameMode::MainMenu;
+}

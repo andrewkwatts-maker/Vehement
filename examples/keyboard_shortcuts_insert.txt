@@ -1,0 +1,66 @@
+
+        // File menu shortcuts
+        if (input.IsKeyDown(Nova::Key::LeftControl) || input.IsKeyDown(Nova::Key::RightControl)) {
+            if (input.IsKeyDown(Nova::Key::LeftShift) || input.IsKeyDown(Nova::Key::RightShift)) {
+                // Ctrl+Shift+N - New World Map
+                if (input.IsKeyPressed(Nova::Key::N)) {
+                    NewWorldMap();
+                }
+                // Ctrl+Shift+S - Save As
+                if (input.IsKeyPressed(Nova::Key::S)) {
+                    m_showSaveMapDialog = true;
+                }
+            } else {
+                // Ctrl+N - New Local Map
+                if (input.IsKeyPressed(Nova::Key::N)) {
+                    m_showNewMapDialog = true;
+                }
+                // Ctrl+O - Open Map
+                if (input.IsKeyPressed(Nova::Key::O)) {
+                    m_showLoadMapDialog = true;
+                }
+                // Ctrl+S - Save Map
+                if (input.IsKeyPressed(Nova::Key::S)) {
+                    if (!m_currentMapPath.empty()) {
+                        SaveMap(m_currentMapPath);
+                    } else {
+                        m_showSaveMapDialog = true;
+                    }
+                }
+
+                // Edit menu shortcuts
+                // Ctrl+Z - Undo
+                if (input.IsKeyPressed(Nova::Key::Z)) {
+                    if (m_commandHistory && m_commandHistory->CanUndo()) {
+                        m_commandHistory->Undo();
+                    }
+                }
+                // Ctrl+Y - Redo
+                if (input.IsKeyPressed(Nova::Key::Y)) {
+                    if (m_commandHistory && m_commandHistory->CanRedo()) {
+                        m_commandHistory->Redo();
+                    }
+                }
+                // Ctrl+X - Cut
+                if (input.IsKeyPressed(Nova::Key::X)) {
+                    if (m_selectedObjectIndex >= 0) {
+                        CopySelectedObjects();
+                        DeleteSelectedObjects();
+                    }
+                }
+                // Ctrl+C - Copy
+                if (input.IsKeyPressed(Nova::Key::C)) {
+                    if (m_selectedObjectIndex >= 0) {
+                        CopySelectedObjects();
+                    }
+                }
+                // Ctrl+V - Paste
+                if (input.IsKeyPressed(Nova::Key::V)) {
+                    spdlog::warn("Paste not yet implemented");
+                }
+                // Ctrl+A - Select All
+                if (input.IsKeyPressed(Nova::Key::A)) {
+                    SelectAllObjects();
+                }
+            }
+        }

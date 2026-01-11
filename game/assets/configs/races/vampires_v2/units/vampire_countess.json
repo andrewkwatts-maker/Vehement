@@ -1,0 +1,103 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "mystic_unit",
+  "id": "vampire_countess",
+  "name": "Vampire Countess",
+  "description": "Seductive vampire nobility who charm and dominate enemies with dark glamour. Converts enemy units and drains their will to fight.",
+  "race": "vampires",
+  "category": "spellcaster",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 480,
+    "healthRegen": 1.5,
+    "mana": 280,
+    "manaRegen": 2.5,
+    "damage": 16,
+    "spellPower": 40,
+    "armor": 2,
+    "magicResist": 28,
+    "moveSpeed": 5.5,
+    "sightRange": 13,
+    "critChance": 0.10,
+    "spellCritChance": 0.18,
+    "spellCritMultiplier": 2.3
+  },
+
+  "cost": {
+    "gold": 450,
+    "blood": 100,
+    "mana": 80,
+    "food": 5
+  },
+
+  "trainTime": 70,
+  "populationCost": 4,
+  "requiredBuilding": "vampire_castle",
+  "requiredAge": 2,
+  "requiredTech": "dark_nobility",
+
+  "armorType": "light",
+  "attackType": "magic",
+
+  "abilities": [
+    {
+      "id": "mass_charm",
+      "name": "Mass Charm",
+      "description": "Charm all enemy units in area to fight for you for 20 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "manaCost": 120,
+      "cooldown": 60.0,
+      "range": 10.0,
+      "radius": 5.0,
+      "duration": 20.0,
+      "excludes": ["hero", "mechanical"]
+    },
+    {
+      "id": "seduce",
+      "name": "Seduce",
+      "description": "Permanently convert a single enemy unit (not heroes). Converted unit becomes vampire thrall.",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 80,
+      "cooldown": 30.0,
+      "range": 7.0,
+      "permanent": true,
+      "convertsTo": "vampire_thrall",
+      "excludes": ["hero"]
+    },
+    {
+      "id": "vampiric_kiss",
+      "name": "Vampiric Kiss",
+      "description": "Drain target for 100 damage, healing self for 150% of damage and charming for 8 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 60,
+      "cooldown": 18.0,
+      "range": 6.0,
+      "damage": 100,
+      "healMultiplier": 1.50,
+      "charmDuration": 8.0
+    },
+    {
+      "id": "dark_glamour",
+      "name": "Dark Glamour",
+      "description": "Aura reducing enemy attack damage by 20% and increasing charm duration by 50%",
+      "type": "aura",
+      "radius": 10.0,
+      "affects": ["enemy_units"],
+      "debuffs": {
+        "damage": -0.20
+      },
+      "charmDurationBonus": 0.50
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/vampires/units/vampire_countess.obj",
+    "portrait": "textures/races/vampires/portraits/vampire_countess.png",
+    "icon": "textures/races/vampires/icons/vampire_countess.png",
+    "scale": 1.0
+  }
+}

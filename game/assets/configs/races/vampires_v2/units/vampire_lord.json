@@ -1,0 +1,202 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "melee_unit",
+  "id": "vampire_lord",
+  "name": "Vampire Lord",
+  "description": "Ancient vampire nobility commanding dark powers. Lords inspire nearby vampires, charm enemies, and can transform into mist to escape danger.",
+  "race": "vampires",
+  "category": "melee",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 650,
+    "healthRegen": 2.5,
+    "mana": 150,
+    "manaRegen": 1.5,
+    "damage": 28,
+    "damageVariance": 0.12,
+    "attackSpeed": 1.5,
+    "attackRange": 1.6,
+    "armor": 8,
+    "magicResist": 25,
+    "moveSpeed": 5.5,
+    "sightRange": 14,
+    "detectionRange": 12,
+    "critChance": 0.15,
+    "critMultiplier": 2.2
+  },
+
+  "cost": {
+    "gold": 400,
+    "blood": 80,
+    "mana": 50,
+    "food": 5
+  },
+
+  "trainTime": 60,
+  "populationCost": 4,
+  "requiredBuilding": "vampire_castle",
+  "requiredAge": 2,
+  "requiredTech": "vampire_nobility",
+
+  "armorType": "heavy",
+  "attackType": "hero",
+
+  "bonusVs": [
+    {
+      "category": "light",
+      "multiplier": 1.40
+    },
+    {
+      "category": "medium",
+      "multiplier": 1.25
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "vampiric_aura",
+      "name": "Vampiric Aura",
+      "description": "Nearby vampire units gain 20% lifesteal and +2 armor",
+      "type": "aura",
+      "radius": 10.0,
+      "affects": ["vampire_units"],
+      "bonuses": {
+        "lifesteal": 0.20,
+        "armor": 2
+      }
+    },
+    {
+      "id": "dominate_mind",
+      "name": "Dominate Mind",
+      "description": "Charm an enemy unit to fight for you for 30 seconds. Does not work on heroes.",
+      "type": "active",
+      "hotkey": "E",
+      "manaCost": 75,
+      "cooldown": 45.0,
+      "range": 6.0,
+      "duration": 30.0,
+      "targetType": "enemy_unit",
+      "excludes": ["hero", "mechanical", "undead"]
+    },
+    {
+      "id": "mist_form",
+      "name": "Mist Form",
+      "description": "Transform into invulnerable mist, gaining 80% movement speed but unable to attack. Lasts 5 seconds.",
+      "type": "active",
+      "hotkey": "Q",
+      "manaCost": 50,
+      "cooldown": 30.0,
+      "duration": 5.0,
+      "effects": {
+        "invulnerable": true,
+        "moveSpeed": 1.80,
+        "canAttack": false,
+        "canCastSpells": false
+      }
+    },
+    {
+      "id": "blood_pact",
+      "name": "Blood Pact",
+      "description": "Sacrifice 20% of max health to restore 100 mana and gain 50% attack speed for 10 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "manaCost": 0,
+      "cooldown": 25.0,
+      "healthCost": 0.20,
+      "manaGain": 100,
+      "buffDuration": 10.0,
+      "attackSpeedBonus": 1.50
+    },
+    {
+      "id": "aristocratic_presence",
+      "name": "Aristocratic Presence",
+      "description": "Nearby enemies have -15% attack damage and -10% movement speed",
+      "type": "aura",
+      "radius": 8.0,
+      "affects": ["enemy_units"],
+      "debuffs": {
+        "damage": -0.15,
+        "moveSpeed": -0.10
+      }
+    },
+    {
+      "id": "night_supremacy",
+      "name": "Night Supremacy",
+      "description": "At night: +35% damage, +4 health regen, abilities cost 25% less mana",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "damage": 1.35,
+          "healthRegen": 4.0,
+          "manaCostReduction": 0.25
+        }
+      }
+    }
+  ],
+
+  "upgrades": ["vampire_lord_armor", "dark_enchantments", "ancient_bloodline"],
+
+  "visuals": {
+    "model": "models/races/vampires/units/vampire_lord.obj",
+    "portrait": "textures/races/vampires/portraits/vampire_lord.png",
+    "icon": "textures/races/vampires/icons/vampire_lord.png",
+    "scale": 1.1,
+    "textures": {
+      "diffuse": "textures/races/vampires/units/vampire_lord_diffuse.png",
+      "normal": "textures/races/vampires/units/vampire_lord_normal.png",
+      "specular": "textures/races/vampires/units/vampire_lord_specular.png",
+      "emissive": "textures/races/vampires/units/vampire_lord_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/vampires/vampire_lord/idle.anim",
+      "walk": "animations/vampires/vampire_lord/walk.anim",
+      "attack": "animations/vampires/vampire_lord/attack.anim",
+      "ability_dominate": "animations/vampires/vampire_lord/dominate.anim",
+      "ability_mist": "animations/vampires/vampire_lord/mist_form.anim",
+      "ability_pact": "animations/vampires/vampire_lord/blood_pact.anim",
+      "death": "animations/vampires/vampire_lord/death.anim"
+    },
+    "particleEffects": {
+      "aura": "effects/vampires/vampiric_aura.fx",
+      "dominate": "effects/vampires/mind_control.fx",
+      "mistForm": "effects/vampires/mist_transformation.fx",
+      "bloodPact": "effects/vampires/blood_magic.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/vampire_lord/select_1.wav", "sounds/vampires/vampire_lord/select_2.wav"],
+    "move": ["sounds/vampires/vampire_lord/move_1.wav"],
+    "attack": ["sounds/sword_noble.wav"],
+    "death": ["sounds/vampires/vampire_lord/death.wav"],
+    "ability_dominate": ["sounds/vampires/dominate_mind.wav"],
+    "ability_mist": ["sounds/vampires/mist_form.wav"],
+    "ability_pact": ["sounds/vampires/blood_magic.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.42,
+    "height": 1.95,
+    "mass": 120.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/vampire_commander.bt",
+    "profile": "commander",
+    "aggroRange": 14.0,
+    "priorityTargets": ["heroes", "casters", "high_value"],
+    "useAbilities": true,
+    "preferNighttime": true,
+    "commandsUnits": true,
+    "commandRadius": 12.0
+  },
+
+  "metadata": {
+    "loreDescription": "Vampire Lords are the ancient nobility of the undead realm, having ruled for centuries. They command both martial prowess and formidable dark magic, bending mortals to their will.",
+    "tacticalRole": "Elite commander and duelist. Provides powerful auras. Use Dominate Mind on key enemies. Mist Form for escapes.",
+    "strengths": ["Leadership auras", "Mind control", "Survivability", "Night supremacy"],
+    "weaknesses": ["High cost", "Mana dependent", "Reduced effectiveness in daylight"]
+  }
+}

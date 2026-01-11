@@ -157,7 +157,7 @@ StateBehavior StateBehavior::FromJson(const json& j) {
 // AnimationState
 // ============================================================================
 
-json AnimationState::ToJson() const {
+json StateNode::ToJson() const {
     json j = {
         {"name", name},
         {"speed", speed},
@@ -206,8 +206,8 @@ json AnimationState::ToJson() const {
     return j;
 }
 
-AnimationState AnimationState::FromJson(const json& j) {
-    AnimationState state;
+StateNode StateNode::FromJson(const json& j) {
+    StateNode state;
     state.name = j.value("name", "");
     state.animationClip = j.value("clip", "");
     state.speed = j.value("speed", 1.0f);
@@ -320,7 +320,7 @@ AnimationParameter AnimationParameter::FromJson(const json& j) {
 // AnimationLayer
 // ============================================================================
 
-json AnimationLayer::ToJson() const {
+json StateMachineLayer::ToJson() const {
     json j = {
         {"name", name},
         {"weight", weight},
@@ -342,8 +342,8 @@ json AnimationLayer::ToJson() const {
     return j;
 }
 
-AnimationLayer AnimationLayer::FromJson(const json& j) {
-    AnimationLayer layer;
+StateMachineLayer StateMachineLayer::FromJson(const json& j) {
+    StateMachineLayer layer;
     layer.name = j.value("name", "");
     layer.weight = j.value("weight", 1.0f);
     layer.blendingMode = j.value("blendingMode", "override");
@@ -733,17 +733,17 @@ bool DataDrivenStateMachine::Reload() {
     return LoadFromFile(m_configPath);
 }
 
-void DataDrivenStateMachine::AddState(const AnimationState& state) {
+void DataDrivenStateMachine::AddState(const StateNode& state) {
     m_states.push_back(state);
 }
 
-void DataDrivenStateMachine::AddState(AnimationState&& state) {
+void DataDrivenStateMachine::AddState(StateNode&& state) {
     m_states.push_back(std::move(state));
 }
 
 bool DataDrivenStateMachine::RemoveState(const std::string& name) {
     auto it = std::find_if(m_states.begin(), m_states.end(),
-                           [&name](const AnimationState& s) { return s.name == name; });
+                           [&name](const StateNode& s) { return s.name == name; });
     if (it != m_states.end()) {
         m_states.erase(it);
         return true;
@@ -751,15 +751,15 @@ bool DataDrivenStateMachine::RemoveState(const std::string& name) {
     return false;
 }
 
-AnimationState* DataDrivenStateMachine::GetState(const std::string& name) {
+StateNode* DataDrivenStateMachine::GetState(const std::string& name) {
     auto it = std::find_if(m_states.begin(), m_states.end(),
-                           [&name](const AnimationState& s) { return s.name == name; });
+                           [&name](const StateNode& s) { return s.name == name; });
     return it != m_states.end() ? &(*it) : nullptr;
 }
 
-const AnimationState* DataDrivenStateMachine::GetState(const std::string& name) const {
+const StateNode* DataDrivenStateMachine::GetState(const std::string& name) const {
     auto it = std::find_if(m_states.begin(), m_states.end(),
-                           [&name](const AnimationState& s) { return s.name == name; });
+                           [&name](const StateNode& s) { return s.name == name; });
     return it != m_states.end() ? &(*it) : nullptr;
 }
 
@@ -767,19 +767,19 @@ void DataDrivenStateMachine::SetDefaultState(const std::string& stateName) {
     m_defaultState = stateName;
 }
 
-void DataDrivenStateMachine::AddLayer(const AnimationLayer& layer) {
+void DataDrivenStateMachine::AddLayer(const StateMachineLayer& layer) {
     m_layers.push_back(layer);
 }
 
-AnimationLayer* DataDrivenStateMachine::GetLayer(const std::string& name) {
+StateMachineLayer* DataDrivenStateMachine::GetLayer(const std::string& name) {
     auto it = std::find_if(m_layers.begin(), m_layers.end(),
-                           [&name](const AnimationLayer& l) { return l.name == name; });
+                           [&name](const StateMachineLayer& l) { return l.name == name; });
     return it != m_layers.end() ? &(*it) : nullptr;
 }
 
-const AnimationLayer* DataDrivenStateMachine::GetLayer(const std::string& name) const {
+const StateMachineLayer* DataDrivenStateMachine::GetLayer(const std::string& name) const {
     auto it = std::find_if(m_layers.begin(), m_layers.end(),
-                           [&name](const AnimationLayer& l) { return l.name == name; });
+                           [&name](const StateMachineLayer& l) { return l.name == name; });
     return it != m_layers.end() ? &(*it) : nullptr;
 }
 

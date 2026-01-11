@@ -1,0 +1,244 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "siege_unit",
+  "id": "naga_leviathan",
+  "name": "Leviathan",
+  "description": "Colossal sea serpent of legend. Devastating siege beast that crushes buildings and swallows ships whole.",
+
+  "category": "siege",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 800,
+    "healthRegen": 2.0,
+    "mana": 100,
+    "manaRegen": 1.2,
+    "damage": 80,  // Massive siege damage
+    "damageVariance": 0.15,
+    "attackSpeed": 0.6,  // Slow but devastating
+    "attackRange": 3.5,
+    "armor": 5,
+    "magicResist": 2,
+    "moveSpeed": 3.5,
+    "turnSpeed": 180,
+    "acceleration": 5.0,
+    "sightRange": 12,
+    "critChance": 0.1,
+    "critMultiplier": 2.5
+  },
+
+  "combat": {
+    "attackType": "siege",
+    "armorType": "fortified",
+
+    "attackAnimation": {
+      "windupTime": 0.8,
+      "backswingTime": 1.0,
+      "totalDuration": 1.67
+    },
+
+    "bonusVs": [
+      {
+        "category": "building",
+        "multiplier": 3.0,
+        "flatBonus": 100
+      },
+      {
+        "category": "fortified",
+        "multiplier": 2.5
+      },
+      {
+        "category": "ship",
+        "multiplier": 4.0
+      }
+    ],
+
+    "penaltyVs": [
+      {
+        "category": "unarmored",
+        "multiplier": 0.5
+      },
+      {
+        "category": "light",
+        "multiplier": 0.6
+      }
+    ],
+
+    "splash": {
+      "enabled": true,
+      "radius": 4.0,
+      "fullDamageRadius": 2.0,
+      "mediumDamageRadius": 3.0,
+      "lightDamageRadius": 4.0
+    }
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 1.5,
+    "pushPriority": 10,
+    "pathfindingType": "amphibious",
+    "unitSize": "huge",
+
+    "waterMovementMultiplier": 1.8,  // Much faster in water
+    "landMovementMultiplier": 0.5,  // Very slow on land
+    "canCrushUnits": true  // Can walk over smaller units
+  },
+
+  "cost": {
+    "gold": 400,
+    "wood": 0,
+    "food": 0,
+    "stone": 100,
+    "mana": 150
+  },
+
+  "trainTime": 90,
+  "populationCost": 6,
+  "requiredBuilding": "abyssal_nexus",
+  "requiredAge": 2,
+  "requiredTech": "leviathan_summoning",
+
+  "abilities": [
+    {
+      "id": "swallow_whole",
+      "name": "Swallow Whole",
+      "description": "Devours a medium or smaller unit, killing it instantly (not heroes)",
+      "manaCost": 50,
+      "cooldown": 30,
+      "range": 3
+    },
+    {
+      "id": "tidal_wave",
+      "name": "Tidal Wave",
+      "description": "Summons a massive wave that damages and pushes back all enemies in a line",
+      "manaCost": 80,
+      "cooldown": 45,
+      "damage": 150,
+      "range": 15,
+      "width": 6
+    },
+    {
+      "id": "deep_sea_regeneration",
+      "name": "Deep Sea Regeneration",
+      "description": "Passive: Regenerates 5 HP/sec in deep water",
+      "passive": true
+    }
+  ],
+
+  "upgrades": [
+    "leviathan_armor",
+    "leviathan_rage",
+    "ancient_leviathan"
+  ],
+
+  "isUnique": true,  // Only one at a time
+  "maxCount": 1,
+
+  "formation": {
+    "preferredPosition": "front",
+    "formationSpacing": 3.0,
+    "maintainFormation": false
+  },
+
+  "ai": {
+    "aggroRange": 15,
+    "targetPriority": [
+      {
+        "type": "building",
+        "weight": 3.0
+      },
+      {
+        "type": "fortified",
+        "weight": 2.0
+      },
+      {
+        "type": "closest",
+        "weight": 1.0
+      }
+    ],
+    "pursuitRange": 20
+  },
+
+  "experience": {
+    "canGainExperience": true,
+    "maxLevel": 3,
+    "experienceValue": 400,
+    "bountyGold": 200
+  },
+
+  "visuals": {
+    "model": "models/units/naga/leviathan.fbx",
+    "portrait": "textures/portraits/naga/leviathan.png",
+    "icon": "textures/icons/units/naga/leviathan.png",
+    "scale": 3.5,  // Massive size
+
+    "animations": {
+      "idle": "anim_idle_coil",
+      "walk": "anim_serpent_swim",
+      "attack": "anim_bite_crush",
+      "death": "anim_death_massive",
+      "special": "anim_swallow",
+      "spell": "anim_tidal_wave"
+    },
+
+    "deathEffect": "effects/leviathan_death.fx",
+    "shadowSize": 3.5,
+    "selectionScale": 2.0,
+
+    "teamColorParts": ["scales_accent"],
+    "glowAtNight": true,
+    "glowColor": "#0088FF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 1.0,
+      "pulseSpeed": 0.8,
+      "patterns": ["spine_line", "eye_glow"]
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/leviathan/select1.wav"],
+    "move": ["sounds/units/naga/leviathan/move1.wav"],
+    "attack": ["sounds/units/naga/leviathan/attack_roar.wav"],
+    "death": ["sounds/units/naga/leviathan/death_roar.wav"],
+    "ambient": "sounds/ambient/leviathan_rumble.wav"
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "legendary": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "healthRegen": 3.0,
+        "moveSpeed": 1.8,
+        "damage": 1.2
+      },
+      "atDepth": {
+        "deepWater": {
+          "healthRegen": 5.0,
+          "armor": 5,
+          "damage": 1.5
+        }
+      },
+      "onLand": {
+        "moveSpeed": 0.5,
+        "attackSpeed": 0.8
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Legendary siege unit. Devastating vs buildings and ships. Dominates deep water. Limited to 1.",
+    "tacticalUse": "Ultimate siege weapon. Use in water for maximum power. Swallow key units. Tidal wave for groups.",
+    "counters": ["buildings", "fortified", "ships", "grouped_units"],
+    "counteredBy": ["anti_siege", "kiting", "land_only_combat"]
+  }
+}

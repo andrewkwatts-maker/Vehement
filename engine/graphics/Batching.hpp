@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <memory>
 #include <cstdint>
+#include <string>
 #include <glm/glm.hpp>
 
 namespace Nova {
@@ -263,8 +264,8 @@ private:
 
     void CreateInstanceBuffer(RenderBatch& batch);
     void UpdateInstanceBuffer(RenderBatch& batch);
-    void RenderBatch(RenderBatch& batch, const glm::mat4& viewProjection);
-    void RenderBatchInstanced(RenderBatch& batch, const glm::mat4& viewProjection);
+    void DrawBatch(RenderBatch& batch, const glm::mat4& viewProjection);
+    void DrawBatchInstanced(RenderBatch& batch, const glm::mat4& viewProjection);
     void SortBatches(std::vector<RenderBatch*>& batches);
     uint64_t ComputeSortKey(const BatchKey& key, float depth);
 

@@ -1,0 +1,95 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "defense_building",
+  "id": "vampire_tower_of_night",
+  "name": "Tower of Night",
+  "description": "A dark spire that projects eternal shadow, attacks enemies with blood bolts, and trains elite night stalkers.",
+  "race": "vampires",
+  "category": "defense",
+  "tier": 2,
+
+  "size": {
+    "width": 2,
+    "height": 2,
+    "footprintShape": "square"
+  },
+
+  "health": 1000,
+  "armor": 8,
+  "magicResist": 20,
+
+  "attackCapability": {
+    "canAttack": true,
+    "damage": 45,
+    "attackSpeed": 1.2,
+    "attackRange": 12,
+    "attackType": "magic",
+    "targetAir": true,
+    "targetGround": true,
+    "projectileType": "shadow_bolt",
+    "nightDamageBonus": 1.40
+  },
+
+  "cost": {
+    "gold": 300,
+    "stone": 250,
+    "blood": 80,
+    "mana": 50
+  },
+
+  "buildTime": 70,
+  "requiredBuilding": "vampire_castle",
+  "requiredAge": 1,
+
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 15.0,
+    "auraType": "shadow_projection",
+    "auraEffects": [
+      {
+        "effect": "creates_shadow",
+        "shadowStrength": 0.60,
+        "description": "Projects shadow in radius, allowing vampires to use night abilities"
+      },
+      {
+        "affect": "vampire_units",
+        "bonus": {
+          "armor": 2
+        }
+      }
+    ]
+  },
+
+  "abilities": [
+    {
+      "id": "eternal_night",
+      "name": "Eternal Night",
+      "description": "Creates artificial shadow in radius, treating area as night for vampire abilities",
+      "type": "passive",
+      "radius": 15.0
+    }
+  ],
+
+  "spawner": {
+    "queueSize": 3,
+    "canTrainUnits": true,
+    "productionQueue": [
+      {
+        "type": "unit",
+        "id": "vampire_night_stalker",
+        "requiredTech": "shadow_mastery"
+      }
+    ]
+  },
+
+  "visuals": {
+    "model": "models/races/vampires/buildings/tower_of_night.obj",
+    "icon": "textures/races/vampires/icons/tower_of_night.png",
+    "glowAtNight": true,
+    "glowColor": "#000033",
+    "particleEffects": {
+      "shadow": "effects/vampires/shadow_projection.fx",
+      "attack": "effects/vampires/shadow_bolt.fx"
+    }
+  }
+}

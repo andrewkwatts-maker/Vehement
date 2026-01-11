@@ -1,0 +1,143 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "worker_unit",
+  "id": "vampire_thrall",
+  "name": "Thrall",
+  "description": "Enslaved mortals bound to the vampire's will. Thralls gather blood-soaked resources, construct dark monuments, and can be sacrificed for greater power. Weakened by daylight.",
+  "race": "vampires",
+  "category": "worker",
+  "tier": 0,
+
+  "baseStats": {
+    "health": 35,
+    "healthRegen": 0.15,
+    "mana": 0,
+    "damage": 4,
+    "attackSpeed": 0.9,
+    "attackRange": 1.0,
+    "armor": 0,
+    "magicResist": 5,
+    "moveSpeed": 4.8,
+    "sightRange": 8,
+    "detectionRange": 5
+  },
+
+  "cost": {
+    "gold": 50,
+    "blood": 10,
+    "food": 1
+  },
+
+  "trainTime": 18,
+  "populationCost": 1,
+  "requiredBuilding": "vampire_castle",
+
+  "canGather": true,
+  "canBuild": true,
+  "canRepair": true,
+
+  "gatheringRates": {
+    "gold": 8,
+    "wood": 10,
+    "stone": 7,
+    "blood": 12
+  },
+
+  "carryCapacity": {
+    "gold": 10,
+    "wood": 12,
+    "stone": 8,
+    "blood": 15
+  },
+
+  "constructionSpeed": 1.0,
+  "repairRate": 4.5,
+
+  "abilities": [
+    {
+      "id": "enthralled",
+      "name": "Enthralled",
+      "description": "Bound to vampire masters. Cannot rebel but dies if master is destroyed.",
+      "type": "passive"
+    },
+    {
+      "id": "blood_offering",
+      "name": "Blood Offering",
+      "description": "Can be sacrificed at Blood Altar to generate mana and blood",
+      "type": "active",
+      "hotkey": "S",
+      "manaCost": 0,
+      "cooldown": 0,
+      "selfDestruct": true,
+      "resources": {
+        "blood": 50,
+        "mana": 25
+      }
+    },
+    {
+      "id": "daylight_weakness",
+      "name": "Daylight Weakness",
+      "description": "20% reduced movement speed and gathering rate during daytime",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "day": {
+          "moveSpeed": -0.2,
+          "gatheringRate": -0.2
+        }
+      }
+    }
+  ],
+
+  "armorType": "unarmored",
+  "attackType": "normal",
+
+  "visuals": {
+    "model": "models/races/vampires/units/thrall.obj",
+    "portrait": "textures/races/vampires/portraits/thrall.png",
+    "icon": "textures/races/vampires/icons/thrall.png",
+    "scale": 0.95,
+    "textures": {
+      "diffuse": "textures/races/vampires/units/thrall_diffuse.png",
+      "normal": "textures/races/vampires/units/thrall_normal.png"
+    },
+    "animations": {
+      "idle": "animations/vampires/thrall/idle.anim",
+      "walk": "animations/vampires/thrall/walk.anim",
+      "attack": "animations/vampires/thrall/attack.anim",
+      "death": "animations/vampires/thrall/death.anim",
+      "gather_gold": "animations/vampires/thrall/mine.anim",
+      "gather_wood": "animations/vampires/thrall/chop.anim",
+      "gather_blood": "animations/vampires/thrall/harvest_blood.anim",
+      "build": "animations/vampires/thrall/build.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/thrall/select_1.wav", "sounds/vampires/thrall/select_2.wav"],
+    "move": ["sounds/vampires/thrall/ack_1.wav", "sounds/vampires/thrall/ack_2.wav"],
+    "attack": ["sounds/vampires/thrall/attack.wav"],
+    "death": ["sounds/vampires/thrall/death.wav"],
+    "ready": ["sounds/vampires/thrall/work.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.25,
+    "height": 1.6,
+    "mass": 65.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/vampire_worker.bt",
+    "profile": "passive",
+    "fleeThreshold": 0.4,
+    "autoGather": true,
+    "prioritizeBlood": true
+  },
+
+  "metadata": {
+    "loreDescription": "Once free mortals, thralls are now enslaved by dark magic to serve their vampire overlords. Their eyes are hollow, their will broken, yet they toil endlessly in the shadow of their masters.",
+    "tacticalRole": "Blood and resource gathering. Can be sacrificed for strategic advantage. Protect during day.",
+    "weaknesses": ["Daylight", "Low health", "Cannot defend itself effectively"]
+  }
+}

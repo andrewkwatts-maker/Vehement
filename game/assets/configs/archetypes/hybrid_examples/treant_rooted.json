@@ -1,0 +1,89 @@
+{
+  "$schema": "../archetype_schema.json",
+  "id": "treant_rooted",
+  "name": "Ancient Treant (Rooted)",
+  "description": "A treant that has rooted itself into the ground, becoming a defensive structure with healing aura",
+  "type": "building",
+
+  "parentArchetypes": [
+    "defense_building",
+    "resource_building"
+  ],
+
+  "behaviors": [
+    {
+      "type": "DefenseBehavior",
+      "config": {
+        "armor": 15.0,
+        "healthRegen": 5.0,
+        "hasAttack": true,
+        "attackRange": 8.0,
+        "attackDamage": 30.0,
+        "attackSpeed": 0.8,
+        "attackType": "entangling_roots",
+        "garrisonCapacity": 0
+      }
+    },
+    {
+      "type": "BuildingAuraBehavior",
+      "config": {
+        "auraName": "Nature's Blessing",
+        "radius": 12.0,
+        "affectsAllies": true,
+        "affectsEnemies": false,
+        "requiresPower": false,
+        "statModifiers": {
+          "healthRegen": 2.0,
+          "armor": 2.0
+        },
+        "grantedAbilities": [],
+        "visualEffect": "green_healing_mist"
+      }
+    },
+    {
+      "type": "ResourceGenerationBehavior",
+      "config": {
+        "generationRates": {
+          "mana": 0.5
+        },
+        "storageCapacity": {
+          "mana": 100.0
+        },
+        "requiresWorkers": false
+      }
+    },
+    {
+      "type": "TransformationBehavior",
+      "config": {
+        "transformationType": "BuildingToUnit",
+        "targetFormId": "treant_mobile",
+        "transformTime": 5.0,
+        "transformDuration": 0.0,
+        "canTransformInCombat": false,
+        "preservesHealth": true,
+        "preservesMana": true,
+        "transformCost": {},
+        "cooldown": 10.0,
+        "abilityName": "Uproot",
+        "description": "Uproot and become mobile again"
+      }
+    }
+  ],
+
+  "stats": {
+    "health": 1200.0,
+    "armor": 15.0,
+    "sightRange": 12.0,
+    "buildTime": 0.0,
+    "foodCost": 0
+  },
+
+  "properties": {
+    "modelPath": "models/units/treant_rooted_sdf.json",
+    "iconPath": "icons/units/treant_rooted.png",
+    "soundSet": "treant",
+    "footprintSize": [3, 3],
+    "selectionPriority": "building",
+    "description_extended": "When rooted, the Treant becomes an immobile defensive structure. It provides healing to nearby allies through its Nature's Blessing aura, and can attack enemies with entangling roots. The Treant can uproot to become mobile again after a 5-second channel."
+  }
+}

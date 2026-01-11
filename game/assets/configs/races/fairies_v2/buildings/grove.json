@@ -1,0 +1,137 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "spawner_building",
+  "id": "fairy_grove",
+  "name": "Enchanted Grove",
+  "description": "A mystical grove where fairies train their warriors and flyers. The grove can specialize in different unit types through seasonal upgrades.",
+  "race": "fairies",
+  "category": "military_building",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 1200,
+    "healthRegen": 3.0,
+    "armor": 6,
+    "magicResist": 20,
+    "sightRange": 14
+  },
+
+  "cost": {
+    "gold": 180,
+    "wood": 120,
+    "mana": 40
+  },
+
+  "buildTime": 45,
+  "footprint": {
+    "width": 5,
+    "height": 5
+  },
+
+  "requiredBuilding": "fairy_ancient_tree",
+  "requiredAge": 0,
+
+  "trainsUnits": [
+    "fairy_pixie",
+    "fairy_sprite",
+    "fairy_dryad",
+    "fairy_satyr",
+    "fairy_centaur"
+  ],
+
+  "abilities": [
+    {
+      "id": "nature_growth_aura",
+      "name": "Nature's Growth",
+      "description": "Passive aura reducing unit training time by 15% in radius",
+      "type": "passive",
+      "auraRadius": 10.0,
+      "trainingSpeedBonus": 0.15
+    },
+    {
+      "id": "call_of_the_wild",
+      "name": "Call of the Wild",
+      "description": "Summon 3 Forest Spirits to defend for 45 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 90.0,
+      "summonCount": 3,
+      "summonDuration": 45.0,
+      "summonUnitId": "forest_spirit"
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "summer_specialization",
+      "name": "Summer Specialization",
+      "description": "Unlock advanced flying units, +25% movement speed for trained units",
+      "cost": {
+        "gold": 200,
+        "wood": 150,
+        "mana": 120
+      },
+      "upgradeTime": 50,
+      "unlocksUnits": ["fairy_phoenix"],
+      "statBonuses": {
+        "trainedUnitMoveSpeed": 0.25
+      }
+    },
+    {
+      "id": "autumn_specialization",
+      "name": "Autumn Specialization",
+      "description": "Unlock nature warriors, +20% armor for trained units",
+      "cost": {
+        "gold": 200,
+        "wood": 150,
+        "mana": 120
+      },
+      "upgradeTime": 50,
+      "unlocksUnits": ["fairy_moonkin"],
+      "statBonuses": {
+        "trainedUnitArmor": 2
+      }
+    }
+  ],
+
+  "researchesTech": [
+    "fairy_archery_mastery",
+    "fairy_melee_training",
+    "fairy_flight_speed",
+    "fairy_nature_magic"
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/buildings/grove.obj",
+    "portrait": "textures/races/fairies/portraits/grove.png",
+    "icon": "textures/races/fairies/icons/grove.png",
+    "scale": 1.8,
+    "textures": {
+      "diffuse": "textures/races/fairies/buildings/grove_diffuse.png",
+      "normal": "textures/races/fairies/buildings/grove_normal.png",
+      "emissive": "textures/races/fairies/buildings/grove_glow.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/buildings/grove_sway.anim",
+      "build": "animations/fairies/buildings/grove_grow.anim",
+      "death": "animations/fairies/buildings/grove_wither.anim",
+      "train": "animations/fairies/buildings/grove_spawn.anim"
+    },
+    "auraEffect": "effects/nature_energy.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/buildings/grove_rustle.wav"],
+    "build": ["sounds/fairies/buildings/grove_grow.wav"],
+    "complete": ["sounds/fairies/buildings/grove_complete.wav"],
+    "death": ["sounds/fairies/buildings/grove_death.wav"],
+    "train": ["sounds/fairies/buildings/grove_train.wav"],
+    "ambient": "sounds/fairies/buildings/forest_ambient.wav"
+  },
+
+  "requirements": {
+    "terrain": ["grass", "forest"],
+    "nearWater": false,
+    "clearArea": true
+  }
+}

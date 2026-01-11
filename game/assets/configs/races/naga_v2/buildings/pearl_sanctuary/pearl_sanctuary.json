@@ -1,0 +1,166 @@
+{
+  "$schema": "../../../../../schemas/building_archetype.schema.json",
+
+  "parentArchetype": "spawner_building_archetype",
+  "id": "naga_pearl_sanctuary",
+  "name": "Pearl Sanctuary",
+  "description": "Sacred chamber where Coral Mages and Sirens are trained in the ancient arts of water magic.",
+
+  "category": "magic",
+  "tier": 2,
+
+  "size": {"width": 4, "height": 4, "footprintShape": "circle"},
+
+  "placement": {
+    "requiresLand": false,
+    "canPlaceOnWater": true,
+    "waterProximityRequired": true,
+    "minDistanceFromOther": 3.0
+  },
+
+  "health": 900,
+  "healthRegen": 1.5,
+  "armor": 3,
+  "magicResist": 8,
+
+  "spawner": {
+    "queueSize": 5,
+    "simultaneousProduction": 1,
+    "productionSpeedMultiplier": 1.0
+  },
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "naga_coral_mage",
+      "name": "Coral Mage",
+      "requiredAge": 1,
+      "requiredTech": "water_magic",
+      "hotkey": "M"
+    },
+    {
+      "type": "unit",
+      "id": "naga_siren",
+      "name": "Siren",
+      "requiredAge": 1,
+      "requiredTech": "siren_calling",
+      "hotkey": "S"
+    },
+    {
+      "type": "tech",
+      "id": "water_magic",
+      "name": "Water Magic",
+      "description": "Unlocks Coral Mages",
+      "cost": {"gold": 200, "mana": 150},
+      "researchTime": 60
+    },
+    {
+      "type": "tech",
+      "id": "siren_calling",
+      "name": "Siren Calling",
+      "description": "Unlocks Sirens",
+      "cost": {"gold": 250, "mana": 200},
+      "researchTime": 70
+    },
+    {
+      "type": "tech",
+      "id": "spell_power_1",
+      "name": "Arcane Tides I",
+      "description": "Increases spell power by 15%",
+      "cost": {"gold": 150, "mana": 100},
+      "researchTime": 50
+    },
+    {
+      "type": "tech",
+      "id": "mana_pool_1",
+      "name": "Deep Reserves I",
+      "description": "Increases mana pool by 20%",
+      "cost": {"gold": 100, "mana": 150},
+      "researchTime": 45
+    }
+  ],
+
+  "cost": {
+    "gold": 300,
+    "stone": 100,
+    "mana": 200
+  },
+
+  "buildTime": 70,
+  "requiredBuilding": "naga_coral_reef",
+  "requiredAge": 1,
+
+  "providesPopulation": 0,
+
+  "resourceGeneration": {
+    "resourceType": "mana",
+    "generationType": "passive",
+    "passiveGeneration": {
+      "manaPerSecond": 1.5,
+      "maxStoredMana": 500,
+      "autoCollect": true
+    }
+  },
+
+  "aura": {
+    "hasAura": true,
+    "auraRadius": 18.0,
+    "auraType": "mana_regeneration",
+    "auraEffects": [
+      {
+        "type": "mana_regen",
+        "value": 1.0,
+        "affectsNagaOnly": true
+      },
+      {
+        "type": "spell_power",
+        "value": 0.1,
+        "affectsNagaOnly": true
+      }
+    ]
+  },
+
+  "visuals": {
+    "model": "models/buildings/naga/pearl_sanctuary.fbx",
+    "icon": "textures/icons/buildings/naga/pearl_sanctuary.png",
+    "glowAtNight": true,
+    "glowColor": "#FFAAFF",
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 1.0,
+      "patterns": ["pearl_glow", "magic_runes", "flowing_mana"]
+    }
+  },
+
+  "sounds": {
+    "ambient": "sounds/ambient/magic_hum.wav",
+    "trainComplete": "sounds/buildings/naga/sanctuary/mage_ready.wav"
+  },
+
+  "modularBuilding": {
+    "enabled": true,
+    "maxComponents": 7,
+    "allowedComponents": [
+      "pearl_chamber_component",
+      "mana_font_component",
+      "singing_crystal_component",
+      "meditation_pool_component"
+    ]
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "magical": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "manaGeneration": 1.4,
+        "auraRadius": 1.2
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Magic building. Trains spellcasters. Generates mana. Provides mana regen aura."
+  }
+}

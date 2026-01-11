@@ -1,0 +1,175 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "siege",
+  "id": "cryptid_thunderbird",
+  "name": "Thunderbird",
+  "description": "Legendary massive bird that commands storms and lightning. Thunderbirds are flying siege units that devastate structures with lightning strikes.",
+  "race": "cryptids",
+  "category": "air_siege",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 680,
+    "healthRegen": 1.5,
+    "damage": 85,
+    "damageVariance": 0.15,
+    "attackSpeed": 0.8,
+    "attackRange": 12.0,
+    "armor": 4,
+    "magicResist": 35,
+    "moveSpeed": 7.0,
+    "sightRange": 16,
+    "critChance": 0.08,
+    "critMultiplier": 2.5
+  },
+
+  "cost": {
+    "gold": 400,
+    "wood": 100,
+    "food": 5
+  },
+
+  "trainTime": 55,
+  "populationCost": 4,
+  "requiredBuilding": "cryptid_elder_tree",
+  "requiredAge": 2,
+
+  "armorType": "heavy",
+  "attackType": "siege",
+  "movementType": "air",
+
+  "canAttackAir": false,
+  "canAttackGround": true,
+
+  "bonusVs": [
+    {
+      "category": "building",
+      "multiplier": 2.5
+    },
+    {
+      "category": "fortification",
+      "multiplier": 3.0
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "lightning_strike",
+      "name": "Lightning Strike",
+      "description": "Calls down lightning that deals massive damage to target and chains to up to 4 nearby enemies",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 12.0,
+      "range": 14.0,
+      "damage": 150,
+      "chainTargets": 4,
+      "chainRange": 4.0,
+      "chainDamageMultiplier": 0.75
+    },
+    {
+      "id": "storm_shield",
+      "name": "Storm Shield",
+      "description": "Surrounded by crackling electricity that reflects 25% of ranged damage back to attackers",
+      "type": "passive",
+      "reflectRangedDamage": 0.25
+    },
+    {
+      "id": "thunderclap",
+      "name": "Thunderclap",
+      "description": "Creates a massive thunderclap that stuns all enemies in area for 3 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 35.0,
+      "radius": 8.0,
+      "stunDuration": 3.0,
+      "damage": 80
+    },
+    {
+      "id": "storm_call",
+      "name": "Storm Call",
+      "description": "Summons a storm that increases lightning strike damage by 50% and attack speed by 30% for 15 seconds",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 60.0,
+      "duration": 15.0,
+      "effects": [
+        {
+          "stat": "damage",
+          "multiplier": 1.50
+        },
+        {
+          "stat": "attackSpeed",
+          "multiplier": 1.30
+        }
+      ]
+    },
+    {
+      "id": "sky_lord",
+      "name": "Sky Lord",
+      "description": "Cannot be targeted by ground melee units",
+      "type": "passive",
+      "immuneToGroundMelee": true
+    }
+  ],
+
+  "flight": {
+    "height": 10.0,
+    "canLand": false,
+    "ignoreTerrain": true,
+    "ignoreWalls": true
+  },
+
+  "upgrades": ["thunderbird_mastery", "storm_fury"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/thunderbird.obj",
+    "portrait": "textures/races/cryptids/portraits/thunderbird.png",
+    "icon": "textures/races/cryptids/icons/thunderbird.png",
+    "scale": 2.0,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/thunderbird_diffuse.png",
+      "normal": "textures/races/cryptids/units/thunderbird_normal.png",
+      "emissive": "textures/races/cryptids/units/thunderbird_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/thunderbird/hover.anim",
+      "fly": "animations/cryptids/thunderbird/soar.anim",
+      "glide": "animations/cryptids/thunderbird/glide.anim",
+      "attack": "animations/cryptids/thunderbird/lightning.anim",
+      "thunderclap": "animations/cryptids/thunderbird/thunderclap.anim",
+      "storm": "animations/cryptids/thunderbird/storm.anim",
+      "death": "animations/cryptids/thunderbird/death.anim"
+    },
+    "particleEffects": {
+      "lightning_aura": "particles/cryptids/lightning_aura.particle",
+      "storm_clouds": "particles/cryptids/storm_clouds.particle",
+      "lightning_bolt": "particles/cryptids/lightning_bolt.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/thunderbird/screech_1.wav", "sounds/cryptids/thunderbird/screech_2.wav"],
+    "move": ["sounds/cryptids/thunderbird/thunder_distant.wav"],
+    "attack": ["sounds/cryptids/thunderbird/lightning.wav"],
+    "thunderclap": ["sounds/cryptids/thunderbird/thunderclap.wav"],
+    "death": ["sounds/cryptids/thunderbird/death.wav"],
+    "ready": ["sounds/cryptids/thunderbird/thunder.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 1.0,
+    "height": 2.5,
+    "mass": 450.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/flying_siege.bt",
+    "profile": "siege",
+    "aggroRange": 14.0,
+    "priorityTargets": ["building", "fortification", "siege"],
+    "maintainMaxRange": true,
+    "useLightningOnClusters": true,
+    "useStormCallInBattle": true
+  }
+}

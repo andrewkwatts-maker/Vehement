@@ -1,0 +1,459 @@
+{
+  "$schema": "../../../schemas/building_archetype.schema.json",
+
+  // =============================================================================
+  // HOUSING/POPULATION BUILDING ARCHETYPE
+  // =============================================================================
+  // This archetype represents a building that primarily provides population capacity.
+  // Behavior composition:
+  // - HousingBehavior: High population capacity
+  // - StatsComponent: Moderate health, low armor
+  //
+  // Use this as a base template for buildings like:
+  // - House, Apartment, Dwelling, Hovel, Keep, Castle, etc.
+  // =============================================================================
+
+  "id": "housing_building_archetype",
+  "name": "Housing Building Template",
+  "description": "A civilian building that provides population capacity, allowing you to train more units. Essential for army scaling.",
+
+  "category": "housing",
+  "tier": 0,
+
+  // =============================================================================
+  // BUILDING SIZE & PLACEMENT
+  // =============================================================================
+  "size": {
+    "width": 2,  // Smaller footprint
+    "height": 2,
+    "footprintShape": "square"
+  },
+
+  "placement": {
+    "requiresLand": true,
+    "canPlaceOnWater": false,
+    "canPlaceOnCliff": false,
+    "requiresFlatTerrain": true,
+    "minDistanceFromOther": 1.0,  // Can be placed close together
+    "minDistanceFromResources": 2.0,
+    "requiresNearby": null,
+    "nearbyRange": 0.0,
+    "blocksPathing": true,
+    "providesVision": true,
+
+    // Housing-specific placement
+    "canCluster": true,  // Housing can be clustered
+    "clusterBonus": {
+      "enabled": false,
+      "bonusPerNearbyHouse": 0.0,
+      "maxBonus": 0.0,
+      "bonusRadius": 5.0
+    }
+  },
+
+  // =============================================================================
+  // BASE STATISTICS
+  // =============================================================================
+  "health": 400,  // Relatively fragile
+  "healthRegen": 0.0,
+  "armor": 1,  // Low armor
+  "magicResist": 0,
+
+  // =============================================================================
+  // HOUSING BEHAVIOR
+  // =============================================================================
+  "providesPopulation": 10,  // Main purpose - provides population
+  "populationCapacity": 10,
+  "requiresPopulation": 0,
+
+  // Population mechanics
+  "population": {
+    "baseCapacity": 10,
+    "capacityPerUpgrade": 2,
+    "maxCapacity": 16,
+
+    // Efficiency
+    "populationEfficiency": 1.0,  // 1.0 = normal, >1 = bonus
+    "costPerPopulation": 5,  // 50 gold / 10 pop = 5 gold per pop
+
+    // Dynamic population
+    "canOvercrowd": false,
+    "overcrowdCapacity": 0,
+    "overcrowdPenalty": 0.0,  // Resource generation penalty when overcrowded
+
+    // Population types
+    "supportsAllTypes": true,
+    "supportedUnitTypes": [],  // Empty = all types
+    "excludedUnitTypes": []
+  },
+
+  // =============================================================================
+  // RESOURCE GENERATION
+  // =============================================================================
+  // Housing buildings don't generate resources
+  "resourceGeneration": {
+    "goldPerSecond": 0,
+    "woodPerSecond": 0,
+    "foodPerSecond": 0,
+    "stonePerSecond": 0,
+    "manaPerSecond": 0,
+    "requiresWorker": false,
+    "workerCapacity": 0
+  },
+
+  // =============================================================================
+  // COST & REQUIREMENTS
+  // =============================================================================
+  "cost": {
+    "gold": 50,  // Cheap and essential
+    "wood": 25,
+    "food": 0,
+    "stone": 0,
+    "mana": 0
+  },
+
+  "buildTime": 20,  // Quick to build
+  "requiredBuilding": "town_hall",
+  "requiredAge": 0,
+  "requiredTech": null,
+
+  // =============================================================================
+  // PRODUCTION QUEUE
+  // =============================================================================
+  // Housing doesn't produce units
+  "productionQueue": [],
+
+  // =============================================================================
+  // GARRISON & DEFENSE
+  // =============================================================================
+  "garrisonCapacity": 5,  // Can garrison civilians for protection
+  "canGarrison": true,
+  "garrisonTypes": ["worker", "civilian"],
+  "garrisonHeal": false,
+  "garrisonHealRate": 0.0,
+  "garrisonProtection": true,  // Protects garrisoned units
+  "garrisonedUnitsInvisible": true,
+
+  // No attack capability
+  "attackCapability": {
+    "canAttack": false,
+    "damage": 0,
+    "attackSpeed": 0,
+    "attackRange": 0,
+    "attackType": "normal",
+    "targetAir": false,
+    "targetGround": false
+  },
+
+  // =============================================================================
+  // BUILDING FEATURES
+  // =============================================================================
+  "isUnique": false,
+  "canRally": false,
+  "canUpgrade": true,
+  "upgradesTo": "large_house",
+  "upgradeCost": {
+    "gold": 75,
+    "wood": 50,
+    "stone": 25,
+    "food": 0,
+    "mana": 0
+  },
+  "upgradeTime": 30,
+  "upgradeBenefits": {
+    "providesPopulation": 15,  // 50% more population
+    "health": 600,
+    "armor": 2
+  },
+
+  // Building flags
+  "isPermanent": true,
+  "isMilitary": false,
+  "isEconomic": true,
+  "isCivilian": true,
+  "requiresPower": false,
+  "providesPower": false,
+
+  // =============================================================================
+  // PASSIVE BENEFITS
+  // =============================================================================
+  "passiveBenefits": {
+    // Some housing provides passive bonuses
+    "happinessBonus": {
+      "enabled": false,
+      "amount": 0,
+      "radius": 0.0
+    },
+
+    // Tax generation (some games)
+    "taxGeneration": {
+      "enabled": false,
+      "goldPerSecond": 0.0,
+      "basedOnPopulation": false,
+      "goldPerPopulation": 0.0
+    },
+
+    // Healing aura
+    "healingAura": {
+      "enabled": false,
+      "radius": 0.0,
+      "healPerSecond": 0.0,
+      "affectsUnits": []
+    }
+  },
+
+  // =============================================================================
+  // DESTRUCTION & REPAIR
+  // =============================================================================
+  "destruction": {
+    "canBeDestroyed": true,
+    "debrisType": "wood",
+    "resourcesOnDestroy": {
+      "gold": 10,
+      "wood": 5
+    },
+    "leavesRuins": false,
+    "ruinsDuration": 0.0,
+
+    // Strategic impact
+    "destroyedPenalty": {
+      "losePopulationCapacity": true,
+      "populationLost": 10,
+      "killGarrisonedUnits": false,  // Units survive, become homeless
+      "ejectGarrison": true
+    }
+  },
+
+  "repair": {
+    "canBeRepaired": true,
+    "repairCostMultiplier": 0.4,  // Cheap to repair
+    "repairSpeed": 8.0,
+    "autoRepair": false,
+    "autoRepairThreshold": 0.0,
+    "repairPriority": "medium"
+  },
+
+  // =============================================================================
+  // AURA & EFFECTS
+  // =============================================================================
+  "aura": {
+    "hasAura": false,
+    "auraRadius": 0.0,
+    "auraType": null,
+    "auraEffects": []
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "model": "models/buildings/house.fbx",
+    "icon": "textures/icons/buildings/house.png",
+    "portrait": "textures/portraits/house.png",
+
+    // Construction
+    "constructionStages": 3,
+    "constructionModels": [
+      "models/buildings/house_stage1.fbx",
+      "models/buildings/house_stage2.fbx",
+      "models/buildings/house_complete.fbx"
+    ],
+
+    // Damage states
+    "hasDestructionAnimation": true,
+    "destructionStages": 2,
+    "damageThreshold": 0.5,
+    "smokeWhenDamaged": true,
+    "fireWhenCritical": true,
+    "criticalHealthPercent": 0.3,
+
+    // Effects
+    "idleEffect": null,
+    "constructionEffect": "effects/construction.fx",
+    "destructionEffect": "effects/building_collapse_small.fx",
+    "fireEffect": "effects/building_fire_small.fx",
+    "smokeEffect": "effects/building_smoke_small.fx",
+
+    // Occupied visual
+    "occupiedEffect": "effects/chimney_smoke.fx",  // Smoke when "occupied"
+    "showOccupancy": true,  // Visual indicator of population
+
+    // Visual features
+    "scale": 1.0,
+    "shadowSize": 2.0,
+    "teamColorParts": ["door", "window_shutters"],
+    "nightLighting": true,
+    "glowAtNight": true,  // Windows glow at night
+    "glowColor": "#FFDD88",
+    "glowWindows": [
+      {
+        "position": {
+          "x": 1.0,
+          "y": 1.5,
+          "z": 0.0
+        },
+        "size": 0.3
+      }
+    ],
+
+    // Variation
+    "hasVariants": true,
+    "variants": [
+      "models/buildings/house_variant1.fbx",
+      "models/buildings/house_variant2.fbx",
+      "models/buildings/house_variant3.fbx"
+    ]
+  },
+
+  "sounds": {
+    "select": [
+      "sounds/buildings/house/select1.wav"
+    ],
+    "construct": "sounds/construction/build_loop.wav",
+    "complete": "sounds/construction/house_complete.wav",
+    "destroy": "sounds/destruction/building_collapse_small.wav",
+    "damaged": "sounds/destruction/wood_break.wav",
+    "repair": "sounds/construction/repair_loop.wav",
+
+    // Garrison sounds
+    "garrisonEnter": "sounds/buildings/house/door_open.wav",
+    "garrisonExit": "sounds/buildings/house/door_close.wav",
+
+    // Ambient
+    "ambient": "sounds/ambient/house_ambient.wav",  // Distant voices, life
+    "ambientNight": "sounds/ambient/house_night.wav"
+  },
+
+  // =============================================================================
+  // ECONOMIC VALUE
+  // =============================================================================
+  "economics": {
+    "constructionCost": 75,  // Total cost
+    "populationProvided": 10,
+    "costPerPopulation": 7.5,  // 7.5 resources per population slot
+    "buildTime": 20,
+
+    // Efficiency
+    "efficiency": {
+      "footprint": 4,  // 2x2 = 4 tiles
+      "populationPerTile": 2.5,  // 10 pop / 4 tiles
+      "costPerTile": 18.75
+    },
+
+    // Scaling
+    "recommendedCount": {
+      "earlyGame": 3,
+      "midGame": 8,
+      "lateGame": 15
+    }
+  },
+
+  // =============================================================================
+  // STRATEGIC VALUE
+  // =============================================================================
+  "strategic": {
+    "importance": "high",  // Critical for army size
+    "targetPriority": 0.4,  // Medium priority target
+    "defenseValue": 4,  // Should be defended
+    "economicValue": 8,  // High economic value
+    "militaryValue": 6,  // Enables military
+
+    // Loss impact
+    "lossImpact": {
+      "populationCapacityReduced": true,
+      "canBlockUnitProduction": true,  // Can't train if population capped
+      "economicImpact": "medium"
+    }
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "large_house" could inherit from this with:
+  // - providesPopulation: 15
+  // - health: 600
+  // - cost.gold: 100
+
+  // A "keep" could inherit with:
+  // - providesPopulation: 25
+  // - health: 1500
+  // - armor: 5
+  // - canAttack: true
+  // - tier: 2
+
+  "variants": {
+    "large_house": {
+      "parentArchetype": "housing_building_archetype",
+      "name": "Large House",
+      "providesPopulation": 15,
+      "health": 600,
+      "armor": 2,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "cost": {
+        "gold": 100,
+        "wood": 50,
+        "stone": 25
+      },
+      "buildTime": 30
+    },
+    "apartment": {
+      "parentArchetype": "housing_building_archetype",
+      "name": "Apartment",
+      "providesPopulation": 20,
+      "tier": 1,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "cost": {
+        "gold": 150,
+        "wood": 100,
+        "stone": 50
+      },
+      "requiredAge": 1
+    },
+    "castle_keep": {
+      "parentArchetype": "housing_building_archetype",
+      "name": "Castle Keep",
+      "category": "military",
+      "providesPopulation": 30,
+      "health": 2000,
+      "armor": 8,
+      "size": {
+        "width": 5,
+        "height": 5
+      },
+      "attackCapability": {
+        "canAttack": true,
+        "damage": 15,
+        "attackSpeed": 1.0,
+        "attackRange": 10,
+        "attackType": "pierce",
+        "targetAir": true,
+        "targetGround": true
+      },
+      "garrisonCapacity": 20,
+      "garrisonTypes": ["all"],
+      "tier": 2,
+      "cost": {
+        "gold": 500,
+        "wood": 200,
+        "stone": 300
+      }
+    }
+  },
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for housing buildings. Essential for population capacity and army scaling.",
+    "economicRole": "Provides population capacity. Build early and often.",
+    "tacticalConsideration": "Protect from early raids. Build near town center. Space efficiently.",
+    "buildOrder": "Build houses proactively before you need them to avoid production blocks.",
+    "commonMistake": "Not building enough houses early = can't produce units when needed"
+  }
+}

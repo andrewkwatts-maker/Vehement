@@ -1,0 +1,251 @@
+#version 460 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// ============================================================================
+// ReSTIR Initial Sampling Pass
+// ============================================================================
+// Generates initial light samples using Resampled Importance Sampling (RIS).
+// For each pixel, we:
+// 1. Test N candidate lights (e.g., 32)
+// 2. Weight them by their contribution (target PDF)
+// 3. Select one light using weighted reservoir sampling
+// 4. Store the result in a reservoir for later reuse
+//
+// This converts naive sampling to importance-sampled lighting in one pass.
+// ============================================================================
+
+// Reservoir structure (must match C++ struct)
+struct Reservoir {
+    int lightIndex;      // Selected light index
+    float weightSum;     // Sum of weights during updates
+    float W;             // Final normalization weight
+    int M;               // Number of samples combined
+    vec3 padding;        // Alignment padding
+};
+
+// Light structure (from ClusteredLighting)
+struct GPULight {
+    vec4 position;       // xyz = position, w = range
+    vec4 direction;      // xyz = direction, w = inner cone angle
+    vec4 color;          // rgb = color, a = intensity
+    vec4 params;         // x = outer cone angle, y = type, z = enabled, w = padding
+};
+
+// Input G-buffers
+layout(rgba32f, binding = 0) uniform image2D u_gBufferPosition;
+layout(rgba16f, binding = 1) uniform image2D u_gBufferNormal;
+layout(rgba8, binding = 2) uniform image2D u_gBufferAlbedo;
+
+// Output reservoir buffer
+layout(std430, binding = 0) buffer ReservoirBuffer {
+    Reservoir reservoirs[];
+};
+
+// Light data
+layout(std430, binding = 2) buffer LightBuffer {
+    GPULight lights[];
+};
+
+// Uniforms
+uniform int u_initialCandidates = 32;
+uniform int u_frameCount = 0;
+uniform int u_lightCount = 0;
+uniform vec2 u_resolution = vec2(1920.0, 1080.0);
+uniform mat4 u_viewMatrix;
+uniform mat4 u_projMatrix;
+
+// ============================================================================
+// Random Number Generation
+// ============================================================================
+
+// Per-pixel RNG state
+uint g_rngState;
+
+// PCG hash - high quality RNG
+void InitRNG(ivec2 pixelCoord, int frame) {
+    uint seed = uint(pixelCoord.x) + uint(pixelCoord.y) * 8192u + uint(frame) * 65536u;
+    g_rngState = seed * 747796405u + 2891336453u;
+}
+
+float Random01() {
+    g_rngState = g_rngState * 747796405u + 2891336453u;
+    uint word = ((g_rngState >> ((g_rngState >> 28u) + 4u)) ^ g_rngState) * 277803737u;
+    return float((word >> 22u) ^ word) / 4294967296.0;
+}
+
+// ============================================================================
+// Light Evaluation
+// ============================================================================
+
+// Evaluate light contribution at a surface point
+vec3 EvaluateLight(GPULight light, vec3 position, vec3 normal, vec3 albedo) {
+    int lightType = int(light.params.y);
+
+    if (lightType == 0) {  // Point light
+        vec3 lightDir = light.position.xyz - position;
+        float dist = length(lightDir);
+
+        if (dist > light.position.w) return vec3(0.0);  // Outside range
+
+        lightDir /= dist;
+        float NdotL = max(dot(normal, lightDir), 0.0);
+
+        if (NdotL < 0.001) return vec3(0.0);
+
+        // Inverse square attenuation with smooth falloff
+        float attenuation = 1.0 / (dist * dist + 1.0);
+        float rangeFalloff = 1.0 - smoothstep(light.position.w * 0.8, light.position.w, dist);
+
+        vec3 contribution = light.color.rgb * light.color.a * NdotL * attenuation * rangeFalloff * albedo;
+        return contribution;
+
+    } else if (lightType == 1) {  // Spot light
+        vec3 lightDir = light.position.xyz - position;
+        float dist = length(lightDir);
+
+        if (dist > light.position.w) return vec3(0.0);
+
+        lightDir /= dist;
+        float NdotL = max(dot(normal, lightDir), 0.0);
+
+        if (NdotL < 0.001) return vec3(0.0);
+
+        // Spot cone attenuation
+        float spotAngle = dot(-lightDir, normalize(light.direction.xyz));
+        float innerCone = cos(light.direction.w);
+        float outerCone = cos(light.params.x);
+        float spotFalloff = smoothstep(outerCone, innerCone, spotAngle);
+
+        if (spotFalloff < 0.001) return vec3(0.0);
+
+        float attenuation = 1.0 / (dist * dist + 1.0);
+        float rangeFalloff = 1.0 - smoothstep(light.position.w * 0.8, light.position.w, dist);
+
+        vec3 contribution = light.color.rgb * light.color.a * NdotL * attenuation * rangeFalloff * spotFalloff * albedo;
+        return contribution;
+
+    } else if (lightType == 2) {  // Directional light
+        vec3 lightDir = -normalize(light.direction.xyz);
+        float NdotL = max(dot(normal, lightDir), 0.0);
+
+        if (NdotL < 0.001) return vec3(0.0);
+
+        vec3 contribution = light.color.rgb * light.color.a * NdotL * albedo;
+        return contribution;
+    }
+
+    return vec3(0.0);
+}
+
+// Convert contribution to scalar weight (luminance)
+float ContributionToWeight(vec3 contribution) {
+    return dot(contribution, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// ============================================================================
+// Reservoir Sampling
+// ============================================================================
+
+// Initialize empty reservoir
+Reservoir CreateReservoir() {
+    Reservoir r;
+    r.lightIndex = -1;
+    r.weightSum = 0.0;
+    r.W = 0.0;
+    r.M = 0;
+    return r;
+}
+
+// Update reservoir with a new sample (weighted reservoir sampling)
+void UpdateReservoir(inout Reservoir r, int newSampleIndex, float weight) {
+    r.weightSum += weight;
+    r.M += 1;
+
+    // Randomly accept this sample with probability weight / weightSum
+    if (Random01() < weight / max(r.weightSum, 0.0001)) {
+        r.lightIndex = newSampleIndex;
+    }
+}
+
+// Finalize reservoir - compute normalization weight W
+void FinalizeReservoir(inout Reservoir r, vec3 position, vec3 normal, vec3 albedo) {
+    if (r.M == 0 || r.lightIndex < 0) {
+        r.W = 0.0;
+        return;
+    }
+
+    // Recompute target PDF for selected light
+    GPULight selectedLight = lights[r.lightIndex];
+    vec3 contribution = EvaluateLight(selectedLight, position, normal, albedo);
+    float targetPdf = ContributionToWeight(contribution);
+
+    // W = (1/M) * (weightSum / targetPdf)
+    // This is the unbiased contribution weight
+    r.W = (r.weightSum / float(r.M)) / max(targetPdf, 0.0001);
+}
+
+// ============================================================================
+// Main Compute Shader
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    // Bounds check
+    if (pixelCoord.x >= int(u_resolution.x) || pixelCoord.y >= int(u_resolution.y)) return;
+
+    // Initialize RNG
+    InitRNG(pixelCoord, u_frameCount);
+
+    // Load G-buffer data
+    vec3 position = imageLoad(u_gBufferPosition, pixelCoord).xyz;
+    vec3 normal = imageLoad(u_gBufferNormal, pixelCoord).xyz;
+    vec3 albedo = imageLoad(u_gBufferAlbedo, pixelCoord).rgb;
+
+    // Early out for sky/background
+    if (length(normal) < 0.1) {
+        int bufferIdx = pixelCoord.y * int(u_resolution.x) + pixelCoord.x;
+        reservoirs[bufferIdx] = CreateReservoir();
+        return;
+    }
+
+    // Normalize normal (in case it's not unit length)
+    normal = normalize(normal);
+
+    // Initialize reservoir for this pixel
+    Reservoir reservoir = CreateReservoir();
+
+    // RIS: Sample N candidate lights and select one via weighted reservoir sampling
+    int candidateCount = min(u_initialCandidates, u_lightCount);
+
+    for (int i = 0; i < candidateCount; i++) {
+        // Randomly select a light (uniform random)
+        int lightIdx = int(Random01() * float(u_lightCount));
+        lightIdx = clamp(lightIdx, 0, u_lightCount - 1);
+
+        GPULight light = lights[lightIdx];
+
+        // Check if light is enabled
+        if (light.params.z < 0.5) continue;
+
+        // Evaluate light contribution (this is our target function)
+        vec3 contribution = EvaluateLight(light, position, normal, albedo);
+        float targetPdf = ContributionToWeight(contribution);
+
+        // Source PDF (uniform random selection)
+        float sourcePdf = 1.0 / float(u_lightCount);
+
+        // Compute RIS weight: targetPdf / sourcePdf
+        float risWeight = targetPdf / sourcePdf;
+
+        // Update reservoir with this candidate
+        UpdateReservoir(reservoir, lightIdx, risWeight);
+    }
+
+    // Finalize reservoir - compute W for unbiased estimation
+    FinalizeReservoir(reservoir, position, normal, albedo);
+
+    // Store reservoir
+    int bufferIdx = pixelCoord.y * int(u_resolution.x) + pixelCoord.x;
+    reservoirs[bufferIdx] = reservoir;
+}

@@ -1,0 +1,173 @@
+{
+  "$schema": "../../../schemas/spell_archetype.schema.json",
+
+  // =============================================================================
+  // CONE SPELL ARCHETYPE
+  // =============================================================================
+  // This archetype represents a directional cone-shaped damage spell.
+  // Behavior composition:
+  // - TargetingBehavior: LineOfSight (cone shaped from caster)
+  // - EffectBehavior: Damage (instant to all in cone)
+  // - ProjectileBehavior: None (instant cone effect)
+  // - ResourceBehavior: Moderate cost, good for clearing groups
+  //
+  // Use this as a base template for spells like:
+  // - Cone of Cold, Flame Breath, Frost Nova (directional), etc.
+  // =============================================================================
+
+  "id": "cone_spell_archetype",
+  "name": "Cone Spell Template",
+  "description": "A directional spell that damages all enemies in a cone-shaped area in front of the caster.",
+
+  "category": "damage",
+  "element": "frost",
+  "tier": 1,
+
+  // =============================================================================
+  // TARGETING BEHAVIOR
+  // =============================================================================
+  "targetType": "cone",  // Cone emanating from caster
+
+  // Direction can be specified by:
+  // - "facing": Uses caster's current facing direction
+  // - "targeted": Player clicks direction/target
+  "directionMode": "targeted",
+
+  "targetFilters": {
+    "canTargetEnemies": true,
+    "canTargetAllies": false,
+    "canTargetSelf": false,
+    "canTargetGround": false,
+    "canTargetAir": true,
+    "canTargetBuildings": true,
+    "canTargetOrganic": true,
+    "canTargetMechanical": true,
+    "requiresLineOfSight": true,  // Walls block the cone
+    "ignoreInvulnerable": true
+  },
+
+  // Not used for cone (uses coneLength instead)
+  "castRange": 0.0,
+
+  // =============================================================================
+  // CONE SHAPE DEFINITION
+  // =============================================================================
+  "coneShape": {
+    "length": 10.0,      // How far the cone extends
+    "angle": 60.0,       // Total cone angle in degrees (30° each side)
+    "originOffset": 1.0  // Distance from caster where cone starts
+  },
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  "projectile": {
+    "type": "instant",
+    "visualDelay": 0.1,  // Minimal delay for effect
+    "warningIndicator": false
+  },
+
+  // Area of effect only applies within the cone
+  "areaOfEffect": 0.0,
+
+  // Maximum targets hit (prevents hitting entire armies)
+  "maxTargets": 8,
+
+  // How targets are selected if max is exceeded
+  "targetPriority": "closest",  // Options: "closest", "furthest", "random", "weakest"
+
+  // =============================================================================
+  // EFFECT BEHAVIOR
+  // =============================================================================
+  "effects": [
+    {
+      "type": "damage",
+      "damageType": "magic",
+      "baseDamage": 60,
+      "scalingFactor": 1.2,
+      "scalingStat": "spellPower",
+      "canCrit": true,
+      "critBonusFromCaster": true,
+      "variance": 0.1
+    },
+    {
+      // Cone spells often have a CC component
+      "type": "debuff",
+      "debuffId": "frozen",
+      "duration": 2.0,
+      "stackable": false,
+      "slowAmount": 0.5  // 50% movement speed reduction
+    }
+  ],
+
+  // Distance-based damage falloff
+  "distanceFalloff": {
+    "enabled": true,
+    "falloffType": "linear",
+    "damageAtMaxRange": 0.7  // 70% damage at max range
+  },
+
+  // =============================================================================
+  // RESOURCE BEHAVIOR
+  // =============================================================================
+  "castTime": 0.4,   // Quick cast for tactical use
+  "cooldown": 8.0,   // Moderate cooldown
+  "manaCost": 70,    // Moderate cost
+
+  "canBeInterrupted": true,
+  "interruptOnDamage": false,
+  "interruptOnMove": true,
+
+  // =============================================================================
+  // REQUIREMENTS & AVAILABILITY
+  // =============================================================================
+  "requiredAge": 0,
+  "requiredBuilding": "frost_spire",
+  "requiredTech": null,
+
+  "learnCost": {
+    "gold": 100,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 50
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "icon": "textures/icons/spells/cone_of_frost.png",
+    "castAnimation": "anim_cast_forward",
+    "castEffect": "effects/cast_frost.fx",
+    "channelEffect": null,
+    "buffEffect": null,
+    "coneEffect": "effects/frost_cone.fx",  // The cone visual
+    "coneDecal": "effects/frost_cone_ground.png",  // Ground indicator
+    "impactEffect": "effects/frost_hit.fx",  // Per-target hit effect
+    "persistentEffect": null
+  },
+
+  "sounds": {
+    "cast": "sounds/spells/frost_cone_cast.wav",
+    "travel": "sounds/spells/frost_cone_whoosh.wav",
+    "impact": "sounds/spells/frost_hit.wav",
+    "hitEnemy": "sounds/spells/ice_shatter.wav"
+  },
+
+  // =============================================================================
+  // TACTICAL CONSIDERATIONS
+  // =============================================================================
+  // Cone spells reward positioning and are great for:
+  // - Controlling chokepoints
+  // - Hitting multiple melee units attacking you
+  // - Clearing groups without affecting allies behind enemies
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for cone-shaped damage spells. Good for tactical AoE without friendly fire risk.",
+    "tacticalUse": "Position to hit maximum enemies while avoiding allies. Best used when enemies cluster."
+  }
+}

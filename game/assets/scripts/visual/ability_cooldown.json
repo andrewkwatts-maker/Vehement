@@ -1,0 +1,234 @@
+{
+    "name": "Ability Cooldown System",
+    "description": "Manages ability cooldowns with UI binding",
+    "version": "1.0",
+    "nodes": [
+        {
+            "id": "node_0",
+            "typeId": "SubscribeEvent",
+            "displayName": "On Ability Used",
+            "position": [100, 150],
+            "channel": "ability.used"
+        },
+        {
+            "id": "node_1",
+            "typeId": "GetProperty",
+            "displayName": "Get Cooldown Duration",
+            "position": [350, 150],
+            "binding": "ability.cooldownDuration"
+        },
+        {
+            "id": "node_2",
+            "typeId": "SetProperty",
+            "displayName": "Set On Cooldown",
+            "position": [550, 100],
+            "binding": "ability.isOnCooldown"
+        },
+        {
+            "id": "node_3",
+            "typeId": "SetProperty",
+            "displayName": "Set Remaining Time",
+            "position": [550, 200],
+            "binding": "ability.cooldownRemaining"
+        },
+        {
+            "id": "node_4",
+            "typeId": "Timer",
+            "displayName": "Cooldown Timer",
+            "position": [800, 150],
+            "interval": 0.1
+        },
+        {
+            "id": "node_5",
+            "typeId": "GetProperty",
+            "displayName": "Get Remaining",
+            "position": [1000, 100],
+            "binding": "ability.cooldownRemaining"
+        },
+        {
+            "id": "node_6",
+            "typeId": "Subtract",
+            "displayName": "Decrement Timer",
+            "position": [1200, 150],
+            "inputs": {
+                "b": 0.1
+            }
+        },
+        {
+            "id": "node_7",
+            "typeId": "Clamp",
+            "displayName": "Clamp Timer",
+            "position": [1400, 150],
+            "inputs": {
+                "min": 0,
+                "max": 9999
+            }
+        },
+        {
+            "id": "node_8",
+            "typeId": "SetProperty",
+            "displayName": "Update Remaining",
+            "position": [1600, 150],
+            "binding": "ability.cooldownRemaining"
+        },
+        {
+            "id": "node_9",
+            "typeId": "Compare",
+            "displayName": "Cooldown Done?",
+            "position": [1600, 300],
+            "operation": "LessEqual",
+            "inputs": {
+                "b": 0
+            }
+        },
+        {
+            "id": "node_10",
+            "typeId": "Branch",
+            "displayName": "Check Complete",
+            "position": [1800, 250]
+        },
+        {
+            "id": "node_11",
+            "typeId": "SetProperty",
+            "displayName": "Clear Cooldown",
+            "position": [2000, 200],
+            "binding": "ability.isOnCooldown"
+        },
+        {
+            "id": "node_12",
+            "typeId": "PublishEvent",
+            "displayName": "Cooldown Ready",
+            "position": [2200, 200],
+            "channel": "ability.cooldown.ready"
+        },
+        {
+            "id": "node_13",
+            "typeId": "Divide",
+            "displayName": "Calculate Progress",
+            "position": [1000, 350]
+        },
+        {
+            "id": "node_14",
+            "typeId": "SetProperty",
+            "displayName": "Update UI Progress",
+            "position": [1200, 350],
+            "binding": "ui.abilityBar.cooldownProgress"
+        }
+    ],
+    "connections": [
+        {
+            "sourceNode": "node_0",
+            "sourcePort": "exec",
+            "targetNode": "node_2",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_0",
+            "sourcePort": "data",
+            "targetNode": "node_1",
+            "targetPort": "binding"
+        },
+        {
+            "sourceNode": "node_1",
+            "sourcePort": "value",
+            "targetNode": "node_3",
+            "targetPort": "value"
+        },
+        {
+            "sourceNode": "node_2",
+            "sourcePort": "exec",
+            "targetNode": "node_3",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_3",
+            "sourcePort": "exec",
+            "targetNode": "node_4",
+            "targetPort": "start"
+        },
+        {
+            "sourceNode": "node_4",
+            "sourcePort": "tick",
+            "targetNode": "node_8",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_5",
+            "sourcePort": "value",
+            "targetNode": "node_6",
+            "targetPort": "a"
+        },
+        {
+            "sourceNode": "node_6",
+            "sourcePort": "result",
+            "targetNode": "node_7",
+            "targetPort": "value"
+        },
+        {
+            "sourceNode": "node_7",
+            "sourcePort": "result",
+            "targetNode": "node_8",
+            "targetPort": "value"
+        },
+        {
+            "sourceNode": "node_7",
+            "sourcePort": "result",
+            "targetNode": "node_9",
+            "targetPort": "a"
+        },
+        {
+            "sourceNode": "node_8",
+            "sourcePort": "exec",
+            "targetNode": "node_10",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_9",
+            "sourcePort": "result",
+            "targetNode": "node_10",
+            "targetPort": "condition"
+        },
+        {
+            "sourceNode": "node_10",
+            "sourcePort": "true",
+            "targetNode": "node_11",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_10",
+            "sourcePort": "true",
+            "targetNode": "node_4",
+            "targetPort": "stop"
+        },
+        {
+            "sourceNode": "node_11",
+            "sourcePort": "exec",
+            "targetNode": "node_12",
+            "targetPort": "exec"
+        },
+        {
+            "sourceNode": "node_5",
+            "sourcePort": "value",
+            "targetNode": "node_13",
+            "targetPort": "a"
+        },
+        {
+            "sourceNode": "node_1",
+            "sourcePort": "value",
+            "targetNode": "node_13",
+            "targetPort": "b"
+        },
+        {
+            "sourceNode": "node_13",
+            "sourcePort": "result",
+            "targetNode": "node_14",
+            "targetPort": "value"
+        }
+    ],
+    "variables": {},
+    "metadata": {
+        "author": "Nova Engine",
+        "tags": ["ability", "cooldown", "ui"],
+        "category": "gameplay"
+    }
+}

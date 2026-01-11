@@ -1,0 +1,159 @@
+{
+  "buildingId": "fairy_moonwell",
+  "nodes": [
+    {
+      "id": "lunar_infusion",
+      "name": "Lunar Infusion",
+      "description": "Increase mana regeneration from moonwells",
+      "type": 2,
+      "iconPath": "icons/tech/lunar_infusion.png",
+      "treePosition": [0, 0],
+      "requiredBuildingLevel": 1,
+      "prerequisites": [],
+      "cost": {
+        "gold": 100,
+        "mana": 100
+      },
+      "researchTime": 30.0,
+      "effects": [
+        {
+          "target": "building:fairy_moonwell:mana_generation",
+          "effectType": "multiply",
+          "value": 1.25
+        }
+      ]
+    },
+    {
+      "id": "healing_waters",
+      "name": "Healing Waters",
+      "description": "Enhance healing power of moonwell auras",
+      "type": 2,
+      "iconPath": "icons/tech/healing_waters.png",
+      "treePosition": [1, 0],
+      "requiredBuildingLevel": 1,
+      "prerequisites": [],
+      "cost": {
+        "gold": 100,
+        "mana": 75
+      },
+      "researchTime": 30.0,
+      "effects": [
+        {
+          "target": "building:fairy_moonwell:healing_rate",
+          "effectType": "multiply",
+          "value": 1.30
+        }
+      ]
+    },
+    {
+      "id": "moon_crystal_resonance",
+      "name": "Crystal Resonance",
+      "description": "Moon crystals amplify each other's power",
+      "type": 2,
+      "iconPath": "icons/tech/crystal_resonance.png",
+      "treePosition": [0, 1],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["lunar_infusion"],
+      "cost": {
+        "gold": 200,
+        "mana": 150
+      },
+      "researchTime": 45.0,
+      "effects": [
+        {
+          "target": "component:fairy_moon_crystal",
+          "effectType": "add_synergy",
+          "value": 1.0,
+          "data": {
+            "per_crystal": 0.15,
+            "max_bonus": 0.75
+          }
+        }
+      ]
+    },
+    {
+      "id": "blessed_healing",
+      "name": "Blessed Healing",
+      "description": "Moonwell healing also restores mana",
+      "type": 2,
+      "iconPath": "icons/tech/blessed_healing.png",
+      "treePosition": [1, 1],
+      "requiredBuildingLevel": 2,
+      "prerequisites": ["healing_waters"],
+      "cost": {
+        "gold": 180,
+        "mana": 120
+      },
+      "researchTime": 40.0,
+      "effects": [
+        {
+          "target": "building:fairy_moonwell:healing_aura",
+          "effectType": "add_effect",
+          "value": 1.0,
+          "data": {
+            "mana_regen": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "moonlight_cascade",
+      "name": "Moonlight Cascade",
+      "description": "Moonwells can activate to heal all units in large radius",
+      "type": 3,
+      "iconPath": "icons/tech/moonlight_cascade.png",
+      "treePosition": [0.5, 2],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["moon_crystal_resonance", "blessed_healing"],
+      "cost": {
+        "gold": 400,
+        "mana": 300
+      },
+      "researchTime": 70.0,
+      "effects": [
+        {
+          "target": "building:fairy_moonwell",
+          "effectType": "unlock_ability",
+          "value": 1.0,
+          "data": {
+            "ability": "moonlight_cascade",
+            "description": "Heal all units in 20 unit radius for 200 health",
+            "cooldown": 90.0,
+            "radius": 20.0,
+            "healing": 200
+          }
+        }
+      ]
+    },
+    {
+      "id": "perpetual_moon",
+      "name": "Perpetual Moon",
+      "description": "Moonwells generate resources at night rates during day",
+      "type": 3,
+      "iconPath": "icons/tech/perpetual_moon.png",
+      "treePosition": [2, 1],
+      "requiredBuildingLevel": 3,
+      "prerequisites": ["blessed_healing"],
+      "cost": {
+        "gold": 350,
+        "mana": 250
+      },
+      "researchTime": 60.0,
+      "effects": [
+        {
+          "target": "building:fairy_moonwell",
+          "effectType": "remove_penalty",
+          "value": 1.0,
+          "data": {
+            "day_penalty": 0.0
+          }
+        },
+        {
+          "target": "building:fairy_moonwell:mana_generation",
+          "effectType": "multiply",
+          "value": 1.20
+        }
+      ]
+    }
+  ]
+}

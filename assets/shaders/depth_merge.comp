@@ -1,0 +1,73 @@
+#version 460 core
+
+// Depth buffer merge compute shader
+// Combines depth buffers from SDF and polygon rendering passes
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+// Input depth textures
+layout(binding = 0, r32f) uniform readonly image2D u_sdfDepth;
+layout(binding = 1, r32f) uniform readonly image2D u_polygonDepth;
+
+// Output merged depth
+layout(binding = 2, r32f) uniform writeonly image2D u_outputDepth;
+
+// Uniforms
+uniform ivec2 u_resolution;
+uniform float u_depthBias;
+uniform int u_mode; // 0 = SDF first, 1 = Polygon first, 2 = Interleaved
+
+// Depth merge modes
+const int MODE_SDF_FIRST = 0;
+const int MODE_POLYGON_FIRST = 1;
+const int MODE_INTERLEAVED = 2;
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    // Bounds check
+    if (pixelCoord.x >= u_resolution.x || pixelCoord.y >= u_resolution.y) {
+        return;
+    }
+
+    // Read depth values
+    float sdfDepth = imageLoad(u_sdfDepth, pixelCoord).r;
+    float polygonDepth = imageLoad(u_polygonDepth, pixelCoord).r;
+
+    float outputDepth;
+
+    switch (u_mode) {
+        case MODE_SDF_FIRST:
+            // SDF rendered first, take minimum (closer) depth
+            outputDepth = min(sdfDepth, polygonDepth);
+            break;
+
+        case MODE_POLYGON_FIRST:
+            // Polygon rendered first, take minimum (closer) depth
+            outputDepth = min(sdfDepth, polygonDepth);
+            break;
+
+        case MODE_INTERLEAVED:
+            // Both rendered with depth test, take minimum
+            outputDepth = min(sdfDepth, polygonDepth);
+            break;
+
+        default:
+            outputDepth = min(sdfDepth, polygonDepth);
+            break;
+    }
+
+    // Apply depth bias to prevent Z-fighting
+    // Bias toward geometry that's slightly closer
+    if (abs(sdfDepth - polygonDepth) < u_depthBias) {
+        // Very close depths - prefer the one rendered second to avoid artifacts
+        if (u_mode == MODE_SDF_FIRST) {
+            outputDepth = polygonDepth;
+        } else {
+            outputDepth = sdfDepth;
+        }
+    }
+
+    // Write output
+    imageStore(u_outputDepth, pixelCoord, vec4(outputDepth));
+}

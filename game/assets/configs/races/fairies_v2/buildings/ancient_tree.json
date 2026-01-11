@@ -1,0 +1,154 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "parentArchetype": "main_hall",
+  "id": "fairy_ancient_tree",
+  "name": "Ancient Tree",
+  "description": "The heart of a fairy settlement. This massive living tree serves as the main hall, training wisps and generating mana. Can uproot to relocate.",
+  "race": "fairies",
+  "category": "main_building",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 2000,
+    "healthRegen": 5.0,
+    "armor": 8,
+    "magicResist": 15,
+    "sightRange": 16
+  },
+
+  "cost": {
+    "gold": 400,
+    "wood": 300,
+    "mana": 100
+  },
+
+  "buildTime": 80,
+  "footprint": {
+    "width": 6,
+    "height": 6
+  },
+
+  "providesPopulation": 10,
+  "generatesResources": {
+    "mana": 1.5
+  },
+
+  "trainsUnits": [
+    "fairy_wisp"
+  ],
+
+  "abilities": [
+    {
+      "id": "uproot",
+      "name": "Uproot",
+      "description": "Uproot and become mobile, able to walk but unable to train or generate resources",
+      "type": "transformation",
+      "hotkey": "Q",
+      "cooldown": 10.0,
+      "transformTime": 5.0,
+      "targetFormId": "fairy_ancient_tree_mobile",
+      "preservesHealth": true
+    },
+    {
+      "id": "natures_blessing_aura",
+      "name": "Nature's Blessing",
+      "description": "Passive aura granting +1 health regen to nearby allies",
+      "type": "passive",
+      "auraRadius": 12.0,
+      "effects": [
+        {
+          "stat": "healthRegen",
+          "value": 1.0,
+          "type": "flat"
+        }
+      ]
+    },
+    {
+      "id": "entangling_roots_defense",
+      "name": "Entangling Roots",
+      "description": "Root attacking enemies in place for 3 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 15.0,
+      "range": 10.0,
+      "duration": 3.0
+    }
+  ],
+
+  "upgrades": [
+    {
+      "id": "tree_of_ages",
+      "name": "Tree of Ages",
+      "age": 2,
+      "cost": {
+        "gold": 800,
+        "wood": 600,
+        "mana": 200
+      },
+      "upgradeTime": 100,
+      "statBonuses": {
+        "health": 1000,
+        "armor": 3,
+        "manaGeneration": 0.5
+      }
+    },
+    {
+      "id": "tree_of_eternity",
+      "name": "Tree of Eternity",
+      "age": 3,
+      "requiredUpgrade": "tree_of_ages",
+      "cost": {
+        "gold": 1500,
+        "wood": 1200,
+        "mana": 400
+      },
+      "upgradeTime": 150,
+      "statBonuses": {
+        "health": 1500,
+        "armor": 5,
+        "manaGeneration": 1.0
+      }
+    }
+  ],
+
+  "researchesTech": [
+    "fairy_basic_magic",
+    "fairy_nature_affinity",
+    "fairy_moonwell_tech",
+    "fairy_grove_tech"
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/buildings/ancient_tree.obj",
+    "portrait": "textures/races/fairies/portraits/ancient_tree.png",
+    "icon": "textures/races/fairies/icons/ancient_tree.png",
+    "scale": 2.5,
+    "textures": {
+      "diffuse": "textures/races/fairies/buildings/ancient_tree_diffuse.png",
+      "normal": "textures/races/fairies/buildings/ancient_tree_normal.png",
+      "emissive": "textures/races/fairies/buildings/ancient_tree_glow.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/buildings/tree_sway.anim",
+      "build": "animations/fairies/buildings/tree_grow.anim",
+      "death": "animations/fairies/buildings/tree_collapse.anim",
+      "uproot": "animations/fairies/buildings/tree_uproot.anim"
+    },
+    "auraEffect": "effects/nature_aura.fx",
+    "ambientEffect": "effects/glowing_leaves.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/buildings/tree_creak.wav"],
+    "build": ["sounds/fairies/buildings/tree_grow.wav"],
+    "complete": ["sounds/fairies/buildings/tree_complete.wav"],
+    "death": ["sounds/fairies/buildings/tree_fall.wav"],
+    "ambient": "sounds/fairies/buildings/tree_ambient.wav"
+  },
+
+  "requirements": {
+    "terrain": ["grass", "forest"],
+    "nearWater": false,
+    "clearArea": true
+  }
+}

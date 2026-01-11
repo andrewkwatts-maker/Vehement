@@ -1,0 +1,226 @@
+{
+  "$schema": "../../../schemas/spell_archetype.schema.json",
+
+  // =============================================================================
+  // HEAL SPELL ARCHETYPE
+  // =============================================================================
+  // This archetype represents a single-target or area healing spell.
+  // Behavior composition:
+  // - TargetingBehavior: SingleTarget (allies) or Area
+  // - EffectBehavior: Heal (restore health)
+  // - ProjectileBehavior: None or Homing (for visual effect)
+  // - ResourceBehavior: Mana cost and cooldown
+  //
+  // Use this as a base template for spells like:
+  // - Healing Touch, Holy Light, Rejuvenation, Mass Heal, etc.
+  // =============================================================================
+
+  "id": "heal_spell_archetype",
+  "name": "Heal Spell Template",
+  "description": "A targeted healing spell that restores health to a friendly unit, with optional heal-over-time component.",
+
+  "category": "healing",
+  "element": "holy",
+  "tier": 1,
+
+  // =============================================================================
+  // TARGETING BEHAVIOR
+  // =============================================================================
+  "targetType": "unit",  // Can also be "self" or "point" for AoE heal
+
+  "targetFilters": {
+    "canTargetEnemies": false,
+    "canTargetAllies": true,
+    "canTargetSelf": true,  // Can heal yourself
+    "canTargetGround": false,
+    "canTargetAir": true,
+    "canTargetBuildings": false,  // Most heals don't work on buildings
+    "canTargetOrganic": true,
+    "canTargetMechanical": false,  // Can't heal mechanical units
+    "requiresLineOfSight": true,
+    "ignoreInvulnerable": false,
+    "onlyDamaged": true  // Can only target units below max health
+  },
+
+  "castRange": 10.0,
+
+  // =============================================================================
+  // PROJECTILE BEHAVIOR
+  // =============================================================================
+  // Optional homing projectile for visual effect
+  "projectile": {
+    "type": "homing",  // Options: "homing", "instant", "none"
+    "speed": 15.0,
+    "maxTravelDistance": 12.0,
+    "homingStrength": 0.9,  // How aggressively it tracks (0-1)
+    "piercing": false,
+    "canBeBlocked": false,  // Healing projectiles ignore obstacles
+    "visualModel": "effects/holy_bolt.fx",
+    "trailEffect": "effects/holy_trail.fx",
+    "impactEffect": "effects/heal_impact.fx",
+    "projectileSize": 0.4
+  },
+
+  "areaOfEffect": 0.0,  // 0 for single target, >0 for AoE heal
+
+  // =============================================================================
+  // EFFECT BEHAVIOR
+  // =============================================================================
+  "effects": [
+    {
+      "type": "heal",
+      "baseHeal": 100,
+      "scalingFactor": 1.5,
+      "scalingStat": "healingPower",  // Or "spellPower" if no healing stat
+      "canCrit": true,  // Critical heals are possible
+      "critBonusFromCaster": true,
+      "variance": 0.05,  // Small variance for heals
+
+      // Healing caps
+      "canOverheal": false,  // Can't exceed max health
+      "overhealAmount": 0.0,  // If allowed, how much (as % of max health)
+      "overhealDecay": 0.0    // Overheal decay per second
+    },
+    {
+      // Secondary heal-over-time (HoT) effect
+      "type": "hot",  // Heal Over Time
+      "healPerSecond": 10,
+      "duration": 5.0,
+      "tickInterval": 1.0,  // Heal every 1 second
+      "scalingFactor": 0.5,
+      "scalingStat": "healingPower",
+      "stackable": false,
+      "refreshable": true  // Casting again refreshes duration
+    }
+  ],
+
+  // =============================================================================
+  // HEAL MODIFIERS
+  // =============================================================================
+  // Healing can be modified by various factors
+  "healModifiers": {
+    "bonusOnLowHealth": {
+      "enabled": true,
+      "healthThreshold": 0.3,  // Below 30% health
+      "bonusPercent": 0.25  // 25% more healing
+    },
+    "bonusOnCriticalHealth": {
+      "enabled": true,
+      "healthThreshold": 0.15,  // Below 15% health
+      "bonusPercent": 0.5  // 50% more healing
+    },
+    "reducedOnFullHealth": {
+      "enabled": false
+    }
+  },
+
+  // =============================================================================
+  // RESOURCE BEHAVIOR
+  // =============================================================================
+  "castTime": 1.0,   // Slower cast for powerful heal
+  "cooldown": 6.0,
+  "manaCost": 80,
+
+  "canBeInterrupted": true,
+  "interruptOnDamage": true,  // Damage interrupts healing
+  "interruptOnMove": true,
+
+  // =============================================================================
+  // SMART TARGETING
+  // =============================================================================
+  // Auto-targeting features for heal spells
+  "smartCasting": {
+    "enabled": true,
+    "autoTargetLowestHealth": true,  // Auto-target most wounded ally
+    "autoTargetRange": 15.0,
+    "preferHeroes": true,  // Prefer heroes over regular units
+    "ignoreFullHealth": true
+  },
+
+  // =============================================================================
+  // REQUIREMENTS & AVAILABILITY
+  // =============================================================================
+  "requiredAge": 0,
+  "requiredBuilding": "temple",
+  "requiredTech": null,
+
+  "learnCost": {
+    "gold": 75,
+    "wood": 0,
+    "food": 0,
+    "stone": 0,
+    "mana": 50
+  },
+
+  // =============================================================================
+  // VISUAL & AUDIO
+  // =============================================================================
+  "visuals": {
+    "icon": "textures/icons/spells/holy_light.png",
+    "castAnimation": "anim_cast_heal",
+    "castEffect": "effects/cast_holy.fx",
+    "channelEffect": "effects/channel_heal.fx",
+    "buffEffect": "effects/heal_buff.fx",  // Visual on healed unit
+    "aoeCursorDecal": null,
+    "hotEffect": "effects/heal_over_time.fx",  // For HoT component
+    "criticalHealEffect": "effects/critical_heal.fx"  // Extra visual for crit heals
+  },
+
+  "sounds": {
+    "cast": "sounds/spells/heal_cast.wav",
+    "travel": "sounds/spells/heal_travel.wav",
+    "impact": "sounds/spells/heal_impact.wav",
+    "healApplied": "sounds/spells/heal_received.wav",
+    "criticalHeal": "sounds/spells/heal_critical.wav"
+  },
+
+  // =============================================================================
+  // DISPEL BEHAVIOR
+  // =============================================================================
+  // Some heals can also remove debuffs
+  "dispel": {
+    "enabled": false,
+    "dispelType": "magic",  // Options: "magic", "disease", "poison", "curse", "all"
+    "maxDispels": 1,  // Number of debuffs to remove
+    "dispelChance": 1.0  // 100% chance to dispel
+  },
+
+  // =============================================================================
+  // MASS HEAL VARIANT
+  // =============================================================================
+  // Example configuration for an AoE heal version
+  "variants": {
+    "mass_heal": {
+      "parentArchetype": "heal_spell_archetype",
+      "name": "Mass Heal",
+      "targetType": "point",
+      "targetFilters": {
+        "canTargetGround": true
+      },
+      "areaOfEffect": 6.0,
+      "maxTargets": 5,
+      "baseHeal": 60,  // Less per target
+      "manaCost": 150,  // Much higher cost
+      "cooldown": 15.0,
+      "tier": 2
+    }
+  },
+
+  // =============================================================================
+  // INHERITANCE EXAMPLE
+  // =============================================================================
+  // A "rejuvenation" spell could inherit from this with:
+  // - Remove instant heal effect
+  // - Increase HoT duration to 12 seconds
+  // - Add mana regeneration to HoT effect
+  // - Reduce mana cost
+  // - Make it instant cast (castTime: 0)
+
+  "metadata": {
+    "isTemplate": true,
+    "templateVersion": "1.0",
+    "author": "Engine Team",
+    "notes": "Base template for healing spells. Can be single-target or AoE, instant or over time.",
+    "tacticalUse": "Save wounded allies, maintain army health. Use before engagements or during sustained combat."
+  }
+}

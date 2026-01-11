@@ -1,0 +1,184 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "air_attacker",
+  "id": "cryptid_jersey_devil",
+  "name": "Jersey Devil",
+  "description": "Demonic winged cryptid with hooves and a forked tail. Jersey Devils are fierce aerial combatants that rain fire from above.",
+  "race": "cryptids",
+  "category": "air",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 520,
+    "healthRegen": 0.9,
+    "damage": 35,
+    "damageVariance": 0.18,
+    "attackSpeed": 1.5,
+    "attackRange": 2.0,
+    "armor": 2,
+    "magicResist": 18,
+    "moveSpeed": 8.5,
+    "sightRange": 14,
+    "critChance": 0.16,
+    "critMultiplier": 2.1
+  },
+
+  "cost": {
+    "gold": 300,
+    "wood": 60,
+    "food": 4
+  },
+
+  "trainTime": 38,
+  "populationCost": 3,
+  "requiredBuilding": "cryptid_sacred_grove",
+  "requiredAge": 2,
+
+  "armorType": "medium",
+  "attackType": "chaos",
+  "movementType": "air",
+
+  "canAttackAir": true,
+  "canAttackGround": true,
+
+  "bonusVs": [
+    {
+      "category": "building",
+      "multiplier": 1.4
+    },
+    {
+      "category": "ranged",
+      "multiplier": 1.3
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "hellfire_breath",
+      "name": "Hellfire Breath",
+      "description": "Breathes fire in a cone dealing damage over time and reducing healing by 40%",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 14.0,
+      "range": 6.0,
+      "coneAngle": 45,
+      "duration": 5.0,
+      "damagePerSecond": 30,
+      "effects": [
+        {
+          "stat": "healingReceived",
+          "multiplier": 0.60
+        }
+      ],
+      "targetType": "cone"
+    },
+    {
+      "id": "aerial_supremacy",
+      "name": "Aerial Supremacy",
+      "description": "Deals 50% bonus damage to grounded units and takes 30% reduced damage from ground attacks",
+      "type": "passive",
+      "effects": [
+        {
+          "stat": "damage",
+          "multiplier": 1.50,
+          "condition": "targetIsGrounded"
+        },
+        {
+          "stat": "damageReduction",
+          "value": 0.30,
+          "condition": "attackerIsGrounded"
+        }
+      ]
+    },
+    {
+      "id": "demonic_dive",
+      "name": "Demonic Dive",
+      "description": "Dive at target dealing 180% damage and creating a fire explosion",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 16.0,
+      "damageMultiplier": 1.80,
+      "explosionRadius": 3.0,
+      "explosionDamage": 40,
+      "requiresFlight": true
+    },
+    {
+      "id": "terror_aura",
+      "name": "Terror Aura",
+      "description": "Nearby ground units have -25% accuracy from fear",
+      "type": "passive",
+      "radius": 7.0,
+      "effects": [
+        {
+          "stat": "accuracy",
+          "value": -0.25,
+          "condition": "targetIsGrounded"
+        }
+      ],
+      "targetType": "enemy"
+    }
+  ],
+
+  "flight": {
+    "height": 7.5,
+    "canLand": true,
+    "landingSpeedMultiplier": 0.6,
+    "ignoreTerrain": true,
+    "ignoreWalls": true
+  },
+
+  "upgrades": ["devil_wings", "infernal_fury"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/jersey_devil.obj",
+    "portrait": "textures/races/cryptids/portraits/jersey_devil.png",
+    "icon": "textures/races/cryptids/icons/jersey_devil.png",
+    "scale": 1.1,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/jersey_devil_diffuse.png",
+      "normal": "textures/races/cryptids/units/jersey_devil_normal.png",
+      "emissive": "textures/races/cryptids/units/jersey_devil_emissive.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/jersey_devil/hover.anim",
+      "fly": "animations/cryptids/jersey_devil/fly.anim",
+      "glide": "animations/cryptids/jersey_devil/glide.anim",
+      "attack": "animations/cryptids/jersey_devil/claw.anim",
+      "dive": "animations/cryptids/jersey_devil/dive.anim",
+      "breath": "animations/cryptids/jersey_devil/breath.anim",
+      "land": "animations/cryptids/jersey_devil/land.anim",
+      "takeoff": "animations/cryptids/jersey_devil/takeoff.anim",
+      "death": "animations/cryptids/jersey_devil/death.anim"
+    },
+    "particleEffects": {
+      "fire_trail": "particles/cryptids/fire_trail.particle",
+      "hellfire": "particles/cryptids/hellfire.particle",
+      "terror_aura": "particles/cryptids/terror_aura.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/jersey_devil/screech_1.wav", "sounds/cryptids/jersey_devil/screech_2.wav"],
+    "move": ["sounds/cryptids/jersey_devil/wing_flap.wav"],
+    "attack": ["sounds/cryptids/jersey_devil/claw.wav"],
+    "breath": ["sounds/cryptids/jersey_devil/fire_breath.wav"],
+    "death": ["sounds/cryptids/jersey_devil/death.wav"],
+    "ready": ["sounds/cryptids/jersey_devil/roar.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.45,
+    "height": 2.0,
+    "mass": 95.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/aerial_raider.bt",
+    "profile": "aggressive",
+    "aggroRange": 13.0,
+    "priorityTargets": ["building", "ranged", "siege"],
+    "useDiveOnHighValue": true,
+    "maintainAltitude": true
+  }
+}

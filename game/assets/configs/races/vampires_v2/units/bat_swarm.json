@@ -1,0 +1,110 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit",
+  "id": "vampire_bat_swarm",
+  "name": "Bat Swarm",
+  "description": "A cloud of vampire bats that scout, harass, and overwhelm isolated enemies. Weak individually but deadly in numbers.",
+  "race": "vampires",
+  "category": "air",
+  "tier": 1,
+
+  "baseStats": {
+    "health": 140,
+    "healthRegen": 0.5,
+    "damage": 8,
+    "damageVariance": 0.15,
+    "attackSpeed": 2.0,
+    "attackRange": 1.5,
+    "armor": 0,
+    "magicResist": 5,
+    "moveSpeed": 8.5,
+    "sightRange": 16,
+    "detectionRange": 14,
+    "critChance": 0.10,
+    "critMultiplier": 1.5
+  },
+
+  "cost": {
+    "gold": 80,
+    "blood": 20,
+    "food": 1
+  },
+
+  "trainTime": 20,
+  "populationCost": 1,
+  "requiredBuilding": "dark_chapel",
+
+  "armorType": "unarmored",
+  "attackType": "pierce",
+
+  "movement": {
+    "movementType": "flying",
+    "flyingHeight": 3.5,
+    "canLand": false
+  },
+
+  "abilities": [
+    {
+      "id": "swarm_tactics",
+      "name": "Swarm Tactics",
+      "description": "Gain +15% attack speed for each nearby bat swarm (max 5 stacks)",
+      "type": "passive",
+      "stacksWith": "vampire_bat_swarm",
+      "radius": 4.0,
+      "maxStacks": 5,
+      "attackSpeedPerStack": 0.15
+    },
+    {
+      "id": "night_scout",
+      "name": "Night Scout",
+      "description": "At night: +50% vision range, can detect invisible units",
+      "type": "passive",
+      "timeOfDayEffect": {
+        "night": {
+          "sightRange": 1.50,
+          "truesight": true
+        }
+      }
+    },
+    {
+      "id": "blood_frenzy_swarm",
+      "name": "Blood Frenzy",
+      "description": "When attacking low health enemies (<30%), deal 40% bonus damage",
+      "type": "passive",
+      "trigger": {
+        "targetHealthThreshold": 0.30,
+        "damageBonus": 1.40
+      }
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/vampires/units/bat_swarm.obj",
+    "portrait": "textures/races/vampires/portraits/bat_swarm.png",
+    "icon": "textures/races/vampires/icons/bat_swarm.png",
+    "scale": 0.8,
+    "animations": {
+      "idle": "animations/vampires/bat_swarm/fly_idle.anim",
+      "walk": "animations/vampires/bat_swarm/fly.anim",
+      "attack": "animations/vampires/bat_swarm/attack.anim",
+      "death": "animations/vampires/bat_swarm/disperse.anim"
+    },
+    "particleEffects": {
+      "swarm": "effects/vampires/bat_cloud.fx"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/vampires/bats/select.wav"],
+    "move": ["sounds/vampires/bats/flutter.wav"],
+    "attack": ["sounds/vampires/bats/screech.wav"],
+    "death": ["sounds/vampires/bats/disperse.wav"]
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/vampire_scout.bt",
+    "profile": "scout_harass",
+    "priorityTargets": ["isolated", "wounded", "workers"],
+    "swarmBehavior": true
+  }
+}

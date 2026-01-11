@@ -1,0 +1,184 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "ranged",
+  "id": "cryptid_yeti",
+  "name": "Yeti",
+  "description": "Massive snow cryptid that hurls ice and boulders from afar. Yetis are masters of ice magic, freezing enemies and creating blizzards.",
+  "race": "cryptids",
+  "category": "ranged",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 480,
+    "healthRegen": 1.2,
+    "damage": 28,
+    "damageVariance": 0.12,
+    "attackSpeed": 1.1,
+    "attackRange": 8.0,
+    "armor": 3,
+    "magicResist": 25,
+    "moveSpeed": 4.2,
+    "critChance": 0.10,
+    "critMultiplier": 1.9
+  },
+
+  "cost": {
+    "gold": 220,
+    "wood": 40,
+    "food": 3
+  },
+
+  "trainTime": 32,
+  "populationCost": 2,
+  "requiredBuilding": "cryptid_hunting_grounds",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "magic",
+
+  "bonusVs": [
+    {
+      "category": "infantry",
+      "multiplier": 1.25
+    },
+    {
+      "category": "mechanical",
+      "multiplier": 1.35
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "ice_boulder",
+      "name": "Ice Boulder",
+      "description": "Hurls a massive ice boulder that deals area damage and slows enemies by 40% for 4 seconds",
+      "type": "passive",
+      "onAttackEffect": true,
+      "splashRadius": 2.0,
+      "splashDamage": 0.5,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.60,
+          "duration": 4.0
+        }
+      ]
+    },
+    {
+      "id": "frost_aura",
+      "name": "Frost Aura",
+      "description": "Enemies within 6 units have -20% attack speed due to extreme cold",
+      "type": "passive",
+      "radius": 6.0,
+      "effects": [
+        {
+          "stat": "attackSpeed",
+          "value": -0.20
+        }
+      ],
+      "targetType": "enemy"
+    },
+    {
+      "id": "blizzard",
+      "name": "Blizzard",
+      "description": "Creates a blizzard in target area dealing damage over time and reducing vision and movement by 50%",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 25.0,
+      "range": 10.0,
+      "radius": 6.0,
+      "duration": 8.0,
+      "damagePerSecond": 20,
+      "effects": [
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.50
+        },
+        {
+          "stat": "sightRange",
+          "multiplier": 0.50
+        }
+      ],
+      "targetType": "area"
+    },
+    {
+      "id": "ice_prison",
+      "name": "Ice Prison",
+      "description": "Freezes target in ice for 4 seconds, making them invulnerable but unable to act",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 30.0,
+      "range": 7.0,
+      "duration": 4.0,
+      "stunDuration": 4.0,
+      "targetInvulnerable": true
+    },
+    {
+      "id": "avalanche",
+      "name": "Avalanche",
+      "description": "Summons an avalanche that knocks back enemies in a cone and deals heavy damage",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 35.0,
+      "range": 12.0,
+      "coneAngle": 60,
+      "damage": 120,
+      "knockbackDistance": 5.0,
+      "stunDuration": 1.5
+    }
+  ],
+
+  "upgrades": ["yeti_ice_mastery", "eternal_winter"],
+
+  "visuals": {
+    "model": "models/races/cryptids/units/yeti.obj",
+    "portrait": "textures/races/cryptids/portraits/yeti.png",
+    "icon": "textures/races/cryptids/icons/yeti.png",
+    "scale": 1.5,
+    "textures": {
+      "diffuse": "textures/races/cryptids/units/yeti_diffuse.png",
+      "normal": "textures/races/cryptids/units/yeti_normal.png",
+      "specular": "textures/races/cryptids/units/yeti_specular.png"
+    },
+    "animations": {
+      "idle": "animations/cryptids/yeti/idle.anim",
+      "walk": "animations/cryptids/yeti/walk.anim",
+      "run": "animations/cryptids/yeti/run.anim",
+      "attack": "animations/cryptids/yeti/throw.anim",
+      "blizzard": "animations/cryptids/yeti/blizzard.anim",
+      "freeze": "animations/cryptids/yeti/freeze.anim",
+      "death": "animations/cryptids/yeti/death.anim"
+    },
+    "particleEffects": {
+      "frost_aura": "particles/cryptids/frost_aura.particle",
+      "blizzard": "particles/cryptids/blizzard.particle",
+      "ice_trail": "particles/cryptids/ice_trail.particle"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/cryptids/yeti/grunt_1.wav", "sounds/cryptids/yeti/grunt_2.wav"],
+    "move": ["sounds/cryptids/yeti/stomp.wav"],
+    "attack": ["sounds/cryptids/yeti/throw.wav"],
+    "blizzard": ["sounds/cryptids/yeti/blizzard.wav"],
+    "death": ["sounds/cryptids/yeti/death.wav"],
+    "ready": ["sounds/cryptids/yeti/roar.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.55,
+    "height": 2.6,
+    "mass": 200.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/ice_caster.bt",
+    "profile": "ranged_caster",
+    "aggroRange": 10.0,
+    "priorityTargets": ["infantry", "cavalry", "mechanical"],
+    "maintainDistance": 6.0,
+    "useBlizzardOnGroups": true,
+    "useIcePrisonOnThreats": true
+  }
+}

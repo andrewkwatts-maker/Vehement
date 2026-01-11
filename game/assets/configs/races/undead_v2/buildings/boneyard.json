@@ -1,0 +1,124 @@
+{
+  "$schema": "../../../../schemas/building_archetype.schema.json",
+  "id": "undead_boneyard",
+  "name": "Boneyard",
+  "description": "Workshop of flesh and bone where massive siege units are constructed. Trains abominations and bone horrors.",
+  "race": "undead",
+  "category": "military",
+  "tier": 2,
+
+  "size": {
+    "width": 5,
+    "height": 4
+  },
+
+  "health": 1400,
+  "armor": 6,
+  "magicResist": 15,
+
+  "cost": {
+    "gold": 350,
+    "wood": 200,
+    "stone": 150
+  },
+
+  "buildTime": 85,
+  "requiredBuilding": "undead_graveyard",
+  "requiredAge": 2,
+
+  "providesPopulation": 0,
+
+  "productionQueue": [
+    {
+      "type": "unit",
+      "id": "undead_abomination",
+      "requiredAge": 2
+    },
+    {
+      "type": "unit",
+      "id": "undead_bone_horror",
+      "requiredAge": 2
+    }
+  ],
+
+  "resourceGeneration": {
+    "corpseStorage": 25,
+    "requiresWorker": false
+  },
+
+  "garrisonCapacity": 0,
+
+  "attackCapability": {
+    "canAttack": false
+  },
+
+  "abilities": [
+    {
+      "id": "bone_forge",
+      "name": "Bone Forge",
+      "description": "Convert 3 corpses into bone fragments usable for construction",
+      "type": "active",
+      "hotkey": "F",
+      "cooldown": 30.0,
+      "corpseCost": 3,
+      "produces": "bone_fragments",
+      "produceAmount": 10
+    },
+    {
+      "id": "mass_construction",
+      "name": "Mass Construction",
+      "description": "Siege units train 25% faster",
+      "type": "passive",
+      "trainingSpeedBonus": 0.25,
+      "scope": "siege"
+    }
+  ],
+
+  "aura": {
+    "id": "boneyard_aura",
+    "name": "Siege Mastery",
+    "radius": 20.0,
+    "effects": [
+      {
+        "stat": "damage",
+        "value": 0.15,
+        "type": "percent",
+        "scope": "undead_siege"
+      }
+    ]
+  },
+
+  "isUnique": false,
+  "maxCount": 6,
+  "canRally": true,
+  "canUpgrade": false,
+
+  "visuals": {
+    "model": "models/races/undead/buildings/boneyard.obj",
+    "icon": "textures/races/undead/icons/buildings/boneyard.png",
+    "textures": {
+      "diffuse": "textures/races/undead/buildings/boneyard_diffuse.png",
+      "normal": "textures/races/undead/buildings/boneyard_normal.png",
+      "emissive": "textures/races/undead/buildings/boneyard_emissive.png"
+    },
+    "constructionStages": 4,
+    "hasDestructionAnimation": true,
+    "smokeWhenDamaged": false,
+    "blightWhenDamaged": true,
+    "damageThreshold": 0.5
+  },
+
+  "sounds": {
+    "select": ["sounds/undead/boneyard/select.wav"],
+    "complete": ["sounds/undead/boneyard/complete.wav"],
+    "destroyed": ["sounds/undead/boneyard/destroyed.wav"],
+    "forge": ["sounds/undead/boneyard/forge.wav"]
+  },
+
+  "visionRange": 12.0,
+
+  "blightProperties": {
+    "createsBlight": false,
+    "requiresBlight": true
+  }
+}

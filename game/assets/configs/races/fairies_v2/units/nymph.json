@@ -1,0 +1,149 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "mystic_unit_archetype",
+  "id": "fairy_nymph",
+  "name": "Nymph Enchantress",
+  "description": "Masters of enchantment magic who can charm enemies, polymorph foes into harmless creatures, and weave powerful illusions. Nymphs are fragile but devastatingly effective controllers.",
+  "race": "fairies",
+  "category": "spellcaster",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 200,
+    "healthRegen": 0.6,
+    "mana": 400,
+    "manaRegen": 3.5,
+    "damage": 15,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.0,
+    "attackRange": 8,
+    "armor": 0,
+    "magicResist": 25,
+    "moveSpeed": 5.0,
+    "sightRange": 12,
+    "spellPower": 80
+  },
+
+  "cost": {
+    "gold": 320,
+    "mana": 150,
+    "food": 3
+  },
+
+  "trainTime": 50,
+  "populationCost": 3,
+  "requiredBuilding": "fairy_circle",
+  "requiredAge": 2,
+
+  "armorType": "unarmored",
+  "attackType": "magic",
+  "movementType": "ground",
+
+  "projectile": {
+    "id": "charm_bolt",
+    "type": "linear",
+    "speed": 20.0,
+    "model": "models/projectiles/charm_bolt.obj",
+    "trailEffect": "effects/charm_trail.fx",
+    "impactEffect": "effects/charm_impact.fx"
+  },
+
+  "abilities": [
+    {
+      "id": "charm",
+      "name": "Enchanting Charm",
+      "description": "Charm target enemy to fight for you for 15 seconds",
+      "type": "active",
+      "hotkey": "Q",
+      "cooldown": 30.0,
+      "manaCost": 120,
+      "range": 10.0,
+      "duration": 15.0,
+      "excludes": ["hero", "massive", "mechanical", "undead"]
+    },
+    {
+      "id": "polymorph",
+      "name": "Polymorph",
+      "description": "Transform enemy into a harmless critter for 12 seconds",
+      "type": "active",
+      "hotkey": "W",
+      "cooldown": 20.0,
+      "manaCost": 90,
+      "range": 9.0,
+      "duration": 12.0,
+      "excludes": ["hero", "massive", "mechanical"]
+    },
+    {
+      "id": "mirror_image",
+      "name": "Mirror Image",
+      "description": "Create 3 illusions of self that deal no damage but draw enemy fire",
+      "type": "active",
+      "hotkey": "E",
+      "cooldown": 35.0,
+      "manaCost": 80,
+      "illusionCount": 3,
+      "illusionDuration": 20.0,
+      "illusionDamageTaken": 3.0
+    },
+    {
+      "id": "mass_slow",
+      "name": "Enthralling Mist",
+      "description": "Create a mist that slows all enemies in area by 50% for 6 seconds",
+      "type": "active",
+      "hotkey": "R",
+      "cooldown": 40.0,
+      "manaCost": 140,
+      "range": 12.0,
+      "radius": 6.0,
+      "duration": 6.0,
+      "slowPercent": 0.5
+    }
+  ],
+
+  "visuals": {
+    "model": "models/races/fairies/units/nymph.obj",
+    "portrait": "textures/races/fairies/portraits/nymph.png",
+    "icon": "textures/races/fairies/icons/nymph.png",
+    "scale": 0.95,
+    "textures": {
+      "diffuse": "textures/races/fairies/units/nymph_diffuse.png",
+      "emissive": "textures/races/fairies/units/nymph_glow.png",
+      "normal": "textures/races/fairies/units/nymph_normal.png"
+    },
+    "animations": {
+      "idle": "animations/fairies/nymph/idle.anim",
+      "walk": "animations/fairies/nymph/walk.anim",
+      "attack": "animations/fairies/nymph/cast_attack.anim",
+      "death": "animations/fairies/nymph/death.anim",
+      "cast": "animations/fairies/nymph/cast_charm.anim",
+      "channel": "animations/fairies/nymph/channel.anim"
+    },
+    "auraEffect": "effects/enchantment_aura.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/fairies/nymph/select_1.wav", "sounds/fairies/nymph/select_2.wav"],
+    "move": ["sounds/fairies/nymph/ack_1.wav", "sounds/fairies/nymph/ack_2.wav"],
+    "attack": ["sounds/fairies/nymph/cast.wav"],
+    "death": ["sounds/fairies/nymph/death.wav"],
+    "cast": ["sounds/fairies/nymph/charm.wav"],
+    "ready": ["sounds/fairies/nymph/ready.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.3,
+    "height": 1.7,
+    "mass": 50.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/enchanter.bt",
+    "profile": "caster",
+    "aggroRange": 11.0,
+    "preferredDistance": 9.0,
+    "manaConservationThreshold": 0.2,
+    "priorityAbilities": ["charm", "polymorph", "mass_slow"],
+    "fleeThreshold": 0.4
+  }
+}

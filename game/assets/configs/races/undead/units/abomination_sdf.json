@@ -1,0 +1,383 @@
+{
+    "id": "abomination",
+    "name": "Abomination",
+    "race": "undead",
+    "type": "unit",
+    "category": "melee",
+    "description": "Massive construct of stitched corpses wielding a meat hook. Exudes disease that poisons nearby enemies.",
+
+    "stats": {
+        "health": 1175,
+        "armor": 3,
+        "damage": 40,
+        "attackSpeed": 1.9,
+        "moveSpeed": 220,
+        "attackRange": 120
+    },
+
+    "costs": {
+        "gold": 240,
+        "food": 4,
+        "buildTime": 40.0
+    },
+
+    "sdfModel": {
+        "name": "abomination_model",
+        "bounds": { "min": [-0.8, 0.0, -0.8], "max": [0.8, 2.8, 0.8] },
+        "primitives": [
+            {
+                "id": "torso_main",
+                "type": "Ellipsoid",
+                "params": { "radii": [0.45, 0.55, 0.4] },
+                "transform": { "position": [0.0, 1.5, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.4, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union"
+            },
+            {
+                "id": "belly_bloated",
+                "type": "Sphere",
+                "params": { "radius": 0.5 },
+                "transform": { "position": [0.0, 1.3, 0.15], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.9, 1.1] },
+                "material": { "baseColor": [0.4, 0.35, 0.3, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.1
+            },
+            {
+                "id": "belly_wound",
+                "type": "Capsule",
+                "params": { "radius": 0.08, "height": 0.3 },
+                "transform": { "position": [0.1, 1.25, 0.45], "rotation": [0.0, 0.0, 0.3, 0.95], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.5, 0.15, 0.1, 1.0], "metallic": 0.0, "roughness": 0.7 },
+                "operation": "Union"
+            },
+            {
+                "id": "guts_exposed",
+                "type": "Torus",
+                "params": { "majorRadius": 0.1, "minorRadius": 0.03 },
+                "transform": { "position": [0.1, 1.2, 0.5], "rotation": [0.4, 0.2, 0.0, 0.89], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.55, 0.2, 0.15, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union"
+            },
+            {
+                "id": "stitch_line_1",
+                "type": "Capsule",
+                "params": { "radius": 0.015, "height": 0.6 },
+                "transform": { "position": [-0.15, 1.5, 0.35], "rotation": [0.0, 0.0, 0.1, 0.995], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.15, 0.1, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union"
+            },
+            {
+                "id": "stitch_line_2",
+                "type": "Capsule",
+                "params": { "radius": 0.015, "height": 0.5 },
+                "transform": { "position": [0.2, 1.6, 0.3], "rotation": [0.1, 0.0, -0.15, 0.98], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.2, 0.15, 0.1, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union"
+            },
+            {
+                "id": "head_main",
+                "type": "Sphere",
+                "params": { "radius": 0.22 },
+                "transform": { "position": [-0.15, 2.15, 0.1], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [0.9, 1.0, 0.95] },
+                "material": { "baseColor": [0.4, 0.35, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "head_secondary",
+                "type": "Sphere",
+                "params": { "radius": 0.15 },
+                "transform": { "position": [0.25, 2.0, 0.05], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [0.85, 0.9, 0.9] },
+                "material": { "baseColor": [0.45, 0.4, 0.35, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.05,
+                "bone": "head"
+            },
+            {
+                "id": "eye_main_left",
+                "type": "Sphere",
+                "params": { "radius": 0.04 },
+                "transform": { "position": [-0.22, 2.2, 0.22], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.2, 0.6] },
+                "material": { "baseColor": [0.8, 0.9, 0.2, 1.0], "metallic": 0.0, "roughness": 0.3 },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "eye_main_right",
+                "type": "Sphere",
+                "params": { "radius": 0.035 },
+                "transform": { "position": [-0.08, 2.18, 0.24], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.9, 0.6] },
+                "material": { "baseColor": [0.8, 0.2, 0.1, 1.0], "metallic": 0.0, "roughness": 0.3 },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "eye_secondary",
+                "type": "Sphere",
+                "params": { "radius": 0.03 },
+                "transform": { "position": [0.28, 2.05, 0.12], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.2, 0.8, 0.3, 1.0], "metallic": 0.0, "roughness": 0.0, "emissive": [0.1, 0.4, 0.15] },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "jaw_main",
+                "type": "RoundedBox",
+                "params": { "size": [0.14, 0.1, 0.12], "radius": 0.03 },
+                "transform": { "position": [-0.15, 2.0, 0.18], "rotation": [0.15, 0.0, 0.0, 0.99], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.3, 0.25, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "head"
+            },
+            {
+                "id": "shoulder_left_massive",
+                "type": "Sphere",
+                "params": { "radius": 0.2 },
+                "transform": { "position": [-0.5, 1.95, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.2, 1.0, 1.0] },
+                "material": { "baseColor": [0.38, 0.42, 0.32, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.08
+            },
+            {
+                "id": "shoulder_right",
+                "type": "Sphere",
+                "params": { "radius": 0.15 },
+                "transform": { "position": [0.45, 1.85, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.1, 0.9, 1.0] },
+                "material": { "baseColor": [0.42, 0.38, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "SmoothUnion",
+                "smoothness": 0.06
+            },
+            {
+                "id": "arm_left_upper",
+                "type": "Capsule",
+                "params": { "radius": 0.12, "height": 0.4 },
+                "transform": { "position": [-0.6, 1.6, 0.0], "rotation": [0.0, 0.0, 0.3, 0.95], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.35, 0.4, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "arm_left_lower",
+                "type": "Capsule",
+                "params": { "radius": 0.1, "height": 0.45 },
+                "transform": { "position": [-0.7, 1.1, 0.1], "rotation": [0.2, 0.0, 0.15, 0.97], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.4, 0.35, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "arm_right_upper",
+                "type": "Capsule",
+                "params": { "radius": 0.08, "height": 0.35 },
+                "transform": { "position": [0.55, 1.55, 0.0], "rotation": [0.0, 0.0, -0.35, 0.94], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.42, 0.38, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "arm_right_lower",
+                "type": "Capsule",
+                "params": { "radius": 0.06, "height": 0.4 },
+                "transform": { "position": [0.65, 1.1, 0.05], "rotation": [0.15, 0.0, -0.1, 0.98], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.4, 0.35, 0.28, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "hand_left_massive",
+                "type": "Sphere",
+                "params": { "radius": 0.12 },
+                "transform": { "position": [-0.75, 0.7, 0.15], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.3, 0.8] },
+                "material": { "baseColor": [0.35, 0.4, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "hand_right",
+                "type": "Sphere",
+                "params": { "radius": 0.07 },
+                "transform": { "position": [0.68, 0.75, 0.08], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.2, 0.7] },
+                "material": { "baseColor": [0.4, 0.35, 0.28, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "cleaver_blade",
+                "type": "RoundedBox",
+                "params": { "size": [0.06, 0.5, 0.15], "radius": 0.015 },
+                "transform": { "position": [-0.8, 0.4, 0.2], "rotation": [0.1, 0.0, 0.2, 0.97], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.4, 0.38, 0.35, 1.0], "metallic": 0.7, "roughness": 0.5 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "cleaver_blood",
+                "type": "Capsule",
+                "params": { "radius": 0.02, "height": 0.15 },
+                "transform": { "position": [-0.82, 0.3, 0.25], "rotation": [0.2, 0.0, 0.3, 0.93], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.5, 0.1, 0.08, 1.0], "metallic": 0.0, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "arm_l"
+            },
+            {
+                "id": "hook_shaft",
+                "type": "Cylinder",
+                "params": { "radius": 0.02, "height": 0.5 },
+                "transform": { "position": [0.7, 0.5, 0.1], "rotation": [0.2, 0.0, -0.1, 0.97], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.3, 0.25, 0.2, 1.0], "metallic": 0.5, "roughness": 0.6 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "hook_curve",
+                "type": "Torus",
+                "params": { "majorRadius": 0.08, "minorRadius": 0.02 },
+                "transform": { "position": [0.72, 0.2, 0.15], "rotation": [0.5, 0.3, 0.0, 0.81], "scale": [1.0, 1.0, 0.5] },
+                "material": { "baseColor": [0.5, 0.45, 0.4, 1.0], "metallic": 0.8, "roughness": 0.4 },
+                "operation": "Union",
+                "bone": "arm_r"
+            },
+            {
+                "id": "leg_left",
+                "type": "Capsule",
+                "params": { "radius": 0.12, "height": 0.6 },
+                "transform": { "position": [-0.2, 0.5, 0.0], "rotation": [0.0, 0.0, 0.05, 0.999], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.35, 0.38, 0.28, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "leg_l"
+            },
+            {
+                "id": "leg_right",
+                "type": "Capsule",
+                "params": { "radius": 0.1, "height": 0.55 },
+                "transform": { "position": [0.2, 0.45, 0.0], "rotation": [0.0, 0.0, -0.08, 0.997], "scale": [1.0, 1.0, 0.9] },
+                "material": { "baseColor": [0.4, 0.35, 0.3, 1.0], "metallic": 0.0, "roughness": 0.85 },
+                "operation": "Union",
+                "bone": "leg_r"
+            },
+            {
+                "id": "foot_left",
+                "type": "RoundedBox",
+                "params": { "size": [0.12, 0.08, 0.18], "radius": 0.03 },
+                "transform": { "position": [-0.2, 0.05, 0.05], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.3, 0.32, 0.25, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union",
+                "bone": "leg_l"
+            },
+            {
+                "id": "foot_right",
+                "type": "RoundedBox",
+                "params": { "size": [0.1, 0.07, 0.15], "radius": 0.025 },
+                "transform": { "position": [0.2, 0.04, 0.04], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.35, 0.3, 0.25, 1.0], "metallic": 0.0, "roughness": 0.9 },
+                "operation": "Union",
+                "bone": "leg_r"
+            },
+            {
+                "id": "chain_hanging",
+                "type": "Torus",
+                "params": { "majorRadius": 0.06, "minorRadius": 0.015 },
+                "transform": { "position": [0.3, 1.7, 0.3], "rotation": [0.3, 0.0, 0.5, 0.81], "scale": [1.0, 1.0, 1.0] },
+                "material": { "baseColor": [0.4, 0.35, 0.3, 1.0], "metallic": 0.7, "roughness": 0.5 },
+                "operation": "Union"
+            },
+            {
+                "id": "disease_cloud",
+                "type": "Sphere",
+                "params": { "radius": 0.6 },
+                "transform": { "position": [0.0, 1.4, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.8, 1.0] },
+                "material": { "baseColor": [0.3, 0.5, 0.2, 0.15], "metallic": 0.0, "roughness": 0.2, "emissive": [0.03, 0.05, 0.02] },
+                "operation": "Union"
+            }
+        ]
+    },
+
+    "skeleton": {
+        "bones": [
+            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "spine", "parent": "root", "position": [0.0, 0.8, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "chest", "parent": "spine", "position": [0.0, 0.6, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "head", "parent": "chest", "position": [0.0, 0.6, 0.1], "rotation": [0.0, 0.0, 0.0, 1.0] },
+            { "name": "arm_l", "parent": "chest", "position": [-0.45, 0.4, 0.0], "rotation": [0.0, 0.0, 0.2, 0.98] },
+            { "name": "arm_r", "parent": "chest", "position": [0.4, 0.35, 0.0], "rotation": [0.0, 0.0, -0.25, 0.97] },
+            { "name": "leg_l", "parent": "root", "position": [-0.2, 0.75, 0.0], "rotation": [0.0, 0.0, 0.03, 0.9995] },
+            { "name": "leg_r", "parent": "root", "position": [0.2, 0.7, 0.0], "rotation": [0.0, 0.0, -0.05, 0.999] }
+        ]
+    },
+
+    "animations": {
+        "idle": {
+            "duration": 3.0, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "head": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.2, 0.98] }, "arm_r": { "rotation": [0.0, 0.0, -0.25, 0.97] } } },
+                { "time": 0.8, "bones": { "spine": { "rotation": [0.03, 0.0, 0.02, 0.999] }, "head": { "rotation": [0.05, 0.08, 0.0, 0.995] }, "arm_l": { "rotation": [0.05, 0.0, 0.25, 0.97] }, "arm_r": { "rotation": [-0.03, 0.0, -0.22, 0.97] } } },
+                { "time": 1.5, "bones": { "spine": { "rotation": [0.0, 0.0, -0.02, 0.9998] }, "head": { "rotation": [-0.03, -0.05, 0.0, 0.998] }, "arm_l": { "rotation": [-0.03, 0.0, 0.18, 0.98] }, "arm_r": { "rotation": [0.05, 0.0, -0.28, 0.96] } } },
+                { "time": 2.2, "bones": { "spine": { "rotation": [0.02, 0.0, 0.01, 0.9997] }, "head": { "rotation": [0.02, 0.03, 0.0, 0.999] }, "arm_l": { "rotation": [0.02, 0.0, 0.22, 0.975] }, "arm_r": { "rotation": [-0.02, 0.0, -0.24, 0.97] } } },
+                { "time": 3.0, "bones": { "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "head": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.2, 0.98] }, "arm_r": { "rotation": [0.0, 0.0, -0.25, 0.97] } } }
+            ]
+        },
+        "shamble": {
+            "duration": 1.2, "loop": true,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "spine": { "rotation": [0.05, 0.0, 0.05, 0.997] }, "leg_l": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "leg_r": { "rotation": [-0.15, 0.0, 0.0, 0.99] }, "arm_l": { "rotation": [0.15, 0.0, 0.25, 0.96] }, "arm_r": { "rotation": [-0.1, 0.0, -0.2, 0.97] } } },
+                { "time": 0.3, "bones": { "root": { "position": [0.0, -0.05, 0.0] }, "spine": { "rotation": [0.05, 0.0, 0.0, 0.999] }, "leg_l": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_r": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.22, 0.975] }, "arm_r": { "rotation": [0.0, 0.0, -0.22, 0.975] } } },
+                { "time": 0.6, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "spine": { "rotation": [0.05, 0.0, -0.05, 0.997] }, "leg_l": { "rotation": [-0.15, 0.0, 0.0, 0.99] }, "leg_r": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "arm_l": { "rotation": [-0.1, 0.0, 0.2, 0.97] }, "arm_r": { "rotation": [0.15, 0.0, -0.25, 0.96] } } },
+                { "time": 0.9, "bones": { "root": { "position": [0.0, -0.05, 0.0] }, "spine": { "rotation": [0.05, 0.0, 0.0, 0.999] }, "leg_l": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "leg_r": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.22, 0.975] }, "arm_r": { "rotation": [0.0, 0.0, -0.22, 0.975] } } },
+                { "time": 1.2, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "spine": { "rotation": [0.05, 0.0, 0.05, 0.997] }, "leg_l": { "rotation": [0.2, 0.0, 0.0, 0.98] }, "leg_r": { "rotation": [-0.15, 0.0, 0.0, 0.99] }, "arm_l": { "rotation": [0.15, 0.0, 0.25, 0.96] }, "arm_r": { "rotation": [-0.1, 0.0, -0.2, 0.97] } } }
+            ]
+        },
+        "attack": {
+            "duration": 1.2, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "chest": { "rotation": [0.0, -0.1, 0.0, 0.995] }, "arm_l": { "rotation": [-0.2, 0.0, 0.4, 0.89] } } },
+                { "time": 0.35, "bones": { "chest": { "rotation": [0.0, -0.25, 0.0, 0.97] }, "arm_l": { "rotation": [-0.5, 0.2, 0.5, 0.68] } } },
+                { "time": 0.55, "bones": { "chest": { "rotation": [0.0, 0.2, 0.0, 0.98] }, "arm_l": { "rotation": [0.4, -0.1, 0.3, 0.86] } }, "events": ["cleaver_hit"] },
+                { "time": 0.85, "bones": { "chest": { "rotation": [0.0, 0.1, 0.0, 0.995] }, "arm_l": { "rotation": [0.2, 0.0, 0.25, 0.95] } } },
+                { "time": 1.2, "bones": { "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_l": { "rotation": [0.0, 0.0, 0.2, 0.98] } } }
+            ]
+        },
+        "hook_throw": {
+            "duration": 1.5, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "chest": { "rotation": [0.0, 0.1, 0.0, 0.995] }, "arm_r": { "rotation": [-0.3, 0.0, -0.4, 0.87] } } },
+                { "time": 0.4, "bones": { "chest": { "rotation": [0.0, 0.3, 0.0, 0.95] }, "arm_r": { "rotation": [-0.5, 0.0, -0.55, 0.67] } } },
+                { "time": 0.6, "bones": { "chest": { "rotation": [0.0, -0.2, 0.0, 0.98] }, "arm_r": { "rotation": [0.5, 0.0, -0.3, 0.81] } }, "events": ["hook_launch"] },
+                { "time": 1.0, "bones": { "chest": { "rotation": [0.0, -0.1, 0.0, 0.995] }, "arm_r": { "rotation": [0.3, 0.0, -0.25, 0.92] } } },
+                { "time": 1.5, "bones": { "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "arm_r": { "rotation": [0.0, 0.0, -0.25, 0.97] } } }
+            ]
+        },
+        "death": {
+            "duration": 2.5, "loop": false,
+            "keyframes": [
+                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
+                { "time": 0.6, "bones": { "root": { "position": [0.0, -0.2, 0.1], "rotation": [0.15, 0.0, 0.1, 0.98] } } },
+                { "time": 1.2, "bones": { "root": { "position": [0.0, -0.5, 0.25], "rotation": [0.35, 0.0, 0.2, 0.91] } } },
+                { "time": 1.8, "bones": { "root": { "position": [0.0, -0.9, 0.4], "rotation": [0.5, 0.0, 0.25, 0.83] } }, "events": ["explode_gore"] },
+                { "time": 2.5, "bones": { "root": { "position": [0.0, -1.2, 0.5], "rotation": [0.6, 0.0, 0.2, 0.77] } } }
+            ]
+        }
+    },
+
+    "animationStateMachine": {
+        "initialState": "idle",
+        "states": {
+            "idle": { "animation": "idle", "transitions": [{ "to": "shamble", "condition": "isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "hook_throw", "condition": "isHooking" }, { "to": "death", "condition": "isDead" }] },
+            "shamble": { "animation": "shamble", "transitions": [{ "to": "idle", "condition": "!isMoving" }, { "to": "attack", "condition": "isAttacking" }, { "to": "death", "condition": "isDead" }] },
+            "attack": { "animation": "attack", "transitions": [{ "to": "idle", "condition": "animationComplete && !isMoving" }, { "to": "shamble", "condition": "animationComplete && isMoving" }, { "to": "death", "condition": "isDead" }] },
+            "hook_throw": { "animation": "hook_throw", "transitions": [{ "to": "idle", "condition": "animationComplete" }, { "to": "death", "condition": "isDead" }] },
+            "death": { "animation": "death", "transitions": [] }
+        }
+    },
+
+    "abilities": [
+        { "id": "disease_cloud", "name": "Disease Cloud", "description": "Exudes a plague that damages nearby enemies over time.", "hotkey": "D", "isToggle": false, "isPassive": true, "damagePerSecond": 2, "radius": 150 },
+        { "id": "meat_hook", "name": "Meat Hook", "description": "Throws a hook that pulls the target towards the Abomination.", "hotkey": "H", "isToggle": false, "range": 800, "cooldown": 20.0, "isUpgrade": true }
+    ],
+
+    "behaviors": {
+        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "abomination_ready" }, { "type": "random_say", "texts": ["Us hear and obey.", "What we do?", "More... bodies..."], "chance": 1.0 }] },
+        "on_attack": { "actions": [{ "type": "play_animation", "animation": "attack" }, { "type": "play_sound", "sound": "cleaver_swing" }] },
+        "on_hook": { "actions": [{ "type": "play_animation", "animation": "hook_throw" }, { "type": "play_sound", "sound": "hook_throw" }, { "type": "spawn_projectile", "projectile": "meat_hook" }] },
+        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "abomination_death" }, { "type": "spawn_particles", "effect": "gore_explosion" }, { "type": "spawn_corpses", "count": 2 }] }
+    }
+}

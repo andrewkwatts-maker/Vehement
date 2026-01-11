@@ -1,0 +1,56 @@
+{
+    "id": "ability.defend",
+    "type": "ability",
+    "name": "Defend",
+    "description": "Raise shield to block incoming attacks. Reduces damage taken but slows movement.",
+    "icon": "textures/abilities/defend.png",
+
+    "hotkey": "D",
+    "targetType": "none",
+    "cooldown": 0.0,
+    "manaCost": 0,
+    "range": 0.0,
+    "castTime": 0.0,
+    "duration": -1,
+
+    "isToggle": true,
+    "isPassive": false,
+
+    "effectRefs": ["effect.defend_stance"],
+
+    "effects": {
+        "damage_reduction": {
+            "stat": "damage_taken",
+            "modifier": -0.30,
+            "type": "multiply"
+        },
+        "movement_penalty": {
+            "stat": "move_speed",
+            "modifier": -0.40,
+            "type": "multiply"
+        },
+        "pierce_resistance": {
+            "stat": "pierce_resistance",
+            "modifier": 0.50,
+            "type": "add"
+        }
+    },
+
+    "onActivate": {
+        "actions": [
+            { "type": "play_animation", "animation": "defend_start" },
+            { "type": "play_sound", "sound": "shield_raise" },
+            { "type": "apply_buff", "buff": "defending" }
+        ]
+    },
+
+    "onDeactivate": {
+        "actions": [
+            { "type": "play_animation", "animation": "defend_end" },
+            { "type": "play_sound", "sound": "shield_lower" },
+            { "type": "remove_buff", "buff": "defending" }
+        ]
+    },
+
+    "tags": ["defensive", "toggle", "shield", "infantry"]
+}

@@ -1,0 +1,383 @@
+{
+  "name": "Default Fantasy World",
+  "description": "A balanced fantasy world with varied biomes, resources, ruins, and ancient structures. Features mountains, forests, deserts, and oceans with procedurally placed content.",
+  "version": "1.0.0",
+  "seed": 12345,
+  "author": "Nova3D Engine",
+  "createdDate": "2025-01-01",
+  "tags": ["fantasy", "balanced", "default", "varied"],
+
+  "worldSize": {
+    "width": 10000,
+    "height": 10000
+  },
+  "maxHeight": 255,
+
+  "terrainScale": 1.0,
+  "terrainAmplitude": 100.0,
+  "erosionStrength": 0.3,
+  "erosionIterations": 100,
+
+  "procGenGraph": {
+    "nodes": [
+      {
+        "id": "base_noise",
+        "type": "PerlinNoise",
+        "position": [100, 100],
+        "parameters": {
+          "frequency": 0.01,
+          "octaves": 6,
+          "persistence": 0.5,
+          "lacunarity": 2.0
+        }
+      },
+      {
+        "id": "mountain_noise",
+        "type": "SimplexNoise",
+        "position": [100, 250],
+        "parameters": {
+          "frequency": 0.005,
+          "octaves": 4,
+          "persistence": 0.6,
+          "lacunarity": 2.5
+        }
+      },
+      {
+        "id": "ridge_transform",
+        "type": "Ridge",
+        "position": [300, 250],
+        "parameters": {
+          "sharpness": 2.0,
+          "offset": 0.5
+        }
+      },
+      {
+        "id": "blend_terrain",
+        "type": "Blend",
+        "position": [500, 175],
+        "parameters": {
+          "blend": 0.3,
+          "blendMode": "add"
+        }
+      },
+      {
+        "id": "hydraulic_erosion",
+        "type": "HydraulicErosion",
+        "position": [700, 175],
+        "parameters": {
+          "iterations": 1000,
+          "rainAmount": 0.01,
+          "evaporation": 0.01,
+          "sedimentCapacity": 4.0,
+          "erosionStrength": 0.3,
+          "depositionStrength": 0.3
+        }
+      },
+      {
+        "id": "thermal_erosion",
+        "type": "ThermalErosion",
+        "position": [900, 175],
+        "parameters": {
+          "iterations": 50,
+          "talusAngle": 0.7,
+          "strength": 0.5
+        }
+      },
+      {
+        "id": "climate",
+        "type": "Climate",
+        "position": [500, 400],
+        "parameters": {
+          "latitude": 45.0,
+          "windPattern": "westerlies"
+        }
+      },
+      {
+        "id": "biome",
+        "type": "Biome",
+        "position": [700, 400],
+        "parameters": {}
+      }
+    ],
+    "connections": [
+      {
+        "from": "base_noise.value",
+        "to": "blend_terrain.inputA"
+      },
+      {
+        "from": "mountain_noise.value",
+        "to": "ridge_transform.heightmap"
+      },
+      {
+        "from": "ridge_transform.ridgedHeightmap",
+        "to": "blend_terrain.inputB"
+      },
+      {
+        "from": "blend_terrain.result",
+        "to": "hydraulic_erosion.heightmap"
+      },
+      {
+        "from": "hydraulic_erosion.erodedHeightmap",
+        "to": "thermal_erosion.heightmap"
+      },
+      {
+        "from": "thermal_erosion.erodedHeightmap",
+        "to": "climate.heightmap"
+      },
+      {
+        "from": "climate.temperature",
+        "to": "biome.temperature"
+      },
+      {
+        "from": "climate.precipitation",
+        "to": "biome.precipitation"
+      }
+    ]
+  },
+
+  "biomes": [
+    {
+      "id": 0,
+      "name": "Ocean",
+      "description": "Deep water biome",
+      "color": [0.1, 0.2, 0.6],
+      "minTemperature": -5.0,
+      "maxTemperature": 30.0,
+      "minPrecipitation": 0.0,
+      "maxPrecipitation": 3000.0,
+      "minElevation": 0.0,
+      "maxElevation": 50.0,
+      "treeTypes": [],
+      "plantTypes": ["kelp", "seaweed"],
+      "vegetationDensity": 0.3,
+      "oreTypes": [],
+      "oreDensities": []
+    },
+    {
+      "id": 1,
+      "name": "Plains",
+      "description": "Flat grasslands",
+      "color": [0.4, 0.7, 0.3],
+      "minTemperature": 0.0,
+      "maxTemperature": 25.0,
+      "minPrecipitation": 400.0,
+      "maxPrecipitation": 1000.0,
+      "minElevation": 50.0,
+      "maxElevation": 100.0,
+      "treeTypes": ["oak", "birch"],
+      "plantTypes": ["grass", "flowers", "bushes"],
+      "vegetationDensity": 0.6,
+      "oreTypes": ["iron", "copper"],
+      "oreDensities": [0.2, 0.3]
+    },
+    {
+      "id": 2,
+      "name": "Forest",
+      "description": "Dense woodland",
+      "color": [0.2, 0.5, 0.2],
+      "minTemperature": -5.0,
+      "maxTemperature": 20.0,
+      "minPrecipitation": 800.0,
+      "maxPrecipitation": 2000.0,
+      "minElevation": 50.0,
+      "maxElevation": 150.0,
+      "treeTypes": ["oak", "pine", "spruce", "birch"],
+      "plantTypes": ["ferns", "mushrooms", "bushes"],
+      "vegetationDensity": 0.9,
+      "oreTypes": ["iron", "gold"],
+      "oreDensities": [0.15, 0.05]
+    },
+    {
+      "id": 3,
+      "name": "Mountains",
+      "description": "Rocky peaks and valleys",
+      "color": [0.5, 0.5, 0.5],
+      "minTemperature": -20.0,
+      "maxTemperature": 10.0,
+      "minPrecipitation": 200.0,
+      "maxPrecipitation": 1500.0,
+      "minElevation": 150.0,
+      "maxElevation": 255.0,
+      "treeTypes": ["pine", "spruce"],
+      "plantTypes": ["moss", "lichen"],
+      "vegetationDensity": 0.2,
+      "oreTypes": ["iron", "gold", "diamond", "mithril"],
+      "oreDensities": [0.3, 0.1, 0.02, 0.01]
+    },
+    {
+      "id": 4,
+      "name": "Desert",
+      "description": "Hot, arid wasteland",
+      "color": [0.9, 0.8, 0.5],
+      "minTemperature": 15.0,
+      "maxTemperature": 45.0,
+      "minPrecipitation": 0.0,
+      "maxPrecipitation": 250.0,
+      "minElevation": 50.0,
+      "maxElevation": 120.0,
+      "treeTypes": ["cactus"],
+      "plantTypes": ["cactus", "dead_bush"],
+      "vegetationDensity": 0.1,
+      "oreTypes": ["copper", "gold"],
+      "oreDensities": [0.25, 0.15]
+    },
+    {
+      "id": 5,
+      "name": "Tundra",
+      "description": "Frozen plains",
+      "color": [0.8, 0.9, 0.95],
+      "minTemperature": -40.0,
+      "maxTemperature": 5.0,
+      "minPrecipitation": 100.0,
+      "maxPrecipitation": 500.0,
+      "minElevation": 50.0,
+      "maxElevation": 100.0,
+      "treeTypes": ["spruce"],
+      "plantTypes": ["snow_grass", "lichen"],
+      "vegetationDensity": 0.1,
+      "oreTypes": ["iron", "diamond"],
+      "oreDensities": [0.2, 0.03]
+    }
+  ],
+
+  "resources": {
+    "ores": [
+      {
+        "resourceType": "iron_ore",
+        "density": 0.2,
+        "minHeight": 0.0,
+        "maxHeight": 150.0,
+        "minSlope": 0.0,
+        "maxSlope": 45.0,
+        "clusterSize": 8.0,
+        "allowedBiomes": [1, 2, 3]
+      },
+      {
+        "resourceType": "gold_ore",
+        "density": 0.08,
+        "minHeight": 0.0,
+        "maxHeight": 80.0,
+        "minSlope": 0.0,
+        "maxSlope": 60.0,
+        "clusterSize": 5.0,
+        "allowedBiomes": [2, 3, 4]
+      },
+      {
+        "resourceType": "diamond",
+        "density": 0.02,
+        "minHeight": 0.0,
+        "maxHeight": 50.0,
+        "minSlope": 0.0,
+        "maxSlope": 90.0,
+        "clusterSize": 3.0,
+        "allowedBiomes": [3, 5]
+      },
+      {
+        "resourceType": "mithril",
+        "density": 0.01,
+        "minHeight": 180.0,
+        "maxHeight": 255.0,
+        "minSlope": 30.0,
+        "maxSlope": 90.0,
+        "clusterSize": 2.0,
+        "allowedBiomes": [3]
+      }
+    ],
+    "vegetation": [
+      {
+        "resourceType": "tree",
+        "density": 0.3,
+        "minHeight": 50.0,
+        "maxHeight": 150.0,
+        "minSlope": 0.0,
+        "maxSlope": 30.0,
+        "clusterSize": 10.0,
+        "allowedBiomes": [1, 2]
+      },
+      {
+        "resourceType": "bush",
+        "density": 0.5,
+        "minHeight": 50.0,
+        "maxHeight": 120.0,
+        "minSlope": 0.0,
+        "maxSlope": 40.0,
+        "clusterSize": 5.0,
+        "allowedBiomes": [1, 2, 4]
+      }
+    ],
+    "water": [
+      {
+        "resourceType": "lake",
+        "density": 0.05,
+        "minHeight": 50.0,
+        "maxHeight": 100.0,
+        "minSlope": 0.0,
+        "maxSlope": 5.0,
+        "clusterSize": 20.0,
+        "allowedBiomes": [1, 2]
+      }
+    ]
+  },
+
+  "structures": {
+    "ruins": [
+      {
+        "structureType": "small_ruins",
+        "density": 0.01,
+        "minDistance": 500.0,
+        "minSize": 10.0,
+        "maxSize": 30.0,
+        "maxSlope": 20.0,
+        "allowedBiomes": [1, 2, 4],
+        "variants": ["temple", "tower", "fort"]
+      }
+    ],
+    "ancients": [
+      {
+        "structureType": "ancient_temple",
+        "density": 0.002,
+        "minDistance": 2000.0,
+        "minSize": 40.0,
+        "maxSize": 100.0,
+        "maxSlope": 15.0,
+        "allowedBiomes": [1, 2, 3],
+        "variants": ["pyramid", "ziggurat", "monument"]
+      },
+      {
+        "structureType": "dungeon",
+        "density": 0.005,
+        "minDistance": 1000.0,
+        "minSize": 20.0,
+        "maxSize": 60.0,
+        "maxSlope": 25.0,
+        "allowedBiomes": [2, 3],
+        "variants": ["cave", "crypt", "vault"]
+      }
+    ],
+    "buildings": [
+      {
+        "structureType": "village",
+        "density": 0.003,
+        "minDistance": 1500.0,
+        "minSize": 50.0,
+        "maxSize": 150.0,
+        "maxSlope": 10.0,
+        "allowedBiomes": [1, 2],
+        "variants": ["human", "elf", "dwarf"]
+      }
+    ]
+  },
+
+  "climate": {
+    "equatorTemperature": 30.0,
+    "poleTemperature": -20.0,
+    "temperatureVariation": 5.0,
+    "elevationTemperatureGradient": -6.5,
+    "baseRainfall": 1000.0,
+    "oceanRainfallBonus": 500.0,
+    "mountainRainShadow": 0.5,
+    "windPattern": "westerlies"
+  },
+
+  "modificationLog": []
+}

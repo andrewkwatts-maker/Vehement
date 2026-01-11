@@ -1,0 +1,148 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "flying_unit_archetype",
+  "id": "alien_phoenix",
+  "name": "Phoenix",
+  "description": "Fast and agile air superiority fighters. Phoenixes excel at harassing workers and intercepting enemy air units with their ion cannons and graviton beam.",
+  "race": "aliens",
+  "category": "air",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 120,
+    "healthRegen": 0,
+    "shield": 60,
+    "shieldRegen": 2.0,
+    "shieldRegenDelay": 10.0,
+
+    "damage": 5,
+    "damageVariance": 0,
+    "attackSpeed": 0.9,
+    "attackRange": 5,
+
+    "armor": 0,
+    "shieldArmor": 0,
+    "magicResist": 0,
+
+    "moveSpeed": 5.6,
+    "turnSpeed": 999,
+    "acceleration": 999,
+
+    "sightRange": 10,
+    "detectionRange": 0,
+
+    "critChance": 0.15,
+    "critMultiplier": 1.5
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "light",
+    "attacksPerSwing": 2,
+    "bonusVs": [
+      {
+        "category": "light",
+        "multiplier": 1.0,
+        "flatBonus": 5
+      }
+    ]
+  },
+
+  "projectile": {
+    "type": "homing",
+    "speed": 30.0,
+    "visualModel": "models/projectiles/ion_cannon.fbx",
+    "trailEffect": "effects/ion_trail.fx",
+    "impactEffect": "effects/ion_impact.fx"
+  },
+
+  "movement": {
+    "movementType": "flying",
+    "flyingHeight": 3.5,
+    "canAttackWhileMoving": true
+  },
+
+  "cost": {
+    "minerals": 150,
+    "vespene": 100,
+    "supply": 2
+  },
+
+  "trainTime": 35,
+  "populationCost": 2,
+  "requiredBuilding": "alien_stargate",
+
+  "abilities": [
+    {
+      "id": "graviton_beam",
+      "name": "Graviton Beam",
+      "description": "Lift a target unit into the air, disabling it for 7 seconds",
+      "type": "targeted_unit",
+      "hotkey": "G",
+      "cooldown": 10.0,
+      "range": 5.0,
+      "channeled": true,
+      "duration": 7.0,
+      "effects": [
+        {
+          "type": "disable",
+          "duration": 7.0,
+          "liftsTarget": true
+        }
+      ]
+    },
+    {
+      "id": "anion_pulse_crystals",
+      "name": "Anion Pulse-Crystals",
+      "description": "Passive: Increases attack range by 2",
+      "type": "passive",
+      "requiredTech": "anion_pulse_crystals_upgrade",
+      "unlockedByDefault": false,
+      "effects": [
+        {
+          "stat": "attackRange",
+          "value": 2
+        }
+      ]
+    }
+  ],
+
+  "upgrades": [
+    "alien_air_weapons_1",
+    "alien_air_weapons_2",
+    "alien_air_weapons_3",
+    "alien_air_armor_1",
+    "alien_air_armor_2",
+    "alien_air_armor_3",
+    "alien_shields_1",
+    "alien_shields_2",
+    "alien_shields_3",
+    "anion_pulse_crystals_upgrade"
+  ],
+
+  "canAttackGround": false,
+  "canAttackAir": true,
+
+  "attributes": {
+    "isBiological": false,
+    "isPsionic": false,
+    "isLight": true,
+    "isArmored": false,
+    "isMassive": false,
+    "isMechanical": true,
+    "cargoSize": 2,
+    "canBeWarped": false
+  },
+
+  "visuals": {
+    "model": "models/races/aliens/units/phoenix.fbx",
+    "scale": 1.2,
+    "shieldEffect": "effects/shield_shimmer.fx"
+  },
+
+  "collision": {
+    "type": "sphere",
+    "radius": 0.6,
+    "mass": 80.0
+  }
+}

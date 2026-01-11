@@ -1,0 +1,272 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+
+  "parentArchetype": "melee_unit_archetype",
+  "id": "naga_depth_stalker",
+  "name": "Depth Stalker",
+  "description": "Abyssal predator from the ocean depths. Becomes invisible in deep water and strikes with crushing pressure.",
+
+  "category": "assassin",
+  "tier": 3,
+
+  "baseStats": {
+    "health": 160,
+    "healthRegen": 1.0,
+    "mana": 100,
+    "manaRegen": 1.2,
+    "damage": 35,  // High burst damage
+    "damageVariance": 0.25,
+    "attackSpeed": 1.1,
+    "attackRange": 1.5,
+    "armor": 2,
+    "magicResist": 3,
+    "moveSpeed": 6.0,
+    "turnSpeed": 450,
+    "acceleration": 16.0,
+    "sightRange": 15,  // Excellent deep sea vision
+    "detectionRange": 12,
+    "critChance": 0.25,  // Very high crit
+    "critMultiplier": 3.5
+  },
+
+  "combat": {
+    "attackType": "normal",
+    "armorType": "light",
+
+    "attackAnimation": {
+      "windupTime": 0.2,
+      "backswingTime": 0.3,
+      "totalDuration": 0.91
+    },
+
+    "bonusVs": [
+      {
+        "category": "caster",
+        "multiplier": 2.0,
+        "flatBonus": 20
+      },
+      {
+        "category": "ranged",
+        "multiplier": 1.7
+      },
+      {
+        "category": "unarmored",
+        "multiplier": 1.8
+      }
+    ],
+
+    "backstabMultiplier": 2.5,  // Massive damage from behind
+
+    "cleave": {
+      "enabled": false
+    }
+  },
+
+  "stealth": {
+    "canStealth": true,
+    "stealthType": "deep_water",  // Only in deep water
+    "stealthSpeed": 0.7,  // 70% speed while stealthed
+    "detectionImmunity": false,
+    "breakOnAttack": true,
+    "breakOnDamage": true,
+    "stealthCooldown": 10.0,
+    "stealthManaCost": 30,
+    "stealthDuration": 20
+  },
+
+  "movement": {
+    "movementType": "amphibious",
+    "canMoveOnLand": true,
+    "canMoveOnWater": true,
+    "collisionRadius": 0.5,
+    "pushPriority": 6,
+    "pathfindingType": "amphibious",
+    "unitSize": "medium",
+
+    "waterMovementMultiplier": 1.8,
+    "landMovementMultiplier": 0.7,
+    "deepWaterMovementMultiplier": 2.2,  // Extremely fast in deep water
+
+    "canBurrow": true,  // Can burrow in ocean floor
+    "burrowSpeed": 0.5,
+    "unburrowTime": 1.0
+  },
+
+  "cost": {
+    "gold": 200,
+    "wood": 0,
+    "food": 0,
+    "stone": 20,
+    "mana": 80
+  },
+
+  "trainTime": 50,
+  "populationCost": 3,
+  "requiredBuilding": "deep_trench",
+  "requiredAge": 2,
+  "requiredTech": "abyssal_hunting",
+
+  "abilities": [
+    {
+      "id": "crushing_depths",
+      "name": "Crushing Depths",
+      "description": "Channels deep sea pressure, next attack deals 150% damage and armor penetration",
+      "manaCost": 35,
+      "cooldown": 12,
+      "effect": "Next attack: 1.5x damage, ignores armor"
+    },
+    {
+      "id": "abyssal_camouflage",
+      "name": "Abyssal Camouflage",
+      "description": "Becomes invisible in deep water for 20 seconds or until attacking",
+      "manaCost": 30,
+      "cooldown": 25,
+      "duration": 20,
+      "requiresDeepWater": true
+    },
+    {
+      "id": "pressure_strike",
+      "name": "Pressure Strike",
+      "description": "Strikes with immense pressure, stunning target for 2 seconds",
+      "manaCost": 40,
+      "cooldown": 20,
+      "stunDuration": 2
+    },
+    {
+      "id": "deep_dweller",
+      "name": "Deep Dweller",
+      "description": "Passive: Gains massive bonuses in deep water. Takes no pressure damage.",
+      "passive": true
+    }
+  ],
+
+  "upgrades": [
+    "assassin_training",
+    "pressure_mastery",
+    "abyssal_adaptation"
+  ],
+
+  "formation": {
+    "preferredPosition": "any",
+    "formationSpacing": 0.0,
+    "maintainFormation": false  // Independent assassin
+  },
+
+  "ai": {
+    "aggroRange": 18,
+    "assassinBehavior": true,
+    "preferBackstab": true,
+    "targetPriority": [
+      {
+        "type": "caster",
+        "weight": 3.0
+      },
+      {
+        "type": "ranged",
+        "weight": 2.5
+      },
+      {
+        "type": "hero",
+        "weight": 2.0
+      },
+      {
+        "type": "isolated",
+        "weight": 1.8
+      }
+    ],
+    "useStealthApproach": true,
+    "fleeAtHealthPercent": 0.25,
+    "pursuitRange": 22
+  },
+
+  "experience": {
+    "canGainExperience": true,
+    "maxLevel": 3,
+    "experienceValue": 150,
+    "bountyGold": 60
+  },
+
+  "visuals": {
+    "model": "models/units/naga/depth_stalker.fbx",
+    "portrait": "textures/portraits/naga/depth_stalker.png",
+    "icon": "textures/icons/units/naga/depth_stalker.png",
+    "scale": 1.15,
+
+    "animations": {
+      "idle": "anim_idle_predator",
+      "walk": "anim_stalk",
+      "attack": "anim_slash_combo",
+      "death": "anim_death",
+      "special": "anim_pressure_strike",
+      "stealth": "anim_fade",
+      "unstealth": "anim_emerge"
+    },
+
+    "deathEffect": "effects/depth_stalker_death.fx",
+    "shadowSize": 1.0,
+    "selectionScale": 1.0,
+
+    "teamColorParts": ["fins", "claws"],
+    "glowAtNight": true,
+    "glowColor": "#8800FF",  // Deep purple
+    "bioluminescence": {
+      "enabled": true,
+      "intensity": 0.6,
+      "pulseSpeed": 1.0,
+      "patterns": ["eye_slits", "predator_stripes"],
+      "color": "deep_purple",
+      "dimInStealth": true
+    },
+    "stealthEffect": "effects/water_shimmer.fx"
+  },
+
+  "sounds": {
+    "select": ["sounds/units/naga/stalker/select1.wav"],
+    "move": ["sounds/units/naga/stalker/move1.wav"],
+    "attack": ["sounds/units/naga/stalker/attack1.wav", "sounds/units/naga/stalker/attack2.wav"],
+    "death": ["sounds/units/naga/stalker/death1.wav"],
+    "stealth": "sounds/units/naga/stalker/stealth.wav",
+    "ambient": "sounds/ambient/deep_rumble.wav"
+  },
+
+  "racialTraits": {
+    "race": "naga",
+    "waterAffinity": true,
+    "amphibious": true,
+    "bioluminescent": true,
+    "abyssal": true,
+    "environmentalBonuses": {
+      "inWater": {
+        "moveSpeed": 1.8,
+        "healthRegen": 2.0,
+        "critChance": 0.1
+      },
+      "atDepth": {
+        "deepWater": {
+          "moveSpeed": 2.2,
+          "healthRegen": 3.5,
+          "damage": 1.4,
+          "armor": 4,
+          "critChance": 0.15,
+          "invisibility": true,
+          "pressureImmunity": true
+        }
+      },
+      "onLand": {
+        "moveSpeed": 0.7,
+        "damage": 0.8,
+        "healthRegen": 0.3
+      }
+    }
+  },
+
+  "metadata": {
+    "author": "Claude",
+    "notes": "Elite assassin. Invisible in deep water. Massive burst damage. Hunts high-value targets.",
+    "tacticalUse": "Use deep water for stealth approach. Backstab priority targets. Crushing depths for armor penetration.",
+    "strengths": "Assassination, stealth, burst damage, deep water dominance",
+    "weaknesses": "Fragile, poor vs groups, weak on land, requires deep water for stealth",
+    "counters": ["casters", "ranged", "heroes", "isolated_units"],
+    "counteredBy": ["detection", "area_damage", "land_combat", "true_sight"]
+  }
+}

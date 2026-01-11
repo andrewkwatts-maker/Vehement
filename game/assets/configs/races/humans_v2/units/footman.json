@@ -1,0 +1,140 @@
+{
+  "$schema": "../../../../schemas/unit_archetype.schema.json",
+  "parentArchetype": "infantry",
+  "id": "human_footman",
+  "name": "Footman",
+  "description": "Professional soldiers of the Valorheim army. Clad in steel armor and wielding sword and shield, footmen form the backbone of human military might.",
+  "race": "humans",
+  "category": "infantry",
+  "tier": 2,
+
+  "baseStats": {
+    "health": 420,
+    "healthRegen": 0.75,
+    "damage": 12,
+    "damageVariance": 0.15,
+    "attackSpeed": 1.3,
+    "attackRange": 1.3,
+    "armor": 5,
+    "magicResist": 10,
+    "moveSpeed": 4.8,
+    "critChance": 0.08,
+    "critMultiplier": 1.75
+  },
+
+  "cost": {
+    "gold": 200,
+    "food": 3
+  },
+
+  "trainTime": 28,
+  "populationCost": 2,
+  "requiredBuilding": "human_barracks",
+  "requiredAge": 1,
+
+  "armorType": "medium",
+  "attackType": "normal",
+
+  "bonusVs": [
+    {
+      "category": "cavalry",
+      "multiplier": 1.25
+    }
+  ],
+
+  "abilities": [
+    {
+      "id": "shield_wall",
+      "name": "Shield Wall",
+      "description": "Form a defensive formation with nearby footmen, gaining 40% damage reduction and 50% ranged resistance",
+      "type": "toggle",
+      "hotkey": "W",
+      "effects": [
+        {
+          "stat": "damageReduction",
+          "value": 0.40
+        },
+        {
+          "stat": "rangedResistance",
+          "value": 0.50
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.40
+        }
+      ],
+      "stacksWithNearby": "human_footman",
+      "stackRadius": 3.0
+    },
+    {
+      "id": "defend",
+      "name": "Defend",
+      "description": "Raise shield for 30% damage reduction",
+      "type": "toggle",
+      "hotkey": "D",
+      "effects": [
+        {
+          "stat": "damageReduction",
+          "value": 0.30
+        },
+        {
+          "stat": "moveSpeed",
+          "multiplier": 0.60
+        }
+      ]
+    },
+    {
+      "id": "cleave_attack",
+      "name": "Cleave",
+      "description": "Attacks deal 15% damage to nearby enemies",
+      "type": "passive",
+      "cleavePercent": 0.15,
+      "cleaveRadius": 1.5
+    }
+  ],
+
+  "upgrades": ["infantry_armor_1", "infantry_damage_1", "footman_shields"],
+
+  "visuals": {
+    "model": "models/races/humans/units/footman.obj",
+    "portrait": "textures/races/humans/portraits/footman.png",
+    "icon": "textures/races/humans/icons/footman.png",
+    "scale": 1.0,
+    "textures": {
+      "diffuse": "textures/races/humans/units/footman_diffuse.png",
+      "normal": "textures/races/humans/units/footman_normal.png",
+      "specular": "textures/races/humans/units/footman_specular.png"
+    },
+    "animations": {
+      "idle": "animations/humans/footman/idle.anim",
+      "walk": "animations/humans/footman/walk.anim",
+      "run": "animations/humans/footman/run.anim",
+      "attack": "animations/humans/footman/attack.anim",
+      "defend": "animations/humans/footman/defend.anim",
+      "shield_wall": "animations/humans/footman/shield_wall.anim",
+      "death": "animations/humans/footman/death.anim"
+    }
+  },
+
+  "sounds": {
+    "select": ["sounds/humans/footman/select_1.wav", "sounds/humans/footman/select_2.wav"],
+    "move": ["sounds/humans/footman/ack_1.wav", "sounds/humans/footman/ack_2.wav"],
+    "attack": ["sounds/sword_swing.wav"],
+    "death": ["sounds/humans/footman/death.wav"],
+    "ready": ["sounds/metal_hit.wav"]
+  },
+
+  "collision": {
+    "type": "capsule",
+    "radius": 0.35,
+    "height": 1.8,
+    "mass": 95.0
+  },
+
+  "ai": {
+    "behaviorTree": "ai/behaviors/tank_infantry.bt",
+    "profile": "defensive",
+    "aggroRange": 10.0,
+    "priorityTargets": ["ranged", "siege"]
+  }
+}

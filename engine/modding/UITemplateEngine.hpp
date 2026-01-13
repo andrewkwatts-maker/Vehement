@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UIComponents.hpp"
+#include "../graphics/PreviewRenderer.hpp"
 #include <string>
 #include <vector>
 #include <memory>
@@ -232,9 +233,25 @@ private:
 
 /**
  * @brief Template renderer - converts template to UI components
+ *
+ * This class handles converting HTML-like templates to UI components,
+ * with integrated preview rendering support via PreviewRenderer.
  */
 class TemplateRenderer {
 public:
+    TemplateRenderer();
+    ~TemplateRenderer();
+
+    /**
+     * @brief Initialize the renderer and preview system
+     */
+    void Initialize();
+
+    /**
+     * @brief Shutdown and cleanup resources
+     */
+    void Shutdown();
+
     /**
      * @brief Render template to UI components
      */
@@ -262,6 +279,40 @@ public:
     static void RegisterComponent(const std::string& tagName,
         std::function<UIComponent::Ptr(const std::vector<TemplateAttribute>&, std::shared_ptr<DataContext>)> factory);
 
+    // =========================================================================
+    // Preview Rendering Support
+    // =========================================================================
+
+    /**
+     * @brief Render a texture preview for template display
+     *
+     * @param texture Texture to preview
+     * @param size Preview size in pixels
+     */
+    void RenderTexturePreview(std::shared_ptr<Texture> texture, const glm::ivec2& size);
+
+    /**
+     * @brief Render a 3D mesh preview for template display
+     *
+     * @param mesh Mesh to preview
+     * @param material Material to apply
+     * @param size Preview size in pixels
+     */
+    void RenderMeshPreview(std::shared_ptr<Mesh> mesh,
+                           std::shared_ptr<Material> material,
+                           const glm::ivec2& size);
+
+    /**
+     * @brief Get the preview texture ID for UI rendering
+     */
+    [[nodiscard]] uint32_t GetPreviewTextureID() const;
+
+    /**
+     * @brief Access the underlying PreviewRenderer
+     */
+    PreviewRenderer* GetPreviewRenderer() { return m_previewRenderer.get(); }
+    const PreviewRenderer* GetPreviewRenderer() const { return m_previewRenderer.get(); }
+
 private:
     static UIComponent::Ptr RenderNode(
         std::shared_ptr<TemplateNode> node,
@@ -279,6 +330,9 @@ private:
 
     static std::unordered_map<std::string,
         std::function<UIComponent::Ptr(const std::vector<TemplateAttribute>&, std::shared_ptr<DataContext>)>>& GetCustomComponents();
+
+    // Preview rendering support
+    std::unique_ptr<PreviewRenderer> m_previewRenderer;
 };
 
 /**

@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(Nova3DEngine VERSION 1.0.0 LANGUAGES CXX C)
 
-# Require C++23 for reflection and modern features
-set(CMAKE_CXX_STANDARD 23)
+# CRITICAL: Fix nlohmann/json C++20 ranges namespace pollution on MSVC
+# These MUST be set as early as possible, before any targets include json
+add_compile_definitions(JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0)
+
+# Use C++20 for source_location, format, etc.
+# NOTE: nlohmann/json C++20 ranges MSVC bug - see CLAUDE.md for workarounds
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -278,6 +283,9 @@ FetchContent_Declare(
 )
 
 # nlohmann/json - JSON configuration
+# Using v3.11.3 with early compile definitions to disable C++20 ranges
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(JSON_DisableEnumSerialization OFF CACHE INTERNAL "")
 FetchContent_Declare(
     json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
@@ -293,11 +301,11 @@ FetchContent_Declare(
     GIT_SHALLOW    TRUE
 )
 
-# ImGui - Debug UI (replaces AntTweakBar)
+# ImGui - Debug UI with Docking support
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG        v1.91.5
+    GIT_TAG        docking
     GIT_SHALLOW    TRUE
 )
 

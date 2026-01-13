@@ -669,9 +669,9 @@ private:
     size_t m_currentSize = 0;
 
     void OpenFile() {
-        auto mode = std::ios::out;
+        std::ios_base::openmode mode = std::ios::out;
         if (m_config.append) {
-            mode |= std::ios::app;
+            mode = static_cast<std::ios_base::openmode>(mode | std::ios::app);
         }
         m_file.open(m_config.filePath, mode);
 

@@ -98,4 +98,28 @@ target_compile_definitions(nova3d PUBLIC JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0)
 
 This was added to [CMakeLists.txt](CMakeLists.txt) after the "# Compiler warnings" section.
 
-**Status**: CMake reconfiguration in progress (fetching dependencies). Once complete, will attempt nova3d build with JSON fixes applied.
+**Status**: BLOCKED - nlohmann/json C++20 ranges namespace pollution on MSVC.
+
+### Build Blocker (2026-01-14)
+
+**Issue**: nlohmann/json v3.11.x creates `nlohmann::std::ranges` namespace which pollutes MSVC's `std::ranges` causing 100+ compilation errors in `<algorithm>`.
+
+**Attempted Fixes**:
+- ❌ `JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0` compile definitions (set too late)
+- ❌ Setting defines before FetchContent (still pollutes)
+- ❌ Setting defines at CMake project start (still pollutes)
+- ❌ Downgrading to v3.10.5 (CMake 3.5 compatibility issues)
+- ❌ Downgrading to v3.11.2 (same issue)
+- ❌ Switching to C++17 (codebase needs C++20 features: source_location, format)
+
+**Workarounds to Try**:
+1. Use single-include json.hpp with manual defines before include
+2. Fork and patch nlohmann/json to disable ranges support
+3. Use a different JSON library (RapidJSON, simdjson)
+4. Update MSVC to latest version that may have fix
+5. Force-include a header with JSON defines before all compilation
+
+**Other Fixes Applied (2026-01-14)**:
+- ✅ Fixed AnimationLayer redefinition (renamed to TimelineAnimationLayer)
+- ✅ Fixed Logger.hpp ios::openmode operator
+- ✅ Switched ImGui to docking branch for DockSpace/SetNextWindowViewport

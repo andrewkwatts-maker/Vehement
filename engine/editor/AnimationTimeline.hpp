@@ -598,9 +598,10 @@ private:
 // =============================================================================
 
 /**
- * @brief Animation layer for blending multiple clips
+ * @brief Animation layer for timeline blending multiple clips
+ * @note Named TimelineAnimationLayer to avoid conflict with Nova::AnimationLayer in Animation.hpp
  */
-struct AnimationLayer {
+struct TimelineAnimationLayer {
     std::string name;
     std::shared_ptr<TimelineAnimationClip> clip;
     float weight = 1.0f;
@@ -1201,7 +1202,7 @@ private:
 
     // Animation data
     std::shared_ptr<TimelineAnimationClip> m_clip;
-    std::vector<AnimationLayer> m_layers;
+    std::vector<TimelineAnimationLayer> m_layers;
 
     // Playback
     PlaybackState m_playback;

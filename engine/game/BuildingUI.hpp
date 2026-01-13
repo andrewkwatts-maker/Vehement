@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <nlohmann/json.hpp>
 #include <glm/glm.hpp>
+#include "../graphics/PreviewRenderer.hpp"
 
 namespace Nova {
 namespace Buildings {
@@ -317,10 +318,24 @@ private:
 
 /**
  * @brief Renders building UI using ImGui
+ *
+ * This class handles ImGui-based building UI rendering with integrated
+ * 3D preview support via PreviewRenderer.
  */
 class BuildingUIRenderer {
 public:
-    BuildingUIRenderer() = default;
+    BuildingUIRenderer();
+    ~BuildingUIRenderer();
+
+    /**
+     * @brief Initialize the renderer and its preview component
+     */
+    void Initialize();
+
+    /**
+     * @brief Shutdown and cleanup resources
+     */
+    void Shutdown();
 
     // Main render function
     void RenderBuildingUI(BuildingInstancePtr building, BuildingUIState& uiState,
@@ -342,12 +357,37 @@ public:
     void RenderProgressBar(float progress, const glm::vec2& size,
                           const std::string& label = "");
 
+    /**
+     * @brief Render a 3D preview of a building mesh
+     *
+     * Uses the internal PreviewRenderer to generate a preview image.
+     *
+     * @param mesh Building mesh to preview
+     * @param material Material to apply
+     * @param size Preview size in pixels
+     */
+    void RenderBuildingPreview(std::shared_ptr<Mesh> mesh,
+                               std::shared_ptr<Material> material,
+                               const glm::ivec2& size);
+
+    /**
+     * @brief Get the preview texture ID for ImGui rendering
+     */
+    uint32_t GetPreviewTextureID() const;
+
+    /**
+     * @brief Access the underlying PreviewRenderer for advanced configuration
+     */
+    PreviewRenderer* GetPreviewRenderer() { return m_previewRenderer.get(); }
+    const PreviewRenderer* GetPreviewRenderer() const { return m_previewRenderer.get(); }
+
     // Configuration
     void SetUIScale(float scale) { m_uiScale = scale; }
     float GetUIScale() const { return m_uiScale; }
 
 private:
     float m_uiScale = 1.0f;
+    std::unique_ptr<PreviewRenderer> m_previewRenderer;
 };
 
 } // namespace Buildings

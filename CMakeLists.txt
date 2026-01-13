@@ -882,6 +882,7 @@ endif()
 # ========================================================================
 if(NOVA_ENABLE_UI)
     target_sources(nova3d PRIVATE
+        engine/ui/DockingSystem.cpp
         engine/ui/editor/UIEditor.cpp
         engine/ui/EditorPanel.cpp
         engine/ui/EditorTheme.cpp
@@ -1068,13 +1069,59 @@ target_sources(nova3d PRIVATE
     engine/editor/TransformGizmo.cpp
 )
 
+# Viewport Controls System (Editor navigation)
+target_sources(nova3d PRIVATE
+    engine/editor/ViewportControls.cpp
+)
+
 # Editor Command System (Undo/Redo)
 target_sources(nova3d PRIVATE
     engine/editor/EditorCommand.cpp
     engine/editor/CommandHistory.cpp
 )
 
+# Play Mode / Runtime Preview System
+target_sources(nova3d PRIVATE
+    engine/editor/PlayMode.cpp
+)
+
 # Material Editor System (Multi-object editing)
 target_sources(nova3d PRIVATE
     engine/editor/MaterialEditor.cpp
 )
+
+# SDF Sculpting Tool
+target_sources(nova3d PRIVATE
+    engine/editor/SDFSculptTool.cpp
+)
+
+# Editor Tool Interface and Registry
+target_sources(nova3d PRIVATE
+    engine/editor/IEditorTool.cpp
+)
+
+# Properties Inspector Panel (Editor)
+target_sources(nova3d PRIVATE
+    engine/editor/PropertiesPanel.cpp
+)
+
+# Console/Log Panel System (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/ConsolePanel.cpp
+    )
+endif()
+
+# Animation Timeline Editor (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/AnimationTimeline.cpp
+    )
+endif()
+
+# Editor Application - Main editor coordinator (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/EditorApplication.cpp
+    )
+endif()

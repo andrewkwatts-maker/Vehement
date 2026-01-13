@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MaterialNode.hpp"
+#include "../graphics/PreviewRenderer.hpp"
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
@@ -249,6 +250,11 @@ public:
 
 /**
  * @brief Material graph preview renderer
+ *
+ * This class is now a thin wrapper around Nova::PreviewRenderer for backward compatibility.
+ * New code should use Nova::PreviewRenderer directly.
+ *
+ * @see Nova::PreviewRenderer
  */
 class MaterialGraphPreviewRenderer {
 public:
@@ -274,16 +280,25 @@ public:
     float rotation = 0.0f;
     bool autoRotate = true;
 
-    unsigned int GetPreviewTexture() const { return m_previewTexture; }
+    unsigned int GetPreviewTexture() const;
+
+    /**
+     * @brief Get the underlying PreviewRenderer instance
+     *
+     * Allows access to the full PreviewRenderer API for advanced use cases.
+     *
+     * @return Pointer to the internal PreviewRenderer
+     */
+    Nova::PreviewRenderer* GetPreviewRenderer() { return m_renderer.get(); }
+    const Nova::PreviewRenderer* GetPreviewRenderer() const { return m_renderer.get(); }
 
 private:
-    unsigned int m_fbo = 0;
-    unsigned int m_previewTexture = 0;
-    unsigned int m_depthBuffer = 0;
+    std::unique_ptr<Nova::PreviewRenderer> m_renderer;
     int m_width = 512;
     int m_height = 512;
 
-    void RenderPreviewScene();
+    // Helper to sync legacy settings with PreviewRenderer
+    void SyncSettings();
 };
 
 } // namespace Engine

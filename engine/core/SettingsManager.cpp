@@ -590,11 +590,11 @@ void SettingsManager::Initialize() {
     spdlog::info("SettingsManager initialized with High preset");
 }
 
-std::expected<void, std::string> SettingsManager::Load(const std::string& filepath) {
+std::optional<void> SettingsManager::Load(const std::string& filepath) {
     try {
         std::ifstream file(filepath);
         if (!file.is_open()) {
-            return std::unexpected("Failed to open file: " + filepath);
+            return std::nullopt;
         }
 
         nlohmann::json json;
@@ -611,13 +611,13 @@ std::expected<void, std::string> SettingsManager::Load(const std::string& filepa
     }
 }
 
-std::expected<void, std::string> SettingsManager::Save(const std::string& filepath) {
+std::optional<void> SettingsManager::Save(const std::string& filepath) {
     try {
         nlohmann::json json = m_settings.ToJson();
 
         std::ofstream file(filepath);
         if (!file.is_open()) {
-            return std::unexpected("Failed to create file: " + filepath);
+            return std::nullopt;
         }
 
         file << json.dump(2);

@@ -8,14 +8,23 @@
 
 #pragma once
 
-// Disable C++20 ranges support to avoid MSVC std::ranges namespace pollution
-#ifndef JSON_HAS_RANGES
+// CRITICAL: Disable C++20 ranges support BEFORE nlohmann/json.hpp
+// The order matters - these must be defined before ANY JSON headers
 #define JSON_HAS_RANGES 0
-#endif
-
-#ifndef JSON_HAS_CPP_20
 #define JSON_HAS_CPP_20 0
+
+// Prevent detection of C++20 ranges by undefining the feature test macro
+#ifdef __cpp_lib_ranges
+#undef __cpp_lib_ranges
+#define NOVA_UNDEF_CPP_LIB_RANGES 1
 #endif
 
 // Now include the actual JSON library
 #include <nlohmann/json.hpp>
+
+// Restore the ranges macro if we undefined it
+#ifdef NOVA_UNDEF_CPP_LIB_RANGES
+#undef NOVA_UNDEF_CPP_LIB_RANGES
+// Note: Can't restore __cpp_lib_ranges as it's compiler-defined
+// This is intentional - we don't want JSON to use ranges
+#endif

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
-#include <expected>
+#include <optional>
 #include <vector>
 #include <span>
 #include <cstdint>
@@ -46,20 +46,20 @@ enum class FileError {
  * @param path Path to the file
  * @return File contents or error
  */
-[[nodiscard]] std::expected<std::string, FileError> ReadFile(std::string_view path) {
+[[nodiscard]] std::optional<std::string> ReadFile(std::string_view path) {
     std::ifstream file(std::string(path), std::ios::in | std::ios::binary);
     if (!file.is_open()) {
         if (!std::filesystem::exists(path)) {
-            return std::unexpected(FileError::NotFound);
+            return std::nullopt;
         }
-        return std::unexpected(FileError::AccessDenied);
+        return std::nullopt;
     }
 
     std::ostringstream buffer;
     buffer << file.rdbuf();
 
     if (file.bad()) {
-        return std::unexpected(FileError::IoError);
+        return std::nullopt;
     }
 
     return buffer.str();
@@ -68,13 +68,13 @@ enum class FileError {
 /**
  * @brief Read file contents as binary data
  */
-[[nodiscard]] std::expected<std::vector<uint8_t>, FileError> ReadBinaryFile(std::string_view path) {
+[[nodiscard]] std::optional<std::vector<uint8_t>> ReadBinaryFile(std::string_view path) {
     std::ifstream file(std::string(path), std::ios::in | std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         if (!std::filesystem::exists(path)) {
-            return std::unexpected(FileError::NotFound);
+            return std::nullopt;
         }
-        return std::unexpected(FileError::AccessDenied);
+        return std::nullopt;
     }
 
     const auto size = file.tellg();
@@ -82,7 +82,7 @@ enum class FileError {
 
     std::vector<uint8_t> buffer(static_cast<size_t>(size));
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
-        return std::unexpected(FileError::IoError);
+        return std::nullopt;
     }
 
     return buffer;
@@ -94,26 +94,26 @@ enum class FileError {
  * @param content Content to write
  * @return Success or error
  */
-[[nodiscard]] std::expected<void, FileError> WriteFile(std::string_view path, std::string_view content) {
+[[nodiscard]] std::optional<FileError> WriteFile(std::string_view path, std::string_view content) {
     std::filesystem::path filePath(path);
 
     if (filePath.has_parent_path()) {
         std::error_code ec;
         std::filesystem::create_directories(filePath.parent_path(), ec);
         if (ec) {
-            return std::unexpected(FromSystemError(ec));
+            return std::nullopt;
         }
     }
 
     std::ofstream file(filePath, std::ios::out | std::ios::binary);
     if (!file.is_open()) {
-        return std::unexpected(FileError::AccessDenied);
+        return std::nullopt;
     }
 
     file.write(content.data(), static_cast<std::streamsize>(content.size()));
 
     if (file.bad()) {
-        return std::unexpected(FileError::IoError);
+        return std::nullopt;
     }
 
     return {};
@@ -122,26 +122,26 @@ enum class FileError {
 /**
  * @brief Write binary data to a file
  */
-[[nodiscard]] std::expected<void, FileError> WriteBinaryFile(std::string_view path, std::span<const uint8_t> data) {
+[[nodiscard]] std::optional<FileError> WriteBinaryFile(std::string_view path, std::span<const uint8_t> data) {
     std::filesystem::path filePath(path);
 
     if (filePath.has_parent_path()) {
         std::error_code ec;
         std::filesystem::create_directories(filePath.parent_path(), ec);
         if (ec) {
-            return std::unexpected(FromSystemError(ec));
+            return std::nullopt;
         }
     }
 
     std::ofstream file(filePath, std::ios::out | std::ios::binary);
     if (!file.is_open()) {
-        return std::unexpected(FileError::AccessDenied);
+        return std::nullopt;
     }
 
     file.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
 
     if (file.bad()) {
-        return std::unexpected(FileError::IoError);
+        return std::nullopt;
     }
 
     return {};
@@ -166,11 +166,11 @@ enum class FileError {
 /**
  * @brief Create a directory (and parent directories if needed)
  */
-[[nodiscard]] std::expected<void, FileError> CreateDirectory(std::string_view path) {
+[[nodiscard]] std::optional<FileError> CreateDirectory(std::string_view path) {
     std::error_code ec;
     std::filesystem::create_directories(path, ec);
     if (ec) {
-        return std::unexpected(FromSystemError(ec));
+        return std::nullopt;
     }
     return {};
 }
@@ -178,13 +178,13 @@ enum class FileError {
 /**
  * @brief Delete a file
  */
-[[nodiscard]] std::expected<void, FileError> DeleteFile(std::string_view path) {
+[[nodiscard]] std::optional<FileError> DeleteFile(std::string_view path) {
     std::error_code ec;
     if (!std::filesystem::remove(path, ec) || ec) {
         if (!std::filesystem::exists(path)) {
-            return std::unexpected(FileError::NotFound);
+            return std::nullopt;
         }
-        return std::unexpected(FromSystemError(ec));
+        return std::nullopt;
     }
     return {};
 }
@@ -192,11 +192,11 @@ enum class FileError {
 /**
  * @brief Copy a file
  */
-[[nodiscard]] std::expected<void, FileError> CopyFile(std::string_view source, std::string_view dest) {
+[[nodiscard]] std::optional<FileError> CopyFile(std::string_view source, std::string_view dest) {
     std::error_code ec;
     std::filesystem::copy_file(source, dest, std::filesystem::copy_options::overwrite_existing, ec);
     if (ec) {
-        return std::unexpected(FromSystemError(ec));
+        return std::nullopt;
     }
     return {};
 }
@@ -232,11 +232,11 @@ enum class FileError {
 /**
  * @brief Get file size in bytes
  */
-[[nodiscard]] std::expected<std::uintmax_t, FileError> GetFileSize(std::string_view path) {
+[[nodiscard]] std::optional<std::uintmax_t> GetFileSize(std::string_view path) {
     std::error_code ec;
     auto size = std::filesystem::file_size(path, ec);
     if (ec) {
-        return std::unexpected(FromSystemError(ec));
+        return std::nullopt;
     }
     return size;
 }

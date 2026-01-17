@@ -84,6 +84,11 @@ bool Property(const char* label, std::string& value, size_t maxLength) {
     return changed;
 }
 
+bool Property(const char* label, char* buffer, size_t bufferSize) {
+    DrawPropertyLabel(label);
+    return ImGui::InputText(("##" + std::string(label)).c_str(), buffer, bufferSize);
+}
+
 bool Property(const char* label, glm::vec2& value, float min, float max, float speed) {
     DrawPropertyLabel(label);
     return ImGui::DragFloat2(("##" + std::string(label)).c_str(), &value.x, speed, min, max);

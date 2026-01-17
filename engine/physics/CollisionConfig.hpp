@@ -4,7 +4,7 @@
 #include "CollisionBody.hpp"
 #include <nlohmann/json.hpp>
 #include <filesystem>
-#include <expected>
+#include <optional>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -82,7 +82,7 @@ public:
      * @param json JSON object containing collision config
      * @return Parsed configuration or error
      */
-    [[nodiscard]] std::expected<CollisionConfiguration, std::string> Parse(
+    [[nodiscard]] std::optional<CollisionConfiguration> Parse(
         const nlohmann::json& json) const;
 
     /**
@@ -90,13 +90,13 @@ public:
      * @param filepath Path to JSON file
      * @return Parsed configuration or error
      */
-    [[nodiscard]] std::expected<CollisionConfiguration, std::string> ParseFile(
+    [[nodiscard]] std::optional<CollisionConfiguration> ParseFile(
         const std::filesystem::path& filepath) const;
 
     /**
      * @brief Parse collision configuration from JSON string
      */
-    [[nodiscard]] std::expected<CollisionConfiguration, std::string> ParseString(
+    [[nodiscard]] std::optional<CollisionConfiguration> ParseString(
         const std::string& jsonString) const;
 
     /**
@@ -128,20 +128,20 @@ public:
      * @param filepath Path to mesh file (.obj, .collider, etc.)
      * @return Loaded collision shape or error
      */
-    [[nodiscard]] std::expected<CollisionShape, std::string> LoadCollisionMesh(
+    [[nodiscard]] std::optional<CollisionShape> LoadCollisionMesh(
         const std::filesystem::path& filepath) const;
 
 private:
     /**
      * @brief Parse a single shape from JSON
      */
-    [[nodiscard]] std::expected<CollisionShape, std::string> ParseShape(
+    [[nodiscard]] std::optional<CollisionShape> ParseShape(
         const nlohmann::json& json) const;
 
     /**
      * @brief Parse compound shape from JSON
      */
-    [[nodiscard]] std::expected<CollisionShape, std::string> ParseCompoundShape(
+    [[nodiscard]] std::optional<CollisionShape> ParseCompoundShape(
         const nlohmann::json& json) const;
 
     /**

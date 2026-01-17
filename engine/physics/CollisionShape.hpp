@@ -8,7 +8,6 @@
 #include <string>
 #include <variant>
 #include <optional>
-#include <expected>
 
 namespace Nova {
 
@@ -327,8 +326,9 @@ public:
 
     /**
      * @brief Deserialize shape from JSON
+     * @return Shape if parsing successful, nullopt otherwise
      */
-    static std::expected<CollisionShape, std::string> FromJson(const nlohmann::json& j);
+    static std::optional<CollisionShape> FromJson(const nlohmann::json& j);
 
     /**
      * @brief Create default shape of given type

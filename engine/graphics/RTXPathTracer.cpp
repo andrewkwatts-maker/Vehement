@@ -19,7 +19,7 @@
 #include "SVGF.hpp"
 #include "Shader.hpp"
 #include "../core/Camera.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <spdlog/spdlog.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_inverse.hpp>

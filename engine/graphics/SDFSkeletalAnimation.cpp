@@ -11,7 +11,7 @@
 
 // OpenGL for GPU buffers
 #ifdef _WIN32
-    #include <glad/glad.h>
+    #include <glad/gl.h>
 #else
     #include <GL/gl.h>
 #endif

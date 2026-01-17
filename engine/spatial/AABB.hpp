@@ -364,7 +364,7 @@ struct Ray {
     glm::vec3 direction{0.0f, 0.0f, -1.0f};
 
     constexpr Ray() noexcept = default;
-    constexpr Ray(const glm::vec3& o, const glm::vec3& d) noexcept
+    Ray(const glm::vec3& o, const glm::vec3& d) noexcept
         : origin(o), direction(glm::normalize(d)) {}
 
     /**

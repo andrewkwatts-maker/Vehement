@@ -47,7 +47,7 @@ std::unique_ptr<CollisionBody> CollisionConfiguration::CreateBody() const {
 // CollisionConfigParser
 // ============================================================================
 
-std::expected<CollisionConfiguration, std::string> CollisionConfigParser::Parse(
+std::optional<CollisionConfiguration> CollisionConfigParser::Parse(
     const nlohmann::json& json) const
 {
     CollisionConfiguration config;
@@ -103,7 +103,7 @@ std::expected<CollisionConfiguration, std::string> CollisionConfigParser::Parse(
         for (const auto& shapeJson : (*collisionJson)["shapes"]) {
             auto shapeResult = ParseShape(shapeJson);
             if (!shapeResult) {
-                return std::unexpected(shapeResult.error());
+                return std::nullopt;
             }
             config.shapes.push_back(std::move(*shapeResult));
         }
@@ -158,13 +158,13 @@ std::expected<CollisionConfiguration, std::string> CollisionConfigParser::Parse(
     }
 
     if (config.shapes.empty()) {
-        return std::unexpected("No collision shapes defined");
+        return std::nullopt;
     }
 
     return config;
 }
 
-std::expected<CollisionConfiguration, std::string> CollisionConfigParser::ParseFile(
+std::optional<CollisionConfiguration> CollisionConfigParser::ParseFile(
     const std::filesystem::path& filepath) const
 {
     std::filesystem::path fullPath = filepath;
@@ -173,34 +173,34 @@ std::expected<CollisionConfiguration, std::string> CollisionConfigParser::ParseF
     }
 
     if (!std::filesystem::exists(fullPath)) {
-        return std::unexpected("File not found: " + fullPath.string());
+        return std::nullopt;
     }
 
     std::ifstream file(fullPath);
     if (!file.is_open()) {
-        return std::unexpected("Could not open file: " + fullPath.string());
+        return std::nullopt;
     }
 
     try {
         nlohmann::json json = nlohmann::json::parse(file);
         return Parse(json);
     } catch (const nlohmann::json::parse_error& e) {
-        return std::unexpected("JSON parse error: " + std::string(e.what()));
+        return std::nullopt;
     }
 }
 
-std::expected<CollisionConfiguration, std::string> CollisionConfigParser::ParseString(
+std::optional<CollisionConfiguration> CollisionConfigParser::ParseString(
     const std::string& jsonString) const
 {
     try {
         nlohmann::json json = nlohmann::json::parse(jsonString);
         return Parse(json);
     } catch (const nlohmann::json::parse_error& e) {
-        return std::unexpected("JSON parse error: " + std::string(e.what()));
+        return std::nullopt;
     }
 }
 
-std::expected<CollisionShape, std::string> CollisionConfigParser::ParseShape(
+std::optional<CollisionShape> CollisionConfigParser::ParseShape(
     const nlohmann::json& json) const
 {
     // First try the standard FromJson parser
@@ -211,21 +211,21 @@ std::expected<CollisionShape, std::string> CollisionConfigParser::ParseShape(
             std::string meshPath = json["mesh_file"].get<std::string>();
             auto meshResult = LoadCollisionMesh(meshPath);
             if (!meshResult) {
-                return std::unexpected(meshResult.error());
+                return std::nullopt;
             }
             return *meshResult;
         }
         return result;
     }
 
-    return std::unexpected(result.error());
+    return std::nullopt;
 }
 
-std::expected<CollisionShape, std::string> CollisionConfigParser::ParseCompoundShape(
+std::optional<CollisionShape> CollisionConfigParser::ParseCompoundShape(
     const nlohmann::json& json) const
 {
     if (!json.contains("children") || !json["children"].is_array()) {
-        return std::unexpected("Compound shape requires 'children' array");
+        return std::nullopt;
     }
 
     ShapeParams::Compound compoundParams;
@@ -233,7 +233,7 @@ std::expected<CollisionShape, std::string> CollisionConfigParser::ParseCompoundS
     for (const auto& childJson : json["children"]) {
         auto childResult = ParseShape(childJson);
         if (!childResult) {
-            return std::unexpected("Failed to parse child shape: " + childResult.error());
+            return std::nullopt;
         }
         compoundParams.children.push_back(
             std::make_shared<CollisionShape>(std::move(*childResult)));
@@ -324,19 +324,19 @@ CollisionShape CollisionConfigParser::GenerateFromMesh(
     }
 }
 
-std::expected<CollisionShape, std::string> CollisionConfigParser::LoadCollisionMesh(
+std::optional<CollisionShape> CollisionConfigParser::LoadCollisionMesh(
     const std::filesystem::path& filepath) const
 {
     std::filesystem::path fullPath = ResolvePath(filepath.string());
 
     if (!std::filesystem::exists(fullPath)) {
-        return std::unexpected("Mesh file not found: " + fullPath.string());
+        return std::nullopt;
     }
 
     // Simple OBJ loader for collision meshes
     std::ifstream file(fullPath);
     if (!file.is_open()) {
-        return std::unexpected("Could not open mesh file: " + fullPath.string());
+        return std::nullopt;
     }
 
     std::vector<glm::vec3> vertices;
@@ -377,7 +377,7 @@ std::expected<CollisionShape, std::string> CollisionConfigParser::LoadCollisionM
     }
 
     if (vertices.empty()) {
-        return std::unexpected("No vertices found in mesh file");
+        return std::nullopt;
     }
 
     // Determine if this should be a convex hull or triangle mesh

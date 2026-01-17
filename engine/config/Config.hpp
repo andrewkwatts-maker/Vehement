@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <variant>
 #include <optional>
-#include <expected>
+#include <optional>
 #include <filesystem>
 #include <fstream>
 #include <shared_mutex>
@@ -84,20 +84,20 @@ public:
      * @param filepath Path to configuration file
      * @return Expected success or error
      */
-    [[nodiscard]] std::expected<void, ConfigError> Load(const std::filesystem::path& filepath);
+    [[nodiscard]] std::optional<ConfigError> Load(const std::filesystem::path& filepath);
 
     /**
      * @brief Save current configuration to JSON file
      * @param filepath Path to save to (uses loaded path if empty)
      * @return Expected success or error
      */
-    [[nodiscard]] std::expected<void, ConfigError> Save(const std::filesystem::path& filepath = "");
+    [[nodiscard]] std::optional<ConfigError> Save(const std::filesystem::path& filepath = "");
 
     /**
      * @brief Reload configuration from disk
      * @return Expected success or error
      */
-    [[nodiscard]] std::expected<void, ConfigError> Reload();
+    [[nodiscard]] std::optional<ConfigError> Reload();
 
     /**
      * @brief Get a configuration value with type safety
@@ -116,7 +116,7 @@ public:
      * @return Expected value or error
      */
     template<ConfigStorable T>
-    [[nodiscard]] std::expected<T, ConfigError> GetExpected(std::string_view key) const;
+    [[nodiscard]] std::optional<T> GetExpected(std::string_view key) const;
 
     /**
      * @brief Get a numeric value with range validation
@@ -293,12 +293,12 @@ T Config::Get(std::string_view key, const T& defaultValue) const {
 }
 
 template<ConfigStorable T>
-std::expected<T, ConfigError> Config::GetExpected(std::string_view key) const {
+std::optional<T> Config::GetExpected(std::string_view key) const {
     std::shared_lock lock(m_mutex);
 
     const auto* node = NavigateToKey(key);
     if (!node || node->is_null()) {
-        return std::unexpected(ConfigError::KeyNotFound);
+        return std::nullopt;
     }
 
     try {
@@ -306,7 +306,7 @@ std::expected<T, ConfigError> Config::GetExpected(std::string_view key) const {
             if (node->is_array() && node->size() >= 2) {
                 return glm::vec2((*node)[0].get<float>(), (*node)[1].get<float>());
             }
-            return std::unexpected(ConfigError::TypeMismatch);
+            return std::nullopt;
         } else if constexpr (std::is_same_v<T, glm::vec3>) {
             if (node->is_array() && node->size() >= 3) {
                 return glm::vec3(
@@ -315,7 +315,7 @@ std::expected<T, ConfigError> Config::GetExpected(std::string_view key) const {
                     (*node)[2].get<float>()
                 );
             }
-            return std::unexpected(ConfigError::TypeMismatch);
+            return std::nullopt;
         } else if constexpr (std::is_same_v<T, glm::vec4>) {
             if (node->is_array() && node->size() >= 4) {
                 return glm::vec4(
@@ -325,12 +325,12 @@ std::expected<T, ConfigError> Config::GetExpected(std::string_view key) const {
                     (*node)[3].get<float>()
                 );
             }
-            return std::unexpected(ConfigError::TypeMismatch);
+            return std::nullopt;
         } else {
             return node->get<T>();
         }
     } catch (...) {
-        return std::unexpected(ConfigError::TypeMismatch);
+        return std::nullopt;
     }
 }
 

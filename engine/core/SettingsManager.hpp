@@ -5,7 +5,7 @@
 #include <array>
 #include <memory>
 #include <functional>
-#include <expected>
+#include <optional>
 #include <glm/glm.hpp>
 #include <nlohmann/json.hpp>
 
@@ -295,12 +295,12 @@ public:
     /**
      * @brief Load settings from JSON file
      */
-    [[nodiscard]] std::expected<void, std::string> Load(const std::string& filepath);
+    [[nodiscard]] std::optional<void> Load(const std::string& filepath);
 
     /**
      * @brief Save settings to JSON file
      */
-    [[nodiscard]] std::expected<void, std::string> Save(const std::string& filepath);
+    [[nodiscard]] std::optional<void> Save(const std::string& filepath);
 
     /**
      * @brief Apply a quality preset

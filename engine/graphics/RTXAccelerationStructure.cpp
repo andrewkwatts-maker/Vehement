@@ -2,7 +2,7 @@
 #include "RTXSupport.hpp"
 #include "../core/SDF.hpp"
 #include "Mesh.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <spdlog/spdlog.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <sstream>

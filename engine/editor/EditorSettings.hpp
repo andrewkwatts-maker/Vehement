@@ -28,7 +28,7 @@
 #include <variant>
 #include <optional>
 #include <memory>
-#include <expected>
+#include <optional>
 #include <glm/glm.hpp>
 #include <nlohmann/json.hpp>
 
@@ -444,14 +444,14 @@ public:
      * @param filepath Path to settings JSON file
      * @return Success or error message
      */
-    [[nodiscard]] std::expected<void, std::string> Load(const std::string& filepath = "");
+    [[nodiscard]] std::optional<void> Load(const std::string& filepath = "");
 
     /**
      * @brief Save settings to file
      * @param filepath Path to save to (empty = default location)
      * @return Success or error message
      */
-    [[nodiscard]] std::expected<void, std::string> Save(const std::string& filepath = "");
+    [[nodiscard]] std::optional<void> Save(const std::string& filepath = "");
 
     /**
      * @brief Get default settings file path
@@ -599,7 +599,7 @@ public:
      * @param filepath Destination path
      * @return Success or error
      */
-    [[nodiscard]] std::expected<void, std::string> Export(const std::string& filepath) const;
+    [[nodiscard]] std::optional<void> Export(const std::string& filepath) const;
 
     /**
      * @brief Import settings from file
@@ -607,7 +607,7 @@ public:
      * @param merge If true, merge with existing; if false, replace all
      * @return Success or error
      */
-    [[nodiscard]] std::expected<void, std::string> Import(const std::string& filepath, bool merge = false);
+    [[nodiscard]] std::optional<void> Import(const std::string& filepath, bool merge = false);
 
     // =========================================================================
     // Migration

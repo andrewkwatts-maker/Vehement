@@ -4,7 +4,7 @@
  */
 
 #include "Profiler.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <imgui.h>
 #include <sstream>
 #include <iomanip>

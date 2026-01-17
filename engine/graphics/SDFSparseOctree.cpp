@@ -1,6 +1,6 @@
 #include "SDFSparseOctree.hpp"
 #include "../sdf/SDFModel.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <algorithm>
 #include <chrono>
 #include <cmath>

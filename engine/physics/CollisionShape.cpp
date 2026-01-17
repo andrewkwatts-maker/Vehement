@@ -747,14 +747,14 @@ nlohmann::json CollisionShape::ToJson() const {
     return j;
 }
 
-std::expected<CollisionShape, std::string> CollisionShape::FromJson(const nlohmann::json& j) {
+std::optional<CollisionShape> CollisionShape::FromJson(const nlohmann::json& j) {
     if (!j.contains("type")) {
-        return std::unexpected("Missing 'type' field in collision shape");
+        return std::nullopt;
     }
 
     auto typeOpt = ShapeTypeFromString(j["type"].get<std::string>());
     if (!typeOpt) {
-        return std::unexpected("Unknown shape type: " + j["type"].get<std::string>());
+        return std::nullopt;
     }
 
     CollisionShape shape(*typeOpt);

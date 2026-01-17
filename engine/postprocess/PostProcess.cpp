@@ -870,9 +870,9 @@ void DepthOfFieldEffect::Resize(int width, int height) {
     PostProcessEffect::Resize(width, height);
 }
 
-void DepthOfFieldEffect::SetCameraPlanes(float near, float far) {
-    m_nearPlane = near;
-    m_farPlane = far;
+void DepthOfFieldEffect::SetCameraPlanes(float nearPlane, float farPlane) {
+    m_nearPlane = nearPlane;
+    m_farPlane = farPlane;
 }
 
 void DepthOfFieldEffect::CalculateCoC(uint32_t /*depthTexture*/) {
@@ -1098,12 +1098,12 @@ void PostProcessPipeline::SetViewProjection(const glm::mat4& view, const glm::ma
     }
 }
 
-void PostProcessPipeline::SetCameraPlanes(float near, float far) {
-    m_nearPlane = near;
-    m_farPlane = far;
+void PostProcessPipeline::SetCameraPlanes(float nearPlane, float farPlane) {
+    m_nearPlane = nearPlane;
+    m_farPlane = farPlane;
 
     if (auto* dof = dynamic_cast<DepthOfFieldEffect*>(GetEffectByType(PostProcessEffectType::DepthOfField))) {
-        dof->SetCameraPlanes(near, far);
+        dof->SetCameraPlanes(nearPlane, farPlane);
     }
 }
 

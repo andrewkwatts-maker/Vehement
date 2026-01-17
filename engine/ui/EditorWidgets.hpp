@@ -40,6 +40,7 @@ bool Property(const char* label, float& value, float min = -FLT_MAX, float max =
 bool Property(const char* label, double& value, double min = -DBL_MAX, double max = DBL_MAX, double speed = 0.1);
 bool Property(const char* label, bool& value);
 bool Property(const char* label, std::string& value, size_t maxLength = 256);
+bool Property(const char* label, char* buffer, size_t bufferSize);  // For C-style string buffers
 bool Property(const char* label, glm::vec2& value, float min = -FLT_MAX, float max = FLT_MAX, float speed = 0.1f);
 bool Property(const char* label, glm::vec3& value, float min = -FLT_MAX, float max = FLT_MAX, float speed = 0.1f);
 bool Property(const char* label, glm::vec4& value, float min = -FLT_MAX, float max = FLT_MAX, float speed = 0.1f);

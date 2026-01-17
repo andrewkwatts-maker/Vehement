@@ -138,7 +138,7 @@ nlohmann::json TriggerVolume::ToJson() const {
     return j;
 }
 
-std::expected<TriggerVolume, std::string> TriggerVolume::FromJson(const nlohmann::json& j) {
+std::optional<TriggerVolume> TriggerVolume::FromJson(const nlohmann::json& j) {
     TriggerVolume trigger;
 
     if (j.contains("name")) {
@@ -185,7 +185,7 @@ std::expected<TriggerVolume, std::string> TriggerVolume::FromJson(const nlohmann
     if (j.contains("shape")) {
         auto shapeResult = CollisionShape::FromJson(j["shape"]);
         if (!shapeResult) {
-            return std::unexpected("Failed to parse trigger shape: " + shapeResult.error());
+            return std::nullopt;  // Failed to parse trigger shape
         }
         trigger.SetShape(*shapeResult);
     }

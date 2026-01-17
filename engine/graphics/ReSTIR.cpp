@@ -2,7 +2,7 @@
 #include "Shader.hpp"
 #include "ClusteredLighting.hpp"
 #include "../core/Camera.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <iostream>
 
 namespace Nova {

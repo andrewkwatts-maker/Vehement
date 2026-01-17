@@ -440,7 +440,7 @@ nlohmann::json CollisionBody::ToJson() const {
     return j;
 }
 
-std::expected<CollisionBody, std::string> CollisionBody::FromJson(const nlohmann::json& j) {
+std::optional<CollisionBody> CollisionBody::FromJson(const nlohmann::json& j) {
     BodyType bodyType = BodyType::Static;
     if (j.contains("body_type")) {
         auto typeOpt = BodyTypeFromString(j["body_type"].get<std::string>());

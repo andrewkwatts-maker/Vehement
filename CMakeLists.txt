@@ -3,7 +3,11 @@ project(Nova3DEngine VERSION 1.0.0 LANGUAGES CXX C)
 
 # CRITICAL: Fix nlohmann/json C++20 ranges namespace pollution on MSVC
 # These MUST be set as early as possible, before any targets include json
-add_compile_definitions(JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0)
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DJSON_HAS_CPP_20=0 /DJSON_HAS_RANGES=0")
+else()
+    add_compile_definitions(JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0)
+endif()
 
 # Use C++20 for source_location, format, etc.
 # NOTE: nlohmann/json C++20 ranges MSVC bug - see CLAUDE.md for workarounds
@@ -651,7 +655,8 @@ endif()
 target_compile_definitions(nova3d PUBLIC JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0 GLM_ENABLE_EXPERIMENTAL)
 
 if(MSVC)
-    target_compile_options(nova3d PRIVATE /W4 /FS)
+    # /FI force-includes json_config.hpp BEFORE any other header to fix nlohmann/json ranges issue
+    target_compile_options(nova3d PRIVATE /W4 /FS /FI${CMAKE_SOURCE_DIR}/engine/core/json_config.hpp)
 else()
     target_compile_options(nova3d PRIVATE -Wall -Wextra -Wpedantic)
 endif()

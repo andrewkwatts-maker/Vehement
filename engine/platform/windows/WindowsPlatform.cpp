@@ -54,6 +54,12 @@
 
 namespace fs = std::filesystem;
 
+// Undefine conflicting Windows macros that clash with our method names
+#undef CreateWindow
+#undef CreateDirectory
+#undef DeleteFile
+#undef GetMonitorInfo
+
 namespace Nova {
 
 // =============================================================================
@@ -330,9 +336,9 @@ bool WindowsPlatform::Initialize() {
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = m_impl->hInstance;
-    wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
-    wc.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
-    wc.hIconSm = LoadIconW(nullptr, IDI_APPLICATION);
+    wc.hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));  // IDC_ARROW
+    wc.hIcon = LoadIconW(nullptr, MAKEINTRESOURCEW(32517));  // IDI_APPLICATION
+    wc.hIconSm = LoadIconW(nullptr, MAKEINTRESOURCEW(32517));  // IDI_APPLICATION
     wc.lpszClassName = m_impl->windowClassName.c_str();
     wc.hbrBackground = nullptr;
 
@@ -340,13 +346,13 @@ bool WindowsPlatform::Initialize() {
         return false;
     }
 
-    // Load standard cursors
-    m_impl->arrowCursor = LoadCursorW(nullptr, IDC_ARROW);
-    m_impl->ibeamCursor = LoadCursorW(nullptr, IDC_IBEAM);
-    m_impl->crosshairCursor = LoadCursorW(nullptr, IDC_CROSS);
-    m_impl->handCursor = LoadCursorW(nullptr, IDC_HAND);
-    m_impl->hresizeCursor = LoadCursorW(nullptr, IDC_SIZEWE);
-    m_impl->vresizeCursor = LoadCursorW(nullptr, IDC_SIZENS);
+    // Load standard cursors (using MAKEINTRESOURCEW for Unicode compatibility)
+    m_impl->arrowCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));  // IDC_ARROW
+    m_impl->ibeamCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32513));  // IDC_IBEAM
+    m_impl->crosshairCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32515));  // IDC_CROSS
+    m_impl->handCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32649));  // IDC_HAND
+    m_impl->hresizeCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32644));  // IDC_SIZEWE
+    m_impl->vresizeCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32645));  // IDC_SIZENS
     m_impl->currentCursor = m_impl->arrowCursor;
 
     // Enumerate monitors

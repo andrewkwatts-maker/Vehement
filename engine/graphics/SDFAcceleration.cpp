@@ -1,7 +1,7 @@
 #include "SDFAcceleration.hpp"
 #include "../sdf/SDFModel.hpp"
 #include "../sdf/SDFPrimitive.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <algorithm>
 #include <execution>
 #include <chrono>

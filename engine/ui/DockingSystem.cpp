@@ -322,7 +322,7 @@ bool DockSpace::MovePanel(EditorPanel* panel, DockPosition position,
 }
 
 bool DockSpace::IsPanelDocked(EditorPanel* panel) const {
-    return FindNodeByPanel(const_cast<EditorPanel*>(panel)) != nullptr;
+    return const_cast<DockSpace*>(this)->FindNodeByPanel(panel) != nullptr;
 }
 
 DockNode::Ptr DockSpace::FindNodeByPanel(EditorPanel* panel) {

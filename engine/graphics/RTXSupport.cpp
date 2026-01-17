@@ -1,5 +1,5 @@
 #include "RTXSupport.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <spdlog/spdlog.h>
 #include <chrono>
 #include <sstream>

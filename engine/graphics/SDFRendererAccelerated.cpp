@@ -1,7 +1,7 @@
 #include "SDFRendererAccelerated.hpp"
 #include "../sdf/SDFModel.hpp"
 #include "../scene/Camera.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <chrono>
 
 namespace Nova {

@@ -602,17 +602,17 @@ void EditorSettings::InitializeDefaultShortcuts() {
     m_defaultSettings.input.shortcuts = shortcuts;
 }
 
-std::expected<void, std::string> EditorSettings::Load(const std::string& filepath) {
+std::optional<void> EditorSettings::Load(const std::string& filepath) {
     std::string path = filepath.empty() ? m_settingsPath : filepath;
 
     if (!std::filesystem::exists(path)) {
-        return std::unexpected("Settings file not found: " + path);
+        return std::nullopt;
     }
 
     try {
         std::ifstream file(path);
         if (!file.is_open()) {
-            return std::unexpected("Failed to open settings file: " + path);
+            return std::nullopt;
         }
 
         nlohmann::json json;
@@ -638,7 +638,7 @@ std::expected<void, std::string> EditorSettings::Load(const std::string& filepat
     }
 }
 
-std::expected<void, std::string> EditorSettings::Save(const std::string& filepath) {
+std::optional<void> EditorSettings::Save(const std::string& filepath) {
     std::string path = filepath.empty() ? m_settingsPath : filepath;
 
     try {
@@ -652,7 +652,7 @@ std::expected<void, std::string> EditorSettings::Save(const std::string& filepat
 
         std::ofstream file(path);
         if (!file.is_open()) {
-            return std::unexpected("Failed to create settings file: " + path);
+            return std::nullopt;
         }
 
         file << json.dump(4);
@@ -978,14 +978,14 @@ bool EditorSettings::ValidatePath(const std::string& path, bool mustExist) const
 // Import/Export
 // =============================================================================
 
-std::expected<void, std::string> EditorSettings::Export(const std::string& filepath) const {
+std::optional<void> EditorSettings::Export(const std::string& filepath) const {
     try {
         nlohmann::json json = m_settings.ToJson();
         json["exportedAt"] = std::time(nullptr);
 
         std::ofstream file(filepath);
         if (!file.is_open()) {
-            return std::unexpected("Failed to create export file: " + filepath);
+            return std::nullopt;
         }
 
         file << json.dump(4);
@@ -999,11 +999,11 @@ std::expected<void, std::string> EditorSettings::Export(const std::string& filep
     }
 }
 
-std::expected<void, std::string> EditorSettings::Import(const std::string& filepath, bool merge) {
+std::optional<void> EditorSettings::Import(const std::string& filepath, bool merge) {
     try {
         std::ifstream file(filepath);
         if (!file.is_open()) {
-            return std::unexpected("Failed to open import file: " + filepath);
+            return std::nullopt;
         }
 
         nlohmann::json json;
@@ -1013,7 +1013,7 @@ std::expected<void, std::string> EditorSettings::Import(const std::string& filep
         // Check version compatibility
         int fileVersion = json.value("version", 1);
         if (fileVersion > CompleteEditorSettings::CURRENT_VERSION) {
-            return std::unexpected("Settings file version is newer than supported");
+            return std::nullopt;
         }
 
         if (fileVersion < CompleteEditorSettings::CURRENT_VERSION) {

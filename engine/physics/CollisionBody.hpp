@@ -333,7 +333,7 @@ public:
     // =========================================================================
 
     [[nodiscard]] nlohmann::json ToJson() const;
-    static std::expected<CollisionBody, std::string> FromJson(const nlohmann::json& j);
+    static std::optional<CollisionBody> FromJson(const nlohmann::json& j);
 
 private:
     friend class PhysicsWorld;

@@ -30,7 +30,7 @@
 #include "GBuffer.hpp"
 #include "../scene/Camera.hpp"
 #include "../core/Logger.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <chrono>
 #include <algorithm>
 #include <cmath>

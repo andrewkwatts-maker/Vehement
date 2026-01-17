@@ -9,7 +9,7 @@
 #include <typeindex>
 #include <any>
 #include <optional>
-#include <expected>
+#include <optional>
 #include <concepts>
 #include <span>
 #include <shared_mutex>
@@ -114,14 +114,14 @@ public:
      * @return Expected value or error
      */
     template<PropertyType T>
-    [[nodiscard]] std::expected<T, ReflectionError> Get(const void* instance) const {
+    [[nodiscard]] std::optional<T> Get(const void* instance) const {
         if (std::type_index(typeid(T)) != m_type) {
-            return std::unexpected(ReflectionError::TypeMismatch);
+            return std::nullopt;
         }
         try {
             return std::any_cast<T>(m_getter(instance));
         } catch (...) {
-            return std::unexpected(ReflectionError::TypeMismatch);
+            return std::nullopt;
         }
     }
 
@@ -145,18 +145,18 @@ public:
      * @return Expected success or error
      */
     template<PropertyType T>
-    std::expected<void, ReflectionError> Set(void* instance, const T& value) {
+    bool Set(void* instance, const T& value) {
         if (!m_setter) {
-            return std::unexpected(ReflectionError::AccessDenied);
+            return false;
         }
         if (std::type_index(typeid(T)) != m_type) {
-            return std::unexpected(ReflectionError::TypeMismatch);
+            return false;
         }
         try {
             m_setter(instance, std::any(value));
-            return {};
+            return true;
         } catch (...) {
-            return std::unexpected(ReflectionError::InvocationFailed);
+            return false;
         }
     }
 
@@ -165,22 +165,22 @@ public:
      */
     template<PropertyType T>
     bool TrySet(void* instance, const T& value) {
-        return Set(instance, value).has_value();
+        return Set(instance, value);
     }
 
     [[nodiscard]] std::any GetAny(const void* instance) const {
         return m_getter(instance);
     }
 
-    std::expected<void, ReflectionError> SetAny(void* instance, const std::any& value) {
+    bool SetAny(void* instance, const std::any& value) {
         if (!m_setter) {
-            return std::unexpected(ReflectionError::AccessDenied);
+            return false;
         }
         try {
             m_setter(instance, value);
-            return {};
+            return true;
         } catch (...) {
-            return std::unexpected(ReflectionError::InvocationFailed);
+            return false;
         }
     }
 
@@ -217,14 +217,14 @@ public:
     /**
      * @brief Invoke method with argument validation
      */
-    [[nodiscard]] std::expected<std::any, ReflectionError> Invoke(void* instance, const std::vector<std::any>& args = {}) const {
+    [[nodiscard]] std::optional<std::any> Invoke(void* instance, const std::vector<std::any>& args = {}) const {
         if (args.size() != m_paramTypes.size()) {
-            return std::unexpected(ReflectionError::InvocationFailed);
+            return std::nullopt;
         }
         try {
             return m_invoker(instance, args);
         } catch (...) {
-            return std::unexpected(ReflectionError::InvocationFailed);
+            return std::nullopt;
         }
     }
 
@@ -265,7 +265,7 @@ public:
         m_properties.try_emplace(prop.GetName(), std::move(prop));
     }
 
-    [[nodiscard]] std::expected<const Property*, ReflectionError> GetProperty(std::string_view name) const {
+    [[nodiscard]] std::optional<const Property*> GetProperty(std::string_view name) const {
         auto it = m_properties.find(std::string(name));
         if (it != m_properties.end()) {
             return &it->second;
@@ -274,7 +274,7 @@ public:
         if (m_baseType) {
             return m_baseType->GetProperty(name);
         }
-        return std::unexpected(ReflectionError::PropertyNotFound);
+        return std::nullopt;
     }
 
     [[nodiscard]] const Property* FindProperty(std::string_view name) const noexcept {
@@ -311,7 +311,7 @@ public:
         m_methods.try_emplace(method.GetName(), std::move(method));
     }
 
-    [[nodiscard]] std::expected<const Method*, ReflectionError> GetMethod(std::string_view name) const {
+    [[nodiscard]] std::optional<const Method*> GetMethod(std::string_view name) const {
         auto it = m_methods.find(std::string(name));
         if (it != m_methods.end()) {
             return &it->second;
@@ -319,7 +319,7 @@ public:
         if (m_baseType) {
             return m_baseType->GetMethod(name);
         }
-        return std::unexpected(ReflectionError::MethodNotFound);
+        return std::nullopt;
     }
 
     [[nodiscard]] const Method* FindMethod(std::string_view name) const noexcept {
@@ -418,13 +418,13 @@ public:
         return it != m_types.end() ? it->second.get() : nullptr;
     }
 
-    [[nodiscard]] std::expected<const TypeInfo*, ReflectionError> GetType(std::string_view name) const {
+    [[nodiscard]] std::optional<const TypeInfo*> GetType(std::string_view name) const {
         std::shared_lock lock(m_mutex);
         auto it = m_typesByName.find(std::string(name));
         if (it != m_typesByName.end()) {
             return it->second;
         }
-        return std::unexpected(ReflectionError::TypeNotFound);
+        return std::nullopt;
     }
 
     [[nodiscard]] const TypeInfo* FindType(std::string_view name) const noexcept {

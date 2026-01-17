@@ -4,6 +4,7 @@
  */
 
 #include "GenericAssetEditor.hpp"
+#include <spdlog/spdlog.h>
 #include "../core/Logger.hpp"
 #include <imgui.h>
 #include <imgui_internal.h>

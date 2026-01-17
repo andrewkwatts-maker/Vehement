@@ -4,6 +4,7 @@
  */
 
 #include "AssetThumbnailCache.hpp"
+#include <spdlog/spdlog.h>
 #include "../graphics/SDFRenderer.hpp"
 #include "../graphics/Framebuffer.hpp"
 #include "../core/Logger.hpp"

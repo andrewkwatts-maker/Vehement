@@ -1,6 +1,6 @@
 #include "PreviewRenderer.hpp"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>

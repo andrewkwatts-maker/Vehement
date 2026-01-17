@@ -195,7 +195,7 @@ public:
     // =========================================================================
 
     [[nodiscard]] nlohmann::json ToJson() const;
-    static std::expected<TriggerVolume, std::string> FromJson(const nlohmann::json& j);
+    static std::optional<TriggerVolume> FromJson(const nlohmann::json& j);
 
 private:
     friend class TriggerSystem;

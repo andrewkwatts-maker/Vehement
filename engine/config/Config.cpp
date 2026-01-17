@@ -8,7 +8,7 @@ Config& Config::Instance() {
     return instance;
 }
 
-std::expected<void, ConfigError> Config::Load(const std::filesystem::path& filepath) {
+std::optional<ConfigError> Config::Load(const std::filesystem::path& filepath) {
     std::unique_lock lock(m_mutex);
     m_filepath = filepath;
 
@@ -21,7 +21,7 @@ std::expected<void, ConfigError> Config::Load(const std::filesystem::path& filep
         std::ifstream file(filepath);
         if (!file.is_open()) {
             spdlog::error("Failed to open config file: {}", filepath.string());
-            return std::unexpected(ConfigError::FileNotFound);
+            return ConfigError::FileNotFound;
         }
 
         m_data = nlohmann::json::parse(file);
@@ -30,11 +30,11 @@ std::expected<void, ConfigError> Config::Load(const std::filesystem::path& filep
         return {};
     } catch (const nlohmann::json::exception& e) {
         spdlog::error("Failed to parse config file: {}", e.what());
-        return std::unexpected(ConfigError::ParseError);
+        return ConfigError::ParseError;
     }
 }
 
-std::expected<void, ConfigError> Config::Save(const std::filesystem::path& filepath) {
+std::optional<ConfigError> Config::Save(const std::filesystem::path& filepath) {
     std::shared_lock lock(m_mutex);
     const auto& path = filepath.empty() ? m_filepath : filepath;
 
@@ -47,7 +47,7 @@ std::expected<void, ConfigError> Config::Save(const std::filesystem::path& filep
         std::ofstream file(path);
         if (!file.is_open()) {
             spdlog::error("Failed to open config file for writing: {}", path.string());
-            return std::unexpected(ConfigError::WriteError);
+            return ConfigError::WriteError;
         }
 
         file << std::setw(4) << m_data << std::endl;
@@ -55,15 +55,15 @@ std::expected<void, ConfigError> Config::Save(const std::filesystem::path& filep
         return {};
     } catch (const std::exception& e) {
         spdlog::error("Failed to save config file: {}", e.what());
-        return std::unexpected(ConfigError::WriteError);
+        return ConfigError::WriteError;
     }
 }
 
-std::expected<void, ConfigError> Config::Reload() {
+std::optional<ConfigError> Config::Reload() {
     // Note: Load acquires its own lock
     if (m_filepath.empty()) {
         spdlog::warn("No config file path set, cannot reload");
-        return std::unexpected(ConfigError::FileNotFound);
+        return ConfigError::FileNotFound;
     }
     return Load(m_filepath);
 }

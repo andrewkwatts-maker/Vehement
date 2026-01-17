@@ -879,12 +879,15 @@ MixedProperty<T> MaterialEditor::GetProperty(MaterialProperty property) const {
     } else {
         result.state = PropertyState::Mixed;
         result.uniformValue = firstValue;  // Use first as reference
-        result.uniqueValueCount = std::unordered_set<T>(values.begin(), values.end()).size();
 
-        // Calculate min/max for numeric types
+        // Only calculate unique count for hashable types (arithmetic types)
         if constexpr (std::is_arithmetic_v<T>) {
+            result.uniqueValueCount = std::unordered_set<T>(values.begin(), values.end()).size();
             result.minValue = *std::min_element(values.begin(), values.end());
             result.maxValue = *std::max_element(values.begin(), values.end());
+        } else {
+            // For non-hashable types like glm::vec3, just count as "multiple values"
+            result.uniqueValueCount = values.size();
         }
     }
 

@@ -1,7 +1,7 @@
 #include "SDFInstanceManager.hpp"
 #include "SDFGPUEvaluator.hpp"
 #include "SDFBrickCache.hpp"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <chrono>
 #include <algorithm>
 

@@ -249,15 +249,37 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         double frameStart = glfwGetTime();
 
-        // TODO: In a real application, you would:
-        // 1. Render G-buffer with your scene geometry
-        // 2. Generate motion vectors in G-buffer shader
-        // 3. Update camera and lights
-
-        // For this example, we'll just clear the G-buffer
+        // Render G-buffer with scene geometry
+        // In a real application, this would be your full scene rendering pass
         glBindFramebuffer(GL_FRAMEBUFFER, gbuffer.framebuffer);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Enable depth testing for G-buffer pass
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        // Render scene geometry to G-buffer
+        // Note: In a complete implementation, you would use a G-buffer shader that outputs:
+        //   - Position (world space) to attachment 0
+        //   - Normal (world space) to attachment 1
+        //   - Albedo/BaseColor to attachment 2
+        //   - Linear depth to attachment 3
+        //   - Motion vectors to attachment 4
+        //
+        // The G-buffer shader would compute motion vectors as:
+        //   motionVector = (currentScreenPos - previousScreenPos) * 0.5
+        // Where previousScreenPos uses the previous frame's view-projection matrix
+        //
+        // Example G-buffer fragment shader output:
+        //   layout(location = 0) out vec4 gPosition;    // xyz = world pos, w = unused
+        //   layout(location = 1) out vec3 gNormal;      // world-space normal
+        //   layout(location = 2) out vec4 gAlbedo;      // base color
+        //   layout(location = 3) out float gDepth;      // linear depth
+        //   layout(location = 4) out vec2 gMotion;      // screen-space velocity
+        //
+        // For this example, the G-buffer is cleared but RTGI will still run
+        // demonstrating the pipeline structure. Connect your scene renderer here.
 
         // Update light culling
         lightManager.UpdateClusters(camera);

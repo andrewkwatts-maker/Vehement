@@ -294,13 +294,15 @@ public:
 
     /**
      * @brief Load settings from JSON file
+     * @return true on success, false on failure
      */
-    [[nodiscard]] std::optional<void> Load(const std::string& filepath);
+    [[nodiscard]] bool Load(const std::string& filepath);
 
     /**
      * @brief Save settings to JSON file
+     * @return true on success, false on failure
      */
-    [[nodiscard]] std::optional<void> Save(const std::string& filepath);
+    [[nodiscard]] bool Save(const std::string& filepath);
 
     /**
      * @brief Apply a quality preset

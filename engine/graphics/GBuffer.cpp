@@ -479,17 +479,34 @@ void GBuffer::DebugVisualize(GBufferAttachment attachment, Shader* shader) {
         glVertexArrayAttribBinding(m_debugQuadVAO, 1, 0);
     }
 
-    // TODO: Implement debug shader visualization
-    // For now, just bind the texture and draw the quad
+    // Get texture for the selected attachment
     uint32_t tex = GetTexture(attachment);
     if (tex == 0) {
         return;
     }
 
+    // Use provided shader or create a simple pass-through if none
+    if (shader) {
+        shader->Bind();
+        shader->SetInt("u_texture", 0);
+        shader->SetInt("u_attachment", static_cast<int>(attachment));
+    } else if (m_debugShader) {
+        m_debugShader->Bind();
+        m_debugShader->SetInt("u_texture", 0);
+        m_debugShader->SetInt("u_attachment", static_cast<int>(attachment));
+    }
+
+    // Disable depth test for fullscreen quad
+    glDisable(GL_DEPTH_TEST);
+
+    // Bind the selected GBuffer texture and draw debug quad
     glBindTextureUnit(0, tex);
     glBindVertexArray(m_debugQuadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
+
+    // Re-enable depth test
+    glEnable(GL_DEPTH_TEST);
 }
 
 size_t GBuffer::GetMemoryUsage() const {

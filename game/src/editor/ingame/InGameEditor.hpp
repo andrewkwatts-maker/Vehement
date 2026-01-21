@@ -379,6 +379,7 @@ private:
     void ShowNewCampaignDialog();
     void ShowPublishDialog();
     void ShowSettingsDialog();
+    void ShowSavePromptDialog();
 
     // Permission check helpers
     void InitializePermissions();
@@ -424,6 +425,8 @@ private:
     bool m_showPublishDialog = false;
     bool m_showSettingsDialog = false;
     bool m_showAboutDialog = false;
+    bool m_showSavePromptDialog = false;
+    bool m_pendingExit = false;
 
     // Panel visibility
     bool m_showTerrainPanel = true;

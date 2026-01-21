@@ -1249,11 +1249,21 @@ bool AssetBrowser::HandleDragSource(AssetEntry& entry) {
         m_dragPayload.primaryType = entry.type;
         m_dragPayload.isValid = true;
 
+        // Set the complex payload for internal asset browser operations
         ImGui::SetDragDropPayload("ASSET_BROWSER_ITEM",
                                   &m_dragPayload, sizeof(AssetDragPayload*));
 
-        // Preview
-        ImGui::Text("%zu item(s)", m_dragPayload.paths.size());
+        // Also set a simple ASSET_PATH payload for viewport drop targets
+        // This allows viewports and other consumers to easily accept asset drops
+        // For single selection, provide the path directly; for multi-select, use first item
+        const std::string& primaryPath = m_dragPayload.paths.empty() ? entry.path : m_dragPayload.paths[0];
+        ImGui::SetDragDropPayload("ASSET_PATH", primaryPath.c_str(), primaryPath.size() + 1);
+
+        // Preview with drag hint
+        ImGui::Text("Drop to add: %s", entry.displayName.c_str());
+        if (m_dragPayload.paths.size() > 1) {
+            ImGui::Text("(+%zu more)", m_dragPayload.paths.size() - 1);
+        }
 
         ImGui::EndDragDropSource();
         m_isDragging = true;

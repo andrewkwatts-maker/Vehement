@@ -61,6 +61,17 @@ void DefenseManager::Update(float deltaTime) {
             UpdateGateAutoClose(gate);
         }
     }
+
+    // Update projectiles
+    for (auto& projectile : m_projectiles) {
+        projectile.Update(deltaTime);
+    }
+
+    // Remove inactive projectiles
+    m_projectiles.erase(
+        std::remove_if(m_projectiles.begin(), m_projectiles.end(),
+            [](const DefenseProjectile& p) { return !p.active || p.HasReachedTarget(); }),
+        m_projectiles.end());
 }
 
 void DefenseManager::Render(Nova::Renderer& renderer) {
@@ -69,7 +80,18 @@ void DefenseManager::Render(Nova::Renderer& renderer) {
 
     // Draw attack range circles for selected buildings (debug)
     // Draw targeting lines to current targets
-    // Draw projectiles in flight
+
+    // Render active projectiles
+    for (const auto& projectile : m_projectiles) {
+        if (!projectile.active) continue;
+
+        // Projectile rendering would use the renderer to draw sprites
+        // at the projectile position using projectile.texturePath
+        // For now, the projectile data is available for the rendering
+        // system to consume via iteration or a getter method.
+        // Example integration:
+        // renderer.DrawSprite(projectile.texturePath, projectile.position, size);
+    }
 }
 
 void DefenseManager::UpdateDefensiveBuilding(Building* building, float deltaTime) {
@@ -149,8 +171,27 @@ void DefenseManager::PerformAttack(Building* building, Entity* target) {
         }
     }
 
-    // TODO: Create projectile for visual effect
-    // For now, damage is instant
+    // Create projectile for visual effect (damage already applied)
+    DefenseProjectile projectile;
+    projectile.position = building->GetPosition();
+    projectile.targetPosition = target->GetPosition();
+    projectile.target = target;
+    projectile.source = building;
+    projectile.damage = 0.0f;  // Damage already applied above
+    projectile.splashRadius = stats.splashRadius;
+    projectile.lifetime = 2.0f;
+    projectile.active = true;
+    projectile.texturePath = stats.projectileTexture;
+
+    // Calculate velocity towards target
+    glm::vec3 direction = projectile.targetPosition - projectile.position;
+    float distance = glm::length(direction);
+    if (distance > 0.01f) {
+        direction = glm::normalize(direction);
+        projectile.velocity = direction * stats.projectileSpeed;
+    }
+
+    m_projectiles.push_back(projectile);
 }
 
 Entity* DefenseManager::FindBestTarget(Building* building) const {

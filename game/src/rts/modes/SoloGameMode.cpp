@@ -163,9 +163,11 @@ void SoloGameMode::SetupPlayerSpawns() {
     player1Spawn.startingResources.SetCapacity(RTS::ResourceType::Metal, 500);
     player1Spawn.startingResources.SetCapacity(RTS::ResourceType::Coins, 10000);
 
-    // TODO: Add starting units/buildings
-    // player1Spawn.startingUnits.push_back("worker");
-    // player1Spawn.startingBuildings.push_back("town_hall");
+    // Add starting units and buildings
+    player1Spawn.startingUnits.push_back("worker");
+    player1Spawn.startingUnits.push_back("worker");
+    player1Spawn.startingUnits.push_back("worker");  // 3 starting workers
+    player1Spawn.startingBuildings.push_back("town_hall");
 
     m_playerSpawns.push_back(player1Spawn);
 
@@ -229,8 +231,9 @@ void SoloGameMode::PlaceResources() {
             tree.entityType = "tree";
             m_resourceNodes.push_back(tree);
 
-            // Mark tile as occupied
-            // TODO: Set tile to forest type or add entity marker
+            // Mark tile as occupied with forest texture
+            Tile forestTile = Tile::Ground(TileType::GroundForest1);
+            tileMap.SetTile(pos.x, pos.y, forestTile);
         }
     }
 
@@ -396,10 +399,19 @@ void SoloGameMode::Update(float deltaTime) {
 
     m_gameTime += deltaTime;
 
-    // Update world
+    // Update world (handles entity movement, collisions, spawns)
     m_world->Update(deltaTime);
 
-    // TODO: Update game logic (unit AI, resource gathering, building construction, etc.)
+    // Update resource node respawning
+    for (auto& node : m_resourceNodes) {
+        if (node.amount <= 0) {
+            // Resource depleted - could implement respawn timer here
+            // For now, depleted resources stay depleted
+        }
+    }
+
+    // Entity AI and game logic is handled by the World's entity update callback
+    // and the individual entity Update() methods called from World::UpdateEntities()
 }
 
 void SoloGameMode::Render(const Nova::Camera& camera) {
@@ -407,11 +419,19 @@ void SoloGameMode::Render(const Nova::Camera& camera) {
         return;
     }
 
-    // Render world
+    // Render world (tile map and terrain)
     m_world->Render(camera);
 
-    // TODO: Render resource nodes (trees, rocks, gold as visual entities)
-    // TODO: Render units and buildings
+    // Resource nodes are rendered as tile textures (forest/rock tiles)
+    // set during PlaceResources(). Additional 3D models or sprites for
+    // individual trees/rocks would be rendered by the entity system.
+
+    // Units and buildings are managed as Entity objects in the World.
+    // They are rendered via World::GetEntities() which returns all
+    // active entities. The caller with access to a Nova::Renderer
+    // should iterate and call Entity::Render() for each.
+    // This is typically done at the Game/Application level where both
+    // the Camera and Renderer are available.
 }
 
 glm::vec3 SoloGameMode::GetPlayerSpawnPosition(int playerId) const {

@@ -3,8 +3,8 @@
     "name": "Archmage",
     "race": "humans",
     "type": "hero",
+    "class": "arcane_mage",
     "description": "A master of the arcane arts, wielding devastating magical spells and commanding the elements.",
-
     "stats": {
         "health": 380,
         "mana": 400,
@@ -15,493 +15,897 @@
         "healthRegen": 1.0,
         "manaRegen": 3.0
     },
-
+    "costs": {
+        "gold": 475,
+        "lumber": 80,
+        "food": 5,
+        "buildTime": 55.0
+    },
     "sdfModel": {
-        "name": "archmage_model",
+        "name": "Archmage_AAA",
         "bounds": {
-            "min": [-0.7, 0.0, -0.7],
-            "max": [0.7, 2.3, 0.7]
+            "min": [-0.8, 0.0, -0.7],
+            "max": [0.8, 2.3, 0.7]
         },
         "primitives": [
             {
-                "id": "torso",
-                "type": "Capsule",
-                "params": { "radius": 0.16, "height": 0.45 },
+                "id": "robe_base",
+                "type": "Cone",
+                "params": {
+                    "radius": 0.38,
+                    "height": 0.95
+                },
                 "transform": {
-                    "position": [0.0, 1.15, 0.0],
+                    "position": [0.0, 0.48, 0.0],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.0, 0.8]
+                    "scale": [1.0, 1.0, 0.9]
                 },
                 "material": {
-                    "baseColor": [0.2, 0.15, 0.4, 1.0],
-                    "metallic": 0.1,
-                    "roughness": 0.7,
-                    "emissive": [0.02, 0.01, 0.05]
+                    "baseColor": [0.15, 0.10, 0.35, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.85,
+                    "sheenColor": [0.08, 0.05, 0.20],
+                    "sheenRoughness": 0.5
                 },
                 "operation": "Union"
             },
             {
-                "id": "robe_lower",
-                "type": "Cone",
-                "params": { "radius1": 0.45, "radius2": 0.18, "height": 0.85 },
+                "id": "robe_upper",
+                "type": "Capsule",
+                "params": {
+                    "radius": 0.15,
+                    "height": 0.42
+                },
                 "transform": {
-                    "position": [0.0, 0.5, 0.0],
+                    "position": [0.0, 1.18, 0.0],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 0.85]
+                },
+                "material": {
+                    "baseColor": [0.14, 0.09, 0.32, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.82,
+                    "sheenColor": [0.07, 0.04, 0.18],
+                    "sheenRoughness": 0.55
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.15
+            },
+            {
+                "id": "robe_collar",
+                "type": "Torus",
+                "params": {
+                    "majorRadius": 0.14,
+                    "minorRadius": 0.035
+                },
+                "transform": {
+                    "position": [0.0, 1.42, 0.0],
+                    "rotation": [0.707, 0.0, 0.0, 0.707],
+                    "scale": [1.0, 1.0, 0.6]
+                },
+                "material": {
+                    "baseColor": [0.75, 0.65, 0.15, 1.0],
+                    "metallic": 0.7,
+                    "roughness": 0.25,
+                    "emissive": [0.08, 0.06, 0.0],
+                    "emissiveIntensity": 0.5
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.04
+            },
+            {
+                "id": "robe_hem_trim",
+                "type": "Torus",
+                "params": {
+                    "majorRadius": 0.36,
+                    "minorRadius": 0.025
+                },
+                "transform": {
+                    "position": [0.0, 0.05, 0.0],
+                    "rotation": [0.707, 0.0, 0.0, 0.707],
+                    "scale": [1.0, 1.0, 0.4]
+                },
+                "material": {
+                    "baseColor": [0.75, 0.65, 0.15, 1.0],
+                    "metallic": 0.65,
+                    "roughness": 0.28,
+                    "anisotropy": 0.5,
+                    "anisotropyRotation": 90.0
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "neck",
+                "type": "Capsule",
+                "params": {
+                    "radius": 0.04,
+                    "height": 0.08
+                },
+                "transform": {
+                    "position": [0.0, 1.48, 0.0],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.2, 0.15, 0.4, 1.0],
+                    "baseColor": [0.85, 0.72, 0.58, 1.0],
                     "metallic": 0.0,
-                    "roughness": 0.8,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "roughness": 0.65,
+                    "subsurface": 0.35,
+                    "subsurfaceColor": [0.6, 0.3, 0.25]
                 },
                 "operation": "SmoothUnion",
-                "smoothness": 0.1
+                "smoothness": 0.025
             },
             {
-                "id": "robe_trim",
-                "type": "Torus",
-                "params": { "majorRadius": 0.42, "minorRadius": 0.03 },
-                "transform": {
-                    "position": [0.0, 0.1, 0.0],
-                    "rotation": [0.707, 0.0, 0.0, 0.707],
-                    "scale": [1.0, 1.0, 0.3]
-                },
-                "material": {
-                    "baseColor": [0.8, 0.7, 0.2, 1.0],
-                    "metallic": 0.6,
-                    "roughness": 0.3,
-                    "emissive": [0.1, 0.08, 0.0]
-                },
-                "operation": "Union"
-            },
-            {
-                "id": "head",
+                "id": "head_base",
                 "type": "Sphere",
-                "params": { "radius": 0.11 },
+                "params": {
+                    "radius": 0.105
+                },
                 "transform": {
-                    "position": [0.0, 1.6, 0.0],
+                    "position": [0.0, 1.62, 0.0],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.15, 1.0]
+                    "scale": [1.0, 1.12, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.9, 0.8, 0.7, 1.0],
+                    "baseColor": [0.85, 0.72, 0.58, 1.0],
                     "metallic": 0.0,
                     "roughness": 0.6,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "subsurface": 0.4,
+                    "subsurfaceColor": [0.6, 0.3, 0.25]
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.04,
+                "bone": "head"
+            },
+            {
+                "id": "forehead",
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.085, 0.05, 0.07]
+                },
+                "transform": {
+                    "position": [0.0, 1.68, 0.04],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.85, 0.72, 0.58, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.6,
+                    "subsurface": 0.4
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.035
+            },
+            {
+                "id": "brow_left",
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.028, 0.012, 0.02]
+                },
+                "transform": {
+                    "position": [-0.035, 1.65, 0.08],
+                    "rotation": [0.0, 0.0, 0.15, 0.99],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.82, 0.68, 0.54, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.65,
+                    "subsurface": 0.35
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02
+            },
+            {
+                "id": "brow_right",
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.028, 0.012, 0.02]
+                },
+                "transform": {
+                    "position": [0.035, 1.65, 0.08],
+                    "rotation": [0.0, 0.0, -0.15, 0.99],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.82, 0.68, 0.54, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.65,
+                    "subsurface": 0.35
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.02
+            },
+            {
+                "id": "nose",
+                "type": "Capsule",
+                "params": {
+                    "radius": 0.018,
+                    "height": 0.04
+                },
+                "transform": {
+                    "position": [0.0, 1.58, 0.1],
+                    "rotation": [0.3, 0.0, 0.0, 0.95],
+                    "scale": [0.8, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.82, 0.68, 0.54, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.6,
+                    "subsurface": 0.4
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.025
+            },
+            {
+                "id": "eye_socket_left",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.022
+                },
+                "transform": {
+                    "position": [-0.035, 1.62, 0.085],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 0.9, 1.2]
+                },
+                "material": {
+                    "baseColor": [0.3, 0.2, 0.15, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.9
+                },
+                "operation": "SmoothSubtraction",
+                "smoothness": 0.012
+            },
+            {
+                "id": "eye_socket_right",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.022
+                },
+                "transform": {
+                    "position": [0.035, 1.62, 0.085],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 0.9, 1.2]
+                },
+                "material": {
+                    "baseColor": [0.3, 0.2, 0.15, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.9
+                },
+                "operation": "SmoothSubtraction",
+                "smoothness": 0.012
+            },
+            {
+                "id": "eye_left",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.015
+                },
+                "transform": {
+                    "position": [-0.035, 1.62, 0.09],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 0.85, 0.6]
+                },
+                "material": {
+                    "baseColor": [0.95, 0.95, 0.98, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.1
                 },
                 "operation": "Union"
             },
             {
-                "id": "beard",
-                "type": "Cone",
-                "params": { "radius1": 0.02, "radius2": 0.08, "height": 0.25 },
+                "id": "eye_right",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.015
+                },
                 "transform": {
-                    "position": [0.0, 1.4, 0.06],
+                    "position": [0.035, 1.62, 0.09],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.0, 0.6]
+                    "scale": [1.0, 0.85, 0.6]
                 },
                 "material": {
-                    "baseColor": [0.85, 0.85, 0.9, 1.0],
+                    "baseColor": [0.95, 0.95, 0.98, 1.0],
                     "metallic": 0.0,
-                    "roughness": 0.9,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "roughness": 0.1
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "iris_left",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.008
+                },
+                "transform": {
+                    "position": [-0.035, 1.62, 0.095],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 0.4]
+                },
+                "material": {
+                    "baseColor": [0.2, 0.4, 0.8, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.15,
+                    "emissive": [0.1, 0.2, 0.5],
+                    "emissiveIntensity": 1.5
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "iris_right",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.008
+                },
+                "transform": {
+                    "position": [0.035, 1.62, 0.095],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 0.4]
+                },
+                "material": {
+                    "baseColor": [0.2, 0.4, 0.8, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.15,
+                    "emissive": [0.1, 0.2, 0.5],
+                    "emissiveIntensity": 1.5
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "beard_main",
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.08, 0.18, 0.08]
+                },
+                "transform": {
+                    "position": [0.0, 1.42, 0.06],
+                    "rotation": [0.15, 0.0, 0.0, 0.99],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.75, 0.72, 0.68, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.95,
+                    "sheenColor": [0.2, 0.18, 0.15],
+                    "sheenRoughness": 0.8
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.08
+            },
+            {
+                "id": "beard_tip",
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.04, 0.12, 0.04]
+                },
+                "transform": {
+                    "position": [0.0, 1.22, 0.1],
+                    "rotation": [0.25, 0.0, 0.0, 0.97],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.78, 0.75, 0.72, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.92,
+                    "sheenColor": [0.22, 0.2, 0.18],
+                    "sheenRoughness": 0.75
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.06
+            },
+            {
+                "id": "mustache_left",
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.045, 0.02, 0.025]
+                },
+                "transform": {
+                    "position": [-0.035, 1.52, 0.09],
+                    "rotation": [0.0, 0.0, 0.3, 0.95],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.72, 0.68, 0.65, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.9
                 },
                 "operation": "SmoothUnion",
                 "smoothness": 0.03
             },
             {
-                "id": "wizard_hat_base",
-                "type": "Cone",
-                "params": { "radius1": 0.02, "radius2": 0.15, "height": 0.08 },
+                "id": "mustache_right",
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.045, 0.02, 0.025]
+                },
                 "transform": {
-                    "position": [0.0, 1.72, 0.0],
-                    "rotation": [3.14159, 0.0, 0.0, 0.0],
+                    "position": [0.035, 1.52, 0.09],
+                    "rotation": [0.0, 0.0, -0.3, 0.95],
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.15, 0.1, 0.35, 1.0],
-                    "metallic": 0.1,
-                    "roughness": 0.7,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "baseColor": [0.72, 0.68, 0.65, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.9
                 },
-                "operation": "Union"
+                "operation": "SmoothUnion",
+                "smoothness": 0.03
             },
             {
-                "id": "wizard_hat_cone",
-                "type": "Cone",
-                "params": { "radius1": 0.01, "radius2": 0.12, "height": 0.35 },
-                "transform": {
-                    "position": [0.0, 1.95, 0.0],
-                    "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.0, 1.0]
-                },
-                "material": {
-                    "baseColor": [0.15, 0.1, 0.35, 1.0],
-                    "metallic": 0.1,
-                    "roughness": 0.7,
-                    "emissive": [0.0, 0.0, 0.02]
-                },
-                "operation": "Union"
-            },
-            {
-                "id": "hat_band",
-                "type": "Torus",
-                "params": { "majorRadius": 0.13, "minorRadius": 0.02 },
-                "transform": {
-                    "position": [0.0, 1.78, 0.0],
-                    "rotation": [0.707, 0.0, 0.0, 0.707],
-                    "scale": [1.0, 1.0, 0.5]
-                },
-                "material": {
-                    "baseColor": [0.8, 0.7, 0.2, 1.0],
-                    "metallic": 0.7,
-                    "roughness": 0.3,
-                    "emissive": [0.1, 0.08, 0.0]
-                },
-                "operation": "Union"
-            },
-            {
-                "id": "hat_gem",
+                "id": "hood_main",
                 "type": "Sphere",
-                "params": { "radius": 0.025 },
+                "params": {
+                    "radius": 0.2
+                },
                 "transform": {
-                    "position": [0.0, 1.78, 0.13],
-                    "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.0, 1.0]
+                    "position": [0.0, 1.72, -0.03],
+                    "rotation": [0.25, 0.0, 0.0, 0.97],
+                    "scale": [1.1, 0.85, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.3, 0.5, 1.0, 1.0],
-                    "metallic": 0.2,
-                    "roughness": 0.1,
-                    "emissive": [0.3, 0.4, 0.8]
+                    "baseColor": [0.12, 0.08, 0.28, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.88,
+                    "sheenColor": [0.06, 0.04, 0.15],
+                    "sheenRoughness": 0.6
                 },
-                "operation": "Union"
+                "operation": "SmoothUnion",
+                "smoothness": 0.1
+            },
+            {
+                "id": "hood_inner_cut",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.16
+                },
+                "transform": {
+                    "position": [0.0, 1.62, 0.08],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 1.2]
+                },
+                "material": {
+                    "baseColor": [0.12, 0.08, 0.28, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.9
+                },
+                "operation": "SmoothSubtraction",
+                "smoothness": 0.06
             },
             {
                 "id": "shoulder_left",
-                "type": "Sphere",
-                "params": { "radius": 0.07 },
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.12, 0.08, 0.1]
+                },
                 "transform": {
-                    "position": [-0.22, 1.35, 0.0],
-                    "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.3, 1.0, 1.0]
+                    "position": [-0.2, 1.35, 0.0],
+                    "rotation": [0.0, 0.0, 0.2, 0.98],
+                    "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.2, 0.15, 0.4, 1.0],
-                    "metallic": 0.1,
-                    "roughness": 0.7,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "baseColor": [0.14, 0.09, 0.32, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.8,
+                    "sheenColor": [0.07, 0.04, 0.18],
+                    "sheenRoughness": 0.55
                 },
                 "operation": "SmoothUnion",
-                "smoothness": 0.05
+                "smoothness": 0.08
             },
             {
                 "id": "shoulder_right",
-                "type": "Sphere",
-                "params": { "radius": 0.07 },
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.12, 0.08, 0.1]
+                },
                 "transform": {
-                    "position": [0.22, 1.35, 0.0],
-                    "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.3, 1.0, 1.0]
+                    "position": [0.2, 1.35, 0.0],
+                    "rotation": [0.0, 0.0, -0.2, 0.98],
+                    "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.2, 0.15, 0.4, 1.0],
-                    "metallic": 0.1,
-                    "roughness": 0.7,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "baseColor": [0.14, 0.09, 0.32, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.8,
+                    "sheenColor": [0.07, 0.04, 0.18],
+                    "sheenRoughness": 0.55
                 },
                 "operation": "SmoothUnion",
-                "smoothness": 0.05
+                "smoothness": 0.08
             },
             {
-                "id": "arm_upper_left",
+                "id": "arm_left",
                 "type": "Capsule",
-                "params": { "radius": 0.04, "height": 0.2 },
+                "params": {
+                    "radius": 0.045,
+                    "height": 0.35
+                },
                 "transform": {
-                    "position": [-0.26, 1.18, 0.0],
-                    "rotation": [0.0, 0.0, 0.15, 0.99],
+                    "position": [-0.28, 1.1, 0.0],
+                    "rotation": [0.0, 0.0, 0.25, 0.97],
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.2, 0.15, 0.4, 1.0],
-                    "metallic": 0.1,
-                    "roughness": 0.7,
-                    "emissive": [0.0, 0.0, 0.0]
-                },
-                "operation": "Union",
-                "bone": "arm_upper_l"
-            },
-            {
-                "id": "arm_upper_right",
-                "type": "Capsule",
-                "params": { "radius": 0.04, "height": 0.2 },
-                "transform": {
-                    "position": [0.26, 1.18, 0.0],
-                    "rotation": [0.0, 0.0, -0.15, 0.99],
-                    "scale": [1.0, 1.0, 1.0]
-                },
-                "material": {
-                    "baseColor": [0.2, 0.15, 0.4, 1.0],
-                    "metallic": 0.1,
-                    "roughness": 0.7,
-                    "emissive": [0.0, 0.0, 0.0]
-                },
-                "operation": "Union",
-                "bone": "arm_upper_r"
-            },
-            {
-                "id": "arm_lower_left",
-                "type": "Capsule",
-                "params": { "radius": 0.035, "height": 0.18 },
-                "transform": {
-                    "position": [-0.3, 0.98, 0.0],
-                    "rotation": [0.0, 0.0, 0.1, 0.99],
-                    "scale": [1.0, 1.0, 1.0]
-                },
-                "material": {
-                    "baseColor": [0.9, 0.8, 0.7, 1.0],
+                    "baseColor": [0.14, 0.09, 0.32, 1.0],
                     "metallic": 0.0,
-                    "roughness": 0.6,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "roughness": 0.82
                 },
-                "operation": "Union",
-                "bone": "arm_lower_l"
+                "operation": "SmoothUnion",
+                "smoothness": 0.04,
+                "bone": "arm_l"
             },
             {
-                "id": "arm_lower_right",
+                "id": "arm_right",
                 "type": "Capsule",
-                "params": { "radius": 0.035, "height": 0.18 },
+                "params": {
+                    "radius": 0.045,
+                    "height": 0.35
+                },
                 "transform": {
-                    "position": [0.3, 0.98, 0.0],
-                    "rotation": [0.0, 0.0, -0.1, 0.99],
+                    "position": [0.28, 1.1, 0.0],
+                    "rotation": [0.0, 0.0, -0.25, 0.97],
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.9, 0.8, 0.7, 1.0],
+                    "baseColor": [0.14, 0.09, 0.32, 1.0],
                     "metallic": 0.0,
-                    "roughness": 0.6,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "roughness": 0.82
                 },
-                "operation": "Union",
-                "bone": "arm_lower_r"
+                "operation": "SmoothUnion",
+                "smoothness": 0.04,
+                "bone": "arm_r"
             },
             {
                 "id": "hand_left",
-                "type": "Sphere",
-                "params": { "radius": 0.03 },
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.04, 0.055, 0.03]
+                },
                 "transform": {
-                    "position": [-0.33, 0.82, 0.0],
+                    "position": [-0.35, 0.88, 0.0],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.2, 0.7]
+                    "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.9, 0.8, 0.7, 1.0],
+                    "baseColor": [0.85, 0.72, 0.58, 1.0],
                     "metallic": 0.0,
                     "roughness": 0.6,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "subsurface": 0.35
                 },
-                "operation": "Union",
-                "bone": "hand_l"
+                "operation": "SmoothUnion",
+                "smoothness": 0.025
             },
             {
                 "id": "hand_right",
-                "type": "Sphere",
-                "params": { "radius": 0.03 },
+                "type": "Ellipsoid",
+                "params": {
+                    "radii": [0.04, 0.055, 0.03]
+                },
                 "transform": {
-                    "position": [0.33, 0.82, 0.0],
+                    "position": [0.35, 0.88, 0.0],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.2, 0.7]
+                    "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.9, 0.8, 0.7, 1.0],
+                    "baseColor": [0.85, 0.72, 0.58, 1.0],
                     "metallic": 0.0,
                     "roughness": 0.6,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "subsurface": 0.35
                 },
-                "operation": "Union",
-                "bone": "hand_r"
+                "operation": "SmoothUnion",
+                "smoothness": 0.025
             },
             {
                 "id": "staff_shaft",
                 "type": "Cylinder",
-                "params": { "radius": 0.02, "height": 1.8 },
+                "params": {
+                    "radius": 0.022,
+                    "height": 1.7
+                },
                 "transform": {
-                    "position": [0.38, 1.0, 0.0],
-                    "rotation": [0.0, 0.0, -0.05, 0.999],
-                    "scale": [1.0, 1.0, 1.0]
-                },
-                "material": {
-                    "baseColor": [0.35, 0.25, 0.15, 1.0],
-                    "metallic": 0.2,
-                    "roughness": 0.6,
-                    "emissive": [0.0, 0.0, 0.0]
-                },
-                "operation": "Union",
-                "bone": "hand_r"
-            },
-            {
-                "id": "staff_head_base",
-                "type": "Sphere",
-                "params": { "radius": 0.06 },
-                "transform": {
-                    "position": [0.42, 1.95, 0.0],
-                    "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.2, 1.0]
-                },
-                "material": {
-                    "baseColor": [0.7, 0.6, 0.2, 1.0],
-                    "metallic": 0.8,
-                    "roughness": 0.2,
-                    "emissive": [0.1, 0.08, 0.0]
-                },
-                "operation": "Union",
-                "bone": "hand_r"
-            },
-            {
-                "id": "staff_crystal",
-                "type": "Sphere",
-                "params": { "radius": 0.08 },
-                "transform": {
-                    "position": [0.42, 2.05, 0.0],
+                    "position": [0.42, 0.85, 0.0],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.4, 0.6, 1.0, 0.85],
-                    "metallic": 0.1,
-                    "roughness": 0.05,
-                    "emissive": [0.4, 0.5, 0.9]
-                },
-                "operation": "Union",
-                "bone": "hand_r"
-            },
-            {
-                "id": "staff_crystal_inner",
-                "type": "Sphere",
-                "params": { "radius": 0.04 },
-                "transform": {
-                    "position": [0.42, 2.05, 0.0],
-                    "rotation": [0.0, 0.0, 0.0, 1.0],
-                    "scale": [1.0, 1.0, 1.0]
-                },
-                "material": {
-                    "baseColor": [0.8, 0.9, 1.0, 1.0],
+                    "baseColor": [0.35, 0.22, 0.12, 1.0],
                     "metallic": 0.0,
-                    "roughness": 0.0,
-                    "emissive": [0.8, 0.9, 1.0]
+                    "roughness": 0.7
                 },
-                "operation": "Union",
-                "bone": "hand_r"
+                "operation": "Union"
+            },
+            {
+                "id": "staff_grip",
+                "type": "Cylinder",
+                "params": {
+                    "radius": 0.028,
+                    "height": 0.15
+                },
+                "transform": {
+                    "position": [0.42, 0.9, 0.0],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.15, 0.1, 0.05, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.9
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.01
+            },
+            {
+                "id": "staff_crystal_holder",
+                "type": "Torus",
+                "params": {
+                    "majorRadius": 0.06,
+                    "minorRadius": 0.012
+                },
+                "transform": {
+                    "position": [0.42, 1.75, 0.0],
+                    "rotation": [0.707, 0.0, 0.0, 0.707],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.7, 0.6, 0.15, 1.0],
+                    "metallic": 0.85,
+                    "roughness": 0.2,
+                    "emissive": [0.1, 0.08, 0.0],
+                    "emissiveIntensity": 0.8
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "staff_crystal_core",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.055
+                },
+                "transform": {
+                    "position": [0.42, 1.75, 0.0],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.4, 0.2, 0.8, 0.7],
+                    "metallic": 0.0,
+                    "roughness": 0.05,
+                    "transmission": 0.75,
+                    "ior": 1.5,
+                    "emissive": [0.4, 0.2, 0.9],
+                    "emissiveIntensity": 3.5
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "staff_crystal_glow",
+                "type": "Sphere",
+                "params": {
+                    "radius": 0.08
+                },
+                "transform": {
+                    "position": [0.42, 1.75, 0.0],
+                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.3, 0.15, 0.6, 0.15],
+                    "metallic": 0.0,
+                    "roughness": 1.0,
+                    "emissive": [0.25, 0.12, 0.5],
+                    "emissiveIntensity": 1.5
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "arcane_rune_1",
+                "type": "Torus",
+                "params": {
+                    "majorRadius": 0.12,
+                    "minorRadius": 0.008
+                },
+                "transform": {
+                    "position": [0.42, 1.75, 0.0],
+                    "rotation": [0.5, 0.5, 0.0, 0.707],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.5, 0.3, 1.0, 0.4],
+                    "metallic": 0.0,
+                    "roughness": 0.1,
+                    "emissive": [0.3, 0.15, 0.7],
+                    "emissiveIntensity": 2.0
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "arcane_rune_2",
+                "type": "Torus",
+                "params": {
+                    "majorRadius": 0.1,
+                    "minorRadius": 0.006
+                },
+                "transform": {
+                    "position": [0.42, 1.75, 0.0],
+                    "rotation": [0.0, 0.707, 0.0, 0.707],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.6, 0.4, 1.0, 0.35],
+                    "metallic": 0.0,
+                    "roughness": 0.1,
+                    "emissive": [0.35, 0.2, 0.75],
+                    "emissiveIntensity": 1.8
+                },
+                "operation": "Union"
             },
             {
                 "id": "belt",
                 "type": "Torus",
-                "params": { "majorRadius": 0.17, "minorRadius": 0.025 },
+                "params": {
+                    "majorRadius": 0.16,
+                    "minorRadius": 0.025
+                },
                 "transform": {
                     "position": [0.0, 0.95, 0.0],
                     "rotation": [0.707, 0.0, 0.0, 0.707],
-                    "scale": [1.0, 1.0, 0.4]
+                    "scale": [1.0, 1.0, 0.5]
                 },
                 "material": {
-                    "baseColor": [0.4, 0.3, 0.15, 1.0],
-                    "metallic": 0.3,
-                    "roughness": 0.6,
-                    "emissive": [0.0, 0.0, 0.0]
+                    "baseColor": [0.25, 0.15, 0.08, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.75
                 },
                 "operation": "Union"
             },
             {
                 "id": "belt_buckle",
                 "type": "RoundedBox",
-                "params": { "size": [0.06, 0.06, 0.02], "radius": 0.01 },
+                "params": {
+                    "size": [0.06, 0.08, 0.02],
+                    "radius": 0.01
+                },
                 "transform": {
-                    "position": [0.0, 0.95, 0.15],
+                    "position": [0.0, 0.95, 0.16],
                     "rotation": [0.0, 0.0, 0.0, 1.0],
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.8, 0.7, 0.2, 1.0],
-                    "metallic": 0.9,
-                    "roughness": 0.2,
-                    "emissive": [0.1, 0.08, 0.0]
+                    "baseColor": [0.7, 0.6, 0.15, 1.0],
+                    "metallic": 0.8,
+                    "roughness": 0.25,
+                    "emissive": [0.08, 0.06, 0.0],
+                    "emissiveIntensity": 0.4
                 },
                 "operation": "Union"
             },
             {
-                "id": "arcane_runes_chest",
-                "type": "RoundedBox",
-                "params": { "size": [0.15, 0.08, 0.01], "radius": 0.005 },
+                "id": "robe_fold_1",
+                "type": "Capsule",
+                "params": {
+                    "radius": 0.03,
+                    "height": 0.6
+                },
                 "transform": {
-                    "position": [0.0, 1.2, 0.14],
-                    "rotation": [0.0, 0.0, 0.0, 1.0],
+                    "position": [-0.15, 0.4, 0.2],
+                    "rotation": [0.1, 0.0, 0.05, 0.99],
                     "scale": [1.0, 1.0, 1.0]
                 },
                 "material": {
-                    "baseColor": [0.3, 0.4, 0.8, 1.0],
-                    "metallic": 0.5,
-                    "roughness": 0.3,
-                    "emissive": [0.15, 0.2, 0.5]
+                    "baseColor": [0.12, 0.08, 0.30, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.85
                 },
-                "operation": "Union"
+                "operation": "SmoothUnion",
+                "smoothness": 0.05
+            },
+            {
+                "id": "robe_fold_2",
+                "type": "Capsule",
+                "params": {
+                    "radius": 0.025,
+                    "height": 0.55
+                },
+                "transform": {
+                    "position": [0.18, 0.42, 0.18],
+                    "rotation": [-0.08, 0.0, -0.06, 0.99],
+                    "scale": [1.0, 1.0, 1.0]
+                },
+                "material": {
+                    "baseColor": [0.11, 0.07, 0.28, 1.0],
+                    "metallic": 0.0,
+                    "roughness": 0.86
+                },
+                "operation": "SmoothUnion",
+                "smoothness": 0.045
             }
         ]
     },
-
     "skeleton": {
         "bones": [
-            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "spine", "parent": "root", "position": [0.0, 0.85, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "chest", "parent": "spine", "position": [0.0, 0.3, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "neck", "parent": "chest", "position": [0.0, 0.25, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "head", "parent": "neck", "position": [0.0, 0.2, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "shoulder_l", "parent": "chest", "position": [-0.12, 0.2, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "shoulder_r", "parent": "chest", "position": [0.12, 0.2, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "arm_upper_l", "parent": "shoulder_l", "position": [-0.1, -0.05, 0.0], "rotation": [0.0, 0.0, 0.1, 0.995] },
-            { "name": "arm_upper_r", "parent": "shoulder_r", "position": [0.1, -0.05, 0.0], "rotation": [0.0, 0.0, -0.1, 0.995] },
-            { "name": "arm_lower_l", "parent": "arm_upper_l", "position": [0.0, -0.2, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "arm_lower_r", "parent": "arm_upper_r", "position": [0.0, -0.2, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "hand_l", "parent": "arm_lower_l", "position": [0.0, -0.18, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "hand_r", "parent": "arm_lower_r", "position": [0.0, -0.18, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "robe_front", "parent": "spine", "position": [0.0, -0.2, 0.2], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "robe_back", "parent": "spine", "position": [0.0, -0.2, -0.2], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "beard_tip", "parent": "head", "position": [0.0, -0.25, 0.06], "rotation": [0.0, 0.0, 0.0, 1.0] }
+            {
+                "name": "root",
+                "parent": null,
+                "position": [0.0, 0.0, 0.0],
+                "rotation": [0.0, 0.0, 0.0, 1.0]
+            },
+            {
+                "name": "spine",
+                "parent": "root",
+                "position": [0.0, 0.9, 0.0],
+                "rotation": [0.0, 0.0, 0.0, 1.0]
+            },
+            {
+                "name": "chest",
+                "parent": "spine",
+                "position": [0.0, 0.3, 0.0],
+                "rotation": [0.0, 0.0, 0.0, 1.0]
+            },
+            {
+                "name": "head",
+                "parent": "chest",
+                "position": [0.0, 0.35, 0.0],
+                "rotation": [0.0, 0.0, 0.0, 1.0]
+            },
+            {
+                "name": "arm_l",
+                "parent": "chest",
+                "position": [-0.18, 0.12, 0.0],
+                "rotation": [0.0, 0.0, 0.15, 0.99]
+            },
+            {
+                "name": "arm_r",
+                "parent": "chest",
+                "position": [0.18, 0.12, 0.0],
+                "rotation": [0.0, 0.0, -0.15, 0.99]
+            }
         ]
     },
-
     "animations": {
         "idle": {
-            "duration": 4.0,
+            "duration": 3.5,
             "loop": true,
             "keyframes": [
                 {
                     "time": 0.0,
                     "bones": {
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "head": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] },
-                        "beard_tip": { "rotation": [0.0, 0.0, 0.0, 1.0] }
+                        "spine": {"rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "head": {"rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "arm_r": {"rotation": [0.0, 0.0, -0.15, 0.99]}
                     }
                 },
                 {
-                    "time": 2.0,
+                    "time": 0.875,
                     "bones": {
-                        "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] },
-                        "chest": { "rotation": [0.02, 0.0, 0.0, 0.9998] },
-                        "head": { "rotation": [-0.03, 0.02, 0.0, 0.999] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.12, 0.993] },
-                        "beard_tip": { "rotation": [0.05, 0.0, 0.0, 0.999] }
+                        "spine": {"rotation": [0.02, 0.02, 0.0, 0.999]},
+                        "head": {"rotation": [0.03, 0.02, 0.0, 0.999]},
+                        "arm_r": {"rotation": [-0.05, 0.0, -0.18, 0.98]}
                     }
                 },
                 {
-                    "time": 4.0,
+                    "time": 1.75,
                     "bones": {
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "head": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] },
-                        "beard_tip": { "rotation": [0.0, 0.0, 0.0, 1.0] }
+                        "spine": {"rotation": [0.0, -0.02, 0.0, 0.999]},
+                        "head": {"rotation": [-0.02, -0.03, 0.0, 0.999]},
+                        "arm_r": {"rotation": [0.0, 0.0, -0.15, 0.99]}
+                    }
+                },
+                {
+                    "time": 2.625,
+                    "bones": {
+                        "spine": {"rotation": [0.015, 0.0, 0.0, 0.999]},
+                        "head": {"rotation": [0.025, 0.0, 0.0, 0.999]},
+                        "arm_r": {"rotation": [-0.03, 0.0, -0.16, 0.985]}
+                    }
+                },
+                {
+                    "time": 3.5,
+                    "bones": {
+                        "spine": {"rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "head": {"rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "arm_r": {"rotation": [0.0, 0.0, -0.15, 0.99]}
                     }
                 }
             ]
@@ -513,237 +917,108 @@
                 {
                     "time": 0.0,
                     "bones": {
-                        "root": { "position": [0.0, 0.0, 0.0] },
-                        "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] },
-                        "arm_upper_l": { "rotation": [0.1, 0.0, 0.1, 0.99] },
-                        "arm_upper_r": { "rotation": [-0.05, 0.0, -0.1, 0.99] },
-                        "robe_front": { "rotation": [0.08, 0.0, 0.0, 0.997] },
-                        "beard_tip": { "rotation": [0.03, 0.0, 0.0, 0.999] }
+                        "spine": {"rotation": [0.03, 0.0, 0.02, 0.999]},
+                        "arm_l": {"rotation": [0.1, 0.0, 0.2, 0.97]},
+                        "arm_r": {"rotation": [-0.1, 0.0, -0.2, 0.97]}
+                    }
+                },
+                {
+                    "time": 0.3,
+                    "bones": {
+                        "spine": {"rotation": [0.02, 0.0, -0.02, 0.999]},
+                        "arm_l": {"rotation": [-0.1, 0.0, 0.15, 0.98]},
+                        "arm_r": {"rotation": [0.1, 0.0, -0.15, 0.98]}
                     }
                 },
                 {
                     "time": 0.6,
                     "bones": {
-                        "root": { "position": [0.0, 0.02, 0.0] },
-                        "spine": { "rotation": [-0.02, 0.0, 0.0, 0.9998] },
-                        "arm_upper_l": { "rotation": [-0.1, 0.0, 0.1, 0.99] },
-                        "arm_upper_r": { "rotation": [0.05, 0.0, -0.1, 0.99] },
-                        "robe_front": { "rotation": [-0.08, 0.0, 0.0, 0.997] },
-                        "beard_tip": { "rotation": [-0.03, 0.0, 0.0, 0.999] }
+                        "spine": {"rotation": [0.03, 0.0, 0.02, 0.999]},
+                        "arm_l": {"rotation": [0.1, 0.0, 0.2, 0.97]},
+                        "arm_r": {"rotation": [-0.1, 0.0, -0.2, 0.97]}
+                    }
+                },
+                {
+                    "time": 0.9,
+                    "bones": {
+                        "spine": {"rotation": [0.02, 0.0, -0.02, 0.999]},
+                        "arm_l": {"rotation": [-0.1, 0.0, 0.15, 0.98]},
+                        "arm_r": {"rotation": [0.1, 0.0, -0.15, 0.98]}
                     }
                 },
                 {
                     "time": 1.2,
                     "bones": {
-                        "root": { "position": [0.0, 0.0, 0.0] },
-                        "spine": { "rotation": [0.02, 0.0, 0.0, 0.9998] },
-                        "arm_upper_l": { "rotation": [0.1, 0.0, 0.1, 0.99] },
-                        "arm_upper_r": { "rotation": [-0.05, 0.0, -0.1, 0.99] },
-                        "robe_front": { "rotation": [0.08, 0.0, 0.0, 0.997] },
-                        "beard_tip": { "rotation": [0.03, 0.0, 0.0, 0.999] }
+                        "spine": {"rotation": [0.03, 0.0, 0.02, 0.999]},
+                        "arm_l": {"rotation": [0.1, 0.0, 0.2, 0.97]},
+                        "arm_r": {"rotation": [-0.1, 0.0, -0.2, 0.97]}
                     }
                 }
             ]
         },
         "attack": {
-            "duration": 1.0,
-            "loop": false,
-            "keyframes": [
-                {
-                    "time": 0.0,
-                    "bones": {
-                        "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_lower_l": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "hand_l": { "rotation": [0.0, 0.0, 0.0, 1.0] }
-                    }
-                },
-                {
-                    "time": 0.25,
-                    "bones": {
-                        "chest": { "rotation": [0.0, -0.15, 0.0, 0.99] },
-                        "arm_upper_l": { "rotation": [-0.3, 0.2, 0.4, 0.84] },
-                        "arm_lower_l": { "rotation": [-0.2, 0.0, 0.0, 0.98] },
-                        "hand_l": { "rotation": [0.1, 0.0, 0.0, 0.995] }
-                    }
-                },
-                {
-                    "time": 0.4,
-                    "bones": {
-                        "chest": { "rotation": [0.0, 0.1, 0.0, 0.995] },
-                        "arm_upper_l": { "rotation": [0.3, -0.1, 0.6, 0.73] },
-                        "arm_lower_l": { "rotation": [0.1, 0.0, 0.0, 0.995] },
-                        "hand_l": { "rotation": [-0.1, 0.0, 0.0, 0.995] }
-                    },
-                    "events": ["spawn_arcane_bolt"]
-                },
-                {
-                    "time": 1.0,
-                    "bones": {
-                        "chest": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_lower_l": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "hand_l": { "rotation": [0.0, 0.0, 0.0, 1.0] }
-                    }
-                }
-            ]
-        },
-        "ability_blizzard": {
-            "duration": 2.5,
-            "loop": false,
-            "keyframes": [
-                {
-                    "time": 0.0,
-                    "bones": {
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] },
-                        "head": { "rotation": [0.0, 0.0, 0.0, 1.0] }
-                    }
-                },
-                {
-                    "time": 0.6,
-                    "bones": {
-                        "spine": { "rotation": [-0.1, 0.0, 0.0, 0.995] },
-                        "arm_upper_r": { "rotation": [-0.5, 0.0, -0.5, 0.71] },
-                        "head": { "rotation": [-0.2, 0.0, 0.0, 0.98] }
-                    }
-                },
-                {
-                    "time": 1.0,
-                    "bones": {
-                        "spine": { "rotation": [-0.15, 0.0, 0.0, 0.99] },
-                        "arm_upper_r": { "rotation": [-0.6, 0.0, -0.6, 0.53] },
-                        "head": { "rotation": [-0.3, 0.0, 0.0, 0.95] }
-                    },
-                    "events": ["cast_blizzard"]
-                },
-                {
-                    "time": 2.5,
-                    "bones": {
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] },
-                        "head": { "rotation": [0.0, 0.0, 0.0, 1.0] }
-                    }
-                }
-            ]
-        },
-        "ability_brilliance_aura": {
             "duration": 1.5,
             "loop": false,
             "keyframes": [
                 {
                     "time": 0.0,
                     "bones": {
-                        "root": { "position": [0.0, 0.0, 0.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] }
+                        "spine": {"rotation": [0.0, -0.1, 0.0, 0.995]},
+                        "arm_r": {"rotation": [-0.15, 0.0, -0.25, 0.96]}
                     }
                 },
                 {
-                    "time": 0.5,
+                    "time": 0.4,
                     "bones": {
-                        "root": { "position": [0.0, 0.05, 0.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.5, 0.87] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.5, 0.87] }
-                    }
-                },
-                {
-                    "time": 0.8,
-                    "bones": {
-                        "root": { "position": [0.0, 0.1, 0.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.7, 0.71] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.7, 0.71] }
+                        "spine": {"rotation": [0.0, 0.12, 0.0, 0.993]},
+                        "arm_r": {"rotation": [0.25, 0.0, -0.45, 0.86]}
                     },
-                    "events": ["activate_brilliance_aura"]
+                    "events": ["arcane_bolt_cast"]
                 },
                 {
                     "time": 1.5,
                     "bones": {
-                        "root": { "position": [0.0, 0.0, 0.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] }
+                        "spine": {"rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "arm_r": {"rotation": [0.0, 0.0, -0.15, 0.99]}
                     }
                 }
             ]
         },
-        "ability_water_elemental": {
-            "duration": 2.0,
+        "cast": {
+            "duration": 2.2,
             "loop": false,
             "keyframes": [
                 {
                     "time": 0.0,
                     "bones": {
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] }
+                        "spine": {"rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "arm_l": {"rotation": [-0.2, 0.0, 0.25, 0.95]},
+                        "arm_r": {"rotation": [-0.2, 0.0, -0.25, 0.95]}
                     }
                 },
                 {
-                    "time": 0.5,
+                    "time": 0.6,
                     "bones": {
-                        "spine": { "rotation": [0.0, 0.3, 0.0, 0.95] },
-                        "arm_upper_l": { "rotation": [-0.3, 0.3, 0.4, 0.8] },
-                        "arm_upper_r": { "rotation": [-0.3, -0.3, -0.4, 0.8] }
+                        "spine": {"rotation": [-0.08, 0.0, 0.0, 0.997]},
+                        "arm_l": {"rotation": [-0.45, 0.08, 0.45, 0.76]},
+                        "arm_r": {"rotation": [-0.45, -0.08, -0.45, 0.76]}
                     }
                 },
                 {
-                    "time": 1.0,
+                    "time": 1.1,
                     "bones": {
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_l": { "rotation": [0.4, 0.0, 0.6, 0.69] },
-                        "arm_upper_r": { "rotation": [0.4, 0.0, -0.6, 0.69] }
+                        "spine": {"rotation": [-0.12, 0.0, 0.0, 0.993]},
+                        "arm_l": {"rotation": [-0.55, 0.15, 0.55, 0.6]},
+                        "arm_r": {"rotation": [-0.55, -0.15, -0.55, 0.6]}
                     },
-                    "events": ["summon_water_elemental"]
+                    "events": ["spell_cast"]
                 },
                 {
-                    "time": 2.0,
+                    "time": 2.2,
                     "bones": {
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] }
-                    }
-                }
-            ]
-        },
-        "ability_mass_teleport": {
-            "duration": 2.5,
-            "loop": false,
-            "keyframes": [
-                {
-                    "time": 0.0,
-                    "bones": {
-                        "root": { "position": [0.0, 0.0, 0.0] },
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] }
-                    }
-                },
-                {
-                    "time": 0.8,
-                    "bones": {
-                        "root": { "position": [0.0, 0.15, 0.0] },
-                        "spine": { "rotation": [0.0, 0.5, 0.0, 0.87] },
-                        "arm_upper_l": { "rotation": [-0.4, 0.0, 0.6, 0.69] },
-                        "arm_upper_r": { "rotation": [-0.4, 0.0, -0.6, 0.69] }
-                    }
-                },
-                {
-                    "time": 1.5,
-                    "bones": {
-                        "root": { "position": [0.0, 0.25, 0.0] },
-                        "spine": { "rotation": [0.0, 1.0, 0.0, 0.0] },
-                        "arm_upper_l": { "rotation": [-0.5, 0.0, 0.7, 0.5] },
-                        "arm_upper_r": { "rotation": [-0.5, 0.0, -0.7, 0.5] }
-                    },
-                    "events": ["cast_mass_teleport"]
-                },
-                {
-                    "time": 2.5,
-                    "bones": {
-                        "root": { "position": [0.0, 0.0, 0.0] },
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_l": { "rotation": [0.0, 0.0, 0.1, 0.995] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] }
+                        "spine": {"rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "arm_l": {"rotation": [0.0, 0.0, 0.15, 0.99]},
+                        "arm_r": {"rotation": [0.0, 0.0, -0.15, 0.99]}
                     }
                 }
             ]
@@ -755,109 +1030,66 @@
                 {
                     "time": 0.0,
                     "bones": {
-                        "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "spine": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "head": { "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "arm_upper_r": { "rotation": [0.0, 0.0, -0.1, 0.995] }
+                        "root": {"position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "spine": {"rotation": [0.0, 0.0, 0.0, 1.0]}
                     }
                 },
                 {
-                    "time": 0.4,
+                    "time": 0.5,
                     "bones": {
-                        "root": { "position": [0.0, -0.1, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-                        "spine": { "rotation": [0.2, 0.0, 0.0, 0.98] },
-                        "head": { "rotation": [0.3, 0.0, 0.0, 0.95] },
-                        "arm_upper_r": { "rotation": [0.3, 0.0, -0.3, 0.9] }
-                    },
-                    "events": ["arcane_discharge"]
+                        "root": {"position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0]},
+                        "spine": {"rotation": [0.15, 0.0, 0.05, 0.988]}
+                    }
                 },
                 {
-                    "time": 1.2,
+                    "time": 1.0,
                     "bones": {
-                        "root": { "position": [0.0, -0.5, 0.15], "rotation": [0.35, 0.0, 0.1, 0.93] },
-                        "spine": { "rotation": [0.25, 0.0, 0.1, 0.96] },
-                        "head": { "rotation": [0.2, 0.1, 0.0, 0.97] },
-                        "arm_upper_r": { "rotation": [0.4, 0.2, -0.2, 0.87] }
+                        "root": {"position": [0.0, -0.1, 0.1], "rotation": [0.2, 0.0, 0.1, 0.97]},
+                        "spine": {"rotation": [0.3, 0.0, 0.1, 0.95]}
                     }
                 },
                 {
                     "time": 2.0,
                     "bones": {
-                        "root": { "position": [0.0, -0.85, 0.3], "rotation": [0.65, 0.0, 0.1, 0.75] },
-                        "spine": { "rotation": [0.1, 0.0, 0.0, 0.995] },
-                        "head": { "rotation": [0.15, 0.0, 0.1, 0.98] },
-                        "arm_upper_r": { "rotation": [0.2, 0.3, -0.1, 0.93] }
+                        "root": {"position": [0.0, -0.4, 0.3], "rotation": [0.5, 0.0, 0.15, 0.85]},
+                        "spine": {"rotation": [0.4, 0.0, 0.15, 0.9]}
                     }
                 }
             ]
         }
     },
-
     "animationStateMachine": {
         "initialState": "idle",
         "states": {
             "idle": {
                 "animation": "idle",
                 "transitions": [
-                    { "to": "walk", "condition": "isMoving" },
-                    { "to": "attack", "condition": "isAttacking" },
-                    { "to": "ability_blizzard", "condition": "isCastingQ" },
-                    { "to": "ability_brilliance_aura", "condition": "isCastingW" },
-                    { "to": "ability_water_elemental", "condition": "isCastingE" },
-                    { "to": "ability_mass_teleport", "condition": "isCastingR" },
-                    { "to": "death", "condition": "isDead" }
+                    {"to": "walk", "condition": "isMoving"},
+                    {"to": "attack", "condition": "isAttacking"},
+                    {"to": "cast", "condition": "isCasting"},
+                    {"to": "death", "condition": "isDead"}
                 ]
             },
             "walk": {
                 "animation": "walk",
                 "transitions": [
-                    { "to": "idle", "condition": "!isMoving" },
-                    { "to": "attack", "condition": "isAttacking" },
-                    { "to": "ability_blizzard", "condition": "isCastingQ" },
-                    { "to": "ability_brilliance_aura", "condition": "isCastingW" },
-                    { "to": "ability_water_elemental", "condition": "isCastingE" },
-                    { "to": "ability_mass_teleport", "condition": "isCastingR" },
-                    { "to": "death", "condition": "isDead" }
+                    {"to": "idle", "condition": "!isMoving"},
+                    {"to": "attack", "condition": "isAttacking"},
+                    {"to": "death", "condition": "isDead"}
                 ]
             },
             "attack": {
                 "animation": "attack",
                 "transitions": [
-                    { "to": "idle", "condition": "animationComplete && !isMoving" },
-                    { "to": "walk", "condition": "animationComplete && isMoving" },
-                    { "to": "death", "condition": "isDead" }
+                    {"to": "idle", "condition": "animationComplete"},
+                    {"to": "death", "condition": "isDead"}
                 ]
             },
-            "ability_blizzard": {
-                "animation": "ability_blizzard",
+            "cast": {
+                "animation": "cast",
                 "transitions": [
-                    { "to": "idle", "condition": "animationComplete && !isMoving" },
-                    { "to": "walk", "condition": "animationComplete && isMoving" },
-                    { "to": "death", "condition": "isDead" }
-                ]
-            },
-            "ability_brilliance_aura": {
-                "animation": "ability_brilliance_aura",
-                "transitions": [
-                    { "to": "idle", "condition": "animationComplete && !isMoving" },
-                    { "to": "walk", "condition": "animationComplete && isMoving" },
-                    { "to": "death", "condition": "isDead" }
-                ]
-            },
-            "ability_water_elemental": {
-                "animation": "ability_water_elemental",
-                "transitions": [
-                    { "to": "idle", "condition": "animationComplete && !isMoving" },
-                    { "to": "walk", "condition": "animationComplete && isMoving" },
-                    { "to": "death", "condition": "isDead" }
-                ]
-            },
-            "ability_mass_teleport": {
-                "animation": "ability_mass_teleport",
-                "transitions": [
-                    { "to": "idle", "condition": "animationComplete && !isMoving" },
-                    { "to": "walk", "condition": "animationComplete && isMoving" },
-                    { "to": "death", "condition": "isDead" }
+                    {"to": "idle", "condition": "animationComplete"},
+                    {"to": "death", "condition": "isDead"}
                 ]
             },
             "death": {
@@ -866,219 +1098,25 @@
             }
         }
     },
-
     "abilities": [
-        {
-            "id": "blizzard",
-            "name": "Blizzard",
-            "description": "Calls down waves of freezing ice shards that damage and slow enemies in a target area.",
-            "hotkey": "Q",
-            "cooldown": 10.0,
-            "manaCost": 75,
-            "range": 800,
-            "targetType": "ground",
-            "radius": 300,
-            "damagePerWave": 30,
-            "waves": 6,
-            "slowAmount": 0.3,
-            "slowDuration": 2.0,
-            "castTime": 1.0
-        },
-        {
-            "id": "brilliance_aura",
-            "name": "Brilliance Aura",
-            "description": "Increases mana regeneration of nearby friendly units.",
-            "hotkey": "W",
-            "cooldown": 0,
-            "manaCost": 0,
-            "range": 0,
-            "targetType": "passive",
-            "radius": 900,
-            "manaRegenBonus": 1.5,
-            "isAura": true
-        },
-        {
-            "id": "water_elemental",
-            "name": "Summon Water Elemental",
-            "description": "Summons a Water Elemental to fight for the Archmage.",
-            "hotkey": "E",
-            "cooldown": 20.0,
-            "manaCost": 125,
-            "range": 0,
-            "targetType": "self",
-            "summonDuration": 60.0,
-            "elementalHealth": 525,
-            "elementalDamage": 22,
-            "castTime": 1.0
-        },
-        {
-            "id": "mass_teleport",
-            "name": "Mass Teleport",
-            "description": "Ultimate: Teleports the Archmage and nearby friendly units to a target allied building.",
-            "hotkey": "R",
-            "cooldown": 90.0,
-            "manaCost": 150,
-            "range": 99999,
-            "targetType": "friendly_building",
-            "teleportRadius": 600,
-            "maxUnits": 24,
-            "castTime": 1.5
-        }
+        {"id": "blizzard", "name": "Blizzard", "description": "Calls down waves of ice shards", "hotkey": "B"},
+        {"id": "summon_water_elemental", "name": "Summon Water Elemental", "description": "Summons a Water Elemental to fight", "hotkey": "W"},
+        {"id": "brilliance_aura", "name": "Brilliance Aura", "description": "Increases mana regeneration of nearby units", "hotkey": "R"},
+        {"id": "mass_teleport", "name": "Mass Teleport", "description": "Teleports the Archmage and nearby units", "hotkey": "T"}
     ],
-
     "behaviors": {
         "on_spawn": {
             "actions": [
-                { "type": "play_sound", "sound": "hero_archmage_spawn" },
-                { "type": "spawn_effect", "effect": "arcane_arrival", "duration": 2.0 },
-                { "type": "say", "text": "Knowledge is power!" }
-            ]
-        },
-        "on_attack": {
-            "actions": [
-                { "type": "spawn_projectile", "projectile": "arcane_bolt", "target": "attack_target" },
-                { "type": "play_sound", "sound": "archmage_attack" }
-            ]
-        },
-        "on_ability_q": {
-            "conditions": [
-                { "type": "has_mana", "amount": 75 },
-                { "type": "cooldown_ready", "ability": "blizzard" }
-            ],
-            "actions": [
-                { "type": "play_animation", "animation": "ability_blizzard" },
-                { "type": "spawn_effect", "effect": "blizzard_storm", "target": "ability_target", "duration": 6.0 },
-                { "type": "area_damage_over_time", "target": "ability_target", "radius": 300, "damagePerWave": 30, "waves": 6, "filter": "enemy" },
-                { "type": "area_slow", "target": "ability_target", "radius": 300, "amount": 0.3, "duration": 2.0, "filter": "enemy" },
-                { "type": "play_sound", "sound": "blizzard_cast" },
-                { "type": "spend_mana", "amount": 75 },
-                { "type": "start_cooldown", "ability": "blizzard" }
-            ]
-        },
-        "on_ability_w": {
-            "conditions": [
-                { "type": "cooldown_ready", "ability": "brilliance_aura" }
-            ],
-            "actions": [
-                { "type": "play_animation", "animation": "ability_brilliance_aura" },
-                { "type": "toggle_aura", "aura": "brilliance_aura" },
-                { "type": "spawn_effect", "effect": "brilliance_pulse", "target": "self" },
-                { "type": "play_sound", "sound": "aura_toggle" }
-            ]
-        },
-        "on_ability_e": {
-            "conditions": [
-                { "type": "has_mana", "amount": 125 },
-                { "type": "cooldown_ready", "ability": "water_elemental" }
-            ],
-            "actions": [
-                { "type": "play_animation", "animation": "ability_water_elemental" },
-                { "type": "summon_unit", "unit": "water_elemental", "position": "front", "duration": 60.0 },
-                { "type": "spawn_effect", "effect": "water_summon_splash", "position": "front" },
-                { "type": "play_sound", "sound": "water_elemental_summon" },
-                { "type": "spend_mana", "amount": 125 },
-                { "type": "start_cooldown", "ability": "water_elemental" }
-            ]
-        },
-        "on_ability_r": {
-            "conditions": [
-                { "type": "has_mana", "amount": 150 },
-                { "type": "cooldown_ready", "ability": "mass_teleport" }
-            ],
-            "actions": [
-                { "type": "play_animation", "animation": "ability_mass_teleport" },
-                { "type": "spawn_effect", "effect": "teleport_portal", "target": "self", "duration": 2.0 },
-                { "type": "teleport_group", "radius": 600, "destination": "ability_target", "maxUnits": 24 },
-                { "type": "spawn_effect", "effect": "teleport_arrival", "target": "ability_target", "duration": 1.5 },
-                { "type": "play_sound", "sound": "mass_teleport_cast" },
-                { "type": "spend_mana", "amount": 150 },
-                { "type": "start_cooldown", "ability": "mass_teleport" }
-            ]
-        },
-        "on_kill": {
-            "actions": [
-                { "type": "gain_experience", "amount": "target.experience_value" },
-                { "type": "random_say", "texts": ["Insignificant.", "Your magic was... lacking.", "Study harder next time."], "chance": 0.3 }
+                {"type": "play_sound", "sound": "archmage_ready"},
+                {"type": "spawn_effect", "effect": "arcane_spawn", "duration": 1.2}
             ]
         },
         "on_death": {
             "actions": [
-                { "type": "play_animation", "animation": "death" },
-                { "type": "spawn_effect", "effect": "arcane_explosion", "duration": 2.0 },
-                { "type": "play_sound", "sound": "archmage_death" },
-                { "type": "say", "text": "My power... fades..." }
+                {"type": "play_animation", "animation": "death"},
+                {"type": "play_sound", "sound": "archmage_death"},
+                {"type": "spawn_particles", "effect": "arcane_dissipate"}
             ]
-        }
-    },
-
-    "effects": {
-        "blizzard_storm": {
-            "type": "volume",
-            "shape": "cylinder",
-            "radius": 3.0,
-            "height": 8.0,
-            "particles": {
-                "type": "ice_shards",
-                "count": 200,
-                "color": [0.7, 0.85, 1.0, 0.9],
-                "size": 0.15,
-                "velocity": [0.0, -5.0, 0.0]
-            },
-            "groundEffect": {
-                "type": "frost_circle",
-                "color": [0.6, 0.8, 1.0, 0.5]
-            }
-        },
-        "brilliance_pulse": {
-            "type": "expanding_ring",
-            "maxRadius": 9.0,
-            "color": [0.5, 0.6, 1.0, 0.4],
-            "duration": 1.0
-        },
-        "water_summon_splash": {
-            "type": "splash",
-            "particles": {
-                "type": "water_droplets",
-                "count": 50,
-                "color": [0.5, 0.7, 1.0, 0.8],
-                "size": 0.1
-            }
-        },
-        "teleport_portal": {
-            "type": "portal",
-            "radius": 2.0,
-            "color": [0.6, 0.4, 1.0, 0.8],
-            "rotationSpeed": 90.0,
-            "particles": {
-                "type": "arcane_runes",
-                "count": 30,
-                "color": [0.8, 0.6, 1.0, 1.0]
-            }
-        },
-        "teleport_arrival": {
-            "type": "flash",
-            "color": [0.7, 0.5, 1.0, 0.9],
-            "particles": {
-                "type": "sparkle",
-                "count": 80,
-                "color": [0.9, 0.8, 1.0, 1.0]
-            }
-        },
-        "arcane_arrival": {
-            "type": "pillar",
-            "radius": 1.0,
-            "height": 5.0,
-            "color": [0.5, 0.4, 0.9, 0.6]
-        },
-        "arcane_explosion": {
-            "type": "explosion",
-            "radius": 3.0,
-            "color": [0.5, 0.4, 1.0, 0.8],
-            "particles": {
-                "type": "arcane_fragments",
-                "count": 60,
-                "color": [0.6, 0.5, 1.0, 1.0]
-            }
         }
     }
 }

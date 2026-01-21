@@ -87,4 +87,11 @@ private:
     // UI state
     bool m_isDraggingCamera = false;
     ImVec2 m_lastMousePos{0.0f, 0.0f};
+
+    // Export dialog state
+    bool m_showExportDialog = false;
+    int m_exportFormat = 0; // 0 = OBJ, 1 = FBX, 2 = GLTF
+    char m_exportPath[512] = "";
+    void RenderExportDialog();
+    void ExportModel();
 };

@@ -54,6 +54,7 @@ private:
     void StartCampaign(int raceIndex);
     void ReturnToMainMenu();
     void OpenSettings();
+    void UpdateSoloGame(float deltaTime);
 
     // Core systems
     std::unique_ptr<Nova::FlyCamera> m_camera;
@@ -75,6 +76,10 @@ private:
     GameMode m_currentMode = GameMode::MainMenu;
     int m_selectedRace = 0;
     float m_rotationAngle = 0.0f;
+
+    // Solo game state (placeholder until game library is built)
+    float m_soloGameTime = 0.0f;
+    float m_lastResourceTick = 0.0f;
 
     // Menu state
     bool m_showRaceSelection = false;

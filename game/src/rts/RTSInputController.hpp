@@ -317,6 +317,11 @@ public:
     bool Initialize(Nova::Camera* camera, Player* player);
 
     /**
+     * @brief Set the entity manager for entity queries
+     */
+    void SetEntityManager(class Vehement::EntityManager* entityManager) { m_entityManager = entityManager; }
+
+    /**
      * @brief Update input handling
      */
     void Update(Nova::InputManager& input, float deltaTime);
@@ -531,6 +536,7 @@ private:
     // Core references
     Nova::Camera* m_camera = nullptr;
     Player* m_player = nullptr;
+    class Vehement::EntityManager* m_entityManager = nullptr;
 
     // RTS camera
     RTSCamera m_rtsCamera;
@@ -553,6 +559,10 @@ private:
     bool m_gamepadEnabled = true;
     bool m_isDragging = false;
     glm::vec2 m_lastMousePosition{0.0f};
+
+    // Command modes
+    bool m_patrolModeActive = false;    // Waiting for patrol waypoint
+    bool m_buildMenuOpen = false;       // Building construction menu is open
 
     // Modifier keys
     bool m_shiftHeld = false;

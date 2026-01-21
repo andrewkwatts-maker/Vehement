@@ -168,6 +168,7 @@ public:
     std::function<void(Objective&)> onProgress;
     std::function<void(Objective&)> onComplete;
     std::function<void(Objective&)> onFail;
+    std::function<void(Objective&, const ObjectiveHint&)> onHintShown;
 
     // Custom script
     std::string customScript;

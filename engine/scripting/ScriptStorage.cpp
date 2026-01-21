@@ -382,7 +382,8 @@ ScriptInfo ScriptStorage::ExtractMetadata(const std::string& code) const {
     ScriptInfo info;
 
     // Look for metadata in header docstring
-    std::regex docstringRegex(R"(^\"\"\"([\s\S]*?)\"\"\")", std::regex::multiline);
+    // Note: std::regex doesn't have multiline flag; [\s\S] already matches newlines
+    std::regex docstringRegex(R"(^\"\"\"([\s\S]*?)\"\"\")");
     std::smatch match;
 
     if (std::regex_search(code, match, docstringRegex)) {

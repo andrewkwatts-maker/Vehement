@@ -243,31 +243,8 @@ glm::mat3 ConvexHull::GetInertiaTensor(float mass) const {
 // AABB
 // ============================================================================
 
-bool AABB::Contains(const glm::vec3& point) const {
-    return point.x >= min.x && point.x <= max.x &&
-           point.y >= min.y && point.y <= max.y &&
-           point.z >= min.z && point.z <= max.z;
-}
-
-bool AABB::Intersects(const AABB& other) const {
-    return min.x <= other.max.x && max.x >= other.min.x &&
-           min.y <= other.max.y && max.y >= other.min.y &&
-           min.z <= other.max.z && max.z >= other.min.z;
-}
-
-void AABB::Expand(const glm::vec3& point) {
-    min = glm::min(min, point);
-    max = glm::max(max, point);
-}
-
-void AABB::Expand(const AABB& other) {
-    min = glm::min(min, other.min);
-    max = glm::max(max, other.max);
-}
-
-AABB AABB::FromCenterExtents(const glm::vec3& center, const glm::vec3& extents) {
-    return AABB{center - extents, center + extents};
-}
+// Note: All AABB methods are now defined inline in CollisionShape.hpp
+// to avoid duplicate symbol definitions across translation units.
 
 // ============================================================================
 // OBB

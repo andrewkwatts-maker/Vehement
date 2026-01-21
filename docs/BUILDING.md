@@ -318,6 +318,114 @@ Features:
 - Useful for profiling
 - Assertions disabled
 
+## Running Tests
+
+The test suite is disabled by default. Enable it with `NOVA_BUILD_TESTS=ON`.
+
+### Building with Tests
+
+```bash
+# Configure with tests enabled
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DNOVA_BUILD_TESTS=ON
+
+# Build (this will also build the test executables)
+cmake --build build --parallel
+```
+
+### Test Executables
+
+The test suite includes several test targets:
+
+| Executable | Description |
+|------------|-------------|
+| `nova_unit_tests` | Engine unit tests (spatial, animation, physics, etc.) |
+| `nova_game_tests` | Game system tests (config loading, visual scripting, etc.) |
+| `nova_graphics_tests` | Graphics/GI tests (radiance cascade, spectral renderer) |
+| `nova_integration_tests` | Integration tests (editor flow, game loop) |
+| `nova_benchmarks` | Performance benchmarks |
+
+### Running Tests with CTest
+
+```bash
+# Run all tests
+cd build
+ctest --output-on-failure
+
+# Run tests with verbose output
+ctest --output-on-failure --verbose
+
+# Run only unit tests (by label)
+ctest -L unit --output-on-failure
+
+# Run only game tests
+ctest -L game --output-on-failure
+
+# Run only graphics tests
+ctest -L graphics --output-on-failure
+
+# Run only integration tests
+ctest -L integration --output-on-failure
+```
+
+### Using Custom Test Targets
+
+The CMake configuration provides convenient targets:
+
+```bash
+# Build and run all tests
+cmake --build build --target run_tests
+
+# Build and run unit tests only
+cmake --build build --target run_unit_tests
+
+# Build and run graphics tests only
+cmake --build build --target run_graphics_tests
+
+# Build and run integration tests only
+cmake --build build --target run_integration_tests
+
+# Build and run benchmarks
+cmake --build build --target run_benchmarks
+```
+
+### Running Tests Directly
+
+You can also run test executables directly for more control:
+
+```bash
+# Windows
+.\build\bin\Debug\nova_unit_tests.exe
+
+# Linux/macOS
+./build/bin/nova_unit_tests
+
+# Run specific test (using GoogleTest filter)
+./build/bin/nova_unit_tests --gtest_filter="AABBTest.*"
+
+# List all tests
+./build/bin/nova_unit_tests --gtest_list_tests
+
+# Run with detailed output
+./build/bin/nova_unit_tests --gtest_print_time=1
+```
+
+### Code Coverage (Linux/macOS)
+
+Enable coverage reporting with GCC or Clang:
+
+```bash
+# Configure with coverage
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DNOVA_BUILD_TESTS=ON -DNOVA_ENABLE_COVERAGE=ON
+
+# Build and run tests
+cmake --build build --target run_tests
+
+# Generate coverage report (requires lcov)
+cmake --build build --target coverage
+```
+
+The coverage report will be generated in `build/coverage_report/index.html`.
+
 ## Advanced Configuration
 
 ### Disabling Python Scripting

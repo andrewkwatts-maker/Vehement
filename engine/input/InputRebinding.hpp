@@ -134,6 +134,9 @@ struct ExtendedBinding {
         }
         return false;
     }
+
+    // Display string for UI - defined after helper function below
+    std::string GetDisplayString() const;
 };
 
 // =============================================================================

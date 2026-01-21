@@ -583,11 +583,56 @@ bool AssetImporter::ExportAssetPack(const std::vector<std::string>& assetIds,
             manifestFile.close();
         }
 
-        // TODO: Copy asset files and create ZIP archive
-        // This would require a proper ZIP library implementation
+        // Create assets subdirectory in temp folder
+        std::string assetsDir = tempDir + "/assets";
+        fs::create_directories(assetsDir);
 
-        // Cleanup
-        fs::remove_all(tempDir);
+        // Copy asset files to the temp directory
+        for (const auto& assetId : assetIds) {
+            // Find the asset file by ID - in practice this would look up
+            // the asset path from a registry or database
+            // For now, we search common asset directories
+
+            std::vector<std::string> searchPaths = {
+                "game/assets/configs/units",
+                "game/assets/configs/buildings",
+                "game/assets/configs/tiles",
+                "game/assets/configs/spells",
+                "game/assets/configs/items",
+                "game/assets/models",
+                "game/assets/textures"
+            };
+
+            bool found = false;
+            for (const auto& searchPath : searchPaths) {
+                if (!fs::exists(searchPath)) continue;
+
+                for (const auto& entry : fs::recursive_directory_iterator(searchPath)) {
+                    if (!entry.is_regular_file()) continue;
+
+                    std::string filename = entry.path().stem().string();
+                    if (filename == assetId || entry.path().string().find(assetId) != std::string::npos) {
+                        // Copy this file to assets dir
+                        std::string destPath = assetsDir + "/" + entry.path().filename().string();
+                        fs::copy_file(entry.path(), destPath, fs::copy_options::overwrite_existing);
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+        }
+
+        // Create the output pack as a directory (uncompressed pack format)
+        // A ZIP library (like libzip, miniz, or zlib) would be needed for proper ZIP creation
+        // For now, we create an uncompressed directory-based pack
+
+        if (fs::exists(outputPath)) {
+            fs::remove_all(outputPath);
+        }
+
+        // Move temp directory to output path
+        fs::rename(tempDir, outputPath);
 
         return true;
     } catch (const std::exception&) {

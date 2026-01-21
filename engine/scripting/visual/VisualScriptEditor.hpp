@@ -1,9 +1,11 @@
 #pragma once
 
 #include "VisualScriptingCore.hpp"
+#include <nlohmann/json.hpp>
 #include <imgui.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <optional>
 #include <functional>
 
@@ -36,9 +38,22 @@ public:
     GraphPtr GetGraph() const { return m_graph; }
 
     // Selection
-    void SelectNode(NodePtr node);
+    void SelectNode(NodePtr node, bool addToSelection = false);
     void ClearSelection();
+    void SelectAll();
     NodePtr GetSelectedNode() const { return m_selectedNode; }
+    const std::vector<NodePtr>& GetSelectedNodes() const { return m_selectedNodes; }
+    bool IsNodeSelected(NodePtr node) const;
+
+    // Clipboard operations
+    void CopySelected();
+    void PasteAtPosition(const glm::vec2& position);
+    void DuplicateSelected();
+    void DeleteSelected();
+
+    // Frame selected nodes in view
+    void FrameSelected();
+    void FrameAll();
 
     // Callbacks
     using GraphChangedCallback = std::function<void(GraphPtr)>;
@@ -59,6 +74,11 @@ private:
     void RenderBindingBrowser();
     void RenderWarningsPanel();
     void RenderContextMenu();
+    void RenderVariablesPanel();
+    void RenderBoxSelection();
+
+    // Keyboard shortcuts
+    void HandleKeyboardShortcuts();
 
     // Canvas helpers
     void RenderNode(NodePtr node);
@@ -88,6 +108,7 @@ private:
     // Graph state
     GraphPtr m_graph;
     NodePtr m_selectedNode;
+    std::vector<NodePtr> m_selectedNodes;  // Multi-select support
     PortPtr m_selectedPort;
 
     // Connection dragging
@@ -100,6 +121,18 @@ private:
     float m_canvasZoom = 1.0f;
     bool m_isPanning = false;
     ImVec2 m_panStartPos;
+
+    // Box selection state
+    bool m_isBoxSelecting = false;
+    ImVec2 m_boxSelectStart;
+    ImVec2 m_boxSelectEnd;
+
+    // Node dragging (multi-node support)
+    bool m_isDraggingNodes = false;
+    std::unordered_map<std::string, glm::vec2> m_dragStartPositions;
+
+    // Clipboard for copy/paste
+    nlohmann::json m_clipboard;
 
     // Search/filter
     char m_nodeSearchBuffer[256] = "";

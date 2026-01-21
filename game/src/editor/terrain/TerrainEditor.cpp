@@ -1,8 +1,12 @@
 #include "TerrainEditor.hpp"
 #include "../Editor.hpp"
+#include "../../../../engine/import/TextureImporter.hpp"
 #include <imgui.h>
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
 
 namespace Vehement {
 
@@ -219,8 +223,67 @@ void TerrainEditor::AddStamp(const TerrainStamp& stamp) {
 }
 
 bool TerrainEditor::LoadStamps(const std::string& path) {
-    // TODO: Load stamps from JSON
-    return false;
+    try {
+        std::ifstream file(path);
+        if (!file.is_open()) {
+            spdlog::error("Failed to open stamps file: {}", path);
+            return false;
+        }
+
+        nlohmann::json j;
+        file >> j;
+
+        if (!j.contains("stamps") || !j["stamps"].is_array()) {
+            spdlog::error("Invalid stamps file format: missing 'stamps' array");
+            return false;
+        }
+
+        for (const auto& stampJson : j["stamps"]) {
+            TerrainStamp stamp;
+
+            stamp.name = stampJson.value("name", "Unnamed");
+            stamp.description = stampJson.value("description", "");
+            stamp.thumbnailPath = stampJson.value("thumbnail", "");
+            stamp.smoothness = stampJson.value("smoothness", 0.3f);
+
+            // Parse shape
+            std::string shapeStr = stampJson.value("shape", "sphere");
+            if (shapeStr == "sphere") stamp.shape = Nova::SDFBrushShape::Sphere;
+            else if (shapeStr == "box") stamp.shape = Nova::SDFBrushShape::Box;
+            else if (shapeStr == "cylinder") stamp.shape = Nova::SDFBrushShape::Cylinder;
+            else if (shapeStr == "capsule") stamp.shape = Nova::SDFBrushShape::Capsule;
+            else if (shapeStr == "cone") stamp.shape = Nova::SDFBrushShape::Cone;
+            else if (shapeStr == "torus") stamp.shape = Nova::SDFBrushShape::Torus;
+            else stamp.shape = Nova::SDFBrushShape::Custom;
+
+            // Parse size
+            if (stampJson.contains("size") && stampJson["size"].is_array() && stampJson["size"].size() >= 3) {
+                stamp.size.x = stampJson["size"][0].get<float>();
+                stamp.size.y = stampJson["size"][1].get<float>();
+                stamp.size.z = stampJson["size"][2].get<float>();
+            }
+
+            // Parse rotation (as euler angles in degrees)
+            if (stampJson.contains("rotation") && stampJson["rotation"].is_array() && stampJson["rotation"].size() >= 3) {
+                float pitch = glm::radians(stampJson["rotation"][0].get<float>());
+                float yaw = glm::radians(stampJson["rotation"][1].get<float>());
+                float roll = glm::radians(stampJson["rotation"][2].get<float>());
+                stamp.rotation = glm::quat(glm::vec3(pitch, yaw, roll));
+            }
+
+            m_stamps.push_back(stamp);
+        }
+
+        spdlog::info("Loaded {} stamps from {}", m_stamps.size(), path);
+        return true;
+
+    } catch (const nlohmann::json::exception& e) {
+        spdlog::error("JSON parsing error in stamps file {}: {}", path, e.what());
+        return false;
+    } catch (const std::exception& e) {
+        spdlog::error("Error loading stamps file {}: {}", path, e.what());
+        return false;
+    }
 }
 
 // =========================================================================
@@ -420,11 +483,132 @@ void TerrainEditor::GenerateProcedural(int seed, float scale, int octaves) {
 }
 
 void TerrainEditor::ImportHeightmap(const std::string& path, float heightScale) {
-    // TODO: Implement heightmap import
+    if (!m_terrain) return;
+
+    Nova::TextureImporter importer;
+    Nova::ImageData image = importer.LoadImage(path);
+
+    if (image.pixels.empty() || image.width == 0 || image.height == 0) {
+        spdlog::error("Failed to load heightmap from: {}", path);
+        return;
+    }
+
+    spdlog::info("Importing heightmap {}x{} from {}", image.width, image.height, path);
+
+    // Calculate terrain bounds based on image size
+    float terrainWidth = static_cast<float>(image.width);
+    float terrainDepth = static_cast<float>(image.height);
+
+    // Apply heightmap to terrain
+    for (int z = 0; z < image.height; ++z) {
+        for (int x = 0; x < image.width; ++x) {
+            // Sample height from image (use red channel or grayscale)
+            int pixelIndex = (z * image.width + x) * image.channels;
+            float heightValue = 0.0f;
+
+            if (image.channels >= 1) {
+                heightValue = static_cast<float>(image.pixels[pixelIndex]) / 255.0f;
+            }
+
+            // Scale to world height
+            float worldHeight = heightValue * heightScale;
+
+            // Convert to world position (centered)
+            float worldX = static_cast<float>(x) - terrainWidth * 0.5f;
+            float worldZ = static_cast<float>(z) - terrainDepth * 0.5f;
+
+            // Fill terrain column with voxels up to the height
+            for (float y = -heightScale * 0.5f; y <= worldHeight; y += 1.0f) {
+                glm::vec3 pos(worldX, y, worldZ);
+
+                Nova::Voxel voxel;
+                voxel.density = -1.0f;  // Solid
+                voxel.material = (y < worldHeight - 1.0f) ? Nova::VoxelMaterial::Dirt : Nova::VoxelMaterial::Grass;
+                voxel.color = (y < worldHeight - 1.0f) ? glm::vec3(0.5f, 0.4f, 0.3f) : glm::vec3(0.3f, 0.6f, 0.2f);
+
+                m_terrain->SetVoxel(pos, voxel);
+            }
+
+            // Set air above the terrain height
+            for (float y = worldHeight + 1.0f; y <= heightScale; y += 1.0f) {
+                glm::vec3 pos(worldX, y, worldZ);
+
+                Nova::Voxel voxel;
+                voxel.density = 1.0f;  // Air
+                voxel.material = Nova::VoxelMaterial::Air;
+
+                m_terrain->SetVoxel(pos, voxel);
+            }
+        }
+    }
+
+    m_terrain->RebuildAllMeshes();
+
+    if (OnTerrainModified) OnTerrainModified();
+    spdlog::info("Heightmap import complete");
 }
 
 void TerrainEditor::ExportHeightmap(const std::string& path, int resolution) const {
-    // TODO: Implement heightmap export
+    if (!m_terrain) return;
+
+    spdlog::info("Exporting heightmap {}x{} to {}", resolution, resolution, path);
+
+    // Determine terrain bounds by sampling
+    float minHeight = std::numeric_limits<float>::max();
+    float maxHeight = std::numeric_limits<float>::lowest();
+    float terrainSize = static_cast<float>(resolution);
+    float halfSize = terrainSize * 0.5f;
+
+    // First pass: find height range
+    for (int z = 0; z < resolution; ++z) {
+        for (int x = 0; x < resolution; ++x) {
+            float worldX = static_cast<float>(x) - halfSize;
+            float worldZ = static_cast<float>(z) - halfSize;
+            float height = m_terrain->GetHeightAt(worldX, worldZ);
+
+            minHeight = std::min(minHeight, height);
+            maxHeight = std::max(maxHeight, height);
+        }
+    }
+
+    // Handle edge case where terrain is flat
+    float heightRange = maxHeight - minHeight;
+    if (heightRange < 0.001f) {
+        heightRange = 1.0f;
+    }
+
+    // Create image data
+    Nova::ImageData image;
+    image.width = resolution;
+    image.height = resolution;
+    image.channels = 1;  // Grayscale
+    image.pixels.resize(resolution * resolution);
+
+    // Second pass: sample heights and normalize to 0-255
+    for (int z = 0; z < resolution; ++z) {
+        for (int x = 0; x < resolution; ++x) {
+            float worldX = static_cast<float>(x) - halfSize;
+            float worldZ = static_cast<float>(z) - halfSize;
+            float height = m_terrain->GetHeightAt(worldX, worldZ);
+
+            // Normalize to 0-1 range
+            float normalizedHeight = (height - minHeight) / heightRange;
+            normalizedHeight = glm::clamp(normalizedHeight, 0.0f, 1.0f);
+
+            // Convert to 8-bit
+            uint8_t pixelValue = static_cast<uint8_t>(normalizedHeight * 255.0f);
+            image.pixels[z * resolution + x] = pixelValue;
+        }
+    }
+
+    // Save as PNG
+    Nova::TextureImporter importer;
+    if (importer.SavePNG(image, path)) {
+        spdlog::info("Heightmap exported successfully to {}", path);
+        spdlog::info("Height range: {} to {}", minHeight, maxHeight);
+    } else {
+        spdlog::error("Failed to save heightmap to {}", path);
+    }
 }
 
 // =========================================================================

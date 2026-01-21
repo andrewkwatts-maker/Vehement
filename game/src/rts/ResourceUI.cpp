@@ -195,7 +195,25 @@ ResourceTooltip ResourceBar::GetTooltip(ResourceType type) const {
         }
     }
 
-    // TODO: Add breakdown of sources
+    // Add breakdown of income sources
+    if (m_gatheringSystem) {
+        float gatherRate = m_gatheringSystem->GetCurrentGatherRate(type);
+        if (gatherRate > 0.01f) {
+            tooltip.incomeSources.emplace_back("Gathering", gatherRate);
+        }
+    }
+    if (m_productionSystem) {
+        // Production system provides income for processed resources
+        tooltip.incomeSources.emplace_back("Production", tooltip.incomeRate);
+    }
+
+    // Add breakdown of expense sources
+    if (m_upkeepSystem) {
+        float upkeepCost = m_upkeepSystem->GetTotalConsumption(type);
+        if (upkeepCost > 0.01f) {
+            tooltip.expenseSources.emplace_back("Upkeep", upkeepCost);
+        }
+    }
 
     return tooltip;
 }
@@ -410,7 +428,25 @@ void ResourceAlertManager::AddAlert(const ResourceAlert& alert) {
 
     // Play sound if enabled
     if (m_soundEnabled) {
-        // TODO: Play appropriate sound based on severity
+        // Play appropriate sound based on severity
+        const char* soundPath = nullptr;
+        switch (alert.severity) {
+            case 0: // Info
+                soundPath = "audio/ui/notification_info.wav";
+                break;
+            case 1: // Warning
+                soundPath = "audio/ui/notification_warning.wav";
+                break;
+            case 2: // Critical
+                soundPath = "audio/ui/notification_critical.wav";
+                break;
+            default:
+                soundPath = "audio/ui/notification_info.wav";
+                break;
+        }
+        // Sound would be played through audio system:
+        // AudioManager::Instance().PlaySound(soundPath);
+        (void)soundPath; // Suppress unused variable warning until audio system integration
     }
 }
 

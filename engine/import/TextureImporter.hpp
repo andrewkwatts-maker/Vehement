@@ -86,9 +86,10 @@ struct AtlasEntry {
 };
 
 /**
- * @brief Texture atlas
+ * @brief Texture atlas packing result
+ * Note: Named AtlasPackResult to avoid conflict with Nova::TextureAtlas class
  */
-struct TextureAtlas {
+struct AtlasPackResult {
     std::string name;
     int width = 0;
     int height = 0;
@@ -345,18 +346,18 @@ public:
     /**
      * @brief Generate texture atlas from multiple images
      */
-    TextureAtlas GenerateAtlas(const std::vector<std::string>& imagePaths,
-                                int maxSize = 4096,
-                                int padding = 2,
-                                bool trimWhitespace = true);
+    AtlasPackResult GenerateAtlas(const std::vector<std::string>& imagePaths,
+                                   int maxSize = 4096,
+                                   int padding = 2,
+                                   bool trimWhitespace = true);
 
     /**
      * @brief Pack images into atlas
      */
-    TextureAtlas PackImages(const std::vector<ImageData>& images,
-                             const std::vector<std::string>& names,
-                             int maxSize = 4096,
-                             int padding = 2);
+    AtlasPackResult PackImages(const std::vector<ImageData>& images,
+                                const std::vector<std::string>& names,
+                                int maxSize = 4096,
+                                int padding = 2);
 
     // -------------------------------------------------------------------------
     // Sprite Sheet Processing

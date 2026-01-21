@@ -71,6 +71,9 @@ private:
     void CreateNode(PCG::NodeCategory category, const std::string& type);
     void DeleteSelectedNode();
 
+    // View manipulation
+    void FrameAllNodes();
+
     // Connection handling
     void BeginConnection(int nodeId, int pinIndex, bool isOutput);
     void EndConnection(int nodeId, int pinIndex, bool isInput);
@@ -114,10 +117,16 @@ private:
     bool m_showNodePalette = true;
     bool m_showProperties = true;
     bool m_showGrid = true;
+    bool m_showOpenDialog = false;
+    bool m_showSaveDialog = false;
+    char m_filePathBuffer[256] = "";
 
     // Node creation state
     bool m_showCreateNodeMenu = false;
     glm::vec2 m_createNodePos{0.0f};
 
     int m_nextNodeId = 1;
+
+    // File path for current graph
+    std::string m_currentFilePath;
 };

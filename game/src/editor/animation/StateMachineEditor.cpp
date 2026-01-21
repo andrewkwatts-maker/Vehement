@@ -561,8 +561,82 @@ void StateMachineEditor::Undo() {
     EditorAction action = m_undoStack.back();
     m_undoStack.pop_back();
 
-    // Apply reverse action
-    // TODO: Implement proper undo logic based on action type
+    // Apply reverse action based on action type
+    switch (action.type) {
+        case EditorAction::Type::AddState: {
+            // Reverse of add is remove
+            RemoveState(action.targetName);
+            break;
+        }
+        case EditorAction::Type::RemoveState: {
+            // Reverse of remove is add - restore from beforeData
+            if (action.beforeData.contains("position")) {
+                glm::vec2 pos(
+                    action.beforeData["position"].value("x", 100.0f),
+                    action.beforeData["position"].value("y", 100.0f)
+                );
+                AddState(action.targetName, pos);
+            }
+            break;
+        }
+        case EditorAction::Type::MoveState: {
+            // Restore previous position
+            auto* node = GetStateNode(action.targetName);
+            if (node && action.beforeData.contains("position")) {
+                node->position.x = action.beforeData["position"].value("x", node->position.x);
+                node->position.y = action.beforeData["position"].value("y", node->position.y);
+            }
+            break;
+        }
+        case EditorAction::Type::ModifyState: {
+            // Restore previous state data
+            if (m_stateMachine && action.beforeData.contains("state")) {
+                auto* state = m_stateMachine->GetState(action.targetName);
+                if (state) {
+                    state->loop = action.beforeData["state"].value("loop", state->loop);
+                    state->speed = action.beforeData["state"].value("speed", state->speed);
+                }
+            }
+            break;
+        }
+        case EditorAction::Type::AddTransition: {
+            // Reverse of add is remove
+            if (action.beforeData.contains("from") && action.beforeData.contains("to")) {
+                RemoveTransition(
+                    action.beforeData["from"].get<std::string>(),
+                    action.beforeData["to"].get<std::string>()
+                );
+            }
+            break;
+        }
+        case EditorAction::Type::RemoveTransition: {
+            // Reverse of remove is add
+            if (action.beforeData.contains("from") && action.beforeData.contains("to")) {
+                auto* trans = AddTransition(
+                    action.beforeData["from"].get<std::string>(),
+                    action.beforeData["to"].get<std::string>()
+                );
+                if (trans && action.beforeData.contains("condition")) {
+                    trans->condition = action.beforeData["condition"].get<std::string>();
+                }
+            }
+            break;
+        }
+        case EditorAction::Type::ModifyTransition: {
+            // Restore previous condition
+            if (action.beforeData.contains("from") && action.beforeData.contains("to")) {
+                SetTransitionCondition(
+                    action.beforeData["from"].get<std::string>(),
+                    action.beforeData["to"].get<std::string>(),
+                    action.beforeData.value("condition", "")
+                );
+            }
+            break;
+        }
+        default:
+            // Unhandled action types (AddEvent, RemoveEvent, AddParameter, RemoveParameter)
+            break;
+    }
 
     m_redoStack.push_back(action);
     m_dirty = true;
@@ -576,8 +650,82 @@ void StateMachineEditor::Redo() {
     EditorAction action = m_redoStack.back();
     m_redoStack.pop_back();
 
-    // Apply action
-    // TODO: Implement proper redo logic based on action type
+    // Re-apply action based on action type
+    switch (action.type) {
+        case EditorAction::Type::AddState: {
+            // Re-add the state
+            if (action.afterData.contains("position")) {
+                glm::vec2 pos(
+                    action.afterData["position"].value("x", 100.0f),
+                    action.afterData["position"].value("y", 100.0f)
+                );
+                AddState(action.targetName, pos);
+            }
+            break;
+        }
+        case EditorAction::Type::RemoveState: {
+            // Re-remove the state
+            RemoveState(action.targetName);
+            break;
+        }
+        case EditorAction::Type::MoveState: {
+            // Apply new position
+            auto* node = GetStateNode(action.targetName);
+            if (node && action.afterData.contains("position")) {
+                node->position.x = action.afterData["position"].value("x", node->position.x);
+                node->position.y = action.afterData["position"].value("y", node->position.y);
+            }
+            break;
+        }
+        case EditorAction::Type::ModifyState: {
+            // Apply new state data
+            if (m_stateMachine && action.afterData.contains("state")) {
+                auto* state = m_stateMachine->GetState(action.targetName);
+                if (state) {
+                    state->loop = action.afterData["state"].value("loop", state->loop);
+                    state->speed = action.afterData["state"].value("speed", state->speed);
+                }
+            }
+            break;
+        }
+        case EditorAction::Type::AddTransition: {
+            // Re-add the transition
+            if (action.afterData.contains("from") && action.afterData.contains("to")) {
+                auto* trans = AddTransition(
+                    action.afterData["from"].get<std::string>(),
+                    action.afterData["to"].get<std::string>()
+                );
+                if (trans && action.afterData.contains("condition")) {
+                    trans->condition = action.afterData["condition"].get<std::string>();
+                }
+            }
+            break;
+        }
+        case EditorAction::Type::RemoveTransition: {
+            // Re-remove the transition
+            if (action.afterData.contains("from") && action.afterData.contains("to")) {
+                RemoveTransition(
+                    action.afterData["from"].get<std::string>(),
+                    action.afterData["to"].get<std::string>()
+                );
+            }
+            break;
+        }
+        case EditorAction::Type::ModifyTransition: {
+            // Apply new condition
+            if (action.afterData.contains("from") && action.afterData.contains("to")) {
+                SetTransitionCondition(
+                    action.afterData["from"].get<std::string>(),
+                    action.afterData["to"].get<std::string>(),
+                    action.afterData.value("condition", "")
+                );
+            }
+            break;
+        }
+        default:
+            // Unhandled action types (AddEvent, RemoveEvent, AddParameter, RemoveParameter)
+            break;
+    }
 
     m_undoStack.push_back(action);
     m_dirty = true;

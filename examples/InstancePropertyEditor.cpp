@@ -1,6 +1,8 @@
 #include "InstancePropertyEditor.hpp"
 #include <imgui.h>
 #include <spdlog/spdlog.h>
+#include <functional>
+#include <algorithm>
 
 InstancePropertyEditor::InstancePropertyEditor()
     : m_lastChangeTime(std::chrono::steady_clock::now()) {
@@ -120,8 +122,89 @@ void InstancePropertyEditor::RenderHeader(const Nova::InstanceData& instance) {
 
     ImGui::SameLine();
     if (ImGui::Button("View Archetype")) {
-        // TODO: Open archetype file or show archetype details
+        // Open archetype details popup
+        m_showArchetypePopup = true;
+        m_viewedArchetypeId = instance.archetypeId;
         spdlog::info("View archetype: {}", instance.archetypeId);
+    }
+
+    // Render archetype details popup if requested
+    if (m_showArchetypePopup && m_instanceManager) {
+        ImGui::OpenPopup("Archetype Details");
+
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+
+        if (ImGui::BeginPopupModal("Archetype Details", &m_showArchetypePopup)) {
+            ImGui::Text("Archetype: %s", m_viewedArchetypeId.c_str());
+            ImGui::Separator();
+
+            // Load and display archetype JSON
+            nlohmann::json archetypeJson = m_instanceManager->LoadArchetype(m_viewedArchetypeId);
+
+            if (archetypeJson.empty()) {
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Archetype not found!");
+            } else {
+                // Show path to archetype file
+                std::string archetypePath = m_instanceManager->GetArchetypeDirectory() + m_viewedArchetypeId + ".json";
+                std::replace(archetypePath.begin(), archetypePath.end(), '.', '/');
+                ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "File: %s", archetypePath.c_str());
+                ImGui::Separator();
+
+                // Display archetype content in a scrollable region
+                ImGui::BeginChild("ArchetypeContent", ImVec2(0, -30), true);
+
+                // Recursively render JSON as a tree
+                std::function<void(const std::string&, const nlohmann::json&)> renderJson;
+                renderJson = [&renderJson](const std::string& key, const nlohmann::json& value) {
+                    if (value.is_object()) {
+                        if (ImGui::TreeNode(key.c_str())) {
+                            for (auto& [k, v] : value.items()) {
+                                renderJson(k, v);
+                            }
+                            ImGui::TreePop();
+                        }
+                    } else if (value.is_array()) {
+                        if (ImGui::TreeNode(key.c_str(), "%s [%zu items]", key.c_str(), value.size())) {
+                            int idx = 0;
+                            for (const auto& item : value) {
+                                renderJson(std::to_string(idx++), item);
+                            }
+                            ImGui::TreePop();
+                        }
+                    } else {
+                        // Leaf value - display inline
+                        std::string valueStr;
+                        if (value.is_string()) {
+                            valueStr = "\"" + value.get<std::string>() + "\"";
+                        } else if (value.is_number_integer()) {
+                            valueStr = std::to_string(value.get<int64_t>());
+                        } else if (value.is_number_float()) {
+                            valueStr = std::to_string(value.get<double>());
+                        } else if (value.is_boolean()) {
+                            valueStr = value.get<bool>() ? "true" : "false";
+                        } else if (value.is_null()) {
+                            valueStr = "null";
+                        }
+                        ImGui::Text("%s: %s", key.c_str(), valueStr.c_str());
+                    }
+                };
+
+                for (auto& [key, value] : archetypeJson.items()) {
+                    renderJson(key, value);
+                }
+
+                ImGui::EndChild();
+            }
+
+            ImGui::Separator();
+            if (ImGui::Button("Close", ImVec2(120, 0))) {
+                m_showArchetypePopup = false;
+            }
+
+            ImGui::EndPopup();
+        }
     }
 }
 

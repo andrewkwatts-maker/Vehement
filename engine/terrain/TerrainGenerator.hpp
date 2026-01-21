@@ -226,7 +226,7 @@ private:
 
     // Pending mesh creation queue (chunks generated but need mesh on main thread)
     std::queue<TerrainChunk*> m_pendingMeshQueue;
-    std::mutex m_pendingMeshMutex;
+    mutable std::mutex m_pendingMeshMutex;
 
     // Async generation futures
     std::vector<std::future<void>> m_generationFutures;

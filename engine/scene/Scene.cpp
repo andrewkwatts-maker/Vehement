@@ -86,7 +86,8 @@ void Scene::ForEachNode(const std::function<void(SceneNode&)>& func) {
 
 void Scene::ForEachNode(const std::function<void(const SceneNode&)>& func) const {
     if (m_root) {
-        m_root->ForEach(func);
+        const SceneNode& constRoot = *m_root;
+        constRoot.ForEach(func);
     }
 }
 
@@ -96,7 +97,8 @@ size_t Scene::GetNodeCount() const {
     }
 
     size_t count = 0;
-    m_root->ForEach([&count](const SceneNode&) {
+    const SceneNode& constRoot = *m_root;
+    constRoot.ForEach([&count](const SceneNode&) {
         ++count;
     });
     return count;
@@ -124,7 +126,7 @@ void Scene::UpdateParallel(float deltaTime, bool useParallel) {
     } else {
         // Parallel update - nodes must be independent for this to be safe
         // Only update leaf nodes in parallel, then propagate transforms
-        JobSystem::Instance().ParallelFor(0, nodes.size(), [&](size_t i) {
+        JobSystem::Instance().ParallelFor(nodes.size(), [&](size_t i) {
             nodes[i]->Update(deltaTime);
         });
     }

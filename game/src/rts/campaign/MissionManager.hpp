@@ -212,6 +212,9 @@ private:
     void SetupStartingUnits();
     void SetupStartingResources();
     void SetupAIPlayers();
+
+    // Trigger condition evaluation
+    [[nodiscard]] bool EvaluateTriggerCondition(const std::string& condition);
 };
 
 } // namespace Campaign

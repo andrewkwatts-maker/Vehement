@@ -76,6 +76,43 @@ static std::string GetVec3String(const glm::vec3& v) {
     return oss.str();
 }
 
+// Infer GLSL type from variable name patterns
+// Returns the highest-dimensional type from the inputs, defaulting to float
+static std::string InferGLSLType(const std::string& varA, const std::string& varB) {
+    // Check for vec4 patterns
+    if (varA.find("vec4") != std::string::npos || varB.find("vec4") != std::string::npos) {
+        return "vec4";
+    }
+    // Check for vec3 patterns
+    if (varA.find("vec3") != std::string::npos || varB.find("vec3") != std::string::npos) {
+        return "vec3";
+    }
+    // Check for vec2 patterns
+    if (varA.find("vec2") != std::string::npos || varB.find("vec2") != std::string::npos) {
+        return "vec2";
+    }
+    // Check for texture sample outputs (which are vec4)
+    if (varA.find("_tex") != std::string::npos || varB.find("_tex") != std::string::npos ||
+        varA.find("Tex") != std::string::npos || varB.find("Tex") != std::string::npos) {
+        return "vec4";
+    }
+    // Check for common vec3 variable patterns (normals, positions, colors)
+    if (varA.find("Normal") != std::string::npos || varB.find("Normal") != std::string::npos ||
+        varA.find("Pos") != std::string::npos || varB.find("Pos") != std::string::npos ||
+        varA.find("Color") != std::string::npos || varB.find("Color") != std::string::npos ||
+        varA.find("RGB") != std::string::npos || varB.find("RGB") != std::string::npos ||
+        varA.find("rgb") != std::string::npos || varB.find("rgb") != std::string::npos) {
+        return "vec3";
+    }
+    // Check for common vec2 variable patterns (UVs, texture coordinates)
+    if (varA.find("UV") != std::string::npos || varB.find("UV") != std::string::npos ||
+        varA.find("TexCoord") != std::string::npos || varB.find("TexCoord") != std::string::npos) {
+        return "vec2";
+    }
+    // Default to float for scalar operations
+    return "float";
+}
+
 // UV Node
 UVNode::UVNode() : MaterialNode(MaterialNodeType::UV, "UV") {
     AddOutputPin("UV", MaterialNodePin::Type::Vec2);
@@ -144,7 +181,8 @@ std::string AddNode::GenerateGLSL(const std::map<std::string, std::string>& inpu
     std::string aVar = (aIt != inputVarNames.end()) ? aIt->second : "0.0";
     std::string bVar = (bIt != inputVarNames.end()) ? bIt->second : "0.0";
 
-    return "auto " + outputVarName + " = " + aVar + " + " + bVar + ";\n";
+    std::string glslType = InferGLSLType(aVar, bVar);
+    return glslType + " " + outputVarName + " = " + aVar + " + " + bVar + ";\n";
 }
 
 // Multiply Node
@@ -177,7 +215,8 @@ std::string MultiplyNode::GenerateGLSL(const std::map<std::string, std::string>&
     std::string aVar = (aIt != inputVarNames.end()) ? aIt->second : "1.0";
     std::string bVar = (bIt != inputVarNames.end()) ? bIt->second : "1.0";
 
-    return "auto " + outputVarName + " = " + aVar + " * " + bVar + ";\n";
+    std::string glslType = InferGLSLType(aVar, bVar);
+    return glslType + " " + outputVarName + " = " + aVar + " * " + bVar + ";\n";
 }
 
 // Lerp Node
@@ -220,7 +259,9 @@ std::string LerpNode::GenerateGLSL(const std::map<std::string, std::string>& inp
     std::string bVar = (bIt != inputVarNames.end()) ? bIt->second : "1.0";
     std::string tVar = (tIt != inputVarNames.end()) ? tIt->second : "0.5";
 
-    return "auto " + outputVarName + " = mix(" + aVar + ", " + bVar + ", " + tVar + ");\n";
+    // Infer type from A and B inputs (T is always a float interpolation factor)
+    std::string glslType = InferGLSLType(aVar, bVar);
+    return glslType + " " + outputVarName + " = mix(" + aVar + ", " + bVar + ", " + tVar + ");\n";
 }
 
 // Fresnel Node

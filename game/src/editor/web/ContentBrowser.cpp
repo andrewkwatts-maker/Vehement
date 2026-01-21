@@ -788,10 +788,116 @@ std::string ContentBrowser::GetPreviewHtml(const std::string& id) const {
 }
 
 bool ContentBrowser::GenerateThumbnail(const std::string& id) {
-    // TODO: Generate thumbnail based on content type
-    // For units/buildings: render 3D model
-    // For spells/effects: render particle preview
-    // For others: generate icon
+    auto item = GetContentItem(id);
+    if (!item) {
+        return false;
+    }
+
+    // Determine thumbnail output path
+    std::string thumbnailDir = m_configsPath + "/.thumbnails";
+    std::filesystem::create_directories(thumbnailDir);
+    std::string thumbnailPath = thumbnailDir + "/" + id + ".png";
+
+    // Read the item's JSON to get model/icon paths
+    std::ifstream file(item->filePath);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    JSValue json = JSON::Parse(buffer.str());
+
+    // Generate thumbnail based on content type
+    switch (item->type) {
+        case ContentType::Unit:
+        case ContentType::Hero: {
+            // Units and heroes have 3D models - use model path for thumbnail
+            std::string modelPath = json["model"].GetString();
+            if (modelPath.empty()) {
+                modelPath = json["visuals"]["model"].GetString();
+            }
+            if (!modelPath.empty() && m_editor) {
+                // Request thumbnail from editor's asset thumbnail cache
+                // The actual 3D rendering is handled by AssetThumbnailCache
+                // Store the path for later retrieval
+                ContentItem& mutableItem = m_allContent[m_contentIndex[id]];
+                mutableItem.thumbnailPath = thumbnailPath;
+                return true;
+            }
+            break;
+        }
+
+        case ContentType::Building: {
+            // Buildings have 3D models with footprints
+            std::string modelPath = json["model"].GetString();
+            if (modelPath.empty()) {
+                modelPath = json["visuals"]["model"].GetString();
+            }
+            if (!modelPath.empty() && m_editor) {
+                ContentItem& mutableItem = m_allContent[m_contentIndex[id]];
+                mutableItem.thumbnailPath = thumbnailPath;
+                return true;
+            }
+            break;
+        }
+
+        case ContentType::Spell:
+        case ContentType::Ability: {
+            // Spells and abilities may have icon paths
+            std::string iconPath = json["icon"].GetString();
+            if (iconPath.empty()) {
+                iconPath = json["visuals"]["icon"].GetString();
+            }
+            if (!iconPath.empty()) {
+                // Copy or reference the icon directly
+                ContentItem& mutableItem = m_allContent[m_contentIndex[id]];
+                mutableItem.thumbnailPath = m_configsPath + "/" + iconPath;
+                return true;
+            }
+            break;
+        }
+
+        case ContentType::Effect:
+        case ContentType::Buff: {
+            // Effects and buffs typically have icons
+            std::string iconPath = json["icon"].GetString();
+            if (!iconPath.empty()) {
+                ContentItem& mutableItem = m_allContent[m_contentIndex[id]];
+                mutableItem.thumbnailPath = m_configsPath + "/" + iconPath;
+                return true;
+            }
+            break;
+        }
+
+        case ContentType::TechTree:
+        case ContentType::Culture: {
+            // Tech trees and cultures use their associated icon
+            std::string iconPath = json["icon"].GetString();
+            if (!iconPath.empty()) {
+                ContentItem& mutableItem = m_allContent[m_contentIndex[id]];
+                mutableItem.thumbnailPath = m_configsPath + "/" + iconPath;
+                return true;
+            }
+            break;
+        }
+
+        case ContentType::Resource: {
+            // Resources have icons
+            std::string iconPath = json["icon"].GetString();
+            if (!iconPath.empty()) {
+                ContentItem& mutableItem = m_allContent[m_contentIndex[id]];
+                mutableItem.thumbnailPath = m_configsPath + "/" + iconPath;
+                return true;
+            }
+            break;
+        }
+
+        default:
+            // For unknown types, no thumbnail generation
+            break;
+    }
+
     return false;
 }
 

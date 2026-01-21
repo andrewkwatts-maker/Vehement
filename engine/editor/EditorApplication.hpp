@@ -21,6 +21,7 @@
 #include "../ui/EditorTheme.hpp"
 #include "CommandHistory.hpp"
 #include "EditorCommand.hpp"
+#include "AssetCreationDialog.hpp"
 #include <glm/glm.hpp>
 #include <string>
 #include <string_view>
@@ -588,6 +589,55 @@ public:
     void SetOnSelectionChanged(std::function<void(const SelectionChangedEvent&)> callback);
 
     // =========================================================================
+    // Clipboard Operations
+    // =========================================================================
+
+    /**
+     * @brief Cut selected entities to clipboard
+     *
+     * Serializes selected entities to JSON, stores in clipboard with isCut=true,
+     * and deletes the original entities.
+     */
+    void CutSelection();
+
+    /**
+     * @brief Copy selected entities to clipboard
+     *
+     * Serializes selected entities to JSON and stores in clipboard with isCut=false.
+     */
+    void CopySelection();
+
+    /**
+     * @brief Paste entities from clipboard
+     *
+     * Creates new entities from clipboard JSON data, offsets their positions
+     * to avoid overlap, and selects the new entities.
+     */
+    void PasteSelection();
+
+    /**
+     * @brief Check if clipboard has content to paste
+     */
+    [[nodiscard]] bool HasClipboardContent() const;
+
+    // =========================================================================
+    // Object Creation
+    // =========================================================================
+
+    /**
+     * @brief Create an empty game object in the scene
+     * @param parent Optional parent node (nullptr for root)
+     * @return Pointer to created node
+     */
+    SceneNode* CreateEmptyObject(SceneNode* parent = nullptr);
+
+    /**
+     * @brief Group selected objects under a new parent
+     * @return Pointer to group node, or nullptr if failed
+     */
+    SceneNode* GroupSelection();
+
+    // =========================================================================
     // Command System (Undo/Redo)
     // =========================================================================
 
@@ -895,6 +945,28 @@ public:
                             const std::string& defaultName,
                             std::function<void(const std::filesystem::path&)> callback);
 
+    /**
+     * @brief Show a text input dialog
+     * @param title Dialog title
+     * @param prompt Prompt text shown above the input field
+     * @param callback Called with user input (empty if cancelled)
+     * @param defaultValue Optional default value for the input
+     */
+    void ShowInputDialog(const std::string& title, const std::string& prompt,
+                        std::function<void(const std::string&)> callback,
+                        const std::string& defaultValue = "");
+
+    /**
+     * @brief Show the new asset creation dialog
+     * @param preselectedType Optional type to preselect (defaults to SDFModel)
+     */
+    void ShowNewAssetDialog(CreatableAssetType preselectedType = CreatableAssetType::SDFModel);
+
+    /**
+     * @brief Get the asset creation dialog
+     */
+    [[nodiscard]] AssetCreationDialog& GetAssetCreationDialog() { return m_assetCreationDialog; }
+
     // =========================================================================
     // Keyboard Shortcuts
     // =========================================================================
@@ -976,6 +1048,7 @@ private:
     void RenderGameObjectMenu();
     void RenderComponentMenu();
     void RenderWindowMenu();
+    void RenderAIMenu();
     void RenderHelpMenu();
 
     void RenderToolbar();
@@ -1020,6 +1093,28 @@ private:
     void NotifySelectionChanged(const std::vector<SceneNode*>& previous);
 
     // =========================================================================
+    // Play Mode Serialization
+    // =========================================================================
+
+    /**
+     * @brief Serialize the entire scene state to JSON for play mode save/restore
+     * @return JSON string containing full scene state, or empty string on failure
+     */
+    std::string SerializeFullScene();
+
+    /**
+     * @brief Deserialize and restore the scene state from JSON
+     * @param jsonState The JSON string containing the saved scene state
+     * @return true if restoration succeeded
+     */
+    bool DeserializeFullScene(const std::string& jsonState);
+
+    /**
+     * @brief Clear entities created during play mode
+     */
+    void ClearPlayModeEntities();
+
+    // =========================================================================
     // Member Variables
     // =========================================================================
 
@@ -1046,13 +1141,18 @@ private:
 
     // Scene
     std::unique_ptr<Scene> m_activeScene;
+    std::unique_ptr<Scene> m_savedSceneState;  // Saved state for play mode restore
     std::filesystem::path m_scenePath;
     bool m_sceneDirty = false;
     std::vector<std::filesystem::path> m_openScenes;
     size_t m_activeSceneIndex = 0;
 
-    // Scene state for play mode
-    std::unique_ptr<Scene> m_savedSceneState;
+    // Scene state for play mode (JSON serialization)
+    std::string m_prePlaySceneState;
+    glm::vec3 m_prePlayCameraPosition{0.0f};
+    float m_prePlayCameraPitch = 0.0f;
+    float m_prePlayCameraYaw = -90.0f;
+    float m_prePlayCameraFOV = 45.0f;
 
     // Selection
     std::vector<SceneNode*> m_selection;
@@ -1073,6 +1173,7 @@ private:
     // Settings
     EditorSettings m_settings;
     bool m_showPreferencesWindow = false;
+    bool m_showAISetupWizard = false;
 
     // Layouts
     std::unordered_map<std::string, LayoutPreset> m_layouts;
@@ -1091,12 +1192,17 @@ private:
         std::string message;
         std::function<void()> onConfirm;
         std::function<void()> onCancel;
-        enum class Type { Message, Confirm, OpenFile, SaveFile } type = Type::Message;
+        enum class Type { Message, Confirm, OpenFile, SaveFile, Input } type = Type::Message;
         std::string filters;
         std::string defaultName;
         std::function<void(const std::filesystem::path&)> fileCallback;
+        std::function<void(const std::string&)> inputCallback;
+        char inputBuffer[512] = {};  // Buffer for input dialog
     };
     DialogState m_dialogState;
+
+    // Asset Creation Dialog
+    AssetCreationDialog m_assetCreationDialog;
 
     // Shortcuts
     struct ShortcutBinding {
@@ -1105,6 +1211,19 @@ private:
         std::function<void()> handler;
     };
     std::unordered_map<std::string, ShortcutBinding> m_shortcuts;
+
+    // Clipboard for scene nodes
+    struct ClipboardEntry {
+        std::string name;
+        glm::vec3 position{0.0f};
+        glm::quat rotation{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec3 scale{1.0f};
+        std::string assetPath;
+        // Store serialized node data for full restoration
+        // FUTURE: Add component data serialization
+    };
+    std::vector<ClipboardEntry> m_clipboard;
+    bool m_clipboardIsCut = false;
 
     // Toolbar search
     char m_searchBuffer[256] = "";

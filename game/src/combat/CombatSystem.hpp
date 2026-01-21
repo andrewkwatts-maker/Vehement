@@ -379,6 +379,9 @@ private:
     // Track processed grenades to avoid double-processing
     std::unordered_set<Grenade*> m_processedExplosions;
 
+    // Track if the last kill was a headshot (for coin calculation)
+    bool m_lastKillWasHeadshot = false;
+
     bool m_initialized = false;
 };
 

@@ -17,15 +17,19 @@ This guide will help you get up and running with the Nova3D engine quickly. We'l
 
 ### Required Software
 
-- **C++20 Compiler**: MSVC 2022, GCC 11+, or Clang 14+
+- **C++23 Compiler**: MSVC 2022+, GCC 13+, or Clang 16+
 - **CMake**: Version 3.20 or higher
 - **Git**: For dependency management
-- **Python 3.9+**: For scripting support (optional)
+- **Python 3.10+**: For scripting support (optional)
 
 ### Recommended
 
-- **Vulkan SDK**: For RTX/raytracing features
-- **CUDA Toolkit 11+**: For GPU acceleration features
+- **Vulkan SDK**: For RTX/raytracing features (optional)
+- **CUDA Toolkit 11+**: For GPU acceleration features (optional)
+
+### Known Build Issue
+
+> **Warning:** There is currently a known build blocker on MSVC involving nlohmann/json and C++20 ranges support. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#nlohmannjson-c20-ranges-conflict-msvc) for details and workarounds.
 
 ### Dependencies (Auto-fetched by CMake)
 
@@ -374,18 +378,20 @@ glm::vec3 rayDir = camera.ScreenToWorldRay(mousePos, screenSize);
 
 ### Explore More Documentation
 
+- **[EXAMPLES.md](EXAMPLES.md)** - Practical examples: building demos, SDF models, visual scripting
 - **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
 - **[SDF_RENDERING_GUIDE.md](SDF_RENDERING_GUIDE.md)** - Deep dive into SDF rendering
 - **[ANIMATION_GUIDE.md](ANIMATION_GUIDE.md)** - Animation system tutorial
 - **[EDITOR_GUIDE.md](EDITOR_GUIDE.md)** - Using the Vehement editor
+- **[SCRIPTING_GUIDE.md](SCRIPTING_GUIDE.md)** - Python scripting reference
 
 ### Example Projects
 
 Check the `examples/` directory for:
-- `BasicSDF/` - Simple SDF rendering
-- `TerrainDemo/` - Procedural terrain with GI
-- `CharacterEditor/` - SDF character creation
-- `RealTimeGI/` - Advanced lighting demo
+- `main.cpp` / `DemoApplication.cpp` - Basic engine demo with rendering
+- `RTSApplication.cpp` - Full RTS game implementation
+- `StandaloneEditor.cpp` - Level editor with terrain tools
+- `RTGIExample.cpp` - Real-time global illumination demo
 
 ### Getting Help
 

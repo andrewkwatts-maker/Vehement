@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <functional>
 
 JSONEditor::JSONEditor() {
     // Allocate text buffer
@@ -60,11 +61,11 @@ void JSONEditor::Render(bool* isOpen) {
                     FormatJSON();
                 }
                 ImGui::Separator();
-                if (ImGui::MenuItem("Undo", "Ctrl+Z", false, false)) {
-                    // TODO: Undo functionality
+                if (ImGui::MenuItem("Undo", "Ctrl+Z", false, !m_undoStack.empty())) {
+                    Undo();
                 }
-                if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false)) {
-                    // TODO: Redo functionality
+                if (ImGui::MenuItem("Redo", "Ctrl+Y", false, !m_redoStack.empty())) {
+                    Redo();
                 }
                 ImGui::EndMenu();
             }
@@ -169,8 +170,12 @@ void JSONEditor::RenderTextEditor() {
         // Check if content changed
         std::string newContent(m_textBuffer);
         if (newContent != m_content) {
+            // Push current state to undo stack before modifying
+            PushUndoState();
             m_content = newContent;
             m_isDirty = true;
+            // Clear redo stack when new changes are made
+            m_redoStack.clear();
 
             if (m_autoValidate) {
                 ValidateJSON();
@@ -179,24 +184,83 @@ void JSONEditor::RenderTextEditor() {
     }
 }
 
+void JSONEditor::RenderJSONNode(JSONNode& node, int depth) {
+    ImGui::PushID(&node);
+
+    // Color coding for different types
+    ImVec4 typeColor;
+    if (node.type == "object") {
+        typeColor = ImVec4(0.6f, 0.8f, 1.0f, 1.0f); // Light blue
+    } else if (node.type == "array") {
+        typeColor = ImVec4(0.8f, 0.6f, 1.0f, 1.0f); // Light purple
+    } else if (node.type == "string") {
+        typeColor = ImVec4(0.6f, 1.0f, 0.6f, 1.0f); // Light green
+    } else if (node.type == "number") {
+        typeColor = ImVec4(1.0f, 0.8f, 0.4f, 1.0f); // Orange
+    } else if (node.type == "boolean") {
+        typeColor = ImVec4(1.0f, 0.6f, 0.6f, 1.0f); // Light red
+    } else {
+        typeColor = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); // Gray for null
+    }
+
+    bool hasChildren = !node.children.empty();
+
+    if (hasChildren) {
+        // Render as tree node for objects and arrays
+        std::string label = node.key.empty() ? node.type : node.key;
+        if (node.type == "object") {
+            label += " {...}";
+        } else if (node.type == "array") {
+            label += " [" + std::to_string(node.children.size()) + "]";
+        }
+
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+        if (node.expanded) {
+            flags |= ImGuiTreeNodeFlags_DefaultOpen;
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_Text, typeColor);
+        bool isOpen = ImGui::TreeNodeEx(label.c_str(), flags);
+        ImGui::PopStyleColor();
+
+        node.expanded = isOpen;
+
+        if (isOpen) {
+            for (auto& child : node.children) {
+                RenderJSONNode(child, depth + 1);
+            }
+            ImGui::TreePop();
+        }
+    } else {
+        // Render as leaf node for primitives
+        ImGui::Indent();
+        ImGui::PushStyleColor(ImGuiCol_Text, typeColor);
+
+        std::string displayText;
+        if (!node.key.empty()) {
+            displayText = node.key + ": ";
+        }
+
+        if (node.type == "string") {
+            displayText += "\"" + node.value + "\"";
+        } else {
+            displayText += node.value;
+        }
+
+        ImGui::Text("%s", displayText.c_str());
+        ImGui::PopStyleColor();
+        ImGui::Unindent();
+    }
+
+    ImGui::PopID();
+}
+
 void JSONEditor::RenderTreeView() {
     if (ImGui::BeginChild("TreeView", ImVec2(0, 0), true)) {
-        ImGui::TextDisabled("Tree view not fully implemented");
-        ImGui::Text("Root Object");
-
-        // TODO: Implement full tree rendering
-        // This would recursively render the JSON structure as a tree
-
-        if (ImGui::TreeNode("Example Object")) {
-            ImGui::Text("key1: \"value1\"");
-            ImGui::Text("key2: 123");
-
-            if (ImGui::TreeNode("nested")) {
-                ImGui::Text("nestedKey: true");
-                ImGui::TreePop();
-            }
-
-            ImGui::TreePop();
+        if (m_rootNode.children.empty() && m_rootNode.value.empty()) {
+            ImGui::TextDisabled("No JSON structure parsed. Click 'Validate' or switch views to parse.");
+        } else {
+            RenderJSONNode(m_rootNode, 0);
         }
     }
     ImGui::EndChild();
@@ -414,14 +478,160 @@ void JSONEditor::FormatJSON() {
 }
 
 void JSONEditor::ParseJSONToTree() {
-    // TODO: Implement JSON parsing to tree structure
-    // This would parse the JSON and build the JSONNode tree for tree view
+    spdlog::debug("JSONEditor: Parsing JSON to tree");
 
-    spdlog::debug("JSONEditor: Parsing JSON to tree (not fully implemented)");
-
+    // Clear existing tree
+    m_rootNode = JSONNode();
     m_rootNode.key = "root";
-    m_rootNode.type = "object";
     m_rootNode.expanded = true;
+
+    if (m_content.empty()) {
+        return;
+    }
+
+    // Simple recursive descent JSON parser
+    size_t pos = 0;
+    const std::string& content = m_content;
+
+    // Helper lambdas for parsing
+    std::function<void()> skipWhitespace = [&]() {
+        while (pos < content.size() && std::isspace(content[pos])) {
+            ++pos;
+        }
+    };
+
+    std::function<char()> peek = [&]() -> char {
+        return pos < content.size() ? content[pos] : '\0';
+    };
+
+    std::function<char()> consume = [&]() -> char {
+        return pos < content.size() ? content[pos++] : '\0';
+    };
+
+    std::function<std::string()> parseString = [&]() -> std::string {
+        std::string result;
+        if (consume() != '"') return result; // Consume opening quote
+
+        while (pos < content.size()) {
+            char c = consume();
+            if (c == '"') break;
+            if (c == '\\' && pos < content.size()) {
+                char escaped = consume();
+                switch (escaped) {
+                    case 'n': result += '\n'; break;
+                    case 't': result += '\t'; break;
+                    case 'r': result += '\r'; break;
+                    case '"': result += '"'; break;
+                    case '\\': result += '\\'; break;
+                    default: result += escaped; break;
+                }
+            } else {
+                result += c;
+            }
+        }
+        return result;
+    };
+
+    std::function<std::string()> parseNumber = [&]() -> std::string {
+        std::string result;
+        while (pos < content.size()) {
+            char c = peek();
+            if (std::isdigit(c) || c == '.' || c == '-' || c == '+' || c == 'e' || c == 'E') {
+                result += consume();
+            } else {
+                break;
+            }
+        }
+        return result;
+    };
+
+    std::function<JSONNode(const std::string&)> parseValue = [&](const std::string& key) -> JSONNode {
+        JSONNode node;
+        node.key = key;
+        node.expanded = true;
+
+        skipWhitespace();
+        char c = peek();
+
+        if (c == '{') {
+            // Object
+            node.type = "object";
+            consume(); // Consume '{'
+            skipWhitespace();
+
+            while (peek() != '}' && pos < content.size()) {
+                skipWhitespace();
+                if (peek() == '"') {
+                    std::string childKey = parseString();
+                    skipWhitespace();
+                    if (peek() == ':') consume(); // Consume ':'
+                    skipWhitespace();
+                    node.children.push_back(parseValue(childKey));
+                    skipWhitespace();
+                    if (peek() == ',') consume(); // Consume ','
+                } else {
+                    break;
+                }
+            }
+            if (peek() == '}') consume(); // Consume '}'
+        }
+        else if (c == '[') {
+            // Array
+            node.type = "array";
+            consume(); // Consume '['
+            skipWhitespace();
+
+            int index = 0;
+            while (peek() != ']' && pos < content.size()) {
+                skipWhitespace();
+                node.children.push_back(parseValue("[" + std::to_string(index++) + "]"));
+                skipWhitespace();
+                if (peek() == ',') consume(); // Consume ','
+            }
+            if (peek() == ']') consume(); // Consume ']'
+        }
+        else if (c == '"') {
+            // String
+            node.type = "string";
+            node.value = parseString();
+        }
+        else if (c == 't' || c == 'f') {
+            // Boolean
+            node.type = "boolean";
+            if (content.substr(pos, 4) == "true") {
+                node.value = "true";
+                pos += 4;
+            } else if (content.substr(pos, 5) == "false") {
+                node.value = "false";
+                pos += 5;
+            }
+        }
+        else if (c == 'n') {
+            // Null
+            node.type = "null";
+            node.value = "null";
+            if (content.substr(pos, 4) == "null") {
+                pos += 4;
+            }
+        }
+        else if (std::isdigit(c) || c == '-') {
+            // Number
+            node.type = "number";
+            node.value = parseNumber();
+        }
+
+        return node;
+    };
+
+    try {
+        skipWhitespace();
+        m_rootNode = parseValue("");
+        m_rootNode.key = "root";
+        m_rootNode.expanded = true;
+        spdlog::debug("JSONEditor: JSON tree parsed successfully");
+    } catch (const std::exception& e) {
+        spdlog::warn("JSONEditor: Failed to parse JSON to tree: {}", e.what());
+    }
 }
 
 void JSONEditor::Save() {
@@ -456,6 +666,68 @@ void JSONEditor::Save() {
 
     } catch (const std::exception& e) {
         spdlog::error("JSONEditor: Failed to save file: {}", e.what());
+    }
+}
+
+void JSONEditor::PushUndoState() {
+    // Add current content to undo stack
+    m_undoStack.push_back(m_content);
+
+    // Limit undo stack size
+    if (m_undoStack.size() > MAX_UNDO_LEVELS) {
+        m_undoStack.erase(m_undoStack.begin());
+    }
+}
+
+void JSONEditor::Undo() {
+    if (m_undoStack.empty()) {
+        return;
+    }
+
+    spdlog::debug("JSONEditor: Undo");
+
+    // Push current state to redo stack
+    m_redoStack.push_back(m_content);
+
+    // Restore previous state
+    m_content = m_undoStack.back();
+    m_undoStack.pop_back();
+
+    // Update text buffer
+    size_t copySize = std::min(m_content.size(), BUFFER_SIZE - 1);
+    memcpy(m_textBuffer, m_content.c_str(), copySize);
+    m_textBuffer[copySize] = '\0';
+
+    m_isDirty = (m_content != m_originalContent);
+
+    if (m_autoValidate) {
+        ValidateJSON();
+    }
+}
+
+void JSONEditor::Redo() {
+    if (m_redoStack.empty()) {
+        return;
+    }
+
+    spdlog::debug("JSONEditor: Redo");
+
+    // Push current state to undo stack
+    m_undoStack.push_back(m_content);
+
+    // Restore next state
+    m_content = m_redoStack.back();
+    m_redoStack.pop_back();
+
+    // Update text buffer
+    size_t copySize = std::min(m_content.size(), BUFFER_SIZE - 1);
+    memcpy(m_textBuffer, m_content.c_str(), copySize);
+    m_textBuffer[copySize] = '\0';
+
+    m_isDirty = (m_content != m_originalContent);
+
+    if (m_autoValidate) {
+        ValidateJSON();
     }
 }
 

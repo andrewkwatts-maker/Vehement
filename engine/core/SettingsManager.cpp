@@ -590,11 +590,12 @@ void SettingsManager::Initialize() {
     spdlog::info("SettingsManager initialized with High preset");
 }
 
-std::optional<void> SettingsManager::Load(const std::string& filepath) {
+bool SettingsManager::Load(const std::string& filepath) {
     try {
         std::ifstream file(filepath);
         if (!file.is_open()) {
-            return std::nullopt;
+            spdlog::error("Failed to open settings file: {}", filepath);
+            return false;
         }
 
         nlohmann::json json;
@@ -605,28 +606,31 @@ std::optional<void> SettingsManager::Load(const std::string& filepath) {
         spdlog::info("Settings loaded from: {}", filepath);
 
         NotifyChanges();
-        return {};
+        return true;
     } catch (const std::exception& e) {
-        return std::unexpected("Failed to load settings: " + std::string(e.what()));
+        spdlog::error("Failed to load settings: {}", e.what());
+        return false;
     }
 }
 
-std::optional<void> SettingsManager::Save(const std::string& filepath) {
+bool SettingsManager::Save(const std::string& filepath) {
     try {
         nlohmann::json json = m_settings.ToJson();
 
         std::ofstream file(filepath);
         if (!file.is_open()) {
-            return std::nullopt;
+            spdlog::error("Failed to open file for writing: {}", filepath);
+            return false;
         }
 
         file << json.dump(2);
         file.close();
 
         spdlog::info("Settings saved to: {}", filepath);
-        return {};
+        return true;
     } catch (const std::exception& e) {
-        return std::unexpected("Failed to save settings: " + std::string(e.what()));
+        spdlog::error("Failed to save settings: {}", e.what());
+        return false;
     }
 }
 

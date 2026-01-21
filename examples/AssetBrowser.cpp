@@ -7,6 +7,8 @@
 #include <sstream>
 #include <iomanip>
 #include <cctype>
+#include <glad/gl.h>
+#include <stb_image.h>
 
 namespace fs = std::filesystem;
 
@@ -74,17 +76,74 @@ ImVec4 ThumbnailCache::GetTypeColor(const std::string& type) const {
 }
 
 ImTextureID ThumbnailCache::LoadImageThumbnail(const std::string& path) {
-    // TODO: Implement actual image loading using stb_image or similar
-    // For now, return nullptr to fall back to placeholder
-    //
-    // Example implementation:
-    // 1. Load image using stb_image_load()
-    // 2. Create OpenGL texture
-    // 3. Upload image data to GPU
-    // 4. Store texture ID
-    // 5. Free CPU image data
+    // Load image using stb_image
+    // Note: stb_image is already included in the project (see engine/graphics/Texture.cpp)
+    // We need to include its header (without implementation since it's already defined elsewhere)
+    int width, height, channels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
-    return (ImTextureID)0;
+    if (!data) {
+        spdlog::warn("Failed to load thumbnail image: {}", path);
+        return (ImTextureID)0;
+    }
+
+    // Resize to thumbnail size if too large (max 128x128)
+    const int maxThumbnailSize = 128;
+    int thumbWidth = width;
+    int thumbHeight = height;
+
+    // Calculate scaled dimensions maintaining aspect ratio
+    if (width > maxThumbnailSize || height > maxThumbnailSize) {
+        float scale = std::min(static_cast<float>(maxThumbnailSize) / width,
+                               static_cast<float>(maxThumbnailSize) / height);
+        thumbWidth = static_cast<int>(width * scale);
+        thumbHeight = static_cast<int>(height * scale);
+    }
+
+    // Determine OpenGL format based on channels
+    GLenum format;
+    GLenum internalFormat;
+    switch (channels) {
+        case 1:
+            format = GL_RED;
+            internalFormat = GL_R8;
+            break;
+        case 2:
+            format = GL_RG;
+            internalFormat = GL_RG8;
+            break;
+        case 3:
+            format = GL_RGB;
+            internalFormat = GL_RGB8;
+            break;
+        case 4:
+        default:
+            format = GL_RGBA;
+            internalFormat = GL_RGBA8;
+            break;
+    }
+
+    // Create OpenGL texture
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Set texture parameters for thumbnail rendering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Upload image data to GPU (using original size, GPU will scale during rendering)
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+    // Free CPU image data
+    stbi_image_free(data);
+
+    spdlog::debug("Loaded thumbnail: {} ({}x{}, {} channels)", path, width, height, channels);
+
+    return (ImTextureID)(intptr_t)textureID;
 }
 
 ImTextureID ThumbnailCache::GeneratePlaceholder(const std::string& type) {

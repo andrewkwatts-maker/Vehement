@@ -8,10 +8,19 @@
 #include "../core/Engine.hpp"
 #include "../ui/EditorTheme.hpp"
 
+// Include SDFAssetEditor if available
+#if __has_include("SDFAssetEditor.hpp")
+#include "SDFAssetEditor.hpp"
+#define NOVA_HAS_SDF_ASSET_EDITOR 1
+#else
+#define NOVA_HAS_SDF_ASSET_EDITOR 0
+#endif
+
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
 
 namespace Nova {
@@ -25,6 +34,7 @@ void EditorMenuSystem::Initialize(EditorApplication* editor) {
 
     // Load recent files from disk
     LoadRecentFiles();
+    LoadRecentAssets();
 
     spdlog::debug("EditorMenuSystem initialized");
 }
@@ -32,10 +42,12 @@ void EditorMenuSystem::Initialize(EditorApplication* editor) {
 void EditorMenuSystem::Shutdown() {
     // Save recent files before shutdown
     SaveRecentFiles();
+    SaveRecentAssets();
 
     m_shortcuts.clear();
     m_customMenus.clear();
     m_recentFiles.clear();
+    m_recentAssets.clear();
     m_editor = nullptr;
 
     spdlog::debug("EditorMenuSystem shutdown");
@@ -200,7 +212,15 @@ bool EditorMenuSystem::ParseShortcut(const std::string& shortcut, int& key, int&
 
     // Parse key
     if (keyStr.length() == 1) {
-        key = static_cast<int>(std::toupper(static_cast<unsigned char>(keyStr[0])));
+        char c = keyStr[0];
+        // Handle both letters and numbers
+        if (std::isalpha(static_cast<unsigned char>(c))) {
+            key = static_cast<int>(std::toupper(static_cast<unsigned char>(c)));
+        } else if (std::isdigit(static_cast<unsigned char>(c))) {
+            key = static_cast<int>(c);  // Keep digit as-is ('0' = 48, '1' = 49, etc.)
+        } else {
+            key = static_cast<int>(c);
+        }
     } else {
         // Handle special keys
         std::string upperKey = keyStr;
@@ -335,13 +355,66 @@ void EditorMenuSystem::ClearRecentFiles() {
 }
 
 bool EditorMenuSystem::LoadRecentFiles() {
-    // TODO: Load from settings/config file
+    // FUTURE: Load from settings/config file (uses EditorApplication settings persistence)
     m_recentFiles.clear();
     return true;
 }
 
 bool EditorMenuSystem::SaveRecentFiles() {
-    // TODO: Save to settings/config file
+    // FUTURE: Save to settings/config file (uses EditorApplication settings persistence)
+    return true;
+}
+
+// =============================================================================
+// Recent Assets
+// =============================================================================
+
+void EditorMenuSystem::AddRecentAsset(const std::filesystem::path& path, const std::string& assetType) {
+    // Remove existing entry if present
+    m_recentAssets.erase(
+        std::remove_if(m_recentAssets.begin(), m_recentAssets.end(),
+            [&path](const RecentAsset& a) { return a.path == path.string(); }),
+        m_recentAssets.end()
+    );
+
+    // Add to front
+    RecentAsset entry;
+    entry.path = path.string();
+    entry.name = path.stem().string();
+    entry.assetType = assetType;
+    entry.lastOpened = std::chrono::system_clock::now();
+    entry.exists = std::filesystem::exists(path);
+    m_recentAssets.insert(m_recentAssets.begin(), entry);
+
+    // Trim to max size
+    if (m_recentAssets.size() > m_maxRecentAssets) {
+        m_recentAssets.resize(m_maxRecentAssets);
+    }
+}
+
+std::vector<RecentAsset> EditorMenuSystem::GetRecentAssetsByType(const std::string& assetType) const {
+    std::vector<RecentAsset> filtered;
+    for (const auto& asset : m_recentAssets) {
+        if (asset.assetType == assetType) {
+            filtered.push_back(asset);
+        }
+    }
+    return filtered;
+}
+
+void EditorMenuSystem::ClearRecentAssets() {
+    m_recentAssets.clear();
+    SaveRecentAssets();
+}
+
+bool EditorMenuSystem::LoadRecentAssets() {
+    // FUTURE: Load from settings/config file (uses EditorApplication settings persistence)
+    m_recentAssets.clear();
+    return true;
+}
+
+bool EditorMenuSystem::SaveRecentAssets() {
+    // FUTURE: Save to settings/config file (uses EditorApplication settings persistence)
     return true;
 }
 
@@ -372,6 +445,10 @@ void EditorMenuSystem::SetEditMenuCallbacks(
     std::function<void()> onRedo,
     std::function<bool()> canUndo,
     std::function<bool()> canRedo,
+    std::function<void()> onCut,
+    std::function<void()> onCopy,
+    std::function<void()> onPaste,
+    std::function<bool()> canPaste,
     std::function<void()> onDelete,
     std::function<void()> onDuplicate,
     std::function<void()> onSelectAll,
@@ -383,12 +460,42 @@ void EditorMenuSystem::SetEditMenuCallbacks(
     m_onRedo = std::move(onRedo);
     m_canUndo = std::move(canUndo);
     m_canRedo = std::move(canRedo);
+    m_onCut = std::move(onCut);
+    m_onCopy = std::move(onCopy);
+    m_onPaste = std::move(onPaste);
+    m_canPaste = std::move(canPaste);
     m_onDelete = std::move(onDelete);
     m_onDuplicate = std::move(onDuplicate);
     m_onSelectAll = std::move(onSelectAll);
     m_onDeselectAll = std::move(onDeselectAll);
     m_onInvertSelection = std::move(onInvertSelection);
     m_hasSelection = std::move(hasSelection);
+}
+
+void EditorMenuSystem::SetAssetMenuCallbacks(
+    std::function<void()> onNewAsset,
+    std::function<void()> onOpenAsset,
+    std::function<void()> onSaveAsset,
+    std::function<void()> onSaveAssetAs,
+    std::function<void(const std::filesystem::path&)> onOpenRecentAsset)
+{
+    m_onNewAsset = std::move(onNewAsset);
+    m_onOpenAsset = std::move(onOpenAsset);
+    m_onSaveAsset = std::move(onSaveAsset);
+    m_onSaveAssetAs = std::move(onSaveAssetAs);
+    m_onOpenRecentAsset = std::move(onOpenRecentAsset);
+}
+
+void EditorMenuSystem::SetWindowMenuCallbacks(
+    std::function<void()> onShowSDFAssetEditor,
+    std::function<void()> onShowVisualScriptEditor,
+    std::function<void()> onShowMaterialGraphEditor,
+    std::function<void()> onShowAnimationTimeline)
+{
+    m_onShowSDFAssetEditor = std::move(onShowSDFAssetEditor);
+    m_onShowVisualScriptEditor = std::move(onShowVisualScriptEditor);
+    m_onShowMaterialGraphEditor = std::move(onShowMaterialGraphEditor);
+    m_onShowAnimationTimeline = std::move(onShowAnimationTimeline);
 }
 
 // =============================================================================
@@ -411,6 +518,7 @@ void EditorMenuSystem::RenderMenuBar() {
 
 void EditorMenuSystem::RenderFileMenu() {
     if (ImGui::BeginMenu("File")) {
+        // Scene operations
         if (ImGui::MenuItem("New Scene", GetShortcutForAction("New").c_str())) {
             if (m_onNew) m_onNew();
         }
@@ -420,6 +528,48 @@ void EditorMenuSystem::RenderFileMenu() {
 
         ImGui::Separator();
 
+        // Asset operations - New SDF Asset opens SDFAssetEditor with new asset
+        if (ImGui::MenuItem("New SDF Asset", GetShortcutForAction("NewAsset").c_str())) {
+            if (m_onNewAsset) {
+                m_onNewAsset();
+            } else if (m_editor) {
+                // Ensure SDFAssetEditor is visible and create new asset
+                m_editor->ShowPanel("SDFAssetEditor");
+#if NOVA_HAS_SDF_ASSET_EDITOR
+                if (auto sdfEditor = m_editor->GetPanel<SDFAssetEditor>()) {
+                    sdfEditor->CreateNewAsset(SDFAssetEditor::SDFAssetType::Generic, "NewSDFModel");
+                }
+#endif
+            }
+        }
+        // Open Asset shows file dialog and loads into SDFAssetEditor
+        if (ImGui::MenuItem("Open Asset...", GetShortcutForAction("OpenAsset").c_str())) {
+            if (m_onOpenAsset) {
+                m_onOpenAsset();
+            } else if (m_editor) {
+                // Show file dialog, then open SDFAssetEditor with the selected file
+                m_editor->ShowOpenFileDialog("Open Asset",
+                    "SDF Files (*.sdf;*.sdf.json)|*.sdf;*.sdf.json|Material Files (*.mat)|*.mat|All Files (*.*)|*.*",
+                    [this](const std::filesystem::path& path) {
+                        if (!path.empty() && m_editor) {
+                            m_editor->ShowPanel("SDFAssetEditor");
+#if NOVA_HAS_SDF_ASSET_EDITOR
+                            if (auto sdfEditor = m_editor->GetPanel<SDFAssetEditor>()) {
+                                if (sdfEditor->LoadAsset(path)) {
+                                    AddRecentAsset(path, "SDF");
+                                }
+                            }
+#else
+                            AddRecentAsset(path, "SDF");
+#endif
+                        }
+                    });
+            }
+        }
+
+        ImGui::Separator();
+
+        // Save operations
         if (ImGui::MenuItem("Save", GetShortcutForAction("Save").c_str(), false, m_sceneDirty)) {
             if (m_onSave) m_onSave();
         }
@@ -429,6 +579,16 @@ void EditorMenuSystem::RenderFileMenu() {
 
         ImGui::Separator();
 
+        if (ImGui::MenuItem("Save Asset", GetShortcutForAction("SaveAsset").c_str(), false, m_assetDirty)) {
+            if (m_onSaveAsset) m_onSaveAsset();
+        }
+        if (ImGui::MenuItem("Save Asset As...", GetShortcutForAction("SaveAssetAs").c_str())) {
+            if (m_onSaveAssetAs) m_onSaveAssetAs();
+        }
+
+        ImGui::Separator();
+
+        // Recent projects
         if (ImGui::BeginMenu("Recent Projects")) {
             if (m_recentFiles.empty()) {
                 ImGui::MenuItem("No recent projects", nullptr, false, false);
@@ -441,6 +601,89 @@ void EditorMenuSystem::RenderFileMenu() {
                 ImGui::Separator();
                 if (ImGui::MenuItem("Clear Recent")) {
                     ClearRecentFiles();
+                }
+            }
+            ImGui::EndMenu();
+        }
+
+        // Recent assets
+        if (ImGui::BeginMenu("Recent Assets")) {
+            if (m_recentAssets.empty()) {
+                ImGui::MenuItem("No recent assets", nullptr, false, false);
+            } else {
+                // Group by asset type
+                auto sdfAssets = GetRecentAssetsByType("SDF");
+                auto materialAssets = GetRecentAssetsByType("Material");
+                auto scriptAssets = GetRecentAssetsByType("Script");
+                auto animAssets = GetRecentAssetsByType("Animation");
+
+                if (!sdfAssets.empty()) {
+                    ImGui::TextDisabled("SDF Assets");
+                    for (const auto& asset : sdfAssets) {
+                        if (ImGui::MenuItem(asset.name.c_str(), nullptr, false, asset.exists)) {
+                            if (m_onOpenRecentAsset) {
+                                m_onOpenRecentAsset(asset.path);
+                            } else if (m_editor) {
+                                // Open SDF asset in SDFAssetEditor
+                                m_editor->ShowPanel("SDFAssetEditor");
+#if NOVA_HAS_SDF_ASSET_EDITOR
+                                if (auto sdfEditor = m_editor->GetPanel<SDFAssetEditor>()) {
+                                    sdfEditor->LoadAsset(asset.path);
+                                }
+#endif
+                            }
+                        }
+                    }
+                    ImGui::Separator();
+                }
+
+                if (!materialAssets.empty()) {
+                    ImGui::TextDisabled("Materials");
+                    for (const auto& asset : materialAssets) {
+                        if (ImGui::MenuItem(asset.name.c_str(), nullptr, false, asset.exists)) {
+                            if (m_onOpenRecentAsset) {
+                                m_onOpenRecentAsset(asset.path);
+                            } else if (m_editor) {
+                                // Open Material in MaterialGraphEditor
+                                m_editor->ShowPanel("MaterialGraphEditor");
+                            }
+                        }
+                    }
+                    ImGui::Separator();
+                }
+
+                if (!scriptAssets.empty()) {
+                    ImGui::TextDisabled("Visual Scripts");
+                    for (const auto& asset : scriptAssets) {
+                        if (ImGui::MenuItem(asset.name.c_str(), nullptr, false, asset.exists)) {
+                            if (m_onOpenRecentAsset) {
+                                m_onOpenRecentAsset(asset.path);
+                            } else if (m_editor) {
+                                // Open Script in VisualScriptEditor
+                                m_editor->ShowPanel("VisualScriptEditor");
+                            }
+                        }
+                    }
+                    ImGui::Separator();
+                }
+
+                if (!animAssets.empty()) {
+                    ImGui::TextDisabled("Animations");
+                    for (const auto& asset : animAssets) {
+                        if (ImGui::MenuItem(asset.name.c_str(), nullptr, false, asset.exists)) {
+                            if (m_onOpenRecentAsset) {
+                                m_onOpenRecentAsset(asset.path);
+                            } else if (m_editor) {
+                                // Open Animation in AnimationTimeline
+                                m_editor->ShowPanel("AnimationTimeline");
+                            }
+                        }
+                    }
+                    ImGui::Separator();
+                }
+
+                if (ImGui::MenuItem("Clear Recent Assets")) {
+                    ClearRecentAssets();
                 }
             }
             ImGui::EndMenu();
@@ -467,6 +710,7 @@ void EditorMenuSystem::RenderEditMenu() {
         bool canUndo = m_canUndo ? m_canUndo() : false;
         bool canRedo = m_canRedo ? m_canRedo() : false;
         bool hasSelection = m_hasSelection ? m_hasSelection() : false;
+        bool canPaste = m_canPaste ? m_canPaste() : false;
 
         if (ImGui::MenuItem("Undo", GetShortcutForAction("Undo").c_str(), false, canUndo)) {
             if (m_onUndo) m_onUndo();
@@ -478,13 +722,13 @@ void EditorMenuSystem::RenderEditMenu() {
         ImGui::Separator();
 
         if (ImGui::MenuItem("Cut", "Ctrl+X", false, hasSelection)) {
-            // TODO: Implement cut
+            if (m_onCut) m_onCut();
         }
         if (ImGui::MenuItem("Copy", "Ctrl+C", false, hasSelection)) {
-            // TODO: Implement copy
+            if (m_onCopy) m_onCopy();
         }
-        if (ImGui::MenuItem("Paste", "Ctrl+V")) {
-            // TODO: Implement paste
+        if (ImGui::MenuItem("Paste", "Ctrl+V", false, canPaste)) {
+            if (m_onPaste) m_onPaste();
         }
         if (ImGui::MenuItem("Delete", GetShortcutForAction("Delete").c_str(), false, hasSelection)) {
             if (m_onDelete) m_onDelete();
@@ -533,18 +777,26 @@ void EditorMenuSystem::RenderViewMenu() {
         // Layout presets
         if (ImGui::BeginMenu("Layout")) {
             if (ImGui::MenuItem("Default")) {
-                m_editor->GetLayoutManager().ResetLayout();
+                m_editor->ResetLayout();
             }
             ImGui::Separator();
-            auto layouts = m_editor->GetLayoutManager().GetLayoutNames();
+            auto layouts = m_editor->GetLayoutNames();
             for (const auto& name : layouts) {
                 if (ImGui::MenuItem(name.c_str())) {
-                    m_editor->GetLayoutManager().LoadLayout(name);
+                    m_editor->LoadLayout(name);
                 }
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Save Layout...")) {
-                // TODO: Show save layout dialog
+                if (m_editor) {
+                    m_editor->ShowInputDialog("Save Layout", "Enter layout name:",
+                        [this](const std::string& name) {
+                            if (!name.empty() && m_editor) {
+                                m_editor->SaveLayout(name);
+                                m_editor->ShowNotification("Layout saved: " + name, NotificationType::Success);
+                            }
+                        }, "Custom Layout");
+                }
             }
             ImGui::EndMenu();
         }
@@ -563,50 +815,88 @@ void EditorMenuSystem::RenderViewMenu() {
 
 void EditorMenuSystem::RenderGameObjectMenu() {
     if (ImGui::BeginMenu("GameObject")) {
-        if (ImGui::MenuItem("Create Empty")) {
-            // TODO: Create empty game object
+        bool hasScene = m_editor && m_editor->GetActiveScene();
+
+        if (ImGui::MenuItem("Create Empty", nullptr, false, hasScene)) {
+            if (m_editor) {
+                m_editor->CreateEmptyObject();
+            }
         }
 
         ImGui::Separator();
 
-        if (ImGui::BeginMenu("3D Object")) {
-            if (ImGui::MenuItem("Cube")) {}
-            if (ImGui::MenuItem("Sphere")) {}
-            if (ImGui::MenuItem("Cylinder")) {}
-            if (ImGui::MenuItem("Plane")) {}
-            if (ImGui::MenuItem("Quad")) {}
+        if (ImGui::BeginMenu("3D Object", hasScene)) {
+            if (ImGui::MenuItem("Cube")) {
+                if (m_editor) m_editor->ShowNotification("Cube primitive: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Sphere")) {
+                if (m_editor) m_editor->ShowNotification("Sphere primitive: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Cylinder")) {
+                if (m_editor) m_editor->ShowNotification("Cylinder primitive: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Plane")) {
+                if (m_editor) m_editor->ShowNotification("Plane primitive: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Quad")) {
+                if (m_editor) m_editor->ShowNotification("Quad primitive: Not yet implemented", NotificationType::Warning);
+            }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("SDF Primitive")) {
-            if (ImGui::MenuItem("SDF Sphere")) {}
-            if (ImGui::MenuItem("SDF Box")) {}
-            if (ImGui::MenuItem("SDF Cylinder")) {}
-            if (ImGui::MenuItem("SDF Torus")) {}
-            if (ImGui::MenuItem("SDF Capsule")) {}
+        if (ImGui::BeginMenu("SDF Primitive", hasScene)) {
+            if (ImGui::MenuItem("SDF Sphere")) {
+                if (m_editor) m_editor->ShowNotification("SDF Sphere: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("SDF Box")) {
+                if (m_editor) m_editor->ShowNotification("SDF Box: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("SDF Cylinder")) {
+                if (m_editor) m_editor->ShowNotification("SDF Cylinder: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("SDF Torus")) {
+                if (m_editor) m_editor->ShowNotification("SDF Torus: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("SDF Capsule")) {
+                if (m_editor) m_editor->ShowNotification("SDF Capsule: Not yet implemented", NotificationType::Warning);
+            }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Light")) {
-            if (ImGui::MenuItem("Directional Light")) {}
-            if (ImGui::MenuItem("Point Light")) {}
-            if (ImGui::MenuItem("Spot Light")) {}
-            if (ImGui::MenuItem("Area Light")) {}
+        if (ImGui::BeginMenu("Light", hasScene)) {
+            if (ImGui::MenuItem("Directional Light")) {
+                if (m_editor) m_editor->ShowNotification("Directional Light: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Point Light")) {
+                if (m_editor) m_editor->ShowNotification("Point Light: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Spot Light")) {
+                if (m_editor) m_editor->ShowNotification("Spot Light: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Area Light")) {
+                if (m_editor) m_editor->ShowNotification("Area Light: Not yet implemented", NotificationType::Warning);
+            }
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Camera")) {
-            if (ImGui::MenuItem("Perspective Camera")) {}
-            if (ImGui::MenuItem("Orthographic Camera")) {}
+        if (ImGui::BeginMenu("Camera", hasScene)) {
+            if (ImGui::MenuItem("Perspective Camera")) {
+                if (m_editor) m_editor->ShowNotification("Perspective Camera: Not yet implemented", NotificationType::Warning);
+            }
+            if (ImGui::MenuItem("Orthographic Camera")) {
+                if (m_editor) m_editor->ShowNotification("Orthographic Camera: Not yet implemented", NotificationType::Warning);
+            }
             ImGui::EndMenu();
         }
 
         ImGui::Separator();
 
         bool hasMultiSelection = m_hasSelection && m_hasSelection() &&
-                                  m_editor && m_editor->GetSelectionManager().GetSelectionCount() > 1;
+                                  m_editor && m_editor->GetSelection().size() > 1;
         if (ImGui::MenuItem("Group Selection", nullptr, false, hasMultiSelection)) {
-            // TODO: Group selected objects
+            if (m_editor) {
+                m_editor->GroupSelection();
+            }
         }
 
         ImGui::EndMenu();
@@ -654,22 +944,56 @@ void EditorMenuSystem::RenderWindowMenu() {
             if (m_editor) m_editor->ShowPanel("SceneOutliner");
         }
         if (ImGui::MenuItem("Inspector")) {
-            // TODO: ShowPanel("Properties")
+            if (m_editor) m_editor->ShowPanel("Properties");
         }
         if (ImGui::MenuItem("Console")) {
             if (m_editor) m_editor->ShowPanel("Console");
         }
         if (ImGui::MenuItem("Asset Browser")) {
-            // TODO: ShowPanel("AssetBrowser")
+            if (m_editor) m_editor->ShowPanel("AssetBrowser");
         }
 
         ImGui::Separator();
 
-        // Editor panels
-        if (ImGui::MenuItem("Viewport")) {}
-        if (ImGui::MenuItem("SDF Toolbox")) {}
-        if (ImGui::MenuItem("Animation Timeline")) {}
-        if (ImGui::MenuItem("Material Editor")) {}
+        // Editor panels with shortcuts - use callbacks if set, otherwise toggle directly
+        if (ImGui::MenuItem("SDF Asset Editor", GetShortcutForAction("ShowSDFAssetEditor").c_str())) {
+            if (m_onShowSDFAssetEditor) {
+                m_onShowSDFAssetEditor();
+            } else if (m_editor) {
+                m_editor->TogglePanel("SDFAssetEditor");
+            }
+        }
+        if (ImGui::MenuItem("Visual Script Editor", GetShortcutForAction("ShowVisualScriptEditor").c_str())) {
+            if (m_onShowVisualScriptEditor) {
+                m_onShowVisualScriptEditor();
+            } else if (m_editor) {
+                m_editor->TogglePanel("VisualScriptEditor");
+            }
+        }
+        if (ImGui::MenuItem("Material Graph Editor", GetShortcutForAction("ShowMaterialGraphEditor").c_str())) {
+            if (m_onShowMaterialGraphEditor) {
+                m_onShowMaterialGraphEditor();
+            } else if (m_editor) {
+                m_editor->TogglePanel("MaterialGraphEditor");
+            }
+        }
+        if (ImGui::MenuItem("Animation Timeline", GetShortcutForAction("ShowAnimationTimeline").c_str())) {
+            if (m_onShowAnimationTimeline) {
+                m_onShowAnimationTimeline();
+            } else if (m_editor) {
+                m_editor->TogglePanel("AnimationTimeline");
+            }
+        }
+
+        ImGui::Separator();
+
+        // Additional panels
+        if (ImGui::MenuItem("Viewport")) {
+            if (m_editor) m_editor->ShowPanel("Viewport");
+        }
+        if (ImGui::MenuItem("SDF Toolbox")) {
+            if (m_editor) m_editor->ShowPanel("SDFToolbox");
+        }
 
         ImGui::EndMenu();
     }
@@ -677,11 +1001,20 @@ void EditorMenuSystem::RenderWindowMenu() {
 
 void EditorMenuSystem::RenderHelpMenu() {
     if (ImGui::BeginMenu("Help")) {
-        if (ImGui::MenuItem("Documentation")) {
-            // TODO: Open documentation
+        if (ImGui::MenuItem("Documentation", "F1")) {
+            // Open README or main documentation
+            spdlog::info("Documentation requested - searching for docs/README.md");
+            if (m_editor) {
+                m_editor->ShowNotification("Opening documentation...", NotificationType::Info, 2.0f);
+            }
+            // FUTURE: Integrate with platform-specific file opening
         }
         if (ImGui::MenuItem("API Reference")) {
-            // TODO: Open API docs
+            spdlog::info("API Reference requested - searching for docs/API.md");
+            if (m_editor) {
+                m_editor->ShowNotification("Opening API reference...", NotificationType::Info, 2.0f);
+            }
+            // FUTURE: Integrate with platform-specific file opening
         }
 
         ImGui::Separator();

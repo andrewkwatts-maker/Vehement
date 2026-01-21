@@ -43,6 +43,17 @@ struct RecentProject {
     bool exists = true;
 };
 
+/**
+ * @brief Recent asset entry for menu display
+ */
+struct RecentAsset {
+    std::string path;
+    std::string name;
+    std::string assetType;  ///< "SDF", "Material", "Script", "Animation"
+    std::chrono::system_clock::time_point lastOpened;
+    bool exists = true;
+};
+
 // =============================================================================
 // Shortcut Binding
 // =============================================================================
@@ -248,6 +259,42 @@ public:
      */
     void ClearRecentFiles();
 
+    // =========================================================================
+    // Recent Assets (SDF, Materials, Scripts, Animations)
+    // =========================================================================
+
+    /**
+     * @brief Add asset to recent list
+     * @param path Asset file path
+     * @param assetType Type identifier ("SDF", "Material", "Script", "Animation")
+     */
+    void AddRecentAsset(const std::filesystem::path& path, const std::string& assetType);
+
+    /**
+     * @brief Get recent assets list
+     */
+    [[nodiscard]] const std::vector<RecentAsset>& GetRecentAssets() const { return m_recentAssets; }
+
+    /**
+     * @brief Get recent assets filtered by type
+     */
+    [[nodiscard]] std::vector<RecentAsset> GetRecentAssetsByType(const std::string& assetType) const;
+
+    /**
+     * @brief Clear recent assets list
+     */
+    void ClearRecentAssets();
+
+    /**
+     * @brief Load recent assets from disk
+     */
+    bool LoadRecentAssets();
+
+    /**
+     * @brief Save recent assets to disk
+     */
+    bool SaveRecentAssets();
+
     /**
      * @brief Load recent files from disk
      * @return true if load succeeded
@@ -288,6 +335,27 @@ public:
     );
 
     /**
+     * @brief Set callback for asset menu operations
+     */
+    void SetAssetMenuCallbacks(
+        std::function<void()> onNewAsset,
+        std::function<void()> onOpenAsset,
+        std::function<void()> onSaveAsset,
+        std::function<void()> onSaveAssetAs,
+        std::function<void(const std::filesystem::path&)> onOpenRecentAsset
+    );
+
+    /**
+     * @brief Set callback for window panel toggle operations
+     */
+    void SetWindowMenuCallbacks(
+        std::function<void()> onShowSDFAssetEditor,
+        std::function<void()> onShowVisualScriptEditor,
+        std::function<void()> onShowMaterialGraphEditor,
+        std::function<void()> onShowAnimationTimeline
+    );
+
+    /**
      * @brief Set callback for edit menu operations
      */
     void SetEditMenuCallbacks(
@@ -295,6 +363,10 @@ public:
         std::function<void()> onRedo,
         std::function<bool()> canUndo,
         std::function<bool()> canRedo,
+        std::function<void()> onCut,
+        std::function<void()> onCopy,
+        std::function<void()> onPaste,
+        std::function<bool()> canPaste,
         std::function<void()> onDelete,
         std::function<void()> onDuplicate,
         std::function<void()> onSelectAll,
@@ -342,6 +414,10 @@ private:
     std::vector<RecentProject> m_recentFiles;
     size_t m_maxRecentFiles = 10;
 
+    // Recent assets
+    std::vector<RecentAsset> m_recentAssets;
+    size_t m_maxRecentAssets = 15;
+
     // Callbacks for file menu
     std::function<void()> m_onNew;
     std::function<void()> m_onOpen;
@@ -356,6 +432,10 @@ private:
     std::function<void()> m_onRedo;
     std::function<bool()> m_canUndo;
     std::function<bool()> m_canRedo;
+    std::function<void()> m_onCut;
+    std::function<void()> m_onCopy;
+    std::function<void()> m_onPaste;
+    std::function<bool()> m_canPaste;
     std::function<void()> m_onDelete;
     std::function<void()> m_onDuplicate;
     std::function<void()> m_onSelectAll;
@@ -363,8 +443,22 @@ private:
     std::function<void()> m_onInvertSelection;
     std::function<bool()> m_hasSelection;
 
+    // Callbacks for asset menu
+    std::function<void()> m_onNewAsset;
+    std::function<void()> m_onOpenAsset;
+    std::function<void()> m_onSaveAsset;
+    std::function<void()> m_onSaveAssetAs;
+    std::function<void(const std::filesystem::path&)> m_onOpenRecentAsset;
+
+    // Callbacks for window menu (panel toggles)
+    std::function<void()> m_onShowSDFAssetEditor;
+    std::function<void()> m_onShowVisualScriptEditor;
+    std::function<void()> m_onShowMaterialGraphEditor;
+    std::function<void()> m_onShowAnimationTimeline;
+
     // State flags
     bool m_sceneDirty = false;
+    bool m_assetDirty = false;
 };
 
 } // namespace Nova

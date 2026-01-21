@@ -168,7 +168,7 @@ void PreferencesPanel::OnRender() {
         ImGui::SetCursorPos(ImVec2(closeX, 8));
         if (ImGui::Button("X", ImVec2(24, 24))) {
             if (m_hasChanges) {
-                // TODO: Show confirmation dialog
+                // FUTURE: Show confirmation dialog before discarding changes
                 DiscardChanges();
             }
             m_shouldClose = true;

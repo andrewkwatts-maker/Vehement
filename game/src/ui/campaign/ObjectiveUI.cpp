@@ -1,4 +1,5 @@
 #include "ObjectiveUI.hpp"
+#include "engine/ui/runtime/UIBinding.hpp"
 #include <algorithm>
 
 namespace Vehement {
@@ -203,7 +204,15 @@ void ObjectiveUI::Update(float deltaTime) {
     // Clear "new" flag after animation
     for (auto& obj : m_objectives) {
         if (obj.isNew) {
-            // TODO: Track animation time and clear flag
+            // Track animation elapsed time
+            m_newObjectiveTimers[obj.id] += deltaTime;
+
+            // Clear flag when animation duration completes
+            if (m_newObjectiveTimers[obj.id] >= m_config.newObjectiveFlashDuration) {
+                obj.isNew = false;
+                m_newObjectiveTimers.erase(obj.id);
+                SendDataToHTML();
+            }
         }
     }
 }
@@ -213,7 +222,27 @@ void ObjectiveUI::Render() {
 }
 
 void ObjectiveUI::BindToHTML() {
-    // TODO: Register JavaScript callbacks
+    // Register JavaScript callbacks for objective interactions
+    Engine::UI::UIBinding binding;
+
+    binding.ExposeFunction("Objectives.onClick", [this](const nlohmann::json& args) -> nlohmann::json {
+        if (args.contains("id")) {
+            HandleHTMLEvent("objectiveClick", args["id"].get<std::string>());
+        }
+        return nullptr;
+    });
+
+    binding.ExposeFunction("Objectives.requestHint", [this](const nlohmann::json& args) -> nlohmann::json {
+        if (args.contains("id")) {
+            HandleHTMLEvent("requestHint", args["id"].get<std::string>());
+        }
+        return nullptr;
+    });
+
+    binding.ExposeFunction("Objectives.toggleExpand", [this](const nlohmann::json&) -> nlohmann::json {
+        HandleHTMLEvent("toggleExpand", "");
+        return nullptr;
+    });
 }
 
 void ObjectiveUI::HandleHTMLEvent(const std::string& eventName, const std::string& data) {
@@ -227,7 +256,40 @@ void ObjectiveUI::HandleHTMLEvent(const std::string& eventName, const std::strin
 }
 
 void ObjectiveUI::SendDataToHTML() {
-    // TODO: Send objective data to HTML via JavaScript bindings
+    // Send objective data to HTML via JavaScript bindings
+    Engine::UI::UIBinding binding;
+
+    nlohmann::json data;
+    data["visible"] = m_visible;
+    data["expanded"] = m_expanded;
+
+    nlohmann::json objectivesArray = nlohmann::json::array();
+    for (const auto& obj : m_objectives) {
+        nlohmann::json objJson;
+        objJson["id"] = obj.id;
+        objJson["title"] = obj.title;
+        objJson["description"] = obj.description;
+        objJson["icon"] = obj.icon;
+        objJson["isPrimary"] = obj.isPrimary;
+        objJson["isCompleted"] = obj.isCompleted;
+        objJson["isFailed"] = obj.isFailed;
+        objJson["isNew"] = obj.isNew;
+        objJson["hasTimer"] = obj.hasTimer;
+        objJson["progress"] = obj.progress;
+        objJson["currentCount"] = obj.currentCount;
+        objJson["requiredCount"] = obj.requiredCount;
+        objJson["timeRemaining"] = obj.timeRemaining;
+        objJson["hint"] = obj.hint;
+        objectivesArray.push_back(objJson);
+    }
+    data["objectives"] = objectivesArray;
+
+    // Include current alert if any
+    if (!m_alertQueue.empty()) {
+        data["currentAlert"] = m_alertQueue.front();
+    }
+
+    binding.CallJS("Objectives.updateData", data);
 }
 
 void ObjectiveUI::UpdateAlerts(float deltaTime) {
@@ -240,8 +302,15 @@ void ObjectiveUI::UpdateAlerts(float deltaTime) {
     }
 }
 
-void ObjectiveUI::PlaySound(const std::string& /*soundFile*/) {
-    // TODO: Play sound through audio system
+void ObjectiveUI::PlaySound(const std::string& soundFile) {
+    // Play sound through audio system via JavaScript bindings
+    if (soundFile.empty()) return;
+
+    Engine::UI::UIBinding binding;
+    nlohmann::json args;
+    args["path"] = soundFile;
+    args["volume"] = 1.0f;
+    binding.CallJS("Audio.playSound", args);
 }
 
 } // namespace Campaign

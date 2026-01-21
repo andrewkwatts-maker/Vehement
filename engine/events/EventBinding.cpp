@@ -1,6 +1,6 @@
 #include "EventBinding.hpp"
 #include <sstream>
-#include <nlohmann/json.hpp>
+#include "../core/json_config.hpp"
 
 namespace Nova {
 namespace Events {

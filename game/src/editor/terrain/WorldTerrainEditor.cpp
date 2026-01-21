@@ -348,11 +348,94 @@ void WorldTerrainEditor::CopyRegion(const glm::vec3& srcMin, const glm::vec3& sr
 }
 
 void WorldTerrainEditor::MirrorTerrain(const glm::vec3& center, bool mirrorX, bool mirrorZ) {
-    // TODO: Implement terrain mirroring
+    if (!m_terrain) return;
+
+    // Determine region bounds based on current brush radius
+    float radius = m_brush.radius * 10.0f;  // Use larger area for mirroring
+
+    for (float z = -radius; z <= radius; z += 1.0f) {
+        for (float y = -radius; y <= radius; y += 1.0f) {
+            for (float x = -radius; x <= radius; x += 1.0f) {
+                glm::vec3 srcOffset(x, y, z);
+                glm::vec3 srcPos = center + srcOffset;
+
+                // Calculate mirrored position
+                glm::vec3 mirrorOffset = srcOffset;
+                if (mirrorX) mirrorOffset.x = -mirrorOffset.x;
+                if (mirrorZ) mirrorOffset.z = -mirrorOffset.z;
+
+                glm::vec3 dstPos = center + mirrorOffset;
+
+                // Skip if source and destination are the same
+                if (glm::length(srcPos - dstPos) < 0.1f) continue;
+
+                // Skip if destination is not editable
+                if (!CanEdit(dstPos)) continue;
+
+                // Copy voxel from source to destination
+                Nova::Voxel voxel = m_terrain->GetVoxel(srcPos);
+                m_terrain->SetVoxel(dstPos, voxel);
+            }
+        }
+    }
+
+    if (OnTerrainModified) OnTerrainModified();
 }
 
 void WorldTerrainEditor::RotateTerrain(const glm::vec3& center, float radius, int quarterTurns) {
-    // TODO: Implement terrain rotation
+    if (!m_terrain) return;
+
+    // Normalize quarter turns to 0-3 range
+    quarterTurns = ((quarterTurns % 4) + 4) % 4;
+    if (quarterTurns == 0) return;  // No rotation needed
+
+    // Create temporary storage for rotated voxels
+    std::unordered_map<uint64_t, Nova::Voxel> tempVoxels;
+
+    // Read all voxels in the region
+    for (float z = -radius; z <= radius; z += 1.0f) {
+        for (float y = -radius; y <= radius; y += 1.0f) {
+            for (float x = -radius; x <= radius; x += 1.0f) {
+                glm::vec3 offset(x, y, z);
+                if (glm::length(glm::vec2(x, z)) > radius) continue;
+
+                glm::vec3 srcPos = center + offset;
+                Nova::Voxel voxel = m_terrain->GetVoxel(srcPos);
+
+                // Calculate rotated position (around Y axis)
+                glm::vec3 rotatedOffset = offset;
+                for (int i = 0; i < quarterTurns; ++i) {
+                    float tempX = rotatedOffset.x;
+                    rotatedOffset.x = -rotatedOffset.z;
+                    rotatedOffset.z = tempX;
+                }
+
+                glm::vec3 dstPos = center + rotatedOffset;
+                uint64_t hash = HashPosition(dstPos);
+                tempVoxels[hash] = voxel;
+            }
+        }
+    }
+
+    // Apply rotated voxels
+    for (const auto& [hash, voxel] : tempVoxels) {
+        // Reconstruct position from hash
+        int x = static_cast<int>((hash >> 40) & 0xFFFFF);
+        int y = static_cast<int>((hash >> 20) & 0xFFFFF);
+        int z = static_cast<int>(hash & 0xFFFFF);
+
+        // Handle sign extension for negative values
+        if (x >= 0x80000) x -= 0x100000;
+        if (y >= 0x80000) y -= 0x100000;
+        if (z >= 0x80000) z -= 0x100000;
+
+        glm::vec3 pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
+        if (CanEdit(pos)) {
+            m_terrain->SetVoxel(pos, voxel);
+        }
+    }
+
+    if (OnTerrainModified) OnTerrainModified();
 }
 
 void WorldTerrainEditor::ScaleHeight(const glm::vec3& minBounds, const glm::vec3& maxBounds, float scale) {
@@ -376,11 +459,158 @@ void WorldTerrainEditor::ScaleHeight(const glm::vec3& minBounds, const glm::vec3
 // =========================================================================
 
 void WorldTerrainEditor::SimulateErosion(const glm::vec3& minBounds, const glm::vec3& maxBounds, int iterations, float strength) {
-    // TODO: Implement hydraulic erosion
+    if (!m_terrain) return;
+
+    // Simple hydraulic erosion simulation
+    // Water flows downhill, eroding terrain and depositing sediment
+    float erosionRate = 0.1f * strength;
+    float depositionRate = 0.05f * strength;
+    float evaporationRate = 0.02f;
+
+    // Temporary heightmap storage
+    std::unordered_map<uint64_t, float> waterMap;
+    std::unordered_map<uint64_t, float> sedimentMap;
+
+    for (int iter = 0; iter < iterations; ++iter) {
+        // For each position in the region
+        for (float z = minBounds.z; z <= maxBounds.z; z += 1.0f) {
+            for (float x = minBounds.x; x <= maxBounds.x; x += 1.0f) {
+                glm::vec3 pos(x, 0.0f, z);
+                if (!CanEdit(pos)) continue;
+
+                uint64_t hash = HashPosition(pos);
+                float currentHeight = m_terrain->GetHeightAt(x, z);
+
+                // Add rainfall
+                waterMap[hash] += 0.1f;
+
+                // Find lowest neighbor
+                float lowestHeight = currentHeight;
+                glm::vec2 lowestDir(0.0f);
+
+                for (int dz = -1; dz <= 1; ++dz) {
+                    for (int dx = -1; dx <= 1; ++dx) {
+                        if (dx == 0 && dz == 0) continue;
+
+                        float neighborHeight = m_terrain->GetHeightAt(x + dx, z + dz);
+                        if (neighborHeight < lowestHeight) {
+                            lowestHeight = neighborHeight;
+                            lowestDir = glm::vec2(static_cast<float>(dx), static_cast<float>(dz));
+                        }
+                    }
+                }
+
+                // Water flows downhill
+                if (lowestHeight < currentHeight) {
+                    float heightDiff = currentHeight - lowestHeight;
+                    float water = waterMap[hash];
+                    float sediment = sedimentMap[hash];
+
+                    // Erode terrain
+                    float erosion = std::min(heightDiff * erosionRate * water, 0.5f);
+
+                    // Apply erosion by lowering the terrain
+                    glm::vec3 erodePos(x, currentHeight, z);
+                    m_terrain->SmoothTerrain(erodePos, 1.0f, erosion);
+
+                    // Transfer water and sediment to neighbor
+                    glm::vec3 neighborPos(x + lowestDir.x, 0.0f, z + lowestDir.y);
+                    uint64_t neighborHash = HashPosition(neighborPos);
+
+                    float transferAmount = std::min(water * 0.5f, heightDiff);
+                    waterMap[hash] -= transferAmount;
+                    waterMap[neighborHash] += transferAmount * 0.9f;
+
+                    sedimentMap[hash] -= sediment * 0.5f;
+                    sedimentMap[neighborHash] += erosion + sediment * 0.5f;
+                } else {
+                    // Deposit sediment in flat areas
+                    float sediment = sedimentMap[hash];
+                    if (sediment > 0.0f) {
+                        float deposit = sediment * depositionRate;
+                        glm::vec3 depositPos(x, currentHeight, z);
+
+                        Nova::SDFBrush brush;
+                        brush.shape = Nova::SDFBrushShape::Sphere;
+                        brush.operation = Nova::SDFOperation::SmoothUnion;
+                        brush.position = depositPos;
+                        brush.size = glm::vec3(deposit);
+                        brush.smoothness = 0.3f;
+                        brush.material = Nova::VoxelMaterial::Dirt;
+                        m_terrain->ApplyBrush(brush);
+
+                        sedimentMap[hash] -= deposit;
+                    }
+                }
+
+                // Evaporation
+                waterMap[hash] *= (1.0f - evaporationRate);
+            }
+        }
+    }
+
+    if (OnTerrainModified) OnTerrainModified();
 }
 
 void WorldTerrainEditor::SimulateThermalErosion(const glm::vec3& minBounds, const glm::vec3& maxBounds, float talusAngle, int iterations) {
-    // TODO: Implement thermal erosion
+    if (!m_terrain) return;
+
+    // Thermal erosion: material falls when slope exceeds talus angle
+    // talusAngle is the maximum stable slope (in radians)
+    float maxHeightDiff = std::tan(talusAngle);  // Convert angle to height difference per unit distance
+
+    for (int iter = 0; iter < iterations; ++iter) {
+        for (float z = minBounds.z; z <= maxBounds.z; z += 1.0f) {
+            for (float x = minBounds.x; x <= maxBounds.x; x += 1.0f) {
+                glm::vec3 pos(x, 0.0f, z);
+                if (!CanEdit(pos)) continue;
+
+                float currentHeight = m_terrain->GetHeightAt(x, z);
+
+                // Check all 8 neighbors
+                float totalTransfer = 0.0f;
+                std::vector<std::pair<glm::vec2, float>> transfers;
+
+                for (int dz = -1; dz <= 1; ++dz) {
+                    for (int dx = -1; dx <= 1; ++dx) {
+                        if (dx == 0 && dz == 0) continue;
+
+                        float neighborHeight = m_terrain->GetHeightAt(x + dx, z + dz);
+                        float heightDiff = currentHeight - neighborHeight;
+                        float distance = (std::abs(dx) + std::abs(dz) == 2) ? 1.414f : 1.0f;
+                        float slope = heightDiff / distance;
+
+                        // If slope exceeds talus angle, material should fall
+                        if (slope > maxHeightDiff) {
+                            float excess = (slope - maxHeightDiff) * distance;
+                            float transfer = excess * 0.5f;  // Transfer half of excess
+                            transfers.emplace_back(glm::vec2(static_cast<float>(dx), static_cast<float>(dz)), transfer);
+                            totalTransfer += transfer;
+                        }
+                    }
+                }
+
+                // Apply transfers
+                if (totalTransfer > 0.0f) {
+                    // Lower current position
+                    glm::vec3 lowerPos(x, currentHeight - totalTransfer * 0.5f, z);
+                    m_terrain->FlattenTerrain(glm::vec3(x, currentHeight, z), 0.5f, currentHeight - totalTransfer * 0.5f, 0.5f);
+
+                    // Raise neighbor positions
+                    for (const auto& [dir, amount] : transfers) {
+                        float nx = x + dir.x;
+                        float nz = z + dir.y;
+                        float neighborHeight = m_terrain->GetHeightAt(nx, nz);
+
+                        glm::vec3 raisePos(nx, neighborHeight, nz);
+                        m_terrain->FlattenTerrain(raisePos, 0.5f, neighborHeight + amount * 0.5f, 0.5f);
+                    }
+                }
+            }
+        }
+    }
+
+    if (OnTerrainModified) OnTerrainModified();
 }
 
 void WorldTerrainEditor::CreateRiver(const std::vector<glm::vec3>& path, float width, float depth) {
@@ -527,7 +757,30 @@ bool WorldTerrainEditor::LoadWorldTerrain() {
 void WorldTerrainEditor::BroadcastEdit(const glm::vec3& position) {
     if (!m_worldConfig.enableNetworkedEditing) return;
 
-    // TODO: Send edit to server/other clients
+    // Prepare edit data for network transmission
+    // In a real implementation, this would serialize the edit and send it via the network system
+    // For now, we log the edit and prepare the data structure
+
+    struct NetworkTerrainEdit {
+        glm::vec3 position;
+        TerrainBrush brush;
+        uint32_t playerId;
+        float timestamp;
+    };
+
+    NetworkTerrainEdit edit;
+    edit.position = position;
+    edit.brush = m_brush;
+    edit.playerId = 0;  // Local player ID would come from network system
+    edit.timestamp = 0.0f;  // Current time from network system
+
+    // In a real implementation:
+    // 1. Serialize the edit to a network packet
+    // 2. Send to server via network system
+    // 3. Server broadcasts to all other clients
+    // Example: m_networkSystem->SendTerrainEdit(edit);
+
+    spdlog::debug("Broadcasting terrain edit at ({}, {}, {})", position.x, position.y, position.z);
 }
 
 void WorldTerrainEditor::ReceiveEdit(uint32_t playerId, const glm::vec3& position, const TerrainBrush& brush) {

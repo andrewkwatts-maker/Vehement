@@ -15,6 +15,7 @@
 #include "PCGGraphEditor.hpp"
 #include "ModernUI.hpp"
 #include "PCGNodeTypes.hpp"
+#include "../engine/ui/EditorWidgets.hpp"
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <FastNoise/FastNoise.h>
@@ -23,6 +24,8 @@
 #include <FastNoise/Generators/Cellular.h>
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 // =============================================================================
 // Helper Functions
@@ -215,15 +218,21 @@ void PCGGraphEditor::RenderMenuBar() {
                 NewGraph();
             }
             if (ImGui::MenuItem("Open...", "Ctrl+O")) {
-                // TODO: File dialog integration
+                std::string filePath;
+                if (Nova::EditorWidgets::OpenFileDialog("Open PCG Graph", filePath, "*.pcg", nullptr)) {
+                    LoadGraph(filePath);
+                }
             }
             if (ImGui::MenuItem("Save", "Ctrl+S")) {
-                if (!m_currentFilepath.empty()) {
-                    SaveGraph(m_currentFilepath);
+                if (!m_currentFilePath.empty()) {
+                    SaveGraph(m_currentFilePath);
                 }
             }
             if (ImGui::MenuItem("Save As...")) {
-                // TODO: File dialog integration
+                std::string filePath;
+                if (Nova::EditorWidgets::SaveFileDialog("Save PCG Graph", filePath, "*.pcg", "untitled.pcg")) {
+                    SaveGraph(filePath);
+                }
             }
             ModernUI::GradientSeparator();
             if (ImGui::MenuItem("Exit")) {
@@ -238,7 +247,7 @@ void PCGGraphEditor::RenderMenuBar() {
             }
             ModernUI::GradientSeparator();
             if (ImGui::MenuItem("Frame All", "F")) {
-                // TODO: Frame all nodes
+                FrameAllNodes();
             }
             ImGui::EndMenu();
         }
@@ -860,18 +869,212 @@ void PCGGraphEditor::NewGraph() {
     m_canvasZoom = 1.0f;
 }
 
+void PCGGraphEditor::FrameAllNodes() {
+    if (!m_graph || m_graph->GetNodes().empty()) {
+        m_canvasOffset = glm::vec2(0.0f);
+        m_canvasZoom = 1.0f;
+        return;
+    }
+
+    // Calculate bounding box of all nodes
+    glm::vec2 minPos(std::numeric_limits<float>::max());
+    glm::vec2 maxPos(std::numeric_limits<float>::lowest());
+
+    const float nodeWidth = 200.0f;
+    const float nodeHeight = 150.0f;  // Approximate node height
+
+    for (const auto& [id, node] : m_graph->GetNodes()) {
+        glm::vec2 pos = node->GetPosition();
+        minPos = glm::min(minPos, pos);
+        maxPos = glm::max(maxPos, pos + glm::vec2(nodeWidth, nodeHeight));
+    }
+
+    // Add padding
+    const float padding = 50.0f;
+    minPos -= glm::vec2(padding);
+    maxPos += glm::vec2(padding);
+
+    // Calculate center and size of bounding box
+    glm::vec2 center = (minPos + maxPos) * 0.5f;
+    glm::vec2 size = maxPos - minPos;
+
+    // Get canvas size (approximate from ImGui window)
+    ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+    float canvasWidth = canvasSize.x > 0 ? canvasSize.x : 800.0f;
+    float canvasHeight = canvasSize.y > 0 ? canvasSize.y : 600.0f;
+
+    // Calculate zoom to fit all nodes
+    float zoomX = canvasWidth / size.x;
+    float zoomY = canvasHeight / size.y;
+    m_canvasZoom = std::min(zoomX, zoomY);
+    m_canvasZoom = std::clamp(m_canvasZoom, 0.25f, 2.0f);
+
+    // Center the view on the nodes
+    m_canvasOffset = -center + glm::vec2(canvasWidth, canvasHeight) * 0.5f / m_canvasZoom;
+
+    spdlog::info("Framed {} nodes, zoom: {:.2f}", m_graph->GetNodes().size(), m_canvasZoom);
+}
+
 bool PCGGraphEditor::LoadGraph(const std::string& path) {
     spdlog::info("Loading PCG graph from: {}", path);
-    m_currentFilepath = path;
-    // TODO: Implement JSON deserialization
-    return false;
+
+    try {
+        std::ifstream file(path);
+        if (!file.is_open()) {
+            spdlog::error("Failed to open file: {}", path);
+            return false;
+        }
+
+        nlohmann::json j;
+        file >> j;
+
+        // Create new graph
+        m_graph = std::make_unique<PCG::PCGGraph>();
+        m_selectedNodeId = -1;
+        m_nextNodeId = 1;
+
+        // Load nodes
+        if (j.contains("nodes") && j["nodes"].is_array()) {
+            for (const auto& nodeJson : j["nodes"]) {
+                int id = nodeJson.value("id", m_nextNodeId++);
+                std::string type = nodeJson.value("type", "Perlin");
+                std::string category = nodeJson.value("category", "Noise");
+                float posX = nodeJson.value("posX", 0.0f);
+                float posY = nodeJson.value("posY", 0.0f);
+
+                // Create node based on type
+                std::unique_ptr<PCG::PCGNode> node;
+                if (type == "Perlin") {
+                    node = std::make_unique<PCG::PerlinNoiseNode>(id);
+                } else if (type == "Simplex") {
+                    node = std::make_unique<PCG::SimplexNoiseNode>(id);
+                } else if (type == "Voronoi") {
+                    node = std::make_unique<PCG::VoronoiNoiseNode>(id);
+                } else if (type == "Add" || type == "Multiply" || type == "Clamp") {
+                    auto op = PCG::MathNode::Operation::Add;
+                    if (type == "Multiply") op = PCG::MathNode::Operation::Multiply;
+                    else if (type == "Clamp") op = PCG::MathNode::Operation::Clamp;
+                    node = std::make_unique<PCG::MathNode>(id, op);
+                } else if (type == "SRTM") {
+                    node = std::make_unique<PCG::SRTMElevationNode>(id);
+                } else if (type == "Sentinel2") {
+                    node = std::make_unique<PCG::Sentinel2Node>(id);
+                } else if (type == "OSMRoads") {
+                    node = std::make_unique<PCG::OSMRoadsNode>(id);
+                } else if (type == "Scatter") {
+                    node = std::make_unique<PCG::PointScatterNode>(id);
+                } else if (type == "Remap") {
+                    node = std::make_unique<PCG::RemapRangeNode>(id);
+                } else if (type == "Blend") {
+                    node = std::make_unique<PCG::BlendNode>(id);
+                } else if (type == "Position") {
+                    node = std::make_unique<PCG::PositionInputNode>(id);
+                } else {
+                    node = std::make_unique<PCG::PerlinNoiseNode>(id);
+                }
+
+                node->SetPosition(glm::vec2(posX, posY));
+                m_nextNodeId = std::max(m_nextNodeId, id + 1);
+                m_graph->AddNode(std::move(node));
+            }
+        }
+
+        // Load connections
+        if (j.contains("connections") && j["connections"].is_array()) {
+            for (const auto& connJson : j["connections"]) {
+                int sourceNode = connJson.value("sourceNode", -1);
+                int sourcePin = connJson.value("sourcePin", 0);
+                int targetNode = connJson.value("targetNode", -1);
+                int targetPin = connJson.value("targetPin", 0);
+
+                if (sourceNode >= 0 && targetNode >= 0) {
+                    m_graph->ConnectPins(sourceNode, sourcePin, targetNode, targetPin);
+                }
+            }
+        }
+
+        // Load view state
+        if (j.contains("view")) {
+            m_canvasOffset.x = j["view"].value("offsetX", 0.0f);
+            m_canvasOffset.y = j["view"].value("offsetY", 0.0f);
+            m_canvasZoom = j["view"].value("zoom", 1.0f);
+        }
+
+        m_currentFilePath = path;
+        spdlog::info("Loaded PCG graph with {} nodes", m_graph->GetNodes().size());
+        return true;
+
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to load PCG graph: {}", e.what());
+        return false;
+    }
 }
 
 bool PCGGraphEditor::SaveGraph(const std::string& path) {
     spdlog::info("Saving PCG graph to: {}", path);
-    m_currentFilepath = path;
-    // TODO: Implement JSON serialization
-    return false;
+
+    if (!m_graph) {
+        spdlog::error("No graph to save");
+        return false;
+    }
+
+    try {
+        nlohmann::json j;
+        j["version"] = "1.0";
+
+        // Save nodes
+        nlohmann::json nodesArray = nlohmann::json::array();
+        for (const auto& [id, node] : m_graph->GetNodes()) {
+            nlohmann::json nodeJson;
+            nodeJson["id"] = node->GetId();
+            nodeJson["type"] = node->GetTypeId();
+            nodeJson["name"] = node->GetName();
+            nodeJson["category"] = static_cast<int>(node->GetCategory());
+            nodeJson["posX"] = node->GetPosition().x;
+            nodeJson["posY"] = node->GetPosition().y;
+            nodesArray.push_back(nodeJson);
+        }
+        j["nodes"] = nodesArray;
+
+        // Save connections
+        nlohmann::json connectionsArray = nlohmann::json::array();
+        for (const auto& [id, node] : m_graph->GetNodes()) {
+            int inputIndex = 0;
+            for (const auto& pin : node->GetInputPins()) {
+                if (pin.isConnected) {
+                    nlohmann::json connJson;
+                    connJson["sourceNode"] = pin.connectedNodeId;
+                    connJson["sourcePin"] = pin.connectedPinIndex;
+                    connJson["targetNode"] = node->GetId();
+                    connJson["targetPin"] = inputIndex;
+                    connectionsArray.push_back(connJson);
+                }
+                inputIndex++;
+            }
+        }
+        j["connections"] = connectionsArray;
+
+        // Save view state
+        j["view"]["offsetX"] = m_canvasOffset.x;
+        j["view"]["offsetY"] = m_canvasOffset.y;
+        j["view"]["zoom"] = m_canvasZoom;
+
+        // Write to file
+        std::ofstream file(path);
+        if (!file.is_open()) {
+            spdlog::error("Failed to open file for writing: {}", path);
+            return false;
+        }
+
+        file << j.dump(4);  // Pretty print with 4-space indent
+        m_currentFilePath = path;
+        spdlog::info("Saved PCG graph with {} nodes", m_graph->GetNodes().size());
+        return true;
+
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to save PCG graph: {}", e.what());
+        return false;
+    }
 }
 
 // Placeholder implementations for base file compatibility

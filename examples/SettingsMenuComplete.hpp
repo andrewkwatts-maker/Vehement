@@ -183,6 +183,15 @@ private:
     void RenderProgressBar(float fraction, const char* overlay = nullptr);
     bool RenderButton(const char* label, const char* tooltip = nullptr);
 
+    // Report export functions
+    void ExportSettingsReport();
+    void ExportPerformanceReport();
+
+    // String conversion helpers
+    const char* GIMethodToString(GIMethod method);
+    const char* RenderBackendToString(RenderBackend backend);
+    const char* LODQualityToString(LODQuality quality);
+
     // State
     SettingsTab m_currentTab = SettingsTab::Rendering;
     CompleteSettings m_currentSettings;
@@ -194,6 +203,42 @@ private:
     // Preview
     std::vector<SettingPreview> m_previews;
     bool m_showPreview = false;
+    bool m_previewNeedsUpdate = false;
+
+    // External system interfaces (set by user)
+    class ICacheManager {
+    public:
+        virtual ~ICacheManager() = default;
+        virtual void ClearBrickCache() = 0;
+    };
+
+    class IShaderManager {
+    public:
+        virtual ~IShaderManager() = default;
+        virtual void RebuildAllShaders() = 0;
+    };
+
+    class IPreviewRenderer {
+    public:
+        virtual ~IPreviewRenderer() = default;
+        virtual void SetResolutionScale(float scale) = 0;
+        virtual void SetGIMethod(GIMethod method) = 0;
+        virtual void SetShadowQuality(int size) = 0;
+        virtual void SetMSAASamples(int samples) = 0;
+        virtual void RequestUpdate() = 0;
+        virtual void* GetTexture() = 0;
+    };
+
+    ICacheManager* m_cacheManager = nullptr;
+    IShaderManager* m_shaderManager = nullptr;
+    IPreviewRenderer* m_previewRenderer = nullptr;
+
+public:
+    void SetCacheManager(ICacheManager* manager) { m_cacheManager = manager; }
+    void SetShaderManager(IShaderManager* manager) { m_shaderManager = manager; }
+    void SetPreviewRenderer(IPreviewRenderer* renderer) { m_previewRenderer = renderer; }
+
+private:
 
     // Performance stats
     PerformanceStats m_stats;

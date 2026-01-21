@@ -4,6 +4,8 @@
 #include "PCGGraphEditor.hpp"
 #include <memory>
 #include <string>
+#include <vector>
+#include <cstdint>
 #include <glm/glm.hpp>
 
 /**
@@ -116,6 +118,20 @@ private:
     void RenderDataSourcesPanel();
     void RenderGenerationPanel();
     void RenderPropertiesPanel();
+    void RenderFileDialogs();
+
+    // Generation
+    void GenerateEntireWorld();
+
+    // Terrain data (chunked/streaming) - defined early for use in function declarations
+    struct TerrainChunk {
+        double centerLat;
+        double centerLon;
+        int tileSize;
+        std::vector<float> heights;
+        bool isGenerated = false;
+        bool needsRegeneration = false;
+    };
 
     // Terrain generation
     void GenerateTerrain();
@@ -130,6 +146,18 @@ private:
     // Coordinate conversion
     glm::vec3 LatLongToWorld(double latitude, double longitude, float elevation = 0.0f);
     void WorldToLatLong(const glm::vec3& world, double& latitude, double& longitude);
+
+    // Chunk management
+    void GenerateChunkTerrain(TerrainChunk& chunk);
+    TerrainChunk* FindChunkAt(double latitude, double longitude);
+
+    // Export
+    void ExportRegion(double lat, double lon, int radiusTiles, const std::string& path);
+
+    // Real-world data queries
+    float GetRealWorldElevation(double latitude, double longitude);
+    float GetRoadDistance(double latitude, double longitude);
+    float GetBuildingDistance(double latitude, double longitude);
 
     // State
     bool m_initialized = false;
@@ -146,22 +174,42 @@ private:
     float m_cameraAltitude = 1000.0f;  // Meters above terrain
     float m_cameraZoom = 1.0f;
 
-    // Terrain data (chunked/streaming)
-    struct TerrainChunk {
-        double centerLat;
-        double centerLon;
-        int tileSize;
-        std::vector<float> heights;
-        bool isGenerated = false;
-        bool needsRegeneration = false;
-    };
+    // Loaded chunks
     std::vector<TerrainChunk> m_loadedChunks;
 
-    // Real-world data
+    // Real-world data flags
     bool m_hasElevationData = false;
     bool m_hasRoadData = false;
     bool m_hasBuildingData = false;
     bool m_hasBiomeData = false;
+
+    // Elevation data
+    std::vector<float> m_elevationData;
+    int m_elevationWidth = 0;
+    int m_elevationHeight = 0;
+    struct { double minLat, maxLat, minLon, maxLon; } m_elevationBounds = {0, 0, 0, 0};
+
+    // Road data
+    struct RoadSegment {
+        double startLat, startLon;
+        double endLat, endLon;
+        int roadType;  // 0=path, 1=residential, 2=highway
+    };
+    std::vector<RoadSegment> m_roadSegments;
+
+    // Building data
+    struct BuildingFootprint {
+        double centerLat, centerLon;
+        float radius;
+        float height;
+    };
+    std::vector<BuildingFootprint> m_buildingFootprints;
+
+    // Biome data
+    std::vector<uint8_t> m_biomeData;
+    int m_biomeWidth = 0;
+    int m_biomeHeight = 0;
+    struct { double minLat, maxLat, minLon, maxLon; } m_biomeBounds = {0, 0, 0, 0};
 
     // UI state
     bool m_showPCGEditor = false;
@@ -169,6 +217,17 @@ private:
     bool m_showDataSources = true;
     bool m_showGeneration = true;
     bool m_showProperties = true;
+
+    // Dialog state
+    bool m_showOpenDialog = false;
+    bool m_showSaveDialog = false;
+    bool m_showExportDialog = false;
+    bool m_showImportDialog = false;
+    bool m_showWorldPropertiesDialog = false;
+    bool m_showLoadPCGDialog = false;
+    bool m_showSavePCGDialog = false;
+    char m_dialogPathBuffer[512] = "";
+    char m_exportPathBuffer[512] = "";
 
     // Generation settings
     bool m_useRealWorldElevation = false;

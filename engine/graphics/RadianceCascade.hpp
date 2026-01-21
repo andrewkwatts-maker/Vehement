@@ -164,6 +164,8 @@ private:
     void UpdateCascadeOrigin(const glm::vec3& cameraPosition);
     void UpdateProbes(CascadeLevel& cascade, int maxProbes);
     void PropagateLevel(int level);
+    void PropagateLevelCPU(int level);
+    bool LoadPropagationShader();
     glm::ivec3 WorldToGrid(const glm::vec3& worldPos, const CascadeLevel& cascade) const;
     glm::vec3 GridToWorld(const glm::ivec3& gridPos, const CascadeLevel& cascade) const;
     int GetProbeIndex(const glm::ivec3& gridPos, const CascadeLevel& cascade) const;
@@ -185,6 +187,7 @@ private:
     bool m_initialized = false;
     bool m_enabled = true;
     float m_time = 0.0f;
+    int m_frameIndex = 0;
 };
 
 } // namespace Nova

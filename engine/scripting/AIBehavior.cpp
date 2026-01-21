@@ -285,15 +285,21 @@ void AIStateMachine::AddTransition(const StateTransition& transition) {
 void AIStateMachine::ForceTransition(const std::string& toState) {
     if (!HasState(toState)) return;
 
-    uint32_t entityId = 0;  // TODO: Track entity ID
+    // Use tracked entity ID and blackboard if available
+    // These are set during Update() calls or via SetEntityId()/SetBlackboard()
     Blackboard tempBlackboard;
+    Blackboard& blackboard = m_blackboard ? *m_blackboard : tempBlackboard;
 
-    ExitState(entityId, tempBlackboard, m_currentState);
+    ExitState(m_entityId, blackboard, m_currentState);
     m_currentState = toState;
-    EnterState(entityId, tempBlackboard, m_currentState);
+    EnterState(m_entityId, blackboard, m_currentState);
 }
 
 void AIStateMachine::Update(uint32_t entityId, Blackboard& blackboard, float deltaTime) {
+    // Track entity ID and blackboard for ForceTransition support
+    m_entityId = entityId;
+    m_blackboard = &blackboard;
+
     if (m_currentState.empty()) {
         if (!m_initialState.empty()) {
             m_currentState = m_initialState;

@@ -162,9 +162,26 @@ private:
         return current != defaultVal;
     }
 
+    // Audio system interface
+    class IAudioSystem {
+    public:
+        virtual ~IAudioSystem() = default;
+        virtual void SetMasterVolume(float volume) = 0;
+        virtual void SetMusicVolume(float volume) = 0;
+        virtual void SetSFXVolume(float volume) = 0;
+        virtual void SetAmbientVolume(float volume) = 0;
+        virtual void SetVoiceVolume(float volume) = 0;
+    };
+
     // Systems
     Nova::InputManager* m_inputManager = nullptr;
     Nova::Window* m_window = nullptr;
+    IAudioSystem* m_audioSystem = nullptr;
+
+public:
+    void SetAudioSystem(IAudioSystem* audioSystem) { m_audioSystem = audioSystem; }
+
+private:
 
     // UI State
     SettingsTab m_currentTab = SettingsTab::Input;

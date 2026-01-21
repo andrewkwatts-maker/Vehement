@@ -1,10 +1,12 @@
 #include "ModelImporter.hpp"
+#include "../animation/Skeleton.hpp"
 #include <fstream>
 #include <sstream>
 #include <cmath>
 #include <algorithm>
 #include <filesystem>
 #include <queue>
+#include <set>
 #include <unordered_set>
 
 namespace fs = std::filesystem;

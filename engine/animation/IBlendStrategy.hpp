@@ -715,7 +715,7 @@ public:
         Sample sample;
         sample.position = position;
         sample.clip = clip;
-        sample.clipId = clip ? "" : "";  // TODO: Get name from clip
+        sample.clipId = clip ? clip->GetName() : "";
         m_samples.push_back(sample);
         m_dirty = true;
         return m_samples.size() - 1;

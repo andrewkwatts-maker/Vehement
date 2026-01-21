@@ -6,6 +6,10 @@
 #include <functional>
 #include <memory>
 
+namespace Nova {
+    class AudioSource;
+}
+
 namespace Vehement {
 namespace RTS {
 namespace Campaign {
@@ -218,6 +222,14 @@ private:
 
     // Flags
     std::map<std::string, bool> m_flags;
+
+    // Dialog tree storage (for ID-based lookup)
+    std::map<std::string, std::unique_ptr<DialogTree>> m_dialogTrees;
+
+    // Voiceover audio
+    std::shared_ptr<Nova::AudioSource> m_voiceoverSource;
+    float m_transitionTimer = 0.0f;
+    float m_transitionDuration = 0.3f;
 
     // Callbacks
     std::function<void(const DialogTree&)> m_onDialogStart;

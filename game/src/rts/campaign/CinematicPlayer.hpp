@@ -5,6 +5,12 @@
 #include <memory>
 #include <queue>
 #include <functional>
+#include <vector>
+
+// Forward declarations
+namespace Nova {
+    class AudioSource;
+}
 
 namespace Vehement {
 namespace RTS {
@@ -151,6 +157,7 @@ private:
 
     // Current playback
     Cinematic* m_currentCinematic = nullptr;
+    std::unique_ptr<Cinematic> m_loadedCinematic;  // Owned cinematic from file load
     std::queue<Cinematic*> m_queue;
     float m_playbackTime = 0.0f;
 
@@ -179,6 +186,9 @@ private:
     float m_voiceVolume = 1.0f;
     float m_musicVolume = 0.8f;
     float m_sfxVolume = 1.0f;
+    bool m_wasGameAudioMuted = false;
+    std::shared_ptr<Nova::AudioSource> m_currentVoiceover;
+    std::vector<std::shared_ptr<Nova::AudioSource>> m_activeSfx;
 
     // Callbacks
     std::function<void()> m_onStart;

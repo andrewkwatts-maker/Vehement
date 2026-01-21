@@ -9,11 +9,15 @@
 #include "engine/procedural/ProcGenGraph.hpp"
 #include "engine/procedural/ProcGenNodes.hpp"
 #include "engine/terrain/SDFTerrain.hpp"
+#include "engine/scripting/visual/VisualScriptingCore.hpp"
 #include "graphics/Shader.hpp"
 #include "graphics/Mesh.hpp"
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 #include <fstream>
 #include <memory>
+#include <unordered_map>
+#include <any>
 
 namespace Nova {
 
@@ -378,12 +382,87 @@ private:
 
         if (erosionConfig.contains("hydraulic") && erosionConfig["hydraulic"]["enabled"].get<bool>()) {
             spdlog::info("Applying hydraulic erosion...");
-            // TODO: Execute HydraulicErosionNode
+
+            // Create and configure hydraulic erosion node
+            auto hydraulicNode = std::make_shared<ProcGen::HydraulicErosionNode>();
+
+            // Set input heightmap
+            auto heightmapPort = hydraulicNode->GetInputPort("heightmap");
+            if (heightmapPort) {
+                heightmapPort->SetValue(std::any(m_heightmap));
+            }
+
+            // Configure erosion parameters from JSON
+            auto hydraulicParams = erosionConfig["hydraulic"];
+            if (auto port = hydraulicNode->GetInputPort("iterations")) {
+                port->SetValue(std::any(hydraulicParams.value("iterations", 50000)));
+            }
+            if (auto port = hydraulicNode->GetInputPort("rainAmount")) {
+                port->SetValue(std::any(hydraulicParams.value("rain_amount", 0.01f)));
+            }
+            if (auto port = hydraulicNode->GetInputPort("evaporation")) {
+                port->SetValue(std::any(hydraulicParams.value("evaporation", 0.02f)));
+            }
+            if (auto port = hydraulicNode->GetInputPort("sedimentCapacity")) {
+                port->SetValue(std::any(hydraulicParams.value("sediment_capacity", 4.0f)));
+            }
+            if (auto port = hydraulicNode->GetInputPort("erosionStrength")) {
+                port->SetValue(std::any(hydraulicParams.value("erosion_strength", 0.3f)));
+            }
+            if (auto port = hydraulicNode->GetInputPort("depositionStrength")) {
+                port->SetValue(std::any(hydraulicParams.value("deposition_strength", 0.3f)));
+            }
+
+            // Execute erosion
+            VisualScript::ExecutionContext context;
+            hydraulicNode->Execute(context);
+
+            // Retrieve eroded heightmap
+            if (auto outputPort = hydraulicNode->GetOutputPort("erodedHeightmap")) {
+                try {
+                    m_heightmap = std::any_cast<std::shared_ptr<ProcGen::HeightmapData>>(outputPort->GetValue());
+                } catch (const std::bad_any_cast&) {
+                    spdlog::warn("Failed to retrieve eroded heightmap from hydraulic erosion node");
+                }
+            }
         }
 
         if (erosionConfig.contains("thermal") && erosionConfig["thermal"]["enabled"].get<bool>()) {
             spdlog::info("Applying thermal erosion...");
-            // TODO: Execute ThermalErosionNode
+
+            // Create and configure thermal erosion node
+            auto thermalNode = std::make_shared<ProcGen::ThermalErosionNode>();
+
+            // Set input heightmap
+            auto heightmapPort = thermalNode->GetInputPort("heightmap");
+            if (heightmapPort) {
+                heightmapPort->SetValue(std::any(m_heightmap));
+            }
+
+            // Configure erosion parameters from JSON
+            auto thermalParams = erosionConfig["thermal"];
+            if (auto port = thermalNode->GetInputPort("iterations")) {
+                port->SetValue(std::any(thermalParams.value("iterations", 100)));
+            }
+            if (auto port = thermalNode->GetInputPort("talusAngle")) {
+                port->SetValue(std::any(thermalParams.value("talus_angle", 0.6f)));
+            }
+            if (auto port = thermalNode->GetInputPort("strength")) {
+                port->SetValue(std::any(thermalParams.value("strength", 0.4f)));
+            }
+
+            // Execute erosion
+            VisualScript::ExecutionContext context;
+            thermalNode->Execute(context);
+
+            // Retrieve eroded heightmap
+            if (auto outputPort = thermalNode->GetOutputPort("erodedHeightmap")) {
+                try {
+                    m_heightmap = std::any_cast<std::shared_ptr<ProcGen::HeightmapData>>(outputPort->GetValue());
+                } catch (const std::bad_any_cast&) {
+                    spdlog::warn("Failed to retrieve eroded heightmap from thermal erosion node");
+                }
+            }
         }
     }
 
@@ -491,9 +570,89 @@ private:
      * @brief Create rendering resources (shaders, meshes)
      */
     void CreateRenderingResources(const nlohmann::json& config) {
-        // Load terrain shader (would be a separate .glsl file in production)
+        // Load terrain shader from files
         m_terrainShader = std::make_shared<Shader>();
-        // TODO: Load shader from file
+        const std::string shaderBasePath = "game/assets/shaders/terrain/";
+        if (!m_terrainShader->Load(shaderBasePath + "terrain.vert", shaderBasePath + "terrain.frag")) {
+            spdlog::warn("Failed to load terrain shader from files, using fallback embedded shader");
+
+            // Fallback: use embedded simple terrain shader
+            const char* vertexSource = R"(
+                #version 450 core
+                layout(location = 0) in vec3 a_Position;
+                layout(location = 1) in vec3 a_Normal;
+                layout(location = 2) in vec2 a_TexCoord;
+
+                uniform mat4 u_View;
+                uniform mat4 u_Projection;
+
+                out vec3 v_WorldPos;
+                out vec3 v_Normal;
+                out vec2 v_TexCoord;
+
+                void main() {
+                    v_WorldPos = a_Position;
+                    v_Normal = a_Normal;
+                    v_TexCoord = a_TexCoord;
+                    gl_Position = u_Projection * u_View * vec4(a_Position, 1.0);
+                }
+            )";
+
+            const char* fragmentSource = R"(
+                #version 450 core
+                in vec3 v_WorldPos;
+                in vec3 v_Normal;
+                in vec2 v_TexCoord;
+
+                uniform vec3 u_CameraPos;
+                uniform vec3 u_LightDirection;
+                uniform vec3 u_LightColor;
+                uniform float u_AmbientStrength;
+                uniform vec3 u_AmbientColor;
+                uniform vec3 u_FogColor;
+                uniform float u_FogDensity;
+                uniform float u_DesaturationAmount;
+
+                out vec4 FragColor;
+
+                void main() {
+                    // Basic terrain coloring based on height and slope
+                    vec3 normal = normalize(v_Normal);
+                    float slope = 1.0 - normal.y;
+                    float height = v_WorldPos.y;
+
+                    // Terrain color gradient
+                    vec3 grassColor = vec3(0.3, 0.5, 0.2);
+                    vec3 rockColor = vec3(0.5, 0.45, 0.4);
+                    vec3 snowColor = vec3(0.95, 0.95, 0.98);
+
+                    vec3 baseColor = mix(grassColor, rockColor, smoothstep(0.3, 0.7, slope));
+                    baseColor = mix(baseColor, snowColor, smoothstep(40.0, 50.0, height));
+
+                    // Lighting
+                    float NdotL = max(dot(normal, normalize(-u_LightDirection)), 0.0);
+                    vec3 diffuse = NdotL * u_LightColor;
+                    vec3 ambient = u_AmbientStrength * u_AmbientColor;
+
+                    vec3 color = baseColor * (ambient + diffuse);
+
+                    // Atmospheric fog
+                    float dist = length(v_WorldPos - u_CameraPos);
+                    float fogFactor = 1.0 - exp(-u_FogDensity * dist * 0.001);
+                    color = mix(color, u_FogColor, fogFactor);
+
+                    // Distance desaturation
+                    float luminance = dot(color, vec3(0.299, 0.587, 0.114));
+                    color = mix(color, vec3(luminance), fogFactor * u_DesaturationAmount);
+
+                    FragColor = vec4(color, 1.0);
+                }
+            )";
+
+            if (!m_terrainShader->LoadFromSource(vertexSource, fragmentSource)) {
+                spdlog::error("Failed to compile fallback terrain shader");
+            }
+        }
 
         // Create terrain mesh from heightmap
         m_terrainMesh = CreateTerrainMesh();
@@ -588,15 +747,80 @@ private:
             }
         }
 
-        // Create mesh (implementation depends on your Mesh class)
+        // Create mesh and upload to GPU
         auto mesh = std::make_shared<Mesh>();
-        // TODO: Upload vertices and indices to GPU
+
+        // Calculate vertex count and index count
+        size_t vertexCount = static_cast<size_t>(m_resolution) * m_resolution;
+        size_t indexCount = indices.size();
+
+        // Upload vertices and indices to GPU using CreateFromRaw
+        // Vertex format: position (3 floats) + normal (3 floats) + texcoord (2 floats) = 8 floats per vertex
+        mesh->CreateFromRaw(
+            vertices.data(),
+            vertexCount,
+            indices.data(),
+            indexCount,
+            true,   // hasNormals
+            true,   // hasTexCoords
+            false   // hasTangents
+        );
+
+        spdlog::info("Created terrain mesh with {} vertices and {} indices", vertexCount, indexCount);
         return mesh;
     }
 
     void RenderFeatures() {
-        // Render rocks, vegetation, water, etc.
-        // TODO: Implement feature rendering
+        // Render rocks using instanced rendering
+        if (m_rockShader && m_rockMesh && !m_rockTransforms.empty()) {
+            m_rockShader->Bind();
+            m_rockShader->SetVec3("u_LightDirection", m_lightDirection);
+            m_rockShader->SetVec3("u_LightColor", m_lightColor);
+            m_rockShader->SetFloat("u_AmbientStrength", m_ambientStrength);
+            m_rockShader->SetVec3("u_AmbientColor", m_ambientColor);
+            m_rockShader->SetVec3("u_FogColor", m_fogColor);
+            m_rockShader->SetFloat("u_FogDensity", m_fogDensity);
+
+            // Render each rock instance
+            for (const auto& transform : m_rockTransforms) {
+                m_rockShader->SetMat4("u_Model", transform);
+                m_rockMesh->Draw();
+            }
+        }
+
+        // Render vegetation (grass, trees, bushes)
+        if (m_vegetationShader && !m_vegetationInstances.empty()) {
+            m_vegetationShader->Bind();
+            m_vegetationShader->SetVec3("u_LightDirection", m_lightDirection);
+            m_vegetationShader->SetVec3("u_LightColor", m_lightColor);
+            m_vegetationShader->SetFloat("u_AmbientStrength", m_ambientStrength);
+            m_vegetationShader->SetVec3("u_AmbientColor", m_ambientColor);
+            m_vegetationShader->SetVec3("u_FogColor", m_fogColor);
+            m_vegetationShader->SetFloat("u_FogDensity", m_fogDensity);
+
+            // Render vegetation by type
+            for (const auto& [mesh, transforms] : m_vegetationInstances) {
+                if (mesh && !transforms.empty()) {
+                    for (const auto& transform : transforms) {
+                        m_vegetationShader->SetMat4("u_Model", transform);
+                        mesh->Draw();
+                    }
+                }
+            }
+        }
+
+        // Render water plane with special water shader
+        if (m_waterShader && m_waterMesh) {
+            m_waterShader->Bind();
+            m_waterShader->SetFloat("u_WaterLevel", m_waterLevel);
+            m_waterShader->SetVec3("u_WaterColor", m_waterColor);
+            m_waterShader->SetFloat("u_WaterOpacity", m_waterOpacity);
+            m_waterShader->SetVec3("u_LightDirection", m_lightDirection);
+            m_waterShader->SetVec3("u_LightColor", m_lightColor);
+            m_waterShader->SetVec3("u_FogColor", m_fogColor);
+            m_waterShader->SetFloat("u_FogDensity", m_fogDensity);
+            m_waterMesh->Draw();
+        }
     }
 
 private:
@@ -627,6 +851,20 @@ private:
     glm::vec3 m_fogColor;
     float m_fogDensity;
     float m_desaturationAmount;
+
+    // Feature rendering resources
+    std::shared_ptr<Shader> m_rockShader;
+    std::shared_ptr<Mesh> m_rockMesh;
+    std::vector<glm::mat4> m_rockTransforms;
+
+    std::shared_ptr<Shader> m_vegetationShader;
+    std::unordered_map<std::shared_ptr<Mesh>, std::vector<glm::mat4>> m_vegetationInstances;
+
+    std::shared_ptr<Shader> m_waterShader;
+    std::shared_ptr<Mesh> m_waterMesh;
+    float m_waterLevel = 0.0f;
+    glm::vec3 m_waterColor = glm::vec3(0.2f, 0.4f, 0.6f);
+    float m_waterOpacity = 0.7f;
 };
 
 } // namespace Nova

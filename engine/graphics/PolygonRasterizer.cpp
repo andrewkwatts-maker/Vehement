@@ -1,5 +1,5 @@
 #include "PolygonRasterizer.hpp"
-#include "core/Camera.hpp"
+#include "scene/Camera.hpp"
 #include "scene/Scene.hpp"
 #include "graphics/Shader.hpp"
 #include "graphics/Texture.hpp"
@@ -8,6 +8,7 @@
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 #include <algorithm>
+#include <cmath>
 
 namespace Nova {
 
@@ -283,7 +284,23 @@ void PolygonRasterizer::RenderOpaque() {
 }
 
 void PolygonRasterizer::RenderTransparent() {
-    // TODO: Sort transparent batches back-to-front
+    // Sort transparent batches back-to-front by distance to camera
+    // This is essential for correct alpha blending (painter's algorithm)
+    std::sort(m_transparentBatches.begin(), m_transparentBatches.end(),
+        [this](const PolygonBatch& a, const PolygonBatch& b) {
+            // Calculate distance from camera to each batch's center
+            // For instanced batches, use the first transform as representative
+            glm::vec3 posA = glm::vec3(a.transforms[0][3]); // Extract position from transform
+            glm::vec3 posB = glm::vec3(b.transforms[0][3]);
+
+            // Calculate squared distance to camera (avoid sqrt for performance)
+            float distA = glm::dot(posA - m_cameraPosition, posA - m_cameraPosition);
+            float distB = glm::dot(posB - m_cameraPosition, posB - m_cameraPosition);
+
+            // Sort back-to-front (farther objects first)
+            return distA > distB;
+        });
+
     for (const auto& batch : m_transparentBatches) {
         RenderBatch(batch);
     }
@@ -314,7 +331,10 @@ void PolygonRasterizer::RenderShadows() {
 
             // Set model matrix
             if (batch.isInstanced) {
-                // TODO: Handle instanced rendering in shadow pass
+                // For shadow pass, we skip true GPU instancing for simplicity
+                // This ensures shadow maps work correctly without needing a separate instanced shadow shader
+                // Performance note: For large instance counts, consider implementing instanced shadow rendering
+                // by uploading transforms to a UBO/SSBO and using gl_InstanceID in the shadow vertex shader
                 for (const auto& transform : batch.transforms) {
                     m_shadowShader->SetMat4("u_model", transform);
                     batch.mesh->Draw();
@@ -339,21 +359,76 @@ void PolygonRasterizer::SetupShadowCascades(const Camera& camera) {
     // Directional light direction (sun)
     glm::vec3 lightDir = glm::normalize(glm::vec3(-0.3f, -1.0f, -0.2f));
 
+    // Get camera properties for frustum calculation
+    const glm::mat4& viewMatrix = camera.GetView();
+    const glm::mat4& projMatrix = camera.GetProjection();
+    glm::mat4 invViewProj = glm::inverse(projMatrix * viewMatrix);
+
     for (int i = 0; i < m_settings.cascadeCount; ++i) {
         float nearPlane = (i == 0) ? camera.GetNearPlane() : m_cascadeSplits[i - 1];
         float farPlane = m_cascadeSplits[i];
 
-        // Calculate frustum corners for this cascade
-        // TODO: Implement proper cascade frustum calculation
-        // For now, use a simple orthographic projection
+        // Calculate cascade frustum split in normalized depth (0-1)
+        float nearSplit = (nearPlane - camera.GetNearPlane()) /
+                         (camera.GetFarPlane() - camera.GetNearPlane());
+        float farSplit = (farPlane - camera.GetNearPlane()) /
+                        (camera.GetFarPlane() - camera.GetNearPlane());
 
-        float cascadeSize = 50.0f * (i + 1);
-        glm::mat4 lightView = glm::lookAt(m_cameraPosition - lightDir * 50.0f,
-                                         m_cameraPosition,
-                                         glm::vec3(0, 1, 0));
-        glm::mat4 lightProj = glm::ortho(-cascadeSize, cascadeSize,
-                                        -cascadeSize, cascadeSize,
-                                        0.1f, 200.0f);
+        // Calculate 8 frustum corners in world space for this cascade
+        // NDC corners: x,y in [-1,1], z from nearSplit to farSplit
+        glm::vec3 frustumCorners[8] = {
+            // Near plane corners
+            glm::vec3(-1.0f, -1.0f, nearSplit * 2.0f - 1.0f),
+            glm::vec3( 1.0f, -1.0f, nearSplit * 2.0f - 1.0f),
+            glm::vec3( 1.0f,  1.0f, nearSplit * 2.0f - 1.0f),
+            glm::vec3(-1.0f,  1.0f, nearSplit * 2.0f - 1.0f),
+            // Far plane corners
+            glm::vec3(-1.0f, -1.0f, farSplit * 2.0f - 1.0f),
+            glm::vec3( 1.0f, -1.0f, farSplit * 2.0f - 1.0f),
+            glm::vec3( 1.0f,  1.0f, farSplit * 2.0f - 1.0f),
+            glm::vec3(-1.0f,  1.0f, farSplit * 2.0f - 1.0f),
+        };
+
+        // Transform frustum corners to world space
+        glm::vec3 frustumCenter(0.0f);
+        for (int j = 0; j < 8; ++j) {
+            glm::vec4 worldCorner = invViewProj * glm::vec4(frustumCorners[j], 1.0f);
+            frustumCorners[j] = glm::vec3(worldCorner) / worldCorner.w;
+            frustumCenter += frustumCorners[j];
+        }
+        frustumCenter /= 8.0f;
+
+        // Calculate the radius of the bounding sphere for this cascade
+        float radius = 0.0f;
+        for (int j = 0; j < 8; ++j) {
+            float distance = glm::length(frustumCorners[j] - frustumCenter);
+            radius = glm::max(radius, distance);
+        }
+
+        // Round up to reduce shadow swimming when camera moves
+        radius = std::ceil(radius * 16.0f) / 16.0f;
+
+        // Create light view matrix looking at frustum center
+        glm::vec3 lightPos = frustumCenter - lightDir * radius;
+        glm::mat4 lightView = glm::lookAt(lightPos, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Create orthographic projection that encompasses the cascade frustum
+        glm::mat4 lightProj = glm::ortho(-radius, radius, -radius, radius,
+                                        0.1f, radius * 2.0f + 10.0f);
+
+        // Stabilize shadow map to reduce shimmer when camera rotates
+        // by snapping to texel boundaries
+        glm::mat4 shadowMatrix = lightProj * lightView;
+        glm::vec4 shadowOrigin = shadowMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        shadowOrigin *= static_cast<float>(m_settings.shadowMapSize) / 2.0f;
+
+        glm::vec4 roundedOrigin = glm::round(shadowOrigin);
+        glm::vec4 roundOffset = roundedOrigin - shadowOrigin;
+        roundOffset *= 2.0f / static_cast<float>(m_settings.shadowMapSize);
+        roundOffset.z = 0.0f;
+        roundOffset.w = 0.0f;
+
+        lightProj[3] += roundOffset;
 
         m_shadowViewProj[i] = lightProj * lightView;
     }
@@ -405,8 +480,37 @@ void PolygonRasterizer::RenderBatch(const PolygonBatch& batch) {
 }
 
 void PolygonRasterizer::SetupMaterial(const Material& material) {
-    // TODO: Setup material textures and properties
-    // This is a placeholder - actual implementation depends on Material class interface
+    // Bind the material which sets up its shader, textures, and uniforms
+    material.Bind();
+
+    // Get the currently bound shader to set additional PBR uniforms
+    // The Material::Bind() already activates the shader, so we can set uniforms directly
+    auto shader = material.GetShaderPtr();
+    if (!shader || !shader->IsValid()) {
+        return;
+    }
+
+    // Bind shadow maps to texture units 8-11 (reserving 0-7 for material textures)
+    // This allows the fragment shader to sample shadows from all cascades
+    for (int i = 0; i < m_settings.cascadeCount && i < static_cast<int>(m_shadowMapFramebuffers.size()); ++i) {
+        auto shadowDepth = m_shadowMapFramebuffers[i]->GetDepthAttachment();
+        if (shadowDepth) {
+            glActiveTexture(GL_TEXTURE8 + i);
+            glBindTexture(GL_TEXTURE_2D, shadowDepth->GetID());
+
+            // Set sampler uniform for this cascade
+            std::string samplerName = "u_shadowMap[" + std::to_string(i) + "]";
+            shader->SetInt(samplerName, 8 + i);
+        }
+    }
+
+    // Set cascade split distances for shader to select correct cascade
+    shader->SetFloatArray("u_cascadeSplits", m_cascadeSplits.data(),
+                         static_cast<int>(m_cascadeSplits.size()));
+    shader->SetInt("u_cascadeCount", m_settings.cascadeCount);
+
+    // Reset active texture to unit 0 for subsequent material texture bindings
+    glActiveTexture(GL_TEXTURE0);
 }
 
 bool PolygonRasterizer::CreateInstanceBuffers() {

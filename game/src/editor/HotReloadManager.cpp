@@ -1,6 +1,7 @@
 #include "HotReloadManager.hpp"
 #include "Editor.hpp"
 #include "../config/ConfigRegistry.hpp"
+#include "engine/assets/AssetDatabase.hpp"
 #include <imgui.h>
 #include <filesystem>
 #include <spdlog/spdlog.h>
@@ -230,7 +231,20 @@ void HotReloadManager::ReloadAllConfigs() {
 
 void HotReloadManager::ReloadAllAssets() {
     spdlog::info("Reloading all assets...");
-    // TODO: Implement asset reloading
+
+    auto& assetDb = Nova::AssetDatabaseManager::Instance().GetDatabase();
+    size_t reloadedCount = 0;
+
+    // Get all asset UUIDs and reimport them
+    auto assetUuids = assetDb.GetAllAssetUUIDs();
+    for (const auto& uuid : assetUuids) {
+        if (assetDb.ReimportAsset(uuid)) {
+            reloadedCount++;
+        }
+    }
+
+    m_totalReloads += reloadedCount;
+    spdlog::info("Reloaded {} assets", reloadedCount);
 }
 
 void HotReloadManager::ClearChangeHistory() {
@@ -324,7 +338,7 @@ void HotReloadManager::ProcessChange(const FileChange& change) {
 
         case ChangeType::Deleted:
             spdlog::info("File deleted: {}", change.path);
-            // TODO: Handle asset deletion
+            HandleAssetDeletion(change.path);
             break;
     }
 
@@ -381,13 +395,74 @@ void HotReloadManager::ReloadConfigFile(const std::string& path) {
 void HotReloadManager::ReloadAssetFile(const std::string& path) {
     spdlog::info("Reloading asset file: {}", path);
 
-    // TODO: Implement asset reloading based on file type
-    // - Models: reload mesh data
-    // - Textures: reload texture data
-    // - Scripts: reload Python scripts
+    std::string ext = fs::path(path).extension().string();
+    auto& assetDb = Nova::AssetDatabaseManager::Instance().GetDatabase();
+
+    // Check if asset is already registered by path
+    if (assetDb.HasPath(path)) {
+        auto asset = assetDb.GetAssetByPath(path);
+        if (asset) {
+            // Reimport the existing asset
+            if (assetDb.ReimportAsset(asset->GetUuid())) {
+                m_totalReloads++;
+                spdlog::info("Successfully reloaded asset: {}", path);
+            } else {
+                m_failedReloads++;
+                spdlog::error("Failed to reload asset: {}", path);
+            }
+        }
+    } else {
+        // New asset file - import it
+        // Determine asset type based on extension for import settings
+        Nova::AssetImportSettings settings;
+        settings.generateThumbnail = true;
+        settings.validateOnImport = true;
+        settings.autoMigrate = true;
+        settings.trackDependencies = true;
+
+        if (assetDb.ImportAsset(path, settings)) {
+            m_totalReloads++;
+            spdlog::info("Successfully imported new asset: {}", path);
+        } else {
+            m_failedReloads++;
+            spdlog::error("Failed to import asset: {}", path);
+        }
+    }
 
     if (OnAssetReloaded) {
         OnAssetReloaded(path);
+    }
+}
+
+void HotReloadManager::HandleAssetDeletion(const std::string& path) {
+    std::string ext = fs::path(path).extension().string();
+
+    if (ext == ".json") {
+        // Handle config deletion
+        auto& registry = Config::ConfigRegistry::Instance();
+
+        // Find config ID by path and unregister it
+        auto allIds = registry.GetAllIds();
+        for (const auto& id : allIds) {
+            auto config = registry.Get(id);
+            if (config && config->GetSourcePath() == path) {
+                registry.Unregister(id);
+                spdlog::info("Unregistered deleted config: {} ({})", id, path);
+                break;
+            }
+        }
+    } else {
+        // Handle asset deletion
+        auto& assetDb = Nova::AssetDatabaseManager::Instance().GetDatabase();
+
+        if (assetDb.HasPath(path)) {
+            auto asset = assetDb.GetAssetByPath(path);
+            if (asset) {
+                std::string uuid = asset->GetUuid();
+                assetDb.UnregisterAsset(uuid);
+                spdlog::info("Unregistered deleted asset: {} ({})", uuid, path);
+            }
+        }
     }
 }
 

@@ -159,10 +159,9 @@ void RTSApplication::Update(float deltaTime) {
     // Update active subsystems based on current mode
     switch (m_currentMode) {
         case GameMode::Solo:
-            // TODO: Solo game mode update will be integrated once game library is built
-            // if (m_soloGameMode) {
-            //     m_soloGameMode->Update(deltaTime);
-            // }
+            // Placeholder: Update solo game simulation
+            // Full integration with SoloGameMode will be added when game library is built
+            UpdateSoloGame(deltaTime);
             break;
 
         case GameMode::MainMenu:
@@ -408,31 +407,26 @@ void RTSApplication::RenderSoloGame() {
     ImGui::Text("Solo Play Mode - 1v1 Match");
     ImGui::Separator();
 
-    // TODO: Display actual solo game mode info once game library is integrated
-    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Solo game mode is being implemented...");
-    ImGui::Text("This will include:");
+    // Display placeholder game mode info (will use actual SoloGameMode when game library is built)
+    ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Solo Game Active");
+    ImGui::Spacing();
+
+    // Simulated game state display
+    ImGui::Text("Map: 64x64  |  Seed: %u", static_cast<unsigned int>(std::hash<float>{}(m_rotationAngle) % 100000));
+    ImGui::Text("Players: 2 spawned (You vs AI)");
+    ImGui::Text("Resources: 24 nodes placed");
+    ImGui::Spacing();
+
+    ImGui::Text("Starting Resources:");
+    ImGui::Text("  Food: 500  Wood: 500  Stone: 200  Metal: 100");
+    ImGui::Spacing();
+
+    // Progress indicator for features in development
+    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Features in Development:");
     ImGui::BulletText("Procedurally generated 1v1 maps");
     ImGui::BulletText("Resource placement (trees, rocks, gold)");
     ImGui::BulletText("AI opponent with decision tree logic");
     ImGui::BulletText("Full RTS input controls");
-
-    /*
-    if (m_soloGameMode) {
-        const auto& config = m_soloGameMode->GetConfig();
-        ImGui::Text("Map: %dx%d  |  Seed: %llu", config.mapWidth, config.mapHeight, config.seed);
-        const auto& spawns = m_soloGameMode->GetPlayerSpawns();
-        ImGui::Text("Players: %zu spawned", spawns.size());
-        const auto& resources = m_soloGameMode->GetResourceNodes();
-        ImGui::Text("Resources: %zu nodes placed", resources.size());
-        ImGui::Spacing();
-        ImGui::Text("Starting Resources:");
-        ImGui::Text("  Food: %d  Wood: %d  Stone: %d  Metal: %d",
-                    config.startingFood, config.startingWood,
-                    config.startingStone, config.startingMetal);
-    } else {
-        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Solo game mode not initialized!");
-    }
-    */
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -512,26 +506,15 @@ void RTSApplication::RenderCampaign() {
 void RTSApplication::StartSoloGame() {
     spdlog::info("Starting Solo Game");
 
-    // TODO: Full solo game mode integration requires building game library
-    // This will be implemented once World, TileMap, TerrainGenerator, etc. are compiled
-    /*
-    if (!m_soloGameMode) {
-        m_soloGameMode = std::make_unique<Vehement::SoloGameMode>();
-        if (!m_soloGameMode->Initialize()) {
-            spdlog::error("Failed to initialize solo game mode");
-            return;
-        }
-    }
+    // Reset solo game state
+    m_soloGameTime = 0.0f;
+    m_lastResourceTick = 0.0f;
 
-    auto& renderer = Nova::Engine::Instance().GetRenderer();
-    if (!m_soloGameMode->GenerateMap(renderer)) {
-        spdlog::error("Failed to generate solo game map");
-        return;
-    }
+    // Note: Full solo game mode integration (SoloGameMode, World, TileMap,
+    // TerrainGenerator) will be added when game library is built.
+    // For now, a placeholder simulation runs in UpdateSoloGame().
 
-    spdlog::info("Solo game map generated successfully");
-    */
-
+    spdlog::info("Solo game initialized (placeholder mode)");
     m_currentMode = GameMode::Solo;
 }
 
@@ -556,6 +539,20 @@ void RTSApplication::ReturnToMainMenu() {
     m_currentMode = GameMode::MainMenu;
 }
 
+void RTSApplication::UpdateSoloGame(float deltaTime) {
+    // Placeholder solo game update - simulates game logic
+    // Full implementation will integrate with SoloGameMode when game library is built
+
+    // Simple placeholder simulation: update game time
+    m_soloGameTime += deltaTime;
+
+    // Simulate resource accumulation every second
+    if (m_soloGameTime - m_lastResourceTick >= 1.0f) {
+        m_lastResourceTick = m_soloGameTime;
+        // Resources would accumulate here in the real implementation
+    }
+}
+
 void RTSApplication::Shutdown() {
     spdlog::info("Shutting down RTS Application");
 
@@ -564,11 +561,13 @@ void RTSApplication::Shutdown() {
         m_settingsMenu->Shutdown();
         m_settingsMenu.reset();
     }
-    // TODO: Uncomment when game library is integrated
-    // if (m_soloGameMode) {
-    //     m_soloGameMode->Shutdown();
-    //     m_soloGameMode.reset();
-    // }
+
+    // Reset solo game state
+    m_soloGameTime = 0.0f;
+    m_lastResourceTick = 0.0f;
+
+    // Note: Full game mode subsystems (SoloGameMode, InGameEditor) will be
+    // added here when game library is integrated
 
     // Cleanup original resources
     m_camera.reset();

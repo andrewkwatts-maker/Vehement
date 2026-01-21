@@ -5,6 +5,7 @@
 #include <memory>
 #include <functional>
 #include <cstdint>
+#include <limits>
 #include <glm/glm.hpp>
 
 namespace Nova {
@@ -52,10 +53,36 @@ struct AABB {
         max = glm::max(max, other.max);
     }
 
-    AABB Transform(const glm::mat4& matrix) const;
+    inline AABB Transform(const glm::mat4& matrix) const {
+        // Transform all 8 corners and compute new AABB
+        glm::vec3 corners[8] = {
+            glm::vec3(min.x, min.y, min.z),
+            glm::vec3(max.x, min.y, min.z),
+            glm::vec3(min.x, max.y, min.z),
+            glm::vec3(max.x, max.y, min.z),
+            glm::vec3(min.x, min.y, max.z),
+            glm::vec3(max.x, min.y, max.z),
+            glm::vec3(min.x, max.y, max.z),
+            glm::vec3(max.x, max.y, max.z)
+        };
 
-    static AABB FromMesh(const Mesh& mesh);
-    static AABB Merge(const AABB& a, const AABB& b);
+        AABB result;
+        result.min = glm::vec3(std::numeric_limits<float>::max());
+        result.max = glm::vec3(std::numeric_limits<float>::lowest());
+
+        for (int i = 0; i < 8; i++) {
+            glm::vec4 transformed = matrix * glm::vec4(corners[i], 1.0f);
+            glm::vec3 point = glm::vec3(transformed) / transformed.w;
+            result.min = glm::min(result.min, point);
+            result.max = glm::max(result.max, point);
+        }
+
+        return result;
+    }
+
+    static inline AABB Merge(const AABB& a, const AABB& b) {
+        return AABB(glm::min(a.min, b.min), glm::max(a.max, b.max));
+    }
 };
 
 /**
@@ -114,15 +141,125 @@ struct Frustum {
 
     std::array<Plane, PlaneCount> planes;
 
-    void ExtractFromMatrix(const glm::mat4& viewProjection);
+    inline void ExtractFromMatrix(const glm::mat4& vp) {
+        // Extract frustum planes from view-projection matrix
+        planes[Left].normal.x = vp[0][3] + vp[0][0];
+        planes[Left].normal.y = vp[1][3] + vp[1][0];
+        planes[Left].normal.z = vp[2][3] + vp[2][0];
+        planes[Left].distance = vp[3][3] + vp[3][0];
 
-    bool ContainsPoint(const glm::vec3& point) const;
-    bool ContainsSphere(const glm::vec3& center, float radius) const;
-    bool ContainsAABB(const AABB& aabb) const;
+        planes[Right].normal.x = vp[0][3] - vp[0][0];
+        planes[Right].normal.y = vp[1][3] - vp[1][0];
+        planes[Right].normal.z = vp[2][3] - vp[2][0];
+        planes[Right].distance = vp[3][3] - vp[3][0];
+
+        planes[Bottom].normal.x = vp[0][3] + vp[0][1];
+        planes[Bottom].normal.y = vp[1][3] + vp[1][1];
+        planes[Bottom].normal.z = vp[2][3] + vp[2][1];
+        planes[Bottom].distance = vp[3][3] + vp[3][1];
+
+        planes[Top].normal.x = vp[0][3] - vp[0][1];
+        planes[Top].normal.y = vp[1][3] - vp[1][1];
+        planes[Top].normal.z = vp[2][3] - vp[2][1];
+        planes[Top].distance = vp[3][3] - vp[3][1];
+
+        planes[Near].normal.x = vp[0][3] + vp[0][2];
+        planes[Near].normal.y = vp[1][3] + vp[1][2];
+        planes[Near].normal.z = vp[2][3] + vp[2][2];
+        planes[Near].distance = vp[3][3] + vp[3][2];
+
+        planes[Far].normal.x = vp[0][3] - vp[0][2];
+        planes[Far].normal.y = vp[1][3] - vp[1][2];
+        planes[Far].normal.z = vp[2][3] - vp[2][2];
+        planes[Far].distance = vp[3][3] - vp[3][2];
+
+        for (auto& plane : planes) {
+            plane.Normalize();
+        }
+    }
+
+    inline bool ContainsPoint(const glm::vec3& point) const {
+        for (const auto& plane : planes) {
+            if (plane.DistanceToPoint(point) < 0.0f) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    inline bool ContainsSphere(const glm::vec3& center, float radius) const {
+        for (const auto& plane : planes) {
+            if (plane.DistanceToPoint(center) < -radius) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    inline bool ContainsAABB(const AABB& aabb) const {
+        for (const auto& plane : planes) {
+            glm::vec3 positive = aabb.min;
+            if (plane.normal.x >= 0) positive.x = aabb.max.x;
+            if (plane.normal.y >= 0) positive.y = aabb.max.y;
+            if (plane.normal.z >= 0) positive.z = aabb.max.z;
+
+            if (plane.DistanceToPoint(positive) < 0.0f) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     // Returns: -1 = outside, 0 = intersecting, 1 = inside
-    int TestAABB(const AABB& aabb) const;
-    int TestSphere(const glm::vec3& center, float radius) const;
+    inline int TestAABB(const AABB& aabb) const {
+        int result = 1;
+
+        for (const auto& plane : planes) {
+            glm::vec3 positive = aabb.min;
+            glm::vec3 negative = aabb.max;
+
+            if (plane.normal.x >= 0) {
+                positive.x = aabb.max.x;
+                negative.x = aabb.min.x;
+            }
+            if (plane.normal.y >= 0) {
+                positive.y = aabb.max.y;
+                negative.y = aabb.min.y;
+            }
+            if (plane.normal.z >= 0) {
+                positive.z = aabb.max.z;
+                negative.z = aabb.min.z;
+            }
+
+            if (plane.DistanceToPoint(positive) < 0.0f) {
+                return -1;
+            }
+
+            if (plane.DistanceToPoint(negative) < 0.0f) {
+                result = 0;
+            }
+        }
+
+        return result;
+    }
+
+    inline int TestSphere(const glm::vec3& center, float radius) const {
+        int result = 1;
+
+        for (const auto& plane : planes) {
+            float distance = plane.DistanceToPoint(center);
+
+            if (distance < -radius) {
+                return -1;
+            }
+
+            if (distance < radius) {
+                result = 0;
+            }
+        }
+
+        return result;
+    }
 };
 
 /**

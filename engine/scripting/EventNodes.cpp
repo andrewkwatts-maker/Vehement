@@ -4,6 +4,7 @@
  */
 
 #include "EventNodes.hpp"
+#include "../core/json_wrapper.hpp"
 #include <sstream>
 #include <algorithm>
 
@@ -192,8 +193,29 @@ std::string EventNode::ToJson() const {
     return ss.str();
 }
 
-void EventNode::FromJson(const std::string& json) {
-    // TODO: Parse JSON
+void EventNode::FromJson(const std::string& jsonStr) {
+    auto parsed = Nova::Json::TryParse(jsonStr);
+    if (!parsed) {
+        return;
+    }
+
+    const auto& json = *parsed;
+
+    // Parse node ID
+    if (json.contains("id") && json["id"].is_number_unsigned()) {
+        m_id = json["id"].get<EventNodeId>();
+    }
+
+    // Parse position
+    if (json.contains("position") && json["position"].is_array() && json["position"].size() >= 2) {
+        m_position.x = json["position"][0].get<float>();
+        m_position.y = json["position"][1].get<float>();
+    }
+
+    // Parse display name if provided
+    if (json.contains("displayName") && json["displayName"].is_string()) {
+        m_displayName = json["displayName"].get<std::string>();
+    }
 }
 
 // ============================================================================
@@ -1142,8 +1164,77 @@ std::string EventGraph::ToJson() const {
     return ss.str();
 }
 
-void EventGraph::FromJson(const std::string& json) {
-    // TODO: Parse JSON
+void EventGraph::FromJson(const std::string& jsonStr) {
+    auto parsed = Nova::Json::TryParse(jsonStr);
+    if (!parsed) {
+        return;
+    }
+
+    const auto& json = *parsed;
+
+    // Parse graph name
+    if (json.contains("name") && json["name"].is_string()) {
+        m_name = json["name"].get<std::string>();
+    }
+
+    // Parse nodes
+    if (json.contains("nodes") && json["nodes"].is_array()) {
+        auto& factory = EventNodeFactory::Instance();
+
+        for (const auto& nodeJson : json["nodes"]) {
+            if (!nodeJson.contains("type") || !nodeJson["type"].is_string()) {
+                continue;
+            }
+
+            std::string typeName = nodeJson["type"].get<std::string>();
+            auto node = factory.Create(typeName);
+            if (node) {
+                // Restore node state from JSON
+                node->FromJson(nodeJson.dump());
+                m_nodes.push_back(node);
+            }
+        }
+    }
+
+    // Parse connections (if present)
+    if (json.contains("connections") && json["connections"].is_array()) {
+        for (const auto& connJson : json["connections"]) {
+            if (connJson.contains("fromNode") && connJson.contains("fromPin") &&
+                connJson.contains("toNode") && connJson.contains("toPin")) {
+                EventNodeId fromNode = connJson["fromNode"].get<EventNodeId>();
+                std::string fromPin = connJson["fromPin"].get<std::string>();
+                EventNodeId toNode = connJson["toNode"].get<EventNodeId>();
+                std::string toPin = connJson["toPin"].get<std::string>();
+                Connect(fromNode, fromPin, toNode, toPin);
+            }
+        }
+    }
+
+    // Parse variables (if present)
+    if (json.contains("variables") && json["variables"].is_object()) {
+        for (auto it = json["variables"].begin(); it != json["variables"].end(); ++it) {
+            const std::string& varName = it.key();
+            const auto& varInfo = it.value();
+
+            if (varInfo.contains("type") && varInfo["type"].is_string()) {
+                std::string typeStr = varInfo["type"].get<std::string>();
+                EventDataType type = EventDataType::Any;
+
+                // Map type string to EventDataType
+                if (typeStr == "bool") type = EventDataType::Bool;
+                else if (typeStr == "int") type = EventDataType::Int;
+                else if (typeStr == "float") type = EventDataType::Float;
+                else if (typeStr == "str") type = EventDataType::String;
+                else if (typeStr == "Vec2") type = EventDataType::Vec2;
+                else if (typeStr == "Vec3") type = EventDataType::Vec3;
+                else if (typeStr == "Vec4") type = EventDataType::Vec4;
+                else if (typeStr == "Entity") type = EventDataType::Entity;
+                else if (typeStr == "List[Entity]") type = EventDataType::EntityList;
+
+                AddVariable(varName, type);
+            }
+        }
+    }
 }
 
 // ============================================================================

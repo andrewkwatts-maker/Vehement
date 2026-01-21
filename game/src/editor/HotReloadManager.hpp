@@ -84,6 +84,7 @@ private:
 
     void ReloadConfigFile(const std::string& path);
     void ReloadAssetFile(const std::string& path);
+    void HandleAssetDeletion(const std::string& path);
 
     Editor* m_editor = nullptr;
 

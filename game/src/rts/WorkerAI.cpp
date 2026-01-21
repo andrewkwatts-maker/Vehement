@@ -137,8 +137,19 @@ void WorkerAI::UpdateWorkerAI(Worker* worker, float deltaTime, EntityManager& en
 
     // Check basic needs
     if (m_autoSeekFood && ShouldSeekFood(worker)) {
-        // TODO: Find food source and eat
-        // For now, workers will handle this through the needs system
+        // Find food source (home or designated food storage) and eat
+        if (worker->HasHome() && worker->GetWorkerState() != WorkerState::Moving) {
+            WorkTask eatTask;
+            eatTask.type = WorkTask::Type::GoHome;
+            eatTask.targetPosition = worker->GetHomePosition();
+            eatTask.duration = 5.0f; // Time to eat
+            worker->AssignTask(eatTask);
+            worker->SetWorkerState(WorkerState::Moving);
+
+            if (navGraph) {
+                worker->RequestPath(worker->GetHomePosition(), *navGraph);
+            }
+        }
     }
 
     if (m_autoSeekRest && ShouldSeekRest(worker)) {
@@ -274,7 +285,18 @@ void WorkerAI::ProcessCommandQueue(Worker* worker, Nova::Graph* navGraph) {
         case WorkerCommand::Type::Attack: {
             // Only guards can attack
             if (worker->GetJob() == WorkerJob::Guard) {
-                // TODO: Implement attack behavior
+                WorkTask attackTask;
+                attackTask.type = WorkTask::Type::Patrol; // Use patrol as combat task
+                attackTask.targetPosition = cmd.position;
+                attackTask.targetEntity = cmd.targetEntity;
+                attackTask.duration = 0.0f; // Continuous until target is dead
+                attackTask.repeating = false;
+                worker->AssignTask(attackTask);
+                worker->SetWorkerState(WorkerState::Moving);
+
+                if (navGraph) {
+                    worker->RequestPath(cmd.position, *navGraph);
+                }
             }
             break;
         }
@@ -336,8 +358,38 @@ void WorkerAI::UpdateAutoAssignment(float /*deltaTime*/, Population& population)
     for (Worker* worker : idleWorkers) {
         if (!worker || worker->HasJob()) continue;
 
-        // TODO: Find available jobs and assign
-        // This would integrate with a building/job system
+        // Find available jobs by checking worker skills and available workplaces
+        // Priority: Gatherer > Builder > Farmer > Crafter
+        const auto& skills = worker->GetSkills();
+
+        // Assign based on highest skill level
+        WorkerJob bestJob = WorkerJob::None;
+        float bestSkill = 0.0f;
+
+        if (skills.gathering > bestSkill) {
+            bestSkill = skills.gathering;
+            bestJob = WorkerJob::Gatherer;
+        }
+        if (skills.building > bestSkill) {
+            bestSkill = skills.building;
+            bestJob = WorkerJob::Builder;
+        }
+        if (skills.farming > bestSkill) {
+            bestSkill = skills.farming;
+            bestJob = WorkerJob::Farmer;
+        }
+        if (skills.crafting > bestSkill) {
+            bestSkill = skills.crafting;
+            bestJob = WorkerJob::Crafter;
+        }
+
+        // If no skill stands out, assign as Gatherer by default
+        if (bestJob == WorkerJob::None) {
+            bestJob = WorkerJob::Gatherer;
+        }
+
+        // Assign the job (workplace assignment would be handled by building system)
+        worker->SetJob(bestJob);
     }
 }
 
@@ -683,7 +735,13 @@ AIDecision WorkerAI::EvaluateWorker(Worker* worker, EntityManager& entityManager
     if (worker->GetNeeds().IsStarving()) {
         decision.urgency = 0.85f;
         decision.reason = "Starving - seek food";
-        // TODO: Set target to food source
+        // Set target to food source (home where food is distributed)
+        if (worker->HasHome()) {
+            decision.newState = WorkerState::Moving;
+            decision.targetPosition = worker->GetHomePosition();
+            decision.task.type = WorkTask::Type::GoHome;
+            decision.task.targetPosition = worker->GetHomePosition();
+        }
         return decision;
     }
 

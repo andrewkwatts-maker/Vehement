@@ -39,6 +39,11 @@ public:
                         const std::string& geometrySource = "");
 
     /**
+     * @brief Load compute shader from source string
+     */
+    bool LoadComputeShader(const std::string& computeSource);
+
+    /**
      * @brief Reload the shader from disk
      */
     bool Reload();

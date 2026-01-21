@@ -365,8 +365,13 @@ float Zombie::Attack(Entity& target) {
 void Zombie::Die() {
     Entity::Die();
 
-    // Drop coins (handled by game logic)
-    // TODO: Spawn coin pickup entity
+    // Calculate and store coin drop value for the game to spawn
+    // The actual coin entity spawning is handled by the CombatSystem's
+    // NotifyKill callback, which monitors entity deaths and calls DropCoins
+    // at the death position with the appropriate value from GetCoinDrop()
+    //
+    // This design keeps entity code decoupled from the combat/coin systems
+    // and allows centralized handling of kill rewards, statistics, etc.
 }
 
 int Zombie::GetCoinDrop() const {

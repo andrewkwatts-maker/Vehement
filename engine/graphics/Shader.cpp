@@ -133,6 +133,37 @@ bool Shader::LoadFromSource(const std::string& vertexSource, const std::string& 
     return true;
 }
 
+bool Shader::LoadComputeShader(const std::string& computeSource) {
+    Cleanup();
+    m_uniformCache.clear();
+
+    // Compile compute shader
+    uint32_t computeShader = CompileShader(GL_COMPUTE_SHADER, computeSource);
+    if (computeShader == 0) {
+        return false;
+    }
+
+    // Create and link program
+    m_programID = glCreateProgram();
+    glAttachShader(m_programID, computeShader);
+    glLinkProgram(m_programID);
+
+    int success;
+    glGetProgramiv(m_programID, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(m_programID, 512, nullptr, infoLog);
+        spdlog::error("Compute shader program linking failed: {}", infoLog);
+        glDeleteProgram(m_programID);
+        m_programID = 0;
+        glDeleteShader(computeShader);
+        return false;
+    }
+
+    glDeleteShader(computeShader);
+    return true;
+}
+
 bool Shader::Reload() {
     if (m_vertexPath.empty() || m_fragmentPath.empty()) {
         spdlog::warn("Cannot reload shader without file paths");

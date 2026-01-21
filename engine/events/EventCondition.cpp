@@ -1,5 +1,7 @@
 #include "EventCondition.hpp"
+#ifdef NOVA_SCRIPTING_ENABLED
 #include "../scripting/PythonEngine.hpp"
+#endif
 #include <sstream>
 #include <algorithm>
 #include <cmath>
@@ -8,8 +10,10 @@
 namespace Nova {
 namespace Events {
 
+#ifdef NOVA_SCRIPTING_ENABLED
 // Static member initialization
 Nova::Scripting::PythonEngine* EventConditionEvaluator::s_pythonEngine = nullptr;
+#endif
 
 // ============================================================================
 // Comparator Utilities
@@ -235,9 +239,11 @@ EventCondition EventCondition::FromJson(const json& j) {
 // EventConditionEvaluator
 // ============================================================================
 
+#ifdef NOVA_SCRIPTING_ENABLED
 void EventConditionEvaluator::SetPythonEngine(Nova::Scripting::PythonEngine* engine) {
     s_pythonEngine = engine;
 }
+#endif
 
 bool EventConditionEvaluator::Evaluate(
     const EventCondition& condition,
@@ -283,16 +289,18 @@ bool EventConditionEvaluator::Evaluate(
     }
 
     // Check Python condition
+#ifdef NOVA_SCRIPTING_ENABLED
     if (result && condition.UsesPython() && s_pythonEngine) {
         if (!condition.pythonFunction.empty()) {
-            auto pyResult = s_pythonEngine->CallFunction<bool>(
+            auto pyResult = s_pythonEngine->CallFunction(
                 condition.pythonModule,
                 condition.pythonFunction,
                 eventType, sourceType, sourceId
             );
             if (pyResult.success) {
-                auto val = pyResult.GetValue<bool>();
-                result = val.value_or(false);
+                // Try to extract boolean result from return value
+                result = pyResult.returnValue.index() == 0 ?
+                    std::get<bool>(pyResult.returnValue) : false;
             }
         } else if (!condition.pythonCondition.empty()) {
             auto pyResult = s_pythonEngine->ExecuteString(
@@ -304,6 +312,7 @@ bool EventConditionEvaluator::Evaluate(
             result = pyResult.success;
         }
     }
+#endif
 
     // Evaluate AND conditions
     if (result && !condition.andConditions.empty()) {

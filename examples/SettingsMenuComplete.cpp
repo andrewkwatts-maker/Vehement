@@ -205,7 +205,7 @@ void SettingsMenuComplete::RenderMenuBar() {
             }
             if (ImGui::MenuItem("Export Report")) {
                 spdlog::info("Exporting settings report...");
-                // TODO: Implement report export
+                ExportSettingsReport();
             }
             ImGui::EndMenu();
         }
@@ -877,7 +877,12 @@ void SettingsMenuComplete::RenderSDFBrickCache() {
     ImGui::Spacing();
     if (ImGui::Button("Clear Cache")) {
         spdlog::info("Clearing SDF brick cache...");
-        // TODO: Call cache clear function
+        if (m_cacheManager) {
+            m_cacheManager->ClearBrickCache();
+            spdlog::info("SDF brick cache cleared successfully");
+        } else {
+            spdlog::warn("Cache manager not available");
+        }
     }
 
     SettingsUI::EndSettingGroup();
@@ -909,7 +914,12 @@ void SettingsMenuComplete::RenderShaderCache() {
     ImGui::Spacing();
     if (ImGui::Button("Rebuild All Shaders")) {
         spdlog::info("Rebuilding all shaders...");
-        // TODO: Call shader rebuild function
+        if (m_shaderManager) {
+            m_shaderManager->RebuildAllShaders();
+            spdlog::info("Shader rebuild initiated");
+        } else {
+            spdlog::warn("Shader manager not available");
+        }
     }
 
     SettingsUI::EndSettingGroup();
@@ -1053,7 +1063,7 @@ void SettingsMenuComplete::RenderCurrentStats() {
     ImGui::Spacing();
     if (ImGui::Button("Export Report")) {
         spdlog::info("Exporting performance report...");
-        // TODO: Implement report export
+        ExportPerformanceReport();
     }
 
     SettingsUI::EndSettingGroup();
@@ -1218,16 +1228,93 @@ void SettingsMenuComplete::ShowValidationErrors() {
 }
 
 void SettingsMenuComplete::UpdatePreview() {
-    // TODO: Implement preview system
+    if (!m_showPreview) return;
+
+    // Update preview render target with current settings
+    m_previewNeedsUpdate = true;
+
+    // Apply temporary settings to preview renderer
+    if (m_previewRenderer) {
+        m_previewRenderer->SetResolutionScale(m_currentSettings.rendering.resolutionScale / 100.0f);
+        m_previewRenderer->SetGIMethod(m_currentSettings.lighting.giMethod);
+        m_previewRenderer->SetShadowQuality(m_currentSettings.lighting.shadowAtlasSize.x);
+        m_previewRenderer->SetMSAASamples(m_currentSettings.rendering.msaaSamples);
+        m_previewRenderer->RequestUpdate();
+    }
 }
 
 void SettingsMenuComplete::RenderPreviewPanel() {
-    // TODO: Implement preview rendering
+    if (!m_showPreview) return;
+
+    ImGui::Begin("Settings Preview", &m_showPreview, ImGuiWindowFlags_NoCollapse);
+
+    ImGui::Text("Live Preview");
+    ImGui::Separator();
+
+    // Display preview render target
+    if (m_previewRenderer && m_previewRenderer->GetTexture()) {
+        ImVec2 previewSize(320, 180);
+        ImGui::Image(m_previewRenderer->GetTexture(), previewSize);
+    } else {
+        ImVec2 previewSize(320, 180);
+        ImGui::Dummy(previewSize);
+        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + 100, ImGui::GetCursorPosY() - 100));
+        ImGui::TextDisabled("Preview not available");
+    }
+
+    ImGui::Spacing();
+    ImGui::Text("Current Settings Summary:");
+    ImGui::BulletText("Resolution Scale: %d%%", m_currentSettings.rendering.resolutionScale);
+    ImGui::BulletText("GI Method: %s", GIMethodToString(m_currentSettings.lighting.giMethod));
+    ImGui::BulletText("Shadow Atlas: %dx%d", m_currentSettings.lighting.shadowAtlasSize.x, m_currentSettings.lighting.shadowAtlasSize.y);
+    ImGui::BulletText("MSAA: %dx", m_currentSettings.rendering.msaaSamples);
+
+    if (ImGui::Button("Refresh Preview")) {
+        UpdatePreview();
+    }
+
+    ImGui::End();
 }
 
 PerformanceImpact SettingsMenuComplete::EstimateImpact(const std::string& settingName) {
-    // Simple impact estimation
-    // TODO: More sophisticated impact analysis
+    // Impact estimation based on setting type and current values
+    if (settingName == "resolutionScale") {
+        if (m_currentSettings.rendering.resolutionScale > 150) return PerformanceImpact::High;
+        if (m_currentSettings.rendering.resolutionScale > 100) return PerformanceImpact::Medium;
+        return PerformanceImpact::Low;
+    }
+    if (settingName == "shadowAtlasSize") {
+        if (m_currentSettings.lighting.shadowAtlasSize.x >= 16384) return PerformanceImpact::High;
+        if (m_currentSettings.lighting.shadowAtlasSize.x >= 8192) return PerformanceImpact::Medium;
+        return PerformanceImpact::Low;
+    }
+    if (settingName == "giMethod") {
+        if (m_currentSettings.lighting.giMethod == GIMethod::ReSTIR_SVGF) return PerformanceImpact::High;
+        if (m_currentSettings.lighting.giMethod != GIMethod::None) return PerformanceImpact::Medium;
+        return PerformanceImpact::None;
+    }
+    if (settingName == "msaaSamples") {
+        if (m_currentSettings.rendering.msaaSamples >= 8) return PerformanceImpact::High;
+        if (m_currentSettings.rendering.msaaSamples >= 4) return PerformanceImpact::Medium;
+        return PerformanceImpact::Low;
+    }
+    if (settingName == "maxRaymarchSteps") {
+        if (m_currentSettings.rendering.maxRaymarchSteps > 300) return PerformanceImpact::High;
+        if (m_currentSettings.rendering.maxRaymarchSteps > 150) return PerformanceImpact::Medium;
+        return PerformanceImpact::Low;
+    }
+    if (settingName == "maxLights") {
+        if (m_currentSettings.lighting.maxLights > 500000) return PerformanceImpact::High;
+        if (m_currentSettings.lighting.maxLights > 100000) return PerformanceImpact::Medium;
+        return PerformanceImpact::Low;
+    }
+    if (settingName == "softShadowSamples") {
+        if (m_currentSettings.lighting.softShadowSamples > 32) return PerformanceImpact::High;
+        if (m_currentSettings.lighting.softShadowSamples > 16) return PerformanceImpact::Medium;
+        return PerformanceImpact::Low;
+    }
+
+    // Default to medium impact for unknown settings
     return PerformanceImpact::Medium;
 }
 
@@ -1280,6 +1367,135 @@ bool SettingsMenuComplete::RenderButton(const char* label, const char* tooltip) 
         ImGui::SetTooltip("%s", tooltip);
     }
     return clicked;
+}
+
+const char* SettingsMenuComplete::GIMethodToString(GIMethod method) {
+    switch (method) {
+        case GIMethod::None: return "None";
+        case GIMethod::ReSTIR: return "ReSTIR";
+        case GIMethod::SVGF: return "SVGF";
+        case GIMethod::ReSTIR_SVGF: return "ReSTIR+SVGF";
+        default: return "Unknown";
+    }
+}
+
+void SettingsMenuComplete::ExportSettingsReport() {
+    std::string report;
+    report += "=== Nova3D Settings Report ===\n\n";
+
+    // Rendering settings
+    report += "[Rendering]\n";
+    report += "Backend: " + std::string(RenderBackendToString(m_currentSettings.rendering.backend)) + "\n";
+    report += "Resolution Scale: " + std::to_string(m_currentSettings.rendering.resolutionScale) + "%\n";
+    report += "Target FPS: " + std::to_string(m_currentSettings.rendering.targetFPS) + "\n";
+    report += "Adaptive: " + std::string(m_currentSettings.rendering.enableAdaptive ? "Yes" : "No") + "\n";
+    report += "MSAA Samples: " + std::to_string(m_currentSettings.rendering.msaaSamples) + "\n";
+    report += "Shadow Cascades: " + std::to_string(m_currentSettings.rendering.shadowCascades) + "\n";
+    report += "Max Raymarch Steps: " + std::to_string(m_currentSettings.rendering.maxRaymarchSteps) + "\n\n";
+
+    // Lighting settings
+    report += "[Lighting]\n";
+    report += "GI Method: " + std::string(GIMethodToString(m_currentSettings.lighting.giMethod)) + "\n";
+    report += "Max Lights: " + std::to_string(m_currentSettings.lighting.maxLights) + "\n";
+    report += "Shadow Atlas: " + std::to_string(m_currentSettings.lighting.shadowAtlasSize.x) + "x" +
+              std::to_string(m_currentSettings.lighting.shadowAtlasSize.y) + "\n";
+    report += "Soft Shadow Samples: " + std::to_string(m_currentSettings.lighting.softShadowSamples) + "\n\n";
+
+    // Materials settings
+    report += "[Materials]\n";
+    report += "Max Texture Size: " + std::to_string(m_currentSettings.materials.maxTextureSize) + "\n";
+    report += "Anisotropic Filtering: " + std::to_string(m_currentSettings.materials.anisotropicFiltering) + "x\n";
+    report += "IOR: " + std::string(m_currentSettings.materials.enableIOR ? "Yes" : "No") + "\n";
+    report += "Dispersion: " + std::string(m_currentSettings.materials.enableDispersion ? "Yes" : "No") + "\n\n";
+
+    // LOD settings
+    report += "[LOD]\n";
+    report += "Quality: " + std::string(LODQualityToString(m_currentSettings.lod.quality)) + "\n";
+    report += "Bias: " + std::to_string(m_currentSettings.lod.lodBias) + "\n";
+    report += "Culling Distance: " + std::to_string(m_currentSettings.lod.cullingDistance) + "m\n\n";
+
+    // Performance settings
+    report += "[Performance]\n";
+    report += "Worker Threads: " + std::to_string(m_currentSettings.performance.workerThreads) + "\n";
+    report += "GPU Memory Limit: " + std::to_string(m_currentSettings.performance.gpuMemoryLimitMB) + " MB\n";
+    report += "Streaming Budget: " + std::to_string(m_currentSettings.performance.streamingBudgetMB) + " MB\n";
+
+    // Save to file
+    std::string filepath = "settings_report.txt";
+    FILE* file = fopen(filepath.c_str(), "w");
+    if (file) {
+        fprintf(file, "%s", report.c_str());
+        fclose(file);
+        spdlog::info("Settings report exported to: {}", filepath);
+    } else {
+        spdlog::error("Failed to export settings report to: {}", filepath);
+    }
+}
+
+void SettingsMenuComplete::ExportPerformanceReport() {
+    std::string report;
+    report += "=== Nova3D Performance Report ===\n\n";
+
+    // Current performance stats
+    report += "[Current Stats]\n";
+    report += "FPS: " + std::to_string(m_stats.fps) + "\n";
+    report += "Frame Time: " + std::to_string(m_stats.frameTimeMs) + " ms\n";
+    report += "Culling Time: " + std::to_string(m_stats.cullingTimeMs) + " ms\n";
+    report += "Lighting Time: " + std::to_string(m_stats.lightingTimeMs) + " ms\n";
+    report += "Rendering Time: " + std::to_string(m_stats.renderingTimeMs) + " ms\n\n";
+
+    // Memory usage
+    report += "[Memory]\n";
+    report += "GPU Memory Used: " + std::to_string(m_stats.gpuMemoryUsedMB) + " MB\n";
+    report += "GPU Memory Total: " + std::to_string(m_stats.gpuMemoryTotalMB) + " MB\n";
+    report += "Cache Memory Used: " + std::to_string(m_stats.cacheMemoryUsedMB) + " MB\n";
+    report += "Cache Memory Total: " + std::to_string(m_stats.cacheMemoryTotalMB) + " MB\n\n";
+
+    // Cache stats
+    report += "[Cache]\n";
+    report += "Bricks Cached: " + std::to_string(m_stats.bricksCached) + " / " + std::to_string(m_stats.bricksTotal) + "\n";
+    report += "Deduplication Savings: " + std::to_string(m_stats.dedupSavingsPercent) + "%\n\n";
+
+    // Configuration that affects performance
+    report += "[Performance-Affecting Settings]\n";
+    report += "Resolution Scale: " + std::to_string(m_currentSettings.rendering.resolutionScale) + "%\n";
+    report += "GI Method: " + std::string(GIMethodToString(m_currentSettings.lighting.giMethod)) + "\n";
+    report += "Shadow Atlas: " + std::to_string(m_currentSettings.lighting.shadowAtlasSize.x) + "x" +
+              std::to_string(m_currentSettings.lighting.shadowAtlasSize.y) + "\n";
+    report += "Max Lights: " + std::to_string(m_currentSettings.lighting.maxLights) + "\n";
+    report += "Worker Threads: " + std::to_string(m_currentSettings.performance.workerThreads) + "\n";
+
+    // Save to file
+    std::string filepath = "performance_report.txt";
+    FILE* file = fopen(filepath.c_str(), "w");
+    if (file) {
+        fprintf(file, "%s", report.c_str());
+        fclose(file);
+        spdlog::info("Performance report exported to: {}", filepath);
+    } else {
+        spdlog::error("Failed to export performance report to: {}", filepath);
+    }
+}
+
+const char* SettingsMenuComplete::RenderBackendToString(RenderBackend backend) {
+    switch (backend) {
+        case RenderBackend::SDFFirst: return "SDF-First";
+        case RenderBackend::PolygonOnly: return "Polygon Only";
+        case RenderBackend::GPUDriven: return "GPU-Driven";
+        case RenderBackend::PathTracing: return "Path Tracing";
+        default: return "Unknown";
+    }
+}
+
+const char* SettingsMenuComplete::LODQualityToString(LODQuality quality) {
+    switch (quality) {
+        case LODQuality::VeryLow: return "Very Low";
+        case LODQuality::Low: return "Low";
+        case LODQuality::Medium: return "Medium";
+        case LODQuality::High: return "High";
+        case LODQuality::VeryHigh: return "Very High";
+        default: return "Unknown";
+    }
 }
 
 } // namespace Nova

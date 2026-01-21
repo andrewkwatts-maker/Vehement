@@ -3,6 +3,11 @@
 #include <spdlog/spdlog.h>
 #include <cmath>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#include <GL/gl.h>
+
 namespace Vehement {
 
 // Shader sources for brush preview rendering
@@ -287,13 +292,36 @@ void TerrainBrushRenderer::RenderOutline(const std::vector<glm::vec3>& vertices,
     m_outlineShader->SetMat4("u_Model", model);
     m_outlineShader->SetVec4("u_Color", color);
 
-    // TODO: Actually render the line vertices
-    // This would require creating a VAO/VBO and drawing as GL_LINE_STRIP
-    // For now, this is a placeholder showing the structure
+    // Create dynamic VAO/VBO for the outline vertices
+    uint32_t vao = 0, vbo = 0;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_DYNAMIC_DRAW);
+
+    // Position attribute (location = 0)
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
+
+    // Set line width
+    glLineWidth(m_config.outlineThickness);
+
+    // Draw as line strip
+    glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(vertices.size()));
+
+    // Reset line width
+    glLineWidth(1.0f);
+
+    // Cleanup
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
 }
 
 void TerrainBrushRenderer::RenderGradient(const std::vector<glm::vec3>& vertices, const std::vector<glm::vec4>& colors, const glm::vec3& position, const glm::mat4& viewProjection) {
-    if (vertices.empty() || !m_gradientShader) {
+    if (vertices.empty() || colors.empty() || vertices.size() != colors.size() || !m_gradientShader) {
         return;
     }
 
@@ -303,7 +331,45 @@ void TerrainBrushRenderer::RenderGradient(const std::vector<glm::vec3>& vertices
     m_gradientShader->SetMat4("u_ViewProjection", viewProjection);
     m_gradientShader->SetMat4("u_Model", model);
 
-    // TODO: Render gradient mesh with vertex colors
+    // Create dynamic VAO/VBOs for position and color data
+    uint32_t vao = 0, vboPos = 0, vboCol = 0;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vboPos);
+    glGenBuffers(1, &vboCol);
+
+    glBindVertexArray(vao);
+
+    // Position buffer (location = 0)
+    glBindBuffer(GL_ARRAY_BUFFER, vboPos);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
+
+    // Color buffer (location = 1)
+    glBindBuffer(GL_ARRAY_BUFFER, vboCol);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec4), colors.data(), GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), nullptr);
+
+    // Enable blending for transparency
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Disable depth writing but keep depth testing for proper layering
+    glDepthMask(GL_FALSE);
+
+    // Draw as triangles (gradient mesh is generated as triangles)
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
+
+    // Restore state
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+
+    // Cleanup
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &vboPos);
+    glDeleteBuffers(1, &vboCol);
+    glDeleteVertexArrays(1, &vao);
 }
 
 void TerrainBrushRenderer::RenderHeightPreview(const std::vector<glm::vec3>& vertices, const std::vector<glm::vec3>& normals, const glm::vec3& position, const glm::mat4& viewProjection) {
@@ -317,7 +383,68 @@ void TerrainBrushRenderer::RenderHeightPreview(const std::vector<glm::vec3>& ver
     m_previewShader->SetMat4("u_ViewProjection", viewProjection);
     m_previewShader->SetMat4("u_Model", model);
 
-    // TODO: Render preview mesh
+    // Generate vertex colors based on height for visualization
+    std::vector<glm::vec4> colors;
+    colors.reserve(vertices.size());
+
+    // Find height range for normalization
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
+    for (const auto& v : vertices) {
+        minY = std::min(minY, v.y);
+        maxY = std::max(maxY, v.y);
+    }
+    float heightRange = std::max(maxY - minY, 0.001f);
+
+    // Generate colors based on height (green at bottom, blue at top)
+    for (const auto& v : vertices) {
+        float t = (v.y - minY) / heightRange;
+        glm::vec4 color(
+            0.2f + t * 0.3f,      // R: slightly increase with height
+            0.7f - t * 0.3f,      // G: decrease with height
+            0.3f + t * 0.5f,      // B: increase with height
+            0.5f                   // Alpha: semi-transparent
+        );
+        colors.push_back(color);
+    }
+
+    // Create dynamic VAO/VBOs
+    uint32_t vao = 0, vboPos = 0, vboCol = 0;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vboPos);
+    glGenBuffers(1, &vboCol);
+
+    glBindVertexArray(vao);
+
+    // Position buffer (location = 0)
+    glBindBuffer(GL_ARRAY_BUFFER, vboPos);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
+
+    // Color buffer (location = 1)
+    glBindBuffer(GL_ARRAY_BUFFER, vboCol);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec4), colors.data(), GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), nullptr);
+
+    // Enable blending and polygon offset for wireframe-like preview
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // Draw preview mesh as wireframe
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
+
+    // Restore polygon mode and disable blending
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_BLEND);
+
+    // Cleanup
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &vboPos);
+    glDeleteBuffers(1, &vboCol);
+    glDeleteVertexArrays(1, &vao);
 }
 
 // =============================================================================

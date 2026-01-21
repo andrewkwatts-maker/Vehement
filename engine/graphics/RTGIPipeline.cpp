@@ -6,6 +6,7 @@
 #include <glad/gl.h>
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 
 namespace Nova {
 
@@ -127,8 +128,8 @@ void RTGIPipeline::Render(const Camera& camera,
                          uint32_t outputTexture) {
     if (!m_initialized) return;
 
-    // Start frame timing
-    float frameStartTime = 0.0f; // TODO: Use actual timer
+    // Start frame timing using high-resolution clock
+    auto frameStartTime = std::chrono::high_resolution_clock::now();
 
     // 1. ReSTIR Pass - Generate high-quality light samples
     if (m_restirEnabled && m_restir) {
@@ -153,6 +154,11 @@ void RTGIPipeline::Render(const Camera& camera,
                           outputTexture, GL_TEXTURE_2D, 0, 0, 0, 0,
                           m_width, m_height, 1);
     }
+
+    // Calculate elapsed time and store for statistics
+    auto frameEndTime = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float, std::milli> elapsed = frameEndTime - frameStartTime;
+    m_lastFrameTime = elapsed.count();
 
     // Update statistics
     UpdateStats();

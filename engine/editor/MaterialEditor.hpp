@@ -681,6 +681,38 @@ public:
     void RenderAssignmentPanel();
 
     // =========================================================================
+    // AI-Powered Material Features
+    // =========================================================================
+
+    /**
+     * @brief Show AI material generator panel
+     *
+     * Displays UI for generating PBR materials from reference images or
+     * procedural generation. Allows setting parameters and generating
+     * material variations.
+     */
+    void ShowAIMaterialGenerator();
+
+    /**
+     * @brief Generate a material from a reference image
+     *
+     * Uses AI to analyze a reference image and generate PBR material
+     * properties (albedo, roughness, metallic, normal map, etc.)
+     *
+     * @param imagePath Path to the reference image file
+     */
+    void GenerateMaterialFromImage(const std::string& imagePath);
+
+    /**
+     * @brief Suggest material improvements based on analysis
+     *
+     * Analyzes the currently selected material and provides AI-driven
+     * suggestions for improvements based on object type, physical
+     * properties, and visual appeal.
+     */
+    void SuggestMaterialImprovements();
+
+    // =========================================================================
     // Mixed Property UI Helpers
     // =========================================================================
 
@@ -802,6 +834,7 @@ private:
     int m_comparisonSourceIndex = 0;
     int m_comparisonTargetIndex = 1;
     bool m_showAdvancedProperties = false;
+    bool m_showAIMaterialGenerator = false;
 
     // Internal helpers
     void UpdatePropertyCache();

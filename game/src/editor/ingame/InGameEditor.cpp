@@ -130,7 +130,9 @@ void InGameEditor::ExitEditorMode() {
 
     // Prompt to save if unsaved changes
     if (m_hasUnsavedChanges) {
-        // TODO: Show save prompt dialog
+        m_showSavePromptDialog = true;
+        m_pendingExit = true;
+        return;
     }
 
     m_state = EditorState::Disabled;
@@ -209,6 +211,7 @@ void InGameEditor::Render() {
     if (m_showNewCampaignDialog) ShowNewCampaignDialog();
     if (m_showPublishDialog) ShowPublishDialog();
     if (m_showSettingsDialog) ShowSettingsDialog();
+    if (m_showSavePromptDialog) ShowSavePromptDialog();
 
     // Render active sub-editor
     switch (m_state) {
@@ -1137,6 +1140,69 @@ void InGameEditor::ShowSettingsDialog() {
 
         if (ImGui::Button("Close", ImVec2(120, 0))) {
             m_showSettingsDialog = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void InGameEditor::ShowSavePromptDialog() {
+    if (!ImGui::IsPopupOpen("Unsaved Changes")) {
+        ImGui::OpenPopup("Unsaved Changes");
+    }
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Unsaved Changes", &m_showSavePromptDialog,
+                                ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("You have unsaved changes.");
+        ImGui::Text("Do you want to save before exiting?");
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Save", ImVec2(100, 0))) {
+            SaveMap();
+            m_showSavePromptDialog = false;
+            ImGui::CloseCurrentPopup();
+
+            if (m_pendingExit) {
+                m_pendingExit = false;
+                m_hasUnsavedChanges = false;
+                m_state = EditorState::Disabled;
+                if (m_game) {
+                    m_game->SetPaused(false);
+                }
+                if (OnEditorExit) {
+                    OnEditorExit();
+                }
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Don't Save", ImVec2(100, 0))) {
+            m_showSavePromptDialog = false;
+            ImGui::CloseCurrentPopup();
+
+            if (m_pendingExit) {
+                m_pendingExit = false;
+                m_hasUnsavedChanges = false;
+                m_state = EditorState::Disabled;
+                if (m_game) {
+                    m_game->SetPaused(false);
+                }
+                if (OnEditorExit) {
+                    OnEditorExit();
+                }
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(100, 0))) {
+            m_showSavePromptDialog = false;
+            m_pendingExit = false;
             ImGui::CloseCurrentPopup();
         }
 

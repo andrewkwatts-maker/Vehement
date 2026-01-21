@@ -613,31 +613,118 @@ private:
 /**
  * @brief Convert Key enum to string name
  */
-const char* KeyToString(Key key) noexcept;
+inline const char* KeyToString(Key key) noexcept {
+    switch (key) {
+        case Key::Space: return "Space";
+        case Key::Apostrophe: return "'";
+        case Key::Comma: return ",";
+        case Key::Minus: return "-";
+        case Key::Period: return ".";
+        case Key::Slash: return "/";
+        case Key::Num0: return "0"; case Key::Num1: return "1"; case Key::Num2: return "2";
+        case Key::Num3: return "3"; case Key::Num4: return "4"; case Key::Num5: return "5";
+        case Key::Num6: return "6"; case Key::Num7: return "7"; case Key::Num8: return "8";
+        case Key::Num9: return "9";
+        case Key::Semicolon: return ";";
+        case Key::Equal: return "=";
+        case Key::A: return "A"; case Key::B: return "B"; case Key::C: return "C";
+        case Key::D: return "D"; case Key::E: return "E"; case Key::F: return "F";
+        case Key::G: return "G"; case Key::H: return "H"; case Key::I: return "I";
+        case Key::J: return "J"; case Key::K: return "K"; case Key::L: return "L";
+        case Key::M: return "M"; case Key::N: return "N"; case Key::O: return "O";
+        case Key::P: return "P"; case Key::Q: return "Q"; case Key::R: return "R";
+        case Key::S: return "S"; case Key::T: return "T"; case Key::U: return "U";
+        case Key::V: return "V"; case Key::W: return "W"; case Key::X: return "X";
+        case Key::Y: return "Y"; case Key::Z: return "Z";
+        case Key::LeftBracket: return "[";
+        case Key::Backslash: return "\\";
+        case Key::RightBracket: return "]";
+        case Key::GraveAccent: return "`";
+        case Key::Escape: return "Escape";
+        case Key::Enter: return "Enter";
+        case Key::Tab: return "Tab";
+        case Key::Backspace: return "Backspace";
+        case Key::Insert: return "Insert";
+        case Key::Delete: return "Delete";
+        case Key::Right: return "Right";
+        case Key::Left: return "Left";
+        case Key::Down: return "Down";
+        case Key::Up: return "Up";
+        case Key::PageUp: return "PageUp";
+        case Key::PageDown: return "PageDown";
+        case Key::Home: return "Home";
+        case Key::End: return "End";
+        case Key::CapsLock: return "CapsLock";
+        case Key::ScrollLock: return "ScrollLock";
+        case Key::NumLock: return "NumLock";
+        case Key::PrintScreen: return "PrintScreen";
+        case Key::Pause: return "Pause";
+        case Key::F1: return "F1"; case Key::F2: return "F2"; case Key::F3: return "F3";
+        case Key::F4: return "F4"; case Key::F5: return "F5"; case Key::F6: return "F6";
+        case Key::F7: return "F7"; case Key::F8: return "F8"; case Key::F9: return "F9";
+        case Key::F10: return "F10"; case Key::F11: return "F11"; case Key::F12: return "F12";
+        case Key::LeftShift: return "LeftShift";
+        case Key::LeftControl: return "LeftControl";
+        case Key::LeftAlt: return "LeftAlt";
+        case Key::LeftSuper: return "LeftSuper";
+        case Key::RightShift: return "RightShift";
+        case Key::RightControl: return "RightControl";
+        case Key::RightAlt: return "RightAlt";
+        case Key::RightSuper: return "RightSuper";
+        case Key::Menu: return "Menu";
+        default: return "Unknown";
+    }
+}
 
 /**
  * @brief Convert MouseButton to string name
  */
-const char* MouseButtonToString(MouseButton button) noexcept;
+inline const char* MouseButtonToString(MouseButton button) noexcept {
+    switch (button) {
+        case MouseButton::Left: return "Left";
+        case MouseButton::Right: return "Right";
+        case MouseButton::Middle: return "Middle";
+        case MouseButton::Button4: return "Button4";
+        case MouseButton::Button5: return "Button5";
+        case MouseButton::Button6: return "Button6";
+        case MouseButton::Button7: return "Button7";
+        case MouseButton::Button8: return "Button8";
+        default: return "Unknown";
+    }
+}
 
 /**
  * @brief Check if key is a modifier key
  */
-bool IsModifierKey(Key key) noexcept;
+inline bool IsModifierKey(Key key) noexcept {
+    return key == Key::LeftShift || key == Key::RightShift ||
+           key == Key::LeftControl || key == Key::RightControl ||
+           key == Key::LeftAlt || key == Key::RightAlt ||
+           key == Key::LeftSuper || key == Key::RightSuper;
+}
 
 /**
  * @brief Check if key produces printable character
  */
-bool IsPrintableKey(Key key) noexcept;
+inline bool IsPrintableKey(Key key) noexcept {
+    int k = static_cast<int>(key);
+    return (k >= 32 && k <= 126);
+}
 
 /**
  * @brief Check if key is a function key (F1-F25)
  */
-bool IsFunctionKey(Key key) noexcept;
+inline bool IsFunctionKey(Key key) noexcept {
+    int k = static_cast<int>(key);
+    return (k >= static_cast<int>(Key::F1) && k <= static_cast<int>(Key::F25));
+}
 
 /**
  * @brief Check if key is a numpad key
  */
-bool IsNumpadKey(Key key) noexcept;
+inline bool IsNumpadKey(Key key) noexcept {
+    int k = static_cast<int>(key);
+    return (k >= static_cast<int>(Key::KP0) && k <= static_cast<int>(Key::KPEqual));
+}
 
 } // namespace Nova

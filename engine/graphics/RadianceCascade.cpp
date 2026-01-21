@@ -5,6 +5,9 @@
 #include <glad/gl.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
+#include <fstream>
+#include <sstream>
+#include <chrono>
 
 namespace Nova {
 
@@ -34,6 +37,11 @@ bool RadianceCascade::Initialize(const Config& config) {
 
         InitializeCascade(m_cascades[i], resolution, spacing);
         spdlog::info("Cascade {}: resolution={}, spacing={}", i, resolution, spacing);
+    }
+
+    // Load propagation compute shader
+    if (!LoadPropagationShader()) {
+        spdlog::warn("Failed to load radiance propagation shader - GPU propagation disabled");
     }
 
     m_initialized = true;
@@ -235,12 +243,149 @@ void RadianceCascade::PropagateLighting() {
 }
 
 void RadianceCascade::PropagateLevel(int level) {
-    // TODO: Implement GPU-based propagation using compute shaders
-    // For now, this is a placeholder that would:
-    // 1. Trace rays from each probe
-    // 2. Sample finer cascade or geometry
-    // 3. Accumulate radiance
-    // 4. Update 3D texture
+    if (level < 0 || level >= static_cast<int>(m_cascades.size())) {
+        return;
+    }
+
+    if (!m_propagationShader || !m_propagationShader->IsValid()) {
+        // Fallback to CPU propagation if shader not available
+        PropagateLevelCPU(level);
+        return;
+    }
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    const auto& cascade = m_cascades[level];
+    int resolution = cascade.resolution;
+
+    // Bind the propagation compute shader
+    m_propagationShader->Bind();
+
+    // Bind current cascade texture for read/write
+    glBindImageTexture(0, cascade.radianceTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
+
+    // Bind finer cascade for reading (if exists)
+    int finerResolution = 0;
+    float finerSpacing = 0.0f;
+    if (level > 0) {
+        const auto& finerCascade = m_cascades[level - 1];
+        glBindImageTexture(1, finerCascade.radianceTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+        finerResolution = finerCascade.resolution;
+        finerSpacing = finerCascade.spacing;
+    } else {
+        // No finer cascade - bind a dummy or the same texture
+        glBindImageTexture(1, cascade.radianceTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+    }
+
+    // Bind history texture for temporal blending
+    glBindImageTexture(2, cascade.radianceTextureHistory, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+
+    // Set uniforms
+    m_propagationShader->SetInt("u_cascadeLevel", level);
+    m_propagationShader->SetInt("u_resolution", resolution);
+    m_propagationShader->SetInt("u_finerResolution", finerResolution);
+    m_propagationShader->SetFloat("u_spacing", cascade.spacing);
+    m_propagationShader->SetFloat("u_finerSpacing", finerSpacing);
+    m_propagationShader->SetVec3("u_cascadeOrigin", cascade.origin);
+
+    // Ray tracing parameters
+    m_propagationShader->SetInt("u_raysPerProbe", m_config.raysPerProbe);
+    m_propagationShader->SetInt("u_maxSteps", 64);
+    m_propagationShader->SetFloat("u_maxDistance", cascade.spacing * 4.0f);
+
+    // Temporal blending
+    m_propagationShader->SetFloat("u_temporalBlend", m_config.temporalBlend);
+    m_propagationShader->SetInt("u_frameIndex", m_frameIndex);
+
+    // Scene bounds (use cascade bounds as default)
+    float cascadeExtent = cascade.spacing * resolution;
+    glm::vec3 sceneMin = cascade.origin - glm::vec3(cascadeExtent * 0.1f);
+    glm::vec3 sceneMax = cascade.origin + glm::vec3(cascadeExtent * 1.1f);
+    m_propagationShader->SetVec3("u_sceneMin", sceneMin);
+    m_propagationShader->SetVec3("u_sceneMax", sceneMax);
+    m_propagationShader->SetBool("u_hasSDF", false); // SDF binding handled externally if available
+
+    // Lighting
+    m_propagationShader->SetInt("u_numLights", 0); // Lights injected via InjectDirectLighting
+    m_propagationShader->SetVec3("u_ambientLight", glm::vec3(0.1f, 0.12f, 0.15f)); // Default ambient
+
+    // Dispatch compute shader
+    // Work group size is 4x4x4, so calculate number of groups needed
+    int groupsX = (resolution + 3) / 4;
+    int groupsY = (resolution + 3) / 4;
+    int groupsZ = (resolution + 3) / 4;
+
+    glDispatchCompute(groupsX, groupsY, groupsZ);
+
+    // Memory barrier to ensure writes are complete before next level
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT);
+
+    // Swap current and history textures for next frame
+    std::swap(const_cast<CascadeLevel&>(cascade).radianceTexture,
+              const_cast<CascadeLevel&>(cascade).radianceTextureHistory);
+
+    Shader::Unbind();
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    float elapsedMs = std::chrono::duration<float, std::milli>(endTime - startTime).count();
+    m_stats.propagationTimeMs += elapsedMs;
+
+    m_frameIndex++;
+}
+
+void RadianceCascade::PropagateLevelCPU(int level) {
+    // CPU fallback for when compute shader is not available
+    // This is a simple placeholder that could be expanded for debugging
+    if (level < 0 || level >= static_cast<int>(m_cascades.size())) {
+        return;
+    }
+
+    const auto& cascade = m_cascades[level];
+    int resolution = cascade.resolution;
+    int totalProbes = resolution * resolution * resolution;
+
+    // Simple ambient fill for CPU fallback
+    std::vector<float> radianceData(totalProbes * 4);
+    glm::vec3 ambient(0.1f, 0.12f, 0.15f);
+
+    for (int i = 0; i < totalProbes; ++i) {
+        radianceData[i * 4 + 0] = ambient.r;
+        radianceData[i * 4 + 1] = ambient.g;
+        radianceData[i * 4 + 2] = ambient.b;
+        radianceData[i * 4 + 3] = 1.0f; // Valid
+    }
+
+    glBindTexture(GL_TEXTURE_3D, cascade.radianceTexture);
+    glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0,
+                    resolution, resolution, resolution,
+                    GL_RGBA, GL_FLOAT, radianceData.data());
+    glBindTexture(GL_TEXTURE_3D, 0);
+}
+
+bool RadianceCascade::LoadPropagationShader() {
+    // Try to load the propagation compute shader
+    std::string shaderPath = "assets/shaders/radiance_propagate.comp";
+
+    std::ifstream file(shaderPath);
+    if (!file.is_open()) {
+        spdlog::error("Failed to open radiance propagation shader: {}", shaderPath);
+        return false;
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string shaderSource = buffer.str();
+    file.close();
+
+    m_propagationShader = std::make_shared<Shader>();
+    if (!m_propagationShader->LoadComputeShader(shaderSource)) {
+        spdlog::error("Failed to compile radiance propagation shader");
+        m_propagationShader.reset();
+        return false;
+    }
+
+    spdlog::info("Radiance propagation compute shader loaded successfully");
+    return true;
 }
 
 glm::vec3 RadianceCascade::SampleRadiance(const glm::vec3& worldPos, const glm::vec3& normal) const {

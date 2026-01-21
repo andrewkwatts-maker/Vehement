@@ -5,7 +5,6 @@
     "type": "unit",
     "category": "transport",
     "description": "A versatile flying transport that can switch between transport mode and power mode. In power mode, the Warp Prism projects a power field that allows buildings to function and enables unit warping.",
-
     "stats": {
         "health": 80,
         "shield": 100,
@@ -15,256 +14,1855 @@
         "moveSpeed": 413,
         "attackRange": 0
     },
-
     "costs": {
         "minerals": 250,
         "vespene": 0,
         "supply": 2,
         "buildTime": 50.0
     },
-
     "sdfModel": {
-        "name": "warp_prism_model",
-        "bounds": { "min": [-1.2, 0.0, -1.2], "max": [1.2, 1.8, 1.2] },
+        "name": "Warp Prism",
+        "bounds": {
+            "min": [
+                -1.2,
+                0.6,
+                -1.2
+            ],
+            "max": [
+                1.2,
+                1.5,
+                1.2
+            ]
+        },
         "primitives": [
             {
                 "id": "main_hull",
                 "type": "Ellipsoid",
-                "params": { "radii": [0.5, 0.3, 0.7] },
-                "transform": { "position": [0.0, 0.9, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.18, 0.28, 0.42, 1.0], "metallic": 0.7, "roughness": 0.3, "emissive": [0.02, 0.04, 0.08] },
+                "params": {
+                    "radii": [
+                        0.5,
+                        0.3,
+                        0.7
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        0.9,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.18,
+                        0.28,
+                        0.42,
+                        1.0
+                    ],
+                    "metallic": 0.7,
+                    "roughness": 0.3,
+                    "emissive": [
+                        0.02,
+                        0.04,
+                        0.08
+                    ],
+                    "anisotropy": 0.4,
+                    "anisotropyRotation": 45
+                },
                 "operation": "Union"
             },
             {
                 "id": "upper_dome",
                 "type": "Sphere",
-                "params": { "radius": 0.35 },
-                "transform": { "position": [0.0, 1.15, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.6, 1.0] },
-                "material": { "baseColor": [0.3, 0.6, 0.9, 0.8], "metallic": 0.1, "roughness": 0.15, "emissive": [0.1, 0.2, 0.4] },
+                "params": {
+                    "radius": 0.35
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        1.15,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        0.6,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.3,
+                        0.6,
+                        0.9,
+                        0.8
+                    ],
+                    "metallic": 0.1,
+                    "roughness": 0.15,
+                    "emissive": [
+                        0.1,
+                        0.2,
+                        0.4
+                    ],
+                    "clearcoat": 0.8
+                },
                 "operation": "SmoothUnion",
                 "smoothness": 0.1
             },
             {
                 "id": "central_crystal",
                 "type": "Cone",
-                "params": { "radius1": 0.03, "radius2": 0.12, "height": 0.25 },
-                "transform": { "position": [0.0, 1.05, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.3, 0.7, 1.0, 0.95], "metallic": 0.2, "roughness": 0.1, "emissive": [0.4, 0.8, 1.2] },
+                "params": {
+                    "radius1": 0.03,
+                    "radius2": 0.12,
+                    "height": 0.25
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        1.05,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.3,
+                        0.7,
+                        1.0,
+                        0.95
+                    ],
+                    "metallic": 0.2,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.4,
+                        0.8,
+                        1.2
+                    ]
+                },
                 "operation": "Union"
             },
             {
                 "id": "power_core",
                 "type": "Sphere",
-                "params": { "radius": 0.15 },
-                "transform": { "position": [0.0, 0.9, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.4, 0.8, 1.0, 0.9], "metallic": 0.0, "roughness": 0.1, "emissive": [0.6, 1.0, 1.5] },
+                "params": {
+                    "radius": 0.15
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        0.9,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.4,
+                        0.8,
+                        1.0,
+                        0.9
+                    ],
+                    "metallic": 0.0,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.6,
+                        1.0,
+                        1.5
+                    ]
+                },
                 "operation": "Union"
             },
             {
                 "id": "wing_front_left",
                 "type": "RoundedBox",
-                "params": { "size": [0.15, 0.08, 0.45], "radius": 0.03 },
-                "transform": { "position": [-0.45, 0.9, 0.35], "rotation": [0.0, 0.2, 0.1, 0.97], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.7, 0.7, 0.25, 1.0], "metallic": 0.8, "roughness": 0.25, "emissive": [0.15, 0.15, 0.05] },
+                "params": {
+                    "size": [
+                        0.15,
+                        0.08,
+                        0.45
+                    ],
+                    "radius": 0.03
+                },
+                "transform": {
+                    "position": [
+                        -0.45,
+                        0.9,
+                        0.35
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.2,
+                        0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.7,
+                        0.7,
+                        0.25,
+                        1.0
+                    ],
+                    "metallic": 0.8,
+                    "roughness": 0.25,
+                    "emissive": [
+                        0.15,
+                        0.15,
+                        0.05
+                    ]
+                },
                 "operation": "Union",
                 "bone": "wing_fl"
             },
             {
                 "id": "wing_front_right",
                 "type": "RoundedBox",
-                "params": { "size": [0.15, 0.08, 0.45], "radius": 0.03 },
-                "transform": { "position": [0.45, 0.9, 0.35], "rotation": [0.0, -0.2, -0.1, 0.97], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.7, 0.7, 0.25, 1.0], "metallic": 0.8, "roughness": 0.25, "emissive": [0.15, 0.15, 0.05] },
+                "params": {
+                    "size": [
+                        0.15,
+                        0.08,
+                        0.45
+                    ],
+                    "radius": 0.03
+                },
+                "transform": {
+                    "position": [
+                        0.45,
+                        0.9,
+                        0.35
+                    ],
+                    "rotation": [
+                        0.0,
+                        -0.2,
+                        -0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.7,
+                        0.7,
+                        0.25,
+                        1.0
+                    ],
+                    "metallic": 0.8,
+                    "roughness": 0.25,
+                    "emissive": [
+                        0.15,
+                        0.15,
+                        0.05
+                    ]
+                },
                 "operation": "Union",
                 "bone": "wing_fr"
             },
             {
                 "id": "wing_back_left",
                 "type": "RoundedBox",
-                "params": { "size": [0.15, 0.08, 0.45], "radius": 0.03 },
-                "transform": { "position": [-0.45, 0.9, -0.35], "rotation": [0.0, -0.2, 0.1, 0.97], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.7, 0.7, 0.25, 1.0], "metallic": 0.8, "roughness": 0.25, "emissive": [0.15, 0.15, 0.05] },
+                "params": {
+                    "size": [
+                        0.15,
+                        0.08,
+                        0.45
+                    ],
+                    "radius": 0.03
+                },
+                "transform": {
+                    "position": [
+                        -0.45,
+                        0.9,
+                        -0.35
+                    ],
+                    "rotation": [
+                        0.0,
+                        -0.2,
+                        0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.7,
+                        0.7,
+                        0.25,
+                        1.0
+                    ],
+                    "metallic": 0.8,
+                    "roughness": 0.25,
+                    "emissive": [
+                        0.15,
+                        0.15,
+                        0.05
+                    ]
+                },
                 "operation": "Union",
                 "bone": "wing_bl"
             },
             {
                 "id": "wing_back_right",
                 "type": "RoundedBox",
-                "params": { "size": [0.15, 0.08, 0.45], "radius": 0.03 },
-                "transform": { "position": [0.45, 0.9, -0.35], "rotation": [0.0, 0.2, -0.1, 0.97], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.7, 0.7, 0.25, 1.0], "metallic": 0.8, "roughness": 0.25, "emissive": [0.15, 0.15, 0.05] },
+                "params": {
+                    "size": [
+                        0.15,
+                        0.08,
+                        0.45
+                    ],
+                    "radius": 0.03
+                },
+                "transform": {
+                    "position": [
+                        0.45,
+                        0.9,
+                        -0.35
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.2,
+                        -0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.7,
+                        0.7,
+                        0.25,
+                        1.0
+                    ],
+                    "metallic": 0.8,
+                    "roughness": 0.25,
+                    "emissive": [
+                        0.15,
+                        0.15,
+                        0.05
+                    ]
+                },
                 "operation": "Union",
                 "bone": "wing_br"
             },
             {
-                "id": "wing_tip_orb_fl",
+                "id": "rivet_1",
                 "type": "Sphere",
-                "params": { "radius": 0.1 },
-                "transform": { "position": [-0.65, 0.9, 0.6], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.8, 1.0] },
-                "material": { "baseColor": [0.4, 0.75, 1.0, 0.9], "metallic": 0.1, "roughness": 0.15, "emissive": [0.5, 0.9, 1.3] },
-                "operation": "Union",
-                "bone": "wing_fl"
+                "params": {
+                    "radius": 0.02
+                },
+                "transform": {
+                    "position": [
+                        0.4,
+                        1.0,
+                        0.6
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.6,
+                        0.6,
+                        0.6,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.2
+                },
+                "operation": "Union"
             },
             {
-                "id": "wing_tip_orb_fr",
+                "id": "rivet_2",
                 "type": "Sphere",
-                "params": { "radius": 0.1 },
-                "transform": { "position": [0.65, 0.9, 0.6], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.8, 1.0] },
-                "material": { "baseColor": [0.4, 0.75, 1.0, 0.9], "metallic": 0.1, "roughness": 0.15, "emissive": [0.5, 0.9, 1.3] },
-                "operation": "Union",
-                "bone": "wing_fr"
+                "params": {
+                    "radius": 0.02
+                },
+                "transform": {
+                    "position": [
+                        -0.4,
+                        1.0,
+                        0.6
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.6,
+                        0.6,
+                        0.6,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.2
+                },
+                "operation": "Union"
             },
             {
-                "id": "wing_tip_orb_bl",
+                "id": "rivet_3",
                 "type": "Sphere",
-                "params": { "radius": 0.1 },
-                "transform": { "position": [-0.65, 0.9, -0.6], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.8, 1.0] },
-                "material": { "baseColor": [0.4, 0.75, 1.0, 0.9], "metallic": 0.1, "roughness": 0.15, "emissive": [0.5, 0.9, 1.3] },
-                "operation": "Union",
-                "bone": "wing_bl"
+                "params": {
+                    "radius": 0.02
+                },
+                "transform": {
+                    "position": [
+                        0.4,
+                        1.0,
+                        -0.6
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.6,
+                        0.6,
+                        0.6,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.2
+                },
+                "operation": "Union"
             },
             {
-                "id": "wing_tip_orb_br",
+                "id": "rivet_4",
                 "type": "Sphere",
-                "params": { "radius": 0.1 },
-                "transform": { "position": [0.65, 0.9, -0.6], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 0.8, 1.0] },
-                "material": { "baseColor": [0.4, 0.75, 1.0, 0.9], "metallic": 0.1, "roughness": 0.15, "emissive": [0.5, 0.9, 1.3] },
-                "operation": "Union",
-                "bone": "wing_br"
+                "params": {
+                    "radius": 0.02
+                },
+                "transform": {
+                    "position": [
+                        -0.4,
+                        1.0,
+                        -0.6
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.6,
+                        0.6,
+                        0.6,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.2
+                },
+                "operation": "Union"
             },
             {
-                "id": "cargo_bay",
-                "type": "RoundedBox",
-                "params": { "size": [0.4, 0.25, 0.5], "radius": 0.05 },
-                "transform": { "position": [0.0, 0.65, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.2, 0.3, 0.45, 1.0], "metallic": 0.6, "roughness": 0.35 },
-                "operation": "SmoothUnion",
-                "smoothness": 0.05
+                "id": "panel_line_1",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.01,
+                        0.01,
+                        0.6
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        0.9,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.1,
+                        0.2,
+                        0.3,
+                        1.0
+                    ],
+                    "metallic": 0.8,
+                    "roughness": 0.4
+                },
+                "operation": "Subtraction"
             },
             {
-                "id": "transport_beam_emitter",
+                "id": "panel_line_2",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.6,
+                        0.01,
+                        0.01
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        0.9,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.1,
+                        0.2,
+                        0.3,
+                        1.0
+                    ],
+                    "metallic": 0.8,
+                    "roughness": 0.4
+                },
+                "operation": "Subtraction"
+            },
+            {
+                "id": "wing_detail_1",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.02,
+                        0.04,
+                        0.1
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        -0.55,
+                        0.9,
+                        0.5
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.2,
+                        0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.5,
+                        0.5,
+                        0.15,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.05,
+                        0.05,
+                        0.01
+                    ]
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "wing_detail_2",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.02,
+                        0.04,
+                        0.1
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        0.55,
+                        0.9,
+                        0.5
+                    ],
+                    "rotation": [
+                        0.0,
+                        -0.2,
+                        -0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.5,
+                        0.5,
+                        0.15,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.05,
+                        0.05,
+                        0.01
+                    ]
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "wing_detail_3",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.02,
+                        0.04,
+                        0.1
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        -0.55,
+                        0.9,
+                        -0.5
+                    ],
+                    "rotation": [
+                        0.0,
+                        -0.2,
+                        0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.5,
+                        0.5,
+                        0.15,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.05,
+                        0.05,
+                        0.01
+                    ]
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "wing_detail_4",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.02,
+                        0.04,
+                        0.1
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        0.55,
+                        0.9,
+                        -0.5
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.2,
+                        -0.1,
+                        0.97
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.5,
+                        0.5,
+                        0.15,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.05,
+                        0.05,
+                        0.01
+                    ]
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "scratch_1",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.01,
+                        0.01,
+                        0.2
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        0.2,
+                        0.85,
+                        0.4
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.5,
+                        0.0,
+                        0.866
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.15,
+                        0.25,
+                        0.35,
+                        1.0
+                    ],
+                    "metallic": 0.75,
+                    "roughness": 0.4
+                },
+                "operation": "Subtraction"
+            },
+            {
+                "id": "scratch_2",
+                "type": "Box",
+                "params": {
+                    "size": [
+                        0.01,
+                        0.01,
+                        0.2
+                    ]
+                },
+                "transform": {
+                    "position": [
+                        -0.2,
+                        0.85,
+                        -0.4
+                    ],
+                    "rotation": [
+                        0.0,
+                        -0.5,
+                        0.0,
+                        0.866
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.15,
+                        0.25,
+                        0.35,
+                        1.0
+                    ],
+                    "metallic": 0.75,
+                    "roughness": 0.4
+                },
+                "operation": "Subtraction"
+            },
+            {
+                "id": "emissive_ring",
+                "type": "Torus",
+                "params": {
+                    "radius1": 0.2,
+                    "radius2": 0.02
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        1.15,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.707,
+                        0.0,
+                        0.0,
+                        0.707
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.5,
+                        0.9,
+                        1.5
+                    ]
+                },
+                "operation": "Union"
+            },
+            {
+                "id": "lower_detail",
                 "type": "Cylinder",
-                "params": { "radius": 0.08, "height": 0.12 },
-                "transform": { "position": [0.0, 0.45, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.3, 0.65, 0.95, 0.85], "metallic": 0.4, "roughness": 0.2, "emissive": [0.3, 0.6, 1.0] },
+                "params": {
+                    "radius1": 0.1,
+                    "radius2": 0.1,
+                    "height": 0.05
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        0.65,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.15,
+                        0.25,
+                        0.35,
+                        1.0
+                    ],
+                    "metallic": 0.8,
+                    "roughness": 0.2,
+                    "anisotropy": 0.6,
+                    "anisotropyRotation": 110
+                },
                 "operation": "Union"
             },
             {
-                "id": "stabilizer_ring",
-                "type": "Torus",
-                "params": { "majorRadius": 0.5, "minorRadius": 0.03 },
-                "transform": { "position": [0.0, 0.9, 0.0], "rotation": [0.707, 0.0, 0.0, 0.707], "scale": [1.0, 1.0, 0.5] },
-                "material": { "baseColor": [0.75, 0.75, 0.3, 1.0], "metallic": 0.85, "roughness": 0.2, "emissive": [0.18, 0.18, 0.06] },
-                "operation": "Union"
-            },
-            {
-                "id": "power_field_ring",
-                "type": "Torus",
-                "params": { "majorRadius": 0.6, "minorRadius": 0.025 },
-                "transform": { "position": [0.0, 0.9, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.4, 0.75, 1.0, 0.6], "metallic": 0.0, "roughness": 0.1, "emissive": [0.5, 0.9, 1.4] },
-                "operation": "Union"
-            },
-            {
-                "id": "underbelly_glow",
-                "type": "Ellipsoid",
-                "params": { "radii": [0.35, 0.08, 0.5] },
-                "transform": { "position": [0.0, 0.55, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0], "scale": [1.0, 1.0, 1.0] },
-                "material": { "baseColor": [0.3, 0.6, 1.0, 0.5], "metallic": 0.0, "roughness": 0.1, "emissive": [0.4, 0.7, 1.2] },
+                "id": "lower_detail_2",
+                "type": "Cylinder",
+                "params": {
+                    "radius1": 0.08,
+                    "radius2": 0.08,
+                    "height": 0.03
+                },
+                "transform": {
+                    "position": [
+                        0.0,
+                        0.6,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                },
+                "material": {
+                    "baseColor": [
+                        0.6,
+                        0.4,
+                        0.2,
+                        1.0
+                    ],
+                    "metallic": 0.9,
+                    "roughness": 0.1,
+                    "emissive": [
+                        0.05,
+                        0.02,
+                        0.01
+                    ]
+                },
                 "operation": "Union"
             }
         ]
     },
-
     "skeleton": {
         "bones": [
-            { "name": "root", "parent": null, "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "body", "parent": "root", "position": [0.0, 0.9, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "wing_fl", "parent": "body", "position": [-0.45, 0.0, 0.35], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "wing_fr", "parent": "body", "position": [0.45, 0.0, 0.35], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "wing_bl", "parent": "body", "position": [-0.45, 0.0, -0.35], "rotation": [0.0, 0.0, 0.0, 1.0] },
-            { "name": "wing_br", "parent": "body", "position": [0.45, 0.0, -0.35], "rotation": [0.0, 0.0, 0.0, 1.0] }
+            {
+                "name": "root",
+                "parent": null,
+                "position": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "name": "body",
+                "parent": "root",
+                "position": [
+                    0.0,
+                    0.9,
+                    0.0
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "name": "wing_fl",
+                "parent": "body",
+                "position": [
+                    -0.45,
+                    0.0,
+                    0.35
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "name": "wing_fr",
+                "parent": "body",
+                "position": [
+                    0.45,
+                    0.0,
+                    0.35
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "name": "wing_bl",
+                "parent": "body",
+                "position": [
+                    -0.45,
+                    0.0,
+                    -0.35
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            },
+            {
+                "name": "wing_br",
+                "parent": "body",
+                "position": [
+                    0.45,
+                    0.0,
+                    -0.35
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            }
         ]
     },
-
     "animations": {
         "idle_transport": {
-            "duration": 2.5, "loop": true,
+            "duration": 2.5,
+            "loop": true,
             "keyframes": [
-                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "body": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
-                { "time": 1.25, "bones": { "root": { "position": [0.0, 0.06, 0.0] }, "body": { "rotation": [0.02, 0.0, 0.0, 0.9998] } } },
-                { "time": 2.5, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "body": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+                {
+                    "time": 0.0,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ]
+                        },
+                        "body": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 1.25,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.06,
+                                0.0
+                            ]
+                        },
+                        "body": {
+                            "rotation": [
+                                0.02,
+                                0.0,
+                                0.0,
+                                0.9998
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 2.5,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ]
+                        },
+                        "body": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        }
+                    }
+                }
             ]
         },
         "idle_phased": {
-            "duration": 3.0, "loop": true,
+            "duration": 3.0,
+            "loop": true,
             "keyframes": [
-                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "wing_fl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_fr": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_bl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_br": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
-                { "time": 1.5, "bones": { "root": { "position": [0.0, 0.08, 0.0] }, "wing_fl": { "rotation": [0.0, 0.0, 0.1, 0.995] }, "wing_fr": { "rotation": [0.0, 0.0, -0.1, 0.995] }, "wing_bl": { "rotation": [0.0, 0.0, 0.1, 0.995] }, "wing_br": { "rotation": [0.0, 0.0, -0.1, 0.995] } } },
-                { "time": 3.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "wing_fl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_fr": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_bl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_br": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+                {
+                    "time": 0.0,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ]
+                        },
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 1.5,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.08,
+                                0.0
+                            ]
+                        },
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.1,
+                                0.995
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.1,
+                                0.995
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.1,
+                                0.995
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.1,
+                                0.995
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 3.0,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ]
+                        },
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        }
+                    }
+                }
             ]
         },
         "hover": {
-            "duration": 1.0, "loop": true,
+            "duration": 1.0,
+            "loop": true,
             "keyframes": [
-                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "body": { "rotation": [0.05, 0.0, 0.0, 0.999] } } },
-                { "time": 0.5, "bones": { "root": { "position": [0.0, 0.04, 0.0] }, "body": { "rotation": [-0.05, 0.0, 0.0, 0.999] } } },
-                { "time": 1.0, "bones": { "root": { "position": [0.0, 0.0, 0.0] }, "body": { "rotation": [0.05, 0.0, 0.0, 0.999] } } }
+                {
+                    "time": 0.0,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ]
+                        },
+                        "body": {
+                            "rotation": [
+                                0.05,
+                                0.0,
+                                0.0,
+                                0.999
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 0.5,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.04,
+                                0.0
+                            ]
+                        },
+                        "body": {
+                            "rotation": [
+                                -0.05,
+                                0.0,
+                                0.0,
+                                0.999
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 1.0,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ]
+                        },
+                        "body": {
+                            "rotation": [
+                                0.05,
+                                0.0,
+                                0.0,
+                                0.999
+                            ]
+                        }
+                    }
+                }
             ]
         },
         "transform_to_phased": {
-            "duration": 1.25, "loop": false,
+            "duration": 1.25,
+            "loop": false,
             "keyframes": [
-                { "time": 0.0, "bones": { "wing_fl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_fr": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_bl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_br": { "rotation": [0.0, 0.0, 0.0, 1.0] } } },
-                { "time": 0.625, "bones": { "wing_fl": { "rotation": [0.0, 0.0, 0.25, 0.97] }, "wing_fr": { "rotation": [0.0, 0.0, -0.25, 0.97] }, "wing_bl": { "rotation": [0.0, 0.0, 0.25, 0.97] }, "wing_br": { "rotation": [0.0, 0.0, -0.25, 0.97] } }, "events": ["phase_shift"] },
-                { "time": 1.25, "bones": { "wing_fl": { "rotation": [0.0, 0.0, 0.35, 0.94] }, "wing_fr": { "rotation": [0.0, 0.0, -0.35, 0.94] }, "wing_bl": { "rotation": [0.0, 0.0, 0.35, 0.94] }, "wing_br": { "rotation": [0.0, 0.0, -0.35, 0.94] } } }
+                {
+                    "time": 0.0,
+                    "bones": {
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 0.625,
+                    "bones": {
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.25,
+                                0.97
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.25,
+                                0.97
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.25,
+                                0.97
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.25,
+                                0.97
+                            ]
+                        }
+                    },
+                    "events": [
+                        "phase_shift"
+                    ]
+                },
+                {
+                    "time": 1.25,
+                    "bones": {
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.35,
+                                0.94
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.35,
+                                0.94
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.35,
+                                0.94
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.35,
+                                0.94
+                            ]
+                        }
+                    }
+                }
             ]
         },
         "transform_to_transport": {
-            "duration": 1.25, "loop": false,
+            "duration": 1.25,
+            "loop": false,
             "keyframes": [
-                { "time": 0.0, "bones": { "wing_fl": { "rotation": [0.0, 0.0, 0.35, 0.94] }, "wing_fr": { "rotation": [0.0, 0.0, -0.35, 0.94] }, "wing_bl": { "rotation": [0.0, 0.0, 0.35, 0.94] }, "wing_br": { "rotation": [0.0, 0.0, -0.35, 0.94] } } },
-                { "time": 0.625, "bones": { "wing_fl": { "rotation": [0.0, 0.0, 0.15, 0.99] }, "wing_fr": { "rotation": [0.0, 0.0, -0.15, 0.99] }, "wing_bl": { "rotation": [0.0, 0.0, 0.15, 0.99] }, "wing_br": { "rotation": [0.0, 0.0, -0.15, 0.99] } } },
-                { "time": 1.25, "bones": { "wing_fl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_fr": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_bl": { "rotation": [0.0, 0.0, 0.0, 1.0] }, "wing_br": { "rotation": [0.0, 0.0, 0.0, 1.0] } } }
+                {
+                    "time": 0.0,
+                    "bones": {
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.35,
+                                0.94
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.35,
+                                0.94
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.35,
+                                0.94
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.35,
+                                0.94
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 0.625,
+                    "bones": {
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.15,
+                                0.99
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.15,
+                                0.99
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.15,
+                                0.99
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                -0.15,
+                                0.99
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 1.25,
+                    "bones": {
+                        "wing_fl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_fr": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_bl": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        },
+                        "wing_br": {
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        }
+                    }
+                }
             ]
         },
         "death": {
-            "duration": 1.5, "loop": false,
+            "duration": 1.5,
+            "loop": false,
             "keyframes": [
-                { "time": 0.0, "bones": { "root": { "position": [0.0, 0.0, 0.0], "rotation": [0.0, 0.0, 0.0, 1.0] } } },
-                { "time": 0.5, "bones": { "root": { "position": [0.0, -0.1, 0.0], "rotation": [0.15, 0.1, 0.15, 0.97] } }, "events": ["explosion"] },
-                { "time": 1.0, "bones": { "root": { "position": [0.0, -0.3, 0.0], "rotation": [0.3, 0.2, 0.25, 0.9] } } },
-                { "time": 1.5, "bones": { "root": { "position": [0.0, -0.6, 0.0], "rotation": [0.5, 0.3, 0.35, 0.75] } } }
+                {
+                    "time": 0.0,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                0.0,
+                                0.0
+                            ],
+                            "rotation": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 0.5,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                -0.1,
+                                0.0
+                            ],
+                            "rotation": [
+                                0.15,
+                                0.1,
+                                0.15,
+                                0.97
+                            ]
+                        }
+                    },
+                    "events": [
+                        "explosion"
+                    ]
+                },
+                {
+                    "time": 1.0,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                -0.3,
+                                0.0
+                            ],
+                            "rotation": [
+                                0.3,
+                                0.2,
+                                0.25,
+                                0.9
+                            ]
+                        }
+                    }
+                },
+                {
+                    "time": 1.5,
+                    "bones": {
+                        "root": {
+                            "position": [
+                                0.0,
+                                -0.6,
+                                0.0
+                            ],
+                            "rotation": [
+                                0.5,
+                                0.3,
+                                0.35,
+                                0.75
+                            ]
+                        }
+                    }
+                }
             ]
         }
     },
-
     "animationStateMachine": {
         "initialState": "idle_transport",
         "states": {
-            "idle_transport": { "animation": "idle_transport", "transitions": [{ "to": "hover", "condition": "isMoving" }, { "to": "transform_to_phased", "condition": "isPhasing" }, { "to": "death", "condition": "isDead" }] },
-            "idle_phased": { "animation": "idle_phased", "transitions": [{ "to": "transform_to_transport", "condition": "!isPhasing" }, { "to": "death", "condition": "isDead" }] },
-            "hover": { "animation": "hover", "transitions": [{ "to": "idle_transport", "condition": "!isMoving && !isPhasing" }, { "to": "transform_to_phased", "condition": "isPhasing" }, { "to": "death", "condition": "isDead" }] },
-            "transform_to_phased": { "animation": "transform_to_phased", "transitions": [{ "to": "idle_phased", "condition": "animationComplete" }, { "to": "death", "condition": "isDead" }] },
-            "transform_to_transport": { "animation": "transform_to_transport", "transitions": [{ "to": "idle_transport", "condition": "animationComplete" }, { "to": "death", "condition": "isDead" }] },
-            "death": { "animation": "death", "transitions": [] }
+            "idle_transport": {
+                "animation": "idle_transport",
+                "transitions": [
+                    {
+                        "to": "hover",
+                        "condition": "isMoving"
+                    },
+                    {
+                        "to": "transform_to_phased",
+                        "condition": "isPhasing"
+                    },
+                    {
+                        "to": "death",
+                        "condition": "isDead"
+                    }
+                ]
+            },
+            "idle_phased": {
+                "animation": "idle_phased",
+                "transitions": [
+                    {
+                        "to": "transform_to_transport",
+                        "condition": "!isPhasing"
+                    },
+                    {
+                        "to": "death",
+                        "condition": "isDead"
+                    }
+                ]
+            },
+            "hover": {
+                "animation": "hover",
+                "transitions": [
+                    {
+                        "to": "idle_transport",
+                        "condition": "!isMoving && !isPhasing"
+                    },
+                    {
+                        "to": "transform_to_phased",
+                        "condition": "isPhasing"
+                    },
+                    {
+                        "to": "death",
+                        "condition": "isDead"
+                    }
+                ]
+            },
+            "transform_to_phased": {
+                "animation": "transform_to_phased",
+                "transitions": [
+                    {
+                        "to": "idle_phased",
+                        "condition": "animationComplete"
+                    },
+                    {
+                        "to": "death",
+                        "condition": "isDead"
+                    }
+                ]
+            },
+            "transform_to_transport": {
+                "animation": "transform_to_transport",
+                "transitions": [
+                    {
+                        "to": "idle_transport",
+                        "condition": "animationComplete"
+                    },
+                    {
+                        "to": "death",
+                        "condition": "isDead"
+                    }
+                ]
+            },
+            "death": {
+                "animation": "death",
+                "transitions": []
+            }
         }
     },
-
     "abilities": [
-        { "id": "transport", "name": "Transport", "description": "Loads and transports ground units.", "hotkey": "T" },
-        { "id": "phasing_mode", "name": "Phasing Mode", "description": "Deploys to provide power field and enable warp-in.", "hotkey": "E" }
+        {
+            "id": "transport",
+            "name": "Transport",
+            "description": "Loads and transports ground units.",
+            "hotkey": "T"
+        },
+        {
+            "id": "phasing_mode",
+            "name": "Phasing Mode",
+            "description": "Deploys to provide power field and enable warp-in.",
+            "hotkey": "E"
+        }
     ],
-
     "behaviors": {
-        "on_spawn": { "actions": [{ "type": "play_sound", "sound": "warp_prism_warp_in" }, { "type": "spawn_effect", "effect": "warp_in_flash", "duration": 1.0 }] },
-        "on_attack": { "actions": [] },
-        "on_death": { "actions": [{ "type": "play_animation", "animation": "death" }, { "type": "play_sound", "sound": "warp_prism_death" }, { "type": "spawn_effect", "effect": "explosion" }] }
+        "on_spawn": {
+            "actions": [
+                {
+                    "type": "play_sound",
+                    "sound": "warp_prism_warp_in"
+                },
+                {
+                    "type": "spawn_effect",
+                    "effect": "warp_in_flash",
+                    "duration": 1.0
+                }
+            ]
+        },
+        "on_attack": {
+            "actions": []
+        },
+        "on_death": {
+            "actions": [
+                {
+                    "type": "play_animation",
+                    "animation": "death"
+                },
+                {
+                    "type": "play_sound",
+                    "sound": "warp_prism_death"
+                },
+                {
+                    "type": "spawn_effect",
+                    "effect": "explosion"
+                }
+            ]
+        }
     },
-
     "effects": {
-        "warp_in_flash": { "type": "flash", "color": [0.3, 0.7, 1.0, 0.8], "duration": 1.0 },
-        "phase_shift": { "type": "ripple", "radius": 1.5, "color": [0.4, 0.75, 1.0, 0.6], "duration": 0.5 },
-        "explosion": { "type": "explosion", "radius": 1.5, "color": [1.0, 0.5, 0.2, 0.8], "particles": { "type": "debris", "count": 40, "color": [0.8, 0.4, 0.2, 1.0] } }
+        "warp_in_flash": {
+            "type": "flash",
+            "color": [
+                0.3,
+                0.7,
+                1.0,
+                0.8
+            ],
+            "duration": 1.0
+        },
+        "phase_shift": {
+            "type": "ripple",
+            "radius": 1.5,
+            "color": [
+                0.4,
+                0.75,
+                1.0,
+                0.6
+            ],
+            "duration": 0.5
+        },
+        "explosion": {
+            "type": "explosion",
+            "radius": 1.5,
+            "color": [
+                1.0,
+                0.5,
+                0.2,
+                0.8
+            ],
+            "particles": {
+                "type": "debris",
+                "count": 40,
+                "color": [
+                    0.8,
+                    0.4,
+                    0.2,
+                    1.0
+                ]
+            }
+        }
     }
 }

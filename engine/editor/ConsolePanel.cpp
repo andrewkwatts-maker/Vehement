@@ -902,7 +902,7 @@ std::string ConsolePanel::ExportAsJson(bool filteredOnly) const {
         oss << "    \"timestamp\": \"" << entry.GetFormattedTimestamp() << "\",\n";
         oss << "    \"level\": \"" << ConsoleLogLevelToString(entry.level) << "\",\n";
         oss << "    \"category\": \"" << entry.category << "\",\n";
-        oss << "    \"message\": \"" << entry.message << "\"";  // TODO: escape JSON
+        oss << "    \"message\": \"" << entry.message << "\"";  // FUTURE: escape JSON special characters
 
         if (entry.HasSourceLocation()) {
             oss << ",\n    \"source\": \"" << entry.GetSourceLocation() << "\"";

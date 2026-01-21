@@ -354,7 +354,7 @@ StateMachineLayer StateMachineLayer::FromJson(const json& j) {
 
     if (j.contains("states") && j["states"].is_array()) {
         for (const auto& s : j["states"]) {
-            layer.states.push_back(AnimationState::FromJson(s));
+            layer.states.push_back(StateNode::FromJson(s));
         }
     }
 
@@ -664,7 +664,7 @@ bool DataDrivenStateMachine::LoadFromJson(const json& config) {
         m_states.clear();
         if (config.contains("states") && config["states"].is_array()) {
             for (const auto& s : config["states"]) {
-                m_states.push_back(AnimationState::FromJson(s));
+                m_states.push_back(StateNode::FromJson(s));
             }
         }
 
@@ -672,7 +672,7 @@ bool DataDrivenStateMachine::LoadFromJson(const json& config) {
         m_layers.clear();
         if (config.contains("layers") && config["layers"].is_array()) {
             for (const auto& l : config["layers"]) {
-                m_layers.push_back(AnimationLayer::FromJson(l));
+                m_layers.push_back(StateMachineLayer::FromJson(l));
             }
         }
 

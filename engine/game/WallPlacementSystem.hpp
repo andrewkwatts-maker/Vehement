@@ -175,7 +175,7 @@ private:
     void UpdateSegmentProperties();
     bool CheckCornerValidity(const glm::vec3& position, std::vector<std::string>& errors) const;
     bool CheckAreaConstraints(std::vector<std::string>& errors) const;
-    glm::vec3 ClampToBuilding Bounds(const glm::vec3& position) const;
+    glm::vec3 ClampToBuildingBounds(const glm::vec3& position) const;
 
     static size_t s_nextCornerId;
     static size_t s_nextSegmentId;

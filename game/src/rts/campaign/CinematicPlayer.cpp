@@ -1,6 +1,11 @@
 #include "CinematicPlayer.hpp"
+#include "CampaignManager.hpp"
+#include "engine/audio/AudioEngine.hpp"
+#include <imgui.h>
 #include <algorithm>
 #include <cmath>
+#include <unordered_map>
+#include <memory>
 
 namespace Vehement {
 namespace RTS {
@@ -43,12 +48,24 @@ void CinematicPlayer::Play(Cinematic* cinematic) {
     StartCinematic();
 }
 
-void CinematicPlayer::Play(const std::string& /*cinematicId*/) {
-    // TODO: Look up cinematic by ID from campaign manager
+void CinematicPlayer::Play(const std::string& cinematicId) {
+    // Look up cinematic by ID from campaign manager's current campaign
+    auto& campaignMgr = CampaignManager::Instance();
+    if (auto* campaign = campaignMgr.GetCurrentCampaign()) {
+        if (auto* cinematic = campaign->GetCinematic(cinematicId)) {
+            Play(cinematic);
+        }
+    }
 }
 
-void CinematicPlayer::PlayFromFile(const std::string& /*jsonPath*/) {
-    // TODO: Load cinematic from file and play
+void CinematicPlayer::PlayFromFile(const std::string& jsonPath) {
+    // Load cinematic from file and play
+    auto cinematic = CinematicFactory::CreateFromJson(jsonPath);
+    if (cinematic) {
+        // Store the unique_ptr and play the raw pointer
+        m_loadedCinematic = std::move(cinematic);
+        Play(m_loadedCinematic.get());
+    }
 }
 
 void CinematicPlayer::Queue(Cinematic* cinematic) {
@@ -60,8 +77,14 @@ void CinematicPlayer::Queue(Cinematic* cinematic) {
     }
 }
 
-void CinematicPlayer::Queue(const std::string& /*cinematicId*/) {
-    // TODO: Look up cinematic by ID and queue
+void CinematicPlayer::Queue(const std::string& cinematicId) {
+    // Look up cinematic by ID from campaign manager and queue
+    auto& campaignMgr = CampaignManager::Instance();
+    if (auto* campaign = campaignMgr.GetCurrentCampaign()) {
+        if (auto* cinematic = campaign->GetCinematic(cinematicId)) {
+            Queue(cinematic);
+        }
+    }
 }
 
 void CinematicPlayer::Pause() {
@@ -310,8 +333,42 @@ void CinematicPlayer::UpdateSkip(float deltaTime) {
     }
 }
 
-void CinematicPlayer::UpdateAudio(float /*deltaTime*/) {
-    // TODO: Update audio playback, handle fades
+void CinematicPlayer::UpdateAudio(float deltaTime) {
+    auto& audio = Nova::AudioEngine::Instance();
+
+    // Update music volume based on current cinematic settings
+    if (m_currentCinematic && !m_currentCinematic->backgroundMusic.empty()) {
+        float targetVolume = m_currentCinematic->musicVolume * m_musicVolume * m_masterVolume;
+
+        // Handle fade in
+        if (m_currentCinematic->fadeInMusic && m_playbackTime < 2.0f) {
+            float fadeProgress = m_playbackTime / 2.0f;
+            audio.SetMusicVolume(targetVolume * fadeProgress);
+        }
+        // Handle fade out near end
+        else if (m_currentCinematic->fadeOutMusic) {
+            float timeRemaining = m_currentCinematic->totalDuration - m_playbackTime;
+            if (timeRemaining < 2.0f && timeRemaining > 0.0f) {
+                float fadeProgress = timeRemaining / 2.0f;
+                audio.SetMusicVolume(targetVolume * fadeProgress);
+            } else {
+                audio.SetMusicVolume(targetVolume);
+            }
+        } else {
+            audio.SetMusicVolume(targetVolume);
+        }
+    }
+
+    // Update voice and SFX volumes
+    // These are managed through the audio bus system
+    if (auto* voiceBus = audio.GetBus("voice")) {
+        voiceBus->SetVolume(m_voiceVolume * m_masterVolume);
+    }
+    if (auto* sfxBus = audio.GetBus("sfx")) {
+        sfxBus->SetVolume(m_sfxVolume * m_masterVolume);
+    }
+
+    (void)deltaTime;  // Mark as intentionally unused for now
 }
 
 void CinematicPlayer::StartCinematic() {
@@ -324,7 +381,15 @@ void CinematicPlayer::StartCinematic() {
     m_currentCinematic->Start();
 
     if (m_config.muteGameAudio) {
-        // TODO: Mute game audio
+        // Mute game audio buses (ambient, game SFX) but keep cinematic audio
+        auto& audio = Nova::AudioEngine::Instance();
+        if (auto* ambientBus = audio.GetBus("ambient")) {
+            ambientBus->SetMuted(true);
+        }
+        if (auto* gameSfxBus = audio.GetBus("game_sfx")) {
+            gameSfxBus->SetMuted(true);
+        }
+        m_wasGameAudioMuted = true;
     }
 
     if (m_onStart) {
@@ -334,6 +399,21 @@ void CinematicPlayer::StartCinematic() {
 
 void CinematicPlayer::EndCinematic() {
     m_state = CinematicPlayerState::Finished;
+
+    // Restore game audio if we muted it
+    if (m_wasGameAudioMuted) {
+        auto& audio = Nova::AudioEngine::Instance();
+        if (auto* ambientBus = audio.GetBus("ambient")) {
+            ambientBus->SetMuted(false);
+        }
+        if (auto* gameSfxBus = audio.GetBus("game_sfx")) {
+            gameSfxBus->SetMuted(false);
+        }
+        m_wasGameAudioMuted = false;
+    }
+
+    // Stop cinematic audio
+    StopAllAudio();
 
     if (m_onEnd) {
         m_onEnd();
@@ -402,9 +482,52 @@ void CinematicPlayer::InterpolateCamera(const CameraMovement& movement, float sc
         t = (sceneTime - prevFrame->time) / (nextFrame->time - prevFrame->time);
     }
 
-    // Apply easing
-    // TODO: Implement different easing types
-    t = t * t * (3.0f - 2.0f * t); // Smoothstep
+    // Apply easing based on keyframe easing type
+    const std::string& easingType = prevFrame->easingType;
+    if (easingType == "linear") {
+        // Linear - no change to t
+    } else if (easingType == "ease-in" || easingType == "ease_in") {
+        // Ease in - quadratic
+        t = t * t;
+    } else if (easingType == "ease-out" || easingType == "ease_out") {
+        // Ease out - inverse quadratic
+        t = t * (2.0f - t);
+    } else if (easingType == "ease-in-out" || easingType == "ease_in_out") {
+        // Ease in-out - smoothstep
+        t = t * t * (3.0f - 2.0f * t);
+    } else if (easingType == "ease-in-cubic" || easingType == "ease_in_cubic") {
+        // Cubic ease in
+        t = t * t * t;
+    } else if (easingType == "ease-out-cubic" || easingType == "ease_out_cubic") {
+        // Cubic ease out
+        float f = t - 1.0f;
+        t = f * f * f + 1.0f;
+    } else if (easingType == "ease-in-out-cubic" || easingType == "ease_in_out_cubic") {
+        // Cubic ease in-out
+        if (t < 0.5f) {
+            t = 4.0f * t * t * t;
+        } else {
+            float f = 2.0f * t - 2.0f;
+            t = 0.5f * f * f * f + 1.0f;
+        }
+    } else if (easingType == "bounce") {
+        // Bounce effect at end
+        if (t < (1.0f / 2.75f)) {
+            t = 7.5625f * t * t;
+        } else if (t < (2.0f / 2.75f)) {
+            t -= (1.5f / 2.75f);
+            t = 7.5625f * t * t + 0.75f;
+        } else if (t < (2.5f / 2.75f)) {
+            t -= (2.25f / 2.75f);
+            t = 7.5625f * t * t + 0.9375f;
+        } else {
+            t -= (2.625f / 2.75f);
+            t = 7.5625f * t * t + 0.984375f;
+        }
+    } else {
+        // Default to smoothstep
+        t = t * t * (3.0f - 2.0f * t);
+    }
 
     // Interpolate position
     m_interpolatedCamera.position.x = prevFrame->position.x + t * (nextFrame->position.x - prevFrame->position.x);
@@ -417,15 +540,129 @@ void CinematicPlayer::InterpolateCamera(const CameraMovement& movement, float sc
 }
 
 void CinematicPlayer::RenderLetterbox() {
-    // TODO: Render top and bottom letterbox bars
+    // Render top and bottom letterbox bars using ImGui
+    ImGuiIO& io = ImGui::GetIO();
+    float screenWidth = io.DisplaySize.x;
+    float screenHeight = io.DisplaySize.y;
+    float barHeight = screenHeight * m_letterboxAmount;
+
+    ImU32 barColor = IM_COL32(0, 0, 0, 255);
+
+    ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+
+    // Top bar
+    drawList->AddRectFilled(
+        ImVec2(0.0f, 0.0f),
+        ImVec2(screenWidth, barHeight),
+        barColor
+    );
+
+    // Bottom bar
+    drawList->AddRectFilled(
+        ImVec2(0.0f, screenHeight - barHeight),
+        ImVec2(screenWidth, screenHeight),
+        barColor
+    );
 }
 
 void CinematicPlayer::RenderSubtitles() {
-    // TODO: Render subtitle text
+    if (!m_currentDialog || !m_currentDialog->showSubtitle) return;
+
+    ImGuiIO& io = ImGui::GetIO();
+    float screenWidth = io.DisplaySize.x;
+    float screenHeight = io.DisplaySize.y;
+
+    std::string subtitle = GetCurrentSubtitle();
+    if (subtitle.empty()) return;
+
+    // Calculate subtitle position (bottom center, above letterbox)
+    float subtitleY = screenHeight - (screenHeight * m_letterboxAmount) - 60.0f;
+    float padding = 20.0f;
+    float maxWidth = screenWidth * 0.8f;
+
+    // Style for subtitle background
+    ImU32 bgColor = IM_COL32(0, 0, 0, 180);
+    ImU32 textColor = IM_COL32(255, 255, 255, 255);
+
+    // Get text size
+    ImVec2 textSize = ImGui::CalcTextSize(subtitle.c_str(), nullptr, false, maxWidth);
+
+    // Calculate box position (centered)
+    float boxX = (screenWidth - textSize.x - padding * 2) * 0.5f;
+    float boxY = subtitleY - textSize.y - padding;
+
+    ImDrawList* drawList = ImGui::GetForegroundDrawList();
+
+    // Draw background
+    drawList->AddRectFilled(
+        ImVec2(boxX, boxY),
+        ImVec2(boxX + textSize.x + padding * 2, boxY + textSize.y + padding * 2),
+        bgColor,
+        5.0f  // Rounded corners
+    );
+
+    // Draw character name if available
+    if (!m_currentDialog->characterName.empty()) {
+        ImU32 nameColor = IM_COL32(255, 220, 100, 255);
+        std::string nameText = m_currentDialog->characterName + ":";
+        ImVec2 nameSize = ImGui::CalcTextSize(nameText.c_str());
+        drawList->AddText(
+            ImVec2(boxX + padding, boxY - nameSize.y - 5.0f),
+            nameColor,
+            nameText.c_str()
+        );
+    }
+
+    // Draw subtitle text
+    drawList->AddText(
+        nullptr,
+        0.0f,
+        ImVec2(boxX + padding, boxY + padding),
+        textColor,
+        subtitle.c_str(),
+        nullptr,
+        maxWidth
+    );
 }
 
 void CinematicPlayer::RenderSkipPrompt() {
-    // TODO: Render skip prompt UI
+    ImGuiIO& io = ImGui::GetIO();
+    float screenWidth = io.DisplaySize.x;
+
+    // Position in bottom-right corner
+    float promptX = screenWidth - 200.0f;
+    float promptY = 50.0f;
+
+    ImDrawList* drawList = ImGui::GetForegroundDrawList();
+
+    // Draw skip prompt text
+    const char* skipText = "Hold [SPACE] to Skip";
+    ImU32 textColor = IM_COL32(255, 255, 255, 200);
+    drawList->AddText(ImVec2(promptX, promptY), textColor, skipText);
+
+    // Draw progress bar if holding
+    if (m_isSkipHeld && m_skipHoldProgress > 0.0f) {
+        float barWidth = 150.0f;
+        float barHeight = 4.0f;
+        float barY = promptY + 20.0f;
+
+        // Background
+        drawList->AddRectFilled(
+            ImVec2(promptX, barY),
+            ImVec2(promptX + barWidth, barY + barHeight),
+            IM_COL32(50, 50, 50, 200),
+            2.0f
+        );
+
+        // Progress fill
+        float fillWidth = barWidth * m_skipHoldProgress;
+        drawList->AddRectFilled(
+            ImVec2(promptX, barY),
+            ImVec2(promptX + fillWidth, barY + barHeight),
+            IM_COL32(255, 255, 255, 255),
+            2.0f
+        );
+    }
 }
 
 void CinematicPlayer::StartDialog(const CinematicDialog& dialog) {
@@ -437,7 +674,17 @@ void CinematicPlayer::StartDialog(const CinematicDialog& dialog) {
         m_onDialogStart(dialog);
     }
 
-    // TODO: Play voiceover if available
+    // Play voiceover if available
+    if (!dialog.voiceoverFile.empty()) {
+        auto& audio = Nova::AudioEngine::Instance();
+        auto voiceBuffer = audio.LoadSound(dialog.voiceoverFile);
+        if (voiceBuffer) {
+            m_currentVoiceover = audio.Play2D(voiceBuffer, m_voiceVolume * m_masterVolume);
+            if (m_currentVoiceover) {
+                m_currentVoiceover->SetOutputBus("voice");
+            }
+        }
+    }
 }
 
 void CinematicPlayer::EndDialog() {
@@ -447,12 +694,54 @@ void CinematicPlayer::EndDialog() {
     m_currentDialog = nullptr;
 }
 
-void CinematicPlayer::PlayAudioCue(const AudioCue& /*cue*/) {
-    // TODO: Play audio through audio system
+void CinematicPlayer::PlayAudioCue(const AudioCue& cue) {
+    if (cue.audioFile.empty()) return;
+
+    auto& audio = Nova::AudioEngine::Instance();
+
+    if (cue.isMusic) {
+        // Play as music (streaming)
+        float volume = cue.volume * m_musicVolume * m_masterVolume;
+        audio.PlayMusic(cue.audioFile, volume, cue.loop);
+    } else {
+        // Play as sound effect
+        auto buffer = audio.LoadSound(cue.audioFile);
+        if (buffer) {
+            float volume = cue.volume * m_sfxVolume * m_masterVolume;
+            auto source = audio.Play2D(buffer, volume);
+            if (source) {
+                source->SetLooping(cue.loop);
+                if (!cue.channel.empty()) {
+                    source->SetOutputBus(cue.channel);
+                } else {
+                    source->SetOutputBus("sfx");
+                }
+                // Track active SFX for cleanup
+                m_activeSfx.push_back(source);
+            }
+        }
+    }
 }
 
 void CinematicPlayer::StopAllAudio() {
-    // TODO: Stop all cinematic audio
+    auto& audio = Nova::AudioEngine::Instance();
+
+    // Stop background music
+    audio.StopMusic();
+
+    // Stop current voiceover
+    if (m_currentVoiceover) {
+        m_currentVoiceover->Stop();
+        m_currentVoiceover.reset();
+    }
+
+    // Stop all active SFX
+    for (auto& sfx : m_activeSfx) {
+        if (sfx) {
+            sfx->Stop();
+        }
+    }
+    m_activeSfx.clear();
 }
 
 } // namespace Campaign

@@ -150,6 +150,13 @@ private:
     // Objectives (for scenario maps)
     void AddObjective(const std::string& type, const glm::vec3& position);
 
+    // Dialog rendering
+    void RenderOpenDialog();
+    void RenderSaveDialog();
+    void RenderExportDialog();
+    void RenderMapPropertiesDialog();
+    void RenderLoadPCGDialog();
+
     // State
     bool m_initialized = false;
     LocalMapConfig m_config;
@@ -219,4 +226,14 @@ private:
     // Selection
     int m_selectedAssetIndex = -1;
     int m_selectedSpawnIndex = -1;
+
+    // Dialog states
+    bool m_showOpenDialog = false;
+    bool m_showSaveDialog = false;
+    bool m_showExportDialog = false;
+    bool m_showMapPropertiesDialog = false;
+    bool m_showLoadPCGDialog = false;
+    char m_filePathBuffer[256] = "";
+    char m_exportPathBuffer[256] = "";
+    char m_pcgGraphPathBuffer[256] = "";
 };

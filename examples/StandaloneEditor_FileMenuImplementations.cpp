@@ -5,6 +5,7 @@
 
 // Add to includes at the top of StandaloneEditor.cpp:
 // #include <fstream>
+// #include "terrain/HeightmapIO.hpp"
 // #ifdef _WIN32
 // #include <Windows.h>
 // #include <commdlg.h>
@@ -373,9 +374,36 @@ bool StandaloneEditor::ImportHeightmap(const std::string& path) {
         return true;
     }
     else if (ext == "png") {
-        spdlog::warn("PNG heightmap import not yet implemented (requires image library)");
-        // TODO: Implement PNG loading using stb_image or similar
-        return false;
+        // Use Nova's HeightmapIO for PNG loading (it already uses stb_image internally)
+        Nova::HeightmapImportOptions importOptions;
+        importOptions.normalizeHeight = true;
+        importOptions.targetMinHeight = 0.0f;
+        importOptions.targetMaxHeight = 100.0f;
+
+        Nova::HeightmapResult result = Nova::HeightmapIO::LoadFromPNG(path, importOptions);
+        if (!result.success) {
+            spdlog::error("Failed to load PNG heightmap: {}", result.errorMessage);
+            return false;
+        }
+
+        // Copy loaded data to our terrain arrays
+        m_mapWidth = result.heightmap.width;
+        m_mapHeight = result.heightmap.height;
+        m_terrainHeights.resize(m_mapWidth * m_mapHeight);
+
+        // Convert normalized heights to our scale (0-100 range)
+        for (size_t i = 0; i < result.heightmap.data.size(); ++i) {
+            m_terrainHeights[i] = result.heightmap.GetWorldHeight(
+                static_cast<int>(i % m_mapWidth),
+                static_cast<int>(i / m_mapWidth)
+            );
+        }
+
+        // Initialize terrain tiles
+        m_terrainTiles.resize(m_mapWidth * m_mapHeight, 0);
+
+        spdlog::info("Imported PNG heightmap: {}x{}", m_mapWidth, m_mapHeight);
+        return true;
     }
     else {
         spdlog::error("Unsupported heightmap format: {}", ext);
@@ -413,9 +441,30 @@ bool StandaloneEditor::ExportHeightmap(const std::string& path) {
         return true;
     }
     else if (ext == "png") {
-        spdlog::warn("PNG heightmap export not yet implemented (requires image library)");
-        // TODO: Implement PNG saving using stb_image_write or similar
-        return false;
+        // Use Nova's HeightmapIO for PNG saving (it already uses stb_image_write internally)
+        Nova::HeightmapData heightmap;
+        heightmap.width = m_mapWidth;
+        heightmap.height = m_mapHeight;
+        heightmap.data.resize(m_terrainHeights.size());
+        heightmap.minHeight = 0.0f;
+        heightmap.maxHeight = 100.0f;
+
+        // Convert our height data to normalized format for HeightmapIO
+        for (size_t i = 0; i < m_terrainHeights.size(); ++i) {
+            // Normalize from 0-100 range to 0-1 range
+            heightmap.data[i] = std::clamp(m_terrainHeights[i] / 100.0f, 0.0f, 1.0f);
+        }
+
+        Nova::HeightmapExportOptions exportOptions;
+        exportOptions.normalize = true;
+
+        if (!Nova::HeightmapIO::SaveToPNG(heightmap, path, 16, exportOptions)) {
+            spdlog::error("Failed to export PNG heightmap: {}", Nova::HeightmapIO::GetLastError());
+            return false;
+        }
+
+        spdlog::info("Exported PNG heightmap: {}x{}", m_mapWidth, m_mapHeight);
+        return true;
     }
     else {
         spdlog::error("Unsupported heightmap format: {}", ext);

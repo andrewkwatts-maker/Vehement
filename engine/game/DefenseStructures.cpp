@@ -10,10 +10,8 @@ namespace Buildings {
 // =============================================================================
 
 WallSegmentComponent::WallSegmentComponent(const std::string& id, const std::string& name)
-    : BuildingComponent() {
-    m_id = id;
-    m_name = name;
-    m_category = "Defense";
+    : BuildingComponent(id, name) {
+    SetCategory("Defense");
     UpdateStats();
 }
 
@@ -195,10 +193,8 @@ WallSegmentPtr WallSegmentComponent::Deserialize(const nlohmann::json& json) {
 // =============================================================================
 
 TowerComponent::TowerComponent(const std::string& id, const std::string& name)
-    : BuildingComponent() {
-    m_id = id;
-    m_name = name;
-    m_category = "Defense";
+    : BuildingComponent(id, name) {
+    SetCategory("Defense");
     UpdateStats();
 }
 
@@ -385,10 +381,8 @@ TowerComponentPtr TowerComponent::Deserialize(const nlohmann::json& json) {
 // =============================================================================
 
 GateComponent::GateComponent(const std::string& id, const std::string& name)
-    : BuildingComponent() {
-    m_id = id;
-    m_name = name;
-    m_category = "Defense";
+    : BuildingComponent(id, name) {
+    SetCategory("Defense");
     UpdateStats();
 }
 

@@ -1,4 +1,5 @@
 #include "PropertySystem.hpp"
+#include <glm/gtc/quaternion.hpp>
 #include <fstream>
 #include <stdexcept>
 
@@ -42,7 +43,7 @@ namespace {
             json.push_back(q.w);
         } else {
             // Unknown type, store as empty
-            json = nlohmann::json::null;
+            json = nullptr;
         }
 
         return json;
@@ -182,14 +183,133 @@ void PropertyContainer::Deserialize(const nlohmann::json& json) {
     }
 }
 
-void PropertyContainer::SaveToDatabase(class SQLiteDatabase& db, const std::string& tableName) {
-    // TODO: Implement SQLite serialization
-    // This would create a table with columns: name, type, value_blob, override_level, etc.
-    // For now, we'll use JSON serialization to file
+void PropertyContainer::SaveToDatabase(class SQLiteDatabase& /*db*/, const std::string& /*tableName*/) {
+    // SQLite serialization for property containers
+    // Note: Disabled until SQLite dependency is added to project
+#if 0
+    // Creates a table with schema: name, type, value_json, category, tooltip, override_level, etc.
+
+    // Create table if not exists
+    std::string createTableSQL =
+        "CREATE TABLE IF NOT EXISTS " + tableName + " ("
+        "name TEXT PRIMARY KEY, "
+        "type TEXT NOT NULL, "
+        "value_json TEXT, "
+        "category TEXT, "
+        "tooltip TEXT, "
+        "override_level INTEGER DEFAULT 0, "
+        "allow_override INTEGER DEFAULT 1, "
+        "min_value REAL DEFAULT 0.0, "
+        "max_value REAL DEFAULT 1.0, "
+        "is_color INTEGER DEFAULT 0, "
+        "is_angle INTEGER DEFAULT 0, "
+        "is_percentage INTEGER DEFAULT 0"
+        ");";
+
+    db.ExecuteStatement(createTableSQL);
+
+    // Clear existing data for this table
+    db.ExecuteStatement("DELETE FROM " + tableName + ";");
+
+    // Insert each property
+    std::string insertSQL =
+        "INSERT OR REPLACE INTO " + tableName + " "
+        "(name, type, value_json, category, tooltip, override_level, allow_override, "
+        "min_value, max_value, is_color, is_angle, is_percentage) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+
+    for (const auto& [name, prop] : m_properties) {
+        const auto& meta = prop.GetMetadata();
+
+        // Serialize value to JSON string
+        nlohmann::json propJson = prop.Serialize();
+        std::string valueJson = propJson.contains("value") ? propJson["value"].dump() : "null";
+
+        std::vector<std::string> params = {
+            name,
+            TypeIndexToString(meta.type),
+            valueJson,
+            meta.category,
+            meta.tooltip,
+            std::to_string(static_cast<int>(meta.overrideLevel)),
+            std::to_string(meta.allowOverride ? 1 : 0),
+            std::to_string(meta.minValue),
+            std::to_string(meta.maxValue),
+            std::to_string(meta.isColor ? 1 : 0),
+            std::to_string(meta.isAngle ? 1 : 0),
+            std::to_string(meta.isPercentage ? 1 : 0)
+        };
+
+        db.ExecuteStatement(insertSQL, params);
+    }
+#endif
 }
 
-void PropertyContainer::LoadFromDatabase(class SQLiteDatabase& db, const std::string& tableName) {
-    // TODO: Implement SQLite deserialization
+void PropertyContainer::LoadFromDatabase(class SQLiteDatabase& /*db*/, const std::string& /*tableName*/) {
+    // Note: Disabled until SQLite dependency is added to project
+#if 0
+    // SQLite deserialization for property containers
+    // Reads properties from the database table and reconstructs the container
+
+    // Query all properties from the table
+    std::string selectSQL =
+        "SELECT name, type, value_json, category, tooltip, override_level, allow_override, "
+        "min_value, max_value, is_color, is_angle, is_percentage FROM " + tableName + ";";
+
+    nlohmann::json results = db.ExecuteQuery(selectSQL);
+
+    if (!results.is_array()) {
+        return; // No data or error
+    }
+
+    m_properties.clear();
+
+    for (const auto& row : results) {
+        std::string name = row.value("name", "");
+        if (name.empty()) continue;
+
+        PropertyMetadata metadata;
+        metadata.name = name;
+        metadata.type = StringToTypeIndex(row.value("type", "void"));
+        metadata.category = row.value("category", "");
+        metadata.tooltip = row.value("tooltip", "");
+        metadata.overrideLevel = static_cast<PropertyLevel>(row.value("override_level", 0));
+        metadata.allowOverride = row.value("allow_override", 1) != 0;
+        metadata.minValue = row.value("min_value", 0.0f);
+        metadata.maxValue = row.value("max_value", 1.0f);
+        metadata.isColor = row.value("is_color", 0) != 0;
+        metadata.isAngle = row.value("is_angle", 0) != 0;
+        metadata.isPercentage = row.value("is_percentage", 0) != 0;
+
+        // Parse the value JSON
+        std::string valueJsonStr = row.value("value_json", "null");
+        nlohmann::json valueJson;
+        try {
+            valueJson = nlohmann::json::parse(valueJsonStr);
+        } catch (...) {
+            valueJson = nullptr;
+        }
+
+        // Construct property with deserialized value
+        PropertyValue prop;
+        nlohmann::json propJson;
+        propJson["name"] = metadata.name;
+        propJson["category"] = metadata.category;
+        propJson["tooltip"] = metadata.tooltip;
+        propJson["overrideLevel"] = static_cast<int>(metadata.overrideLevel);
+        propJson["allowOverride"] = metadata.allowOverride;
+        propJson["type"] = TypeIndexToString(metadata.type);
+        propJson["minValue"] = metadata.minValue;
+        propJson["maxValue"] = metadata.maxValue;
+        propJson["isColor"] = metadata.isColor;
+        propJson["isAngle"] = metadata.isAngle;
+        propJson["isPercentage"] = metadata.isPercentage;
+        propJson["value"] = valueJson;
+
+        prop.Deserialize(propJson);
+        m_properties[name] = std::move(prop);
+    }
+#endif
 }
 
 // PropertySystem implementation

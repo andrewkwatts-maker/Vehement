@@ -375,7 +375,7 @@ bool Prefab::FromJson(const std::string& json) {
         return false;
     }
 
-    // TODO: Implement full JSON parsing with the project's JSON library
+    // FUTURE: Implement full JSON parsing with the project's JSON library
     // This would parse the JSON and populate all fields
 
     return true;

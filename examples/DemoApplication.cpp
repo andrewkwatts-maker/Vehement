@@ -171,7 +171,7 @@ void DemoApplication::Update(float deltaTime) {
     // Update particles
     if (m_showParticles && m_particles) {
         m_particles->Emit(glm::vec3(0, 0, 0), 1);
-        m_particles->Update(deltaTime, m_camera->GetView());
+        m_particles->Update(deltaTime);
     }
 
     // Update terrain
@@ -229,7 +229,9 @@ void DemoApplication::Render() {
 
     // Draw particles
     if (m_showParticles && m_particles) {
-        m_particles->Render(m_camera->GetProjectionView());
+        m_particles->Render(m_camera->GetProjectionView(),
+                            m_camera->GetRight(),
+                            m_camera->GetUp());
     }
 
     // Draw pathfinding graph

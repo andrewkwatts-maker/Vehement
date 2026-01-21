@@ -24,20 +24,86 @@ struct AABB {
     [[nodiscard]] glm::vec3 Center() const { return (min + max) * 0.5f; }
     [[nodiscard]] glm::vec3 Extents() const { return (max - min) * 0.5f; }
     [[nodiscard]] glm::vec3 Size() const { return max - min; }
-    [[nodiscard]] float SurfaceArea() const;
-    [[nodiscard]] float Volume() const;
 
-    [[nodiscard]] bool Contains(const glm::vec3& point) const;
-    [[nodiscard]] bool Intersects(const AABB& other) const;
-    [[nodiscard]] bool IntersectsRay(const glm::vec3& origin, const glm::vec3& direction,
-                                      float& tMin, float& tMax) const;
+    [[nodiscard]] inline float SurfaceArea() const {
+        glm::vec3 d = max - min;
+        return 2.0f * (d.x * d.y + d.y * d.z + d.z * d.x);
+    }
 
-    void Expand(const glm::vec3& point);
-    void Expand(const AABB& other);
+    [[nodiscard]] inline float Volume() const {
+        glm::vec3 d = max - min;
+        return d.x * d.y * d.z;
+    }
 
-    [[nodiscard]] static AABB Union(const AABB& a, const AABB& b);
-    [[nodiscard]] static AABB Intersection(const AABB& a, const AABB& b);
-    [[nodiscard]] static AABB Transform(const AABB& aabb, const glm::mat4& transform);
+    [[nodiscard]] inline bool Contains(const glm::vec3& point) const {
+        return point.x >= min.x && point.x <= max.x &&
+               point.y >= min.y && point.y <= max.y &&
+               point.z >= min.z && point.z <= max.z;
+    }
+
+    [[nodiscard]] inline bool Intersects(const AABB& other) const {
+        return (min.x <= other.max.x && max.x >= other.min.x) &&
+               (min.y <= other.max.y && max.y >= other.min.y) &&
+               (min.z <= other.max.z && max.z >= other.min.z);
+    }
+
+    [[nodiscard]] inline bool IntersectsRay(const glm::vec3& origin, const glm::vec3& direction,
+                                             float& tMin, float& tMax) const {
+        glm::vec3 invDir = 1.0f / direction;
+        glm::vec3 t0 = (min - origin) * invDir;
+        glm::vec3 t1 = (max - origin) * invDir;
+
+        glm::vec3 tNear = glm::min(t0, t1);
+        glm::vec3 tFar = glm::max(t0, t1);
+
+        tMin = glm::max(glm::max(tNear.x, tNear.y), tNear.z);
+        tMax = glm::min(glm::min(tFar.x, tFar.y), tFar.z);
+
+        return tMax >= tMin && tMax >= 0.0f;
+    }
+
+    inline void Expand(const glm::vec3& point) {
+        min = glm::min(min, point);
+        max = glm::max(max, point);
+    }
+
+    inline void Expand(const AABB& other) {
+        min = glm::min(min, other.min);
+        max = glm::max(max, other.max);
+    }
+
+    [[nodiscard]] static inline AABB Union(const AABB& a, const AABB& b) {
+        return AABB(glm::min(a.min, b.min), glm::max(a.max, b.max));
+    }
+
+    [[nodiscard]] static inline AABB Intersection(const AABB& a, const AABB& b) {
+        return AABB(glm::max(a.min, b.min), glm::min(a.max, b.max));
+    }
+
+    [[nodiscard]] static inline AABB Transform(const AABB& aabb, const glm::mat4& transform) {
+        // Transform all 8 corners and compute new AABB
+        std::array<glm::vec3, 8> corners = {
+            glm::vec3(aabb.min.x, aabb.min.y, aabb.min.z),
+            glm::vec3(aabb.max.x, aabb.min.y, aabb.min.z),
+            glm::vec3(aabb.min.x, aabb.max.y, aabb.min.z),
+            glm::vec3(aabb.max.x, aabb.max.y, aabb.min.z),
+            glm::vec3(aabb.min.x, aabb.min.y, aabb.max.z),
+            glm::vec3(aabb.max.x, aabb.min.y, aabb.max.z),
+            glm::vec3(aabb.min.x, aabb.max.y, aabb.max.z),
+            glm::vec3(aabb.max.x, aabb.max.y, aabb.max.z)
+        };
+
+        AABB result;
+        result.min = glm::vec3(FLT_MAX);
+        result.max = glm::vec3(-FLT_MAX);
+
+        for (const auto& corner : corners) {
+            glm::vec3 transformed = glm::vec3(transform * glm::vec4(corner, 1.0f));
+            result.Expand(transformed);
+        }
+
+        return result;
+    }
 };
 
 /**
@@ -61,11 +127,91 @@ struct Frustum {
     std::array<glm::vec4, 6> planes;  // left, right, bottom, top, near, far
 
     Frustum() = default;
-    explicit Frustum(const glm::mat4& projectionView);
 
-    [[nodiscard]] bool ContainsPoint(const glm::vec3& point) const;
-    [[nodiscard]] bool IntersectsSphere(const glm::vec3& center, float radius) const;
-    [[nodiscard]] bool IntersectsAABB(const AABB& aabb) const;
+    explicit inline Frustum(const glm::mat4& projectionView) {
+        // Extract frustum planes from projection-view matrix
+        planes[0] = glm::vec4(
+            projectionView[0][3] + projectionView[0][0],
+            projectionView[1][3] + projectionView[1][0],
+            projectionView[2][3] + projectionView[2][0],
+            projectionView[3][3] + projectionView[3][0]
+        );
+
+        planes[1] = glm::vec4(
+            projectionView[0][3] - projectionView[0][0],
+            projectionView[1][3] - projectionView[1][0],
+            projectionView[2][3] - projectionView[2][0],
+            projectionView[3][3] - projectionView[3][0]
+        );
+
+        planes[2] = glm::vec4(
+            projectionView[0][3] + projectionView[0][1],
+            projectionView[1][3] + projectionView[1][1],
+            projectionView[2][3] + projectionView[2][1],
+            projectionView[3][3] + projectionView[3][1]
+        );
+
+        planes[3] = glm::vec4(
+            projectionView[0][3] - projectionView[0][1],
+            projectionView[1][3] - projectionView[1][1],
+            projectionView[2][3] - projectionView[2][1],
+            projectionView[3][3] - projectionView[3][1]
+        );
+
+        planes[4] = glm::vec4(
+            projectionView[0][3] + projectionView[0][2],
+            projectionView[1][3] + projectionView[1][2],
+            projectionView[2][3] + projectionView[2][2],
+            projectionView[3][3] + projectionView[3][2]
+        );
+
+        planes[5] = glm::vec4(
+            projectionView[0][3] - projectionView[0][2],
+            projectionView[1][3] - projectionView[1][2],
+            projectionView[2][3] - projectionView[2][2],
+            projectionView[3][3] - projectionView[3][2]
+        );
+
+        for (auto& plane : planes) {
+            float length = glm::length(glm::vec3(plane));
+            plane /= length;
+        }
+    }
+
+    [[nodiscard]] inline bool ContainsPoint(const glm::vec3& point) const {
+        for (const auto& plane : planes) {
+            if (glm::dot(glm::vec3(plane), point) + plane.w < 0.0f) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    [[nodiscard]] inline bool IntersectsSphere(const glm::vec3& center, float radius) const {
+        for (const auto& plane : planes) {
+            float distance = glm::dot(glm::vec3(plane), center) + plane.w;
+            if (distance < -radius) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    [[nodiscard]] inline bool IntersectsAABB(const AABB& aabb) const {
+        for (const auto& plane : planes) {
+            glm::vec3 normal = glm::vec3(plane);
+
+            glm::vec3 pVertex = aabb.min;
+            if (normal.x >= 0) pVertex.x = aabb.max.x;
+            if (normal.y >= 0) pVertex.y = aabb.max.y;
+            if (normal.z >= 0) pVertex.z = aabb.max.z;
+
+            if (glm::dot(normal, pVertex) + plane.w < 0.0f) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 /**

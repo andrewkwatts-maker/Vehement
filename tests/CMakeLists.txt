@@ -90,6 +90,8 @@ set(ENGINE_TEST_SOURCES
     engine/test_physics.cpp
     engine/test_pool.cpp
     engine/test_job_system.cpp
+    engine/test_audio.cpp
+    physics/test_rigid_body.cpp
 )
 
 add_executable(nova_unit_tests ${ENGINE_TEST_SOURCES})
@@ -121,6 +123,8 @@ set(GAME_TEST_SOURCES
     game/test_tech_tree.cpp
     game/test_spells.cpp
     game/test_replication.cpp
+    AssetConfigLoaderTests.cpp
+    VisualScriptingTests.cpp
 )
 
 add_executable(nova_game_tests ${GAME_TEST_SOURCES})
@@ -130,6 +134,7 @@ target_link_libraries(nova_game_tests PRIVATE
 )
 target_include_directories(nova_game_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/game/src
+    ${CMAKE_SOURCE_DIR}/engine
 )
 target_compile_definitions(nova_game_tests PRIVATE
     NOVA_TESTING
@@ -151,6 +156,8 @@ set(GRAPHICS_TEST_SOURCES
     graphics/test_radiance_cascade.cpp
     graphics/test_spectral_renderer.cpp
     graphics/test_path_tracer.cpp
+    graphics/test_sdf_primitives.cpp
+    graphics/test_sdf_animation.cpp
 )
 
 add_executable(nova_graphics_tests ${GRAPHICS_TEST_SOURCES})

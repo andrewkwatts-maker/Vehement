@@ -9,13 +9,8 @@
 #include <any>
 #include <optional>
 
-// Forward declaration for JSON support
-namespace nlohmann {
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
-}
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
+// JSON support - use the configured wrapper to avoid MSVC C++20 ranges issues
+#include "../core/json_config.hpp"  // Provides 'json' type alias
 
 namespace Nova {
 namespace Reflect {

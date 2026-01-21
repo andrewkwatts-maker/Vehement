@@ -540,5 +540,39 @@ bool PolygonAreaCalculator::HasSelfIntersection(const std::vector<WallCorner>& c
     return false;
 }
 
+// =============================================================================
+// WallGateComponent Implementation
+// =============================================================================
+
+WallGateComponent::WallGateComponent(const std::string& id, const std::string& name)
+    : BuildingComponent(id, name) {
+    SetCategory("Gate");
+}
+
+bool WallGateComponent::CanAttachToWall(const WallSegment& segment) const {
+    // Check if the wall segment length can accommodate the gate width
+    // This is a simplified check - actual implementation would need corner positions
+    return segment.baseHeight >= m_height;
+}
+
+glm::vec3 WallGateComponent::CalculateAttachmentPosition(const WallSegment& segment,
+                                                          float positionAlongWall,
+                                                          const std::vector<WallCorner>& corners) const {
+    // Find start and end corners
+    glm::vec3 start(0, 0, 0), end(0, 0, 0);
+
+    for (const auto& corner : corners) {
+        if (corner.id == segment.startCornerId) {
+            start = corner.position;
+        }
+        if (corner.id == segment.endCornerId) {
+            end = corner.position;
+        }
+    }
+
+    // Interpolate position along wall
+    return glm::mix(start, end, positionAlongWall);
+}
+
 } // namespace Buildings
 } // namespace Nova

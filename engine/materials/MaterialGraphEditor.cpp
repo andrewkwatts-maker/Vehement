@@ -1,10 +1,12 @@
 #include "MaterialGraphEditor.hpp"
 #include "AdvancedMaterial.hpp"
 #include <nlohmann/json.hpp>
+#include <imgui.h>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <queue>
+#include <set>
 
 using json = nlohmann::json;
 
@@ -554,6 +556,152 @@ std::string MaterialGraphCompiler::CompileNode(const MaterialNode* node, std::ma
     return "    " + node->GenerateGLSL(inputVarNames, outputVarName);
 }
 
+// Command classes for undo/redo
+
+class MaterialGraphEditor::AddNodeCommand : public MaterialGraphEditor::EditorCommand {
+public:
+    AddNodeCommand(MaterialGraph* graph, MaterialNodeType type, const glm::vec2& position)
+        : m_graph(graph), m_type(type), m_position(position), m_nodeId(-1) {}
+
+    void Execute() override {
+        auto node = MaterialNodeFactory::CreateNode(m_type);
+        if (node) {
+            node->position = m_position;
+            m_nodeId = m_graph->AddNode(std::move(node));
+        }
+    }
+
+    void Undo() override {
+        if (m_nodeId >= 0) {
+            m_graph->RemoveNode(m_nodeId);
+        }
+    }
+
+    int GetNodeId() const { return m_nodeId; }
+
+private:
+    MaterialGraph* m_graph;
+    MaterialNodeType m_type;
+    glm::vec2 m_position;
+    int m_nodeId;
+};
+
+class MaterialGraphEditor::DeleteNodeCommand : public MaterialGraphEditor::EditorCommand {
+public:
+    DeleteNodeCommand(MaterialGraph* graph, int nodeId)
+        : m_graph(graph), m_nodeId(nodeId) {}
+
+    void Execute() override {
+        // Store the node data before deletion for undo
+        MaterialNode* node = m_graph->GetNode(m_nodeId);
+        if (node) {
+            // Serialize the node for later restoration
+            node->Serialize(m_nodeData);
+
+            // Store all connections involving this node
+            m_connections.clear();
+            for (const auto& conn : m_graph->GetAllConnections()) {
+                if (conn.startNodeId == m_nodeId || conn.endNodeId == m_nodeId) {
+                    m_connections.push_back(conn);
+                }
+            }
+
+            // Remove the node (this also removes its connections)
+            m_graph->RemoveNode(m_nodeId);
+        }
+    }
+
+    void Undo() override {
+        // Recreate the node from stored data
+        if (!m_nodeData.empty()) {
+            MaterialNodeType type = static_cast<MaterialNodeType>(m_nodeData["type"]);
+            auto node = MaterialNodeFactory::CreateNode(type);
+            if (node) {
+                node->Deserialize(m_nodeData);
+                node->id = m_nodeId;  // Restore original ID
+                m_graph->AddNode(std::move(node));
+
+                // Restore connections
+                for (const auto& conn : m_connections) {
+                    m_graph->AddConnection(conn.startPinId, conn.endPinId);
+                }
+            }
+        }
+    }
+
+private:
+    MaterialGraph* m_graph;
+    int m_nodeId;
+    nlohmann::json m_nodeData;
+    std::vector<MaterialConnection> m_connections;
+};
+
+class MaterialGraphEditor::AddConnectionCommand : public MaterialGraphEditor::EditorCommand {
+public:
+    AddConnectionCommand(MaterialGraph* graph, int startPinId, int endPinId)
+        : m_graph(graph), m_startPinId(startPinId), m_endPinId(endPinId), m_connectionId(-1) {}
+
+    void Execute() override {
+        if (m_graph->AddConnection(m_startPinId, m_endPinId)) {
+            // Find the connection ID we just created
+            for (const auto& conn : m_graph->GetAllConnections()) {
+                if (conn.startPinId == m_startPinId && conn.endPinId == m_endPinId) {
+                    m_connectionId = conn.id;
+                    break;
+                }
+            }
+        }
+    }
+
+    void Undo() override {
+        if (m_connectionId >= 0) {
+            m_graph->RemoveConnection(m_connectionId);
+        }
+    }
+
+    int GetConnectionId() const { return m_connectionId; }
+
+private:
+    MaterialGraph* m_graph;
+    int m_startPinId;
+    int m_endPinId;
+    int m_connectionId;
+};
+
+class MaterialGraphEditor::DeleteConnectionCommand : public MaterialGraphEditor::EditorCommand {
+public:
+    DeleteConnectionCommand(MaterialGraph* graph, int connectionId)
+        : m_graph(graph), m_connectionId(connectionId) {}
+
+    void Execute() override {
+        // Store connection data before deletion
+        MaterialConnection* conn = m_graph->GetConnection(m_connectionId);
+        if (conn) {
+            m_startPinId = conn->startPinId;
+            m_endPinId = conn->endPinId;
+            m_startNodeId = conn->startNodeId;
+            m_endNodeId = conn->endNodeId;
+            m_graph->RemoveConnection(m_connectionId);
+        }
+    }
+
+    void Undo() override {
+        // Restore the connection
+        if (m_graph->AddConnection(m_startPinId, m_endPinId)) {
+            // The connection ID might be different after restoration
+            // but the logical connection is restored
+        }
+    }
+
+private:
+    MaterialGraph* m_graph;
+    int m_connectionId;
+    int m_startPinId = 0;
+    int m_endPinId = 0;
+    int m_startNodeId = 0;
+    int m_endNodeId = 0;
+};
+
 // MaterialGraphEditor implementation
 MaterialGraphEditor::MaterialGraphEditor() {
     InitializeNodePalette();
@@ -572,19 +720,67 @@ std::shared_ptr<MaterialGraph> MaterialGraphEditor::GetGraph() const {
 
 void MaterialGraphEditor::NewGraph() {
     m_graph = std::make_shared<MaterialGraph>();
+    m_currentFilePath.clear();
+    m_clipboardData.clear();
+    m_compiledShaderCode.clear();
     ClearSelection();
+
+    // Clear undo/redo stacks
+    m_undoStack.clear();
+    m_redoStack.clear();
 }
 
 void MaterialGraphEditor::LoadGraph(const std::string& filepath) {
     m_graph = std::make_shared<MaterialGraph>();
     m_graph->Load(filepath);
+    m_currentFilePath = filepath;
     ClearSelection();
+
+    // Clear undo/redo stacks when loading a new graph
+    m_undoStack.clear();
+    m_redoStack.clear();
+
+    // Auto-compile if enabled
+    if (settings.autoCompile) {
+        CompileGraph();
+    }
 }
 
 void MaterialGraphEditor::SaveGraph(const std::string& filepath) {
     if (m_graph) {
         m_graph->Save(filepath);
+        m_currentFilePath = filepath;
     }
+}
+
+bool MaterialGraphEditor::ExportShader(const std::string& filepath) {
+    if (!m_graph) return false;
+
+    // Compile the graph if needed
+    if (m_compiledShaderCode.empty()) {
+        CompileGraph();
+    }
+
+    if (m_compiledShaderCode.empty()) {
+        return false;
+    }
+
+    // Write the compiled GLSL shader to file
+    std::ofstream file(filepath);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    // Add header comment
+    file << "// Generated GLSL Fragment Shader\n";
+    file << "// Material Graph: " << m_graph->name << "\n";
+    file << "// Generated by MaterialGraphEditor\n";
+    file << "//\n\n";
+
+    file << m_compiledShaderCode;
+    file.close();
+
+    return true;
 }
 
 void MaterialGraphEditor::InitializeNodePalette() {
@@ -633,6 +829,424 @@ void MaterialGraphEditor::CompileGraph() {
 
 std::string MaterialGraphEditor::GetCompiledShaderCode() const {
     return m_compiledShaderCode;
+}
+
+void MaterialGraphEditor::AddNode(MaterialNodeType type, const glm::vec2& position) {
+    if (!m_graph) return;
+
+    auto command = std::make_unique<AddNodeCommand>(m_graph.get(), type, position);
+    command->Execute();
+
+    // Clear redo stack when a new action is performed
+    m_redoStack.clear();
+
+    // Push to undo stack
+    m_undoStack.push_back(std::move(command));
+
+    // Auto-compile if enabled
+    if (settings.autoCompile) {
+        CompileGraph();
+    }
+}
+
+void MaterialGraphEditor::DeleteSelectedNodes() {
+    if (!m_graph || m_selectedNodes.empty()) return;
+
+    // Delete each selected node via commands
+    for (int nodeId : m_selectedNodes) {
+        auto command = std::make_unique<DeleteNodeCommand>(m_graph.get(), nodeId);
+        command->Execute();
+        m_undoStack.push_back(std::move(command));
+    }
+
+    // Clear redo stack when a new action is performed
+    m_redoStack.clear();
+
+    // Clear selection
+    m_selectedNodes.clear();
+
+    // Auto-compile if enabled
+    if (settings.autoCompile) {
+        CompileGraph();
+    }
+}
+
+void MaterialGraphEditor::DuplicateSelectedNodes() {
+    if (!m_graph || m_selectedNodes.empty()) return;
+
+    std::set<int> newSelection;
+    const glm::vec2 offset(50.0f, 50.0f);  // Offset for duplicated nodes
+
+    for (int nodeId : m_selectedNodes) {
+        MaterialNode* originalNode = m_graph->GetNode(nodeId);
+        if (originalNode) {
+            // Create a new node of the same type at an offset position
+            auto command = std::make_unique<AddNodeCommand>(
+                m_graph.get(),
+                originalNode->type,
+                originalNode->position + offset
+            );
+            command->Execute();
+
+            int newNodeId = command->GetNodeId();
+            if (newNodeId >= 0) {
+                // Copy parameters from original node
+                MaterialNode* newNode = m_graph->GetNode(newNodeId);
+                if (newNode) {
+                    newNode->floatParams = originalNode->floatParams;
+                    newNode->vec2Params = originalNode->vec2Params;
+                    newNode->vec3Params = originalNode->vec3Params;
+                    newNode->vec4Params = originalNode->vec4Params;
+                    newNode->stringParams = originalNode->stringParams;
+                    newNode->boolParams = originalNode->boolParams;
+                }
+                newSelection.insert(newNodeId);
+            }
+
+            m_undoStack.push_back(std::move(command));
+        }
+    }
+
+    // Clear redo stack
+    m_redoStack.clear();
+
+    // Select the new nodes
+    m_selectedNodes = newSelection;
+
+    // Auto-compile if enabled
+    if (settings.autoCompile) {
+        CompileGraph();
+    }
+}
+
+void MaterialGraphEditor::SelectNode(int nodeId) {
+    m_selectedNodes.insert(nodeId);
+}
+
+void MaterialGraphEditor::DeselectNode(int nodeId) {
+    m_selectedNodes.erase(nodeId);
+}
+
+void MaterialGraphEditor::ClearSelection() {
+    m_selectedNodes.clear();
+}
+
+bool MaterialGraphEditor::IsNodeSelected(int nodeId) const {
+    return m_selectedNodes.find(nodeId) != m_selectedNodes.end();
+}
+
+void MaterialGraphEditor::CopySelectedNodes() {
+    if (!m_graph || m_selectedNodes.empty()) return;
+
+    // Create JSON object for clipboard data
+    json clipboardData;
+    clipboardData["type"] = "MaterialGraphNodes";
+    clipboardData["nodes"] = json::array();
+    clipboardData["connections"] = json::array();
+
+    // Find center of selection for relative positioning
+    glm::vec2 center(0.0f);
+    for (int nodeId : m_selectedNodes) {
+        MaterialNode* node = m_graph->GetNode(nodeId);
+        if (node) {
+            center += node->position;
+        }
+    }
+    if (!m_selectedNodes.empty()) {
+        center /= static_cast<float>(m_selectedNodes.size());
+    }
+
+    // Serialize selected nodes with relative positions
+    for (int nodeId : m_selectedNodes) {
+        MaterialNode* node = m_graph->GetNode(nodeId);
+        if (node) {
+            json nodeJson;
+            node->Serialize(nodeJson);
+            // Store relative position from center
+            nodeJson["relativePos"] = {node->position.x - center.x, node->position.y - center.y};
+            clipboardData["nodes"].push_back(nodeJson);
+        }
+    }
+
+    // Serialize connections between selected nodes
+    for (const auto& conn : m_graph->GetAllConnections()) {
+        // Only include connections where both nodes are selected
+        if (m_selectedNodes.count(conn.startNodeId) && m_selectedNodes.count(conn.endNodeId)) {
+            clipboardData["connections"].push_back({
+                {"startNodeId", conn.startNodeId},
+                {"endNodeId", conn.endNodeId},
+                {"startPinId", conn.startPinId},
+                {"endPinId", conn.endPinId}
+            });
+        }
+    }
+
+    // Store to internal clipboard as JSON string
+    m_clipboardData = clipboardData.dump();
+}
+
+void MaterialGraphEditor::CutSelectedNodes() {
+    // Cut = Copy + Delete
+    CopySelectedNodes();
+    DeleteSelectedNodes();
+}
+
+void MaterialGraphEditor::PasteNodes() {
+    if (!m_graph || m_clipboardData.empty()) return;
+
+    try {
+        json clipboardData = json::parse(m_clipboardData);
+
+        // Verify clipboard type
+        if (!clipboardData.contains("type") || clipboardData["type"] != "MaterialGraphNodes") {
+            return;
+        }
+
+        // Calculate paste position (offset from current viewport center or mouse position)
+        glm::vec2 pasteCenter = m_graph->viewportOffset + glm::vec2(100.0f, 100.0f);
+
+        // Map old node IDs to new node IDs
+        std::map<int, int> nodeIdMap;
+        // Map old pin IDs to new pin IDs
+        std::map<int, int> pinIdMap;
+
+        // Clear selection before pasting
+        ClearSelection();
+
+        // Create new nodes from clipboard data
+        for (const auto& nodeJson : clipboardData["nodes"]) {
+            MaterialNodeType type = static_cast<MaterialNodeType>(nodeJson["type"]);
+            auto node = MaterialNodeFactory::CreateNode(type);
+            if (node) {
+                // Deserialize node data
+                node->Deserialize(nodeJson);
+
+                // Store old ID for mapping
+                int oldNodeId = nodeJson["id"];
+
+                // Store old pin IDs before adding node (which may reassign IDs)
+                std::map<std::string, int> oldInputPinIds;
+                std::map<std::string, int> oldOutputPinIds;
+                for (const auto& [pinName, pin] : node->inputs) {
+                    oldInputPinIds[pinName] = pin.id;
+                }
+                for (const auto& [pinName, pin] : node->outputs) {
+                    oldOutputPinIds[pinName] = pin.id;
+                }
+
+                // Calculate new position relative to paste center
+                glm::vec2 relativePos(0.0f);
+                if (nodeJson.contains("relativePos")) {
+                    relativePos = glm::vec2(nodeJson["relativePos"][0], nodeJson["relativePos"][1]);
+                }
+                node->position = pasteCenter + relativePos;
+
+                // Add node to graph (this assigns a new ID)
+                int newNodeId = m_graph->AddNode(std::move(node));
+
+                // Map old ID to new ID
+                nodeIdMap[oldNodeId] = newNodeId;
+
+                // Map old pin IDs to new pin IDs
+                MaterialNode* addedNode = m_graph->GetNode(newNodeId);
+                if (addedNode) {
+                    for (const auto& [pinName, oldPinId] : oldInputPinIds) {
+                        auto it = addedNode->inputs.find(pinName);
+                        if (it != addedNode->inputs.end()) {
+                            pinIdMap[oldPinId] = it->second.id;
+                        }
+                    }
+                    for (const auto& [pinName, oldPinId] : oldOutputPinIds) {
+                        auto it = addedNode->outputs.find(pinName);
+                        if (it != addedNode->outputs.end()) {
+                            pinIdMap[oldPinId] = it->second.id;
+                        }
+                    }
+                }
+
+                // Select the new node
+                m_selectedNodes.insert(newNodeId);
+            }
+        }
+
+        // Recreate connections between pasted nodes using mapped IDs
+        for (const auto& connJson : clipboardData["connections"]) {
+            int oldStartPinId = connJson["startPinId"];
+            int oldEndPinId = connJson["endPinId"];
+
+            // Only create connection if both pins were mapped
+            auto startIt = pinIdMap.find(oldStartPinId);
+            auto endIt = pinIdMap.find(oldEndPinId);
+            if (startIt != pinIdMap.end() && endIt != pinIdMap.end()) {
+                m_graph->AddConnection(startIt->second, endIt->second);
+            }
+        }
+
+        // Auto-compile if enabled
+        if (settings.autoCompile) {
+            CompileGraph();
+        }
+
+    } catch (const std::exception& e) {
+        // Invalid clipboard data, ignore
+        (void)e;
+    }
+}
+
+void MaterialGraphEditor::Undo() {
+    if (!CanUndo()) return;
+
+    // Get the last command from the undo stack
+    auto command = std::move(m_undoStack.back());
+    m_undoStack.pop_back();
+
+    // Execute the undo operation
+    command->Undo();
+
+    // Move to redo stack
+    m_redoStack.push_back(std::move(command));
+
+    // Auto-compile if enabled
+    if (settings.autoCompile) {
+        CompileGraph();
+    }
+}
+
+void MaterialGraphEditor::Redo() {
+    if (!CanRedo()) return;
+
+    // Get the last command from the redo stack
+    auto command = std::move(m_redoStack.back());
+    m_redoStack.pop_back();
+
+    // Execute the command again
+    command->Execute();
+
+    // Move back to undo stack
+    m_undoStack.push_back(std::move(command));
+
+    // Auto-compile if enabled
+    if (settings.autoCompile) {
+        CompileGraph();
+    }
+}
+
+bool MaterialGraphEditor::CanUndo() const {
+    return !m_undoStack.empty();
+}
+
+bool MaterialGraphEditor::CanRedo() const {
+    return !m_redoStack.empty();
+}
+
+void MaterialGraphEditor::UpdatePreview() {
+    m_preview.needsUpdate = true;
+}
+
+void MaterialGraphEditor::SetPreviewMaterial(std::shared_ptr<AdvancedMaterial> material) {
+    m_preview.material = material;
+    m_preview.needsUpdate = true;
+}
+
+// Connection operations with undo support (internal helper methods)
+
+bool MaterialGraphEditor::AddConnectionWithUndo(int startPinId, int endPinId) {
+    if (!m_graph) return false;
+
+    auto command = std::make_unique<AddConnectionCommand>(m_graph.get(), startPinId, endPinId);
+    command->Execute();
+
+    if (command->GetConnectionId() >= 0) {
+        // Clear redo stack when a new action is performed
+        m_redoStack.clear();
+
+        // Push to undo stack
+        m_undoStack.push_back(std::move(command));
+
+        // Auto-compile if enabled
+        if (settings.autoCompile) {
+            CompileGraph();
+        }
+        return true;
+    }
+    return false;
+}
+
+void MaterialGraphEditor::DeleteConnectionWithUndo(int connectionId) {
+    if (!m_graph) return;
+
+    auto command = std::make_unique<DeleteConnectionCommand>(m_graph.get(), connectionId);
+    command->Execute();
+
+    // Clear redo stack when a new action is performed
+    m_redoStack.clear();
+
+    // Push to undo stack
+    m_undoStack.push_back(std::move(command));
+
+    // Auto-compile if enabled
+    if (settings.autoCompile) {
+        CompileGraph();
+    }
+}
+
+void MaterialGraphEditor::HandleNodeInteraction() {
+    // This would typically be called from Render() to handle user input
+    // Implementation depends on the UI framework (Dear ImGui, etc.)
+}
+
+void MaterialGraphEditor::HandleConnectionDragging() {
+    // This would typically be called from Render() to handle connection creation
+    // When a connection drag completes successfully:
+    // if (dragCompleted && m_dragStartPin >= 0 && targetPin >= 0) {
+    //     AddConnectionWithUndo(m_dragStartPin, targetPin);
+    //     m_isDraggingConnection = false;
+    //     m_dragStartPin = -1;
+    // }
+}
+
+void MaterialGraphEditor::ValidateGraph() {
+    if (m_graph) {
+        m_graph->Validate();
+    }
+}
+
+void MaterialGraphEditor::Render() {
+    RenderToolbar();
+    RenderNodePalette();
+    RenderNodeEditor();
+    RenderProperties();
+    RenderPreview();
+}
+
+void MaterialGraphEditor::RenderToolbar() {
+    // Toolbar rendering - implementation depends on UI framework
+}
+
+void MaterialGraphEditor::RenderNodePalette() {
+    // Node palette rendering - implementation depends on UI framework
+}
+
+void MaterialGraphEditor::RenderNodeEditor() {
+    // Main node editor canvas rendering - implementation depends on UI framework
+    HandleNodeInteraction();
+    HandleConnectionDragging();
+}
+
+void MaterialGraphEditor::RenderProperties() {
+    // Selected node properties panel - implementation depends on UI framework
+}
+
+void MaterialGraphEditor::RenderPreview() {
+    // Material preview rendering - implementation depends on UI framework
+}
+
+void MaterialGraphEditor::RenderNode(MaterialNode* node) {
+    // Individual node rendering - implementation depends on UI framework
+}
+
+void MaterialGraphEditor::RenderConnection(const MaterialConnection& conn) {
+    // Connection line rendering - implementation depends on UI framework
 }
 
 // Template implementations

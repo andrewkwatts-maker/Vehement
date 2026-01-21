@@ -29,9 +29,12 @@ bool HybridDepthMerge::Initialize(int width, int height) {
         return false;
     }
 
-    // Create temporary depth buffer
+    // Create temporary depth buffer with GL_DEPTH_COMPONENT32F format
     m_tempDepth = std::make_shared<Texture>();
-    // TODO: Create depth texture with appropriate format
+    if (!m_tempDepth->Create(width, height, TextureFormat::Depth, nullptr)) {
+        spdlog::error("Failed to create temporary depth texture");
+        return false;
+    }
 
     m_initialized = true;
     spdlog::info("HybridDepthMerge initialized successfully");
@@ -60,8 +63,13 @@ void HybridDepthMerge::Resize(int width, int height) {
     m_width = width;
     m_height = height;
 
-    // Resize temporary depth buffer
-    // TODO: Recreate m_tempDepth with new dimensions
+    // Resize temporary depth buffer - delete and recreate with new dimensions
+    if (m_tempDepth) {
+        m_tempDepth->Cleanup();
+        if (!m_tempDepth->Create(width, height, TextureFormat::Depth, nullptr)) {
+            spdlog::error("Failed to recreate temporary depth texture on resize");
+        }
+    }
 }
 
 void HybridDepthMerge::PrepareSDFPass(DepthMergeMode mode) {
@@ -216,17 +224,79 @@ bool HybridDepthMerge::CreateShaders() {
         // Continue - we can still function with limited capability
     }
 
-    // Load depth copy shader (inline simple shader)
+    // Create inline depth copy shader - simple pass-through that optionally uses min
+    const std::string depthCopySource = R"(
+#version 450 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(r32f, binding = 0) uniform readonly image2D u_source;
+layout(r32f, binding = 1) uniform image2D u_dest;
+
+uniform ivec2 u_resolution;
+uniform int u_useMin;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (pixel.x >= u_resolution.x || pixel.y >= u_resolution.y) return;
+
+    float srcDepth = imageLoad(u_source, pixel).r;
+    if (u_useMin == 1) {
+        float dstDepth = imageLoad(u_dest, pixel).r;
+        imageStore(u_dest, pixel, vec4(min(srcDepth, dstDepth)));
+    } else {
+        imageStore(u_dest, pixel, vec4(srcDepth));
+    }
+}
+)";
     m_depthCopyShader = std::make_shared<Shader>();
-    // TODO: Load or create simple depth copy shader
+    if (!m_depthCopyShader->LoadComputeShader(depthCopySource)) {
+        spdlog::warn("Failed to compile depth copy shader");
+    }
 
-    // Load depth clear shader
+    // Create inline depth clear shader
+    const std::string depthClearSource = R"(
+#version 450 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(r32f, binding = 0) uniform writeonly image2D u_depth;
+
+uniform ivec2 u_resolution;
+uniform float u_clearValue;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (pixel.x >= u_resolution.x || pixel.y >= u_resolution.y) return;
+
+    imageStore(u_depth, pixel, vec4(u_clearValue));
+}
+)";
     m_depthClearShader = std::make_shared<Shader>();
-    // TODO: Load or create depth clear shader
+    if (!m_depthClearShader->LoadComputeShader(depthClearSource)) {
+        spdlog::warn("Failed to compile depth clear shader");
+    }
 
-    // Load depth init shader
+    // Create inline depth init shader for raymarch initialization
+    const std::string depthInitSource = R"(
+#version 450 core
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(r32f, binding = 0) uniform writeonly image2D u_depth;
+
+uniform ivec2 u_resolution;
+uniform float u_farPlane;
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (pixel.x >= u_resolution.x || pixel.y >= u_resolution.y) return;
+
+    // Initialize depth to far plane for raymarch
+    imageStore(u_depth, pixel, vec4(u_farPlane));
+}
+)";
     m_depthInitShader = std::make_shared<Shader>();
-    // TODO: Load or create depth init shader
+    if (!m_depthInitShader->LoadComputeShader(depthInitSource)) {
+        spdlog::warn("Failed to compile depth init shader");
+    }
 
     return true;
 }

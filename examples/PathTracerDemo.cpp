@@ -17,7 +17,9 @@
 #include "../engine/core/Time.hpp"
 #include "../engine/input/InputManager.hpp"
 #include "../engine/core/Logger.hpp"
+#include <glad/gl.h>
 #include <iostream>
+#include <iomanip>
 
 using namespace Nova;
 
@@ -81,6 +83,7 @@ public:
     }
 
     void Shutdown() {
+        CleanupFullscreenQuad();
         m_pathTracer->Shutdown();
         m_window->Close();
     }
@@ -194,14 +197,126 @@ private:
         // Render with path tracer
         m_pathTracer->Render(*m_camera, m_primitives);
 
-        // Display output texture
+        // Display output texture using fullscreen quad
         auto texture = m_pathTracer->GetOutputTexture();
         if (texture) {
-            // TODO: Render texture to screen (fullscreen quad)
-            // For now, the texture is available for display
+            RenderTextureToScreen(texture);
         }
 
         m_window->SwapBuffers();
+    }
+
+    void RenderTextureToScreen(GLuint texture) {
+        // Initialize fullscreen quad resources on first call
+        if (m_quadVAO == 0) {
+            InitializeFullscreenQuad();
+        }
+
+        // Bind default framebuffer (screen)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Disable depth testing for fullscreen quad
+        glDisable(GL_DEPTH_TEST);
+
+        // Use the fullscreen shader
+        glUseProgram(m_fullscreenShader);
+
+        // Bind the path tracer output texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(m_fullscreenShader, "uTexture"), 0);
+
+        // Draw the fullscreen quad
+        glBindVertexArray(m_quadVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glBindVertexArray(0);
+
+        glUseProgram(0);
+    }
+
+    void InitializeFullscreenQuad() {
+        // Create fullscreen quad VAO/VBO
+        // Positions are in NDC (-1 to 1), UVs from 0 to 1
+        float quadVertices[] = {
+            // Position (x, y)  // TexCoord (u, v)
+            -1.0f, -1.0f,       0.0f, 0.0f,
+             1.0f, -1.0f,       1.0f, 0.0f,
+            -1.0f,  1.0f,       0.0f, 1.0f,
+             1.0f,  1.0f,       1.0f, 1.0f
+        };
+
+        glGenVertexArrays(1, &m_quadVAO);
+        glGenBuffers(1, &m_quadVBO);
+
+        glBindVertexArray(m_quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, m_quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+        // Position attribute
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        // TexCoord attribute
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        glBindVertexArray(0);
+
+        // Create simple fullscreen shader
+        const char* vertexShaderSource = R"(
+            #version 330 core
+            layout(location = 0) in vec2 aPos;
+            layout(location = 1) in vec2 aTexCoord;
+            out vec2 vTexCoord;
+            void main() {
+                gl_Position = vec4(aPos, 0.0, 1.0);
+                vTexCoord = aTexCoord;
+            }
+        )";
+
+        const char* fragmentShaderSource = R"(
+            #version 330 core
+            in vec2 vTexCoord;
+            out vec4 FragColor;
+            uniform sampler2D uTexture;
+            void main() {
+                FragColor = texture(uTexture, vTexCoord);
+            }
+        )";
+
+        // Compile vertex shader
+        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+        glCompileShader(vertexShader);
+
+        // Compile fragment shader
+        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+        glCompileShader(fragmentShader);
+
+        // Create shader program
+        m_fullscreenShader = glCreateProgram();
+        glAttachShader(m_fullscreenShader, vertexShader);
+        glAttachShader(m_fullscreenShader, fragmentShader);
+        glLinkProgram(m_fullscreenShader);
+
+        // Clean up individual shaders
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+        Logger::Info("Initialized fullscreen quad for path tracer output display");
+    }
+
+    void CleanupFullscreenQuad() {
+        if (m_quadVAO != 0) {
+            glDeleteVertexArrays(1, &m_quadVAO);
+            glDeleteBuffers(1, &m_quadVBO);
+            glDeleteProgram(m_fullscreenShader);
+            m_quadVAO = 0;
+            m_quadVBO = 0;
+            m_fullscreenShader = 0;
+        }
     }
 
     void PrintStats() {
@@ -296,6 +411,11 @@ private:
     bool m_dispersionEnabled = true;
     bool m_denoisingEnabled = true;
     float m_statsTimer = 0.0f;
+
+    // Fullscreen quad resources for displaying path tracer output
+    GLuint m_quadVAO = 0;
+    GLuint m_quadVBO = 0;
+    GLuint m_fullscreenShader = 0;
 };
 
 // ============================================================================

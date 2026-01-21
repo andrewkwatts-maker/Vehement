@@ -2,6 +2,7 @@
 
 #include "MaterialNode.hpp"
 #include "../graphics/PreviewRenderer.hpp"
+#include <nlohmann/json_fwd.hpp>
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
@@ -135,6 +136,11 @@ public:
     void NewGraph();
     void LoadGraph(const std::string& filepath);
     void SaveGraph(const std::string& filepath);
+    bool ExportShader(const std::string& filepath);
+
+    // Get/Set current file path
+    const std::string& GetCurrentFilePath() const { return m_currentFilePath; }
+    void SetCurrentFilePath(const std::string& path) { m_currentFilePath = path; }
 
     // UI rendering
     void Render();
@@ -157,6 +163,7 @@ public:
 
     // Clipboard
     void CopySelectedNodes();
+    void CutSelectedNodes();
     void PasteNodes();
 
     // Undo/Redo
@@ -198,6 +205,12 @@ private:
     std::map<std::string, std::vector<MaterialNodeType>> m_nodePalette;
     std::string m_nodeSearchFilter;
 
+    // Clipboard for copy/paste
+    std::string m_clipboardData;
+
+    // Current file path for save operations
+    std::string m_currentFilePath;
+
     // Undo/Redo
     struct EditorCommand {
         virtual void Execute() = 0;
@@ -220,6 +233,10 @@ private:
     void HandleNodeInteraction();
     void HandleConnectionDragging();
     void ValidateGraph();
+
+    // Connection operations with undo support
+    bool AddConnectionWithUndo(int startPinId, int endPinId);
+    void DeleteConnectionWithUndo(int connectionId);
 
     // Preview
     struct PreviewData {

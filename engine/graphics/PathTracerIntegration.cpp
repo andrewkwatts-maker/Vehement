@@ -1,6 +1,8 @@
 #include "PathTracerIntegration.hpp"
 #include "../core/Logger.hpp"
+#include "../scene/SceneNode.hpp"
 #include <glm/gtc/matrix_transform.hpp>
+#include <functional>
 
 namespace Nova {
 
@@ -200,10 +202,96 @@ void PathTracerIntegration::UpdateAdaptiveQuality() {
 std::vector<SDFPrimitive> PathTracerIntegration::ConvertSceneToPrimitives(const Scene& scene) {
     std::vector<SDFPrimitive> primitives;
 
-    // TODO: Implement scene graph traversal and conversion
-    // For now, return empty (user will manually create primitives)
+    // Get root node
+    const SceneNode* root = scene.GetRoot();
+    if (!root) {
+        Logger::Warn("Scene has no root node");
+        return primitives;
+    }
 
-    Logger::Warn("Scene conversion not yet implemented - create primitives manually");
+    // Reserve space for efficiency
+    primitives.reserve(64);
+
+    // Recursive lambda to traverse scene graph
+    std::function<void(const SceneNode&, const glm::mat4&)> traverseNode;
+    traverseNode = [&](const SceneNode& node, const glm::mat4& parentTransform) {
+        // Skip invisible nodes
+        if (!node.IsVisible()) {
+            return;
+        }
+
+        // Calculate world transform
+        glm::mat4 worldTransform = parentTransform * node.GetLocalTransform();
+
+        // Check if node has renderable content
+        if (node.HasMesh()) {
+            const auto& mesh = node.GetMesh();
+
+            // For now, convert meshes to sphere primitives based on bounding box
+            // A full implementation would use the mesh's SDF representation if available
+            if (mesh) {
+                glm::vec3 boundsMin = mesh->GetBoundsMin();
+                glm::vec3 boundsMax = mesh->GetBoundsMax();
+
+                // Calculate center and radius
+                glm::vec3 center = (boundsMin + boundsMax) * 0.5f;
+                glm::vec3 halfExtent = (boundsMax - boundsMin) * 0.5f;
+                float radius = glm::length(halfExtent);
+
+                // Transform center to world space
+                glm::vec4 worldCenter = worldTransform * glm::vec4(center, 1.0f);
+
+                // Extract scale from transform for radius adjustment
+                glm::vec3 scale(
+                    glm::length(glm::vec3(worldTransform[0])),
+                    glm::length(glm::vec3(worldTransform[1])),
+                    glm::length(glm::vec3(worldTransform[2]))
+                );
+                float avgScale = (scale.x + scale.y + scale.z) / 3.0f;
+                radius *= avgScale;
+
+                // Get material properties
+                glm::vec3 color(0.7f, 0.7f, 0.7f);
+                float roughness = 0.5f;
+                float metallic = 0.0f;
+                MaterialType matType = MaterialType::Diffuse;
+
+                if (node.HasMaterial()) {
+                    const auto& material = node.GetMaterial();
+                    if (material) {
+                        // Extract material properties
+                        // Note: Actual implementation depends on Material class API
+                        // Using defaults for now
+                    }
+                }
+
+                // Create sphere primitive as approximation
+                SDFPrimitive prim = CreateSpherePrimitive(
+                    glm::vec3(worldCenter),
+                    radius,
+                    color,
+                    matType,
+                    roughness,
+                    metallic,
+                    1.5f
+                );
+
+                primitives.push_back(prim);
+            }
+        }
+
+        // Traverse children
+        for (const auto& child : node.GetChildren()) {
+            if (child) {
+                traverseNode(*child, worldTransform);
+            }
+        }
+    };
+
+    // Start traversal from root with identity transform
+    traverseNode(*root, glm::mat4(1.0f));
+
+    Logger::Info("Converted scene to %zu SDF primitives", primitives.size());
     return primitives;
 }
 

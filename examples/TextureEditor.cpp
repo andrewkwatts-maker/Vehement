@@ -2,6 +2,25 @@
 #include "ModernUI.hpp"
 #include <spdlog/spdlog.h>
 #include <filesystem>
+#include <algorithm>
+#include <vector>
+#include <cmath>
+
+// OpenGL for texture creation
+#include <glad/glad.h>
+
+// STB image loading (implementation is in Texture.cpp or elsewhere in the engine)
+#include <stb_image.h>
+#include <stb_image_write.h>
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <commdlg.h>
+#endif
+
+// Store raw texture data for adjustments
+static std::vector<unsigned char> s_originalTextureData;
+static std::vector<unsigned char> s_adjustedTextureData;
 
 TextureEditor::TextureEditor() = default;
 TextureEditor::~TextureEditor() = default;
@@ -37,7 +56,7 @@ void TextureEditor::Render(bool* isOpen) {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Export As...")) {
-                    // TODO: Export dialog
+                    ExportTextureAs();
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Close")) {
@@ -289,9 +308,6 @@ void TextureEditor::RenderProperties() {
 void TextureEditor::LoadTexture() {
     spdlog::info("TextureEditor: Loading texture '{}'", m_assetPath);
 
-    // TODO: Actual texture loading using engine's texture system
-    // For now, simulate loading
-
     try {
         std::filesystem::path path(m_assetPath);
 
@@ -302,15 +318,74 @@ void TextureEditor::LoadTexture() {
 
         m_fileSize = std::filesystem::file_size(path);
 
-        // Simulate texture properties (would be loaded from actual file)
-        m_width = 512;
-        m_height = 512;
-        m_channels = 4;
-        m_format = "RGBA8";
-        m_mipLevels = 1;
+        // Load texture using stb_image
+        int width, height, channels;
+        unsigned char* data = stbi_load(m_assetPath.c_str(), &width, &height, &channels, 0);
+
+        if (!data) {
+            spdlog::error("TextureEditor: Failed to load texture with stb_image: {}",
+                          stbi_failure_reason());
+            m_isLoaded = false;
+            return;
+        }
+
+        m_width = width;
+        m_height = height;
+        m_channels = channels;
+
+        // Determine format string based on channels
+        switch (channels) {
+            case 1: m_format = "R8"; break;
+            case 2: m_format = "RG8"; break;
+            case 3: m_format = "RGB8"; break;
+            case 4: m_format = "RGBA8"; break;
+            default: m_format = "Unknown";
+        }
+
+        // Calculate mip levels (log2 of max dimension)
+        int maxDim = std::max(width, height);
+        m_mipLevels = static_cast<int>(std::floor(std::log2(maxDim))) + 1;
+
+        // Store original data for adjustments
+        size_t dataSize = static_cast<size_t>(width * height * channels);
+        s_originalTextureData.assign(data, data + dataSize);
+        s_adjustedTextureData = s_originalTextureData;
+
+        // Create OpenGL texture for ImGui display
+        // Note: In a real implementation, this would use Nova::Texture
+        // For now, we'll create a raw OpenGL texture
+        GLuint textureId = 0;
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+
+        // Set texture parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // Upload texture data
+        GLenum format = GL_RGBA;
+        switch (channels) {
+            case 1: format = GL_RED; break;
+            case 2: format = GL_RG; break;
+            case 3: format = GL_RGB; break;
+            case 4: format = GL_RGBA; break;
+        }
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
+                     GL_UNSIGNED_BYTE, data);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Store texture ID for ImGui
+        m_textureID = reinterpret_cast<ImTextureID>(static_cast<intptr_t>(textureId));
+
+        stbi_image_free(data);
 
         m_isLoaded = true;
-        spdlog::info("TextureEditor: Texture loaded successfully");
+        spdlog::info("TextureEditor: Texture loaded successfully ({}x{}, {} channels)",
+                     m_width, m_height, m_channels);
 
     } catch (const std::exception& e) {
         spdlog::error("TextureEditor: Failed to load texture: {}", e.what());
@@ -319,8 +394,72 @@ void TextureEditor::LoadTexture() {
 }
 
 void TextureEditor::UpdatePreview() {
-    // TODO: Update preview with current adjustments
-    // Would regenerate texture with brightness/contrast applied
+    if (!m_isLoaded || s_originalTextureData.empty() || !m_textureID) {
+        return;
+    }
+
+    // Apply brightness and contrast adjustments to texture data
+    size_t dataSize = s_originalTextureData.size();
+    s_adjustedTextureData.resize(dataSize);
+
+    for (size_t i = 0; i < dataSize; ++i) {
+        // Skip alpha channel if present (every 4th byte in RGBA)
+        bool isAlpha = (m_channels == 4) && ((i % 4) == 3);
+        if (isAlpha) {
+            s_adjustedTextureData[i] = s_originalTextureData[i];
+            continue;
+        }
+
+        // Apply channel visibility
+        int channelIndex = i % m_channels;
+        bool showChannel = true;
+        if (channelIndex == 0 && !m_showRed) showChannel = false;
+        if (channelIndex == 1 && !m_showGreen) showChannel = false;
+        if (channelIndex == 2 && !m_showBlue) showChannel = false;
+        if (channelIndex == 3 && !m_showAlpha) showChannel = false;
+
+        if (!showChannel) {
+            s_adjustedTextureData[i] = 0;
+            continue;
+        }
+
+        // Get original value normalized to 0-1
+        float value = static_cast<float>(s_originalTextureData[i]) / 255.0f;
+
+        // Apply contrast (centered at 0.5)
+        value = (value - 0.5f) * m_contrast + 0.5f;
+
+        // Apply brightness
+        value += m_brightness;
+
+        // Clamp to valid range
+        value = std::clamp(value, 0.0f, 1.0f);
+
+        // Convert back to byte
+        s_adjustedTextureData[i] = static_cast<unsigned char>(value * 255.0f);
+    }
+
+    // Update OpenGL texture with adjusted data
+    GLuint textureId = static_cast<GLuint>(reinterpret_cast<intptr_t>(m_textureID));
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    GLenum format = GL_RGBA;
+    switch (m_channels) {
+        case 1: format = GL_RED; break;
+        case 2: format = GL_RG; break;
+        case 3: format = GL_RGB; break;
+        case 4: format = GL_RGBA; break;
+    }
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, format,
+                    GL_UNSIGNED_BYTE, s_adjustedTextureData.data());
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Mark as dirty since adjustments were made
+    if (m_brightness != 0.0f || m_contrast != 1.0f) {
+        m_isDirty = true;
+    }
 }
 
 std::string TextureEditor::GetEditorName() const {
@@ -338,11 +477,131 @@ void TextureEditor::Save() {
 
     spdlog::info("TextureEditor: Saving texture '{}'", m_assetPath);
 
-    // TODO: Actual save implementation
+    if (s_adjustedTextureData.empty()) {
+        spdlog::warn("TextureEditor: No texture data to save");
+        return;
+    }
 
-    m_isDirty = false;
+    // Determine format from file extension
+    std::filesystem::path path(m_assetPath);
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    bool success = false;
+
+    if (ext == ".png") {
+        success = stbi_write_png(m_assetPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data(), m_width * m_channels) != 0;
+    } else if (ext == ".jpg" || ext == ".jpeg") {
+        success = stbi_write_jpg(m_assetPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data(), 95) != 0;
+    } else if (ext == ".bmp") {
+        success = stbi_write_bmp(m_assetPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data()) != 0;
+    } else if (ext == ".tga") {
+        success = stbi_write_tga(m_assetPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data()) != 0;
+    } else {
+        // Default to PNG for unknown formats
+        std::string pngPath = m_assetPath + ".png";
+        success = stbi_write_png(pngPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data(), m_width * m_channels) != 0;
+        if (success) {
+            spdlog::info("TextureEditor: Saved as PNG (unknown format): {}", pngPath);
+        }
+    }
+
+    if (success) {
+        // Update original data to match saved data
+        s_originalTextureData = s_adjustedTextureData;
+        m_isDirty = false;
+        spdlog::info("TextureEditor: Texture saved successfully");
+    } else {
+        spdlog::error("TextureEditor: Failed to save texture");
+    }
 }
 
 std::string TextureEditor::GetAssetPath() const {
     return m_assetPath;
+}
+
+void TextureEditor::ExportTextureAs() {
+    if (!m_isLoaded || s_adjustedTextureData.empty()) {
+        spdlog::warn("TextureEditor: No texture loaded to export");
+        return;
+    }
+
+    std::string exportPath;
+
+#ifdef _WIN32
+    // Windows native file dialog
+    char filename[MAX_PATH] = {0};
+
+    // Create default filename based on current texture name
+    std::filesystem::path currentPath(m_assetPath);
+    std::string defaultName = currentPath.stem().string() + "_export";
+    strncpy_s(filename, defaultName.c_str(), MAX_PATH - 1);
+
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFilter = "PNG Image (*.png)\0*.png\0"
+                      "JPEG Image (*.jpg)\0*.jpg\0"
+                      "BMP Image (*.bmp)\0*.bmp\0"
+                      "TGA Image (*.tga)\0*.tga\0"
+                      "All Files (*.*)\0*.*\0";
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = "Export Texture As";
+    ofn.lpstrDefExt = "png";
+    ofn.Flags = OFN_DONTADDTORECENT | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+
+    if (GetSaveFileNameA(&ofn)) {
+        exportPath = filename;
+    }
+#else
+    // Fallback for non-Windows: use a simple path
+    spdlog::warn("TextureEditor: Native file dialog not available on this platform");
+    exportPath = m_assetPath + "_export.png";
+#endif
+
+    if (exportPath.empty()) {
+        spdlog::info("TextureEditor: Export cancelled");
+        return;
+    }
+
+    spdlog::info("TextureEditor: Exporting texture to '{}'", exportPath);
+
+    // Determine format from extension
+    std::filesystem::path path(exportPath);
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    bool success = false;
+
+    if (ext == ".png") {
+        success = stbi_write_png(exportPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data(), m_width * m_channels) != 0;
+    } else if (ext == ".jpg" || ext == ".jpeg") {
+        success = stbi_write_jpg(exportPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data(), 95) != 0;
+    } else if (ext == ".bmp") {
+        success = stbi_write_bmp(exportPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data()) != 0;
+    } else if (ext == ".tga") {
+        success = stbi_write_tga(exportPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data()) != 0;
+    } else {
+        // Default to PNG
+        exportPath += ".png";
+        success = stbi_write_png(exportPath.c_str(), m_width, m_height, m_channels,
+                                 s_adjustedTextureData.data(), m_width * m_channels) != 0;
+    }
+
+    if (success) {
+        spdlog::info("TextureEditor: Texture exported successfully to '{}'", exportPath);
+    } else {
+        spdlog::error("TextureEditor: Failed to export texture to '{}'", exportPath);
+    }
 }

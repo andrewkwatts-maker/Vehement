@@ -17,8 +17,7 @@
 // GLFW for window/context creation
 #include <GLFW/glfw3.h>
 
-// STB Image Write for PNG output
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+// STB Image Write for PNG output (implementation in nova3d.lib via Texture.cpp)
 #include <stb_image_write.h>
 
 // GLM for math

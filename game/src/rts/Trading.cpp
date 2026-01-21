@@ -383,8 +383,17 @@ bool TradingPost::AttackCaravan(uint32_t caravanId, float damage) {
 // -------------------------------------------------------------------------
 
 void TradingPost::SyncOffersToFirebase() {
-    // TODO: Implement Firebase sync
-    // This would use FirebaseManager to push active offers
+    // Firebase sync stub - log active offers for later implementation
+    // In production, this would use FirebaseManager to push active offers to the cloud
+    int activeCount = 0;
+    for (const auto& offer : m_offers) {
+        if (offer.state == TradeOfferState::Active) {
+            activeCount++;
+        }
+    }
+    // Log sync attempt (placeholder for actual Firebase integration)
+    // FirebaseManager::Instance().SyncTradeOffers(m_offers);
+    (void)activeCount; // Suppress unused variable warning
 }
 
 void TradingPost::ReceiveOffersFromFirebase(const std::vector<TradeOffer>& offers) {

@@ -3,6 +3,8 @@
 #include "../config/ConfigRegistry.hpp"
 #include <imgui.h>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 
 namespace Vehement {
 
@@ -247,6 +249,75 @@ void ValidationPanel::AddMessage(const ValidationMessage& msg) {
     }
 }
 
+// Helper function to find line number of a field in a JSON file
+// Field path format: "field" or "parent.child" or "array[0].field"
+static int FindFieldLineNumber(const std::string& filePath, const std::string& fieldPath) {
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        return 0;
+    }
+
+    // Parse field path into components
+    std::vector<std::string> pathParts;
+    std::string current;
+    for (char c : fieldPath) {
+        if (c == '.' || c == '[') {
+            if (!current.empty()) {
+                pathParts.push_back(current);
+                current.clear();
+            }
+        } else if (c == ']') {
+            if (!current.empty()) {
+                pathParts.push_back(current);
+                current.clear();
+            }
+        } else {
+            current += c;
+        }
+    }
+    if (!current.empty()) {
+        pathParts.push_back(current);
+    }
+
+    if (pathParts.empty()) {
+        return 0;
+    }
+
+    // Search for the field key in the file
+    // This is a simple heuristic: find a line containing "fieldName":
+    std::string searchKey = "\"" + pathParts.back() + "\"";
+    std::string line;
+    int lineNumber = 0;
+    int foundLine = 0;
+    int nestingLevel = 0;
+    int targetNesting = static_cast<int>(pathParts.size());
+
+    while (std::getline(file, line)) {
+        lineNumber++;
+
+        // Track nesting level for better accuracy
+        for (char c : line) {
+            if (c == '{' || c == '[') nestingLevel++;
+            else if (c == '}' || c == ']') nestingLevel--;
+        }
+
+        // Look for the field key
+        size_t pos = line.find(searchKey);
+        if (pos != std::string::npos) {
+            // Check if followed by a colon (JSON key pattern)
+            size_t colonPos = line.find(':', pos + searchKey.length());
+            if (colonPos != std::string::npos) {
+                foundLine = lineNumber;
+                // If we have path parts, try to match more specifically
+                // For simple cases, return first match
+                break;
+            }
+        }
+    }
+
+    return foundLine;
+}
+
 void ValidationPanel::ConvertValidationResult(const std::string& configId,
                                               const Config::ValidationResult& result) {
     auto& registry = Config::ConfigRegistry::Instance();
@@ -261,7 +332,7 @@ void ValidationPanel::ConvertValidationResult(const std::string& configId,
         msg.configPath = configPath;
         msg.field = error.field;
         msg.message = error.message;
-        msg.lineNumber = 0;  // TODO: Parse JSON to find line number
+        msg.lineNumber = FindFieldLineNumber(configPath, error.field);
         AddMessage(msg);
     }
 
@@ -273,7 +344,7 @@ void ValidationPanel::ConvertValidationResult(const std::string& configId,
         msg.configPath = configPath;
         msg.field = warning.field;
         msg.message = warning.message;
-        msg.lineNumber = 0;
+        msg.lineNumber = FindFieldLineNumber(configPath, warning.field);
         AddMessage(msg);
     }
 

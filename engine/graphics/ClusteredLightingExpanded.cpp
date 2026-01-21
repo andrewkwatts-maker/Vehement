@@ -52,7 +52,7 @@ bool ClusterAABB::Intersects(const Light& light) const {
         }
 
         case LightType::Spot: {
-            // Simplified: treat as sphere first
+            // Step 1: Quick rejection test using bounding sphere
             Vector3 closest;
             closest.x = std::max(min.x, std::min(light.position.x, max.x));
             closest.y = std::max(min.y, std::min(light.position.y, max.y));
@@ -61,12 +61,114 @@ bool ClusterAABB::Intersects(const Light& light) const {
             Vector3 diff = closest - light.position;
             float distSquared = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
 
+            // If AABB is outside the light's range sphere, no intersection
             if (distSquared > light.range * light.range) {
                 return false;
             }
 
-            // TODO: More accurate cone-AABB test
-            return true;
+            // Step 2: Cone-AABB intersection test
+            // Test each corner of the AABB against the cone
+            float cosHalfAngle = std::cos(light.spotAngle * 0.5f);
+
+            // AABB corners
+            Vector3 corners[8] = {
+                {min.x, min.y, min.z},
+                {max.x, min.y, min.z},
+                {min.x, max.y, min.z},
+                {max.x, max.y, min.z},
+                {min.x, min.y, max.z},
+                {max.x, min.y, max.z},
+                {min.x, max.y, max.z},
+                {max.x, max.y, max.z}
+            };
+
+            // Check if any corner is inside the cone
+            for (int i = 0; i < 8; ++i) {
+                Vector3 toCorner = corners[i] - light.position;
+                float dist = toCorner.Length();
+
+                if (dist > 0.0001f && dist <= light.range) {
+                    // Normalize direction to corner
+                    Vector3 dirToCorner = toCorner * (1.0f / dist);
+
+                    // Dot product with light direction
+                    float cosAngle = dirToCorner.x * light.direction.x +
+                                    dirToCorner.y * light.direction.y +
+                                    dirToCorner.z * light.direction.z;
+
+                    // If corner is within cone angle, intersection found
+                    if (cosAngle >= cosHalfAngle) {
+                        return true;
+                    }
+                }
+            }
+
+            // Step 3: Check if AABB center is in cone (common case)
+            Vector3 center;
+            center.x = (min.x + max.x) * 0.5f;
+            center.y = (min.y + max.y) * 0.5f;
+            center.z = (min.z + max.z) * 0.5f;
+
+            Vector3 toCenter = center - light.position;
+            float centerDist = toCenter.Length();
+
+            if (centerDist > 0.0001f && centerDist <= light.range) {
+                Vector3 dirToCenter = toCenter * (1.0f / centerDist);
+                float cosAngle = dirToCenter.x * light.direction.x +
+                                dirToCenter.y * light.direction.y +
+                                dirToCenter.z * light.direction.z;
+
+                // Add some slack for the AABB radius
+                float aabbRadius = std::sqrt(
+                    (max.x - min.x) * (max.x - min.x) +
+                    (max.y - min.y) * (max.y - min.y) +
+                    (max.z - min.z) * (max.z - min.z)
+                ) * 0.5f;
+
+                // Adjust angle threshold based on distance and AABB size
+                float adjustedCosAngle = cosAngle + (aabbRadius / centerDist) * 0.5f;
+
+                if (adjustedCosAngle >= cosHalfAngle) {
+                    return true;
+                }
+            }
+
+            // Step 4: Edge case - cone axis passes through AABB
+            // Project AABB onto cone axis and check if cone intersects projection
+            float t = 0.0f;
+            Vector3 coneDir = light.direction;
+
+            // Find projection of AABB center onto cone axis
+            Vector3 toBoxCenter = center - light.position;
+            t = toBoxCenter.x * coneDir.x + toBoxCenter.y * coneDir.y + toBoxCenter.z * coneDir.z;
+
+            if (t > 0.0f && t <= light.range) {
+                // Point on cone axis at projection distance
+                Vector3 axisPoint;
+                axisPoint.x = light.position.x + coneDir.x * t;
+                axisPoint.y = light.position.y + coneDir.y * t;
+                axisPoint.z = light.position.z + coneDir.z * t;
+
+                // Cone radius at this distance
+                float coneRadius = t * std::tan(light.spotAngle * 0.5f);
+
+                // Distance from axis point to closest AABB point
+                Vector3 closestToAxis;
+                closestToAxis.x = std::max(min.x, std::min(axisPoint.x, max.x));
+                closestToAxis.y = std::max(min.y, std::min(axisPoint.y, max.y));
+                closestToAxis.z = std::max(min.z, std::min(axisPoint.z, max.z));
+
+                Vector3 axisToClosest = closestToAxis - axisPoint;
+                float axisDistSq = axisToClosest.x * axisToClosest.x +
+                                   axisToClosest.y * axisToClosest.y +
+                                   axisToClosest.z * axisToClosest.z;
+
+                if (axisDistSq <= coneRadius * coneRadius) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         case LightType::Directional:

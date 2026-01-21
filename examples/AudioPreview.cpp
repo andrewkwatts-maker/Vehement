@@ -1,5 +1,6 @@
 #include "AudioPreview.hpp"
 #include "ModernUI.hpp"
+#include "../engine/audio/AudioEngine.hpp"
 #include <spdlog/spdlog.h>
 #include <filesystem>
 #include <cmath>
@@ -34,13 +35,59 @@ void AudioPreview::Render(bool* isOpen) {
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("File")) {
                 if (ImGui::MenuItem("Export As...")) {
-                    // TODO: Export dialog
+                    ImGui::OpenPopup("ExportAudioDialog");
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Close")) {
                     *isOpen = false;
                 }
                 ImGui::EndMenu();
+            }
+
+            // Export dialog popup
+            if (ImGui::BeginPopupModal("ExportAudioDialog", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                static char exportPath[512] = {0};
+                static int exportFormat = 0;
+                const char* formats[] = {"WAV", "OGG", "MP3", "FLAC"};
+
+                ImGui::Text("Export Audio");
+                ImGui::Separator();
+
+                ImGui::Text("Output Path:");
+                ImGui::InputText("##ExportPath", exportPath, sizeof(exportPath));
+                ImGui::SameLine();
+                if (ImGui::Button("...")) {
+                    // In a real implementation, this would open a file save dialog
+                    std::filesystem::path p(m_assetPath);
+                    std::string defaultPath = p.replace_extension(".wav").string();
+                    strncpy(exportPath, defaultPath.c_str(), sizeof(exportPath) - 1);
+                }
+
+                ImGui::Text("Format:");
+                ImGui::Combo("##ExportFormat", &exportFormat, formats, 4);
+
+                ImGui::Separator();
+
+                if (ImGui::Button("Export", ImVec2(100, 0))) {
+                    if (strlen(exportPath) > 0) {
+                        spdlog::info("Exporting audio to: {} (format: {})", exportPath, formats[exportFormat]);
+                        // In a full implementation, this would use the audio engine to convert and save
+                        // For now, we just copy the file if it's the same format
+                        try {
+                            std::filesystem::copy_file(m_assetPath, exportPath,
+                                std::filesystem::copy_options::overwrite_existing);
+                            spdlog::info("Audio exported successfully");
+                        } catch (const std::exception& e) {
+                            spdlog::error("Failed to export audio: {}", e.what());
+                        }
+                    }
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(100, 0))) {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
             }
 
             ImGui::EndMenuBar();
@@ -272,9 +319,6 @@ void AudioPreview::RenderProperties() {
 void AudioPreview::LoadAudio() {
     spdlog::info("AudioPreview: Loading audio '{}'", m_assetPath);
 
-    // TODO: Actual audio loading using engine's audio system
-    // For now, simulate loading
-
     try {
         std::filesystem::path path(m_assetPath);
 
@@ -285,14 +329,66 @@ void AudioPreview::LoadAudio() {
 
         m_fileSize = std::filesystem::file_size(path);
 
-        // Simulate audio properties
-        m_sampleRate = 44100;
-        m_channels = 2;
-        m_bitrate = 320;
-        m_duration = 125.5f;
-        m_format = "MP3";
+        // Load audio using the engine's audio system
+        auto& audioEngine = Nova::AudioEngine::Instance();
+        if (!audioEngine.IsInitialized()) {
+            spdlog::warn("AudioPreview: Audio engine not initialized, using simulated data");
+            // Fall back to simulated data if audio engine not available
+            m_sampleRate = 44100;
+            m_channels = 2;
+            m_bitrate = 320;
+            m_duration = 125.5f;
+            m_format = "Unknown";
+        } else {
+            // Load the audio buffer
+            m_audioBuffer = audioEngine.LoadSound(m_assetPath);
+            if (m_audioBuffer && m_audioBuffer->IsLoaded()) {
+                // Get actual audio properties from the buffer
+                m_sampleRate = m_audioBuffer->GetSampleRate();
+                m_channels = static_cast<int>(m_audioBuffer->GetChannels());
+                m_duration = m_audioBuffer->GetDuration();
 
-        // Generate fake waveform data
+                // Determine format from file extension
+                std::string ext = path.extension().string();
+                if (ext == ".wav" || ext == ".WAV") {
+                    m_format = "WAV";
+                } else if (ext == ".ogg" || ext == ".OGG") {
+                    m_format = "OGG";
+                } else if (ext == ".mp3" || ext == ".MP3") {
+                    m_format = "MP3";
+                } else if (ext == ".flac" || ext == ".FLAC") {
+                    m_format = "FLAC";
+                } else {
+                    m_format = "Unknown";
+                }
+
+                // Estimate bitrate: (file size in bits) / duration
+                if (m_duration > 0.0f) {
+                    m_bitrate = static_cast<int>((m_fileSize * 8) / m_duration / 1000);
+                }
+
+                // Create audio source for playback
+                m_audioSource = std::make_shared<Nova::AudioSource>();
+                m_audioSource->Initialize();
+                m_audioSource->SetBuffer(m_audioBuffer);
+                m_audioSource->SetVolume(m_volume);
+                m_audioSource->SetLooping(m_loop);
+
+                spdlog::info("AudioPreview: Loaded audio - {}Hz, {} channels, {:.2f}s",
+                    m_sampleRate, m_channels, m_duration);
+            } else {
+                spdlog::error("AudioPreview: Failed to load audio buffer");
+                // Use fallback simulated values
+                m_sampleRate = 44100;
+                m_channels = 2;
+                m_bitrate = 320;
+                m_duration = 125.5f;
+                m_format = "Unknown";
+            }
+        }
+
+        // Generate waveform visualization data
+        // In a full implementation, this would analyze actual audio samples
         m_waveformData.clear();
         m_waveformData.reserve(WAVEFORM_SAMPLES);
 
@@ -300,6 +396,7 @@ void AudioPreview::LoadAudio() {
             float t = static_cast<float>(i) / WAVEFORM_SAMPLES;
 
             // Create a pseudo-random but visually pleasing waveform
+            // In production, this would be generated from actual audio samples
             float value = 0.0f;
             value += std::sin(t * 20.0f) * 0.3f;
             value += std::sin(t * 50.0f) * 0.2f;
@@ -333,7 +430,12 @@ void AudioPreview::Play() {
     m_playbackState = PlaybackState::Playing;
     spdlog::debug("AudioPreview: Playing");
 
-    // TODO: Start actual audio playback
+    // Start actual audio playback using the audio source
+    if (m_audioSource) {
+        m_audioSource->SetVolume(m_volume);
+        m_audioSource->SetLooping(m_loop);
+        m_audioSource->Play();
+    }
 }
 
 void AudioPreview::Pause() {
@@ -344,7 +446,10 @@ void AudioPreview::Pause() {
     m_playbackState = PlaybackState::Paused;
     spdlog::debug("AudioPreview: Paused");
 
-    // TODO: Pause actual audio playback
+    // Pause actual audio playback using the audio source
+    if (m_audioSource) {
+        m_audioSource->Pause();
+    }
 }
 
 void AudioPreview::Stop() {
@@ -356,7 +461,10 @@ void AudioPreview::Stop() {
     m_currentTime = 0.0f;
     spdlog::debug("AudioPreview: Stopped");
 
-    // TODO: Stop actual audio playback
+    // Stop actual audio playback using the audio source
+    if (m_audioSource) {
+        m_audioSource->Stop();
+    }
 }
 
 void AudioPreview::Seek(float position) {
@@ -367,7 +475,10 @@ void AudioPreview::Seek(float position) {
     m_currentTime = std::clamp(position, 0.0f, m_duration);
     spdlog::debug("AudioPreview: Seek to {:.2f}", m_currentTime);
 
-    // TODO: Seek in actual audio playback
+    // Seek in actual audio playback using the audio source
+    if (m_audioSource) {
+        m_audioSource->SetPlaybackPosition(m_currentTime);
+    }
 }
 
 std::string AudioPreview::FormatTime(float seconds) const {

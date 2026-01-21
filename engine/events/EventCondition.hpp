@@ -7,9 +7,14 @@
 #include <functional>
 #include <any>
 #include <variant>
-#include <nlohmann/json.hpp>
+#include "../core/json_config.hpp"  // Provides 'json' type alias
 
-using json = nlohmann::json;
+// Forward declaration for scripting integration
+namespace Nova {
+namespace Scripting {
+    class PythonEngine;
+}
+}
 
 namespace Nova {
 namespace Events {
@@ -301,13 +306,15 @@ public:
         const std::string& propertyPath
     );
 
+#ifdef NOVA_SCRIPTING_ENABLED
     /**
      * @brief Set Python engine for evaluating Python conditions
      */
-    static void SetPythonEngine(class Nova::Scripting::PythonEngine* engine);
+    static void SetPythonEngine(Nova::Scripting::PythonEngine* engine);
 
 private:
-    static class Nova::Scripting::PythonEngine* s_pythonEngine;
+    static Nova::Scripting::PythonEngine* s_pythonEngine;
+#endif
 };
 
 /**

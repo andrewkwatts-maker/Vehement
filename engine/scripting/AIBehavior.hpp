@@ -352,6 +352,11 @@ public:
     void SetPythonEngine(PythonEngine* engine) { m_pythonEngine = engine; }
     void SetContext(ScriptContext* context) { m_context = context; }
 
+    // Entity binding - allows ForceTransition to work without explicit entity ID
+    void SetEntityId(uint32_t entityId) { m_entityId = entityId; }
+    [[nodiscard]] uint32_t GetEntityId() const { return m_entityId; }
+    void SetBlackboard(Blackboard* blackboard) { m_blackboard = blackboard; }
+
     // Queries
     [[nodiscard]] bool HasState(const std::string& name) const;
     [[nodiscard]] std::vector<std::string> GetStateNames() const;
@@ -366,6 +371,9 @@ private:
     std::vector<StateTransition> m_transitions;
     std::string m_currentState;
     std::string m_initialState;
+
+    uint32_t m_entityId = 0;           // Tracked entity ID for ForceTransition
+    Blackboard* m_blackboard = nullptr; // Tracked blackboard for ForceTransition
 
     PythonEngine* m_pythonEngine = nullptr;
     ScriptContext* m_context = nullptr;

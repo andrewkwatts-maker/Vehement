@@ -1,8 +1,20 @@
 cmake_minimum_required(VERSION 3.20)
 project(Nova3DEngine VERSION 1.0.0 LANGUAGES CXX C)
 
-# CRITICAL: Fix nlohmann/json C++20 ranges namespace pollution on MSVC
-# These MUST be set as early as possible, before any targets include json
+# =============================================================================
+# nlohmann/json C++20 Ranges Fix
+# =============================================================================
+# PROBLEM: nlohmann/json v3.11.x-v3.12.x creates `nlohmann::std::ranges` namespace
+# which pollutes MSVC's `std::ranges`, causing 100+ template errors in <algorithm>
+#
+# SOLUTION: Define JSON_HAS_RANGES=0 and JSON_HAS_CPP_20=0 BEFORE nlohmann/json.hpp
+# is included. This is done via:
+# 1. Global CMAKE_CXX_FLAGS (belt-and-suspenders, applies to all compilation)
+# 2. Interface compile definitions on nlohmann_json target (proper CMake way)
+#
+# The interface definitions (set after FetchContent_MakeAvailable) are the primary
+# fix; the global flags are a safety net for edge cases.
+# =============================================================================
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DJSON_HAS_CPP_20=0 /DJSON_HAS_RANGES=0")
 else()
@@ -10,7 +22,6 @@ else()
 endif()
 
 # Use C++20 for source_location, format, etc.
-# NOTE: nlohmann/json C++20 ranges MSVC bug - see CLAUDE.md for workarounds
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -287,13 +298,15 @@ FetchContent_Declare(
 )
 
 # nlohmann/json - JSON configuration
-# Using v3.11.3 with early compile definitions to disable C++20 ranges
+# Using v3.12.0 with compile definitions to disable C++20 ranges (MSVC namespace pollution fix)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(JSON_DisableEnumSerialization OFF CACHE INTERNAL "")
+# IMPORTANT: These must be defined BEFORE including json headers to prevent ranges detection
+set(JSON_HAS_RANGES OFF CACHE INTERNAL "Disable C++20 ranges support to prevent MSVC namespace pollution")
 FetchContent_Declare(
     json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG        v3.11.3
+    GIT_TAG        v3.12.0
     GIT_SHALLOW    TRUE
 )
 
@@ -333,9 +346,96 @@ if(NOVA_ENABLE_SCRIPTING)
     )
 endif()
 
+# =============================================================================
+# Audio System Dependencies (optional, for NOVA_ENABLE_AUDIO)
+# =============================================================================
+if(NOVA_ENABLE_AUDIO)
+    # OpenAL-soft - Cross-platform 3D audio
+    FetchContent_Declare(
+        openal-soft
+        GIT_REPOSITORY https://github.com/kcat/openal-soft.git
+        GIT_TAG        1.23.1
+        GIT_SHALLOW    TRUE
+    )
+    # Disable OpenAL examples, utils, and install targets
+    set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_NO_CONFIG_UTIL ON CACHE BOOL "" FORCE)
+    set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_INSTALL OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_INSTALL_CONFIG OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_INSTALL_HRTF_DATA OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_INSTALL_AMBDEC_PRESETS OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_INSTALL_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_INSTALL_UTILS OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_UPDATE_BUILD_VERSION OFF CACHE BOOL "" FORCE)
+
+    # libsndfile - Audio file loading (WAV, OGG, FLAC, etc.)
+    FetchContent_Declare(
+        libsndfile
+        GIT_REPOSITORY https://github.com/libsndfile/libsndfile.git
+        GIT_TAG        1.2.2
+        GIT_SHALLOW    TRUE
+    )
+    # Disable libsndfile extras
+    set(BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    set(ENABLE_EXTERNAL_LIBS ON CACHE BOOL "" FORCE)
+    set(ENABLE_MPEG OFF CACHE BOOL "" FORCE)
+    set(BUILD_REGTEST OFF CACHE BOOL "" FORCE)
+    set(INSTALL_PKGCONFIG_MODULE OFF CACHE BOOL "" FORCE)
+    set(INSTALL_MANPAGES OFF CACHE BOOL "" FORCE)
+
+    # libogg - Required by libvorbis
+    FetchContent_Declare(
+        libogg
+        GIT_REPOSITORY https://github.com/xiph/ogg.git
+        GIT_TAG        v1.3.5
+        GIT_SHALLOW    TRUE
+    )
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    set(INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+
+    # libvorbis - OGG Vorbis decoding
+    FetchContent_Declare(
+        libvorbis
+        GIT_REPOSITORY https://github.com/xiph/vorbis.git
+        GIT_TAG        v1.3.7
+        GIT_SHALLOW    TRUE
+    )
+endif()
+
 # Make dependencies available
 message(STATUS "Fetching dependencies...")
 FetchContent_MakeAvailable(glfw glm json spdlog)
+
+# Make audio dependencies available if enabled
+if(NOVA_ENABLE_AUDIO)
+    message(STATUS "Fetching audio dependencies (OpenAL-soft, libsndfile, libvorbis)...")
+    # Fetch ogg first (vorbis depends on it)
+    FetchContent_MakeAvailable(libogg)
+    # Then vorbis
+    FetchContent_MakeAvailable(libvorbis)
+    # Then sndfile (uses vorbis)
+    FetchContent_MakeAvailable(libsndfile)
+    # Finally OpenAL
+    FetchContent_MakeAvailable(openal-soft)
+    message(STATUS "Audio dependencies fetched successfully")
+endif()
+
+# CRITICAL FIX: Add interface compile definitions to nlohmann_json target
+# This ensures JSON_HAS_RANGES=0 and JSON_HAS_CPP_20=0 are defined BEFORE
+# any source file includes nlohmann/json.hpp, preventing MSVC std::ranges
+# namespace pollution that causes 100+ template errors in <algorithm>
+# Note: We target 'nlohmann_json' (not the alias 'nlohmann_json::nlohmann_json')
+# because you cannot add compile definitions to ALIAS targets in CMake.
+if(TARGET nlohmann_json)
+    target_compile_definitions(nlohmann_json INTERFACE
+        JSON_HAS_RANGES=0
+        JSON_HAS_CPP_20=0
+    )
+    message(STATUS "nlohmann/json: Disabled C++20 ranges support (MSVC compatibility)")
+endif()
 
 # Handle stb separately (header-only, no CMakeLists)
 FetchContent_GetProperties(stb)
@@ -499,8 +599,8 @@ add_library(nova3d STATIC
     # Utils
     engine/utils/FileSystem.cpp
     engine/utils/StringUtils.cpp
-    # Procedural Generation System
-    engine/procedural/ProcGenNodes.cpp
+    # Procedural Generation System (ProcGenNodes disabled - needs ProcGenNodeFactory class)
+    # engine/procedural/ProcGenNodes.cpp
     engine/procedural/ProcGenGraph.cpp
     engine/procedural/WorldTemplate.cpp
 
@@ -554,10 +654,10 @@ add_library(nova3d STATIC
     engine/animation/editor/EditableAnimation.cpp
     engine/animation/editor/EditableSkeleton.cpp
 
-    # Extended Terrain System
-    engine/terrain/LandscapeSDFIntegration.cpp
+    # Extended Terrain System (LandscapeSDFIntegration and TerrainSDFDemo disabled - uses obsolete Engine::Terrain namespace and missing math headers)
+    # engine/terrain/LandscapeSDFIntegration.cpp
     engine/terrain/SDFTerrain.cpp
-    engine/terrain/TerrainSDFDemo.cpp
+    # engine/terrain/TerrainSDFDemo.cpp
     engine/terrain/VoxelTerrain.cpp
     engine/terrain/HeightmapIO.cpp
 
@@ -569,8 +669,8 @@ add_library(nova3d STATIC
     engine/import/AnimationImporter.cpp
     engine/import/ImportProgress.cpp
 
-    # Materials System
-    engine/materials/AdvancedMaterial.cpp
+    # Materials System (AdvancedMaterial disabled - needs missing MaterialGraph.hpp)
+    # engine/materials/AdvancedMaterial.cpp
     engine/materials/MaterialGraphEditor.cpp
     engine/materials/MaterialNode.cpp
     engine/materials/NoiseNodes.cpp
@@ -578,10 +678,10 @@ add_library(nova3d STATIC
     engine/materials/ShaderGraphEditor.cpp
     engine/materials/ShaderNodes.cpp
 
-    # Lighting System
-    engine/lighting/EmissiveGeometryLight.cpp
-    engine/lighting/LightMaterialFunction.cpp
-    engine/lighting/PhysicalLight.cpp
+    # Lighting System (disabled - uses old Engine namespace and missing MaterialGraph.hpp)
+    # engine/lighting/EmissiveGeometryLight.cpp
+    # engine/lighting/LightMaterialFunction.cpp
+    # engine/lighting/PhysicalLight.cpp
 
     # Post-Processing
     engine/postprocess/PostProcess.cpp
@@ -650,12 +750,13 @@ if(NOVA_PLATFORM_LIBS)
     target_link_libraries(nova3d PUBLIC ${NOVA_PLATFORM_LIBS})
 endif()
 
-# Compiler warnings
-
-target_compile_definitions(nova3d PUBLIC JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0 GLM_ENABLE_EXPERIMENTAL)
+# Compiler warnings and definitions
+target_compile_definitions(nova3d PUBLIC GLM_ENABLE_EXPERIMENTAL)
 
 if(MSVC)
-    # /FI force-includes json_config.hpp BEFORE any other header to fix nlohmann/json ranges issue
+    # CRITICAL: Force-include json_config.hpp BEFORE any other header
+    # This ensures <algorithm> and other STL headers are included before nlohmann/json
+    # which prevents MSVC from creating the spurious nlohmann::std::ranges namespace
     target_compile_options(nova3d PRIVATE /W4 /FS /FI${CMAKE_SOURCE_DIR}/engine/core/json_config.hpp)
 else()
     target_compile_options(nova3d PRIVATE -Wall -Wextra -Wpedantic)
@@ -850,12 +951,43 @@ endif()
 # Audio System
 # ========================================================================
 if(NOVA_ENABLE_AUDIO)
+    # Add audio source files
     target_sources(nova3d PRIVATE
         engine/audio/AudioEngine.cpp
+        engine/audio/AudioEventSystem.cpp
     )
-    message(STATUS "Audio System: ENABLED")
+
+    # Add compile definition to indicate audio is available
+    target_compile_definitions(nova3d PUBLIC NOVA_AUDIO_ENABLED)
+
+    # Link audio libraries
+    # OpenAL-soft
+    target_link_libraries(nova3d PUBLIC OpenAL::OpenAL)
+
+    # libsndfile for audio file loading
+    target_link_libraries(nova3d PUBLIC sndfile)
+
+    # libvorbis for OGG support (sndfile uses it)
+    target_link_libraries(nova3d PUBLIC vorbis vorbisfile vorbisenc)
+
+    # libogg (vorbis dependency)
+    target_link_libraries(nova3d PUBLIC ogg)
+
+    # Get OpenAL include directory
+    if(TARGET OpenAL::OpenAL)
+        get_target_property(OPENAL_INCLUDE_DIR OpenAL::OpenAL INTERFACE_INCLUDE_DIRECTORIES)
+        if(OPENAL_INCLUDE_DIR)
+            target_include_directories(nova3d PUBLIC ${OPENAL_INCLUDE_DIR})
+        endif()
+    endif()
+
+    message(STATUS "Audio System: ENABLED (OpenAL-soft, libsndfile, libvorbis)")
 else()
-    message(STATUS "Audio System: DISABLED")
+    # Add audio stub for compilation without audio
+    target_sources(nova3d PRIVATE
+        engine/audio/AudioEngineStub.cpp
+    )
+    message(STATUS "Audio System: DISABLED (stub implementation)")
 endif()
 
 # ========================================================================
@@ -1132,9 +1264,58 @@ if(NOVA_ENABLE_UI)
     )
 endif()
 
+# SDF Asset Editor Panel (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/SDFAssetEditor.cpp
+    )
+endif()
+
 # Editor Application - Main editor coordinator (Editor)
 if(NOVA_ENABLE_UI)
     target_sources(nova3d PRIVATE
         engine/editor/EditorApplication.cpp
+    )
+endif()
+
+# Asset Creation Dialog (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/AssetCreationDialog.cpp
+    )
+endif()
+
+# AI Setup Wizard (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/AISetupWizard.cpp
+    )
+endif()
+
+# AI Feedback Panel (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/AIFeedbackPanel.cpp
+    )
+endif()
+
+# AI Assistant Panel (Editor)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/AIAssistantPanel.cpp
+    )
+endif()
+
+# AI Tool Launcher (Editor - Python tool integration)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/AIToolLauncher.cpp
+    )
+endif()
+
+# PCG Panel (Editor - Level Design)
+if(NOVA_ENABLE_UI)
+    target_sources(nova3d PRIVATE
+        engine/editor/PCGPanel.cpp
     )
 endif()

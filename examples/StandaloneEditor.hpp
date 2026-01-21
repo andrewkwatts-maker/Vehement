@@ -449,6 +449,9 @@ private:
     // Scene objects
     std::vector<SceneObject> m_sceneObjects;
 
+    // Clipboard for copy/paste operations
+    std::vector<SceneObject> m_clipboard;
+
     // Camera
     enum class CameraMode {
         Free,        // Free-look perspective camera

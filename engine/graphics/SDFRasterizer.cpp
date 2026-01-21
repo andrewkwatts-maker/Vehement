@@ -391,11 +391,104 @@ void SDFRasterizer::DispatchRaymarch() {
 }
 
 void SDFRasterizer::RenderDebugVisualization() {
-    // TODO: Implement debug visualization
-    // - Draw tile boundaries
-    // - Show culled vs active tiles
-    // - Display depth buffer
-    // - Show per-tile object counts
+    // Create debug shader on first use (inline vertex/fragment shader)
+    if (!m_debugShader) {
+        const std::string vertSource = R"(
+#version 450 core
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec2 a_texCoord;
+out vec2 v_texCoord;
+void main() {
+    v_texCoord = a_texCoord;
+    gl_Position = vec4(a_position, 1.0);
+}
+)";
+        const std::string fragSource = R"(
+#version 450 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+
+uniform sampler2D u_depthTexture;
+uniform ivec2 u_tileGridSize;
+uniform int u_tileSize;
+uniform int u_activeTileCount;
+uniform int u_totalTileCount;
+
+void main() {
+    // Visualize depth buffer with color gradient
+    float depth = texture(u_depthTexture, v_texCoord).r;
+    vec3 depthColor = vec3(1.0 - depth);  // Invert so near is bright
+
+    // Calculate tile coordinates
+    ivec2 pixel = ivec2(gl_FragCoord.xy);
+    ivec2 tile = pixel / u_tileSize;
+
+    // Draw tile grid overlay
+    bool isBorder = (pixel.x % u_tileSize == 0) || (pixel.y % u_tileSize == 0);
+
+    if (isBorder) {
+        // Tile border - cyan for active tiles area
+        fragColor = vec4(0.0, 0.8, 1.0, 0.5);
+    } else {
+        // Show depth with slight tint based on tile occupancy
+        fragColor = vec4(depthColor, 1.0);
+    }
+}
+)";
+        m_debugShader = std::make_shared<Shader>();
+        if (!m_debugShader->LoadFromSource(vertSource, fragSource)) {
+            spdlog::warn("Failed to create SDF debug visualization shader");
+            return;
+        }
+    }
+
+    // Create debug quad VAO if needed (static, created once)
+    static uint32_t debugQuadVAO = 0;
+    static uint32_t debugQuadVBO = 0;
+    if (debugQuadVAO == 0) {
+        float quadVertices[] = {
+            // positions        // texCoords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+
+        glGenVertexArrays(1, &debugQuadVAO);
+        glGenBuffers(1, &debugQuadVBO);
+        glBindVertexArray(debugQuadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, debugQuadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+        glBindVertexArray(0);
+    }
+
+    // Render debug overlay
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    m_debugShader->Bind();
+    m_debugShader->SetInt("u_depthTexture", 0);
+    m_debugShader->SetIVec2("u_tileGridSize", m_tileGridSize);
+    m_debugShader->SetInt("u_tileSize", m_settings.sdfTileSize);
+    m_debugShader->SetInt("u_activeTileCount", static_cast<int>(m_activeTileCount));
+    m_debugShader->SetInt("u_totalTileCount", m_tileGridSize.x * m_tileGridSize.y);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_depthTexture->GetID());
+
+    glBindVertexArray(debugQuadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
 }
 
 bool SDFRasterizer::CreateBuffers() {

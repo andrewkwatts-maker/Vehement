@@ -1,4 +1,5 @@
 #include "AnimationLayer.hpp"
+#include "../Skeleton.hpp"
 #include <algorithm>
 #include <sstream>
 

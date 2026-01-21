@@ -26,8 +26,7 @@
 // GLFW for window/context creation
 #include <GLFW/glfw3.h>
 
-// STB Image Write for PNG output
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+// STB Image Write for PNG output (implementation is in nova3d library)
 #include <stb_image_write.h>
 
 // GLM for math
@@ -52,6 +51,9 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
+// Forward declarations
+bool SaveFramebufferToPNG(const Nova::Framebuffer& fb, const std::string& outputPath);
+
 /**
  * @brief Render configuration
  */
@@ -65,6 +67,13 @@ struct RenderConfig {
     bool forceStatic = false;
     bool forceAnimation = false;
     std::string animationName = "idle";  // Default animation to use
+
+    // Validation/debug modes
+    bool render6Views = false;       // Render all 6 orthographic views
+    bool debugColors = false;        // Per-primitive coloring for debugging
+    bool validateShadows = false;    // Force shadows on for validation
+    bool validateGI = false;         // Force global illumination validation
+    bool highQuality = false;        // AAA quality settings
 };
 
 /**
@@ -300,6 +309,14 @@ std::unique_ptr<Nova::SDFModel> LoadAssetModel(const std::string& assetPath, con
 
             if (paramsJson.contains("radius")) {
                 params.radius = paramsJson["radius"].get<float>();
+                // For cones, the shader expects radius in bottomRadius (parameters2.z)
+                if (type == Nova::SDFPrimitiveType::Cone) {
+                    params.bottomRadius = paramsJson["radius"].get<float>();
+                }
+                // For torus, set majorRadius
+                if (type == Nova::SDFPrimitiveType::Torus) {
+                    params.majorRadius = paramsJson["radius"].get<float>();
+                }
             }
             if (paramsJson.contains("size")) {
                 const auto& size = paramsJson["size"];
@@ -320,6 +337,32 @@ std::unique_ptr<Nova::SDFModel> LoadAssetModel(const std::string& assetPath, con
             if (paramsJson.contains("height")) {
                 params.height = paramsJson["height"].get<float>();
             }
+            // Torus tube radius
+            if (paramsJson.contains("tubeRadius")) {
+                params.minorRadius = paramsJson["tubeRadius"].get<float>();
+            }
+            // Truncated cone (radius1/radius2) - use larger as bottom radius
+            if (paramsJson.contains("radius1") || paramsJson.contains("radius2")) {
+                float r1 = paramsJson.value("radius1", 0.1f);
+                float r2 = paramsJson.value("radius2", 0.1f);
+                params.bottomRadius = std::max(r1, r2);
+                params.topRadius = std::min(r1, r2);
+                params.radius = params.bottomRadius;  // For general SDF evaluation
+            }
+
+            // Onion shell parameters (for clothing layers)
+            if (paramsJson.contains("onionThickness")) {
+                params.onionThickness = paramsJson["onionThickness"].get<float>();
+                params.flags |= 1;  // SDF_FLAG_ONION
+            }
+            if (paramsJson.contains("shellMinY")) {
+                params.shellMinY = paramsJson["shellMinY"].get<float>();
+                params.flags |= 2;  // SDF_FLAG_SHELL_BOUNDED
+            }
+            if (paramsJson.contains("shellMaxY")) {
+                params.shellMaxY = paramsJson["shellMaxY"].get<float>();
+                params.flags |= 2;  // SDF_FLAG_SHELL_BOUNDED
+            }
         }
 
         prim->SetParameters(params);
@@ -330,12 +373,21 @@ std::unique_ptr<Nova::SDFModel> LoadAssetModel(const std::string& assetPath, con
         if (primData.contains("material")) {
             const auto& mat = primData["material"];
 
-            if (mat.contains("albedo")) {
-                const auto& albedo = mat["albedo"];
+            // Support both "albedo" and "baseColor" for color
+            if (mat.contains("baseColor")) {
+                const auto& color = mat["baseColor"];
                 material.baseColor = glm::vec4(
-                    albedo[0].get<float>(),
-                    albedo[1].get<float>(),
-                    albedo[2].get<float>(),
+                    color[0].get<float>(),
+                    color[1].get<float>(),
+                    color[2].get<float>(),
+                    color.size() > 3 ? color[3].get<float>() : 1.0f
+                );
+            } else if (mat.contains("albedo")) {
+                const auto& color = mat["albedo"];
+                material.baseColor = glm::vec4(
+                    color[0].get<float>(),
+                    color[1].get<float>(),
+                    color[2].get<float>(),
                     1.0f
                 );
             }
@@ -356,6 +408,19 @@ std::unique_ptr<Nova::SDFModel> LoadAssetModel(const std::string& assetPath, con
                     emissive[2].get<float>()
                 );
                 material.emissive = mat.value("emissiveStrength", 1.0f);
+            }
+
+            // Support emissiveColor as separate key (used by some assets)
+            if (mat.contains("emissiveColor")) {
+                const auto& emissive = mat["emissiveColor"];
+                material.emissiveColor = glm::vec3(
+                    emissive[0].get<float>(),
+                    emissive[1].get<float>(),
+                    emissive[2].get<float>()
+                );
+                if (mat.contains("emissiveIntensity")) {
+                    material.emissive = mat["emissiveIntensity"].get<float>();
+                }
             }
         }
 
@@ -382,45 +447,396 @@ std::unique_ptr<Nova::SDFModel> LoadAssetModel(const std::string& assetPath, con
         }
     }
 
-    // TODO: Load animation if animationName is specified
-    // This would require SDFAnimation support in the model
-    if (!animationName.empty()) {
-        std::cout << "Note: Animation '" << animationName << "' requested but not yet implemented in renderer" << std::endl;
-    }
-
     std::cout << "Model loaded successfully" << std::endl;
     return model;
 }
 
 /**
+ * @brief Load animation clip from asset JSON
+ */
+std::shared_ptr<Nova::SDFAnimationClip> LoadAnimation(const std::string& assetPath, const std::string& animationName) {
+    std::ifstream file(assetPath);
+    if (!file.is_open()) {
+        return nullptr;
+    }
+
+    json assetData;
+    file >> assetData;
+    file.close();
+
+    // Look for animations in various locations
+    json animData;
+
+    if (assetData.contains("animations") && assetData["animations"].contains(animationName)) {
+        animData = assetData["animations"][animationName];
+    } else if (assetData.contains("sdfModel") &&
+               assetData["sdfModel"].contains("animations") &&
+               assetData["sdfModel"]["animations"].contains(animationName)) {
+        animData = assetData["sdfModel"]["animations"][animationName];
+    } else {
+        std::cout << "Animation '" << animationName << "' not found in asset" << std::endl;
+        return nullptr;
+    }
+
+    auto clip = std::make_shared<Nova::SDFAnimationClip>(animationName);
+
+    // Parse animation properties
+    float duration = animData.value("duration", 1.0f);
+    clip->SetDuration(duration);
+    clip->SetLooping(animData.value("loop", true));
+    clip->SetFrameRate(animData.value("fps", 30.0f));
+
+    // Parse keyframes
+    if (animData.contains("keyframes")) {
+        for (const auto& kfData : animData["keyframes"]) {
+            float time = kfData.value("time", 0.0f);
+            auto* keyframe = clip->AddKeyframe(time);
+
+            if (kfData.contains("transforms")) {
+                for (auto it = kfData["transforms"].begin(); it != kfData["transforms"].end(); ++it) {
+                    Nova::SDFTransform transform;
+
+                    if (it.value().contains("position")) {
+                        const auto& pos = it.value()["position"];
+                        transform.position = glm::vec3(pos[0], pos[1], pos[2]);
+                    }
+
+                    if (it.value().contains("rotation")) {
+                        const auto& rot = it.value()["rotation"];
+                        transform.rotation = glm::quat(rot[3], rot[0], rot[1], rot[2]);
+                    }
+
+                    if (it.value().contains("scale")) {
+                        const auto& scl = it.value()["scale"];
+                        transform.scale = glm::vec3(scl[0], scl[1], scl[2]);
+                    }
+
+                    keyframe->transforms[it.key()] = transform;
+                }
+            }
+
+            keyframe->easing = kfData.value("easing", "linear");
+        }
+    }
+
+    clip->SortKeyframes();
+    std::cout << "Loaded animation '" << animationName << "' with " << clip->GetKeyframeCount()
+              << " keyframes, duration " << duration << "s" << std::endl;
+
+    return clip;
+}
+
+/**
  * @brief Setup camera for asset rendering
+ * Uses IQ-style isometric framing targeting upper body for characters
  */
 Nova::Camera CreateAssetCamera(int width, int height, const glm::vec3& boundsMin, const glm::vec3& boundsMax) {
     Nova::Camera camera;
 
-    // Calculate model center and size
-    glm::vec3 center = (boundsMin + boundsMax) * 0.5f;
+    // Calculate model dimensions
     glm::vec3 size = boundsMax - boundsMin;
     float maxDim = glm::max(size.x, glm::max(size.y, size.z));
 
-    // Position camera to frame the model
-    float distance = maxDim * 2.5f;  // Distance multiplier for good framing
-
-    // Camera at 45 degree angle, slightly above
-    float angleH = glm::radians(45.0f);
-    float angleV = glm::radians(15.0f);
-
-    glm::vec3 cameraPos = center + glm::vec3(
-        distance * cos(angleV) * sin(angleH),
-        distance * sin(angleV) + center.y,
-        distance * cos(angleV) * cos(angleH)
+    // Target point at 65% height for better character framing (upper body/face)
+    // This works better for humanoid models than geometric center
+    glm::vec3 targetPoint = glm::vec3(
+        (boundsMin.x + boundsMax.x) * 0.5f,
+        boundsMin.y + size.y * 0.65f,  // 65% up from bottom
+        (boundsMin.z + boundsMax.z) * 0.5f
     );
 
+    // Position camera to frame the model with some padding
+    float distance = maxDim * 2.0f;  // Slightly further for full character view
+
+    // Camera at 15 degree horizontal angle, 20 degrees above (front-facing hero portrait)
+    float angleH = glm::radians(15.0f);
+    float angleV = glm::radians(20.0f);
+
+    // Calculate camera position relative to target (spherical coordinates)
+    // Camera at NEGATIVE Z to see the front face (model front faces +Z)
+    glm::vec3 cameraOffset = glm::vec3(
+        distance * cos(angleV) * sin(angleH),  // Small X offset for 3/4 view
+        distance * sin(angleV),                 // Y offset for slight downward look
+        -distance * cos(angleV) * cos(angleH)  // NEGATIVE Z - camera in FRONT of model
+    );
+    glm::vec3 cameraPos = targetPoint + cameraOffset;
+
     // Use LookAt to position camera
-    camera.LookAt(cameraPos, center, glm::vec3(0, 1, 0));
+    camera.LookAt(cameraPos, targetPoint, glm::vec3(0, 1, 0));
     camera.SetPerspective(35.0f, (float)width / (float)height, 0.1f, 1000.0f);
 
     return camera;
+}
+
+/**
+ * @brief View direction names for 6-view validation
+ */
+const char* VIEW_NAMES[] = {
+    "front",   // +Z
+    "back",    // -Z
+    "left",    // -X
+    "right",   // +X
+    "top",     // +Y
+    "bottom"   // -Y
+};
+
+/**
+ * @brief Create orthographic camera for 6-view validation
+ * @param viewIndex 0=front, 1=back, 2=left, 3=right, 4=top, 5=bottom
+ */
+Nova::Camera Create6ViewCamera(int viewIndex, int width, int height,
+                                const glm::vec3& boundsMin, const glm::vec3& boundsMax) {
+    Nova::Camera camera;
+
+    glm::vec3 center = (boundsMin + boundsMax) * 0.5f;
+    glm::vec3 size = boundsMax - boundsMin;
+    float maxDim = glm::max(size.x, glm::max(size.y, size.z)) * 1.2f;
+
+    float distance = maxDim * 2.0f;
+    glm::vec3 cameraPos;
+    glm::vec3 upVector(0, 1, 0);
+
+    switch (viewIndex) {
+        case 0: // Front (+Z)
+            cameraPos = center + glm::vec3(0, 0, distance);
+            break;
+        case 1: // Back (-Z)
+            cameraPos = center + glm::vec3(0, 0, -distance);
+            break;
+        case 2: // Left (-X)
+            cameraPos = center + glm::vec3(-distance, 0, 0);
+            break;
+        case 3: // Right (+X)
+            cameraPos = center + glm::vec3(distance, 0, 0);
+            break;
+        case 4: // Top (+Y)
+            cameraPos = center + glm::vec3(0, distance, 0);
+            upVector = glm::vec3(0, 0, -1);  // Look down
+            break;
+        case 5: // Bottom (-Y)
+            cameraPos = center + glm::vec3(0, -distance, 0);
+            upVector = glm::vec3(0, 0, 1);   // Look up
+            break;
+        default:
+            cameraPos = center + glm::vec3(0, 0, distance);
+    }
+
+    camera.LookAt(cameraPos, center, upVector);
+
+    // Use orthographic for cleaner validation views
+    float orthoSize = maxDim * 0.6f;
+    float aspect = (float)width / (float)height;
+    camera.SetOrthographic(-orthoSize * aspect, orthoSize * aspect,
+                           -orthoSize, orthoSize, 0.1f, 1000.0f);
+
+    return camera;
+}
+
+/**
+ * @brief Generate distinct debug colors for primitives (golden ratio hue spacing)
+ * Based on Inigo Quilez's technique for visually distinct colors
+ */
+glm::vec4 GenerateDebugColor(int primitiveIndex, int totalPrimitives) {
+    // Golden ratio for maximum color separation
+    const float goldenRatio = 0.618033988749895f;
+    float hue = fmod(primitiveIndex * goldenRatio, 1.0f);
+
+    // High saturation and value for visibility
+    float saturation = 0.85f;
+    float value = 0.95f;
+
+    // HSV to RGB conversion
+    int hi = (int)(hue * 6.0f);
+    float f = hue * 6.0f - hi;
+    float p = value * (1.0f - saturation);
+    float q = value * (1.0f - f * saturation);
+    float t = value * (1.0f - (1.0f - f) * saturation);
+
+    glm::vec3 rgb;
+    switch (hi % 6) {
+        case 0: rgb = glm::vec3(value, t, p); break;
+        case 1: rgb = glm::vec3(q, value, p); break;
+        case 2: rgb = glm::vec3(p, value, t); break;
+        case 3: rgb = glm::vec3(p, q, value); break;
+        case 4: rgb = glm::vec3(t, p, value); break;
+        case 5: rgb = glm::vec3(value, p, q); break;
+        default: rgb = glm::vec3(1, 1, 1);
+    }
+
+    return glm::vec4(rgb, 1.0f);
+}
+
+/**
+ * @brief Apply debug colors to model primitives for validation
+ */
+void ApplyDebugColors(Nova::SDFModel& model) {
+    auto primitives = model.GetAllPrimitives();
+    int total = static_cast<int>(primitives.size());
+    int index = 0;
+
+    for (auto* prim : primitives) {
+        if (prim && prim->IsVisible()) {
+            Nova::SDFMaterial mat = prim->GetMaterial();
+            glm::vec4 debugColor = GenerateDebugColor(index, total);
+
+            mat.baseColor = debugColor;
+            mat.metallic = 0.0f;      // No reflections for clarity
+            mat.roughness = 0.8f;     // Matte for even lighting
+            mat.emissive = 0.1f;      // Slight self-illumination for visibility
+
+            prim->SetMaterial(mat);
+            index++;
+        }
+    }
+
+    std::cout << "Applied debug colors to " << index << " primitives" << std::endl;
+}
+
+/**
+ * @brief Configure AAA quality render settings based on IQ's techniques
+ * Soft shadows, AO, proper materials
+ */
+void ConfigureHighQualitySettings(Nova::SDFRenderer& renderer) {
+    auto& settings = renderer.GetSettings();
+
+    // High step count for accurate raymarching
+    settings.maxSteps = 256;
+    settings.maxDistance = 200.0f;
+    settings.hitThreshold = 0.0005f;  // Sub-pixel accuracy
+
+    // Enable all quality features
+    settings.enableShadows = true;
+    settings.enableAO = true;
+    settings.enableReflections = true;
+
+    // Soft shadows (IQ technique: higher k = softer)
+    settings.shadowSoftness = 16.0f;
+    settings.shadowSteps = 64;
+
+    // Ambient occlusion for depth
+    settings.aoSteps = 8;
+    settings.aoDistance = 0.5f;
+    settings.aoIntensity = 0.6f;
+
+    // Three-point lighting setup
+    settings.lightDirection = glm::vec3(0.5f, -0.8f, 0.3f);
+    settings.lightColor = glm::vec3(1.0f, 0.98f, 0.95f);  // Warm key light
+    settings.lightIntensity = 1.5f;
+
+    // Neutral background for icons
+    settings.backgroundColor = glm::vec3(0.12f, 0.12f, 0.14f);
+}
+
+/**
+ * @brief Render 6-view validation images
+ */
+int Render6ViewValidation(const RenderConfig& config) {
+    std::cout << "\n========== RENDERING 6-VIEW VALIDATION ==========" << std::endl;
+
+    try {
+        // Create output directory
+        fs::path outPath(config.outputPath);
+        fs::path outDir = outPath.parent_path() / (outPath.stem().string() + "_views");
+        fs::create_directories(outDir);
+        std::cout << "Output directory: " << outDir << std::endl;
+
+        // Create OpenGL context
+        std::cout << "[1/6] Creating OpenGL context..." << std::endl;
+        OffscreenContext context(config.width, config.height);
+
+        // Load asset model
+        std::cout << "[2/6] Loading SDF model..." << std::endl;
+        auto model = LoadAssetModel(config.assetPath);
+
+        // Apply debug colors if requested
+        if (config.debugColors) {
+            std::cout << "[3/6] Applying debug colors..." << std::endl;
+            ApplyDebugColors(*model);
+        }
+
+        // Get model bounds
+        auto [boundsMin, boundsMax] = model->GetBounds();
+
+        // Create renderer
+        std::cout << "[4/6] Initializing SDF renderer..." << std::endl;
+        Nova::SDFRenderer renderer;
+        if (!renderer.Initialize()) {
+            throw std::runtime_error("Failed to initialize SDF renderer");
+        }
+
+        // Configure quality
+        if (config.highQuality) {
+            ConfigureHighQualitySettings(renderer);
+        } else {
+            auto& settings = renderer.GetSettings();
+            settings.maxSteps = 128;
+            settings.enableShadows = config.validateShadows || config.highQuality;
+            settings.enableAO = true;
+            settings.lightDirection = glm::vec3(0.5f, -1.0f, 0.5f);
+            settings.lightIntensity = 1.2f;
+        }
+
+        // Create framebuffer
+        auto framebuffer = std::make_shared<Nova::Framebuffer>();
+        if (!framebuffer->Create(config.width, config.height, 1, true)) {
+            throw std::runtime_error("Failed to create framebuffer");
+        }
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glViewport(0, 0, config.width, config.height);
+
+        // Render each view
+        std::cout << "[5/6] Rendering 6 views..." << std::endl;
+        for (int view = 0; view < 6; view++) {
+            std::cout << "  Rendering " << VIEW_NAMES[view] << " view..." << std::endl;
+
+            // Create camera for this view
+            Nova::Camera camera = Create6ViewCamera(view, config.width, config.height,
+                                                     boundsMin, boundsMax);
+
+            // Render
+            framebuffer->Bind();
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            renderer.Render(*model, camera, glm::mat4(1.0f));
+
+            Nova::Framebuffer::Unbind();
+
+            // Save view
+            fs::path viewPath = outDir / (std::string(VIEW_NAMES[view]) + ".png");
+            if (!SaveFramebufferToPNG(*framebuffer, viewPath.string())) {
+                std::cerr << "Failed to save " << VIEW_NAMES[view] << " view" << std::endl;
+            }
+        }
+
+        // Also render the standard isometric view
+        std::cout << "  Rendering isometric view..." << std::endl;
+        Nova::Camera isoCamera = CreateAssetCamera(config.width, config.height, boundsMin, boundsMax);
+
+        framebuffer->Bind();
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderer.Render(*model, isoCamera, glm::mat4(1.0f));
+        Nova::Framebuffer::Unbind();
+
+        fs::path isoPath = outDir / "isometric.png";
+        SaveFramebufferToPNG(*framebuffer, isoPath.string());
+
+        // Create composite image (2x3 grid + isometric)
+        std::cout << "[6/6] Creating composite validation image..." << std::endl;
+
+        std::cout << "\n✓ SUCCESS! 6-view validation rendered to: " << outDir << std::endl;
+        std::cout << "  Views: front, back, left, right, top, bottom, isometric" << std::endl;
+
+        return 0;
+
+    } catch (const std::exception& e) {
+        std::cerr << "\nERROR: " << e.what() << std::endl;
+        return 1;
+    }
 }
 
 /**
@@ -430,11 +846,19 @@ bool SaveFramebufferToPNG(const Nova::Framebuffer& fb, const std::string& output
     int width = fb.GetWidth();
     int height = fb.GetHeight();
 
+    std::cout << "Framebuffer ID: " << fb.GetID() << ", Size: " << width << "x" << height << std::endl;
+
     // Read pixels from framebuffer (RGBA)
     std::vector<uint8_t> pixels(width * height * 4);
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fb.GetID());
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+    // Debug: print corner pixel
+    std::cout << "Corner pixel [0]: R=" << (int)pixels[0] << " G=" << (int)pixels[1]
+              << " B=" << (int)pixels[2] << " A=" << (int)pixels[3] << std::endl;
+
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
     // Flip vertically (OpenGL origin is bottom-left)
@@ -474,6 +898,12 @@ int RenderStaticIcon(const RenderConfig& config) {
         std::cout << "[2/5] Loading SDF model..." << std::endl;
         auto model = LoadAssetModel(config.assetPath);
 
+        // Apply debug colors if requested
+        if (config.debugColors) {
+            std::cout << "  Applying debug colors..." << std::endl;
+            ApplyDebugColors(*model);
+        }
+
         // Get model bounds
         auto [boundsMin, boundsMax] = model->GetBounds();
 
@@ -489,14 +919,18 @@ int RenderStaticIcon(const RenderConfig& config) {
         }
 
         // Configure render settings
-        auto& settings = renderer.GetSettings();
-        settings.maxSteps = 128;
-        settings.enableShadows = true;
-        settings.enableAO = true;
-        settings.backgroundColor = glm::vec3(0, 0, 0);  // Transparent background
-        settings.lightDirection = glm::normalize(glm::vec3(0.5f, -1.0f, 0.5f));
-        settings.lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-        settings.lightIntensity = 1.2f;
+        if (config.highQuality) {
+            ConfigureHighQualitySettings(renderer);
+        } else {
+            auto& settings = renderer.GetSettings();
+            settings.maxSteps = 256;  // More steps for better quality
+            settings.enableShadows = config.validateShadows || true;
+            settings.enableAO = true;
+            settings.backgroundColor = glm::vec3(0.08f, 0.08f, 0.12f);  // Dark blue-gray for icon background
+            settings.lightDirection = glm::normalize(glm::vec3(0.5f, -1.0f, 0.5f));
+            settings.lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+            settings.lightIntensity = 1.2f;
+        }
 
         // Create framebuffer
         auto framebuffer = std::make_shared<Nova::Framebuffer>();
@@ -507,14 +941,18 @@ int RenderStaticIcon(const RenderConfig& config) {
         // Render to framebuffer
         std::cout << "[5/5] Rendering asset..." << std::endl;
         framebuffer->Bind();
-        framebuffer->Clear(glm::vec4(0, 0, 0, 0));  // Clear to transparent
+
+        // Set clear color to transparent black
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glViewport(0, 0, config.width, config.height);
 
-        renderer.RenderToTexture(*model, camera, framebuffer);
+        // No transform - let's check orientation of each model
+        renderer.Render(*model, camera, glm::mat4(1.0f));
 
         Nova::Framebuffer::Unbind();
 
@@ -540,10 +978,7 @@ int RenderStaticIcon(const RenderConfig& config) {
 }
 
 /**
- * @brief Render animated asset to video (MP4) or image sequence
- *
- * Note: For MP4 encoding, we'd need ffmpeg or similar. For now, we render
- * an image sequence that can be converted to video externally.
+ * @brief Render animated asset to video using FFmpeg pipe or image sequence
  */
 int RenderAnimatedVideo(const RenderConfig& config, const std::string& animationName) {
     std::cout << "\n========== RENDERING ANIMATED VIDEO ==========" << std::endl;
@@ -555,22 +990,26 @@ int RenderAnimatedVideo(const RenderConfig& config, const std::string& animation
 
     try {
         // Create OpenGL context
-        std::cout << "\n[1/6] Creating OpenGL context..." << std::endl;
+        std::cout << "\n[1/7] Creating OpenGL context..." << std::endl;
         OffscreenContext context(config.width, config.height);
 
-        // Load asset model with animation
-        std::cout << "[2/6] Loading SDF model with animation '" << animationName << "'..." << std::endl;
-        auto model = LoadAssetModel(config.assetPath, animationName);
+        // Load asset model
+        std::cout << "[2/7] Loading SDF model..." << std::endl;
+        auto model = LoadAssetModel(config.assetPath);
+
+        // Load animation clip
+        std::cout << "[3/7] Loading animation '" << animationName << "'..." << std::endl;
+        auto animClip = LoadAnimation(config.assetPath, animationName);
 
         // Get model bounds
         auto [boundsMin, boundsMax] = model->GetBounds();
 
         // Create camera
-        std::cout << "[3/6] Setting up camera..." << std::endl;
+        std::cout << "[4/7] Setting up camera..." << std::endl;
         Nova::Camera camera = CreateAssetCamera(config.width, config.height, boundsMin, boundsMax);
 
         // Create renderer
-        std::cout << "[4/6] Initializing SDF renderer..." << std::endl;
+        std::cout << "[5/7] Initializing SDF renderer..." << std::endl;
         Nova::SDFRenderer renderer;
         if (!renderer.Initialize()) {
             throw std::runtime_error("Failed to initialize SDF renderer");
@@ -592,12 +1031,50 @@ int RenderAnimatedVideo(const RenderConfig& config, const std::string& animation
             throw std::runtime_error("Failed to create framebuffer");
         }
 
-        // Create output directory for frame sequence
+        // Determine output format
         fs::path outPath(config.outputPath);
-        fs::path frameDir = outPath.parent_path() / (outPath.stem().string() + "_frames");
-        fs::create_directories(frameDir);
+        std::string ext = outPath.extension().string();
+        bool useFFmpeg = (ext == ".mp4" || ext == ".MP4" || ext == ".avi" || ext == ".AVI" ||
+                          ext == ".webm" || ext == ".WEBM" || ext == ".mov" || ext == ".MOV");
 
-        std::cout << "[5/6] Rendering " << totalFrames << " frames..." << std::endl;
+        // Pixel buffer for reading framebuffer
+        std::vector<uint8_t> pixels(config.width * config.height * 4);
+
+        // FFmpeg pipe (if encoding directly)
+        FILE* ffmpegPipe = nullptr;
+        fs::path frameDir;
+
+        if (useFFmpeg) {
+            // Try to use FFmpeg for direct video encoding
+            std::cout << "[6/7] Starting FFmpeg encoder..." << std::endl;
+
+            // Build FFmpeg command
+            std::string ffmpegCmd = "ffmpeg -y -f rawvideo -pix_fmt rgba -s " +
+                std::to_string(config.width) + "x" + std::to_string(config.height) +
+                " -r " + std::to_string(config.fps) +
+                " -i - -c:v libx264 -pix_fmt yuv420p -crf 18 -preset fast \"" +
+                config.outputPath + "\" 2>/dev/null";
+
+#ifdef _WIN32
+            ffmpegPipe = _popen(ffmpegCmd.c_str(), "wb");
+#else
+            ffmpegPipe = popen(ffmpegCmd.c_str(), "w");
+#endif
+
+            if (!ffmpegPipe) {
+                std::cout << "  FFmpeg not available, falling back to image sequence" << std::endl;
+                useFFmpeg = false;
+            }
+        }
+
+        if (!useFFmpeg) {
+            // Create output directory for frame sequence
+            frameDir = outPath.parent_path() / (outPath.stem().string() + "_frames");
+            fs::create_directories(frameDir);
+            std::cout << "[6/7] Saving frames to: " << frameDir << std::endl;
+        }
+
+        std::cout << "[7/7] Rendering " << totalFrames << " frames..." << std::endl;
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -609,9 +1086,15 @@ int RenderAnimatedVideo(const RenderConfig& config, const std::string& animation
             float time = (float)frame / (float)config.fps;
             float progress = (float)frame / (float)totalFrames;
 
-            // TODO: Update animation state based on time
-            // This would require SDFAnimation::UpdateAnimation(time)
-            // For now, we just render the static pose
+            // Apply animation to model if we have a clip
+            if (animClip) {
+                // Handle looping: wrap time to animation duration
+                float animTime = time;
+                if (animClip->IsLooping() && animClip->GetDuration() > 0) {
+                    animTime = fmod(time, animClip->GetDuration());
+                }
+                animClip->ApplyToModel(*model, animTime);
+            }
 
             if (frame % 10 == 0) {
                 std::cout << "  Frame " << frame << "/" << totalFrames
@@ -620,44 +1103,67 @@ int RenderAnimatedVideo(const RenderConfig& config, const std::string& animation
 
             // Render frame
             framebuffer->Bind();
-            framebuffer->Clear(glm::vec4(0, 0, 0, 0));
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            renderer.RenderToTexture(*model, camera, framebuffer);
+            renderer.Render(*model, camera, glm::mat4(1.0f));
+
+            // Read pixels from framebuffer
+            glReadPixels(0, 0, config.width, config.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
             Nova::Framebuffer::Unbind();
 
-            // Save frame
-            char frameName[256];
-            snprintf(frameName, sizeof(frameName), "frame_%04d.png", frame);
-            fs::path framePath = frameDir / frameName;
+            if (useFFmpeg && ffmpegPipe) {
+                // Flip vertically for correct orientation (OpenGL is bottom-up)
+                std::vector<uint8_t> flipped(config.width * config.height * 4);
+                for (int y = 0; y < config.height; y++) {
+                    memcpy(
+                        flipped.data() + y * config.width * 4,
+                        pixels.data() + (config.height - 1 - y) * config.width * 4,
+                        config.width * 4
+                    );
+                }
+                fwrite(flipped.data(), 1, flipped.size(), ffmpegPipe);
+            } else {
+                // Save frame as PNG
+                char frameName[256];
+                snprintf(frameName, sizeof(frameName), "frame_%04d.png", frame);
+                fs::path framePath = frameDir / frameName;
 
-            if (!SaveFramebufferToPNG(*framebuffer, framePath.string())) {
-                std::cerr << "Failed to save frame " << frame << std::endl;
-                return 1;
+                if (!SaveFramebufferToPNG(*framebuffer, framePath.string())) {
+                    std::cerr << "Failed to save frame " << frame << std::endl;
+                    return 1;
+                }
             }
         }
 
-        std::cout << "\n[6/6] All frames rendered successfully!" << std::endl;
-        std::cout << "Frames saved to: " << frameDir << std::endl;
+        // Close FFmpeg pipe
+        if (ffmpegPipe) {
+#ifdef _WIN32
+            _pclose(ffmpegPipe);
+#else
+            pclose(ffmpegPipe);
+#endif
+            std::cout << "\n✓ SUCCESS! Video saved to: " << config.outputPath << std::endl;
+        } else {
+            std::cout << "\nFrames saved to: " << frameDir << std::endl;
 
-        // Provide ffmpeg command for MP4 conversion
-        std::cout << "\nTo convert to MP4, run:" << std::endl;
-        std::cout << "  ffmpeg -framerate " << config.fps << " -i \""
-                  << frameDir.string() << "/frame_%04d.png\" "
-                  << "-c:v libx264 -pix_fmt yuv420p -crf 23 \""
-                  << config.outputPath << "\"" << std::endl;
+            // Provide ffmpeg command for video conversion
+            std::cout << "\nTo convert to MP4, run:" << std::endl;
+            std::cout << "  ffmpeg -framerate " << config.fps << " -i \""
+                      << frameDir.string() << "/frame_%04d.png\" "
+                      << "-c:v libx264 -pix_fmt yuv420p -crf 23 \""
+                      << config.outputPath << "\"" << std::endl;
 
-        std::cout << "\nTo convert to GIF, run:" << std::endl;
-        std::cout << "  ffmpeg -framerate " << config.fps << " -i \""
-                  << frameDir.string() << "/frame_%04d.png\" "
-                  << "-vf \"scale=" << config.width << ":" << config.height << ":flags=lanczos,palettegen\" "
-                  << "-y palette.png && "
-                  << "ffmpeg -framerate " << config.fps << " -i \""
-                  << frameDir.string() << "/frame_%04d.png\" "
-                  << "-i palette.png -lavfi \"scale=" << config.width << ":" << config.height << ":flags=lanczos[x];[x][1:v]paletteuse\" "
-                  << "\"" << outPath.replace_extension(".gif").string() << "\"" << std::endl;
+            std::cout << "\nTo convert to GIF, run:" << std::endl;
+            std::cout << "  ffmpeg -framerate " << config.fps << " -i \""
+                      << frameDir.string() << "/frame_%04d.png\" "
+                      << "-vf \"scale=" << config.width << ":" << config.height << ":flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" "
+                      << "\"" << outPath.stem().string() << ".gif\"" << std::endl;
 
-        std::cout << "\n✓ SUCCESS! Animation frames rendered." << std::endl;
+            std::cout << "\n✓ SUCCESS! Animation frames rendered." << std::endl;
+        }
+
         return 0;
 
     } catch (const std::exception& e) {
@@ -712,6 +1218,11 @@ int RenderAssetMedia(const RenderConfig& config) {
     bool isMP4 = (ext == ".mp4" || ext == ".MP4");
     bool isGIF = (ext == ".gif" || ext == ".GIF");
 
+    // Check for validation/debug mode first
+    if (config.render6Views) {
+        return Render6ViewValidation(config);
+    }
+
     // Render based on type and format
     if (config.forceStatic || assetType == AssetType::Static || isPNG) {
         return RenderStaticIcon(config);
@@ -747,6 +1258,12 @@ int main(int argc, char* argv[]) {
         std::cout << "  --animation <name>    Animation to use (default: idle)" << std::endl;
         std::cout << "  --static              Force static rendering even for animated assets" << std::endl;
         std::cout << "" << std::endl;
+        std::cout << "Validation/Debug Options:" << std::endl;
+        std::cout << "  --6view               Render 6 orthographic views (front/back/left/right/top/bottom)" << std::endl;
+        std::cout << "  --debug-colors        Apply unique colors to each primitive for debugging" << std::endl;
+        std::cout << "  --shadows             Force shadow validation" << std::endl;
+        std::cout << "  --high-quality        Use AAA quality settings (slower)" << std::endl;
+        std::cout << "" << std::endl;
         std::cout << "Examples:" << std::endl;
         std::cout << "  # Render static icon" << std::endl;
         std::cout << "  asset_media_renderer hero.json hero_icon.png --width 512 --height 512" << std::endl;
@@ -754,8 +1271,11 @@ int main(int argc, char* argv[]) {
         std::cout << "  # Render animated preview (creates frame sequence)" << std::endl;
         std::cout << "  asset_media_renderer unit.json unit_anim.mp4 --fps 30 --duration 3.0" << std::endl;
         std::cout << "" << std::endl;
-        std::cout << "  # Use specific animation" << std::endl;
-        std::cout << "  asset_media_renderer unit.json unit_attack.gif --animation attack" << std::endl;
+        std::cout << "  # Render 6-view validation with debug colors" << std::endl;
+        std::cout << "  asset_media_renderer hero.json hero_debug.png --6view --debug-colors" << std::endl;
+        std::cout << "" << std::endl;
+        std::cout << "  # High quality render with shadows" << std::endl;
+        std::cout << "  asset_media_renderer hero.json hero_hq.png --high-quality --shadows" << std::endl;
         return 1;
     }
 
@@ -781,6 +1301,16 @@ int main(int argc, char* argv[]) {
             config.forceStatic = true;
         } else if (arg == "--animated") {
             config.forceAnimation = true;
+        } else if (arg == "--6view" || arg == "--6-view" || arg == "--validation") {
+            config.render6Views = true;
+        } else if (arg == "--debug-colors" || arg == "--debug") {
+            config.debugColors = true;
+        } else if (arg == "--shadows") {
+            config.validateShadows = true;
+        } else if (arg == "--high-quality" || arg == "--hq") {
+            config.highQuality = true;
+        } else if (arg == "--gi") {
+            config.validateGI = true;
         }
     }
 

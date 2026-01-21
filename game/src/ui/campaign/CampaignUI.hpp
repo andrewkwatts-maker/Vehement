@@ -185,6 +185,8 @@ private:
     // Animation
     float m_transitionProgress = 0.0f;
     bool m_isTransitioning = false;
+    float m_carouselPosition = 0.0f;  // Current visual position (lerps toward m_carouselIndex)
+    float m_carouselVelocity = 0.0f;  // For smooth deceleration
 
     // Callbacks
     std::function<void(const std::string&)> m_onCampaignSelect;

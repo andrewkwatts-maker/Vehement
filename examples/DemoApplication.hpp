@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <glm/glm.hpp>
 
 namespace Nova {
     class FlyCamera;

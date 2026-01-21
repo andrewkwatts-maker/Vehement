@@ -1,5 +1,6 @@
 #include "Player.hpp"
 #include "EntityManager.hpp"
+#include <game/src/combat/Weapon.hpp>
 #include <engine/input/InputManager.hpp>
 #include <engine/graphics/Renderer.hpp>
 #include <engine/graphics/TextureManager.hpp>
@@ -40,11 +41,13 @@ void Player::Update(float deltaTime) {
         m_reloadTimer -= deltaTime;
         if (m_reloadTimer <= 0.0f) {
             m_reloading = false;
-            // TODO: Complete reload - transfer ammo from reserve to magazine
+            // Complete reload - transfer ammo from reserve to magazine
             auto& weapon = m_weapons[m_currentWeaponSlot];
             if (!weapon.IsEmpty()) {
-                // Simplified reload logic - full magazine from reserve
-                int magazineSize = 30; // TODO: Get from weapon data
+                // Get magazine size from weapon stats
+                WeaponType weaponType = static_cast<WeaponType>(weapon.weaponId);
+                WeaponStats stats = DefaultWeaponStats::GetStats(weaponType);
+                int magazineSize = stats.magazineSize;
                 int needed = magazineSize - weapon.ammo;
                 int transfer = std::min(needed, weapon.reserveAmmo);
                 weapon.ammo += transfer;
@@ -237,8 +240,9 @@ bool Player::Fire() {
     weapon.ammo--;
     m_stats.shotsFired++;
 
-    // TODO: Create projectile, play sound, etc.
-    // This will be handled by the weapon system
+    // Note: Projectile creation, sound effects, and visual feedback are handled
+    // by the CombatSystem when FireWeapon() is called by the game loop
+    // after this method returns true
 
     return true;
 }
@@ -251,8 +255,10 @@ bool Player::Reload() {
         return false;
     }
 
-    // TODO: Get reload time from weapon data
-    m_reloadTimer = 1.5f;
+    // Get reload time from weapon data
+    WeaponType weaponType = static_cast<WeaponType>(weapon.weaponId);
+    WeaponStats stats = DefaultWeaponStats::GetStats(weaponType);
+    m_reloadTimer = stats.reloadTime;
     m_reloading = true;
 
     return true;
@@ -271,10 +277,40 @@ bool Player::TryInteract(EntityManager& entityManager) {
         return false;
     }
 
-    // TODO: Implement interaction with shops, items, etc.
-    // For now, just clear the target
-    m_interactionTarget = Entity::INVALID_ID;
+    // Get the interaction target entity
+    Entity* target = entityManager.GetEntity(m_interactionTarget);
+    if (!target || !target->IsActive()) {
+        m_interactionTarget = Entity::INVALID_ID;
+        return false;
+    }
 
+    // Check if still in interaction range
+    float distance = DistanceTo(*target);
+    if (distance > INTERACTION_RADIUS) {
+        m_interactionTarget = Entity::INVALID_ID;
+        return false;
+    }
+
+    // Handle interaction based on entity type
+    switch (target->GetType()) {
+        case EntityType::Pickup:
+            // Pickups are automatically collected on collision
+            // Interaction confirms collection if manual pickup is required
+            target->MarkForRemoval();
+            break;
+
+        case EntityType::NPC:
+            // Interact with NPC (could be shop, quest giver, etc.)
+            // NPCs handle their own interaction logic
+            break;
+
+        default:
+            // Unknown interactable - just clear the target
+            break;
+    }
+
+    // Clear target after interaction
+    m_interactionTarget = Entity::INVALID_ID;
     return true;
 }
 
@@ -300,7 +336,16 @@ void Player::Die() {
     // Update stats
     m_stats.OnDeath();
 
-    // TODO: Play death animation, sound, etc.
+    // Stop all movement
+    m_velocity = glm::vec3(0.0f);
+    m_reloading = false;
+    m_sprinting = false;
+
+    // Note: Death animation and sound effects are triggered by the game's
+    // event system. The game loop monitors player death state and handles:
+    // - Playing death animation/sound through the AudioSystem
+    // - Showing death UI overlay
+    // - Initiating respawn countdown
 }
 
 void Player::Respawn(const glm::vec3& position) {

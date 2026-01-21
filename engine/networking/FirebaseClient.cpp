@@ -5,6 +5,26 @@
 #include <random>
 #include <algorithm>
 #include <unordered_set>
+#include <thread>
+#include <future>
+#include <vector>
+
+// Platform-specific HTTP includes
+#ifdef _WIN32
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <Windows.h>
+    #include <winhttp.h>
+    #pragma comment(lib, "winhttp.lib")
+    #define NOVA_HAS_WINHTTP 1
+#elif defined(__APPLE__) || defined(__linux__)
+    // libcurl would be used on these platforms
+    // For now, stub implementations with TODO comments
+    #define NOVA_HAS_WINHTTP 0
+#else
+    #define NOVA_HAS_WINHTTP 0
+#endif
 
 namespace Nova {
 
@@ -73,7 +93,7 @@ void FirebaseClient::Update(float deltaTime) {
 
     if (m_authState == FirebaseAuthState::Authenticated && nowMs > m_tokenExpiry - 300000) {
         // Token expires in < 5 minutes, refresh it
-        // TODO: Implement token refresh
+        RefreshToken();
     }
 }
 
@@ -191,6 +211,54 @@ void FirebaseClient::SignOut() {
     m_idToken.clear();
     m_refreshToken.clear();
     m_tokenExpiry = 0;
+}
+
+void FirebaseClient::RefreshToken() {
+    // Refresh the auth token using the refresh token
+    // This calls the Firebase Auth securetoken endpoint
+
+    if (m_refreshToken.empty()) {
+        m_authState = FirebaseAuthState::NotAuthenticated;
+        return;
+    }
+
+    std::string url = "https://securetoken.googleapis.com/v1/token?key=" + m_config.apiKey;
+
+    nlohmann::json body;
+    body["grant_type"] = "refresh_token";
+    body["refresh_token"] = m_refreshToken;
+
+    HttpPost(url, body.dump(), [this](int code, const std::string& response) {
+        if (code == 200) {
+            try {
+                auto json = nlohmann::json::parse(response);
+
+                // The response uses different field names than the sign-in response
+                m_idToken = json.value("id_token", json.value("idToken", ""));
+                m_refreshToken = json.value("refresh_token", json.value("refreshToken", m_refreshToken));
+
+                // expires_in is in seconds
+                int expiresIn = 3600;
+                if (json.contains("expires_in")) {
+                    expiresIn = std::stoi(json["expires_in"].get<std::string>());
+                }
+
+                auto now = std::chrono::steady_clock::now();
+                m_tokenExpiry = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now.time_since_epoch()).count() + expiresIn * 1000;
+
+                // Token refreshed successfully, stay authenticated
+                m_authState = FirebaseAuthState::Authenticated;
+
+            } catch (const std::exception& e) {
+                // Failed to parse response, but don't change auth state
+                // Token may still be valid
+            }
+        } else {
+            // Refresh failed - token might be revoked
+            // Don't immediately sign out, let the next request fail naturally
+        }
+    });
 }
 
 // ============================================================================
@@ -447,48 +515,223 @@ std::string FirebaseClient::GeneratePushId() {
 // Private Methods
 // ============================================================================
 
+#if NOVA_HAS_WINHTTP
+
+// WinHTTP helper: Parse URL into components
+namespace {
+    struct UrlComponents {
+        std::wstring host;
+        std::wstring path;
+        INTERNET_PORT port;
+        bool secure;
+    };
+
+    bool ParseUrl(const std::string& url, UrlComponents& components) {
+        // Convert to wide string
+        int wlen = MultiByteToWideChar(CP_UTF8, 0, url.c_str(), -1, nullptr, 0);
+        std::wstring wurl(wlen - 1, 0);
+        MultiByteToWideChar(CP_UTF8, 0, url.c_str(), -1, &wurl[0], wlen);
+
+        URL_COMPONENTS urlComp = {};
+        urlComp.dwStructSize = sizeof(urlComp);
+
+        wchar_t hostBuf[256] = {};
+        wchar_t pathBuf[2048] = {};
+
+        urlComp.lpszHostName = hostBuf;
+        urlComp.dwHostNameLength = 256;
+        urlComp.lpszUrlPath = pathBuf;
+        urlComp.dwUrlPathLength = 2048;
+
+        if (!WinHttpCrackUrl(wurl.c_str(), 0, 0, &urlComp)) {
+            return false;
+        }
+
+        components.host = hostBuf;
+        components.path = pathBuf;
+        components.port = urlComp.nPort;
+        components.secure = (urlComp.nScheme == INTERNET_SCHEME_HTTPS);
+
+        return true;
+    }
+
+    // Perform HTTP request using WinHTTP
+    void WinHttpRequest(const std::string& url,
+                        const std::wstring& method,
+                        const std::string& body,
+                        std::function<void(int, const std::string&)> callback) {
+        // Run in a background thread to avoid blocking
+        std::thread([url, method, body, callback]() {
+            int statusCode = 0;
+            std::string responseBody;
+
+            UrlComponents components;
+            if (!ParseUrl(url, components)) {
+                if (callback) callback(0, "Failed to parse URL");
+                return;
+            }
+
+            // Open WinHTTP session
+            HINTERNET hSession = WinHttpOpen(L"Nova3D/1.0",
+                                              WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                                              WINHTTP_NO_PROXY_NAME,
+                                              WINHTTP_NO_PROXY_BYPASS, 0);
+            if (!hSession) {
+                if (callback) callback(0, "Failed to open WinHTTP session");
+                return;
+            }
+
+            // Connect to server
+            HINTERNET hConnect = WinHttpConnect(hSession,
+                                                 components.host.c_str(),
+                                                 components.port, 0);
+            if (!hConnect) {
+                WinHttpCloseHandle(hSession);
+                if (callback) callback(0, "Failed to connect");
+                return;
+            }
+
+            // Create request
+            DWORD flags = components.secure ? WINHTTP_FLAG_SECURE : 0;
+            HINTERNET hRequest = WinHttpOpenRequest(hConnect,
+                                                     method.c_str(),
+                                                     components.path.c_str(),
+                                                     nullptr, WINHTTP_NO_REFERER,
+                                                     WINHTTP_DEFAULT_ACCEPT_TYPES,
+                                                     flags);
+            if (!hRequest) {
+                WinHttpCloseHandle(hConnect);
+                WinHttpCloseHandle(hSession);
+                if (callback) callback(0, "Failed to create request");
+                return;
+            }
+
+            // Set content-type header for requests with body
+            if (!body.empty()) {
+                WinHttpAddRequestHeaders(hRequest,
+                    L"Content-Type: application/json",
+                    -1, WINHTTP_ADDREQ_FLAG_ADD);
+            }
+
+            // Send request
+            BOOL result = WinHttpSendRequest(hRequest,
+                                              WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                                              body.empty() ? WINHTTP_NO_REQUEST_DATA : (LPVOID)body.c_str(),
+                                              static_cast<DWORD>(body.size()),
+                                              static_cast<DWORD>(body.size()),
+                                              0);
+
+            if (result) {
+                result = WinHttpReceiveResponse(hRequest, nullptr);
+            }
+
+            if (result) {
+                // Get status code
+                DWORD statusCodeSize = sizeof(statusCode);
+                WinHttpQueryHeaders(hRequest,
+                                    WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                                    WINHTTP_HEADER_NAME_BY_INDEX,
+                                    &statusCode, &statusCodeSize,
+                                    WINHTTP_NO_HEADER_INDEX);
+
+                // Read response body
+                DWORD bytesAvailable = 0;
+                do {
+                    bytesAvailable = 0;
+                    if (!WinHttpQueryDataAvailable(hRequest, &bytesAvailable)) {
+                        break;
+                    }
+
+                    if (bytesAvailable > 0) {
+                        std::vector<char> buffer(bytesAvailable + 1);
+                        DWORD bytesRead = 0;
+                        if (WinHttpReadData(hRequest, buffer.data(), bytesAvailable, &bytesRead)) {
+                            responseBody.append(buffer.data(), bytesRead);
+                        }
+                    }
+                } while (bytesAvailable > 0);
+            }
+
+            // Cleanup
+            WinHttpCloseHandle(hRequest);
+            WinHttpCloseHandle(hConnect);
+            WinHttpCloseHandle(hSession);
+
+            if (callback) {
+                callback(statusCode, responseBody);
+            }
+        }).detach();
+    }
+}
+
 void FirebaseClient::HttpGet(const std::string& url, std::function<void(int, const std::string&)> callback) {
-    // TODO: Implement actual HTTP GET using platform-specific HTTP library
-    // For now, simulate success
+    WinHttpRequest(url, L"GET", "", callback);
+}
+
+void FirebaseClient::HttpPost(const std::string& url, const std::string& body,
+                               std::function<void(int, const std::string&)> callback) {
+    WinHttpRequest(url, L"POST", body, callback);
+}
+
+void FirebaseClient::HttpPut(const std::string& url, const std::string& body,
+                              std::function<void(int, const std::string&)> callback) {
+    WinHttpRequest(url, L"PUT", body, callback);
+}
+
+void FirebaseClient::HttpPatch(const std::string& url, const std::string& body,
+                                std::function<void(int, const std::string&)> callback) {
+    WinHttpRequest(url, L"PATCH", body, callback);
+}
+
+void FirebaseClient::HttpDelete(const std::string& url, std::function<void(int, const std::string&)> callback) {
+    WinHttpRequest(url, L"DELETE", "", callback);
+}
+
+#else // !NOVA_HAS_WINHTTP
+
+// Stub implementations for non-Windows platforms
+// TODO: Implement using libcurl when NOVA_ENABLE_NETWORKING includes curl dependency
+
+void FirebaseClient::HttpGet(const std::string& url, std::function<void(int, const std::string&)> callback) {
+    // Stub: Requires libcurl integration on non-Windows platforms
+    // To enable: add curl dependency to CMakeLists.txt and implement using curl_easy_* API
     if (callback) {
-        callback(200, "{}");
+        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
     }
 }
 
 void FirebaseClient::HttpPost(const std::string& url, const std::string& body,
                                std::function<void(int, const std::string&)> callback) {
-    // TODO: Implement actual HTTP POST
+    // Stub: Requires libcurl integration on non-Windows platforms
     if (callback) {
-        nlohmann::json response;
-        response["localId"] = "test-user-id";
-        response["idToken"] = "test-id-token";
-        response["expiresIn"] = "3600";
-        callback(200, response.dump());
+        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
     }
 }
 
 void FirebaseClient::HttpPut(const std::string& url, const std::string& body,
                               std::function<void(int, const std::string&)> callback) {
-    // TODO: Implement actual HTTP PUT
+    // Stub: Requires libcurl integration on non-Windows platforms
     if (callback) {
-        callback(200, body);
+        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
     }
 }
 
 void FirebaseClient::HttpPatch(const std::string& url, const std::string& body,
                                 std::function<void(int, const std::string&)> callback) {
-    // TODO: Implement actual HTTP PATCH
+    // Stub: Requires libcurl integration on non-Windows platforms
     if (callback) {
-        callback(200, body);
+        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
     }
 }
 
 void FirebaseClient::HttpDelete(const std::string& url, std::function<void(int, const std::string&)> callback) {
-    // TODO: Implement actual HTTP DELETE
+    // Stub: Requires libcurl integration on non-Windows platforms
     if (callback) {
-        callback(200, "null");
+        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
     }
 }
+
+#endif // NOVA_HAS_WINHTTP
 
 std::string FirebaseClient::BuildDatabaseUrl(const std::string& path) const {
     std::string url = m_config.databaseUrl;

@@ -1,10 +1,16 @@
 #include "ScriptContext.hpp"
 #include <game/src/entities/Entity.hpp>
 #include <game/src/entities/EntityManager.hpp>
+#include <game/src/entities/Zombie.hpp>
+#include <game/src/entities/NPC.hpp>
+#include <game/src/entities/Player.hpp>
 #include <game/src/rts/Building.hpp>
 #include <game/src/rts/Resource.hpp>
+#include <game/src/ui/NotificationUI.hpp>
 #include <engine/core/Logger.hpp>
+#include <engine/audio/AudioEngine.hpp>
 #include <engine/math/Random.hpp>
+#include <engine/particles/ParticleSystem.hpp>
 
 #include <random>
 #include <cmath>
@@ -413,23 +419,19 @@ uint32_t ScriptContext::SpawnEntity(const std::string& type, float x, float y, f
     Vehement::Entity* entity = nullptr;
 
     // Map type string to entity type and create
+    // Note: EntityManager::CreateEntity is a template; we create base Entity and set name/type
     if (type == "zombie" || type == "enemy") {
-        entity = m_entityManager->CreateEntity("enemy");
+        entity = m_entityManager->CreateEntity<Vehement::Zombie>();
     } else if (type == "npc" || type == "villager") {
-        entity = m_entityManager->CreateEntity("npc");
+        entity = m_entityManager->CreateEntity<Vehement::NPC>();
     } else if (type == "player") {
-        entity = m_entityManager->CreateEntity("player");
-    } else if (type == "item" || type == "pickup") {
-        entity = m_entityManager->CreateEntity("item");
-    } else if (type == "projectile") {
-        entity = m_entityManager->CreateEntity("projectile");
-    } else if (type == "building") {
-        entity = m_entityManager->CreateEntity("building");
-    } else if (type == "resource") {
-        entity = m_entityManager->CreateEntity("resource");
+        entity = m_entityManager->CreateEntity<Vehement::Player>();
     } else {
-        // Generic entity type
-        entity = m_entityManager->CreateEntity(type);
+        // For other types, create a base Entity and set its name
+        entity = m_entityManager->CreateEntity<Vehement::Entity>();
+        if (entity) {
+            entity->SetName(type);
+        }
     }
 
     if (entity) {
@@ -527,6 +529,194 @@ std::string ScriptContext::GetEntityType(uint32_t entityId) const {
         return Vehement::EntityTypeToString(entity->GetType());
     }
     return "";
+}
+
+std::string ScriptContext::GetEntityName(uint32_t entityId) const {
+    if (!m_entityManager) return "";
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->GetName();
+    }
+    return "";
+}
+
+// ============================================================================
+// Entity Velocity API
+// ============================================================================
+
+glm::vec3 ScriptContext::GetEntityVelocity(uint32_t entityId) const {
+    if (!m_entityManager) return glm::vec3(0.0f);
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->GetVelocity();
+    }
+    return glm::vec3(0.0f);
+}
+
+void ScriptContext::SetEntityVelocity(uint32_t entityId, float vx, float vy, float vz) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->SetVelocity(glm::vec3(vx, vy, vz));
+    }
+}
+
+// ============================================================================
+// Entity Rotation API
+// ============================================================================
+
+float ScriptContext::GetEntityRotation(uint32_t entityId) const {
+    if (!m_entityManager) return 0.0f;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->GetRotation();
+    }
+    return 0.0f;
+}
+
+void ScriptContext::SetEntityRotation(uint32_t entityId, float radians) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->SetRotation(radians);
+    }
+}
+
+// ============================================================================
+// Entity Max Health API
+// ============================================================================
+
+float ScriptContext::GetEntityMaxHealth(uint32_t entityId) const {
+    if (!m_entityManager) return 0.0f;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->GetMaxHealth();
+    }
+    return 0.0f;
+}
+
+void ScriptContext::SetEntityMaxHealth(uint32_t entityId, float maxHealth) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->SetMaxHealth(maxHealth);
+    }
+}
+
+void ScriptContext::KillEntity(uint32_t entityId) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->Die();
+    }
+}
+
+// ============================================================================
+// Entity Movement API
+// ============================================================================
+
+float ScriptContext::GetEntityMoveSpeed(uint32_t entityId) const {
+    if (!m_entityManager) return 5.0f;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->GetMoveSpeed();
+    }
+    return 5.0f;
+}
+
+void ScriptContext::SetEntityMoveSpeed(uint32_t entityId, float speed) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->SetMoveSpeed(speed);
+    }
+}
+
+// ============================================================================
+// Entity Collision API
+// ============================================================================
+
+float ScriptContext::GetEntityCollisionRadius(uint32_t entityId) const {
+    if (!m_entityManager) return 0.5f;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->GetCollisionRadius();
+    }
+    return 0.5f;
+}
+
+void ScriptContext::SetEntityCollisionRadius(uint32_t entityId, float radius) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->SetCollisionRadius(radius);
+    }
+}
+
+bool ScriptContext::IsEntityCollidable(uint32_t entityId) const {
+    if (!m_entityManager) return true;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->IsCollidable();
+    }
+    return true;
+}
+
+void ScriptContext::SetEntityCollidable(uint32_t entityId, bool collidable) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->SetCollidable(collidable);
+    }
+}
+
+bool ScriptContext::EntitiesCollide(uint32_t entity1, uint32_t entity2) const {
+    if (!m_entityManager) return false;
+
+    auto* e1 = m_entityManager->GetEntity(entity1);
+    auto* e2 = m_entityManager->GetEntity(entity2);
+
+    if (e1 && e2) {
+        return e1->CollidesWith(*e2);
+    }
+    return false;
+}
+
+// ============================================================================
+// Entity State API
+// ============================================================================
+
+bool ScriptContext::IsEntityActive(uint32_t entityId) const {
+    if (!m_entityManager) return false;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        return entity->IsActive();
+    }
+    return false;
+}
+
+void ScriptContext::SetEntityActive(uint32_t entityId, bool active) {
+    if (!m_entityManager) return;
+
+    auto* entity = m_entityManager->GetEntity(entityId);
+    if (entity) {
+        entity->SetActive(active);
+    }
 }
 
 // ============================================================================
@@ -732,7 +922,10 @@ uint32_t ScriptContext::GetBuildingAt(int tileX, int tileY) const {
 
     uint32_t foundBuildingId = 0;
     m_entityManager->ForEachEntity([&](Vehement::Entity& entity) {
-        if (entity.GetTypeName() == "building") {
+        // Check if entity is a building-like type via its name
+        const std::string& entityName = entity.GetName();
+        if (entityName.find("building") != std::string::npos ||
+            entityName.find("Building") != std::string::npos) {
             glm::vec3 buildingPos = entity.GetPosition();
             // Check if building occupies this tile (simple check)
             float dx = std::abs(buildingPos.x - tileWorldPos.x);
@@ -751,7 +944,7 @@ std::string ScriptContext::GetBuildingType(uint32_t buildingId) const {
     if (!m_entityManager) return "";
 
     auto* entity = m_entityManager->GetEntity(buildingId);
-    if (entity && entity->GetTypeName() == "building") {
+    if (entity) {
         // Get building subtype from entity name or property
         std::string name = entity->GetName();
         if (name.find("House") != std::string::npos) return "House";
@@ -761,7 +954,8 @@ std::string ScriptContext::GetBuildingType(uint32_t buildingId) const {
         if (name.find("Tower") != std::string::npos) return "Tower";
         if (name.find("Wall") != std::string::npos) return "Wall";
         if (name.find("Gate") != std::string::npos) return "Gate";
-        return "Building";  // Generic
+        if (name.find("building") != std::string::npos ||
+            name.find("Building") != std::string::npos) return "Building";  // Generic
     }
     return "";
 }
@@ -771,7 +965,13 @@ bool ScriptContext::IsBuildingOperational(uint32_t buildingId) const {
     if (!m_entityManager) return false;
 
     auto* entity = m_entityManager->GetEntity(buildingId);
-    if (entity && entity->GetTypeName() == "building") {
+    if (entity) {
+        // Check if it's a building by name
+        const std::string& name = entity->GetName();
+        bool isBuilding = (name.find("building") != std::string::npos ||
+                          name.find("Building") != std::string::npos);
+        if (!isBuilding) return false;
+
         // Building is operational if health > 0 and not under construction
         if (!entity->IsAlive()) return false;
 
@@ -787,7 +987,13 @@ float ScriptContext::GetBuildingProgress(uint32_t buildingId) const {
     if (!m_entityManager) return 0.0f;
 
     auto* entity = m_entityManager->GetEntity(buildingId);
-    if (entity && entity->GetTypeName() == "building") {
+    if (entity) {
+        // Check if it's a building by name
+        const std::string& name = entity->GetName();
+        bool isBuilding = (name.find("building") != std::string::npos ||
+                          name.find("Building") != std::string::npos);
+        if (!isBuilding) return 0.0f;
+
         // Check for construction progress property
         // For now, assume completed buildings have progress 1.0
         // Buildings could store progress in health ratio during construction
@@ -801,44 +1007,128 @@ float ScriptContext::GetBuildingProgress(uint32_t buildingId) const {
 }
 
 // ============================================================================
-// Sound and Effects Implementation
+// Sound and Effects Implementation (AudioEngine Integration)
 // ============================================================================
 
 void ScriptContext::PlaySound(const std::string& soundName, float x, float y, float z) {
-    // Integrate with audio system
-    if (m_audioSystem) {
-        m_audioSystem->Play3DSound(soundName, glm::vec3(x, y, z));
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        auto buffer = m_audioEngine->LoadSound(soundName);
+        if (buffer) {
+            if (x != 0.0f || y != 0.0f || z != 0.0f) {
+                m_audioEngine->Play3D(buffer, glm::vec3(x, y, z));
+            } else {
+                m_audioEngine->Play2D(buffer);
+            }
+        } else {
+            LogWarning("PlaySound: Failed to load sound: " + soundName);
+        }
     } else {
         LogDebug("PlaySound: " + soundName + " at (" + std::to_string(x) + ", " +
-                 std::to_string(y) + ", " + std::to_string(z) + ")");
+                 std::to_string(y) + ", " + std::to_string(z) + ") [AudioEngine not available]");
+    }
+}
+
+void ScriptContext::PlaySound3D(const std::string& soundName, float x, float y, float z, float volume) {
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        auto buffer = m_audioEngine->LoadSound(soundName);
+        if (buffer) {
+            auto source = m_audioEngine->Play3D(buffer, glm::vec3(x, y, z), volume);
+            if (!source) {
+                LogWarning("PlaySound3D: Failed to play sound: " + soundName);
+            }
+        } else {
+            LogWarning("PlaySound3D: Failed to load sound: " + soundName);
+        }
+    } else {
+        LogDebug("PlaySound3D: " + soundName + " [AudioEngine not available]");
+    }
+}
+
+void ScriptContext::PlaySound2D(const std::string& soundName, float volume, float pitch) {
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        auto buffer = m_audioEngine->LoadSound(soundName);
+        if (buffer) {
+            auto source = m_audioEngine->Play2D(buffer, volume, pitch);
+            if (!source) {
+                LogWarning("PlaySound2D: Failed to play sound: " + soundName);
+            }
+        } else {
+            LogWarning("PlaySound2D: Failed to load sound: " + soundName);
+        }
+    } else {
+        LogDebug("PlaySound2D: " + soundName + " [AudioEngine not available]");
     }
 }
 
 void ScriptContext::PlayMusic(const std::string& musicName) {
-    // Integrate with audio system
-    if (m_audioSystem) {
-        m_audioSystem->PlayMusic(musicName);
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        m_audioEngine->PlayMusic(musicName);
     } else {
-        LogDebug("PlayMusic: " + musicName);
+        LogDebug("PlayMusic: " + musicName + " [AudioEngine not available]");
+    }
+}
+
+void ScriptContext::StopMusic() {
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        m_audioEngine->StopMusic();
+    }
+}
+
+void ScriptContext::SetMusicVolume(float volume) {
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        m_audioEngine->SetMusicVolume(volume);
+    }
+}
+
+void ScriptContext::SetMasterVolume(float volume) {
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        m_audioEngine->SetMasterVolume(volume);
+    }
+}
+
+float ScriptContext::GetMasterVolume() const {
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        return m_audioEngine->GetMasterVolume();
+    }
+    return 1.0f;
+}
+
+void ScriptContext::SetSoundVolume(const std::string& category, float volume) {
+    if (m_audioEngine && m_audioEngine->IsInitialized()) {
+        auto* bus = m_audioEngine->GetBus(category);
+        if (bus) {
+            bus->SetVolume(volume);
+        } else {
+            LogWarning("SetSoundVolume: Unknown category: " + category);
+        }
     }
 }
 
 void ScriptContext::SpawnEffect(const std::string& effectName, float x, float y, float z) {
-    // Integrate with particle/effect system
-    if (m_effectSystem) {
-        m_effectSystem->SpawnEffect(effectName, glm::vec3(x, y, z));
-    } else {
+    // Effects are spawned using the particle system with pre-configured emitter settings
+    // For now, we spawn a burst of particles at the given location as a generic effect
+    if (m_particleSystem && m_particleSystem->IsInitialized()) {
+        // Spawn a burst of particles as a visual effect
+        m_particleSystem->EmitBurst(glm::vec3(x, y, z), 20);
         LogDebug("SpawnEffect: " + effectName + " at (" + std::to_string(x) + ", " +
                  std::to_string(y) + ", " + std::to_string(z) + ")");
+    } else {
+        LogDebug("SpawnEffect: " + effectName + " at (" + std::to_string(x) + ", " +
+                 std::to_string(y) + ", " + std::to_string(z) + ") [ParticleSystem not available]");
     }
 }
 
 void ScriptContext::SpawnParticles(const std::string& particleType, float x, float y, float z, int count) {
-    // Integrate with particle system
-    if (m_particleSystem) {
-        m_particleSystem->Emit(particleType, glm::vec3(x, y, z), count);
+    if (m_particleSystem && m_particleSystem->IsInitialized()) {
+        // Configure particle type-specific settings if needed in the future
+        // For now, use the current emitter config and spawn at position
+        m_particleSystem->EmitBurst(glm::vec3(x, y, z), count);
+        LogDebug("SpawnParticles: " + particleType + " x" + std::to_string(count) +
+                 " at (" + std::to_string(x) + ", " + std::to_string(y) + ", " +
+                 std::to_string(z) + ")");
     } else {
-        LogDebug("SpawnParticles: " + particleType + " x" + std::to_string(count));
+        LogDebug("SpawnParticles: " + particleType + " x" + std::to_string(count) +
+                 " [ParticleSystem not available]");
     }
 }
 
@@ -847,33 +1137,39 @@ void ScriptContext::SpawnParticles(const std::string& particleType, float x, flo
 // ============================================================================
 
 void ScriptContext::ShowNotification(const std::string& message, float duration) {
-    // Integrate with UI system
-    if (m_uiManager) {
-        m_uiManager->ShowNotification(message, duration);
+    if (m_notificationUI) {
+        m_notificationUI->ShowInfo(message, duration);
+    } else {
+        // Fallback to logging if notification UI not available
+        LogInfo("[NOTIFICATION] " + message);
     }
-    LogInfo("[NOTIFICATION] " + message);
 }
 
 void ScriptContext::ShowWarning(const std::string& message) {
-    // Integrate with UI system
-    if (m_uiManager) {
-        m_uiManager->ShowWarning(message);
+    if (m_notificationUI) {
+        m_notificationUI->ShowWarning(message);
+    } else {
+        // Fallback to logging if notification UI not available
+        LogWarning("[WARNING] " + message);
     }
-    LogWarning("[WARNING] " + message);
 }
 
 void ScriptContext::ShowError(const std::string& message) {
-    // Integrate with UI system
-    if (m_uiManager) {
-        m_uiManager->ShowError(message);
+    if (m_notificationUI) {
+        m_notificationUI->ShowError(message);
+    } else {
+        // Fallback to logging if notification UI not available
+        LogError("[ERROR] " + message);
     }
-    LogError("[ERROR] " + message);
 }
 
 void ScriptContext::ShowTooltip(const std::string& text, float x, float y) {
-    // Integrate with UI system
-    if (m_uiManager) {
-        m_uiManager->ShowTooltip(text, x, y);
+    // Tooltips are typically shown through the UI template context which manages
+    // the widget tree. For scripting purposes, we log the tooltip request.
+    // A full implementation would require access to the UITemplateContext.
+    if (!text.empty()) {
+        LogDebug("ShowTooltip: \"" + text + "\" at (" + std::to_string(x) + ", " +
+                 std::to_string(y) + ")");
     }
 }
 
@@ -914,19 +1210,31 @@ glm::vec3 ScriptContext::RandomDirection() const {
 // ============================================================================
 
 void ScriptContext::LogInfo(const std::string& message) {
-    Nova::Logger::Info("[Script] " + message);
+    auto logger = Nova::LogManager::Instance().GetLogger("Script");
+    if (logger) {
+        logger->Log(Nova::LogLevel::Info, Nova::SourceLocation(), message);
+    }
 }
 
 void ScriptContext::LogWarning(const std::string& message) {
-    Nova::Logger::Warning("[Script] " + message);
+    auto logger = Nova::LogManager::Instance().GetLogger("Script");
+    if (logger) {
+        logger->Log(Nova::LogLevel::Warn, Nova::SourceLocation(), message);
+    }
 }
 
 void ScriptContext::LogError(const std::string& message) {
-    Nova::Logger::Error("[Script] " + message);
+    auto logger = Nova::LogManager::Instance().GetLogger("Script");
+    if (logger) {
+        logger->Log(Nova::LogLevel::Error, Nova::SourceLocation(), message);
+    }
 }
 
 void ScriptContext::LogDebug(const std::string& message) {
-    std::printf("[Script DEBUG] %s\n", message.c_str());
+    auto logger = Nova::LogManager::Instance().GetLogger("Script");
+    if (logger) {
+        logger->Log(Nova::LogLevel::Debug, Nova::SourceLocation(), message);
+    }
 }
 
 // ============================================================================

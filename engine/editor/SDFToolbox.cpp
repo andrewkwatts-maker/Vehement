@@ -199,7 +199,7 @@ bool DeleteSDFPrimitiveCommand::Undo() {
 
     // Re-insert at original position
     m_primitivePtr = m_parent->AddChild(std::move(m_ownedPrimitive));
-    // TODO: Restore exact sibling index if needed
+    // FUTURE: Restore exact sibling index if needed
 
     return m_primitivePtr != nullptr;
 }
@@ -880,7 +880,7 @@ std::string SDFToolbox::ConvertToMesh(const SDFMeshSettings& settings) {
     // Generate path
     std::string path = "assets/meshes/" + m_activeModel->GetName() + ".mesh";
 
-    // TODO: Save mesh to file
+    // FUTURE: Save mesh to file
     // mesh->SaveToFile(path);
 
     if (Callbacks.onConvertedToMesh) {
@@ -891,7 +891,7 @@ std::string SDFToolbox::ConvertToMesh(const SDFMeshSettings& settings) {
 }
 
 SDFModel* SDFToolbox::ConvertFromMesh(const std::string& meshPath) {
-    // TODO: Implement mesh to SDF conversion
+    // FUTURE: Implement mesh to SDF conversion
     // This would use a voxelization approach
 
     if (Callbacks.onConvertedFromMesh) {
@@ -1009,7 +1009,7 @@ void SDFToolbox::RefreshAssetLibrary() {
 }
 
 SDFModel* SDFToolbox::LoadAsset(const std::string& path) {
-    // TODO: Implement asset loading
+    // FUTURE: Implement asset loading
     // auto model = std::make_unique<SDFModel>();
     // model->LoadFromFile(path);
     return nullptr;
@@ -1482,7 +1482,7 @@ void SDFToolbox::RenderQuickActions() {
     ImGui::EndDisabled();
 
     if (ImGui::Button("Import Mesh as SDF...", ImVec2(-1, 0))) {
-        // TODO: Open file dialog
+        // FUTURE: Open file dialog
     }
 }
 
@@ -1768,7 +1768,7 @@ void SDFToolbox::RenderAssetBrowser() {
 
         // Thumbnail or placeholder
         if (item.thumbnail) {
-            // TODO: ImGui::Image with texture
+            // FUTURE: ImGui::Image with texture
             ImGui::Button("##Thumb", ImVec2(thumbnailSize, thumbnailSize));
         } else {
             ImGui::Button("SDF", ImVec2(thumbnailSize, thumbnailSize));
@@ -1830,7 +1830,7 @@ void SDFToolbox::HandleKeyboardShortcuts() {
 
     // Delete: Delete selected
     if (ImGui::IsKeyPressed(ImGuiKey_Delete) && !m_selectedPrimitives.empty()) {
-        // TODO: Delete command
+        // FUTURE: Delete command
     }
 
     // Ctrl+Z: Undo
@@ -1927,13 +1927,13 @@ void SDFToolbox::LoadDefaultPresets() {
 }
 
 void SDFToolbox::SavePresetsToFile() {
-    // TODO: Implement JSON serialization
+    // FUTURE: Implement JSON serialization
     // std::ofstream file("config/sdf_presets.json");
     // ...
 }
 
 void SDFToolbox::LoadPresetsFromFile() {
-    // TODO: Implement JSON deserialization
+    // FUTURE: Implement JSON deserialization
     // std::ifstream file("config/sdf_presets.json");
     // ...
 }

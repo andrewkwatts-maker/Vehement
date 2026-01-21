@@ -632,7 +632,7 @@ void PythonEngine::SetupSysPaths() {
         py::list paths = sys.attr("path");
 
         for (const auto& scriptPath : m_config.scriptPaths) {
-            paths.push_back(scriptPath);
+            paths.append(scriptPath);
         }
 
     } catch (const py::error_already_set& e) {

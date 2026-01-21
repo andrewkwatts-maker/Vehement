@@ -122,6 +122,10 @@ public:
     [[nodiscard]] const std::string& GetName() const { return m_name; }
     void SetName(const std::string& name) { m_name = name; }
 
+    // Asset path (for editor integration)
+    [[nodiscard]] const std::string& GetAssetPath() const { return m_assetPath; }
+    void SetAssetPath(const std::string& path) { m_assetPath = path; }
+
     // Rendering components
     void SetMesh(std::shared_ptr<Mesh> mesh) { m_mesh = std::move(mesh); }
     void SetMaterial(std::shared_ptr<Material> material) { m_material = std::move(material); }
@@ -146,6 +150,7 @@ protected:
     void MarkChildrenDirty();
 
     std::string m_name;
+    std::string m_assetPath;  // Path to source asset file (for editor)
     SceneNode* m_parent = nullptr;
     std::vector<std::unique_ptr<SceneNode>> m_children;
 

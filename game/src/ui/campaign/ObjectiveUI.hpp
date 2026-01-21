@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <unordered_map>
 
 namespace Vehement {
 namespace UI {
@@ -120,6 +121,7 @@ private:
     std::vector<ObjectiveDisplayData> m_objectives;
     std::vector<std::string> m_alertQueue;
     float m_alertTimer = 0.0f;
+    std::unordered_map<std::string, float> m_newObjectiveTimers; ///< Tracks animation time for new objectives
 
     std::function<void(const std::string&)> m_onObjectiveClick;
     std::function<void(const std::string&)> m_onHintRequest;

@@ -1,4 +1,5 @@
 #include "TextureImporter.hpp"
+#include "../graphics/Texture.hpp"
 #include <fstream>
 #include <cstring>
 #include <cmath>
@@ -1334,8 +1335,8 @@ void TextureImporter::AdjustGamma(ImageData& image, float gamma) {
 // Atlas Generation
 // ============================================================================
 
-TextureAtlas TextureImporter::GenerateAtlas(const std::vector<std::string>& imagePaths,
-                                             int maxSize, int padding, bool trimWhitespace) {
+AtlasPackResult TextureImporter::GenerateAtlas(const std::vector<std::string>& imagePaths,
+                                                int maxSize, int padding, bool trimWhitespace) {
     std::vector<ImageData> images;
     std::vector<std::string> names;
 
@@ -1350,10 +1351,10 @@ TextureAtlas TextureImporter::GenerateAtlas(const std::vector<std::string>& imag
     return PackImages(images, names, maxSize, padding);
 }
 
-TextureAtlas TextureImporter::PackImages(const std::vector<ImageData>& images,
-                                          const std::vector<std::string>& names,
-                                          int maxSize, int padding) {
-    TextureAtlas atlas;
+AtlasPackResult TextureImporter::PackImages(const std::vector<ImageData>& images,
+                                             const std::vector<std::string>& names,
+                                             int maxSize, int padding) {
+    AtlasPackResult atlas;
 
     // Create rectangles for packing
     std::vector<PackRect> rects;

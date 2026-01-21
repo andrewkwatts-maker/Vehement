@@ -204,7 +204,8 @@ void SceneNode::ForEach(const std::function<void(SceneNode&)>& func) {
 void SceneNode::ForEach(const std::function<void(const SceneNode&)>& func) const {
     func(*this);
     for (const auto& child : m_children) {
-        child->ForEach(func);
+        const SceneNode& constChild = *child;
+        constChild.ForEach(func);
     }
 }
 

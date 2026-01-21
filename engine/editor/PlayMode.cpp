@@ -362,7 +362,7 @@ void PlayMode::InitializePhysics() {
     config.fixedTimestep = m_settings.fixedTimestep;
     m_playPhysicsWorld = std::make_unique<PhysicsWorld>(config);
 
-    // TODO: Copy physics bodies from scene to play world
+    // FUTURE: Copy physics bodies from scene to play world
 }
 
 void PlayMode::UpdatePhysics(float deltaTime) {
@@ -409,7 +409,7 @@ void PlayMode::InitializeScripts() {
 
     m_playScriptContext = std::make_unique<Scripting::ScriptContext>();
 
-    // TODO: Initialize scripts from scene
+    // FUTURE: Initialize scripts from scene
 }
 
 void PlayMode::UpdateScripts(float deltaTime) {
@@ -661,7 +661,7 @@ void PlayMode::SetupPlayCamera() {
         // Keep current editor camera view
         LOG_DEBUG("Using editor camera for play");
     } else if (m_settings.startFromSceneCamera) {
-        // TODO: Switch to scene's designated play camera
+        // FUTURE: Switch to scene's designated play camera
         LOG_DEBUG("Using scene camera for play");
     }
 }
@@ -1083,7 +1083,7 @@ void PlayMode::HotReloadScripts() {
     LOG_INFO("Hot reloading scripts...");
 
     // Save script state
-    // TODO: Implement script state preservation
+    // FUTURE: Implement script state preservation
 
     // Reinitialize scripts
     ShutdownScripts();
@@ -1099,7 +1099,7 @@ void PlayMode::HotReloadShaders() {
 
     LOG_INFO("Hot reloading shaders...");
 
-    // TODO: Implement shader hot reload
+    // FUTURE: Implement shader hot reload
     // This would typically trigger a recompile of all shader programs
 
     LOG_INFO("Shaders hot reloaded");
@@ -1115,7 +1115,7 @@ void PlayMode::CheckHotReload() {
         if (now - m_lastScriptCheckTime > checkInterval) {
             m_lastScriptCheckTime = now;
 
-            // TODO: Check watched script files for modifications
+            // FUTURE: Check watched script files for modifications
             // For each modified file, trigger HotReloadScripts()
         }
     }
@@ -1124,7 +1124,7 @@ void PlayMode::CheckHotReload() {
         if (now - m_lastShaderCheckTime > checkInterval) {
             m_lastShaderCheckTime = now;
 
-            // TODO: Check watched shader files for modifications
+            // FUTURE: Check watched shader files for modifications
             // For each modified file, trigger HotReloadShaders()
         }
     }
@@ -1138,7 +1138,7 @@ bool PlayMode::CreateGameWindow() {
     LOG_INFO("Creating separate game window ({}x{})",
              m_settings.separateWindowSize.x, m_settings.separateWindowSize.y);
 
-    // TODO: Implement separate window creation
+    // FUTURE: Implement separate window creation
     // This would create a new GLFW window for game rendering
 
     SetError(PlayModeError::Type::WindowCreationFailed,

@@ -539,6 +539,42 @@ public:
     void MarkErrorsAsRead() { m_unreadErrorCount = 0; }
 
     // =========================================================================
+    // AI Diagnostics
+    // =========================================================================
+
+    /**
+     * @brief Analyze recent errors using AI and generate fix suggestions
+     *
+     * Scans recent error messages in the console and provides:
+     * - Root cause analysis
+     * - Specific fix suggestions
+     * - Related error patterns
+     * - Performance improvement recommendations
+     */
+    void AnalyzeErrorsWithAI();
+
+    /**
+     * @brief Show AI diagnostics panel with suggestions
+     *
+     * Displays a dedicated panel showing:
+     * - Error analysis results
+     * - AI-generated suggestions
+     * - Pattern detection in error logs
+     * - Performance bottleneck recommendations
+     */
+    void ShowAIDiagnosticsPanel();
+
+    /**
+     * @brief Check if AI diagnostics panel is visible
+     */
+    [[nodiscard]] bool IsAIDiagnosticsPanelVisible() const { return m_showAIDiagnostics; }
+
+    /**
+     * @brief Get AI-generated suggestions
+     */
+    [[nodiscard]] const std::vector<std::string>& GetAISuggestions() const { return m_aiSuggestions; }
+
+    // =========================================================================
     // Callbacks
     // =========================================================================
 
@@ -685,6 +721,10 @@ private:
 
     // Filter state dirty flag
     bool m_filtersDirty = true;
+
+    // AI Diagnostics
+    bool m_showAIDiagnostics = false;              ///< Toggle for AI diagnostics panel visibility
+    std::vector<std::string> m_aiSuggestions;      ///< AI-generated fix suggestions and analysis
 };
 
 // =============================================================================

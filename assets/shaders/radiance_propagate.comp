@@ -1,0 +1,371 @@
+#version 460 core
+
+// ============================================================================
+// Radiance Cascade Propagation Compute Shader
+//
+// Propagates radiance from finer cascade levels to coarser ones, or
+// traces rays from each probe to gather incoming radiance.
+//
+// Reference: "Radiance Cascades" by Alexander Sannikov
+// ============================================================================
+
+layout(local_size_x = 4, local_size_y = 4, local_size_z = 4) in;
+
+// Current cascade level (read/write)
+layout(rgba16f, binding = 0) uniform image3D u_currentCascade;
+
+// Finer cascade level (read only) - may be unused for finest level
+layout(rgba16f, binding = 1) uniform image3D u_finerCascade;
+
+// History texture for temporal blending
+layout(rgba16f, binding = 2) uniform image3D u_historyTexture;
+
+// Scene SDF for ray tracing (optional)
+uniform sampler3D u_sceneSDF;
+
+// Cascade parameters
+uniform int u_cascadeLevel;             // Current cascade level index
+uniform int u_resolution;               // Resolution of current cascade
+uniform int u_finerResolution;          // Resolution of finer cascade (0 if none)
+uniform float u_spacing;                // World space spacing of probes
+uniform float u_finerSpacing;           // Spacing of finer cascade
+uniform vec3 u_cascadeOrigin;           // World space origin of cascade
+
+// Ray tracing parameters
+uniform int u_raysPerProbe;             // Number of rays to trace per probe
+uniform int u_maxSteps;                 // Max raymarching steps
+uniform float u_maxDistance;            // Max ray distance
+
+// Temporal blending
+uniform float u_temporalBlend;          // Blend factor with history (0.95 typical)
+uniform int u_frameIndex;               // Frame counter for temporal variation
+
+// Scene bounds for SDF sampling
+uniform vec3 u_sceneMin;
+uniform vec3 u_sceneMax;
+uniform bool u_hasSDF;                  // Whether scene SDF is available
+
+// Light injection
+uniform int u_numLights;
+uniform vec3 u_ambientLight;
+
+// Light data (SSBO would be better for many lights)
+struct Light {
+    vec3 position;
+    float radius;
+    vec3 color;
+    float intensity;
+};
+
+layout(std430, binding = 0) buffer LightBuffer {
+    Light lights[];
+};
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const float PI = 3.14159265359;
+const float TWO_PI = 6.28318530718;
+const float INV_PI = 0.31830988618;
+const float EPSILON = 0.001;
+
+// ============================================================================
+// Random Number Generation (PCG Hash)
+// ============================================================================
+
+uint g_seed;
+
+uint pcg_hash(uint seed) {
+    uint state = seed * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+void initRandom(uvec3 probeCoord, int frame) {
+    g_seed = probeCoord.x + probeCoord.y * 256u + probeCoord.z * 65536u + uint(frame) * 16777216u;
+}
+
+float random01() {
+    g_seed = pcg_hash(g_seed);
+    return float(g_seed) / 4294967296.0;
+}
+
+vec3 randomDirection() {
+    float theta = random01() * TWO_PI;
+    float phi = acos(2.0 * random01() - 1.0);
+    float sinPhi = sin(phi);
+    return vec3(sinPhi * cos(theta), sinPhi * sin(theta), cos(phi));
+}
+
+vec3 randomHemisphere(vec3 normal) {
+    vec3 dir = randomDirection();
+    return dot(dir, normal) > 0.0 ? dir : -dir;
+}
+
+// Stratified direction sampling using Fibonacci sphere
+vec3 fibonacciDirection(int index, int total) {
+    float goldenRatio = (1.0 + sqrt(5.0)) / 2.0;
+    float i = float(index) + 0.5;
+
+    float phi = TWO_PI * fract(i / goldenRatio);
+    float cosTheta = 1.0 - 2.0 * i / float(total);
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    return vec3(
+        sinTheta * cos(phi),
+        sinTheta * sin(phi),
+        cosTheta
+    );
+}
+
+// ============================================================================
+// SDF Sampling and Ray Marching
+// ============================================================================
+
+float sampleSceneSDF(vec3 worldPos) {
+    if (!u_hasSDF) {
+        return 1000.0; // No SDF, treat as empty space
+    }
+
+    vec3 uvw = (worldPos - u_sceneMin) / (u_sceneMax - u_sceneMin);
+
+    if (any(lessThan(uvw, vec3(0.0))) || any(greaterThan(uvw, vec3(1.0)))) {
+        return 1000.0; // Outside bounds
+    }
+
+    return texture(u_sceneSDF, uvw).r;
+}
+
+struct RayHit {
+    bool hit;
+    vec3 position;
+    vec3 normal;
+    float distance;
+};
+
+RayHit raymarch(vec3 origin, vec3 direction, float maxDist) {
+    RayHit result;
+    result.hit = false;
+    result.distance = 0.0;
+
+    float t = EPSILON * 10.0; // Start slightly forward
+
+    for (int i = 0; i < u_maxSteps; i++) {
+        vec3 p = origin + direction * t;
+        float dist = sampleSceneSDF(p);
+
+        if (dist < EPSILON) {
+            result.hit = true;
+            result.position = p;
+            result.distance = t;
+
+            // Calculate normal via gradient
+            const float h = 0.01;
+            result.normal = normalize(vec3(
+                sampleSceneSDF(p + vec3(h, 0, 0)) - sampleSceneSDF(p - vec3(h, 0, 0)),
+                sampleSceneSDF(p + vec3(0, h, 0)) - sampleSceneSDF(p - vec3(0, h, 0)),
+                sampleSceneSDF(p + vec3(0, 0, h)) - sampleSceneSDF(p - vec3(0, 0, h))
+            ));
+
+            return result;
+        }
+
+        t += max(dist * 0.9, EPSILON);
+
+        if (t > maxDist) {
+            break;
+        }
+    }
+
+    result.distance = maxDist;
+    return result;
+}
+
+// ============================================================================
+// Cascade Sampling
+// ============================================================================
+
+// Convert probe grid coordinate to world position
+vec3 probeToWorld(ivec3 probeCoord, float spacing, vec3 origin) {
+    return origin + (vec3(probeCoord) + 0.5) * spacing;
+}
+
+// Sample radiance from finer cascade with trilinear interpolation
+vec3 sampleFinerCascade(vec3 worldPos) {
+    if (u_finerResolution <= 0) {
+        return vec3(0.0);
+    }
+
+    // Convert world position to finer cascade grid coordinates
+    vec3 gridPos = (worldPos - u_cascadeOrigin) / u_finerSpacing - 0.5;
+
+    // Check bounds
+    if (any(lessThan(gridPos, vec3(-0.5))) ||
+        any(greaterThanEqual(gridPos, vec3(u_finerResolution - 0.5)))) {
+        return vec3(0.0);
+    }
+
+    // Clamp to valid range
+    gridPos = clamp(gridPos, vec3(0.0), vec3(u_finerResolution - 1));
+    ivec3 coord = ivec3(floor(gridPos));
+    coord = clamp(coord, ivec3(0), ivec3(u_finerResolution - 1));
+
+    // Simple nearest neighbor for now (trilinear would be better)
+    vec4 sample = imageLoad(u_finerCascade, coord);
+    return sample.rgb;
+}
+
+// Sample direct lighting contribution at a point
+vec3 sampleDirectLighting(vec3 worldPos, vec3 normal) {
+    vec3 lighting = u_ambientLight;
+
+    for (int i = 0; i < min(u_numLights, 16); i++) {
+        Light light = lights[i];
+
+        vec3 toLight = light.position - worldPos;
+        float dist = length(toLight);
+
+        if (dist < light.radius) {
+            vec3 lightDir = toLight / dist;
+            float NdotL = max(dot(normal, lightDir), 0.0);
+
+            // Distance attenuation
+            float attenuation = 1.0 - smoothstep(0.0, light.radius, dist);
+            attenuation *= attenuation; // Quadratic falloff
+
+            // Shadow check via SDF
+            float shadow = 1.0;
+            if (u_hasSDF) {
+                RayHit shadowHit = raymarch(worldPos + normal * 0.1, lightDir, dist);
+                if (shadowHit.hit && shadowHit.distance < dist - 0.1) {
+                    shadow = 0.0;
+                }
+            }
+
+            lighting += light.color * light.intensity * NdotL * attenuation * shadow;
+        }
+    }
+
+    return lighting;
+}
+
+// ============================================================================
+// Radiance Propagation
+// ============================================================================
+
+vec3 propagateRadiance(ivec3 probeCoord) {
+    vec3 worldPos = probeToWorld(probeCoord, u_spacing, u_cascadeOrigin);
+
+    // Check if probe is inside geometry
+    float sdf = sampleSceneSDF(worldPos);
+    if (sdf < -EPSILON) {
+        return vec3(0.0); // Inside solid, no radiance
+    }
+
+    vec3 accumulatedRadiance = vec3(0.0);
+    float totalWeight = 0.0;
+
+    // Trace rays in multiple directions
+    int numRays = u_raysPerProbe;
+
+    for (int i = 0; i < numRays; i++) {
+        // Use stratified sampling with temporal jitter
+        vec3 direction;
+        if (numRays >= 8) {
+            // Fibonacci sphere distribution with jitter
+            direction = fibonacciDirection(i, numRays);
+            // Add small jitter for temporal anti-aliasing
+            direction = normalize(direction + randomDirection() * 0.1);
+        } else {
+            // Fully random for low sample counts
+            direction = randomDirection();
+        }
+
+        // Ray trace to find hit or sample from finer cascade
+        float rayDistance = u_spacing * 2.0; // Trace distance based on spacing
+        if (u_finerResolution > 0) {
+            rayDistance = u_finerSpacing * 2.0; // Match finer cascade spacing
+        }
+
+        RayHit hit = raymarch(worldPos, direction, rayDistance);
+
+        vec3 rayRadiance = vec3(0.0);
+
+        if (hit.hit) {
+            // Hit geometry - sample direct lighting at hit point
+            rayRadiance = sampleDirectLighting(hit.position, hit.normal);
+
+            // Add indirect from finer cascade at hit point
+            if (u_finerResolution > 0) {
+                rayRadiance += sampleFinerCascade(hit.position) * 0.5;
+            }
+        } else {
+            // No hit - sample from finer cascade along ray
+            if (u_finerResolution > 0) {
+                // Sample at ray endpoint
+                vec3 samplePos = worldPos + direction * rayDistance;
+                rayRadiance = sampleFinerCascade(samplePos);
+            } else {
+                // Finest cascade - use ambient/sky
+                rayRadiance = u_ambientLight * 0.5;
+            }
+        }
+
+        // Accumulate with equal weighting (could use importance sampling)
+        accumulatedRadiance += rayRadiance;
+        totalWeight += 1.0;
+    }
+
+    // Average accumulated radiance
+    if (totalWeight > 0.0) {
+        accumulatedRadiance /= totalWeight;
+    }
+
+    // Add any direct lighting at probe position
+    vec3 probeNormal = vec3(0.0, 1.0, 0.0); // Default up normal
+    accumulatedRadiance += sampleDirectLighting(worldPos, probeNormal) * 0.25;
+
+    return accumulatedRadiance;
+}
+
+// ============================================================================
+// Main
+// ============================================================================
+
+void main() {
+    ivec3 probeCoord = ivec3(gl_GlobalInvocationID);
+
+    // Bounds check
+    if (any(greaterThanEqual(probeCoord, ivec3(u_resolution)))) {
+        return;
+    }
+
+    // Initialize RNG with probe-specific seed
+    initRandom(uvec3(probeCoord), u_frameIndex);
+
+    // Propagate radiance for this probe
+    vec3 newRadiance = propagateRadiance(probeCoord);
+
+    // Temporal blending with history
+    vec4 history = imageLoad(u_historyTexture, probeCoord);
+    vec3 blendedRadiance;
+
+    if (history.a > 0.5) {
+        // Valid history - blend
+        blendedRadiance = mix(newRadiance, history.rgb, u_temporalBlend);
+    } else {
+        // No valid history - use new value directly
+        blendedRadiance = newRadiance;
+    }
+
+    // Clamp to prevent fireflies
+    float luminance = dot(blendedRadiance, vec3(0.2126, 0.7152, 0.0722));
+    float maxLuminance = 10.0;
+    if (luminance > maxLuminance) {
+        blendedRadiance *= maxLuminance / luminance;
+    }
+
+    // Store result (RGB = radiance, A = validity)
+    imageStore(u_currentCascade, probeCoord, vec4(blendedRadiance, 1.0));
+}

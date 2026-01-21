@@ -517,8 +517,34 @@ WorldEvent EventTemplate::CreateEvent(const glm::vec2& location,
 
     event.id = WorldEvent::GenerateEventId(type, timestamp);
     event.type = type;
-    event.name = nameTemplate; // TODO: Replace placeholders
-    event.description = descriptionTemplate;
+
+    // Replace placeholders in name and description
+    std::string processedName = nameTemplate;
+    std::string processedDesc = descriptionTemplate;
+
+    // Replace {name} with the event type name
+    std::string eventTypeName = EventTypeToString(type);
+    size_t pos;
+    while ((pos = processedName.find("{name}")) != std::string::npos) {
+        processedName.replace(pos, 6, eventTypeName);
+    }
+    while ((pos = processedDesc.find("{name}")) != std::string::npos) {
+        processedDesc.replace(pos, 6, eventTypeName);
+    }
+
+    // Replace {location} with coordinates string
+    std::stringstream locStream;
+    locStream << "(" << static_cast<int>(location.x) << ", " << static_cast<int>(location.y) << ")";
+    std::string locationStr = locStream.str();
+    while ((pos = processedName.find("{location}")) != std::string::npos) {
+        processedName.replace(pos, 10, locationStr);
+    }
+    while ((pos = processedDesc.find("{location}")) != std::string::npos) {
+        processedDesc.replace(pos, 10, locationStr);
+    }
+
+    event.name = processedName;
+    event.description = processedDesc;
 
     event.location = location;
     event.isGlobal = canBeGlobal;

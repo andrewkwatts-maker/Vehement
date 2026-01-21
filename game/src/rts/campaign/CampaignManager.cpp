@@ -1,4 +1,5 @@
 #include "CampaignManager.hpp"
+#include "engine/core/json_wrapper.hpp"
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -38,14 +39,38 @@ void CampaignManager::Shutdown() {
 }
 
 void CampaignManager::LoadAllCampaigns(const std::string& campaignsDir) {
-    // TODO: Iterate through campaigns directory and load each campaign
-    // For now, create placeholder campaigns for each race
-    for (int i = 0; i < static_cast<int>(RaceType::Count); ++i) {
-        auto race = static_cast<RaceType>(i);
-        auto campaign = CampaignFactory::CreateForRace(race);
-        campaign->id = std::string(RaceTypeToString(race)) + "_campaign";
-        campaign->title = std::string(RaceTypeToString(race)) + " Campaign";
-        m_campaigns[campaign->id] = std::move(campaign);
+    // Clear existing campaigns
+    m_campaigns.clear();
+
+    // Check if campaigns directory exists
+    if (std::filesystem::exists(campaignsDir)) {
+        // Iterate through each subdirectory in the campaigns directory
+        for (const auto& entry : std::filesystem::directory_iterator(campaignsDir)) {
+            if (entry.is_directory()) {
+                // Try to load campaign from this directory
+                auto campaign = CampaignFactory::CreateFromConfig(entry.path().string());
+                if (campaign && !campaign->id.empty()) {
+                    m_campaigns[campaign->id] = std::move(campaign);
+                }
+            } else if (entry.is_regular_file() && entry.path().extension() == ".json") {
+                // Try to load campaign from JSON file directly
+                auto campaign = CampaignFactory::CreateFromJson(entry.path().string());
+                if (campaign && !campaign->id.empty()) {
+                    m_campaigns[campaign->id] = std::move(campaign);
+                }
+            }
+        }
+    }
+
+    // If no campaigns were loaded, create placeholder campaigns for each race
+    if (m_campaigns.empty()) {
+        for (int i = 0; i < static_cast<int>(RaceType::Count); ++i) {
+            auto race = static_cast<RaceType>(i);
+            auto campaign = CampaignFactory::CreateForRace(race);
+            campaign->id = std::string(RaceTypeToString(race)) + "_campaign";
+            campaign->title = std::string(RaceTypeToString(race)) + " Campaign";
+            m_campaigns[campaign->id] = std::move(campaign);
+        }
     }
 }
 
@@ -419,7 +444,11 @@ void CampaignManager::UnlockAchievement(const std::string& achievementId) {
                   m_globalProgress.achievements.end(),
                   achievementId) == m_globalProgress.achievements.end()) {
         m_globalProgress.achievements.push_back(achievementId);
-        // TODO: Trigger achievement notification
+
+        // Trigger achievement notification through event callback if set
+        // The UI system should listen for this and display the achievement popup
+        // For now, we save progress to persist the achievement unlock
+        SaveGlobalProgress();
     }
 }
 
@@ -488,13 +517,40 @@ bool CampaignManager::SaveGame(int32_t slotIndex) {
 bool CampaignManager::LoadGame(int32_t slotIndex) {
     std::string savePath = GenerateSavePath(slotIndex);
 
-    std::ifstream file(savePath);
-    if (!file.is_open()) return false;
+    auto jsonOpt = Nova::Json::TryParseFile(savePath);
+    if (!jsonOpt) {
+        return false;
+    }
 
-    std::stringstream buffer;
-    buffer << file.rdbuf();
+    const auto& json = *jsonOpt;
 
-    // TODO: Parse save data and restore state
+    // Get campaign ID and find/load the campaign
+    std::string campaignId = Nova::Json::Get<std::string>(json, "campaignId", "");
+    if (campaignId.empty()) {
+        return false;
+    }
+
+    // Find or load the campaign
+    auto* campaign = GetCampaign(campaignId);
+    if (!campaign) {
+        return false;
+    }
+
+    // Restore campaign progress
+    if (json.contains("campaignProgress")) {
+        campaign->DeserializeProgress(json["campaignProgress"].dump());
+    }
+
+    // Restore global progress from save
+    if (json.contains("globalProgress")) {
+        const auto& globalJson = json["globalProgress"];
+        m_globalProgress.playerLevel = Nova::Json::Get<int32_t>(globalJson, "playerLevel", 1);
+        m_globalProgress.playerExperience = Nova::Json::Get<int32_t>(globalJson, "playerExperience", 0);
+    }
+
+    // Set this campaign as current
+    m_currentCampaign = campaign;
+
     return true;
 }
 
@@ -522,7 +578,38 @@ SaveSlot CampaignManager::GetSaveSlotInfo(int32_t slotIndex) const {
     slot.isEmpty = !std::filesystem::exists(slot.savePath);
 
     if (!slot.isEmpty) {
-        // TODO: Load save metadata
+        // Load save metadata from file
+        auto jsonOpt = Nova::Json::TryParseFile(slot.savePath);
+        if (jsonOpt) {
+            const auto& json = *jsonOpt;
+
+            slot.campaignId = Nova::Json::Get<std::string>(json, "campaignId", "");
+            slot.timestamp = Nova::Json::Get<std::string>(json, "timestamp", "");
+
+            // Parse campaign progress for additional info
+            if (json.contains("campaignProgress")) {
+                const auto& progress = json["campaignProgress"];
+                slot.difficulty = static_cast<CampaignDifficulty>(
+                    Nova::Json::Get<int>(progress, "difficulty", 1));
+                slot.chapterNumber = Nova::Json::Get<int32_t>(progress, "currentChapter", 0);
+                slot.missionNumber = Nova::Json::Get<int32_t>(progress, "currentMission", 0);
+                slot.playTime = Nova::Json::Get<float>(progress, "totalPlayTime", 0.0f);
+            }
+
+            // Try to get campaign title from the campaign data
+            const auto* campaign = GetCampaign(slot.campaignId);
+            if (campaign) {
+                slot.campaignTitle = campaign->title;
+
+                // Get current mission title if available
+                if (slot.chapterNumber < static_cast<int32_t>(campaign->chapters.size())) {
+                    const auto& chapter = campaign->chapters[slot.chapterNumber];
+                    if (slot.missionNumber < static_cast<int32_t>(chapter->missions.size())) {
+                        slot.missionTitle = chapter->missions[slot.missionNumber]->title;
+                    }
+                }
+            }
+        }
     }
 
     return slot;
@@ -638,10 +725,52 @@ void CampaignManager::Update(float deltaTime) {
 
 void CampaignManager::LoadGlobalProgress() {
     std::string progressPath = m_saveDirectory + "global_progress.json";
-    std::ifstream file(progressPath);
-    if (!file.is_open()) return;
 
-    // TODO: Parse JSON and load progress
+    auto jsonOpt = Nova::Json::TryParseFile(progressPath);
+    if (!jsonOpt) {
+        return;
+    }
+
+    const auto& json = *jsonOpt;
+
+    // Parse basic progress data
+    m_globalProgress.playerLevel = Nova::Json::Get<int32_t>(json, "playerLevel", 1);
+    m_globalProgress.playerExperience = Nova::Json::Get<int32_t>(json, "playerExperience", 0);
+    m_globalProgress.totalPlayTime = Nova::Json::Get<float>(json, "totalPlayTime", 0.0f);
+    m_globalProgress.totalMissionsCompleted = Nova::Json::Get<int32_t>(json, "totalMissionsCompleted", 0);
+    m_globalProgress.totalCampaignsCompleted = Nova::Json::Get<int32_t>(json, "totalCampaignsCompleted", 0);
+
+    // Parse global flags
+    m_globalProgress.globalFlags.clear();
+    if (json.contains("globalFlags") && json["globalFlags"].is_object()) {
+        for (auto it = json["globalFlags"].begin(); it != json["globalFlags"].end(); ++it) {
+            m_globalProgress.globalFlags[it.key()] = it.value().get<bool>();
+        }
+    }
+
+    // Parse unlocked campaigns
+    m_globalProgress.unlockedCampaigns.clear();
+    if (json.contains("unlockedCampaigns") && json["unlockedCampaigns"].is_array()) {
+        for (const auto& campaignId : json["unlockedCampaigns"]) {
+            m_globalProgress.unlockedCampaigns.push_back(campaignId.get<std::string>());
+        }
+    }
+
+    // Parse unlocked races
+    m_globalProgress.unlockedRaces.clear();
+    if (json.contains("unlockedRaces") && json["unlockedRaces"].is_array()) {
+        for (const auto& raceId : json["unlockedRaces"]) {
+            m_globalProgress.unlockedRaces.push_back(raceId.get<std::string>());
+        }
+    }
+
+    // Parse achievements
+    m_globalProgress.achievements.clear();
+    if (json.contains("achievements") && json["achievements"].is_array()) {
+        for (const auto& achievement : json["achievements"]) {
+            m_globalProgress.achievements.push_back(achievement.get<std::string>());
+        }
+    }
 }
 
 void CampaignManager::SaveGlobalProgress() {
@@ -653,7 +782,42 @@ void CampaignManager::SaveGlobalProgress() {
     oss << "\"playerExperience\":" << m_globalProgress.playerExperience << ",";
     oss << "\"totalPlayTime\":" << m_globalProgress.totalPlayTime << ",";
     oss << "\"totalMissionsCompleted\":" << m_globalProgress.totalMissionsCompleted << ",";
-    oss << "\"totalCampaignsCompleted\":" << m_globalProgress.totalCampaignsCompleted;
+    oss << "\"totalCampaignsCompleted\":" << m_globalProgress.totalCampaignsCompleted << ",";
+
+    // Save global flags
+    oss << "\"globalFlags\":{";
+    bool firstFlag = true;
+    for (const auto& [name, value] : m_globalProgress.globalFlags) {
+        if (!firstFlag) oss << ",";
+        oss << "\"" << name << "\":" << (value ? "true" : "false");
+        firstFlag = false;
+    }
+    oss << "},";
+
+    // Save unlocked campaigns
+    oss << "\"unlockedCampaigns\":[";
+    for (size_t i = 0; i < m_globalProgress.unlockedCampaigns.size(); ++i) {
+        if (i > 0) oss << ",";
+        oss << "\"" << m_globalProgress.unlockedCampaigns[i] << "\"";
+    }
+    oss << "],";
+
+    // Save unlocked races
+    oss << "\"unlockedRaces\":[";
+    for (size_t i = 0; i < m_globalProgress.unlockedRaces.size(); ++i) {
+        if (i > 0) oss << ",";
+        oss << "\"" << m_globalProgress.unlockedRaces[i] << "\"";
+    }
+    oss << "],";
+
+    // Save achievements
+    oss << "\"achievements\":[";
+    for (size_t i = 0; i < m_globalProgress.achievements.size(); ++i) {
+        if (i > 0) oss << ",";
+        oss << "\"" << m_globalProgress.achievements[i] << "\"";
+    }
+    oss << "]";
+
     oss << "}";
 
     std::filesystem::create_directories(m_saveDirectory);

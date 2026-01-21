@@ -149,6 +149,9 @@ private:
     std::string m_activePanel = "objectives";
 
     bool m_voiceoverPlaying = false;
+    bool m_voiceoverPaused = false;
+    float m_voiceoverProgress = 0.0f;      ///< Current playback position (0.0 - 1.0)
+    float m_voiceoverDuration = 0.0f;      ///< Total voiceover duration in seconds
     float m_textScrollPosition = 0.0f;
 
     std::function<void(int32_t)> m_onStartMission;

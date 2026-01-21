@@ -21,10 +21,18 @@ namespace Vehement {
     }
 }
 
+namespace Game {
+namespace UI {
+class NotificationUI;
+}
+}
+
 namespace Nova {
 
 class Renderer;
 class Graph;
+class AudioEngine;
+class ParticleSystem;
 
 namespace Scripting {
 
@@ -161,6 +169,21 @@ public:
      */
     void SetRenderer(Nova::Renderer* renderer) { m_renderer = renderer; }
 
+    /**
+     * @brief Set the audio engine for sound playback
+     */
+    void SetAudioEngine(class Nova::AudioEngine* audio) { m_audioEngine = audio; }
+
+    /**
+     * @brief Set the particle system for spawning particles
+     */
+    void SetParticleSystem(Nova::ParticleSystem* particles) { m_particleSystem = particles; }
+
+    /**
+     * @brief Set the notification UI for showing notifications
+     */
+    void SetNotificationUI(Game::UI::NotificationUI* notificationUI) { m_notificationUI = notificationUI; }
+
     // =========================================================================
     // API Function Registration
     // =========================================================================
@@ -208,17 +231,46 @@ public:
     // Built-in API Functions (exposed to Python)
     // =========================================================================
 
-    // Entity API
+    // Entity API - Core
     [[nodiscard]] uint32_t SpawnEntity(const std::string& type, float x, float y, float z);
     void DespawnEntity(uint32_t entityId);
     [[nodiscard]] glm::vec3 GetEntityPosition(uint32_t entityId) const;
     void SetEntityPosition(uint32_t entityId, float x, float y, float z);
+
+    // Entity API - Velocity
+    [[nodiscard]] glm::vec3 GetEntityVelocity(uint32_t entityId) const;
+    void SetEntityVelocity(uint32_t entityId, float vx, float vy, float vz);
+
+    // Entity API - Rotation (Y-axis for top-down games)
+    [[nodiscard]] float GetEntityRotation(uint32_t entityId) const;
+    void SetEntityRotation(uint32_t entityId, float radians);
+
+    // Entity API - Health
     [[nodiscard]] float GetEntityHealth(uint32_t entityId) const;
     void SetEntityHealth(uint32_t entityId, float health);
+    [[nodiscard]] float GetEntityMaxHealth(uint32_t entityId) const;
+    void SetEntityMaxHealth(uint32_t entityId, float maxHealth);
     void DamageEntity(uint32_t entityId, float damage, uint32_t sourceId = 0);
     void HealEntity(uint32_t entityId, float amount);
+    void KillEntity(uint32_t entityId);
     [[nodiscard]] bool IsEntityAlive(uint32_t entityId) const;
+
+    // Entity API - Movement
+    [[nodiscard]] float GetEntityMoveSpeed(uint32_t entityId) const;
+    void SetEntityMoveSpeed(uint32_t entityId, float speed);
+
+    // Entity API - Collision
+    [[nodiscard]] float GetEntityCollisionRadius(uint32_t entityId) const;
+    void SetEntityCollisionRadius(uint32_t entityId, float radius);
+    [[nodiscard]] bool IsEntityCollidable(uint32_t entityId) const;
+    void SetEntityCollidable(uint32_t entityId, bool collidable);
+    [[nodiscard]] bool EntitiesCollide(uint32_t entity1, uint32_t entity2) const;
+
+    // Entity API - State
     [[nodiscard]] std::string GetEntityType(uint32_t entityId) const;
+    [[nodiscard]] std::string GetEntityName(uint32_t entityId) const;
+    [[nodiscard]] bool IsEntityActive(uint32_t entityId) const;
+    void SetEntityActive(uint32_t entityId, bool active);
 
     // Spatial Query API
     [[nodiscard]] std::vector<uint32_t> FindEntitiesInRadius(float x, float y, float z, float radius);
@@ -250,9 +302,16 @@ public:
     [[nodiscard]] bool IsBuildingOperational(uint32_t buildingId) const;
     [[nodiscard]] float GetBuildingProgress(uint32_t buildingId) const;
 
-    // Sound and Effects API
+    // Sound and Effects API (integrated with AudioEngine)
     void PlaySound(const std::string& soundName, float x = 0.0f, float y = 0.0f, float z = 0.0f);
+    void PlaySound3D(const std::string& soundName, float x, float y, float z, float volume = 1.0f);
+    void PlaySound2D(const std::string& soundName, float volume = 1.0f, float pitch = 1.0f);
     void PlayMusic(const std::string& musicName);
+    void StopMusic();
+    void SetMusicVolume(float volume);
+    void SetMasterVolume(float volume);
+    [[nodiscard]] float GetMasterVolume() const;
+    void SetSoundVolume(const std::string& category, float volume);
     void SpawnEffect(const std::string& effectName, float x, float y, float z);
     void SpawnParticles(const std::string& particleType, float x, float y, float z, int count);
 
@@ -399,6 +458,9 @@ private:
     Nova::Graph* m_navGraph = nullptr;
     Vehement::RTS::ResourceStock* m_resourceStock = nullptr;
     Nova::Renderer* m_renderer = nullptr;
+    Nova::AudioEngine* m_audioEngine = nullptr;
+    Nova::ParticleSystem* m_particleSystem = nullptr;
+    Game::UI::NotificationUI* m_notificationUI = nullptr;
 
     // Variable scopes
     std::shared_ptr<VariableScope> m_globalScope;

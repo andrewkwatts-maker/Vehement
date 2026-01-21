@@ -1,5 +1,10 @@
 #include "DialogSystem.hpp"
 #include <algorithm>
+#include <sstream>
+#include <fstream>
+#include "engine/core/json_config.hpp"
+#include "engine/audio/AudioEngine.hpp"
+#include "engine/scene/Camera.hpp"
 
 namespace Vehement {
 namespace RTS {
@@ -50,8 +55,43 @@ const DialogCharacter* DialogSystem::GetCharacter(const std::string& characterId
     return (it != m_characters.end()) ? &it->second : nullptr;
 }
 
-void DialogSystem::LoadCharactersFromFile(const std::string& /*jsonPath*/) {
-    // TODO: Load characters from JSON file
+void DialogSystem::LoadCharactersFromFile(const std::string& jsonPath) {
+    std::ifstream file(jsonPath);
+    if (!file.is_open()) {
+        return;
+    }
+
+    try {
+        json data;
+        file >> data;
+
+        if (!data.contains("characters") || !data["characters"].is_array()) {
+            return;
+        }
+
+        for (const auto& charJson : data["characters"]) {
+            DialogCharacter character;
+            character.id = charJson.value("id", "");
+            character.name = charJson.value("name", "");
+            character.title = charJson.value("title", "");
+            character.defaultPortrait = charJson.value("defaultPortrait", "");
+            character.voiceStyle = charJson.value("voiceStyle", "");
+            character.faction = charJson.value("faction", "");
+            character.textColor = charJson.value("textColor", "#FFFFFF");
+
+            if (charJson.contains("portraits") && charJson["portraits"].is_object()) {
+                for (auto it = charJson["portraits"].begin(); it != charJson["portraits"].end(); ++it) {
+                    character.portraits[it.key()] = it.value().get<std::string>();
+                }
+            }
+
+            if (!character.id.empty()) {
+                RegisterCharacter(character);
+            }
+        }
+    } catch (const json::exception&) {
+        // JSON parsing failed - silently ignore
+    }
 }
 
 void DialogSystem::StartDialog(const DialogTree& tree) {
@@ -66,8 +106,11 @@ void DialogSystem::StartDialog(const DialogTree& tree) {
     GoToNode(tree.startNodeId);
 }
 
-void DialogSystem::StartDialog(const std::string& /*treeId*/) {
-    // TODO: Look up dialog tree by ID
+void DialogSystem::StartDialog(const std::string& treeId) {
+    auto it = m_dialogTrees.find(treeId);
+    if (it != m_dialogTrees.end() && it->second) {
+        StartDialog(*it->second);
+    }
 }
 
 void DialogSystem::StartSimpleDialog(const std::string& characterId, const std::string& text) {
@@ -182,7 +225,17 @@ void DialogSystem::Update(float deltaTime) {
             break;
 
         case DialogState::Transitioning:
-            // TODO: Handle transition animation
+            m_transitionTimer -= deltaTime;
+            if (m_transitionTimer <= 0.0f) {
+                // Transition complete - move to next appropriate state
+                if (m_currentNode && !m_currentNode->choices.empty()) {
+                    m_state = DialogState::WaitingForChoice;
+                } else if (m_currentNode) {
+                    m_state = DialogState::WaitingForInput;
+                } else {
+                    m_state = DialogState::Inactive;
+                }
+            }
             break;
 
         default:
@@ -333,8 +386,51 @@ void DialogSystem::AddToHistory(const std::string& character, const std::string&
 }
 
 bool DialogSystem::CheckCondition(const std::string& condition) const {
+    if (condition.empty()) {
+        return true;
+    }
+
+    // Handle NOT operator: !flagName
+    if (condition[0] == '!') {
+        std::string flagName = condition.substr(1);
+        return !GetFlag(flagName);
+    }
+
+    // Handle AND operator: flag1 && flag2
+    size_t andPos = condition.find("&&");
+    if (andPos != std::string::npos) {
+        std::string left = condition.substr(0, andPos);
+        std::string right = condition.substr(andPos + 2);
+        // Trim whitespace
+        while (!left.empty() && left.back() == ' ') left.pop_back();
+        while (!right.empty() && right.front() == ' ') right.erase(0, 1);
+        return CheckCondition(left) && CheckCondition(right);
+    }
+
+    // Handle OR operator: flag1 || flag2
+    size_t orPos = condition.find("||");
+    if (orPos != std::string::npos) {
+        std::string left = condition.substr(0, orPos);
+        std::string right = condition.substr(orPos + 2);
+        // Trim whitespace
+        while (!left.empty() && left.back() == ' ') left.pop_back();
+        while (!right.empty() && right.front() == ' ') right.erase(0, 1);
+        return CheckCondition(left) || CheckCondition(right);
+    }
+
+    // Handle equality check: flag == true/false
+    size_t eqPos = condition.find("==");
+    if (eqPos != std::string::npos) {
+        std::string flagName = condition.substr(0, eqPos);
+        std::string value = condition.substr(eqPos + 2);
+        // Trim whitespace
+        while (!flagName.empty() && flagName.back() == ' ') flagName.pop_back();
+        while (!value.empty() && value.front() == ' ') value.erase(0, 1);
+        bool expectedValue = (value == "true" || value == "1");
+        return GetFlag(flagName) == expectedValue;
+    }
+
     // Simple flag check - condition is flag name
-    // TODO: Implement more complex condition parsing
     return GetFlag(condition);
 }
 
@@ -346,29 +442,160 @@ void DialogSystem::ProcessNodeEnter() {
         PlayVoiceover(m_currentNode->voiceFile);
     }
 
-    // TODO: Execute enter script
-    // TODO: Play sound effects
-    // TODO: Apply camera target
+    // Execute enter script (if script callback is registered)
+    if (!m_currentNode->onEnterScript.empty()) {
+        // Scripts are executed via the mission manager's script system
+        // The dialog system exposes script names that the game layer handles
+        SetFlag("_script_enter_" + m_currentNode->id, true);
+    }
+
+    // Play sound effects
+    if (!m_currentNode->soundEffect.empty()) {
+        auto& audio = Nova::AudioEngine::Instance();
+        auto buffer = audio.LoadSound(m_currentNode->soundEffect);
+        if (buffer) {
+            audio.Play2D(buffer);
+        }
+    }
+
+    // Play ambient sound (looping)
+    if (!m_currentNode->ambientSound.empty()) {
+        auto& audio = Nova::AudioEngine::Instance();
+        auto buffer = audio.LoadSound(m_currentNode->ambientSound);
+        if (buffer) {
+            auto source = audio.Play2D(buffer, 0.5f);
+            if (source) {
+                source->SetLooping(true);
+            }
+        }
+    }
+
+    // Apply camera target - store target ID for game layer to handle
+    if (!m_currentNode->cameraTarget.empty()) {
+        SetFlag("_camera_target", true);
+        // The camera target unit ID is stored as a flag key for lookup
+        // Game layer should query GetCurrentNode()->cameraTarget to focus camera
+    }
 }
 
 void DialogSystem::ProcessNodeExit() {
-    // TODO: Execute exit script
+    if (m_currentNode) {
+        // Execute exit script (if script callback is registered)
+        if (!m_currentNode->onExitScript.empty()) {
+            // Scripts are executed via the mission manager's script system
+            // The dialog system exposes script names that the game layer handles
+            SetFlag("_script_exit_" + m_currentNode->id, true);
+        }
+
+        // Clear camera target flag
+        if (!m_currentNode->cameraTarget.empty()) {
+            SetFlag("_camera_target", false);
+        }
+    }
+
     StopVoiceover();
 }
 
-void DialogSystem::PlayVoiceover(const std::string& /*voiceFile*/) {
-    // TODO: Play voice audio
+void DialogSystem::PlayVoiceover(const std::string& voiceFile) {
+    if (!m_config.enableVoice) {
+        return;
+    }
+
+    // Stop any existing voiceover first
+    StopVoiceover();
+
+    auto& audio = Nova::AudioEngine::Instance();
+    auto buffer = audio.LoadSound(voiceFile);
+    if (buffer) {
+        m_voiceoverSource = audio.Play2D(buffer, 1.0f);
+    }
 }
 
 void DialogSystem::StopVoiceover() {
-    // TODO: Stop voice audio
+    if (m_voiceoverSource) {
+        m_voiceoverSource->Stop();
+        m_voiceoverSource.reset();
+    }
 }
 
 // DialogFactory implementations
 
-std::unique_ptr<DialogTree> DialogFactory::CreateFromJson(const std::string& /*jsonPath*/) {
-    // TODO: Load and parse JSON file
-    return std::make_unique<DialogTree>();
+std::unique_ptr<DialogTree> DialogFactory::CreateFromJson(const std::string& jsonPath) {
+    std::ifstream file(jsonPath);
+    if (!file.is_open()) {
+        return nullptr;
+    }
+
+    try {
+        json data;
+        file >> data;
+
+        auto tree = std::make_unique<DialogTree>();
+        tree->id = data.value("id", "");
+        tree->title = data.value("title", "");
+        tree->startNodeId = data.value("startNodeId", "");
+        tree->canSkip = data.value("canSkip", true);
+        tree->pauseGame = data.value("pauseGame", false);
+
+        // Parse participants
+        if (data.contains("participants") && data["participants"].is_array()) {
+            for (const auto& participant : data["participants"]) {
+                tree->participants.push_back(participant.get<std::string>());
+            }
+        }
+
+        // Parse nodes
+        if (data.contains("nodes") && data["nodes"].is_array()) {
+            for (const auto& nodeJson : data["nodes"]) {
+                DialogNode node;
+                node.id = nodeJson.value("id", "");
+                node.characterId = nodeJson.value("characterId", "");
+                node.text = nodeJson.value("text", "");
+                node.emotion = nodeJson.value("emotion", "");
+                node.voiceFile = nodeJson.value("voiceFile", "");
+                node.displayDuration = nodeJson.value("displayDuration", -1.0f);
+                node.nextNodeId = nodeJson.value("nextNodeId", "");
+                node.autoAdvance = nodeJson.value("autoAdvance", false);
+                node.autoAdvanceDelay = nodeJson.value("autoAdvanceDelay", 3.0f);
+
+                // Visual properties
+                node.portraitPosition = nodeJson.value("portraitPosition", "left");
+                node.backgroundEffect = nodeJson.value("backgroundEffect", "");
+                node.cameraTarget = nodeJson.value("cameraTarget", "");
+
+                // Audio properties
+                node.soundEffect = nodeJson.value("soundEffect", "");
+                node.ambientSound = nodeJson.value("ambientSound", "");
+
+                // Conditions and scripts
+                node.condition = nodeJson.value("condition", "");
+                node.onEnterScript = nodeJson.value("onEnterScript", "");
+                node.onExitScript = nodeJson.value("onExitScript", "");
+
+                // Parse choices
+                if (nodeJson.contains("choices") && nodeJson["choices"].is_array()) {
+                    for (const auto& choiceJson : nodeJson["choices"]) {
+                        DialogChoice choice;
+                        choice.id = choiceJson.value("id", "");
+                        choice.text = choiceJson.value("text", "");
+                        choice.tooltip = choiceJson.value("tooltip", "");
+                        choice.enabled = choiceJson.value("enabled", true);
+                        choice.visited = choiceJson.value("visited", false);
+                        choice.requiredFlag = choiceJson.value("requiredFlag", "");
+                        choice.setFlag = choiceJson.value("setFlag", "");
+                        choice.nextNodeId = choiceJson.value("nextNodeId", "");
+                        node.choices.push_back(choice);
+                    }
+                }
+
+                tree->nodes.push_back(node);
+            }
+        }
+
+        return tree;
+    } catch (const json::exception&) {
+        return nullptr;
+    }
 }
 
 DialogTree DialogFactory::CreateSimple(const std::string& characterId, const std::string& text) {

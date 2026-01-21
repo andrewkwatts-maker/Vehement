@@ -20,6 +20,7 @@ namespace Vehement {
 class Entity;
 class Zombie;
 class World;
+struct DefenseProjectile;
 
 // ============================================================================
 // Defense Types
@@ -453,6 +454,9 @@ private:
     // Statistics
     int m_totalKills = 0;
     float m_totalDamageDealt = 0.0f;
+
+    // Active projectiles
+    std::vector<DefenseProjectile> m_projectiles;
 
     // Callbacks
     AttackCallback m_onAttack;

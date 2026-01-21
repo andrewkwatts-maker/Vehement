@@ -1,30 +1,26 @@
 /**
  * @file json_config.hpp
- * @brief JSON library configuration - include this BEFORE nlohmann/json.hpp
+ * @brief JSON library configuration wrapper - MSVC C++20 ranges fix
  *
- * This header ensures proper configuration to avoid C++20 ranges namespace pollution
- * on MSVC. Always include this header instead of nlohmann/json.hpp directly.
+ * CRITICAL: This header fixes the nlohmann/json + MSVC C++20 ranges namespace
+ * pollution issue. The problem is that when <algorithm> is included after
+ * nlohmann/json.hpp, MSVC's template instantiation creates a spurious
+ * `nlohmann::std::ranges` namespace that conflicts with `std::ranges`.
+ *
+ * SOLUTION: Include standard library algorithm headers BEFORE nlohmann/json.hpp,
+ * and define JSON_HAS_RANGES=0 to disable ranges-specific code paths.
+ *
+ * This header should be used instead of directly including <nlohmann/json.hpp>.
+ *
+ * PREFERRED: Use engine/core/json_wrapper.hpp for full Nova::Json namespace
+ * with convenient helper functions.
  */
 
 #pragma once
 
-// CRITICAL: Disable C++20 ranges support BEFORE nlohmann/json.hpp
-// The order matters - these must be defined before ANY JSON headers
-#define JSON_HAS_RANGES 0
-#define JSON_HAS_CPP_20 0
+// Include the complete JSON wrapper which handles all configuration
+#include "json_wrapper.hpp"
 
-// Prevent detection of C++20 ranges by undefining the feature test macro
-#ifdef __cpp_lib_ranges
-#undef __cpp_lib_ranges
-#define NOVA_UNDEF_CPP_LIB_RANGES 1
-#endif
-
-// Now include the actual JSON library
-#include <nlohmann/json.hpp>
-
-// Restore the ranges macro if we undefined it
-#ifdef NOVA_UNDEF_CPP_LIB_RANGES
-#undef NOVA_UNDEF_CPP_LIB_RANGES
-// Note: Can't restore __cpp_lib_ranges as it's compiler-defined
-// This is intentional - we don't want JSON to use ranges
-#endif
+// Re-export for backward compatibility - files using json_config.hpp
+// expect 'json' to be available as nlohmann::json
+using json = nlohmann::json;

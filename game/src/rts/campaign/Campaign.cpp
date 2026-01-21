@@ -1,7 +1,9 @@
 #include "Campaign.hpp"
+#include "engine/core/json_wrapper.hpp"
 #include <algorithm>
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 
 namespace Vehement {
 namespace RTS {
@@ -318,8 +320,45 @@ std::string Campaign::Serialize() const {
     return oss.str();
 }
 
-bool Campaign::Deserialize(const std::string& /*json*/) {
-    // TODO: Implement JSON parsing
+bool Campaign::Deserialize(const std::string& jsonStr) {
+    auto parsed = Nova::Json::TryParse(jsonStr);
+    if (!parsed) {
+        return false;
+    }
+
+    const auto& json = *parsed;
+
+    // Parse identification
+    id = Nova::Json::Get<std::string>(json, "id", "");
+    raceId = Nova::Json::Get<std::string>(json, "race", "");
+    title = Nova::Json::Get<std::string>(json, "title", "");
+    subtitle = Nova::Json::Get<std::string>(json, "subtitle", "");
+    description = Nova::Json::Get<std::string>(json, "description", "");
+
+    // Parse state
+    state = static_cast<CampaignState>(Nova::Json::Get<int>(json, "state", 0));
+    difficulty = static_cast<CampaignDifficulty>(Nova::Json::Get<int>(json, "difficulty", 1));
+    currentChapter = Nova::Json::Get<int32_t>(json, "currentChapter", 0);
+    currentMission = Nova::Json::Get<int32_t>(json, "currentMission", 0);
+
+    // Parse flags
+    flags.clear();
+    if (json.contains("flags") && json["flags"].is_object()) {
+        for (auto it = json["flags"].begin(); it != json["flags"].end(); ++it) {
+            flags[it.key()] = it.value().get<bool>();
+        }
+    }
+
+    // Parse chapters
+    chapters.clear();
+    if (json.contains("chapters") && json["chapters"].is_array()) {
+        for (const auto& chapterJson : json["chapters"]) {
+            auto chapter = std::make_unique<Chapter>();
+            chapter->Deserialize(chapterJson.dump());
+            chapters.push_back(std::move(chapter));
+        }
+    }
+
     return true;
 }
 
@@ -350,8 +389,43 @@ std::string Campaign::SerializeProgress() const {
     return oss.str();
 }
 
-bool Campaign::DeserializeProgress(const std::string& /*json*/) {
-    // TODO: Implement JSON parsing
+bool Campaign::DeserializeProgress(const std::string& jsonStr) {
+    auto parsed = Nova::Json::TryParse(jsonStr);
+    if (!parsed) {
+        return false;
+    }
+
+    const auto& json = *parsed;
+
+    // Parse progress state
+    state = static_cast<CampaignState>(Nova::Json::Get<int>(json, "state", 0));
+    difficulty = static_cast<CampaignDifficulty>(Nova::Json::Get<int>(json, "difficulty", 1));
+    currentChapter = Nova::Json::Get<int32_t>(json, "currentChapter", 0);
+    currentMission = Nova::Json::Get<int32_t>(json, "currentMission", 0);
+
+    // Parse statistics
+    statistics.totalPlayTime = Nova::Json::Get<float>(json, "totalPlayTime", 0.0f);
+    statistics.totalScore = Nova::Json::Get<int32_t>(json, "totalScore", 0);
+
+    // Parse flags
+    flags.clear();
+    if (json.contains("flags") && json["flags"].is_object()) {
+        for (auto it = json["flags"].begin(); it != json["flags"].end(); ++it) {
+            flags[it.key()] = it.value().get<bool>();
+        }
+    }
+
+    // Parse chapter progress
+    if (json.contains("chapterProgress") && json["chapterProgress"].is_array()) {
+        size_t index = 0;
+        for (const auto& chapterProgressJson : json["chapterProgress"]) {
+            if (index < chapters.size()) {
+                chapters[index]->DeserializeProgress(chapterProgressJson.dump());
+            }
+            ++index;
+        }
+    }
+
     return true;
 }
 
@@ -373,14 +447,49 @@ bool Campaign::LoadProgress(const std::string& savePath) {
 
 // CampaignFactory implementations
 
-std::unique_ptr<Campaign> CampaignFactory::CreateFromJson(const std::string& /*jsonPath*/) {
-    // TODO: Load and parse JSON file
-    return std::make_unique<Campaign>();
+std::unique_ptr<Campaign> CampaignFactory::CreateFromJson(const std::string& jsonPath) {
+    auto jsonOpt = Nova::Json::TryParseFile(jsonPath);
+    if (!jsonOpt) {
+        return nullptr;
+    }
+
+    auto campaign = std::make_unique<Campaign>();
+    if (!campaign->Deserialize(jsonOpt->dump())) {
+        return nullptr;
+    }
+
+    return campaign;
 }
 
-std::unique_ptr<Campaign> CampaignFactory::CreateFromConfig(const std::string& /*configDir*/) {
-    // TODO: Load campaign from config directory
-    return std::make_unique<Campaign>();
+std::unique_ptr<Campaign> CampaignFactory::CreateFromConfig(const std::string& configDir) {
+    // Look for campaign.json in the config directory
+    std::string campaignJsonPath = configDir + "/campaign.json";
+    if (!std::filesystem::exists(campaignJsonPath)) {
+        // Try without trailing slash
+        campaignJsonPath = configDir + "campaign.json";
+        if (!std::filesystem::exists(campaignJsonPath)) {
+            return nullptr;
+        }
+    }
+
+    auto campaign = CreateFromJson(campaignJsonPath);
+    if (!campaign) {
+        return nullptr;
+    }
+
+    // Load chapters from chapters subdirectory
+    std::string chaptersDir = configDir + "/chapters";
+    if (std::filesystem::exists(chaptersDir)) {
+        LoadChapters(*campaign, chaptersDir);
+    }
+
+    // Load cinematics from cinematics subdirectory
+    std::string cinematicsDir = configDir + "/cinematics";
+    if (std::filesystem::exists(cinematicsDir)) {
+        LoadCinematics(*campaign, cinematicsDir);
+    }
+
+    return campaign;
 }
 
 std::unique_ptr<Campaign> CampaignFactory::CreateForRace(RaceType race) {
@@ -390,12 +499,45 @@ std::unique_ptr<Campaign> CampaignFactory::CreateForRace(RaceType race) {
     return campaign;
 }
 
-void CampaignFactory::LoadChapters(Campaign& /*campaign*/, const std::string& /*chaptersDir*/) {
-    // TODO: Load all chapters from directory
+void CampaignFactory::LoadChapters(Campaign& campaign, const std::string& chaptersDir) {
+    if (!std::filesystem::exists(chaptersDir)) {
+        return;
+    }
+
+    // Collect all chapter JSON files
+    std::vector<std::string> chapterFiles;
+    for (const auto& entry : std::filesystem::directory_iterator(chaptersDir)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".json") {
+            chapterFiles.push_back(entry.path().string());
+        }
+    }
+
+    // Sort by filename to maintain order (chapter_01.json, chapter_02.json, etc.)
+    std::sort(chapterFiles.begin(), chapterFiles.end());
+
+    // Load each chapter
+    for (const auto& chapterFile : chapterFiles) {
+        auto chapter = ChapterFactory::CreateFromJson(chapterFile);
+        if (chapter) {
+            campaign.AddChapter(std::move(chapter));
+        }
+    }
 }
 
-void CampaignFactory::LoadCinematics(Campaign& /*campaign*/, const std::string& /*cinematicsDir*/) {
-    // TODO: Load all cinematics from directory
+void CampaignFactory::LoadCinematics(Campaign& campaign, const std::string& cinematicsDir) {
+    if (!std::filesystem::exists(cinematicsDir)) {
+        return;
+    }
+
+    // Load all cinematic JSON files from the directory
+    for (const auto& entry : std::filesystem::directory_iterator(cinematicsDir)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".json") {
+            auto cinematic = CinematicFactory::CreateFromJson(entry.path().string());
+            if (cinematic) {
+                campaign.AddCinematic(std::move(cinematic));
+            }
+        }
+    }
 }
 
 } // namespace Campaign

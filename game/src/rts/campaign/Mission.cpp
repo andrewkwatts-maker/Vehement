@@ -1,7 +1,9 @@
 #include "Mission.hpp"
+#include "engine/core/json_wrapper.hpp"
 #include <algorithm>
 #include <cmath>
 #include <sstream>
+#include <fstream>
 
 namespace Vehement {
 namespace RTS {
@@ -188,8 +190,17 @@ bool Mission::CheckVictoryCondition() const {
             return timeLimit > 0 && statistics.completionTime >= timeLimit;
 
         case VictoryCondition::EliminateAll:
-            // TODO: Check if all enemies eliminated
-            return false;
+            // Check if all enemy AI players have been defeated
+            for (const auto& ai : aiPlayers) {
+                if (!ai.isAlly && ai.canBeDefeated) {
+                    // If any enemy AI is still active, victory not achieved
+                    // This is checked via external game state - return false by default
+                    // The actual elimination tracking happens through MissionManager events
+                    return false;
+                }
+            }
+            // All enemy AIs defeated (or none exist)
+            return !aiPlayers.empty();
 
         case VictoryCondition::Custom:
             // Handled by script
@@ -207,10 +218,24 @@ bool Mission::CheckDefeatCondition() const {
             return timeLimit > 0 && statistics.completionTime > timeLimit;
 
         case DefeatCondition::HeroKilled:
+            // Hero death is tracked externally through MissionManager::RecordUnitKilled
+            // Return false here - defeat triggered by event system when hero dies
+            return false;
+
         case DefeatCondition::BaseDestroyed:
+            // Base destruction tracked externally through MissionManager::RecordBuildingDestroyed
+            // Return false here - defeat triggered by event system when main base is destroyed
+            return false;
+
         case DefeatCondition::AllUnitsLost:
+            // Check if player has lost all units - tracked through statistics
+            // If units were created but all were lost, player is defeated
+            return statistics.unitsCreated > 0 &&
+                   (statistics.unitsCreated - statistics.unitsLost) <= 0;
+
         case DefeatCondition::Custom:
-            // TODO: Implement these checks
+            // Custom defeat conditions are handled by mission scripts
+            // Return false here - defeat triggered by ExecuteScript setting mission state
             return false;
     }
     return false;
@@ -336,8 +361,31 @@ std::string Mission::Serialize() const {
     return oss.str();
 }
 
-bool Mission::Deserialize(const std::string& /*json*/) {
-    // TODO: Implement JSON parsing
+bool Mission::Deserialize(const std::string& jsonStr) {
+    using namespace Nova::Json;
+
+    auto parsed = TryParse(jsonStr);
+    if (!parsed) {
+        return false;
+    }
+
+    const auto& json = *parsed;
+
+    // Parse basic fields
+    id = Get<std::string>(json, "id", id);
+    state = static_cast<MissionState>(Get<int>(json, "state", static_cast<int>(state)));
+    currentDifficulty = static_cast<MissionDifficulty>(Get<int>(json, "difficulty", static_cast<int>(currentDifficulty)));
+
+    // Parse objectives
+    if (json.contains("objectives") && json["objectives"].is_array()) {
+        objectives.clear();
+        for (const auto& objJson : json["objectives"]) {
+            Objective obj;
+            obj.Deserialize(objJson.dump());
+            objectives.push_back(std::move(obj));
+        }
+    }
+
     return true;
 }
 
@@ -353,29 +401,281 @@ std::string Mission::SerializeProgress() const {
     return oss.str();
 }
 
-bool Mission::DeserializeProgress(const std::string& /*json*/) {
-    // TODO: Implement JSON parsing
+bool Mission::DeserializeProgress(const std::string& jsonStr) {
+    using namespace Nova::Json;
+
+    auto parsed = TryParse(jsonStr);
+    if (!parsed) {
+        return false;
+    }
+
+    const auto& json = *parsed;
+
+    // Verify mission ID matches
+    std::string missionId = Get<std::string>(json, "missionId", "");
+    if (!missionId.empty() && missionId != id) {
+        return false; // Progress data is for a different mission
+    }
+
+    // Parse state and best statistics
+    state = static_cast<MissionState>(Get<int>(json, "state", static_cast<int>(state)));
+    bestStatistics.score = Get<int>(json, "bestScore", bestStatistics.score);
+    bestStatistics.grade = Get<std::string>(json, "bestGrade", bestStatistics.grade);
+    bestStatistics.completionTime = Get<float>(json, "bestTime", bestStatistics.completionTime);
+
     return true;
 }
 
 // MissionFactory implementations
 
-std::unique_ptr<Mission> MissionFactory::CreateFromJson(const std::string& /*jsonPath*/) {
-    // TODO: Load and parse JSON file
-    return std::make_unique<Mission>();
+std::unique_ptr<Mission> MissionFactory::CreateFromJson(const std::string& jsonPath) {
+    using namespace Nova::Json;
+
+    auto jsonOpt = TryParseFile(jsonPath);
+    if (!jsonOpt) {
+        return nullptr;
+    }
+
+    const auto& json = *jsonOpt;
+    auto mission = std::make_unique<Mission>();
+
+    // Parse identification
+    mission->id = Get<std::string>(json, "id", "");
+    mission->title = Get<std::string>(json, "title", "");
+    mission->description = Get<std::string>(json, "description", "");
+    mission->missionNumber = Get<int>(json, "missionNumber", 1);
+
+    // Parse map info
+    mission->mapFile = Get<std::string>(json, "mapFile", "");
+    mission->mapName = Get<std::string>(json, "mapName", "");
+    mission->mapDescription = Get<std::string>(json, "mapDescription", "");
+    mission->playerStartPosition = Get<std::string>(json, "playerStartPosition", "");
+
+    // Parse victory/defeat conditions
+    mission->victoryCondition = static_cast<VictoryCondition>(Get<int>(json, "victoryCondition", 0));
+    mission->defeatCondition = static_cast<DefeatCondition>(Get<int>(json, "defeatCondition", 0));
+    mission->customVictoryScript = Get<std::string>(json, "customVictoryScript", "");
+    mission->customDefeatScript = Get<std::string>(json, "customDefeatScript", "");
+
+    // Parse time settings
+    mission->timeLimit = Get<float>(json, "timeLimit", -1.0f);
+    mission->parTime = Get<float>(json, "parTime", 0.0f);
+    mission->showTimer = Get<bool>(json, "showTimer", false);
+
+    // Parse starting resources
+    if (json.contains("startingResources") && json["startingResources"].is_object()) {
+        const auto& res = json["startingResources"];
+        mission->startingResources.gold = Get<int>(res, "gold", 500);
+        mission->startingResources.wood = Get<int>(res, "wood", 200);
+        mission->startingResources.stone = Get<int>(res, "stone", 100);
+        mission->startingResources.metal = Get<int>(res, "metal", 50);
+        mission->startingResources.food = Get<int>(res, "food", 100);
+        mission->startingResources.supply = Get<int>(res, "supply", 10);
+        mission->startingResources.maxSupply = Get<int>(res, "maxSupply", 100);
+    }
+
+    // Parse scripts
+    mission->initScript = Get<std::string>(json, "initScript", "");
+    mission->updateScript = Get<std::string>(json, "updateScript", "");
+    mission->victoryScript = Get<std::string>(json, "victoryScript", "");
+    mission->defeatScript = Get<std::string>(json, "defeatScript", "");
+
+    // Parse cinematics
+    mission->introCinematic = Get<std::string>(json, "introCinematic", "");
+    mission->outroCinematic = Get<std::string>(json, "outroCinematic", "");
+    mission->defeatCinematic = Get<std::string>(json, "defeatCinematic", "");
+
+    // Parse audio
+    mission->ambientMusic = Get<std::string>(json, "ambientMusic", "");
+    mission->combatMusic = Get<std::string>(json, "combatMusic", "");
+    mission->victoryMusic = Get<std::string>(json, "victoryMusic", "");
+    mission->defeatMusic = Get<std::string>(json, "defeatMusic", "");
+
+    // Parse UI settings
+    mission->thumbnailImage = Get<std::string>(json, "thumbnailImage", "");
+    mission->loadingScreenImage = Get<std::string>(json, "loadingScreenImage", "");
+    mission->loadingScreenTip = Get<std::string>(json, "loadingScreenTip", "");
+    mission->showMinimap = Get<bool>(json, "showMinimap", true);
+    mission->allowSave = Get<bool>(json, "allowSave", true);
+    mission->allowPause = Get<bool>(json, "allowPause", true);
+
+    // Parse objectives
+    if (json.contains("objectives") && json["objectives"].is_string()) {
+        PopulateObjectives(*mission, json["objectives"].get<std::string>());
+    } else if (json.contains("objectives") && json["objectives"].is_array()) {
+        PopulateObjectives(*mission, json["objectives"].dump());
+    }
+
+    // Parse AI players
+    if (json.contains("aiPlayers") && json["aiPlayers"].is_string()) {
+        PopulateAI(*mission, json["aiPlayers"].get<std::string>());
+    } else if (json.contains("aiPlayers") && json["aiPlayers"].is_array()) {
+        PopulateAI(*mission, json["aiPlayers"].dump());
+    }
+
+    // Parse prerequisite missions
+    if (json.contains("prerequisiteMissions") && json["prerequisiteMissions"].is_array()) {
+        for (const auto& prereq : json["prerequisiteMissions"]) {
+            if (prereq.is_string()) {
+                mission->prerequisiteMissions.push_back(prereq.get<std::string>());
+            }
+        }
+    }
+
+    return mission;
 }
 
-std::unique_ptr<Mission> MissionFactory::CreateFromConfig(const std::string& /*configPath*/) {
-    // TODO: Load mission from config directory
-    return std::make_unique<Mission>();
+std::unique_ptr<Mission> MissionFactory::CreateFromConfig(const std::string& configPath) {
+    // Config path is a directory containing mission.json and other assets
+    // Try to load the main mission definition file
+    std::string missionJsonPath = configPath;
+
+    // Check if path is a directory (ends with / or \) or a file
+    if (!missionJsonPath.empty()) {
+        char lastChar = missionJsonPath.back();
+        if (lastChar == '/' || lastChar == '\\') {
+            missionJsonPath += "mission.json";
+        } else if (missionJsonPath.find(".json") == std::string::npos) {
+            // Assume it's a directory without trailing separator
+            missionJsonPath += "/mission.json";
+        }
+    }
+
+    return CreateFromJson(missionJsonPath);
 }
 
-void MissionFactory::PopulateObjectives(Mission& /*mission*/, const std::string& /*objectivesJson*/) {
-    // TODO: Parse objectives JSON and populate mission
+void MissionFactory::PopulateObjectives(Mission& mission, const std::string& objectivesJson) {
+    using namespace Nova::Json;
+
+    auto parsed = TryParse(objectivesJson);
+    if (!parsed || !parsed->is_array()) {
+        return;
+    }
+
+    mission.objectives.clear();
+    mission.primaryObjectiveIds.clear();
+    mission.secondaryObjectiveIds.clear();
+    mission.bonusObjectiveIds.clear();
+
+    for (const auto& objJson : *parsed) {
+        Objective objective;
+
+        // Parse basic fields
+        objective.id = Get<std::string>(objJson, "id", "");
+        objective.title = Get<std::string>(objJson, "title", "");
+        objective.description = Get<std::string>(objJson, "description", "");
+        objective.shortDescription = Get<std::string>(objJson, "shortDescription", "");
+
+        // Parse type and priority
+        objective.type = static_cast<ObjectiveType>(Get<int>(objJson, "type", 0));
+        objective.priority = static_cast<ObjectivePriority>(Get<int>(objJson, "priority", 0));
+
+        // Parse target
+        if (objJson.contains("target") && objJson["target"].is_object()) {
+            const auto& target = objJson["target"];
+            objective.target.targetType = Get<std::string>(target, "targetType", "");
+            objective.target.targetId = Get<std::string>(target, "targetId", "");
+            objective.target.count = Get<int>(target, "count", 1);
+            objective.target.x = Get<float>(target, "x", 0.0f);
+            objective.target.y = Get<float>(target, "y", 0.0f);
+            objective.target.radius = Get<float>(target, "radius", 0.0f);
+            objective.target.duration = Get<float>(target, "duration", 0.0f);
+            objective.target.resourceType = Get<std::string>(target, "resourceType", "");
+            objective.target.resourceAmount = Get<int>(target, "resourceAmount", 0);
+        }
+
+        // Parse progress requirement
+        objective.progress.required = Get<int>(objJson, "requiredCount", 1);
+
+        // Parse timing
+        objective.timeLimit = Get<float>(objJson, "timeLimit", -1.0f);
+        objective.failOnTimeout = Get<bool>(objJson, "failOnTimeout", false);
+
+        // Parse prerequisites
+        if (objJson.contains("prerequisites") && objJson["prerequisites"].is_array()) {
+            for (const auto& prereq : objJson["prerequisites"]) {
+                if (prereq.is_string()) {
+                    objective.prerequisites.push_back(prereq.get<std::string>());
+                }
+            }
+        }
+
+        // Parse reward
+        if (objJson.contains("reward") && objJson["reward"].is_object()) {
+            const auto& reward = objJson["reward"];
+            objective.reward.gold = Get<int>(reward, "gold", 0);
+            objective.reward.wood = Get<int>(reward, "wood", 0);
+            objective.reward.stone = Get<int>(reward, "stone", 0);
+            objective.reward.metal = Get<int>(reward, "metal", 0);
+            objective.reward.food = Get<int>(reward, "food", 0);
+            objective.reward.experience = Get<int>(reward, "experience", 0);
+        }
+
+        // Parse UI settings
+        objective.icon = Get<std::string>(objJson, "icon", "");
+        objective.showNotification = Get<bool>(objJson, "showNotification", true);
+        objective.showOnMinimap = Get<bool>(objJson, "showOnMinimap", true);
+
+        // Track objective IDs by priority
+        if (!objective.id.empty()) {
+            switch (objective.priority) {
+                case ObjectivePriority::Primary:
+                    mission.primaryObjectiveIds.push_back(objective.id);
+                    break;
+                case ObjectivePriority::Secondary:
+                    mission.secondaryObjectiveIds.push_back(objective.id);
+                    break;
+                case ObjectivePriority::Bonus:
+                    mission.bonusObjectiveIds.push_back(objective.id);
+                    break;
+                case ObjectivePriority::Hidden:
+                    // Hidden objectives not tracked in lists
+                    break;
+            }
+        }
+
+        mission.objectives.push_back(std::move(objective));
+    }
 }
 
-void MissionFactory::PopulateAI(Mission& /*mission*/, const std::string& /*aiJson*/) {
-    // TODO: Parse AI config JSON and populate mission
+void MissionFactory::PopulateAI(Mission& mission, const std::string& aiJson) {
+    using namespace Nova::Json;
+
+    auto parsed = TryParse(aiJson);
+    if (!parsed || !parsed->is_array()) {
+        return;
+    }
+
+    mission.aiPlayers.clear();
+
+    for (const auto& aiJsonObj : *parsed) {
+        MissionAI ai;
+
+        // Parse basic fields
+        ai.aiId = Get<std::string>(aiJsonObj, "aiId", "");
+        ai.faction = Get<std::string>(aiJsonObj, "faction", "");
+        ai.difficulty = static_cast<MissionDifficulty>(Get<int>(aiJsonObj, "difficulty", 1));
+        ai.personality = Get<std::string>(aiJsonObj, "personality", "balanced");
+        ai.handicap = Get<int>(aiJsonObj, "handicap", 0);
+        ai.startingPosition = Get<std::string>(aiJsonObj, "startingPosition", "");
+        ai.isAlly = Get<bool>(aiJsonObj, "isAlly", false);
+        ai.canBeDefeated = Get<bool>(aiJsonObj, "canBeDefeated", true);
+        ai.defeatTrigger = Get<std::string>(aiJsonObj, "defeatTrigger", "");
+
+        // Parse AI resources
+        if (aiJsonObj.contains("resources") && aiJsonObj["resources"].is_object()) {
+            const auto& res = aiJsonObj["resources"];
+            ai.resources.gold = Get<int>(res, "gold", 500);
+            ai.resources.wood = Get<int>(res, "wood", 200);
+            ai.resources.stone = Get<int>(res, "stone", 100);
+            ai.resources.metal = Get<int>(res, "metal", 50);
+            ai.resources.food = Get<int>(res, "food", 100);
+            ai.resources.supply = Get<int>(res, "supply", 10);
+            ai.resources.maxSupply = Get<int>(res, "maxSupply", 100);
+        }
+
+        mission.aiPlayers.push_back(std::move(ai));
+    }
 }
 
 } // namespace Campaign

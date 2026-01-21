@@ -177,12 +177,31 @@ struct AABB {
         return size.x * size.y * size.z;
     }
 
-    [[nodiscard]] bool Contains(const glm::vec3& point) const;
-    [[nodiscard]] bool Intersects(const AABB& other) const;
-    void Expand(const glm::vec3& point);
-    void Expand(const AABB& other);
+    [[nodiscard]] inline bool Contains(const glm::vec3& point) const {
+        return point.x >= min.x && point.x <= max.x &&
+               point.y >= min.y && point.y <= max.y &&
+               point.z >= min.z && point.z <= max.z;
+    }
 
-    [[nodiscard]] static AABB FromCenterExtents(const glm::vec3& center, const glm::vec3& extents);
+    [[nodiscard]] inline bool Intersects(const AABB& other) const {
+        return min.x <= other.max.x && max.x >= other.min.x &&
+               min.y <= other.max.y && max.y >= other.min.y &&
+               min.z <= other.max.z && max.z >= other.min.z;
+    }
+
+    inline void Expand(const glm::vec3& point) {
+        min = glm::min(min, point);
+        max = glm::max(max, point);
+    }
+
+    inline void Expand(const AABB& other) {
+        min = glm::min(min, other.min);
+        max = glm::max(max, other.max);
+    }
+
+    [[nodiscard]] static inline AABB FromCenterExtents(const glm::vec3& center, const glm::vec3& extents) {
+        return AABB{center - extents, center + extents};
+    }
 };
 
 /**

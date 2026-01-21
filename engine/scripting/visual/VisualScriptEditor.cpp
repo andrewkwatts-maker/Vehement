@@ -1,7 +1,13 @@
 #include "VisualScriptEditor.hpp"
+#include "StandardNodes.hpp"
+#include <imgui.h>
+#include <nlohmann/json.hpp>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <cstring>
+#include <unordered_set>
+#include <cfloat>
 
 namespace Nova {
 namespace VisualScript {
@@ -31,10 +37,23 @@ namespace {
         float distance = std::abs(p2.x - p1.x);
         float offset = std::min(distance * 0.5f, 100.0f);
 
+        // Add minimum offset for vertical connections
+        if (offset < 25.0f) offset = 25.0f;
+
         ImVec2 cp1 = ImVec2(p1.x + offset, p1.y);
         ImVec2 cp2 = ImVec2(p2.x - offset, p2.y);
 
         drawList->AddBezierCubic(p1, cp1, cp2, p2, color, thickness);
+    }
+
+    // Convert glm color to ImU32
+    ImU32 GlmColorToImU32(const glm::vec4& color) {
+        return IM_COL32(
+            static_cast<int>(color.r * 255),
+            static_cast<int>(color.g * 255),
+            static_cast<int>(color.b * 255),
+            static_cast<int>(color.a * 255)
+        );
     }
 }
 
@@ -51,6 +70,9 @@ void VisualScriptEditor::Render() {
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar;
 
     ImGui::Begin("Visual Script Editor", nullptr, windowFlags);
+
+    // Handle keyboard shortcuts first
+    HandleKeyboardShortcuts();
 
     RenderMenuBar();
 
@@ -93,6 +115,11 @@ void VisualScriptEditor::Render() {
             if (ImGui::CollapsingHeader("Binding Browser", ImGuiTreeNodeFlags_DefaultOpen)) {
                 RenderBindingBrowser();
             }
+        }
+
+        // Variables panel
+        if (ImGui::CollapsingHeader("Variables")) {
+            RenderVariablesPanel();
         }
 
         ImGui::EndChild();
@@ -145,12 +172,24 @@ void VisualScriptEditor::RenderMenuBar() {
                 Redo();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Delete", "Del", false, m_selectedNode != nullptr)) {
-                if (m_selectedNode && m_graph) {
-                    PushUndoState();
-                    m_graph->RemoveNode(m_selectedNode);
-                    m_selectedNode = nullptr;
-                }
+            if (ImGui::MenuItem("Select All", "Ctrl+A")) {
+                SelectAll();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Copy", "Ctrl+C", false, !m_selectedNodes.empty())) {
+                CopySelected();
+            }
+            if (ImGui::MenuItem("Paste", "Ctrl+V", false, !m_clipboard.empty())) {
+                ImVec2 canvasCenter = ImGui::GetWindowSize() * 0.5f;
+                glm::vec2 pastePos = ToGlm(canvasCenter - m_canvasOffset) / m_canvasZoom;
+                PasteAtPosition(pastePos);
+            }
+            if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, !m_selectedNodes.empty())) {
+                DuplicateSelected();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Delete", "Del", false, !m_selectedNodes.empty())) {
+                DeleteSelected();
             }
             ImGui::EndMenu();
         }
@@ -161,7 +200,13 @@ void VisualScriptEditor::RenderMenuBar() {
             ImGui::MenuItem("Binding Browser", nullptr, &m_showBindingBrowser);
             ImGui::MenuItem("Warnings", nullptr, &m_showWarnings);
             ImGui::Separator();
-            if (ImGui::MenuItem("Reset View")) {
+            if (ImGui::MenuItem("Frame Selected", "F", false, !m_selectedNodes.empty())) {
+                FrameSelected();
+            }
+            if (ImGui::MenuItem("Frame All", "Shift+F")) {
+                FrameAll();
+            }
+            if (ImGui::MenuItem("Reset View", "Home")) {
                 m_canvasOffset = ImVec2(0, 0);
                 m_canvasZoom = 1.0f;
             }
@@ -294,20 +339,31 @@ void VisualScriptEditor::RenderCanvas() {
 
     drawList->PopClipRect();
 
+    // Render box selection overlay
+    RenderBoxSelection();
+
     // Handle canvas interactions
     if (ImGui::IsWindowHovered()) {
-        // Pan with middle mouse or right mouse
+        // Pan with middle mouse or right mouse (when not showing context menu)
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle) ||
             (ImGui::IsMouseDragging(ImGuiMouseButton_Right) && !m_showContextMenu)) {
             ImVec2 delta = ImGui::GetIO().MouseDelta;
             m_canvasOffset = m_canvasOffset + delta;
         }
 
-        // Zoom with scroll wheel
+        // Zoom with scroll wheel (zoom towards mouse position)
         float scroll = ImGui::GetIO().MouseWheel;
         if (scroll != 0.0f) {
+            ImVec2 mousePos = ImGui::GetMousePos();
+            ImVec2 mouseCanvasPos = mousePos - canvasPos - m_canvasOffset;
+
+            float oldZoom = m_canvasZoom;
             m_canvasZoom *= (scroll > 0) ? 1.1f : 0.9f;
             m_canvasZoom = std::clamp(m_canvasZoom, 0.25f, 4.0f);
+
+            // Adjust offset to keep mouse position stable during zoom
+            float zoomRatio = m_canvasZoom / oldZoom;
+            m_canvasOffset = m_canvasOffset - mouseCanvasPos * (zoomRatio - 1.0f);
         }
 
         // Right-click context menu
@@ -316,9 +372,51 @@ void VisualScriptEditor::RenderCanvas() {
             m_contextMenuPos = ImGui::GetMousePos();
         }
 
-        // Clear selection on empty space click
+        // Box selection - start on left click in empty space
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsAnyItemHovered()) {
-            m_selectedNode = nullptr;
+            bool ctrl = ImGui::GetIO().KeyCtrl;
+            if (!ctrl) {
+                ClearSelection();
+            }
+            m_isBoxSelecting = true;
+            m_boxSelectStart = ImGui::GetMousePos();
+            m_boxSelectEnd = m_boxSelectStart;
+        }
+
+        // Box selection - update while dragging
+        if (m_isBoxSelecting && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+            m_boxSelectEnd = ImGui::GetMousePos();
+        }
+
+        // Box selection - complete on mouse release
+        if (m_isBoxSelecting && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+            m_isBoxSelecting = false;
+
+            // Calculate selection rectangle in canvas coordinates
+            ImVec2 minPt = ImVec2(std::min(m_boxSelectStart.x, m_boxSelectEnd.x),
+                                  std::min(m_boxSelectStart.y, m_boxSelectEnd.y));
+            ImVec2 maxPt = ImVec2(std::max(m_boxSelectStart.x, m_boxSelectEnd.x),
+                                  std::max(m_boxSelectStart.y, m_boxSelectEnd.y));
+
+            // Only process if the selection rectangle has some size
+            if ((maxPt.x - minPt.x) > 5 || (maxPt.y - minPt.y) > 5) {
+                // Select nodes within the rectangle
+                if (m_graph) {
+                    bool ctrl = ImGui::GetIO().KeyCtrl;
+                    for (const auto& node : m_graph->GetNodes()) {
+                        ImVec2 nodePos = canvasPos + m_canvasOffset +
+                            ToImVec2(node->GetPosition()) * m_canvasZoom;
+                        float nodeWidth = 180.0f * m_canvasZoom;
+                        float nodeHeight = 100.0f * m_canvasZoom;  // Approximate
+
+                        // Check if node overlaps with selection rectangle
+                        if (nodePos.x < maxPt.x && nodePos.x + nodeWidth > minPt.x &&
+                            nodePos.y < maxPt.y && nodePos.y + nodeHeight > minPt.y) {
+                            SelectNode(node, ctrl);
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -340,8 +438,8 @@ void VisualScriptEditor::RenderNode(NodePtr node) {
 
     ImVec2 nodeSize(nodeWidth, nodeHeight);
 
-    // Background
-    bool isSelected = (node == m_selectedNode);
+    // Background (check if node is in multi-select list)
+    bool isSelected = IsNodeSelected(node);
     ImVec4 bgColor = isSelected ? m_style.nodeSelected : m_style.nodeBackground;
     drawList->AddRectFilled(nodePos, nodePos + nodeSize, ImGui::ColorConvertFloat4ToU32(bgColor),
                            m_style.nodeRounding * m_canvasZoom);
@@ -408,14 +506,44 @@ void VisualScriptEditor::RenderNode(NodePtr node) {
     ImVec2 nodeMax = nodePos + nodeSize;
     if (ImGui::IsMouseHoveringRect(nodeMin, nodeMax)) {
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-            SelectNode(node);
+            bool ctrl = ImGui::GetIO().KeyCtrl;
+            bool shift = ImGui::GetIO().KeyShift;
+
+            if (ctrl || shift) {
+                // Ctrl+click or Shift+click: toggle selection
+                SelectNode(node, true);
+            } else if (!IsNodeSelected(node)) {
+                // Regular click on unselected node: clear and select only this one
+                SelectNode(node, false);
+            }
+            // If already selected and no modifier, keep current selection (for dragging multiple)
+
+            // Start multi-node drag
+            m_isDraggingNodes = true;
+            m_dragStartPositions.clear();
+            for (const auto& selectedNode : m_selectedNodes) {
+                m_dragStartPositions[selectedNode->GetId()] = selectedNode->GetPosition();
+            }
         }
-        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && node == m_selectedNode) {
+
+        // Drag selected nodes
+        if (m_isDraggingNodes && ImGui::IsMouseDragging(ImGuiMouseButton_Left) && IsNodeSelected(node)) {
             ImVec2 delta = ImGui::GetIO().MouseDelta;
-            glm::vec2 newPos = node->GetPosition() + ToGlm(delta) / m_canvasZoom;
-            node->SetPosition(newPos);
+            glm::vec2 deltaGlm = ToGlm(delta) / m_canvasZoom;
+
+            // Move all selected nodes
+            for (const auto& selectedNode : m_selectedNodes) {
+                glm::vec2 newPos = selectedNode->GetPosition() + deltaGlm;
+                selectedNode->SetPosition(newPos);
+            }
             m_isDirty = true;
         }
+    }
+
+    // End drag on mouse release
+    if (m_isDraggingNodes && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+        m_isDraggingNodes = false;
+        m_dragStartPositions.clear();
     }
 }
 
@@ -512,8 +640,8 @@ void VisualScriptEditor::RenderConnections() {
             targetNodePos.y + headerHeight + 8 * m_canvasZoom + targetIdx * portSpacing
         );
 
-//        ImU32 color = ImGui::ColorConvertFloat4ToU32(conn->GetColor());
-//        DrawBezierCurve(drawList, p1, p2, color, m_style.connectionThickness);
+        ImU32 color = GlmColorToImU32(conn->GetColor());
+        DrawBezierCurve(drawList, p1, p2, color, m_style.connectionThickness);
     }
 }
 
@@ -874,12 +1002,44 @@ void VisualScriptEditor::SetGraph(GraphPtr graph) {
     }
 }
 
-void VisualScriptEditor::SelectNode(NodePtr node) {
-    m_selectedNode = node;
+void VisualScriptEditor::SelectNode(NodePtr node, bool addToSelection) {
+    if (!node) {
+        if (!addToSelection) {
+            ClearSelection();
+        }
+        return;
+    }
+
+    if (addToSelection) {
+        // Toggle selection if already selected
+        auto it = std::find(m_selectedNodes.begin(), m_selectedNodes.end(), node);
+        if (it != m_selectedNodes.end()) {
+            m_selectedNodes.erase(it);
+            m_selectedNode = m_selectedNodes.empty() ? nullptr : m_selectedNodes.back();
+        } else {
+            m_selectedNodes.push_back(node);
+            m_selectedNode = node;
+        }
+    } else {
+        m_selectedNodes.clear();
+        m_selectedNodes.push_back(node);
+        m_selectedNode = node;
+    }
 }
 
 void VisualScriptEditor::ClearSelection() {
     m_selectedNode = nullptr;
+    m_selectedNodes.clear();
+}
+
+void VisualScriptEditor::SelectAll() {
+    if (!m_graph) return;
+    m_selectedNodes = m_graph->GetNodes();
+    m_selectedNode = m_selectedNodes.empty() ? nullptr : m_selectedNodes.back();
+}
+
+bool VisualScriptEditor::IsNodeSelected(NodePtr node) const {
+    return std::find(m_selectedNodes.begin(), m_selectedNodes.end(), node) != m_selectedNodes.end();
 }
 
 void VisualScriptEditor::CreateNodeAtPosition(const std::string& typeId, const glm::vec2& position) {
@@ -946,6 +1106,7 @@ void VisualScriptEditor::Undo() {
     m_graph = Graph::Deserialize(m_undoStack.back());
     m_undoStack.pop_back();
     m_selectedNode = nullptr;
+    m_selectedNodes.clear();
 }
 
 void VisualScriptEditor::Redo() {
@@ -955,6 +1116,357 @@ void VisualScriptEditor::Redo() {
     m_graph = Graph::Deserialize(m_redoStack.back());
     m_redoStack.pop_back();
     m_selectedNode = nullptr;
+    m_selectedNodes.clear();
+}
+
+// =============================================================================
+// Copy/Paste/Delete Operations
+// =============================================================================
+
+void VisualScriptEditor::CopySelected() {
+    if (m_selectedNodes.empty()) return;
+
+    m_clipboard = nlohmann::json::object();
+    m_clipboard["nodes"] = nlohmann::json::array();
+    m_clipboard["connections"] = nlohmann::json::array();
+
+    // Track copied node IDs for connection filtering
+    std::unordered_set<std::string> copiedNodeIds;
+    for (const auto& node : m_selectedNodes) {
+        copiedNodeIds.insert(node->GetId());
+        m_clipboard["nodes"].push_back(node->Serialize());
+    }
+
+    // Copy connections between selected nodes
+    if (m_graph) {
+        for (const auto& conn : m_graph->GetConnections()) {
+            auto sourceNode = conn->GetSource()->GetOwner();
+            auto targetNode = conn->GetTarget()->GetOwner();
+            if (sourceNode && targetNode) {
+                bool sourceSelected = copiedNodeIds.count(sourceNode->GetId()) > 0;
+                bool targetSelected = copiedNodeIds.count(targetNode->GetId()) > 0;
+                if (sourceSelected && targetSelected) {
+                    nlohmann::json connJson;
+                    connJson["sourceNode"] = sourceNode->GetId();
+                    connJson["sourcePort"] = conn->GetSource()->GetName();
+                    connJson["targetNode"] = targetNode->GetId();
+                    connJson["targetPort"] = conn->GetTarget()->GetName();
+                    m_clipboard["connections"].push_back(connJson);
+                }
+            }
+        }
+    }
+}
+
+void VisualScriptEditor::PasteAtPosition(const glm::vec2& position) {
+    if (!m_graph || m_clipboard.empty() || !m_clipboard.contains("nodes")) return;
+
+    PushUndoState();
+
+    // Calculate offset from original positions
+    glm::vec2 minPos(FLT_MAX, FLT_MAX);
+    for (const auto& nodeJson : m_clipboard["nodes"]) {
+        if (nodeJson.contains("position")) {
+            auto pos = nodeJson["position"];
+            minPos.x = std::min(minPos.x, pos[0].get<float>());
+            minPos.y = std::min(minPos.y, pos[1].get<float>());
+        }
+    }
+    glm::vec2 offset = position - minPos;
+
+    // Map old IDs to new nodes
+    std::unordered_map<std::string, NodePtr> idToNewNode;
+    auto& factory = NodeFactory::Instance();
+
+    m_selectedNodes.clear();
+
+    for (const auto& nodeJson : m_clipboard["nodes"]) {
+        std::string typeId = nodeJson.value("typeId", "");
+        auto node = factory.Create(typeId);
+        if (node) {
+            node->Deserialize(nodeJson);
+
+            // Generate new ID to avoid conflicts
+            std::string oldId = node->GetId();
+
+            // Apply position offset
+            glm::vec2 newPos = node->GetPosition() + offset;
+            node->SetPosition(newPos);
+
+            m_graph->AddNode(node);
+            idToNewNode[oldId] = node;
+            m_selectedNodes.push_back(node);
+        }
+    }
+
+    // Recreate connections between pasted nodes
+    if (m_clipboard.contains("connections")) {
+        for (const auto& connJson : m_clipboard["connections"]) {
+            std::string sourceNodeId = connJson.value("sourceNode", "");
+            std::string sourcePortName = connJson.value("sourcePort", "");
+            std::string targetNodeId = connJson.value("targetNode", "");
+            std::string targetPortName = connJson.value("targetPort", "");
+
+            auto srcIt = idToNewNode.find(sourceNodeId);
+            auto tgtIt = idToNewNode.find(targetNodeId);
+
+            if (srcIt != idToNewNode.end() && tgtIt != idToNewNode.end()) {
+                auto sourcePort = srcIt->second->GetOutputPort(sourcePortName);
+                auto targetPort = tgtIt->second->GetInputPort(targetPortName);
+                if (sourcePort && targetPort) {
+                    m_graph->Connect(sourcePort, targetPort);
+                }
+            }
+        }
+    }
+
+    m_selectedNode = m_selectedNodes.empty() ? nullptr : m_selectedNodes.back();
+    m_isDirty = true;
+}
+
+void VisualScriptEditor::DuplicateSelected() {
+    CopySelected();
+    if (!m_selectedNodes.empty()) {
+        // Offset duplicates slightly from originals
+        glm::vec2 offset(30.0f, 30.0f);
+        glm::vec2 firstNodePos = m_selectedNodes[0]->GetPosition() + offset;
+        PasteAtPosition(firstNodePos);
+    }
+}
+
+void VisualScriptEditor::DeleteSelected() {
+    if (!m_graph || m_selectedNodes.empty()) return;
+
+    PushUndoState();
+
+    for (const auto& node : m_selectedNodes) {
+        m_graph->RemoveNode(node);
+    }
+
+    ClearSelection();
+    m_isDirty = true;
+}
+
+void VisualScriptEditor::FrameSelected() {
+    if (m_selectedNodes.empty()) {
+        FrameAll();
+        return;
+    }
+
+    // Calculate bounding box of selected nodes
+    glm::vec2 minPos(FLT_MAX, FLT_MAX);
+    glm::vec2 maxPos(-FLT_MAX, -FLT_MAX);
+
+    for (const auto& node : m_selectedNodes) {
+        glm::vec2 pos = node->GetPosition();
+        minPos = glm::min(minPos, pos);
+        maxPos = glm::max(maxPos, pos + glm::vec2(180.0f, 100.0f));  // Node size estimate
+    }
+
+    // Center the view on the selection
+    glm::vec2 center = (minPos + maxPos) * 0.5f;
+    ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+    m_canvasOffset = ImVec2(canvasSize.x * 0.5f - center.x * m_canvasZoom,
+                            canvasSize.y * 0.5f - center.y * m_canvasZoom);
+}
+
+void VisualScriptEditor::FrameAll() {
+    if (!m_graph || m_graph->GetNodes().empty()) return;
+
+    // Calculate bounding box of all nodes
+    glm::vec2 minPos(FLT_MAX, FLT_MAX);
+    glm::vec2 maxPos(-FLT_MAX, -FLT_MAX);
+
+    for (const auto& node : m_graph->GetNodes()) {
+        glm::vec2 pos = node->GetPosition();
+        minPos = glm::min(minPos, pos);
+        maxPos = glm::max(maxPos, pos + glm::vec2(180.0f, 100.0f));
+    }
+
+    // Center the view and adjust zoom to fit
+    glm::vec2 size = maxPos - minPos;
+    glm::vec2 center = (minPos + maxPos) * 0.5f;
+
+    ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+    float zoomX = canvasSize.x / (size.x + 100.0f);  // Add padding
+    float zoomY = canvasSize.y / (size.y + 100.0f);
+    m_canvasZoom = std::clamp(std::min(zoomX, zoomY), 0.25f, 2.0f);
+
+    m_canvasOffset = ImVec2(canvasSize.x * 0.5f - center.x * m_canvasZoom,
+                            canvasSize.y * 0.5f - center.y * m_canvasZoom);
+}
+
+// =============================================================================
+// Keyboard Shortcuts
+// =============================================================================
+
+void VisualScriptEditor::HandleKeyboardShortcuts() {
+    ImGuiIO& io = ImGui::GetIO();
+
+    // Only handle shortcuts when the editor window is focused
+    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) return;
+
+    bool ctrl = io.KeyCtrl;
+    bool shift = io.KeyShift;
+
+    // File operations
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_N)) {
+        NewGraph();
+    }
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_S)) {
+        if (shift || m_currentFilepath.empty()) {
+            // Save As - would trigger file dialog
+        } else {
+            SaveGraph(m_currentFilepath);
+        }
+    }
+
+    // Edit operations
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Z)) {
+        if (shift) {
+            Redo();
+        } else {
+            Undo();
+        }
+    }
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_Y)) {
+        Redo();
+    }
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_A)) {
+        SelectAll();
+    }
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_C)) {
+        CopySelected();
+    }
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_V)) {
+        // Paste at canvas center
+        ImVec2 canvasCenter = ImGui::GetWindowSize() * 0.5f;
+        glm::vec2 pastePos = ToGlm(canvasCenter - m_canvasOffset) / m_canvasZoom;
+        PasteAtPosition(pastePos);
+    }
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_D)) {
+        DuplicateSelected();
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace)) {
+        DeleteSelected();
+    }
+
+    // View operations
+    if (ImGui::IsKeyPressed(ImGuiKey_F)) {
+        if (shift) {
+            FrameAll();
+        } else {
+            FrameSelected();
+        }
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_Home)) {
+        m_canvasOffset = ImVec2(0, 0);
+        m_canvasZoom = 1.0f;
+    }
+
+    // Cancel operations
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+        if (m_isDraggingConnection) {
+            CancelConnection();
+        } else if (m_isBoxSelecting) {
+            m_isBoxSelecting = false;
+        } else {
+            ClearSelection();
+        }
+    }
+}
+
+// =============================================================================
+// Box Selection
+// =============================================================================
+
+void VisualScriptEditor::RenderBoxSelection() {
+    if (!m_isBoxSelecting) return;
+
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    // Calculate rectangle bounds
+    ImVec2 minPt = ImVec2(std::min(m_boxSelectStart.x, m_boxSelectEnd.x),
+                          std::min(m_boxSelectStart.y, m_boxSelectEnd.y));
+    ImVec2 maxPt = ImVec2(std::max(m_boxSelectStart.x, m_boxSelectEnd.x),
+                          std::max(m_boxSelectStart.y, m_boxSelectEnd.y));
+
+    // Draw selection rectangle
+    drawList->AddRectFilled(minPt, maxPt, IM_COL32(100, 150, 255, 50));
+    drawList->AddRect(minPt, maxPt, IM_COL32(100, 150, 255, 200), 0, 0, 1.5f);
+}
+
+// =============================================================================
+// Variables Panel
+// =============================================================================
+
+void VisualScriptEditor::RenderVariablesPanel() {
+    if (!m_graph) {
+        ImGui::TextDisabled("No graph loaded");
+        return;
+    }
+
+    ImGui::Text("Graph Variables");
+    ImGui::Separator();
+
+    auto varNames = m_graph->GetVariableNames();
+
+    if (varNames.empty()) {
+        ImGui::TextDisabled("No variables defined");
+    } else {
+        for (const auto& name : varNames) {
+            ImGui::PushID(name.c_str());
+
+            if (ImGui::TreeNode(name.c_str())) {
+                // Show variable info and allow creating Get/Set nodes
+                if (ImGui::Button("Get")) {
+                    auto node = NodeFactory::Instance().Create("GetVariable");
+                    if (node) {
+                        if (auto getVarNode = std::dynamic_pointer_cast<GetVariableNode>(node)) {
+                            getVarNode->SetVariableName(name);
+                        }
+                        glm::vec2 pos = m_selectedNode ?
+                            m_selectedNode->GetPosition() + glm::vec2(200, 0) :
+                            glm::vec2(100, 100);
+                        node->SetPosition(pos);
+                        m_graph->AddNode(node);
+                        m_isDirty = true;
+                    }
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Set")) {
+                    auto node = NodeFactory::Instance().Create("SetVariable");
+                    if (node) {
+                        if (auto setVarNode = std::dynamic_pointer_cast<SetVariableNode>(node)) {
+                            setVarNode->SetVariableName(name);
+                        }
+                        glm::vec2 pos = m_selectedNode ?
+                            m_selectedNode->GetPosition() + glm::vec2(200, 0) :
+                            glm::vec2(100, 100);
+                        node->SetPosition(pos);
+                        m_graph->AddNode(node);
+                        m_isDirty = true;
+                    }
+                }
+                ImGui::TreePop();
+            }
+
+            ImGui::PopID();
+        }
+    }
+
+    ImGui::Separator();
+
+    // Add new variable
+    static char newVarName[128] = "";
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 60);
+    ImGui::InputTextWithHint("##NewVar", "New variable name", newVarName, sizeof(newVarName));
+    ImGui::SameLine();
+    if (ImGui::Button("Add") && newVarName[0] != '\0') {
+        m_graph->SetVariable(newVarName, std::any{});
+        newVarName[0] = '\0';
+        m_isDirty = true;
+    }
 }
 
 // =============================================================================

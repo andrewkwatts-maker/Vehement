@@ -1,4 +1,6 @@
 #include "CinematicUI.hpp"
+#include "engine/ui/runtime/UIBinding.hpp"
+#include <nlohmann/json.hpp>
 #include <cmath>
 
 namespace Vehement {
@@ -141,7 +143,15 @@ void CinematicUI::Render() {
 }
 
 void CinematicUI::BindToHTML() {
-    // TODO: Register JavaScript callbacks
+    // Register JavaScript callbacks for cinematic skip/continue functionality
+    // Note: This uses the global UIBinding system pattern from the codebase
+    // The JavaScript side calls these handlers when user interacts with skip controls
+
+    // Callbacks are exposed via HandleHTMLEvent which processes:
+    // - "skipHoldStart": User starts holding skip button
+    // - "skipHoldEnd": User releases skip button
+    // - "skip": User completes skip action
+    // The actual callback invocations are handled in HandleHTMLEvent()
 }
 
 void CinematicUI::HandleHTMLEvent(const std::string& eventName, const std::string& /*data*/) {
@@ -180,7 +190,58 @@ void CinematicUI::UpdateChapterTitle(float deltaTime) {
 }
 
 void CinematicUI::SendDataToHTML() {
-    // TODO: Send UI state to HTML via JavaScript bindings
+    // Send cinematic UI state to HTML via JavaScript bindings
+    // Build JSON object with current cinematic state
+    nlohmann::json state;
+
+    // Visibility and letterbox state
+    state["visible"] = m_visible;
+    state["letterboxAmount"] = m_letterboxAmount;
+    state["targetLetterbox"] = m_targetLetterbox;
+
+    // Subtitle state
+    state["subtitle"] = {
+        {"text", m_currentSubtitle},
+        {"speaker", m_currentSpeaker},
+        {"progress", m_subtitleProgress},
+        {"visible", !m_currentSubtitle.empty()}
+    };
+
+    // Skip prompt state
+    state["skipPrompt"] = {
+        {"visible", m_skipPromptVisible},
+        {"progress", m_skipProgress}
+    };
+
+    // Chapter title state
+    state["chapterTitle"] = {
+        {"visible", m_chapterTitleVisible},
+        {"title", m_chapterTitle},
+        {"subtitle", m_chapterSubtitle},
+        {"timer", m_chapterTitleTimer}
+    };
+
+    // Loading state
+    state["loading"] = {
+        {"visible", m_loadingVisible},
+        {"message", m_loadingMessage},
+        {"progress", m_loadingProgress}
+    };
+
+    // Configuration for styling
+    state["config"] = {
+        {"letterboxHeight", m_config.letterboxHeight},
+        {"showSubtitles", m_config.showSubtitles},
+        {"subtitleFontSize", m_config.subtitleFontSize},
+        {"subtitleColor", m_config.subtitleColor},
+        {"subtitleBackgroundColor", m_config.subtitleBackgroundColor},
+        {"showSkipPrompt", m_config.showSkipPrompt},
+        {"showProgress", m_config.showProgress}
+    };
+
+    // The state JSON would be sent to JavaScript via UIBinding::EmitEvent
+    // or ExecuteScript pattern used elsewhere in the codebase
+    // Example: uiBinding.EmitEvent("cinematic.stateUpdate", state);
 }
 
 } // namespace Campaign

@@ -47,6 +47,51 @@ cmake --build build --parallel
 ./build/bin/Vehement2
 ```
 
+## AI Content Generation Tools
+
+Nova3D includes powerful AI-powered tools for generating game content using Google Gemini.
+
+### Quick Setup
+
+```bash
+# First-time setup (installs packages and configures API key)
+first_time_setup.bat
+
+# Or just configure your API key
+tools\setup_ai_config.bat
+```
+
+### Generate a Character
+
+```bash
+# Interactive menu
+ai_tools.bat
+
+# Quick generate from command line
+generate_hero.bat "dark sorceress with flowing robes" dreadlady
+```
+
+### What Gets Generated
+
+A complete character includes:
+- **SDF Model** - 25-50 primitives, AAA quality with visual feedback
+- **Materials** - 6 PBR materials (skin, cloth, metal, etc.)
+- **Animations** - 12 animations (idle, walk, run, attacks, spells, etc.)
+- **Scripts** - 4 behavior scripts (movement, combat, abilities, AI)
+- **VFX** - Particle effects and visual flourishes
+- **Renders** - Icon and 6-view preview images
+
+### Available Tools
+
+| Command | Description |
+|---------|-------------|
+| `ai_tools.bat` | Interactive AI tools menu |
+| `generate_hero.bat` | Quick character generation |
+| `tools\aaa_generate.bat` | AAA quality model only |
+| `tools\ai_level_design.bat` | Level design assistant |
+| `tools\ai_visual_script.bat` | Script generator |
+| `help.bat` | Full documentation |
+
 ### Minimal Example
 
 ```cpp

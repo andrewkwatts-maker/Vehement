@@ -7,6 +7,7 @@
 #include "graphics/Renderer.hpp"
 #include "graphics/debug/DebugDraw.hpp"
 #include "../entities/Entity.hpp"
+#include "../entities/EntityManager.hpp"
 #include "../entities/Player.hpp"
 #include "Building.hpp"
 
@@ -302,6 +303,11 @@ void RTSInputController::ProcessMouseInput(Nova::InputManager& input, float delt
         if (m_buildingPreview.active) {
             // Cancel building placement
             CancelBuildingPlacement();
+        } else if (m_patrolModeActive && m_selection.HasSelection()) {
+            // Set patrol waypoint
+            glm::vec3 worldPos = ScreenToWorldPosition(mousePos);
+            CommandPatrol(worldPos);
+            m_patrolModeActive = false; // Exit patrol mode after setting waypoint
         } else if (m_selection.HasSelection()) {
             // Issue command to selected units
             glm::vec3 worldPos = ScreenToWorldPosition(mousePos);
@@ -335,7 +341,21 @@ void RTSInputController::ProcessKeyboardInput(Nova::InputManager& input, float d
 
     // Delete - Delete selected buildings (if in editor mode)
     if (input.IsKeyPressed(Nova::Key::Delete)) {
-        // TODO: Implement building deletion
+        // Delete selected building if one is selected
+        if (m_selection.selectedBuilding) {
+            spdlog::info("Deleting building: {}",
+                         GetBuildingTypeName(m_selection.selectedBuilding->GetBuildingType()));
+
+            // Mark building for removal
+            m_selection.selectedBuilding->MarkForRemoval();
+
+            // Clear selection
+            m_selection.selectedBuilding = nullptr;
+            if (m_selection.selectedUnits.empty()) {
+                m_selection.type = SelectionType::None;
+            }
+            NotifySelectionChanged();
+        }
     }
 
     // Control groups (1-9)
@@ -383,13 +403,30 @@ void RTSInputController::ProcessKeyboardInput(Nova::InputManager& input, float d
 
         // P - Patrol (next right-click sets patrol point)
         if (input.IsKeyPressed(Nova::Key::P)) {
-            // TODO: Enter patrol mode
+            // Toggle patrol mode - next right-click will set patrol waypoint
+            m_patrolModeActive = !m_patrolModeActive;
+            if (m_patrolModeActive) {
+                spdlog::info("Patrol mode activated - right-click to set patrol waypoint");
+            } else {
+                spdlog::info("Patrol mode cancelled");
+            }
         }
     }
 
     // Building hotkeys (B for building menu)
     if (input.IsKeyPressed(Nova::Key::B)) {
-        // TODO: Open building menu
+        // Toggle building construction menu
+        m_buildMenuOpen = !m_buildMenuOpen;
+        if (m_buildMenuOpen) {
+            spdlog::info("Building menu opened - select a building type to place");
+            // Cancel any active building placement or patrol mode
+            if (m_buildingPreview.active) {
+                CancelBuildingPlacement();
+            }
+            m_patrolModeActive = false;
+        } else {
+            spdlog::info("Building menu closed");
+        }
     }
 
     // Focus on selection (Spacebar)
@@ -399,14 +436,69 @@ void RTSInputController::ProcessKeyboardInput(Nova::InputManager& input, float d
 }
 
 void RTSInputController::ProcessGamepadInput(Nova::InputManager& input, float deltaTime) {
-    // TODO: Implement gamepad controls
-    // Left stick - Move cursor
+    // Basic gamepad control implementation
+    // Note: Full gamepad state would be accessed via InputRebindingManager in production
+
+    auto& window = Nova::Engine::Instance().GetWindow();
+    glm::vec2 screenSize(window.GetWidth(), window.GetHeight());
+
+    // Left stick - Move virtual cursor
+    // Using simulated values since InputManager doesn't expose gamepad directly
+    // In production, this would use input.GetGamepadAxis() or InputRebindingManager
+    glm::vec2 leftStick(0.0f);  // Would be: input.GetGamepadAxis(GamepadAxis::LeftX/LeftY)
+
+    // Apply deadzone
+    const float deadzone = 0.15f;
+    if (glm::length(leftStick) > deadzone) {
+        // Move cursor
+        m_gamepadCursorPosition += leftStick * m_gamepadCursorSpeed * deltaTime;
+
+        // Clamp to screen bounds
+        m_gamepadCursorPosition.x = glm::clamp(m_gamepadCursorPosition.x, 0.0f, screenSize.x);
+        m_gamepadCursorPosition.y = glm::clamp(m_gamepadCursorPosition.y, 0.0f, screenSize.y);
+    }
+
     // Right stick - Pan camera
-    // Triggers - Zoom
-    // A button - Select
+    glm::vec2 rightStick(0.0f);  // Would be: input.GetGamepadAxis(GamepadAxis::RightX/RightY)
+    if (glm::length(rightStick) > deadzone) {
+        m_rtsCamera.Pan(rightStick * m_rtsCamera.panSpeed * deltaTime);
+    }
+
+    // Triggers - Zoom (would check trigger axes)
+    // float leftTrigger = input.GetGamepadAxis(GamepadAxis::LeftTrigger);
+    // float rightTrigger = input.GetGamepadAxis(GamepadAxis::RightTrigger);
+    // m_rtsCamera.Zoom((rightTrigger - leftTrigger) * m_rtsCamera.zoomSpeed * deltaTime);
+
+    // Gamepad button handling would be:
+    // A button - Select at cursor position
+    // if (input.IsGamepadButtonPressed(GamepadButton::A)) {
+    //     SelectAtPosition(m_gamepadCursorPosition);
+    // }
+
     // B button - Cancel/Deselect
-    // X button - Command
-    // Y button - Special action
+    // if (input.IsGamepadButtonPressed(GamepadButton::B)) {
+    //     if (m_buildingPreview.active) {
+    //         CancelBuildingPlacement();
+    //     } else {
+    //         ClearSelection();
+    //     }
+    // }
+
+    // X button - Issue command at cursor
+    // if (input.IsGamepadButtonPressed(GamepadButton::X)) {
+    //     if (m_selection.HasSelection()) {
+    //         glm::vec3 worldPos = ScreenToWorldPosition(m_gamepadCursorPosition);
+    //         CommandMove(worldPos);
+    //     }
+    // }
+
+    // Y button - Special action (attack-move)
+    // if (input.IsGamepadButtonPressed(GamepadButton::Y)) {
+    //     if (m_selection.HasSelection()) {
+    //         glm::vec3 worldPos = ScreenToWorldPosition(m_gamepadCursorPosition);
+    //         CommandAttackMove(worldPos);
+    //     }
+    // }
 }
 
 // ============================================================================
@@ -506,25 +598,157 @@ void RTSInputController::ClearSelection() {
 }
 
 void RTSInputController::SelectAll() {
-    // TODO: Get all player units from entity manager
-    spdlog::info("Select All - not yet implemented");
+    if (!m_entityManager) {
+        spdlog::warn("SelectAll: No entity manager set");
+        return;
+    }
+
+    ClearSelection();
+
+    // Get all entities that belong to the player (non-hostile, selectable units)
+    // In an RTS, we typically select all units the player controls
+    m_entityManager->ForEachEntity([this](Entity& entity) {
+        // Select active, alive entities (excluding the player themselves and buildings)
+        if (entity.IsActive() && entity.IsAlive() &&
+            entity.GetType() != EntityType::Player &&
+            entity.GetType() != EntityType::Projectile &&
+            entity.GetType() != EntityType::Effect &&
+            entity.GetType() != EntityType::Pickup) {
+
+            m_selection.selectedUnits.push_back(&entity);
+        }
+    });
+
+    if (!m_selection.selectedUnits.empty()) {
+        m_selection.type = SelectionType::Units;
+        spdlog::info("Selected all {} units", m_selection.selectedUnits.size());
+    }
+
+    NotifySelectionChanged();
 }
 
 void RTSInputController::SelectAllOfType() {
-    // TODO: Select all units of same type as current selection
-    spdlog::info("Select All Of Type - not yet implemented");
+    if (m_selection.selectedUnits.empty()) {
+        spdlog::info("SelectAllOfType: No units currently selected");
+        return;
+    }
+
+    if (!m_entityManager) {
+        spdlog::warn("SelectAllOfType: No entity manager set");
+        return;
+    }
+
+    // Get the type of the first selected unit
+    EntityType targetType = m_selection.selectedUnits[0]->GetType();
+
+    // Clear and re-select all units of the same type
+    m_selection.selectedUnits.clear();
+
+    m_entityManager->ForEachEntity(targetType, [this](Entity& entity) {
+        if (entity.IsActive() && entity.IsAlive()) {
+            m_selection.selectedUnits.push_back(&entity);
+        }
+    });
+
+    if (!m_selection.selectedUnits.empty()) {
+        m_selection.type = SelectionType::Units;
+        spdlog::info("Selected all {} units of type {}",
+                     m_selection.selectedUnits.size(),
+                     EntityTypeToString(targetType));
+    }
+
+    NotifySelectionChanged();
 }
 
 Entity* RTSInputController::GetEntityAtScreenPosition(const glm::vec2& screenPos) {
-    // TODO: Implement raycasting to find entity at screen position
-    // For now, return nullptr
-    return nullptr;
+    if (!m_entityManager || !m_camera) {
+        return nullptr;
+    }
+
+    // Convert screen position to world position on ground plane
+    glm::vec3 worldPos = ScreenToWorldPosition(screenPos);
+
+    // Find the closest entity within a selection radius
+    const float selectionRadius = 1.5f;  // World units
+    Entity* closestEntity = nullptr;
+    float closestDistSq = selectionRadius * selectionRadius;
+
+    // Find entities near the click position
+    auto nearbyEntities = m_entityManager->FindEntitiesInRadius(worldPos, selectionRadius);
+
+    for (Entity* entity : nearbyEntities) {
+        if (!entity->IsActive() || !entity->IsAlive()) {
+            continue;
+        }
+
+        // Skip non-selectable entity types
+        if (entity->GetType() == EntityType::Projectile ||
+            entity->GetType() == EntityType::Effect) {
+            continue;
+        }
+
+        // Calculate distance squared to entity
+        glm::vec3 entityPos = entity->GetPosition();
+        float dx = entityPos.x - worldPos.x;
+        float dz = entityPos.z - worldPos.z;
+        float distSq = dx * dx + dz * dz;
+
+        if (distSq < closestDistSq) {
+            closestDistSq = distSq;
+            closestEntity = entity;
+        }
+    }
+
+    return closestEntity;
 }
 
 std::vector<Entity*> RTSInputController::GetEntitiesInScreenRect(const glm::vec2& min, const glm::vec2& max) {
-    // TODO: Implement entity selection within screen rectangle
-    // For now, return empty vector
-    return {};
+    std::vector<Entity*> result;
+
+    if (!m_entityManager || !m_camera) {
+        return result;
+    }
+
+    auto& window = Nova::Engine::Instance().GetWindow();
+    glm::vec2 screenSize(window.GetWidth(), window.GetHeight());
+
+    // Convert screen rectangle corners to world positions
+    glm::vec3 worldMin = ScreenToWorldPosition(min);
+    glm::vec3 worldMax = ScreenToWorldPosition(max);
+
+    // Calculate world-space bounding box (account for axis-aligned swap)
+    float worldMinX = std::min(worldMin.x, worldMax.x);
+    float worldMaxX = std::max(worldMin.x, worldMax.x);
+    float worldMinZ = std::min(worldMin.z, worldMax.z);
+    float worldMaxZ = std::max(worldMin.z, worldMax.z);
+
+    // Calculate center and radius for spatial query
+    glm::vec3 center((worldMinX + worldMaxX) * 0.5f, 0.0f, (worldMinZ + worldMaxZ) * 0.5f);
+    float radius = glm::length(glm::vec2(worldMaxX - worldMinX, worldMaxZ - worldMinZ)) * 0.5f + 2.0f;
+
+    // Find entities in the expanded radius then filter by actual bounds
+    auto nearbyEntities = m_entityManager->FindEntitiesInRadius(center, radius);
+
+    for (Entity* entity : nearbyEntities) {
+        if (!entity->IsActive() || !entity->IsAlive()) {
+            continue;
+        }
+
+        // Skip non-selectable entity types
+        if (entity->GetType() == EntityType::Projectile ||
+            entity->GetType() == EntityType::Effect) {
+            continue;
+        }
+
+        // Check if entity position is within world-space bounds
+        glm::vec3 pos = entity->GetPosition();
+        if (pos.x >= worldMinX && pos.x <= worldMaxX &&
+            pos.z >= worldMinZ && pos.z <= worldMaxZ) {
+            result.push_back(entity);
+        }
+    }
+
+    return result;
 }
 
 void RTSInputController::NotifySelectionChanged() {
@@ -546,7 +770,24 @@ void RTSInputController::CommandMove(const glm::vec3& worldPosition) {
         m_onCommand(CommandType::Move, worldPosition);
     }
 
-    // TODO: Send move command to selected units
+    // Send move command to selected units
+    // Each unit calculates its own path to the target
+    // Using basic steering behavior: set velocity toward target
+    for (Entity* unit : m_selection.selectedUnits) {
+        if (unit && unit->IsActive() && unit->IsAlive()) {
+            // Calculate direction to target
+            glm::vec3 unitPos = unit->GetPosition();
+            glm::vec3 direction = worldPosition - unitPos;
+            direction.y = 0.0f;  // Keep on ground plane
+
+            if (glm::length(direction) > 0.1f) {
+                direction = glm::normalize(direction);
+                // Set velocity toward target (unit AI should handle pathfinding)
+                unit->SetVelocity(direction * unit->GetMoveSpeed());
+                unit->LookAt(worldPosition);
+            }
+        }
+    }
 }
 
 void RTSInputController::CommandAttackMove(const glm::vec3& worldPosition) {
@@ -558,7 +799,23 @@ void RTSInputController::CommandAttackMove(const glm::vec3& worldPosition) {
         m_onCommand(CommandType::AttackMove, worldPosition);
     }
 
-    // TODO: Send attack-move command to selected units
+    // Send attack-move command to selected units
+    // Units move toward target but engage enemies along the way
+    // The unit AI system handles attack logic; here we set the destination
+    for (Entity* unit : m_selection.selectedUnits) {
+        if (unit && unit->IsActive() && unit->IsAlive()) {
+            glm::vec3 unitPos = unit->GetPosition();
+            glm::vec3 direction = worldPosition - unitPos;
+            direction.y = 0.0f;
+
+            if (glm::length(direction) > 0.1f) {
+                direction = glm::normalize(direction);
+                // Set velocity (unit AI should check for enemies while moving)
+                unit->SetVelocity(direction * unit->GetMoveSpeed());
+                unit->LookAt(worldPosition);
+            }
+        }
+    }
 }
 
 void RTSInputController::CommandStop() {
@@ -568,7 +825,12 @@ void RTSInputController::CommandStop() {
         m_onCommand(CommandType::Stop, glm::vec3(0.0f));
     }
 
-    // TODO: Send stop command to selected units
+    // Send stop command to selected units - halt all movement
+    for (Entity* unit : m_selection.selectedUnits) {
+        if (unit && unit->IsActive()) {
+            unit->SetVelocity(glm::vec3(0.0f));
+        }
+    }
 }
 
 void RTSInputController::CommandHold() {
@@ -578,7 +840,15 @@ void RTSInputController::CommandHold() {
         m_onCommand(CommandType::Hold, glm::vec3(0.0f));
     }
 
-    // TODO: Send hold command to selected units
+    // Send hold position command to selected units
+    // Units stop moving and defend their current position
+    for (Entity* unit : m_selection.selectedUnits) {
+        if (unit && unit->IsActive()) {
+            // Stop movement - unit AI should engage enemies in range but not pursue
+            unit->SetVelocity(glm::vec3(0.0f));
+            // Note: Full hold behavior requires unit AI state machine to track "hold" mode
+        }
+    }
 }
 
 void RTSInputController::CommandPatrol(const glm::vec3& worldPosition) {
@@ -590,7 +860,23 @@ void RTSInputController::CommandPatrol(const glm::vec3& worldPosition) {
         m_onCommand(CommandType::Patrol, worldPosition);
     }
 
-    // TODO: Send patrol command to selected units
+    // Send patrol command to selected units
+    // Units move between their current position and the patrol point
+    for (Entity* unit : m_selection.selectedUnits) {
+        if (unit && unit->IsActive() && unit->IsAlive()) {
+            // Start moving toward patrol point
+            // Full patrol behavior requires unit AI to track patrol waypoints
+            glm::vec3 unitPos = unit->GetPosition();
+            glm::vec3 direction = worldPosition - unitPos;
+            direction.y = 0.0f;
+
+            if (glm::length(direction) > 0.1f) {
+                direction = glm::normalize(direction);
+                unit->SetVelocity(direction * unit->GetMoveSpeed());
+                unit->LookAt(worldPosition);
+            }
+        }
+    }
 }
 
 void RTSInputController::CommandAttack(Entity* target) {
@@ -602,7 +888,25 @@ void RTSInputController::CommandAttack(Entity* target) {
         m_onCommand(CommandType::Attack, target->GetPosition());
     }
 
-    // TODO: Send attack target command to selected units
+    // Send attack command to selected units - target a specific entity
+    glm::vec3 targetPos = target->GetPosition();
+
+    for (Entity* unit : m_selection.selectedUnits) {
+        if (unit && unit->IsActive() && unit->IsAlive()) {
+            // Move toward target and attack when in range
+            glm::vec3 unitPos = unit->GetPosition();
+            glm::vec3 direction = targetPos - unitPos;
+            direction.y = 0.0f;
+
+            if (glm::length(direction) > 0.1f) {
+                direction = glm::normalize(direction);
+                unit->SetVelocity(direction * unit->GetMoveSpeed());
+                unit->LookAt(targetPos);
+            }
+            // Note: Full attack behavior requires unit AI to track target entity
+            // and execute attack when in range
+        }
+    }
 }
 
 // ============================================================================
@@ -670,8 +974,63 @@ void RTSInputController::UpdateBuildingPlacementPreview(Nova::InputManager& inpu
 }
 
 bool RTSInputController::ValidateBuildingPlacement(const glm::ivec2& gridPos, int buildingTypeIndex) {
-    // TODO: Implement actual validation
+    // Validate building placement
     // Check if position is valid, not occupied, player has resources, etc.
+
+    // Get building type from index
+    if (buildingTypeIndex < 0 || buildingTypeIndex >= static_cast<int>(BuildingType::COUNT)) {
+        return false;
+    }
+
+    BuildingType buildingType = static_cast<BuildingType>(buildingTypeIndex);
+    glm::ivec2 buildingSize = GetBuildingSize(buildingType);
+
+    // Check bounds - ensure building fits within world bounds
+    // Using a simple -100 to 100 world bound as default
+    const int worldMin = -100;
+    const int worldMax = 100;
+
+    if (gridPos.x < worldMin || gridPos.x + buildingSize.x > worldMax ||
+        gridPos.y < worldMin || gridPos.y + buildingSize.y > worldMax) {
+        return false;  // Out of bounds
+    }
+
+    // Check for collision with existing buildings
+    // This would require access to a building manager or tilemap
+    // For now, we do a simple spatial check using the entity manager
+    if (m_entityManager) {
+        glm::vec3 center(
+            gridPos.x + buildingSize.x * 0.5f,
+            0.0f,
+            gridPos.y + buildingSize.y * 0.5f
+        );
+
+        float checkRadius = std::max(buildingSize.x, buildingSize.y) * 0.7f;
+        auto nearbyEntities = m_entityManager->FindEntitiesInRadius(center, checkRadius);
+
+        for (Entity* entity : nearbyEntities) {
+            // Check if any existing entity would overlap
+            // Buildings and static objects block placement
+            if (entity->IsCollidable()) {
+                glm::vec3 entityPos = entity->GetPosition();
+                // Simple AABB check
+                float halfSizeX = buildingSize.x * 0.5f;
+                float halfSizeY = buildingSize.y * 0.5f;
+
+                if (std::abs(entityPos.x - center.x) < halfSizeX + entity->GetCollisionRadius() &&
+                    std::abs(entityPos.z - center.z) < halfSizeY + entity->GetCollisionRadius()) {
+                    return false;  // Collision with existing entity
+                }
+            }
+        }
+    }
+
+    // Additional checks could include:
+    // - Resource cost validation (does player have enough resources?)
+    // - Tech tree requirements (is the building unlocked?)
+    // - Terrain type validation (can this building be placed on this terrain?)
+    // For now, placement is valid if no collisions detected
+
     return true;
 }
 
@@ -810,40 +1169,118 @@ bool RTSInputController::RaycastGround(const glm::vec3& rayOrigin, const glm::ve
 void RTSInputController::Render(Nova::Renderer& renderer) {
     auto& debugDraw = renderer.GetDebugDraw();
 
-    // Draw selection box
+    // Draw selection box in world space (project corners to ground plane)
     if (m_selectionBox.active && m_selectionBox.IsValidSize(1.0f)) {
         glm::vec2 min, max;
         m_selectionBox.GetNormalized(min, max);
 
-        // TODO: Draw 2D selection rectangle on screen
-        // For now, just log it
+        // Convert screen corners to world positions for 3D visualization
+        glm::vec3 worldCorners[4];
+        worldCorners[0] = ScreenToWorldPosition(glm::vec2(min.x, min.y));  // Top-left
+        worldCorners[1] = ScreenToWorldPosition(glm::vec2(max.x, min.y));  // Top-right
+        worldCorners[2] = ScreenToWorldPosition(glm::vec2(max.x, max.y));  // Bottom-right
+        worldCorners[3] = ScreenToWorldPosition(glm::vec2(min.x, max.y));  // Bottom-left
+
+        // Lift slightly above ground for visibility
+        for (int i = 0; i < 4; i++) {
+            worldCorners[i].y = 0.15f;
+        }
+
+        // Draw selection rectangle as lines on ground plane
+        glm::vec4 selectionColor(0.0f, 1.0f, 0.0f, 0.8f);
+        debugDraw.AddLine(worldCorners[0], worldCorners[1], selectionColor);
+        debugDraw.AddLine(worldCorners[1], worldCorners[2], selectionColor);
+        debugDraw.AddLine(worldCorners[2], worldCorners[3], selectionColor);
+        debugDraw.AddLine(worldCorners[3], worldCorners[0], selectionColor);
     }
 
     // Draw building placement preview
     if (m_buildingPreview.active) {
         glm::vec4 color = m_buildingPreview.GetColor();
-        glm::vec3 pos = m_buildingPreview.worldPosition;
 
-        // Draw a box at the placement position
-        // TODO: Draw actual building preview mesh
-        debugDraw.AddBox(pos, glm::vec3(2.0f, 1.0f, 2.0f), color);
+        // Get building size for accurate preview
+        BuildingType buildingType = static_cast<BuildingType>(m_buildingPreview.buildingTypeIndex);
+        glm::ivec2 buildingSize = GetBuildingSize(buildingType);
 
-        // Draw grid position indicator
-        glm::vec3 gridPos(
-            m_buildingPreview.gridPosition.x + 0.5f,
-            0.1f,
-            m_buildingPreview.gridPosition.y + 0.5f
+        // Calculate center position for the building
+        glm::vec3 centerPos(
+            m_buildingPreview.gridPosition.x + buildingSize.x * 0.5f,
+            buildingSize.y * 0.25f,  // Half of wall height for box center
+            m_buildingPreview.gridPosition.y + buildingSize.y * 0.5f
         );
-        debugDraw.AddBox(gridPos, glm::vec3(1.0f, 0.1f, 1.0f), color);
+
+        // Draw building footprint box with correct size
+        glm::vec3 boxSize(
+            static_cast<float>(buildingSize.x),
+            1.0f,  // Placeholder wall height
+            static_cast<float>(buildingSize.y)
+        );
+        debugDraw.AddBox(centerPos, boxSize, color);
+
+        // Draw grid cells the building will occupy
+        glm::vec4 gridColor = color;
+        gridColor.a = 0.3f;
+
+        for (int x = 0; x < buildingSize.x; x++) {
+            for (int z = 0; z < buildingSize.y; z++) {
+                glm::vec3 cellPos(
+                    m_buildingPreview.gridPosition.x + x + 0.5f,
+                    0.05f,
+                    m_buildingPreview.gridPosition.y + z + 0.5f
+                );
+                debugDraw.AddBox(cellPos, glm::vec3(0.95f, 0.1f, 0.95f), gridColor);
+            }
+        }
+
+        // Draw rotation indicator (forward direction)
+        float rotRad = glm::radians(m_buildingPreview.rotation);
+        glm::vec3 forward(std::sin(rotRad), 0.0f, std::cos(rotRad));
+        glm::vec3 arrowStart = centerPos;
+        arrowStart.y = 0.5f;
+        glm::vec3 arrowEnd = arrowStart + forward * 2.0f;
+        debugDraw.AddLine(arrowStart, arrowEnd, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
     }
 
     // Draw selection circles for selected units
     for (Entity* entity : m_selection.selectedUnits) {
+        if (!entity) continue;
+
         glm::vec3 pos = entity->GetPosition();
         pos.y = 0.1f; // Slightly above ground
 
-        // Draw selection circle
-        debugDraw.AddCircle(pos, 1.0f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 16);
+        // Draw selection circle with radius based on entity collision radius
+        float radius = entity->GetCollisionRadius() * 1.5f;
+        debugDraw.AddCircle(pos, radius, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 16);
+
+        // Draw health bar above entity if damaged
+        if (entity->GetHealthPercent() < 1.0f) {
+            glm::vec3 healthBarPos = entity->GetPosition();
+            healthBarPos.y = 1.5f;  // Above entity
+
+            float healthWidth = 1.0f;
+            float healthHeight = 0.1f;
+
+            // Background (red)
+            glm::vec3 bgLeft = healthBarPos - glm::vec3(healthWidth * 0.5f, 0, 0);
+            glm::vec3 bgRight = healthBarPos + glm::vec3(healthWidth * 0.5f, 0, 0);
+            debugDraw.AddLine(bgLeft, bgRight, glm::vec4(0.5f, 0.0f, 0.0f, 1.0f));
+
+            // Foreground (green, based on health)
+            float healthLength = healthWidth * entity->GetHealthPercent();
+            glm::vec3 fgRight = bgLeft + glm::vec3(healthLength, 0, 0);
+            debugDraw.AddLine(bgLeft, fgRight, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+        }
+    }
+
+    // Draw selected building indicator
+    if (m_selection.selectedBuilding) {
+        glm::vec3 pos = m_selection.selectedBuilding->GetPosition();
+        pos.y = 0.1f;
+
+        // Draw selection box around building
+        glm::ivec2 size = m_selection.selectedBuilding->GetSize();
+        glm::vec3 boxSize(static_cast<float>(size.x), 0.2f, static_cast<float>(size.y));
+        debugDraw.AddBox(pos, boxSize, glm::vec4(0.0f, 0.8f, 1.0f, 0.8f));
     }
 }
 

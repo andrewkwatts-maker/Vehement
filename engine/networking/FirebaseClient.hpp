@@ -312,6 +312,9 @@ private:
     // Listener polling
     void PollListeners();
 
+    // Token refresh
+    void RefreshToken();
+
     // Offline cache
     void SaveToOfflineCache();
     void LoadFromOfflineCache();

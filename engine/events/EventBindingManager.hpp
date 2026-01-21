@@ -2,7 +2,9 @@
 
 #include "EventBinding.hpp"
 #include "../reflection/EventBus.hpp"
+#ifdef NOVA_SCRIPTING_ENABLED
 #include "../scripting/PythonEngine.hpp"
+#endif
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -77,6 +79,7 @@ public:
     // Python Integration
     // =========================================================================
 
+#ifdef NOVA_SCRIPTING_ENABLED
     /**
      * @brief Set the Python engine for executing callbacks
      */
@@ -86,6 +89,7 @@ public:
      * @brief Get the Python engine
      */
     [[nodiscard]] Scripting::PythonEngine* GetPythonEngine() const { return m_pythonEngine; }
+#endif
 
     // =========================================================================
     // Binding Management
@@ -305,7 +309,9 @@ private:
     mutable std::mutex m_bindingsMutex;
 
     // Python engine
+#ifdef NOVA_SCRIPTING_ENABLED
     Scripting::PythonEngine* m_pythonEngine = nullptr;
+#endif
 
     // File tracking for hot reload
     std::unordered_map<std::string, std::filesystem::file_time_type> m_fileModTimes;

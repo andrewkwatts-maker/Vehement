@@ -1,401 +1,509 @@
-# Nova3D Engine
+# Nova3D Engine Documentation
 
-A modern C++23 game engine featuring state-of-the-art global illumination, SDF-based rendering, and a complete RTS game framework with 7 playable races.
+Welcome to the Nova3D Engine documentation. This guide will help you navigate the extensive documentation for our modern C++23 game engine featuring state-of-the-art SDF rendering and real-time global illumination.
 
-## Overview
+## Quick Navigation
 
-Nova3D is a production-ready game engine optimized for real-time strategy and action games with support for Windows, macOS, Linux, Android, and iOS. The engine features cutting-edge rendering technology including SDF (Signed Distance Field) rendering, ReSTIR global illumination, and hybrid rasterization.
+| I want to... | Go to... |
+|-------------|----------|
+| Build and run the engine | [Getting Started](#getting-started) |
+| Learn the engine architecture | [Engine Architecture](#engine-architecture) |
+| Use AI-powered tools | [AI Tools Guide](#ai-tools-guide) |
+| Look up API details | [API Reference](#api-reference) |
+| Fix build problems | [Troubleshooting](#troubleshooting) |
+| Follow a tutorial | [Tutorials](#tutorials) |
 
-**Key Highlights:**
-- **285 FPS** global illumination @ 1080p (target was 120 FPS - **2.4x better**)
-- **SDF-first** rendering pipeline with 20x acceleration
-- **7-race RTS** game framework with campaigns and heroes
-- **Cross-platform** support (Desktop + Mobile)
-- **Complete editor** with visual tools and terrain sculpting
+---
 
-## Quick Start (5 Minutes)
+## Getting Started
 
-### Prerequisites
+New to Nova3D? Start here to get up and running quickly.
 
-- **CMake**: 3.20 or higher
-- **C++23 Compiler**: GCC 13+, Clang 16+, or MSVC 2022+
-- **Python 3.10+**: For scripting support (optional)
+### Essential Reading
 
-### Building
+| Document | Description |
+|----------|-------------|
+| [GETTING_STARTED.md](GETTING_STARTED.md) | Prerequisites, installation, and your first application |
+| [BUILDING.md](BUILDING.md) | Complete build instructions for all platforms |
+| [EXAMPLES.md](EXAMPLES.md) | Runnable demos and code examples |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Solutions for common build and runtime issues |
 
+### Quick Start (5 Minutes)
+
+**Prerequisites:**
+- CMake 3.20+
+- C++23 compiler (MSVC 2022+, GCC 13+, Clang 16+)
+- Python 3.10+ (optional, for scripting)
+
+**Build:**
 ```bash
-# Clone the repository
 git clone https://github.com/your-org/Nova3D.git
 cd Nova3D
-
-# Configure and build
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
-
-# Run the RTS demo
-./build/bin/nova_rts_demo
-
-# Or run the editor
-./build/bin/nova_editor
+./build/bin/nova_demo
 ```
 
-### Minimal Example
-
+**Minimal Code:**
 ```cpp
 #include <engine/core/Engine.hpp>
 
 int main() {
     auto& engine = Nova::Engine::Instance();
-
-    if (!engine.Initialize()) {
-        return -1;
-    }
+    if (!engine.Initialize()) return -1;
 
     Nova::Engine::ApplicationCallbacks callbacks;
-
-    callbacks.onStartup = []() {
-        // Initialize game state
-        return true;
-    };
-
-    callbacks.onUpdate = [](float dt) {
-        // Update game logic
-    };
-
-    callbacks.onRender = []() {
-        // Render game world
-    };
+    callbacks.onUpdate = [](float dt) { /* game logic */ };
+    callbacks.onRender = []() { /* rendering */ };
 
     return engine.Run(std::move(callbacks));
 }
 ```
 
-## Documentation
+### Platform Support
 
-### Core Documentation (Start Here)
-- **[README.md](README.md)** - This file - Project overview and quick start
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design, component overview, data flow
-- **[RENDERING.md](RENDERING.md)** - Graphics pipeline, SDF, global illumination, shaders
-- **[GAMEPLAY.md](GAMEPLAY.md)** - RTS game systems, 7 races, units, campaigns
-- **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Build instructions, API reference, contributing
-
-### Project Status Files (Not Consolidated)
-These files track project evolution and planning:
-- [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md) - Current status report
-- [PROJECT_RESTRUCTURING_PLAN.md](PROJECT_RESTRUCTURING_PLAN.md) - Reorganization roadmap
-- [EDITOR_MENU_POLISH_SUMMARY.md](EDITOR_MENU_POLISH_SUMMARY.md) - Editor implementation guide
-
-## Feature Highlights
-
-### World-Class Rendering
-
-**Global Illumination** - State-of-the-art real-time GI
-- ReSTIR (Reservoir-based Spatio-Temporal Importance Resampling)
-- SVGF (Spatiotemporal Variance-Guided Filtering)
-- **285 FPS** @ 1080p (target: 120 FPS)
-- **3.5ms** frame time (target: 8.3ms)
-- 1000+ effective SPP from 1 SPP input
-
-**SDF-First Pipeline** - Signed Distance Field rendering
-- Mesh-to-SDF automatic conversion
-- 12 primitive types (sphere, box, capsule, cylinder, cone, torus, etc.)
-- CSG operations (union, subtract, intersect, smooth variants)
-- Skeletal animation support
-- 4-level LOD system
-- 20x faster than naive raymarching
-
-**Path Tracing** - Physically accurate rendering
-- Full path tracing with 4-16 bounces
-- Refraction with Snell's law
-- Chromatic dispersion (rainbows)
-- Automatic caustics
-- Black body radiation
-- Spectral rendering
-
-**RTX Acceleration** (Optional)
-- Hardware ray tracing support
-- **3.6x speedup** over compute shaders
-- Works without RTX on GTX 1060+, RX 580+, Arc A380+
-
-### Modern C++23 Engine
-
-**Core Features:**
-- RAII resource management
-- Concepts, ranges, coroutines
-- Smart pointers throughout
-- Thread-safe systems
-- Job system with work stealing
-
-**Cross-Platform:**
-- Windows, macOS, Linux (OpenGL 4.6)
-- Android (OpenGL ES 3.2)
-- iOS (OpenGL ES 3.0, Metal planned)
-
-**Engine Systems:**
-- Animation (skeletal, blend trees, state machines)
-- Physics (collision, rigid bodies)
-- Pathfinding (A* with spatial hashing)
-- Networking (Firebase integration)
-- Scripting (Python 3 with hot-reload)
-- Terrain (heightmaps, SDF caves, procedural generation)
-- UI (Dear ImGui with docking)
-
-### Complete RTS Game
-
-**7 Playable Races:**
-1. **Humans** - Balanced, versatile, strong economy
-2. **Orcs** - Aggressive, strong melee units
-3. **Elves** - Archery specialists, nature magic
-4. **Undead** - Necromancy, raise the dead
-5. **Demons** - Fire magic, summoning
-6. **Dragons** - Flying units, breath weapons
-7. **Celestials** - Holy magic, divine powers
-
-**Game Features:**
-- Campaign mode with story missions
-- Skirmish with AI opponents
-- Multiplayer via Firebase
-- Hero system with unique abilities
-- Building and resource management
-- Tech trees per race
-- Unit production and upgrades
-
-### Visual Editor
-
-**Standalone Editor Features:**
-- Terrain sculpting (raise, lower, smooth, flatten)
-- Object placement with transform gizmos
-- SDF model editor
-- Material editor
-- Campaign editor
-- Heightmap import/export
-- Asset browser with thumbnails
-
-## Project Structure
-
-```
-Nova3D/
-├── engine/                 # Core engine library
-│   ├── core/              # Engine, Window, Time, Input
-│   ├── graphics/          # Rendering, SDF, GI, Path Tracing, Shaders
-│   ├── animation/         # Skeletal animation, blend trees, state machines
-│   ├── spatial/           # Octree, BVH, spatial hashing
-│   ├── physics/           # Collision, rigid bodies
-│   ├── audio/             # Audio engine
-│   ├── networking/        # Multiplayer, Firebase
-│   ├── ui/                # ImGui integration
-│   ├── scripting/         # Python integration
-│   ├── reflection/        # Type registry, event bus
-│   ├── persistence/       # Save/load system
-│   ├── terrain/           # Terrain generation, SDF terrain
-│   └── platform/          # Platform abstraction (Windows, macOS, Linux, iOS, Android)
-├── game/                   # RTS game implementation
-│   ├── src/               # Game source code
-│   │   ├── rts/           # RTS game logic
-│   │   ├── races/         # 7 race implementations
-│   │   ├── editor/        # Editor panels and tools
-│   │   └── systems/       # Game systems (lifecycle, combat, economy)
-│   ├── assets/            # Game assets
-│   │   ├── heroes/        # Hero configurations
-│   │   ├── models/        # 3D models and SDFs
-│   │   ├── shaders/       # GLSL shaders
-│   │   ├── configs/       # JSON configurations (units, buildings, races)
-│   │   └── terrain/       # Terrain assets
-│   └── scripts/           # Python game scripts
-├── examples/              # Example applications
-│   ├── nova_demo/         # Basic rendering demo
-│   ├── nova_rts_demo/     # Full RTS game
-│   └── nova_editor/       # Standalone level editor
-├── tools/                 # Development tools
-│   ├── asset_icon_renderer_gi/  # Icon generation with global illumination
-│   └── mesh_to_sdf/       # Mesh-to-SDF converter
-├── docs/                  # **Documentation (you are here)**
-│   ├── README.md          # **This file - Start here**
-│   ├── ARCHITECTURE.md    # System architecture
-│   ├── RENDERING.md       # Graphics and rendering
-│   ├── GAMEPLAY.md        # Game systems
-│   ├── DEVELOPER_GUIDE.md # Developer reference
-│   ├── CURRENT_PROJECT_STATE.md          # Status report
-│   ├── PROJECT_RESTRUCTURING_PLAN.md     # Roadmap
-│   └── EDITOR_MENU_POLISH_SUMMARY.md     # Editor guide
-├── tests/                 # Unit tests
-└── build/                 # Build output (gitignored)
-```
-
-## Performance Metrics
-
-### Rendering Performance (1920x1080)
-
-| Quality Preset | Frame Time | FPS | Effective SPP | Light Count |
-|----------------|-----------|-----|---------------|-------------|
-| Ultra          | 5.2ms     | 192 | 48,000        | 10,000      |
-| High           | 4.1ms     | 243 | 28,800        | 10,000      |
-| **Medium** (recommended) | **3.5ms** | **285** | **16,000** | **10,000** |
-| Low            | 2.4ms     | 416 | 6,400         | 10,000      |
-
-**Achievement:** Target was 120 FPS @ 8.3ms. **Achieved 285 FPS @ 3.5ms** (2.4x better)
-
-### SDF Rendering Performance
-
-| Scene Complexity | SDF-First | Hybrid | RTX (optional) |
-|------------------|-----------|--------|----------------|
-| Simple (1K primitives) | 120+ FPS | 120+ FPS | 240+ FPS |
-| Medium (10K primitives) | 60-90 FPS | 75-100 FPS | 120+ FPS |
-| Complex (100K primitives) | 30-45 FPS | 45-60 FPS | 90+ FPS |
-
-## Technology Stack
-
-| Component | Technology | Version |
-|-----------|------------|---------|
-| **Graphics** | OpenGL | 4.6 / ES 3.2 |
-| **Window** | GLFW | 3.4 |
-| **Math** | GLM | 1.0.1 |
-| **UI** | Dear ImGui | 1.91.5 |
-| **JSON** | nlohmann/json | 3.11.3 |
-| **Logging** | spdlog | 1.14.1 |
-| **Scripting** | Python 3 + pybind11 | 2.12.0 |
-| **Asset Loading** | Assimp | 5.4.3 |
-| **Noise** | FastNoise2 | 0.10.0 |
-| **Testing** | Google Test | - |
-| **Build** | CMake | 3.20+ |
-
-All dependencies automatically fetched via CMake FetchContent.
-
-## Platform Support
-
-| Platform | Status | Graphics API | Minimum Version |
-|----------|--------|--------------|-----------------|
-| **Windows** | ✅ Supported | OpenGL 4.6 | Windows 10 |
-| **macOS** | ✅ Supported | OpenGL 4.1 | macOS 11+ |
-| **Linux** | ✅ Supported | OpenGL 4.6 | Ubuntu 20.04+, Fedora 35+ |
-| **Android** | ✅ Supported | OpenGL ES 3.2 | API Level 24+ |
-| **iOS** | ✅ Supported | OpenGL ES 3.0 | iOS 14+ |
-
-## Hardware Requirements
-
-### Minimum (60 FPS @ 1080p, Medium Quality)
-- **GPU**: NVIDIA GTX 1060, AMD RX 580, Intel Arc A380
-- **CPU**: 4 cores @ 2.5 GHz
-- **RAM**: 8 GB
-- **Storage**: 2 GB
-
-### Recommended (120 FPS @ 1080p, High Quality)
-- **GPU**: NVIDIA RTX 2060, AMD RX 5700 XT, Intel Arc A770
-- **CPU**: 6 cores @ 3.0 GHz
-- **RAM**: 16 GB
-- **Storage**: 5 GB SSD
-
-### Optimal (285 FPS @ 1080p, Ultra Quality)
-- **GPU**: NVIDIA RTX 4070+, AMD RX 7800 XT+
-- **CPU**: 8+ cores @ 3.5 GHz
-- **RAM**: 32 GB
-- **Storage**: 10 GB NVMe SSD
-
-## CMake Build Options
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `NOVA_BUILD_EXAMPLES` | ON | Build example applications (demos, editor) |
-| `NOVA_BUILD_TESTS` | OFF | Build unit tests |
-| `NOVA_USE_ASAN` | OFF | Enable Address Sanitizer (debugging) |
-| `NOVA_ENABLE_SCRIPTING` | ON | Enable Python scripting support |
-| `CMAKE_BUILD_TYPE` | - | Debug, Release, RelWithDebInfo, MinSizeRel |
-
-Example:
-```bash
-# Development build with tests
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DNOVA_BUILD_TESTS=ON
-
-# Production build, no scripting
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DNOVA_ENABLE_SCRIPTING=OFF
-```
-
-## Examples & Demos
-
-### 1. Basic Demo (nova_demo)
-Minimal example demonstrating engine initialization and rendering.
-```bash
-./build/bin/nova_demo
-```
-
-### 2. RTS Game Demo (nova_rts_demo)
-Full-featured RTS with all features:
-- All 7 races (Humans, Orcs, Elves, Undead, Demons, Dragons, Celestials)
-- Campaign mode
-- Skirmish vs AI
-- Multiplayer (Firebase)
-- Hero system
-```bash
-./build/bin/nova_rts_demo
-```
-
-### 3. Standalone Editor (nova_editor)
-Visual level editor:
-- Terrain sculpting
-- Object placement
-- SDF modeling
-- Material editing
-- Map save/load
-```bash
-./build/bin/nova_editor
-```
-
-## Getting Help
-
-- **Documentation**: Read [ARCHITECTURE.md](ARCHITECTURE.md), [RENDERING.md](RENDERING.md), [GAMEPLAY.md](GAMEPLAY.md), [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
-- **Issues**: Report bugs via GitHub Issues
-- **Discussions**: Use GitHub Discussions for questions
-- **Contributing**: See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for guidelines
-
-## Contributing
-
-We welcome contributions! See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for:
-- Code style guidelines (C++23, naming conventions, formatting)
-- Pull request process
-- Testing requirements
-- Documentation standards
-
-Quick start:
-```bash
-# Fork and clone
-git clone https://github.com/YOUR_USERNAME/Nova3DEngine.git
-
-# Create feature branch
-git checkout -b feature/your-feature
-
-# Build with tests
-cmake -B build -DNOVA_BUILD_TESTS=ON
-cmake --build build
-./build/bin/nova_tests
-
-# Submit PR
-```
-
-## License
-
-MIT License - See [LICENSE](../LICENSE) file for details.
-
-## Acknowledgments
-
-Built with excellent open-source projects:
-- [GLFW](https://www.glfw.org/) - Window management
-- [GLM](https://glm.g-truc.net/) - Mathematics
-- [Dear ImGui](https://github.com/ocornut/imgui) - UI framework
-- [nlohmann/json](https://github.com/nlohmann/json) - JSON parser
-- [spdlog](https://github.com/gabime/spdlog) - Fast logging
-- [pybind11](https://github.com/pybind/pybind11) - Python bindings
-- [Assimp](https://github.com/assimp/assimp) - Asset importing
-- [FastNoise2](https://github.com/Auburn/FastNoise2) - Noise generation
-
-Special thanks:
-- **Inigo Quilez** - SDF techniques and resources
-- **NVIDIA Research** - ReSTIR and SVGF papers
-- **Computer Graphics Research Community**
+| Platform | Status | Graphics API |
+|----------|--------|--------------|
+| Windows | Supported | OpenGL 4.6 |
+| macOS | Supported | OpenGL 4.1 |
+| Linux | Supported | OpenGL 4.6 |
+| Android | Supported | OpenGL ES 3.2 |
+| iOS | Supported | OpenGL ES 3.0 |
 
 ---
 
-**Version**: 1.0.0
-**Date**: 2025-12-06
-**Status**: ✅ Production Ready
+## Engine Architecture
 
-**Ready to dive in?** Start with [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for build instructions and API reference, or [RENDERING.md](RENDERING.md) to learn about the cutting-edge graphics technology.
+Understand how Nova3D is structured and how its systems work together.
+
+### Core Architecture
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | High-level system design, module structure, threading model |
+| [CONFIG_REFERENCE.md](CONFIG_REFERENCE.md) | JSON configuration file reference |
+
+### Rendering System
+
+| Document | Description |
+|----------|-------------|
+| [SDF_RENDERING_GUIDE.md](SDF_RENDERING_GUIDE.md) | Complete SDF rendering guide with primitives, CSG, and raymarching |
+| [SDF_SYSTEM_DOCUMENTATION.md](SDF_SYSTEM_DOCUMENTATION.md) | SDF system internals |
+| [RTGI_Integration_Guide.md](RTGI_Integration_Guide.md) | Real-time global illumination integration |
+| [RTGI_README.md](RTGI_README.md) | RadianceCascade GI system overview |
+| [TERRAIN_SDF_GI.md](TERRAIN_SDF_GI.md) | Terrain rendering with SDF and GI |
+| [LIGHTING_IMPLEMENTATION.md](LIGHTING_IMPLEMENTATION.md) | Lighting system details |
+
+### Game Systems
+
+| Document | Description |
+|----------|-------------|
+| [ANIMATION_GUIDE.md](ANIMATION_GUIDE.md) | Skeletal animation, blend trees, state machines |
+| [NETWORKING_GUIDE.md](NETWORKING_GUIDE.md) | Multiplayer networking and Firebase integration |
+| [SCRIPTING_GUIDE.md](SCRIPTING_GUIDE.md) | Python scripting system |
+
+### Editor
+
+| Document | Description |
+|----------|-------------|
+| [EDITOR_GUIDE.md](EDITOR_GUIDE.md) | Complete editor user guide |
+| [THUMBNAIL_SYSTEM.md](THUMBNAIL_SYSTEM.md) | Asset thumbnail generation |
+| [ASSET_ICON_SYSTEM.md](ASSET_ICON_SYSTEM.md) | Icon generation pipeline |
+
+### Instance and Archetype Systems
+
+| Document | Description |
+|----------|-------------|
+| [ArchetypeSystemGuide.md](ArchetypeSystemGuide.md) | Entity archetype system |
+| [InstanceSystem_QuickStart.md](InstanceSystem_QuickStart.md) | Quick start for instance system |
+| [InstanceSystem_Architecture.md](InstanceSystem_Architecture.md) | Instance system architecture |
+| [InstancePropertySystem.md](InstancePropertySystem.md) | Property overrides for instances |
+
+---
+
+## AI Tools Guide
+
+Nova3D integrates AI-powered tools for asset creation, level design, and visual scripting.
+
+### Getting Started with AI Tools
+
+| Document | Description |
+|----------|-------------|
+| [AI_TOOLS_ROLLOUT_PLAN.md](AI_TOOLS_ROLLOUT_PLAN.md) | Overview of all AI tools and configuration |
+| [AI_EDITOR_TOOLS_PLAN.md](AI_EDITOR_TOOLS_PLAN.md) | Complete list of AI batch file tools |
+| [AI_INTEGRATION_IMPLEMENTATION_PLAN.md](AI_INTEGRATION_IMPLEMENTATION_PLAN.md) | AI integration roadmap |
+
+### Configuration
+
+AI tools require a Gemini API key. Configure via:
+
+**Config File** (`%APPDATA%\Nova3D\gemini_config.json` on Windows):
+```json
+{
+  "gemini_api_key": "YOUR_API_KEY",
+  "model_thinking": "gemini-2.0-flash-thinking-exp",
+  "model_fast": "gemini-2.0-flash",
+  "max_refinements": 5,
+  "quality_threshold": 0.85
+}
+```
+
+**Or Environment Variable:**
+```bash
+set GEMINI_API_KEY=YOUR_API_KEY
+```
+
+### Available AI Tools
+
+| Tool | Purpose | Status |
+|------|---------|--------|
+| `concept_to_sdf.bat` | Generate SDF models from concepts | Complete |
+| `ai_asset_helper.bat` | Analyze and optimize assets | Complete |
+| `ai_level_design.bat` | AI-assisted level layout | Complete |
+| `ai_visual_script.bat` | Generate visual scripts | Complete |
+| `aaa_generate.bat` | AAA-quality SDF generation | Complete |
+| `generate_character.bat` | Full character pipeline | Complete |
+| `validate_and_report.bat` | Asset validation | Complete |
+
+### Usage Example
+
+```batch
+cd tools
+setup_ai_config.bat
+concept_to_sdf.bat --prompt "heroic knight in shining armor" --name "knight"
+```
+
+Output structure:
+```
+generated_assets/knight/
+  svgs/           # Orthographic SVG views
+  pngs/           # Converted PNGs
+  previews/       # Iteration previews
+  final/          # Final icon and video
+  knight_sdf.json # SDF model file
+```
+
+---
+
+## API Reference
+
+Detailed API documentation for all engine systems.
+
+### Core API
+
+| Document | Description |
+|----------|-------------|
+| [API_REFERENCE.md](API_REFERENCE.md) | Comprehensive API reference |
+| [api/Engine.md](api/Engine.md) | Engine, Window, Time, Input, Logger |
+| [api/Animation.md](api/Animation.md) | Animation system API |
+| [api/Network.md](api/Network.md) | Networking API |
+| [api/Reflection.md](api/Reflection.md) | Type registry and reflection |
+| [api/Scripting.md](api/Scripting.md) | Python scripting API |
+| [api/Spatial.md](api/Spatial.md) | Spatial indexing (Octree, BVH) |
+| [api/UI.md](api/UI.md) | ImGui integration |
+
+### Key Classes
+
+| Class | Header | Description |
+|-------|--------|-------------|
+| `Engine` | `engine/core/Engine.hpp` | Main engine singleton |
+| `SDFRenderer` | `engine/graphics/SDFRenderer.hpp` | SDF raymarching renderer |
+| `RadianceCascade` | `engine/graphics/RadianceCascade.hpp` | Global illumination |
+| `SDFModel` | `engine/sdf/SDFModel.hpp` | SDF model container |
+| `TerrainGenerator` | `engine/terrain/TerrainGenerator.hpp` | Procedural terrain |
+| `Camera` | `engine/scene/Camera.hpp` | Camera management |
+
+### Common Includes
+
+```cpp
+// Core
+#include <engine/core/Engine.hpp>
+#include <engine/core/Window.hpp>
+#include <engine/core/Time.hpp>
+
+// Graphics
+#include <engine/graphics/SDFRenderer.hpp>
+#include <engine/graphics/RadianceCascade.hpp>
+
+// SDF
+#include <engine/sdf/SDFModel.hpp>
+#include <engine/sdf/SDFPrimitive.hpp>
+
+// Scene
+#include <engine/scene/Camera.hpp>
+```
+
+---
+
+## Tutorials
+
+Step-by-step guides for common tasks.
+
+| Tutorial | Description |
+|----------|-------------|
+| [tutorials/first_entity.md](tutorials/first_entity.md) | Create your first game entity |
+| [tutorials/custom_ability.md](tutorials/custom_ability.md) | Implement a custom ability |
+| [tutorials/ai_behavior.md](tutorials/ai_behavior.md) | Create AI behavior with Python |
+| [tutorials/custom_ui.md](tutorials/custom_ui.md) | Build custom UI panels |
+
+---
+
+## Troubleshooting
+
+Solutions for common issues.
+
+### Build Issues
+
+#### nlohmann/json C++20 Ranges Conflict (MSVC)
+
+**Symptoms:** 100+ template compilation errors in `<algorithm>` header involving `std::ranges`.
+
+**Cause:** nlohmann/json v3.11.x creates `nlohmann::std::ranges` namespace which pollutes MSVC's `std::ranges`.
+
+**Status:** Known issue, work in progress.
+
+**Attempted Fixes:**
+- `JSON_HAS_CPP_20=0 JSON_HAS_RANGES=0` compile definitions (set too late in build)
+- Setting defines before FetchContent
+- Downgrading to v3.10.5 or v3.11.2
+
+**Workarounds to Try:**
+1. Use single-include json.hpp with manual defines before include
+2. Fork and patch nlohmann/json to disable ranges support
+3. Use alternative JSON library (RapidJSON, simdjson)
+4. Update MSVC to latest version
+5. Force-include a header with JSON defines before all compilation
+
+See [CLAUDE.md](../CLAUDE.md) for detailed build blocker documentation.
+
+#### Missing Headers
+
+**Symptom:** `error: 'string' is not a member of 'std'`
+
+**Solution:** Add `#include <string>` to the affected header.
+
+Affected files that have been fixed:
+- `engine/graphics/Renderer.hpp`
+- `engine/graphics/LODManager.hpp`
+- `engine/graphics/Batching.hpp`
+
+#### GLM Constants Not Found
+
+**Symptom:** Undefined reference to GLM constants like `glm::pi`.
+
+**Solution:** Add `#include <glm/gtc/constants.hpp>` to the source file.
+
+### Runtime Issues
+
+#### Python Not Found
+
+```bash
+# Specify Python path explicitly
+cmake -B build -DPython3_EXECUTABLE=/usr/bin/python3
+```
+
+#### OpenGL Headers Not Found (Linux)
+
+```bash
+sudo apt install libgl1-mesa-dev libglu1-mesa-dev
+```
+
+#### GLFW Build Fails (Linux)
+
+```bash
+sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+```
+
+### Audio System
+
+Audio is disabled by default. To enable:
+
+```bash
+cmake -DNOVA_ENABLE_AUDIO=ON ..
+```
+
+When disabled, a stub implementation provides the same API but logs warnings when called.
+
+---
+
+## Contributing
+
+| Document | Description |
+|----------|-------------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Code style, PR process, testing requirements |
+
+### Quick Guidelines
+
+- **Code Style:** PascalCase for classes/methods, camelCase for variables, m_ prefix for members
+- **C++ Standard:** C++23 with modern features (concepts, ranges, coroutines)
+- **Philosophy:** Always fix C++ issues properly; never create Python workarounds for C++ bugs
+- **Documentation:** Doxygen comments for public APIs
+
+---
+
+## Project Status
+
+| Document | Description |
+|----------|-------------|
+| [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md) | Current project status |
+| [CURRENT_STATUS.md](CURRENT_STATUS.md) | Implementation status |
+| [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | Feature completion tracking |
+| [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md) | Product backlog |
+
+---
+
+## Research and Technical Notes
+
+These documents contain research, implementation details, and technical deep-dives.
+
+### SDF Research
+
+| Document | Description |
+|----------|-------------|
+| [SDF_RESEARCH_CONSOLIDATION.md](SDF_RESEARCH_CONSOLIDATION.md) | SDF research summary |
+| [SDF_IMPROVEMENTS_RESEARCH.md](SDF_IMPROVEMENTS_RESEARCH.md) | SDF improvement research |
+| [SDF_PAINTING_WITH_MATHS.md](SDF_PAINTING_WITH_MATHS.md) | Mathematical SDF techniques |
+| [SDF_ACCELERATION_IMPLEMENTATION.md](SDF_ACCELERATION_IMPLEMENTATION.md) | BVH acceleration |
+| [SDF_IMPLEMENTATION_SUMMARY.md](SDF_IMPLEMENTATION_SUMMARY.md) | Implementation summary |
+| [SDF_RADIANCE_CASCADE_INTEGRATION.md](SDF_RADIANCE_CASCADE_INTEGRATION.md) | GI integration details |
+
+### RTX and Hardware Acceleration
+
+| Document | Description |
+|----------|-------------|
+| [RTX_IMPLEMENTATION_GUIDE.md](RTX_IMPLEMENTATION_GUIDE.md) | RTX hardware ray tracing |
+| [RTX_QUICK_START.md](RTX_QUICK_START.md) | RTX quick start |
+
+### Session and Implementation Notes
+
+| Document | Description |
+|----------|-------------|
+| [GI_INTEGRATION_COMPLETE.md](GI_INTEGRATION_COMPLETE.md) | GI integration completion notes |
+| [SESSION_SUMMARY_GI_IMPLEMENTATION.md](SESSION_SUMMARY_GI_IMPLEMENTATION.md) | GI implementation session |
+| [IMPLEMENTATION_COMPLETE_SUMMARY.md](IMPLEMENTATION_COMPLETE_SUMMARY.md) | Implementation completion summary |
+
+---
+
+## Document Index
+
+### By Category
+
+**Core Documentation**
+- [README.md](README.md) - This file
+- [GETTING_STARTED.md](GETTING_STARTED.md)
+- [BUILDING.md](BUILDING.md)
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [API_REFERENCE.md](API_REFERENCE.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+
+**Guides**
+- [EDITOR_GUIDE.md](EDITOR_GUIDE.md)
+- [ANIMATION_GUIDE.md](ANIMATION_GUIDE.md)
+- [NETWORKING_GUIDE.md](NETWORKING_GUIDE.md)
+- [SCRIPTING_GUIDE.md](SCRIPTING_GUIDE.md)
+- [SDF_RENDERING_GUIDE.md](SDF_RENDERING_GUIDE.md)
+- [CONFIG_REFERENCE.md](CONFIG_REFERENCE.md)
+
+**AI Tools**
+- [AI_TOOLS_ROLLOUT_PLAN.md](AI_TOOLS_ROLLOUT_PLAN.md)
+- [AI_EDITOR_TOOLS_PLAN.md](AI_EDITOR_TOOLS_PLAN.md)
+- [AI_INTEGRATION_IMPLEMENTATION_PLAN.md](AI_INTEGRATION_IMPLEMENTATION_PLAN.md)
+- [AI_Decision_Tree_Report.md](AI_Decision_Tree_Report.md)
+
+**Tutorials**
+- [tutorials/first_entity.md](tutorials/first_entity.md)
+- [tutorials/custom_ability.md](tutorials/custom_ability.md)
+- [tutorials/ai_behavior.md](tutorials/ai_behavior.md)
+- [tutorials/custom_ui.md](tutorials/custom_ui.md)
+
+**API Reference**
+- [api/Engine.md](api/Engine.md)
+- [api/Animation.md](api/Animation.md)
+- [api/Network.md](api/Network.md)
+- [api/Reflection.md](api/Reflection.md)
+- [api/Scripting.md](api/Scripting.md)
+- [api/Spatial.md](api/Spatial.md)
+- [api/UI.md](api/UI.md)
+
+**Instance System**
+- [ArchetypeSystemGuide.md](ArchetypeSystemGuide.md)
+- [InstanceSystem_QuickStart.md](InstanceSystem_QuickStart.md)
+- [InstanceSystem_Architecture.md](InstanceSystem_Architecture.md)
+- [InstancePropertySystem.md](InstancePropertySystem.md)
+- [InstanceSystem_FileList.md](InstanceSystem_FileList.md)
+
+**Rendering**
+- [SDF_SYSTEM_DOCUMENTATION.md](SDF_SYSTEM_DOCUMENTATION.md)
+- [RTGI_Integration_Guide.md](RTGI_Integration_Guide.md)
+- [RTGI_README.md](RTGI_README.md)
+- [TERRAIN_SDF_GI.md](TERRAIN_SDF_GI.md)
+- [LIGHTING_IMPLEMENTATION.md](LIGHTING_IMPLEMENTATION.md)
+- [RENDERING_PIPELINE_FIX_PLAN.md](RENDERING_PIPELINE_FIX_PLAN.md)
+- [ENGINE_RENDERING_FIX_PLAN.md](ENGINE_RENDERING_FIX_PLAN.md)
+- [SPHERICAL_WORLD_ARCHITECTURE.md](SPHERICAL_WORLD_ARCHITECTURE.md)
+
+**Editor**
+- [THUMBNAIL_SYSTEM.md](THUMBNAIL_SYSTEM.md)
+- [ASSET_ICON_SYSTEM.md](ASSET_ICON_SYSTEM.md)
+- [EDITOR_INTEGRATION_PLAN.md](EDITOR_INTEGRATION_PLAN.md)
+- [EDITOR_MENU_POLISH_SUMMARY.md](EDITOR_MENU_POLISH_SUMMARY.md)
+- [EDITOR_PCG_SYSTEM_DESIGN.md](EDITOR_PCG_SYSTEM_DESIGN.md)
+- [EDITOR_UI_STATUS_AND_NEXT_STEPS.md](EDITOR_UI_STATUS_AND_NEXT_STEPS.md)
+- [BuildingPlacementControls.md](BuildingPlacementControls.md)
+
+**Project Planning**
+- [CURRENT_PROJECT_STATE.md](CURRENT_PROJECT_STATE.md)
+- [CURRENT_STATUS.md](CURRENT_STATUS.md)
+- [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)
+- [PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md)
+- [PROJECT_RESTRUCTURING_PLAN.md](PROJECT_RESTRUCTURING_PLAN.md)
+- [AAA_QUALITY_PLAN.md](AAA_QUALITY_PLAN.md)
+- [ASSET_POLISH_PLAN.md](ASSET_POLISH_PLAN.md)
+- [SPRINT_001.md](SPRINT_001.md)
+- [SPRINT_BACKLOG_SDF_IMPROVEMENTS.md](SPRINT_BACKLOG_SDF_IMPROVEMENTS.md)
+
+**Technical Research**
+- [SDF_RESEARCH_CONSOLIDATION.md](SDF_RESEARCH_CONSOLIDATION.md)
+- [SDF_IMPROVEMENTS_RESEARCH.md](SDF_IMPROVEMENTS_RESEARCH.md)
+- [SDF_PAINTING_WITH_MATHS.md](SDF_PAINTING_WITH_MATHS.md)
+- [SDF_ACCELERATION_IMPLEMENTATION.md](SDF_ACCELERATION_IMPLEMENTATION.md)
+- [RTX_IMPLEMENTATION_GUIDE.md](RTX_IMPLEMENTATION_GUIDE.md)
+- [RTX_QUICK_START.md](RTX_QUICK_START.md)
+
+**Miscellaneous**
+- [EXAMPLES.md](EXAMPLES.md)
+- [TODO_COMPLETION_REPORT.md](TODO_COMPLETION_REPORT.md)
+- [FULL_ASSET_PIPELINE.md](FULL_ASSET_PIPELINE.md)
+- [RACE_ASSET_CREATION_SUMMARY.md](RACE_ASSET_CREATION_SUMMARY.md)
+- [PCG_SYSTEM_SUMMARY.md](PCG_SYSTEM_SUMMARY.md)
+- [FREE_GEOSPATIAL_DATA_SOURCES.md](FREE_GEOSPATIAL_DATA_SOURCES.md)
+
+---
+
+## Performance Highlights
+
+- **285 FPS** global illumination @ 1080p (target was 120 FPS)
+- **3.5ms** frame time (target was 8.3ms)
+- **20x** SDF acceleration over naive raymarching
+- **3.6x** RTX speedup over compute shaders (optional)
+
+---
+
+## Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| Graphics | OpenGL 4.6 / ES 3.2 |
+| Window | GLFW 3.4 |
+| Math | GLM 1.0.1 |
+| UI | Dear ImGui 1.91.5 (docking) |
+| JSON | nlohmann/json 3.11.3 |
+| Scripting | Python 3 + pybind11 |
+| Audio | OpenAL-soft (optional) |
+
+---
+
+*Nova3D Engine v1.0.0 - High-Performance SDF Rendering with Real-Time Global Illumination*
+
+*Last Updated: 2026-01-21*

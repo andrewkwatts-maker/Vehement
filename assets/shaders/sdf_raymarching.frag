@@ -44,6 +44,17 @@ uniform samplerCube u_environmentMap;
 // Primitive data
 uniform int u_primitiveCount;
 
+// BVH acceleration
+uniform int u_bvhNodeCount;
+uniform bool u_useBVH;
+
+// SDF 3D texture cache (brick-map)
+uniform sampler3D u_sdfCache;
+uniform vec3 u_cacheBoundsMin;
+uniform vec3 u_cacheBoundsMax;
+uniform bool u_useCachedSDF;
+uniform int u_cacheResolution;
+
 // Primitive types
 const int PRIM_SPHERE = 0;
 const int PRIM_BOX = 1;
@@ -72,18 +83,46 @@ struct SDFPrimitive {
     vec4 parameters;      // radius, dimensions.xyz
     vec4 parameters2;     // height, topRadius, bottomRadius, cornerRadius
     vec4 parameters3;     // majorRadius, minorRadius, smoothness, sides
+    vec4 parameters4;     // onionThickness, shellMinY, shellMaxY, flags
     vec4 material;        // metallic, roughness, emissive, unused
     vec4 baseColor;
     vec4 emissiveColor;
+    vec4 boundingSphere;  // xyz = world center, w = bounding radius (for early-out)
     int type;
     int csgOperation;
     int visible;
-    int padding;
+    int parentIndex;      // -1 for root, >= 0 for child
 };
+
+// Primitive flags (must match C++ enum SDFPrimitiveFlags)
+#define SDF_FLAG_ONION          1
+#define SDF_FLAG_SHELL_BOUNDED  2
+#define SDF_FLAG_HOLLOW         4
+#define SDF_FLAG_FBM_DETAIL     8
 
 // SSBO for primitives
 layout(std430, binding = 0) buffer PrimitivesBuffer {
     SDFPrimitive primitives[];
+};
+
+// BVH node structure for GPU traversal
+struct BVHNode {
+    vec4 boundsMin;       // xyz = AABB min, w = unused
+    vec4 boundsMax;       // xyz = AABB max, w = unused
+    int leftChild;        // Left child index (internal) or first primitive (leaf)
+    int rightChild;       // Right child index
+    int primitiveCount;   // 0 = internal node, >0 = leaf
+    int padding;
+};
+
+// SSBO for BVH nodes
+layout(std430, binding = 1) buffer BVHNodesBuffer {
+    BVHNode bvhNodes[];
+};
+
+// SSBO for BVH primitive indices (reordered by BVH)
+layout(std430, binding = 2) buffer BVHPrimitiveIndicesBuffer {
+    int bvhPrimitiveIndices[];
 };
 
 // ===========================================================================
@@ -207,6 +246,139 @@ float opSmoothIntersection(float d1, float d2, float k) {
 }
 
 // ===========================================================================
+// Onion Shell Operations (for clothing layers)
+// ===========================================================================
+
+// Basic onion shell - creates thin shell around surface
+float opOnion(float sdf, float thickness) {
+    return abs(sdf) - thickness;
+}
+
+// Bounded onion shell - only applies within Y range (for open-bottom robes)
+float opOnionBounded(float sdf, float thickness, float minY, float maxY, vec3 localPos) {
+    // Only create shell within Y bounds
+    if (localPos.y < minY || localPos.y > maxY) {
+        return sdf; // Return original SDF outside bounds
+    }
+
+    // Smooth transition at boundaries to avoid hard edges
+    float edgeSoftness = thickness * 2.0;
+    float fadeBottom = smoothstep(minY, minY + edgeSoftness, localPos.y);
+    float fadeTop = smoothstep(maxY, maxY - edgeSoftness, localPos.y);
+    float fade = fadeBottom * fadeTop;
+
+    float shell = abs(sdf) - thickness;
+    return mix(sdf, shell, fade);
+}
+
+// Apply onion modifier based on primitive flags
+float applyOnionModifier(float sdf, SDFPrimitive prim, vec3 localPos) {
+    int flags = int(prim.parameters4.w);
+
+    if ((flags & SDF_FLAG_ONION) == 0) {
+        return sdf; // Onion not enabled
+    }
+
+    float thickness = prim.parameters4.x;
+    if (thickness <= 0.0) {
+        return sdf; // No thickness specified
+    }
+
+    if ((flags & SDF_FLAG_SHELL_BOUNDED) != 0) {
+        // Bounded shell with Y cutoffs
+        float minY = prim.parameters4.y;
+        float maxY = prim.parameters4.z;
+        return opOnionBounded(sdf, thickness, minY, maxY, localPos);
+    } else {
+        // Full onion shell
+        return opOnion(sdf, thickness);
+    }
+}
+
+// ===========================================================================
+// FBM Surface Detail (Procedural Cloth/Skin Texture)
+// ===========================================================================
+
+// Hash function for noise
+float hash(float n) {
+    return fract(sin(n) * 43758.5453123);
+}
+
+// 3D value noise
+float noise3D(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f); // Smoothstep interpolation
+
+    float n = i.x + i.y * 157.0 + 113.0 * i.z;
+
+    return mix(
+        mix(mix(hash(n + 0.0), hash(n + 1.0), f.x),
+            mix(hash(n + 157.0), hash(n + 158.0), f.x), f.y),
+        mix(mix(hash(n + 113.0), hash(n + 114.0), f.x),
+            mix(hash(n + 270.0), hash(n + 271.0), f.x), f.y),
+        f.z);
+}
+
+// Fractal Brownian Motion with 4 octaves
+float fbm(vec3 p, int octaves) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    float frequency = 1.0;
+
+    for (int i = 0; i < octaves; i++) {
+        value += amplitude * noise3D(p * frequency);
+        amplitude *= 0.5;
+        frequency *= 2.0;
+    }
+
+    return value;
+}
+
+// Smooth maximum for safe SDF blending
+float smax(float a, float b, float k) {
+    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(a, b, h) + k * h * (1.0 - h);
+}
+
+// Add procedural surface detail without breaking SDF properties
+// amplitude: height of detail bumps
+// frequency: scale of noise pattern
+float addSurfaceDetail(float baseSDF, vec3 p, float amplitude, float frequency) {
+    if (amplitude <= 0.0) {
+        return baseSDF;
+    }
+
+    // Only add detail near the surface (conservative approach)
+    // This preserves SDF validity by avoiding interior changes
+    float surfaceProximity = 1.0 - smoothstep(0.0, amplitude * 4.0, abs(baseSDF));
+
+    // Generate FBM noise centered around 0.5, then shift to [-0.5, 0.5]
+    float detail = (fbm(p * frequency, 4) - 0.5) * amplitude * surfaceProximity;
+
+    // Use smooth max to ensure the result is still a valid SDF
+    // This prevents the detail from making the SDF non-Euclidean
+    return smax(baseSDF - amplitude, baseSDF + detail, amplitude * 0.5);
+}
+
+// Apply FBM detail modifier based on primitive flags
+float applyFBMDetail(float sdf, SDFPrimitive prim, vec3 localPos) {
+    int flags = int(prim.parameters4.w);
+
+    if ((flags & SDF_FLAG_FBM_DETAIL) == 0) {
+        return sdf; // FBM detail not enabled
+    }
+
+    // Use material roughness to control detail amplitude (rougher = more detail)
+    // Frequency is fixed at a reasonable value for character-scale objects
+    float roughness = prim.material.y;
+    float amplitude = roughness * 0.01;  // Max 1% of unit size
+    float frequency = 20.0;  // Detail frequency
+
+    return addSurfaceDetail(sdf, localPos, amplitude, frequency);
+}
+
+// ===========================================================================
 // SDF Evaluation
 // ===========================================================================
 
@@ -253,6 +425,12 @@ float evaluatePrimitive(SDFPrimitive prim, vec3 worldPos) {
         dist = sdPrism(localPos, sides, prim.parameters2.z, prim.parameters2.x);
     }
 
+    // Apply onion shell modifier if enabled (for clothing layers)
+    dist = applyOnionModifier(dist, prim, localPos);
+
+    // Apply FBM surface detail if enabled (for cloth/skin texture)
+    dist = applyFBMDetail(dist, prim, localPos);
+
     return dist;
 }
 
@@ -264,6 +442,197 @@ struct SDFResult {
     vec4 emissiveColor;
 };
 
+// Bounding sphere distance (for early-out culling)
+// Returns distance to sphere surface, negative if inside
+float sdBoundingSphere(vec3 p, vec4 sphere) {
+    return length(p - sphere.xyz) - sphere.w;
+}
+
+// AABB distance for BVH node culling
+// Returns distance to AABB surface, negative if inside
+float sdAABB(vec3 p, vec3 boundsMin, vec3 boundsMax) {
+    vec3 center = (boundsMin + boundsMax) * 0.5;
+    vec3 halfSize = (boundsMax - boundsMin) * 0.5;
+    vec3 d = abs(p - center) - halfSize;
+    return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0);
+}
+
+// Apply CSG operation between child and parent distances
+float applyCSG(int op, float parentDist, float childDist, float smoothness) {
+    if (op == CSG_UNION) {
+        return opUnion(parentDist, childDist);
+    }
+    else if (op == CSG_SUBTRACTION) {
+        return opSubtraction(childDist, parentDist);
+    }
+    else if (op == CSG_INTERSECTION) {
+        return opIntersection(parentDist, childDist);
+    }
+    else if (op == CSG_SMOOTH_UNION) {
+        return opSmoothUnion(parentDist, childDist, smoothness);
+    }
+    else if (op == CSG_SMOOTH_SUBTRACTION) {
+        return opSmoothSubtraction(childDist, parentDist, smoothness);
+    }
+    else if (op == CSG_SMOOTH_INTERSECTION) {
+        return opSmoothIntersection(parentDist, childDist, smoothness);
+    }
+    return parentDist;
+}
+
+// ===========================================================================
+// Cached SDF Sampling (3D Texture Brick-Map)
+// ===========================================================================
+
+// Sample cached SDF distance from 3D texture
+float sampleCachedSDF(vec3 worldPos) {
+    // Convert world position to texture UVW coordinates
+    vec3 uvw = (worldPos - u_cacheBoundsMin) / (u_cacheBoundsMax - u_cacheBoundsMin);
+
+    // Check if outside cache bounds
+    if (any(lessThan(uvw, vec3(0.0))) || any(greaterThan(uvw, vec3(1.0)))) {
+        return 1e10; // Outside cache bounds, return large distance
+    }
+
+    // Sample with trilinear interpolation (built into texture hardware)
+    return texture(u_sdfCache, uvw).r;
+}
+
+// Evaluate scene using cached SDF texture (fast path for complex models)
+SDFResult evaluateSceneCached(vec3 p) {
+    SDFResult result;
+    result.primitiveIndex = 0;  // Cache doesn't track individual primitives
+    result.baseColor = vec4(0.8, 0.8, 0.8, 1.0);  // Default color
+    result.material = vec4(0.0, 0.5, 0.0, 0.0);   // Default material
+    result.emissiveColor = vec4(0.0);
+
+    result.distance = sampleCachedSDF(p);
+
+    // Get material from nearest primitive (if we have any)
+    // For cached SDF, we use the first visible primitive's material as default
+    if (u_primitiveCount > 0) {
+        for (int i = 0; i < u_primitiveCount; i++) {
+            if (primitives[i].visible != 0) {
+                result.baseColor = primitives[i].baseColor;
+                result.material = primitives[i].material;
+                result.emissiveColor = primitives[i].emissiveColor;
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+// ===========================================================================
+// BVH-Accelerated Scene Evaluation
+// ===========================================================================
+
+// Evaluate scene using BVH acceleration structure
+// Uses stack-based traversal with AABB distance culling
+SDFResult evaluateSceneBVH(vec3 p) {
+    SDFResult result;
+    result.distance = 1e10;
+    result.primitiveIndex = -1;
+    result.baseColor = vec4(1.0);
+    result.material = vec4(0.0, 0.5, 0.0, 0.0);
+    result.emissiveColor = vec4(0.0);
+
+    if (u_bvhNodeCount == 0 || u_primitiveCount == 0) {
+        return result;
+    }
+
+    float closestDist = 1e10;
+    int closestIdx = -1;
+
+    // Stack-based BVH traversal (max depth 24 to avoid stack overflow)
+    int stack[24];
+    int stackPtr = 0;
+    stack[stackPtr++] = 0;  // Push root node
+
+    while (stackPtr > 0 && stackPtr < 24) {
+        int nodeIdx = stack[--stackPtr];
+        BVHNode node = bvhNodes[nodeIdx];
+
+        // AABB distance check for early culling
+        float boxDist = sdAABB(p, node.boundsMin.xyz, node.boundsMax.xyz);
+
+        // Skip this subtree if AABB is farther than current best distance
+        if (boxDist > result.distance + 0.01) {
+            continue;
+        }
+
+        if (node.primitiveCount > 0) {
+            // Leaf node - evaluate primitives
+            int firstPrim = node.leftChild;
+            for (int i = 0; i < node.primitiveCount; i++) {
+                int primIdx = bvhPrimitiveIndices[firstPrim + i];
+                if (primIdx < 0 || primIdx >= u_primitiveCount) continue;
+                if (primitives[primIdx].visible == 0) continue;
+
+                float dist = evaluatePrimitive(primitives[primIdx], p);
+                float smoothness = primitives[primIdx].parameters3.z;
+
+                // Apply CSG operation
+                int parentIdx = primitives[primIdx].parentIndex;
+                int op = primitives[primIdx].csgOperation;
+
+                if (parentIdx == -1) {
+                    // Root primitive - union
+                    result.distance = opUnion(result.distance, dist);
+                } else {
+                    // Child primitive - apply CSG
+                    result.distance = applyCSG(op, result.distance, dist, smoothness);
+                }
+
+                // Track closest for material
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestIdx = primIdx;
+                }
+            }
+        } else {
+            // Internal node - push children (near child last so it's popped first)
+            // Calculate distances to both children for front-to-back ordering
+            float leftDist = sdAABB(p, bvhNodes[node.leftChild].boundsMin.xyz,
+                                        bvhNodes[node.leftChild].boundsMax.xyz);
+            float rightDist = sdAABB(p, bvhNodes[node.rightChild].boundsMin.xyz,
+                                         bvhNodes[node.rightChild].boundsMax.xyz);
+
+            // Push far child first (will be processed later)
+            if (leftDist < rightDist) {
+                if (rightDist <= result.distance + 0.01 && stackPtr < 23) {
+                    stack[stackPtr++] = node.rightChild;
+                }
+                if (leftDist <= result.distance + 0.01 && stackPtr < 23) {
+                    stack[stackPtr++] = node.leftChild;
+                }
+            } else {
+                if (leftDist <= result.distance + 0.01 && stackPtr < 23) {
+                    stack[stackPtr++] = node.leftChild;
+                }
+                if (rightDist <= result.distance + 0.01 && stackPtr < 23) {
+                    stack[stackPtr++] = node.rightChild;
+                }
+            }
+        }
+    }
+
+    // Set material from closest primitive
+    if (closestIdx >= 0) {
+        result.primitiveIndex = closestIdx;
+        result.baseColor = primitives[closestIdx].baseColor;
+        result.material = primitives[closestIdx].material;
+        result.emissiveColor = primitives[closestIdx].emissiveColor;
+    }
+
+    return result;
+}
+
+// ===========================================================================
+// Standard Scene Evaluation (fallback when BVH disabled)
+// ===========================================================================
+
 SDFResult evaluateScene(vec3 p) {
     SDFResult result;
     result.distance = 1e10;
@@ -272,54 +641,82 @@ SDFResult evaluateScene(vec3 p) {
     result.material = vec4(0.0, 0.5, 0.0, 0.0);
     result.emissiveColor = vec4(0.0);
 
+    // Use cached SDF if enabled (fastest path for complex models)
+    if (u_useCachedSDF && u_cacheResolution > 0) {
+        return evaluateSceneCached(p);
+    }
+
     if (u_primitiveCount == 0) {
         return result;
     }
 
-    // Evaluate root primitive (assuming index 0 is root)
-    float dist = evaluatePrimitive(primitives[0], p);
-    result.distance = dist;
-    result.primitiveIndex = 0;
-    result.baseColor = primitives[0].baseColor;
-    result.material = primitives[0].material;
-    result.emissiveColor = primitives[0].emissiveColor;
+    // Use BVH acceleration if enabled and available
+    if (u_useBVH && u_bvhNodeCount > 0) {
+        return evaluateSceneBVH(p);
+    }
 
-    // Apply CSG operations for children
-    for (int i = 1; i < u_primitiveCount; i++) {
+    // Streaming evaluation with bounding sphere early-out optimization
+    // This approach evaluates primitives on-the-fly and accumulates the result
+    float closestDist = 1e10;
+    int closestIdx = -1;
+
+    for (int i = 0; i < u_primitiveCount; i++) {
         if (primitives[i].visible == 0) continue;
 
-        float childDist = evaluatePrimitive(primitives[i], p);
-        float smoothness = primitives[i].parameters3.z;
+        // Early-out using bounding sphere
+        // Skip expensive SDF evaluation if we're far outside the bounding sphere
+        float boundDist = sdBoundingSphere(p, primitives[i].boundingSphere);
+
+        // For root primitives (union), skip if bounding sphere is farther than current best
+        // For child primitives (CSG ops), we still need to evaluate if close to surface
+        bool isRoot = (primitives[i].parentIndex == -1);
         int op = primitives[i].csgOperation;
 
-        float oldDist = result.distance;
-
-        if (op == CSG_UNION) {
-            result.distance = opUnion(result.distance, childDist);
+        // Skip this primitive if:
+        // - It's a root primitive AND bounding sphere is farther than current result
+        // - OR it's a subtraction/intersection AND we're far outside the bounding sphere
+        //   AND far outside the current surface (subtraction can only affect near surface)
+        if (isRoot && boundDist > result.distance + 0.01) {
+            continue;  // Can't contribute to union - too far away
         }
-        else if (op == CSG_SUBTRACTION) {
-            result.distance = opSubtraction(childDist, result.distance);
-        }
-        else if (op == CSG_INTERSECTION) {
-            result.distance = opIntersection(result.distance, childDist);
-        }
-        else if (op == CSG_SMOOTH_UNION) {
-            result.distance = opSmoothUnion(result.distance, childDist, smoothness);
-        }
-        else if (op == CSG_SMOOTH_SUBTRACTION) {
-            result.distance = opSmoothSubtraction(childDist, result.distance, smoothness);
-        }
-        else if (op == CSG_SMOOTH_INTERSECTION) {
-            result.distance = opSmoothIntersection(result.distance, childDist, smoothness);
+        if (!isRoot && (op == CSG_SUBTRACTION || op == CSG_SMOOTH_SUBTRACTION ||
+                        op == CSG_INTERSECTION || op == CSG_SMOOTH_INTERSECTION)) {
+            // For subtraction: only affects region where parent exists
+            // For intersection: only affects region where both exist
+            // If we're far outside the bounding sphere, skip
+            if (boundDist > result.distance + 1.0) {
+                continue;
+            }
         }
 
-        // Update material if this primitive is closer
-        if (childDist < oldDist && result.distance < oldDist) {
-            result.primitiveIndex = i;
-            result.baseColor = primitives[i].baseColor;
-            result.material = primitives[i].material;
-            result.emissiveColor = primitives[i].emissiveColor;
+        // Full SDF evaluation
+        float dist = evaluatePrimitive(primitives[i], p);
+        float smoothness = primitives[i].parameters3.z;
+
+        // Apply CSG operation based on parentIndex
+        // For root primitives (parentIndex == -1), use simple union
+        // For child primitives, apply the specified operation
+        if (isRoot) {
+            // Root primitive - union with accumulated result
+            result.distance = opUnion(result.distance, dist);
+        } else {
+            // Child primitive - apply CSG operation to accumulated result
+            result.distance = applyCSG(op, result.distance, dist, smoothness);
         }
+
+        // Track closest surface for material
+        if (dist < closestDist) {
+            closestDist = dist;
+            closestIdx = i;
+        }
+    }
+
+    // Set material from closest primitive
+    if (closestIdx >= 0) {
+        result.primitiveIndex = closestIdx;
+        result.baseColor = primitives[closestIdx].baseColor;
+        result.material = primitives[closestIdx].material;
+        result.emissiveColor = primitives[closestIdx].emissiveColor;
     }
 
     return result;
@@ -468,6 +865,7 @@ void main() {
     RaymarchResult result = raymarch(rayOrigin, rayDir);
 
     vec3 finalColor;
+    float alpha = 1.0;
 
     if (result.hit) {
         vec3 viewDir = normalize(rayOrigin - result.position);
@@ -480,12 +878,15 @@ void main() {
         lighting += result.emissiveColor.rgb * emissiveStrength;
 
         finalColor = lighting;
+        alpha = 1.0;
     } else {
-        // Background
+        // Background - transparent for icon rendering
         if (u_useEnvironmentMap) {
             finalColor = texture(u_environmentMap, rayDir).rgb;
+            alpha = 1.0;
         } else {
             finalColor = u_backgroundColor;
+            alpha = 0.0;  // Transparent background
         }
     }
 
@@ -495,5 +896,6 @@ void main() {
     // Gamma correction
     finalColor = pow(finalColor, vec3(1.0 / 2.2));
 
-    FragColor = vec4(finalColor, 1.0);
+    // Output alpha: 1.0 for hit, 0.0 for miss (allows transparent background)
+    FragColor = vec4(finalColor, alpha);
 }

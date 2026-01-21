@@ -8,6 +8,10 @@
 #include "scene/Scene.hpp"
 #include "config/Config.hpp"
 
+#ifdef NOVA_AUDIO_ENABLED
+#include "audio/AudioEngine.hpp"
+#endif
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -114,6 +118,16 @@ bool Engine::Initialize(const InitParams& params) {
     }
 
     m_debugDrawEnabled = params.enableDebugDraw;
+
+#ifdef NOVA_AUDIO_ENABLED
+    // Initialize audio system
+    if (!AudioEngine::Instance().Initialize()) {
+        spdlog::warn("Audio system initialization failed - continuing without audio");
+    } else {
+        spdlog::info("Audio system initialized");
+    }
+#endif
+
     m_initialized = true;
 
     spdlog::info("Engine initialization complete");
@@ -161,6 +175,13 @@ void Engine::ProcessFrame(const ApplicationCallbacks& callbacks) {
     if (callbacks.onUpdate) {
         callbacks.onUpdate(deltaTime);
     }
+
+#ifdef NOVA_AUDIO_ENABLED
+    // Update audio system (handles streaming, crossfades, occlusion)
+    if (AudioEngine::Instance().IsInitialized()) {
+        AudioEngine::Instance().Update(deltaTime);
+    }
+#endif
 
     // Update active scene
     if (m_activeScene) {
@@ -241,6 +262,16 @@ void Engine::SetActiveScene(std::unique_ptr<Scene> scene) {
     m_activeScene = std::move(scene);
 }
 
+#ifdef NOVA_AUDIO_ENABLED
+AudioEngine& Engine::GetAudio() noexcept {
+    return AudioEngine::Instance();
+}
+
+const AudioEngine& Engine::GetAudio() const noexcept {
+    return AudioEngine::Instance();
+}
+#endif
+
 void Engine::Shutdown() {
     spdlog::info("Shutting down engine");
 
@@ -250,6 +281,14 @@ void Engine::Shutdown() {
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
+
+#ifdef NOVA_AUDIO_ENABLED
+    // Shutdown audio system
+    if (AudioEngine::Instance().IsInitialized()) {
+        AudioEngine::Instance().Shutdown();
+        spdlog::info("Audio system shutdown");
+    }
+#endif
 
     // Cleanup subsystems in reverse initialization order
     m_activeScene.reset();

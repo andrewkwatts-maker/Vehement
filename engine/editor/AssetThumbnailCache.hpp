@@ -244,6 +244,36 @@ private:
     std::shared_ptr<Texture> CreatePlaceholderTexture(int size);
 
     /**
+     * @brief Create all typed placeholder textures
+     */
+    void CreatePlaceholderTextures();
+
+    /**
+     * @brief Create typed placeholder for specific asset type
+     */
+    std::shared_ptr<Texture> CreateTypedPlaceholder(ThumbnailAssetType type, int size);
+
+    /**
+     * @brief Get placeholder for specific asset type
+     */
+    std::shared_ptr<Texture> GetPlaceholderForType(ThumbnailAssetType type, int size);
+
+    /**
+     * @brief Render material as sphere preview
+     */
+    bool RenderMaterialThumbnail(const std::string& assetPath, const std::string& outputPath, int size);
+
+    /**
+     * @brief Render model to file (helper for material preview)
+     */
+    bool RenderModelToFile(const SDFModel& model, const std::string& outputPath, int size);
+
+    /**
+     * @brief Create placeholder thumbnail for unknown types
+     */
+    bool CreateUnknownTypeThumbnail(const std::string& outputPath, int size);
+
+    /**
      * @brief Load cache manifest from disk
      */
     bool LoadCacheManifest();
@@ -282,6 +312,7 @@ private:
     // Configuration
     std::vector<int> m_sizePresets{64, 128, 256, 512};
     std::shared_ptr<Texture> m_placeholderTexture;
+    std::unordered_map<ThumbnailAssetType, std::shared_ptr<Texture>> m_placeholderTextures;
 
     // File monitoring
     std::unordered_map<std::string, uint64_t> m_watchedFiles;

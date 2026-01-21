@@ -973,7 +973,8 @@ void ViewportControls::FocusOnObject(SceneNode* node, bool frameSelection) {
         // For now, use a default size
         glm::vec3 halfSize{1.0f, 1.0f, 1.0f};
         if (node->GetMesh()) {
-            // TODO: Get actual mesh bounds
+            // FUTURE: Get actual mesh bounds from Mesh::GetBoundingBox()
+            // halfSize = node->GetMesh()->GetBoundingBox().GetHalfSize();
         }
 
         FrameBounds(center - halfSize, center + halfSize, 1.5f);

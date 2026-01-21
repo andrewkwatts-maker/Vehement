@@ -4,8 +4,10 @@
 #include "AnimationLayer.hpp"
 #include <string>
 #include <vector>
+#include <span>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 
 namespace Nova {

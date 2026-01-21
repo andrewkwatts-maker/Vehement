@@ -106,6 +106,125 @@ struct EventBinding {
           createdAt(std::chrono::system_clock::now()),
           modifiedAt(std::chrono::system_clock::now()) {}
 
+    // Copy constructor - needed because of atomic member
+    EventBinding(const EventBinding& other)
+        : id(other.id), name(other.name), description(other.description),
+          category(other.category), condition(other.condition),
+          callbackType(other.callbackType), pythonScript(other.pythonScript),
+          pythonFile(other.pythonFile), pythonModule(other.pythonModule),
+          pythonFunction(other.pythonFunction), emitEventType(other.emitEventType),
+          emitEventData(other.emitEventData), command(other.command),
+          commandArgs(other.commandArgs), nativeCallback(other.nativeCallback),
+          parameters(other.parameters), enabled(other.enabled), priority(other.priority),
+          async(other.async), delay(other.delay), cooldown(other.cooldown),
+          maxExecutions(other.maxExecutions), oneShot(other.oneShot),
+          logExecution(other.logExecution), breakOnExecute(other.breakOnExecute),
+          author(other.author), version(other.version), tags(other.tags),
+          createdAt(other.createdAt), modifiedAt(other.modifiedAt),
+          executionCount(other.executionCount.load()),
+          lastExecutionTime(other.lastExecutionTime),
+          lastError(other.lastError), hasError(other.hasError) {}
+
+    // Copy assignment - needed because of atomic member
+    EventBinding& operator=(const EventBinding& other) {
+        if (this != &other) {
+            id = other.id;
+            name = other.name;
+            description = other.description;
+            category = other.category;
+            condition = other.condition;
+            callbackType = other.callbackType;
+            pythonScript = other.pythonScript;
+            pythonFile = other.pythonFile;
+            pythonModule = other.pythonModule;
+            pythonFunction = other.pythonFunction;
+            emitEventType = other.emitEventType;
+            emitEventData = other.emitEventData;
+            command = other.command;
+            commandArgs = other.commandArgs;
+            nativeCallback = other.nativeCallback;
+            parameters = other.parameters;
+            enabled = other.enabled;
+            priority = other.priority;
+            async = other.async;
+            delay = other.delay;
+            cooldown = other.cooldown;
+            maxExecutions = other.maxExecutions;
+            oneShot = other.oneShot;
+            logExecution = other.logExecution;
+            breakOnExecute = other.breakOnExecute;
+            author = other.author;
+            version = other.version;
+            tags = other.tags;
+            createdAt = other.createdAt;
+            modifiedAt = other.modifiedAt;
+            executionCount.store(other.executionCount.load());
+            lastExecutionTime = other.lastExecutionTime;
+            lastError = other.lastError;
+            hasError = other.hasError;
+        }
+        return *this;
+    }
+
+    // Move constructor - custom because of atomic member
+    EventBinding(EventBinding&& other) noexcept
+        : id(std::move(other.id)), name(std::move(other.name)),
+          description(std::move(other.description)), category(std::move(other.category)),
+          condition(std::move(other.condition)), callbackType(other.callbackType),
+          pythonScript(std::move(other.pythonScript)), pythonFile(std::move(other.pythonFile)),
+          pythonModule(std::move(other.pythonModule)), pythonFunction(std::move(other.pythonFunction)),
+          emitEventType(std::move(other.emitEventType)), emitEventData(std::move(other.emitEventData)),
+          command(std::move(other.command)), commandArgs(std::move(other.commandArgs)),
+          nativeCallback(std::move(other.nativeCallback)), parameters(std::move(other.parameters)),
+          enabled(other.enabled), priority(other.priority), async(other.async),
+          delay(other.delay), cooldown(other.cooldown), maxExecutions(other.maxExecutions),
+          oneShot(other.oneShot), logExecution(other.logExecution), breakOnExecute(other.breakOnExecute),
+          author(std::move(other.author)), version(std::move(other.version)), tags(std::move(other.tags)),
+          createdAt(other.createdAt), modifiedAt(other.modifiedAt),
+          executionCount(other.executionCount.load()), lastExecutionTime(other.lastExecutionTime),
+          lastError(std::move(other.lastError)), hasError(other.hasError) {}
+
+    // Move assignment - custom because of atomic member
+    EventBinding& operator=(EventBinding&& other) noexcept {
+        if (this != &other) {
+            id = std::move(other.id);
+            name = std::move(other.name);
+            description = std::move(other.description);
+            category = std::move(other.category);
+            condition = std::move(other.condition);
+            callbackType = other.callbackType;
+            pythonScript = std::move(other.pythonScript);
+            pythonFile = std::move(other.pythonFile);
+            pythonModule = std::move(other.pythonModule);
+            pythonFunction = std::move(other.pythonFunction);
+            emitEventType = std::move(other.emitEventType);
+            emitEventData = std::move(other.emitEventData);
+            command = std::move(other.command);
+            commandArgs = std::move(other.commandArgs);
+            nativeCallback = std::move(other.nativeCallback);
+            parameters = std::move(other.parameters);
+            enabled = other.enabled;
+            priority = other.priority;
+            async = other.async;
+            delay = other.delay;
+            cooldown = other.cooldown;
+            maxExecutions = other.maxExecutions;
+            oneShot = other.oneShot;
+            logExecution = other.logExecution;
+            breakOnExecute = other.breakOnExecute;
+            author = std::move(other.author);
+            version = std::move(other.version);
+            tags = std::move(other.tags);
+            createdAt = other.createdAt;
+            modifiedAt = other.modifiedAt;
+            executionCount.store(other.executionCount.load());
+            lastExecutionTime = other.lastExecutionTime;
+            lastError = std::move(other.lastError);
+            hasError = other.hasError;
+        }
+        return *this;
+    }
+
     // =========================================================================
     // Builder Pattern
     // =========================================================================

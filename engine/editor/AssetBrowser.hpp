@@ -228,6 +228,62 @@ struct ExternalFileDrop {
 };
 
 // =============================================================================
+// AI Asset Generation Settings
+// =============================================================================
+
+/**
+ * @brief Settings for AI-powered asset generation
+ */
+struct AIGenerationSettings {
+    // Text prompt
+    std::string assetDescription;       ///< Text description of asset to generate
+
+    // References
+    std::string referenceImagePath;     ///< Optional reference concept art
+
+    // Asset configuration
+    AssetType targetAssetType = AssetType::SDFModel;  ///< Type of asset to generate
+
+    // Quality settings
+    enum class GenerationQuality {
+        Draft,      ///< Fast generation with basic quality
+        Standard,   ///< Balanced quality and generation time
+        High,       ///< High quality with longer generation time
+        Ultra       ///< Maximum quality for important assets
+    };
+    GenerationQuality quality = GenerationQuality::Standard;
+
+    // Model-specific settings
+    struct SDFModelParams {
+        float detailLevel = 0.5f;       ///< Detail level (0.0-1.0)
+        float complexity = 0.5f;        ///< Shape complexity (0.0-1.0)
+        bool enableSmoothing = true;    ///< Apply smoothing to generated model
+    };
+
+    struct MaterialParams {
+        float metallicBias = 0.5f;      ///< Metallic to diffuse bias
+        float roughnessBias = 0.5f;     ///< Roughness level
+        bool enablePBR = true;          ///< Use PBR textures
+    };
+
+    struct TextureParams {
+        int resolution = 2048;          ///< Output texture resolution (512-4096)
+        bool generateNormals = true;    ///< Auto-generate normal maps
+        bool generateRoughness = true;  ///< Auto-generate roughness maps
+        bool generateMetallic = true;   ///< Auto-generate metallic maps
+    };
+
+    SDFModelParams sdfParams;
+    MaterialParams materialParams;
+    TextureParams textureParams;
+
+    // Generation state
+    bool isGenerating = false;          ///< Currently generating asset
+    float generationProgress = 0.0f;    ///< Progress 0.0-1.0
+    std::string generationStatus;       ///< Current status message
+};
+
+// =============================================================================
 // Callbacks
 // =============================================================================
 
@@ -614,6 +670,37 @@ public:
     [[nodiscard]] ImportSettings& GetImportSettings() { return m_importSettings; }
 
     // =========================================================================
+    // AI Asset Generation
+    // =========================================================================
+
+    /**
+     * @brief Show the AI-powered asset generation dialog
+     *
+     * Opens a dialog that allows users to generate new assets using AI,
+     * including:
+     * - Text descriptions for asset generation
+     * - Reference concept art uploads
+     * - Asset type selection (SDF Model, Material, Texture, etc.)
+     * - Quality and parameter configuration
+     */
+    void ShowAIGenerateAssetDialog();
+
+    /**
+     * @brief Check if AI generate dialog is currently visible
+     */
+    [[nodiscard]] bool IsAIGenerateDialogVisible() const { return m_showAIGenerateDialog; }
+
+    /**
+     * @brief Close the AI generate dialog
+     */
+    void CloseAIGenerateAssetDialog() { m_showAIGenerateDialog = false; }
+
+    /**
+     * @brief Get current AI generation settings
+     */
+    [[nodiscard]] AIGenerationSettings& GetAIGenerationSettings() { return m_aiGenerationSettings; }
+
+    // =========================================================================
     // Integration
     // =========================================================================
 
@@ -674,6 +761,7 @@ private:
     void RenderImportDialog();
     void RenderRenamePopup();
     void RenderSearchResults();
+    void RenderAIGenerateAssetDialog();
 
     // =========================================================================
     // Directory Scanning
@@ -823,6 +911,12 @@ private:
     bool m_showImportDialog = false;
     ImportSettings m_importSettings;
     std::vector<std::string> m_pendingImports;
+
+    // AI Asset Generation
+    bool m_showAIGenerateDialog = false;
+    AIGenerationSettings m_aiGenerationSettings;
+    char m_aiPromptBuffer[2048] = "";           ///< Text input buffer for asset description
+    char m_aiReferenceImageBuffer[512] = "";    ///< Buffer for reference image path
 
     // External integrations
     AssetThumbnailCache* m_thumbnailCache = nullptr;

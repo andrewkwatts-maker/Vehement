@@ -123,3 +123,61 @@ This was added to [CMakeLists.txt](CMakeLists.txt) after the "# Compiler warning
 - ✅ Fixed AnimationLayer redefinition (renamed to TimelineAnimationLayer)
 - ✅ Fixed Logger.hpp ios::openmode operator
 - ✅ Switched ImGui to docking branch for DockSpace/SetNextWindowViewport
+
+## Audio System (2026-01-18)
+
+### Overview
+
+The audio system uses OpenAL-soft for 3D positional audio, libsndfile for audio file loading, and libvorbis for OGG support.
+
+### Enabling Audio
+
+Audio is **disabled by default** to avoid dependency complexity. To enable:
+
+```bash
+cmake -DNOVA_ENABLE_AUDIO=ON ..
+```
+
+### Dependencies (via FetchContent)
+
+When `NOVA_ENABLE_AUDIO=ON`, the following are automatically fetched:
+- **OpenAL-soft 1.23.1** - Cross-platform 3D audio API
+- **libsndfile 1.2.2** - Audio file loading (WAV, OGG, FLAC, etc.)
+- **libvorbis 1.3.7** - OGG Vorbis decoding
+- **libogg 1.3.5** - OGG container format (vorbis dependency)
+
+### Files
+
+- `engine/audio/AudioEngine.hpp` - Full audio API (AudioEngine, AudioSource, AudioBuffer, etc.)
+- `engine/audio/AudioEngine.cpp` - OpenAL implementation (used when NOVA_ENABLE_AUDIO=ON)
+- `engine/audio/AudioEngineStub.cpp` - Stub implementation (used when NOVA_ENABLE_AUDIO=OFF)
+- `engine/audio/SoundBank.hpp` - Sound variation system with JSON configuration
+
+### Stub Implementation
+
+When audio is disabled, a stub implementation is compiled that:
+- Provides the same API as the real implementation
+- Logs warnings when audio functions are called
+- Returns appropriate default values
+- Allows the engine to compile and run without audio support
+
+### Usage Example
+
+```cpp
+#include "audio/AudioEngine.hpp"
+
+auto& audio = Nova::AudioEngine::Instance();
+audio.Initialize();
+
+// Load a sound
+auto buffer = audio.LoadSound("explosion.ogg");
+
+// Play 3D sound
+auto source = audio.Play3D(buffer, position);
+
+// Update listener (from camera)
+audio.SetListenerTransform(cameraPos, cameraForward, cameraUp);
+
+// Update each frame
+audio.Update(deltaTime);
+```

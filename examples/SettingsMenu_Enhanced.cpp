@@ -1463,7 +1463,15 @@ void SettingsMenu::ApplyAudioSettings() {
     config.Set("audio.music_mute", m_audio.musicMute);
     config.Set("audio.sfx_mute", m_audio.sfxMute);
 
-    // TODO: Apply to actual audio system when available
+    // Apply to audio system if available
+    if (m_audioSystem) {
+        m_audioSystem->SetMasterVolume(m_audio.masterMute ? 0.0f : m_audio.masterVolume);
+        m_audioSystem->SetMusicVolume(m_audio.musicMute ? 0.0f : m_audio.musicVolume);
+        m_audioSystem->SetSFXVolume(m_audio.sfxMute ? 0.0f : m_audio.sfxVolume);
+        m_audioSystem->SetAmbientVolume(m_audio.ambientVolume);
+        m_audioSystem->SetVoiceVolume(m_audio.voiceVolume);
+    }
+
     spdlog::info("Audio settings applied - Master: {:.2f} (mute: {}), Music: {:.2f} (mute: {}), SFX: {:.2f} (mute: {})",
                 m_audio.masterVolume, m_audio.masterMute,
                 m_audio.musicVolume, m_audio.musicMute,

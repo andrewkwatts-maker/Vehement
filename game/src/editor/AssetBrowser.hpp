@@ -12,9 +12,11 @@ class Editor;
  * @brief Asset browser panel
  *
  * Browse and preview assets:
- * - Directory tree view
- * - Thumbnail previews
- * - Drag-drop support
+ * - Directory tree view with breadcrumb navigation
+ * - Thumbnail previews with grid/list view modes
+ * - Drag-drop support (ASSET_PATH payload)
+ * - Right-click context menu
+ * - Search/filter by name (case-insensitive)
  * - Import assets
  */
 class AssetBrowser {
@@ -27,16 +29,36 @@ public:
     void SetRootPath(const std::string& path);
     void Refresh();
 
+    // Navigation
+    void NavigateTo(const std::string& path);
+    void NavigateUp();
+    void NavigateBack();
+
+    // Asset operations
+    void OpenAsset(const std::string& path);
+    void DeleteAsset(const std::string& path);
+    void StartRename(const std::string& path);
+    void ShowInExplorer(const std::string& path);
+    void CopyPathToClipboard(const std::string& path);
+
+    // Callbacks
     std::function<void(const std::string&)> OnAssetSelected;
     std::function<void(const std::string&)> OnAssetDoubleClicked;
+    std::function<void(const std::string&)> OnAssetDeleted;
+    std::function<void(const std::string&, const std::string&)> OnAssetRenamed;
 
 private:
     void RenderToolbar();
+    void RenderBreadcrumbs();
     void RenderDirectoryTree();
     void RenderFileGrid();
+    void RenderContextMenu(const std::string& assetPath, const std::string& filename, bool isDirectory);
+    void RenderRenamePopup();
+    void RenderDeleteConfirmation();
     void RenderPreview();
 
     void ScanDirectory(const std::string& path);
+    bool MatchesFilter(const std::string& name) const;
 
     Editor* m_editor = nullptr;
 
@@ -58,6 +80,20 @@ private:
     bool m_showGrid = true;
     int m_thumbnailSize = 64;
     std::string m_searchFilter;
+    char m_searchBuffer[256] = "";
+
+    // Rename state
+    bool m_showRenamePopup = false;
+    std::string m_renamingPath;
+    char m_renameBuffer[256] = "";
+
+    // Delete confirmation state
+    bool m_showDeleteConfirmation = false;
+    std::string m_pendingDeletePath;
+
+    // New folder state
+    bool m_showNewFolderPopup = false;
+    char m_newFolderBuffer[256] = "";
 };
 
 } // namespace Vehement

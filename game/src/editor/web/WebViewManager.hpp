@@ -9,6 +9,10 @@
 #include <queue>
 #include <filesystem>
 #include <chrono>
+#include <cstdint>
+
+// Forward declare GLuint to avoid including OpenGL headers in header
+using GLuint = unsigned int;
 
 namespace Vehement {
 namespace WebEditor {
@@ -197,6 +201,12 @@ public:
     [[nodiscard]] const std::string& GetTitle() const { return m_config.title; }
     [[nodiscard]] const WebViewConfig& GetConfig() const { return m_config; }
 
+    /**
+     * @brief Get native webview handle (platform-specific)
+     * @return Platform-specific handle or nullptr if using fallback
+     */
+    [[nodiscard]] void* GetNativeHandle() const { return m_nativeHandle; }
+
     // =========================================================================
     // Message Callbacks
     // =========================================================================
@@ -215,16 +225,24 @@ private:
 
     WebViewConfig m_config;
     std::string m_currentSource;
+    std::string m_loadedHtml;      // Loaded HTML content for fallback rendering
+    std::string m_baseUrl;          // Base URL for relative resources
 
     // Native webview handle (platform-specific)
     void* m_nativeHandle = nullptr;
     void* m_textureId = nullptr;
+    GLuint m_glTextureId = 0;       // OpenGL texture ID
 
     // State
     bool m_focused = false;
     bool m_hotReloadEnabled = false;
     float m_hotReloadCheckTimer = 0.0f;
     static constexpr float HOT_RELOAD_CHECK_INTERVAL = 0.5f;
+
+    // Input state for fallback renderer
+    int m_lastMouseX = 0;
+    int m_lastMouseY = 0;
+    uint32_t m_mouseButtonState = 0;  // Bitmask of pressed buttons
 
     // File modification times for hot-reload
     std::unordered_map<std::string, std::filesystem::file_time_type> m_watchedFiles;

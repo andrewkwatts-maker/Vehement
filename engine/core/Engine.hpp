@@ -76,6 +76,7 @@ class Time;
 class Renderer;
 class InputManager;
 class Scene;
+class AudioEngine;
 
 /**
  * @brief Main engine class - orchestrates all subsystems
@@ -165,6 +166,14 @@ public:
 
     [[nodiscard]] InputManager& GetInput() noexcept { return *m_input; }
     [[nodiscard]] const InputManager& GetInput() const noexcept { return *m_input; }
+
+#ifdef NOVA_AUDIO_ENABLED
+    [[nodiscard]] AudioEngine& GetAudio() noexcept;
+    [[nodiscard]] const AudioEngine& GetAudio() const noexcept;
+    [[nodiscard]] bool IsAudioEnabled() const noexcept { return true; }
+#else
+    [[nodiscard]] bool IsAudioEnabled() const noexcept { return false; }
+#endif
 
     // Scene management - may return nullptr if no scene is active
     [[nodiscard]] Scene* GetActiveScene() noexcept { return m_activeScene.get(); }

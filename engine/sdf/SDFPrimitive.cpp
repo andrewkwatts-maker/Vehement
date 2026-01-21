@@ -21,11 +21,12 @@ glm::mat4 SDFTransform::ToMatrix() const {
 }
 
 glm::mat4 SDFTransform::ToInverseMatrix() const {
-    glm::mat4 mat = glm::mat4(1.0f);
-    mat = glm::scale(mat, 1.0f / scale);
-    mat = mat * glm::toMat4(glm::conjugate(rotation));
-    mat = glm::translate(mat, -position);
-    return mat;
+    // For TRS transform (T * R * S), inverse is S^-1 * R^-1 * T^-1
+    // Applied in correct order: first undo translation, then rotation, then scale
+    glm::mat4 invT = glm::translate(glm::mat4(1.0f), -position);
+    glm::mat4 invR = glm::toMat4(glm::conjugate(rotation));
+    glm::mat4 invS = glm::scale(glm::mat4(1.0f), 1.0f / scale);
+    return invS * invR * invT;
 }
 
 glm::vec3 SDFTransform::TransformPoint(const glm::vec3& point) const {

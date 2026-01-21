@@ -104,15 +104,53 @@ MeshToSDFConverter::MeshToSDFConverter() = default;
 MeshToSDFConverter::~MeshToSDFConverter() = default;
 
 ConversionResult MeshToSDFConverter::Convert(const Mesh& mesh, const ConversionSettings& settings) {
-    // Extract vertex and index data from mesh
-    // Note: In a real implementation, we'd need access to the mesh's internal data
-    // For now, we'll use the mesh bounds to create a simple approximation
+    // Extract geometry from mesh bounds
+    // Note: The Mesh class does not expose vertex/index data directly.
+    // We approximate using the bounding box to create 8 vertices (corners)
+    // and 12 triangles (2 per face). For accurate SDF conversion,
+    // extend Mesh class to expose GetVertices() and GetIndices() methods.
 
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
-    // TODO: Extract actual geometry from mesh
-    // This would require mesh to expose its vertex/index data
+    // Get mesh bounds
+    glm::vec3 boundsMin = mesh.GetBoundsMin();
+    glm::vec3 boundsMax = mesh.GetBoundsMax();
+
+    // If bounds are degenerate, return empty result
+    if (boundsMin == boundsMax) {
+        ConversionResult result;
+        result.success = false;
+        result.errorMessage = "Mesh has degenerate bounds";
+        return result;
+    }
+
+    // Create 8 corner vertices of the bounding box
+    vertices.resize(8);
+    vertices[0].position = glm::vec3(boundsMin.x, boundsMin.y, boundsMin.z);
+    vertices[1].position = glm::vec3(boundsMax.x, boundsMin.y, boundsMin.z);
+    vertices[2].position = glm::vec3(boundsMax.x, boundsMax.y, boundsMin.z);
+    vertices[3].position = glm::vec3(boundsMin.x, boundsMax.y, boundsMin.z);
+    vertices[4].position = glm::vec3(boundsMin.x, boundsMin.y, boundsMax.z);
+    vertices[5].position = glm::vec3(boundsMax.x, boundsMin.y, boundsMax.z);
+    vertices[6].position = glm::vec3(boundsMax.x, boundsMax.y, boundsMax.z);
+    vertices[7].position = glm::vec3(boundsMin.x, boundsMax.y, boundsMax.z);
+
+    // Create 12 triangles (2 per face, 6 faces)
+    indices = {
+        // Front face
+        0, 1, 2, 0, 2, 3,
+        // Back face
+        5, 4, 7, 5, 7, 6,
+        // Left face
+        4, 0, 3, 4, 3, 7,
+        // Right face
+        1, 5, 6, 1, 6, 2,
+        // Top face
+        3, 2, 6, 3, 6, 7,
+        // Bottom face
+        4, 5, 1, 4, 1, 0
+    };
 
     return Convert(vertices, indices, settings);
 }
@@ -769,12 +807,20 @@ void MeshToSDFConverter::ComputePCA(
     covariance[2][0] = covariance[0][2];
     covariance[2][1] = covariance[1][2];
 
-    // Simplified: use basis vectors (full eigenvalue decomposition would be better)
+    // OBB fitting stub: Use axis-aligned basis vectors as approximation
+    // For proper OBB fitting, implement eigenvalue decomposition:
+    // 1. Compute covariance matrix (done above)
+    // 2. Find eigenvalues via power iteration or Jacobi method
+    // 3. Sort eigenvalues by magnitude (largest = primary axis)
+    // 4. Eigenvectors become the OBB axes
+    //
+    // Libraries that can help: Eigen, GLM extensions, or custom Jacobi solver
+
+    // For now, use simplified axis-aligned approach
+    // which works well for axis-aligned meshes
     outAxis1 = glm::vec3(1.0f, 0.0f, 0.0f);
     outAxis2 = glm::vec3(0.0f, 1.0f, 0.0f);
     outAxis3 = glm::vec3(0.0f, 0.0f, 1.0f);
-
-    // TODO: Implement proper eigenvalue decomposition for better OBB fitting
 }
 
 // ============================================================================
@@ -785,8 +831,22 @@ ConversionResult MeshToSDFConverter::ConvertConvexDecomposition(
     const std::vector<Triangle>& triangles,
     const ConversionSettings& settings)
 {
-    // TODO: Implement convex decomposition using V-HACD or similar
-    // For now, fallback to primitive fitting
+    // Convex decomposition stub: Falls back to primitive fitting
+    //
+    // For proper convex decomposition, consider:
+    // 1. V-HACD (Volumetric Hierarchical Approximate Convex Decomposition)
+    //    - Most robust, handles complex meshes well
+    //    - Available at: https://github.com/kmammou/v-hacd
+    // 2. HACD (original non-volumetric version)
+    // 3. CoACD (Approximate Convex Decomposition for 3D Meshes)
+    //
+    // Implementation steps:
+    // 1. Build convex hull of entire mesh
+    // 2. Recursively split at concave regions
+    // 3. Stop when all parts are nearly convex (concavity < threshold)
+    // 4. Convert each convex hull to SDF primitive (box or convex mesh)
+    //
+    // Fallback to primitive fitting for now
     return ConvertPrimitiveFitting(triangles, settings);
 }
 
@@ -832,9 +892,28 @@ void MeshToSDFConverter::BuildCSGTree(
     std::vector<PrimitiveFitResult>& primitives,
     const ConversionSettings& settings)
 {
-    // Set CSG operations based on primitive overlap
-    // For now, just use union for all
-    // TODO: Detect subtractions and intersections based on geometry
+    // CSG detection stub: Currently treats all primitives as union
+    //
+    // For proper CSG detection, implement:
+    // 1. Analyze primitive overlaps using SDF evaluation
+    // 2. For each pair of overlapping primitives:
+    //    - If one is mostly inside another: likely subtraction (hole/cavity)
+    //    - If overlap is partial: check surface normals for facing direction
+    //    - If normals point inward at overlap: subtraction candidate
+    //    - If normals point outward: union candidate
+    // 3. Check mesh topology for holes (genus > 0 suggests subtraction)
+    // 4. Use ray casting to detect interior/exterior relationship
+    //
+    // For now, all primitives use implicit union operation
+    // (SDFPrimitive children are combined via smooth union by default)
+    //
+    // Note: To store CSG operation per primitive, extend PrimitiveFitResult
+    // with a csgOperation field (type CSGOperation from SDFPrimitive.hpp),
+    // then use it in ToPrimitive() to call SetCSGOperation() on the result.
+
+    // Currently no-op: primitives default to union when added as children
+    (void)primitives;  // Suppress unused parameter warning
+    (void)settings;
 }
 
 } // namespace Nova

@@ -71,8 +71,9 @@ void DataBinding::Bind(void* sourceObject, const Reflect::TypeInfo* sourceType, 
     // Initial update
     UpdateTarget();
 
-    // TODO: Subscribe to property changes via reflection
-    // This would require the Observable pattern to be integrated into the reflection system
+    // NOTE: Property change subscription is deferred until the reflection system is complete.
+    // This would require the Observable pattern to be integrated into the reflection system,
+    // allowing automatic updates when source properties change.
 }
 
 void DataBinding::Unbind() {
@@ -129,8 +130,12 @@ void DataBinding::UpdateTarget() {
             }
 
             m_targetWidget->MarkDirty();
+        } else {
+            // Navigate to nested object for next path segment
+            // Note: Nested object navigation requires TypeInfo lookup by typeName
+            // For now, only single-level property binding is supported
+            return; // Nested navigation not yet implemented
         }
-        // TODO: Handle nested object navigation
     }
 }
 
@@ -139,7 +144,49 @@ void DataBinding::UpdateSource() {
         return;
     }
 
-    // TODO: Implement source update for two-way binding
+    if (!m_sourceObject || !m_sourceType || !m_targetWidget) {
+        return;
+    }
+
+    // Get the current value from the widget
+    std::any widgetValue;
+    if (m_targetProperty == "text") {
+        widgetValue = m_targetWidget->GetText();
+    } else if (m_targetProperty == "visible") {
+        widgetValue = m_targetWidget->GetStyle().visible;
+    } else if (m_targetProperty == "enabled") {
+        widgetValue = m_targetWidget->IsEnabled();
+    } else {
+        return; // Unsupported target property
+    }
+
+    // Apply converter if present
+    if (m_toSourceConverter) {
+        widgetValue = m_toSourceConverter(widgetValue);
+    }
+
+    // Navigate the property path to find the final property
+    PropertyPath path = PropertyPath::Parse(m_sourcePath);
+    void* currentObject = m_sourceObject;
+    const Reflect::TypeInfo* currentType = m_sourceType;
+
+    for (size_t i = 0; i < path.segments.size(); ++i) {
+        const auto* propInfo = currentType->FindProperty(path.segments[i]);
+        if (!propInfo) {
+            return;
+        }
+
+        if (i == path.segments.size() - 1) {
+            // Final property - set the value
+            if (propInfo->setterAny) {
+                propInfo->setterAny(currentObject, widgetValue);
+            }
+        } else {
+            // Navigate to nested object
+            // Note: Nested object navigation not yet implemented
+            return;
+        }
+    }
 }
 
 // =============================================================================
@@ -338,12 +385,48 @@ std::vector<WidgetPtr> UIWidget::QuerySelectorAll(const std::string& selector) {
 
 // Style
 void UIWidget::SetStyleProperty(const std::string& property, const std::any& value) {
-    // TODO: Implement individual style property setting
+    if (property == "width" && value.type() == typeid(Length)) {
+        m_style.width = std::any_cast<Length>(value);
+    } else if (property == "height" && value.type() == typeid(Length)) {
+        m_style.height = std::any_cast<Length>(value);
+    } else if (property == "backgroundColor" && value.type() == typeid(glm::vec4)) {
+        m_style.backgroundColor = std::any_cast<glm::vec4>(value);
+    } else if (property == "color" && value.type() == typeid(glm::vec4)) {
+        m_style.color = std::any_cast<glm::vec4>(value);
+    } else if (property == "visible" && value.type() == typeid(bool)) {
+        m_style.visible = std::any_cast<bool>(value);
+    } else if (property == "display" && value.type() == typeid(Display)) {
+        m_style.display = std::any_cast<Display>(value);
+    } else if (property == "gap" && value.type() == typeid(float)) {
+        m_style.gap = std::any_cast<float>(value);
+    } else if (property == "fontSize" && value.type() == typeid(float)) {
+        m_style.fontSize = std::any_cast<float>(value);
+    } else if (property == "flexDirection" && value.type() == typeid(LayoutDirection)) {
+        m_style.flexDirection = std::any_cast<LayoutDirection>(value);
+    }
     MarkDirty();
 }
 
 std::any UIWidget::GetStyleProperty(const std::string& property) const {
-    // TODO: Implement individual style property getting
+    if (property == "width") {
+        return m_style.width;
+    } else if (property == "height") {
+        return m_style.height;
+    } else if (property == "backgroundColor") {
+        return m_style.backgroundColor;
+    } else if (property == "color") {
+        return m_style.color;
+    } else if (property == "visible") {
+        return m_style.visible;
+    } else if (property == "display") {
+        return m_style.display;
+    } else if (property == "gap") {
+        return m_style.gap;
+    } else if (property == "fontSize") {
+        return m_style.fontSize;
+    } else if (property == "flexDirection") {
+        return m_style.flexDirection;
+    }
     return {};
 }
 
@@ -453,8 +536,40 @@ void UIWidget::SetInnerHTML(const std::string& html) {
 }
 
 std::string UIWidget::GetInnerHTML() const {
-    // TODO: Serialize children back to HTML
-    return "";
+    std::string html;
+    for (const auto& child : m_children) {
+        // Opening tag
+        html += "<" + child->GetTagName();
+
+        // ID attribute
+        if (!child->GetId().empty()) {
+            html += " id=\"" + child->GetId() + "\"";
+        }
+
+        // Class attribute
+        if (!child->GetClasses().empty()) {
+            html += " class=\"";
+            for (size_t i = 0; i < child->GetClasses().size(); ++i) {
+                if (i > 0) html += " ";
+                html += child->GetClasses()[i];
+            }
+            html += "\"";
+        }
+
+        html += ">";
+
+        // Text content
+        if (!child->GetText().empty()) {
+            html += child->GetText();
+        }
+
+        // Recursively serialize children
+        html += child->GetInnerHTML();
+
+        // Closing tag
+        html += "</" + child->GetTagName() + ">";
+    }
+    return html;
 }
 
 // Events

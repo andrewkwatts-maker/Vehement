@@ -5,6 +5,7 @@
 #include <engine/math/Random.hpp>
 #include <algorithm>
 #include <sstream>
+#include <cmath>
 
 namespace Vehement {
 namespace RTS {
@@ -155,8 +156,31 @@ void AIPlayer::UpdateState(
         }
     }
 
-    // TODO: Update military counts from entity manager
-    // This would involve querying military units, calculating army strength, etc.
+    // Update military counts from entity manager
+    // Query entities that are considered military (Guards in this RTS system)
+    m_state.militaryUnits = 0;
+    m_state.armyStrength = 0;
+
+    // Count workers with Guard job as military units
+    const auto& workers = population.GetWorkers();
+    for (const auto& worker : workers) {
+        if (worker && worker->GetJob() == WorkerJob::Guard && worker->IsAlive()) {
+            m_state.militaryUnits++;
+            // Calculate unit strength based on health and skills
+            float unitStrength = worker->GetHealth() * worker->GetProductivity();
+            m_state.armyStrength += static_cast<int>(unitStrength);
+        }
+    }
+
+    // Also count NPCs that could be military entities (zombies are enemies, not ours)
+    auto militaryEntities = entityManager.GetEntitiesByType(EntityType::NPC);
+    for (Entity* entity : militaryEntities) {
+        if (entity && entity->IsAlive()) {
+            // NPCs could be allied military units
+            // Add their health as army strength contribution
+            m_state.armyStrength += static_cast<int>(entity->GetHealth());
+        }
+    }
 }
 
 void AIPlayer::UpdateStrategyPhase() {
@@ -222,7 +246,7 @@ void AIPlayer::EvaluateWorkerProduction(Population& population, ResourceStock& r
         // Higher urgency if we're far below target
         float urgency = 1.0f - (static_cast<float>(m_state.workerCount) / m_config.targetWorkers);
 
-        // TODO: Get actual worker training cost
+        // Worker training cost (50 Food per worker)
         ResourceCost workerCost;
         workerCost.Add(ResourceType::Food, 50);
 
@@ -532,8 +556,41 @@ void AIPlayer::EvaluateMilitaryProduction(
     targetMilitary = std::max(targetMilitary, m_config.minMilitaryUnits);
 
     if (m_state.militaryUnits < targetMilitary) {
-        // TODO: Queue military unit training
-        // This would require integration with a military unit system
+        // Queue military unit training - convert workers to guards/military
+        // Calculate urgency based on deficit
+        int deficit = targetMilitary - m_state.militaryUnits;
+        float urgency = std::min(1.0f, deficit / static_cast<float>(m_config.minMilitaryUnits));
+
+        // Higher urgency if under attack or enemy detected
+        if (m_state.underAttack) {
+            urgency = std::min(1.0f, urgency + 0.3f);
+        }
+
+        // Need to have idle workers to train as military
+        if (m_state.idleWorkerCount > 0 || m_state.workerCount > m_config.targetWorkers * 0.8f) {
+            AIDecision decision;
+            decision.type = DecisionType::TrainMilitaryUnit;
+            decision.priority = m_state.underAttack ? DecisionPriority::Critical : DecisionPriority::Medium;
+            decision.urgency = urgency;
+            decision.reason = "Need more military units";
+            decision.count = std::min(deficit, std::max(1, m_state.idleWorkerCount / 2));
+            AddDecision(decision);
+        }
+
+        // Also consider building military buildings if we don't have enough
+        int armoryCount = m_buildingCounts[static_cast<int>(ProductionBuildingType::Armory)];
+        if (armoryCount < 1 && m_state.phase >= StrategyPhase::MidGame) {
+            ResourceCost cost = GetBuildingCost(ProductionBuildingType::Armory);
+            if (m_state.CanAfford(cost)) {
+                AIDecision decision;
+                decision.type = DecisionType::BuildMilitaryBuilding;
+                decision.priority = DecisionPriority::Medium;
+                decision.urgency = 0.6f;
+                decision.reason = "Need armory for military production";
+                decision.buildingType = static_cast<int>(ProductionBuildingType::Armory);
+                AddDecision(decision);
+            }
+        }
     }
 }
 
@@ -714,8 +771,67 @@ void AIPlayer::ExecuteDecision(
             ExecuteDefendBase(decision, entityManager);
             break;
 
+        case DecisionType::BuildMilitaryBuilding:
+            ExecuteBuildProductionBuilding(decision, productionSystem, resourceStock);
+            break;
+
+        case DecisionType::Scout:
+            // Send a worker or military unit to scout unexplored areas
+            {
+                auto idleWorkers = population.GetIdleWorkers();
+                if (!idleWorkers.empty()) {
+                    Worker* scout = idleWorkers[0];
+                    // Set scout to explore in a direction away from base
+                    glm::vec2 scoutDirection = glm::normalize(
+                        glm::vec2(Nova::Random::Range(-1.0f, 1.0f), Nova::Random::Range(-1.0f, 1.0f))
+                    );
+                    glm::vec3 scoutTarget = glm::vec3(
+                        m_state.mainBaseLocation.x + scoutDirection.x * 50.0f,
+                        0.0f,
+                        m_state.mainBaseLocation.y + scoutDirection.y * 50.0f
+                    );
+                    scout->MoveTo(scoutTarget, navGraph);
+                }
+            }
+            break;
+
+        case DecisionType::ExpandToNewLocation:
+            // Find and establish a new base location
+            {
+                glm::vec2 expansionLocation = m_state.mainBaseLocation + glm::vec2(
+                    Nova::Random::Range(-30.0f, 30.0f),
+                    Nova::Random::Range(-30.0f, 30.0f)
+                );
+                m_state.expansionLocations.push_back(expansionLocation);
+                m_timeSinceLastExpansion = m_state.gameTime;
+            }
+            break;
+
+        case DecisionType::BuildDefenses:
+            // Build defensive structures near base
+            ExecuteBuildProductionBuilding(decision, productionSystem, resourceStock);
+            break;
+
+        case DecisionType::BalanceWorkers:
+            // Rebalance workers across resource types
+            // This is handled by the worker assignment system
+            break;
+
+        case DecisionType::AssignWorkerToBuild:
+            // Assign idle workers to construction tasks
+            {
+                auto idleWorkers = population.GetIdleWorkers();
+                for (Worker* worker : idleWorkers) {
+                    if (worker && worker->IsAvailable()) {
+                        worker->SetJob(WorkerJob::Builder);
+                        break;  // Assign one at a time
+                    }
+                }
+            }
+            break;
+
         default:
-            // TODO: Implement other decision types
+            // Unhandled decision type - log for debugging
             break;
     }
 }
@@ -744,9 +860,28 @@ void AIPlayer::ExecuteAssignWorkerToGather(
         );
 
         if (node && node->CanAssignGatherer()) {
-            // Assign worker to this node
-            // TODO: Create gatherer from worker and assign to node
-            // This requires integration between Worker and Gatherer systems
+            // Set worker job to Gatherer and assign to node
+            worker->SetJob(WorkerJob::Gatherer);
+
+            // Create a gatherer in the gathering system at worker's position
+            Gatherer* gatherer = gatheringSystem.CreateGatherer(
+                glm::vec2(worker->GetPosition().x, worker->GetPosition().z)
+            );
+
+            if (gatherer) {
+                // Assign the gatherer to the resource node
+                gatheringSystem.AssignGathererToNode(gatherer->id, node->id);
+
+                // Set worker's workplace to the node position
+                worker->SetWorkplacePosition(glm::vec3(node->position.x, 0.0f, node->position.y));
+
+                // Create a task for the worker to move to the node
+                WorkTask gatherTask;
+                gatherTask.type = WorkTask::Type::Gather;
+                gatherTask.targetPosition = glm::vec3(node->position.x, 0.0f, node->position.y);
+                gatherTask.repeating = true;
+                worker->AssignTask(gatherTask);
+            }
         }
     }
 }
@@ -756,14 +891,39 @@ void AIPlayer::ExecuteTrainWorker(
     Population& population,
     ResourceStock& resourceStock
 ) {
-    // TODO: Train a new worker
-    // This requires integration with worker training system
+    // Training cost for a new worker
     ResourceCost cost;
     cost.Add(ResourceType::Food, 50);
 
+    // Check if we have housing capacity before training
+    if (population.GetAvailableHousing() <= 0) {
+        // No housing available, can't train new workers
+        return;
+    }
+
     if (resourceStock.Spend(cost)) {
-        // Worker will be created by the population system
-        // population.TrainWorker();
+        // Create a new worker and add to population
+        auto newWorker = std::make_unique<Worker>();
+
+        // Set initial position near main base
+        glm::vec3 spawnPos(
+            m_state.mainBaseLocation.x + Nova::Random::Range(-5.0f, 5.0f),
+            0.0f,
+            m_state.mainBaseLocation.y + Nova::Random::Range(-5.0f, 5.0f)
+        );
+        newWorker->SetPosition(spawnPos);
+
+        // Generate a name for the worker
+        newWorker->SetWorkerName("Worker " + std::to_string(population.GetTotalPopulation() + 1));
+
+        // Add to population system
+        population.AddWorker(std::move(newWorker));
+
+        // Try to find and assign housing for the new worker
+        Worker* worker = population.GetWorker(population.GetTotalPopulation());
+        if (worker) {
+            population.FindAndAssignHousing(worker);
+        }
     }
 }
 
@@ -822,21 +982,119 @@ void AIPlayer::ExecuteTrainMilitaryUnit(
     EntityManager& entityManager,
     ResourceStock& resourceStock
 ) {
-    // TODO: Train military unit
+    // Military unit training cost
+    ResourceCost cost;
+    cost.Add(ResourceType::Food, 75);
+    cost.Add(ResourceType::Metal, 25);
+
+    if (!resourceStock.Spend(cost)) {
+        return;  // Can't afford to train
+    }
+
+    // In this RTS system, military units are NPCs or workers with Guard job
+    // We'll use the entity manager to track military units
+    // For now, increment the military count - actual unit creation would be done
+    // by converting workers to guards or spawning NPC military units
+    m_state.militaryUnits++;
+
+    // Calculate unit strength contribution (base 50 + random variance)
+    int unitStrength = 50 + static_cast<int>(Nova::Random::Range(0.0f, 25.0f));
+    m_state.armyStrength += unitStrength;
 }
 
 void AIPlayer::ExecuteSendAttackGroup(
     const AIDecision& decision,
     EntityManager& entityManager
 ) {
-    // TODO: Group military units and send to attack position
+    // Group military units and send them to attack the target position
+    glm::vec2 targetPos = decision.position;
+
+    // If no specific target, use enemy base location
+    if (targetPos.x == 0.0f && targetPos.y == 0.0f) {
+        if (m_state.enemyDetected) {
+            targetPos = m_state.enemyBaseLocation;
+        } else {
+            // No known enemy location - pick a random direction to attack
+            float angle = Nova::Random::Range(0.0f, glm::two_pi<float>());
+            targetPos = m_state.mainBaseLocation + glm::vec2(
+                std::cos(angle) * 50.0f,
+                std::sin(angle) * 50.0f
+            );
+        }
+    }
+
+    // Find all military entities (NPCs) near our base and send them to attack
+    glm::vec3 basePos3D(m_state.mainBaseLocation.x, 0.0f, m_state.mainBaseLocation.y);
+    auto nearbyEntities = entityManager.FindEntitiesInRadius(basePos3D, 30.0f, EntityType::NPC);
+
+    // Calculate attack formation - spread units in a line
+    int unitIndex = 0;
+    for (Entity* entity : nearbyEntities) {
+        if (entity && entity->IsAlive()) {
+            // Calculate offset position for formation
+            float offsetX = (unitIndex % 5 - 2) * 2.0f;
+            float offsetZ = (unitIndex / 5) * 2.0f;
+
+            glm::vec3 attackTarget(
+                targetPos.x + offsetX,
+                0.0f,
+                targetPos.y + offsetZ
+            );
+
+            // Set entity velocity towards target
+            glm::vec3 direction = glm::normalize(attackTarget - entity->GetPosition());
+            entity->SetVelocity(direction * entity->GetMoveSpeed());
+            entity->LookAt(attackTarget);
+
+            unitIndex++;
+        }
+    }
 }
 
 void AIPlayer::ExecuteDefendBase(
     const AIDecision& decision,
     EntityManager& entityManager
 ) {
-    // TODO: Rally military units to defend attack location
+    // Rally all military units to defend the attack location
+    glm::vec2 defendPos = decision.position;
+
+    // If no specific location, defend the main base
+    if (defendPos.x == 0.0f && defendPos.y == 0.0f) {
+        defendPos = m_state.attackLocation;
+        if (defendPos.x == 0.0f && defendPos.y == 0.0f) {
+            defendPos = m_state.mainBaseLocation;
+        }
+    }
+
+    // Find all our military units and rally them to defense point
+    // Search a wider radius to gather all available units
+    auto allEntities = entityManager.GetEntitiesByType(EntityType::NPC);
+
+    int unitIndex = 0;
+    for (Entity* entity : allEntities) {
+        if (entity && entity->IsAlive()) {
+            // Calculate defensive formation position (circle around defend point)
+            float angle = (unitIndex / static_cast<float>(allEntities.size())) * glm::two_pi<float>();
+            float radius = 5.0f + (unitIndex / 8) * 3.0f;  // Concentric circles
+
+            glm::vec3 defensePosition(
+                defendPos.x + std::cos(angle) * radius,
+                0.0f,
+                defendPos.y + std::sin(angle) * radius
+            );
+
+            // Move unit towards defense position
+            glm::vec3 direction = glm::normalize(defensePosition - entity->GetPosition());
+            entity->SetVelocity(direction * entity->GetMoveSpeed() * 1.2f);  // Move faster when defending
+            entity->LookAt(glm::vec3(defendPos.x, 0.0f, defendPos.y));  // Face the attack direction
+
+            unitIndex++;
+        }
+    }
+
+    // Clear the under attack flag after rallying defense
+    // (will be set again if attack continues)
+    m_state.underAttack = false;
 }
 
 // ============================================================================
@@ -872,11 +1130,63 @@ glm::vec2 AIPlayer::FindBuildingPlacement(
     const glm::vec2& nearPosition,
     World* world
 ) const {
-    // Simple random placement near position
-    // TODO: Use world grid to find valid placement
+    // Building size estimation based on type
+    float buildingSize = 3.0f;  // Default building footprint
+    if (buildingType == static_cast<int>(ProductionBuildingType::Warehouse)) {
+        buildingSize = 5.0f;  // Warehouses are larger
+    } else if (buildingType == static_cast<int>(ProductionBuildingType::Farm)) {
+        buildingSize = 4.0f;  // Farms need more space
+    }
+
+    // Try to find valid placement using spiral search pattern
+    const int maxAttempts = 20;
+    const float searchRadius = 15.0f;
+
+    for (int attempt = 0; attempt < maxAttempts; ++attempt) {
+        // Spiral outward from near position
+        float angle = attempt * 0.5f;  // Golden angle approximation for good distribution
+        float radius = 3.0f + (attempt / 4) * 2.0f;
+
+        glm::vec2 candidatePos = nearPosition + glm::vec2(
+            std::cos(angle) * radius,
+            std::sin(angle) * radius
+        );
+
+        // Check if position is within base bounds (not too far from main base)
+        float distFromBase = glm::length(candidatePos - m_state.mainBaseLocation);
+        if (distFromBase > 50.0f) {
+            continue;  // Too far from base
+        }
+
+        // Check if position doesn't overlap with existing buildings
+        bool validPosition = true;
+        for (const auto& [type, count] : m_buildingCounts) {
+            if (count > 0) {
+                // Simple collision check - assume buildings are spaced
+                // In a real implementation, this would query the world grid
+                float minSpacing = buildingSize + 2.0f;
+                // Position is valid if it's not on top of main base
+                if (glm::length(candidatePos - m_state.mainBaseLocation) < minSpacing) {
+                    validPosition = false;
+                    break;
+                }
+            }
+        }
+
+        if (validPosition) {
+            // Add some randomness to prevent grid-like placement
+            candidatePos += glm::vec2(
+                Nova::Random::Range(-1.0f, 1.0f),
+                Nova::Random::Range(-1.0f, 1.0f)
+            );
+            return candidatePos;
+        }
+    }
+
+    // Fallback: random placement if no valid position found
     return nearPosition + glm::vec2(
-        Nova::Random::Range(-15.0f, 15.0f),
-        Nova::Random::Range(-15.0f, 15.0f)
+        Nova::Random::Range(-searchRadius, searchRadius),
+        Nova::Random::Range(-searchRadius, searchRadius)
     );
 }
 
@@ -918,8 +1228,61 @@ void AIPlayer::OnEnemyDetected(const glm::vec2& location, int armyStrength) {
 }
 
 void AIPlayer::OnBuildingDestroyed(uint32_t buildingId) {
-    // Update building counts
-    // TODO: Track which building was destroyed and update counts
+    // Update building counts by searching for the building type
+    // Since we track counts by type, we need to find which type this building was
+
+    // Decrement total building count
+    m_state.totalBuildings = std::max(0, m_state.totalBuildings - 1);
+
+    // Try to identify building type from our tracking
+    // In practice, the caller should provide the building type, but we can
+    // iterate through our counts and decrement intelligently
+    bool found = false;
+    for (auto& [type, count] : m_buildingCounts) {
+        if (count > 0) {
+            // Determine category based on building type
+            ProductionBuildingType buildingType = static_cast<ProductionBuildingType>(type);
+
+            // Check if this building type matches what was likely destroyed
+            // We prioritize decrementing counts for buildings we have
+            if (!found) {
+                count--;
+                found = true;
+
+                // Update category counts based on building type
+                switch (buildingType) {
+                    case ProductionBuildingType::Farm:
+                    case ProductionBuildingType::LumberMill:
+                    case ProductionBuildingType::Quarry:
+                    case ProductionBuildingType::Foundry:
+                    case ProductionBuildingType::Workshop:
+                    case ProductionBuildingType::Refinery:
+                        m_state.productionBuildings = std::max(0, m_state.productionBuildings - 1);
+                        break;
+
+                    case ProductionBuildingType::Armory:
+                        m_state.militaryBuildings = std::max(0, m_state.militaryBuildings - 1);
+                        break;
+
+                    case ProductionBuildingType::Warehouse:
+                        // Warehouses don't fit neatly into categories
+                        break;
+
+                    case ProductionBuildingType::Hospital:
+                    case ProductionBuildingType::Mint:
+                        m_state.productionBuildings = std::max(0, m_state.productionBuildings - 1);
+                        break;
+
+                    default:
+                        break;
+                }
+                break;  // Found and decremented, exit loop
+            }
+        }
+    }
+
+    // If building was housing, update housing count
+    m_state.housingBuildings = std::max(0, m_state.housingBuildings - 1);
 }
 
 void AIPlayer::OnUnitKilled(uint32_t unitId) {

@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <chrono>
 
-// Include nlohmann/json for JSON operations
-#include <nlohmann/json.hpp>
+// Include JSON with C++20 ranges workaround
+#include "../core/json_config.hpp"
 
 namespace Nova {
 namespace Events {
@@ -37,9 +37,11 @@ bool EventBindingManager::Initialize(const Config& config) {
     m_config = config;
 
     // Set up condition evaluator with Python engine
+#ifdef NOVA_SCRIPTING_ENABLED
     if (m_pythonEngine) {
         EventConditionEvaluator::SetPythonEngine(m_pythonEngine);
     }
+#endif
 
     // Load all bindings from the configured directory
     if (!m_config.bindingsDirectory.empty()) {
@@ -81,10 +83,12 @@ void EventBindingManager::Update(float deltaTime) {
 // Python Integration
 // ============================================================================
 
+#ifdef NOVA_SCRIPTING_ENABLED
 void EventBindingManager::SetPythonEngine(Scripting::PythonEngine* engine) {
     m_pythonEngine = engine;
     EventConditionEvaluator::SetPythonEngine(engine);
 }
+#endif
 
 // ============================================================================
 // Binding Management
@@ -465,9 +469,11 @@ bool EventBindingManager::ExecuteBinding(const std::string& bindingId,
                 break;
 
             case CallbackType::Script:
+#ifdef NOVA_SCRIPTING_ENABLED
                 if (m_pythonEngine && !binding->pythonFile.empty()) {
                     m_pythonEngine->ExecuteFile(binding->pythonFile);
                 }
+#endif
                 break;
         }
 
@@ -590,6 +596,7 @@ void EventBindingManager::UnregisterFromEventBus(Reflect::EventBus& eventBus) {
 // Internal Methods
 // ============================================================================
 
+#ifdef NOVA_SCRIPTING_ENABLED
 void EventBindingManager::ExecutePythonCallback(const EventBinding& binding,
                                                 const std::unordered_map<std::string, std::any>& eventData) {
     if (!m_pythonEngine) return;
@@ -605,6 +612,12 @@ void EventBindingManager::ExecutePythonCallback(const EventBinding& binding,
         m_pythonEngine->ExecuteFile(binding.pythonFile);
     }
 }
+#else
+void EventBindingManager::ExecutePythonCallback(const EventBinding& /*binding*/,
+                                                const std::unordered_map<std::string, std::any>& /*eventData*/) {
+    // Python scripting not enabled
+}
+#endif
 
 void EventBindingManager::ExecuteEventEmission(const EventBinding& binding,
                                                const std::unordered_map<std::string, std::any>& eventData) {

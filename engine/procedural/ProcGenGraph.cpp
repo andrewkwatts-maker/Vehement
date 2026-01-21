@@ -1,6 +1,7 @@
 #include "ProcGenGraph.hpp"
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 
 namespace Nova {
 namespace ProcGen {
@@ -169,13 +170,198 @@ void ProcGenGraph::ClearCache() {
 }
 
 bool ProcGenGraph::SaveCache() {
-    // TODO: Implement cache serialization
-    return false;
+    // Binary cache serialization for procedural generation chunks
+    // File format:
+    // [uint32_t: magic number] [uint32_t: version] [uint32_t: cache entry count]
+    // For each entry:
+    //   [uint64_t: chunk key] [ivec2: chunk position] [bool: success]
+    //   [float: generation time] [string: error message]
+    //   [uint32_t: heightmap width] [uint32_t: heightmap height] [heightmap data...]
+    //   [uint32_t: biome data size] [biome data...]
+    //   [uint32_t: resource data size] [resource data...]
+    //   [uint32_t: structure data size] [structure data...]
+
+    std::lock_guard<std::mutex> lock(m_cacheMutex);
+
+    if (m_cache.empty()) {
+        return true; // Nothing to save
+    }
+
+    // Create cache directory if needed
+    std::filesystem::path cachePath(m_config.cachePath);
+    if (!std::filesystem::exists(cachePath.parent_path())) {
+        std::filesystem::create_directories(cachePath.parent_path());
+    }
+
+    std::string cacheFilePath = m_config.cachePath + "procgen_cache.bin";
+    std::ofstream file(cacheFilePath, std::ios::binary);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    // Write header
+    const uint32_t magic = 0x50524F43; // "PROC"
+    const uint32_t version = 1;
+    const uint32_t entryCount = static_cast<uint32_t>(m_cache.size());
+
+    file.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
+    file.write(reinterpret_cast<const char*>(&version), sizeof(version));
+    file.write(reinterpret_cast<const char*>(&entryCount), sizeof(entryCount));
+
+    // Write each cache entry
+    for (const auto& [key, result] : m_cache) {
+        // Write key and position
+        file.write(reinterpret_cast<const char*>(&key), sizeof(key));
+        file.write(reinterpret_cast<const char*>(&result.chunkPos.x), sizeof(int));
+        file.write(reinterpret_cast<const char*>(&result.chunkPos.y), sizeof(int));
+
+        // Write status
+        uint8_t success = result.success ? 1 : 0;
+        file.write(reinterpret_cast<const char*>(&success), sizeof(success));
+        file.write(reinterpret_cast<const char*>(&result.generationTime), sizeof(float));
+
+        // Write error message
+        uint32_t errorLen = static_cast<uint32_t>(result.errorMessage.size());
+        file.write(reinterpret_cast<const char*>(&errorLen), sizeof(errorLen));
+        if (errorLen > 0) {
+            file.write(result.errorMessage.data(), errorLen);
+        }
+
+        // Write heightmap data
+        if (result.heightmap) {
+            uint32_t width = result.heightmap->GetWidth();
+            uint32_t height = result.heightmap->GetHeight();
+            const auto& data = result.heightmap->GetData();
+
+            file.write(reinterpret_cast<const char*>(&width), sizeof(width));
+            file.write(reinterpret_cast<const char*>(&height), sizeof(height));
+            file.write(reinterpret_cast<const char*>(data.data()), data.size() * sizeof(float));
+        } else {
+            uint32_t zero = 0;
+            file.write(reinterpret_cast<const char*>(&zero), sizeof(zero));
+            file.write(reinterpret_cast<const char*>(&zero), sizeof(zero));
+        }
+
+        // Write biome data
+        uint32_t biomeSize = static_cast<uint32_t>(result.biomeData.size());
+        file.write(reinterpret_cast<const char*>(&biomeSize), sizeof(biomeSize));
+        if (biomeSize > 0) {
+            file.write(reinterpret_cast<const char*>(result.biomeData.data()), biomeSize);
+        }
+
+        // Write resource data
+        uint32_t resourceSize = static_cast<uint32_t>(result.resourceData.size());
+        file.write(reinterpret_cast<const char*>(&resourceSize), sizeof(resourceSize));
+        if (resourceSize > 0) {
+            file.write(reinterpret_cast<const char*>(result.resourceData.data()), resourceSize);
+        }
+
+        // Write structure data
+        uint32_t structureSize = static_cast<uint32_t>(result.structureData.size());
+        file.write(reinterpret_cast<const char*>(&structureSize), sizeof(structureSize));
+        if (structureSize > 0) {
+            file.write(reinterpret_cast<const char*>(result.structureData.data()), structureSize);
+        }
+    }
+
+    file.close();
+    return file.good();
 }
 
 bool ProcGenGraph::LoadCache() {
-    // TODO: Implement cache deserialization
-    return false;
+    // Binary cache deserialization for procedural generation chunks
+    // Reads the cache file written by SaveCache()
+
+    std::lock_guard<std::mutex> lock(m_cacheMutex);
+
+    std::string cacheFilePath = m_config.cachePath + "procgen_cache.bin";
+    std::ifstream file(cacheFilePath, std::ios::binary);
+    if (!file.is_open()) {
+        return false;
+    }
+
+    // Read header
+    uint32_t magic, version, entryCount;
+    file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+    file.read(reinterpret_cast<char*>(&version), sizeof(version));
+    file.read(reinterpret_cast<char*>(&entryCount), sizeof(entryCount));
+
+    // Validate header
+    if (magic != 0x50524F43) { // "PROC"
+        return false; // Invalid magic number
+    }
+    if (version != 1) {
+        return false; // Unsupported version
+    }
+
+    m_cache.clear();
+
+    // Read each cache entry
+    for (uint32_t i = 0; i < entryCount && file.good(); ++i) {
+        ChunkGenerationResult result;
+        uint64_t key;
+
+        // Read key and position
+        file.read(reinterpret_cast<char*>(&key), sizeof(key));
+        file.read(reinterpret_cast<char*>(&result.chunkPos.x), sizeof(int));
+        file.read(reinterpret_cast<char*>(&result.chunkPos.y), sizeof(int));
+
+        // Read status
+        uint8_t success;
+        file.read(reinterpret_cast<char*>(&success), sizeof(success));
+        result.success = success != 0;
+        file.read(reinterpret_cast<char*>(&result.generationTime), sizeof(float));
+
+        // Read error message
+        uint32_t errorLen;
+        file.read(reinterpret_cast<char*>(&errorLen), sizeof(errorLen));
+        if (errorLen > 0) {
+            result.errorMessage.resize(errorLen);
+            file.read(result.errorMessage.data(), errorLen);
+        }
+
+        // Read heightmap data
+        uint32_t width, height;
+        file.read(reinterpret_cast<char*>(&width), sizeof(width));
+        file.read(reinterpret_cast<char*>(&height), sizeof(height));
+
+        if (width > 0 && height > 0) {
+            result.heightmap = std::make_shared<HeightmapData>(width, height);
+            auto& data = const_cast<std::vector<float>&>(result.heightmap->GetData());
+            file.read(reinterpret_cast<char*>(data.data()), data.size() * sizeof(float));
+        }
+
+        // Read biome data
+        uint32_t biomeSize;
+        file.read(reinterpret_cast<char*>(&biomeSize), sizeof(biomeSize));
+        if (biomeSize > 0) {
+            result.biomeData.resize(biomeSize);
+            file.read(reinterpret_cast<char*>(result.biomeData.data()), biomeSize);
+        }
+
+        // Read resource data
+        uint32_t resourceSize;
+        file.read(reinterpret_cast<char*>(&resourceSize), sizeof(resourceSize));
+        if (resourceSize > 0) {
+            result.resourceData.resize(resourceSize);
+            file.read(reinterpret_cast<char*>(result.resourceData.data()), resourceSize);
+        }
+
+        // Read structure data
+        uint32_t structureSize;
+        file.read(reinterpret_cast<char*>(&structureSize), sizeof(structureSize));
+        if (structureSize > 0) {
+            result.structureData.resize(structureSize);
+            file.read(reinterpret_cast<char*>(result.structureData.data()), structureSize);
+        }
+
+        // Store in cache
+        m_cache[key] = std::move(result);
+    }
+
+    m_stats.chunksCached = m_cache.size();
+    file.close();
+    return file.good() || file.eof();
 }
 
 bool ProcGenGraph::Validate(std::vector<std::string>& errors) const {

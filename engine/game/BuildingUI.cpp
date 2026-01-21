@@ -427,6 +427,21 @@ std::shared_ptr<BuildingUIState> BuildingUIState::Deserialize(const nlohmann::js
 // BuildingUIRenderer Implementation
 // =============================================================================
 
+BuildingUIRenderer::BuildingUIRenderer() = default;
+BuildingUIRenderer::~BuildingUIRenderer() = default;
+
+void BuildingUIRenderer::Initialize() {
+    m_previewRenderer = std::make_unique<PreviewRenderer>();
+    m_previewRenderer->Initialize();
+}
+
+void BuildingUIRenderer::Shutdown() {
+    if (m_previewRenderer) {
+        m_previewRenderer->Shutdown();
+        m_previewRenderer.reset();
+    }
+}
+
 void BuildingUIRenderer::RenderBuildingUI(BuildingInstancePtr building, BuildingUIState& uiState,
                                          float currentTime, float deltaTime) {
     // This would use ImGui to render the UI
@@ -470,6 +485,21 @@ void BuildingUIRenderer::RenderUnitButton(const UnitDefinition& unit, bool avail
 void BuildingUIRenderer::RenderProgressBar(float progress, const glm::vec2& size,
                                           const std::string& label) {
     // Render progress bar
+}
+
+void BuildingUIRenderer::RenderBuildingPreview(std::shared_ptr<Mesh> mesh,
+                                               std::shared_ptr<Material> material,
+                                               const glm::ivec2& size) {
+    if (!m_previewRenderer) return;
+
+    m_previewRenderer->SetMesh(mesh);
+    m_previewRenderer->SetMaterial(material);
+    m_previewRenderer->Render(size);
+}
+
+uint32_t BuildingUIRenderer::GetPreviewTextureID() const {
+    if (!m_previewRenderer) return 0;
+    return m_previewRenderer->GetPreviewTextureID();
 }
 
 } // namespace Buildings

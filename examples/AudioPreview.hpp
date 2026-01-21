@@ -3,6 +3,12 @@
 #include "AssetEditor.hpp"
 #include <imgui.h>
 #include <vector>
+#include <memory>
+
+namespace Nova {
+    class AudioBuffer;
+    class AudioSource;
+}
 
 /**
  * @brief Audio file preview and editor
@@ -75,4 +81,8 @@ private:
 
     // UI state
     bool m_isDraggingSeek = false;
+
+    // Audio engine integration
+    std::shared_ptr<Nova::AudioBuffer> m_audioBuffer;
+    std::shared_ptr<Nova::AudioSource> m_audioSource;
 };

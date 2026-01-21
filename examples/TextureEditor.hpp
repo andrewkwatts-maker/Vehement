@@ -32,6 +32,7 @@ private:
     void RenderProperties();
     void LoadTexture();
     void UpdatePreview();
+    void ExportTextureAs();
 
     std::string m_assetPath;
     std::string m_textureName;

@@ -4,6 +4,7 @@
 #include "AIBehavior.hpp"
 
 #include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 #include <pybind11/operators.h>
@@ -11,10 +12,54 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <game/src/entities/Entity.hpp>
+
+#include <cmath>
+#include <string>
+
 namespace py = pybind11;
 
 namespace Nova {
 namespace Scripting {
+
+// ============================================================================
+// Script Proxy Types (must be defined before pybind11 bindings)
+// ============================================================================
+
+/**
+ * @brief Transform data for Python bindings
+ * Updated to match Entity.hpp API which uses Y-axis rotation for top-down games
+ */
+struct ScriptTransform {
+    glm::vec3 position{0.0f};
+    glm::quat rotation{1.0f, 0.0f, 0.0f, 0.0f};
+    glm::vec3 scale{1.0f};
+    glm::vec3 velocity{0.0f};
+    float yRotation = 0.0f;  // Rotation around Y axis in radians (for top-down)
+    float moveSpeed = 5.0f;  // Movement speed multiplier
+};
+
+/**
+ * @brief Entity proxy for Python bindings
+ */
+struct EntityProxy {
+    uint32_t id = 0;
+};
+
+/**
+ * @brief Resource type enum for Python bindings
+ */
+enum class ScriptResourceType {
+    Food = 0, Wood, Stone, Metal, Coins, Fuel, Medicine, Ammunition
+};
+
+/**
+ * @brief Building type enum for Python bindings
+ */
+enum class ScriptBuildingType {
+    Shelter = 0, House, Barracks, Farm, LumberMill, Quarry, Workshop,
+    WatchTower, Wall, Gate, Fortress, TradingPost, Hospital, Warehouse, CommandCenter
+};
 
 // Static context pointer
 ScriptContext* ScriptBindings::s_context = nullptr;
@@ -158,50 +203,98 @@ void ScriptBindings::RegisterMathTypes(pybind11::module_& m) {
             return glm::slerp(a, b, t);
         });
 
-    // Transform class (composite of position, rotation, scale)
-    py::class_<struct Transform>(m, "Transform")
+    // Transform class (composite of position, rotation, scale, velocity)
+    // Updated to match Entity.hpp API for top-down games
+    py::class_<ScriptTransform>(m, "Transform")
         .def(py::init<>())
         .def(py::init([](const glm::vec3& pos) {
-            Transform t;
+            ScriptTransform t;
             t.position = pos;
             return t;
         }))
-        .def_readwrite("position", &Transform::position)
-        .def_readwrite("rotation", &Transform::rotation)
-        .def_readwrite("scale", &Transform::scale)
-        .def("forward", [](const Transform& t) {
+        .def(py::init([](const glm::vec3& pos, float yRotation) {
+            ScriptTransform t;
+            t.position = pos;
+            t.yRotation = yRotation;
+            return t;
+        }))
+        .def_readwrite("position", &ScriptTransform::position)
+        .def_readwrite("rotation", &ScriptTransform::rotation)
+        .def_readwrite("scale", &ScriptTransform::scale)
+        .def_readwrite("velocity", &ScriptTransform::velocity)
+        .def_readwrite("y_rotation", &ScriptTransform::yRotation)
+        .def_readwrite("move_speed", &ScriptTransform::moveSpeed)
+        .def("forward", [](const ScriptTransform& t) {
+            // For quaternion-based rotation
             return t.rotation * glm::vec3(0.0f, 0.0f, 1.0f);
         })
-        .def("right", [](const Transform& t) {
+        .def("forward_2d", [](const ScriptTransform& t) {
+            // For Y-axis rotation (top-down games) - matches Entity.hpp GetForward()
+            return glm::vec3(std::sin(t.yRotation), 0.0f, std::cos(t.yRotation));
+        })
+        .def("right", [](const ScriptTransform& t) {
             return t.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
         })
-        .def("up", [](const Transform& t) {
+        .def("right_2d", [](const ScriptTransform& t) {
+            // For Y-axis rotation (top-down games) - matches Entity.hpp GetRight()
+            return glm::vec3(std::cos(t.yRotation), 0.0f, -std::sin(t.yRotation));
+        })
+        .def("up", [](const ScriptTransform& t) {
             return t.rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+        })
+        .def("get_speed", [](const ScriptTransform& t) {
+            return glm::length(t.velocity);
+        })
+        .def("get_position_2d", [](const ScriptTransform& t) {
+            return glm::vec2(t.position.x, t.position.z);
+        })
+        .def("set_position_2d", [](ScriptTransform& t, float x, float z) {
+            t.position.x = x;
+            t.position.z = z;
+        })
+        .def("set_velocity_2d", [](ScriptTransform& t, float vx, float vz) {
+            t.velocity = glm::vec3(vx, 0.0f, vz);
+        })
+        .def("look_at_2d", [](ScriptTransform& t, float x, float z) {
+            float dx = x - t.position.x;
+            float dz = z - t.position.z;
+            t.yRotation = std::atan2(dx, dz);
+        })
+        .def("look_at", [](ScriptTransform& t, const glm::vec3& target) {
+            glm::vec3 dir = glm::normalize(target - t.position);
+            t.yRotation = std::atan2(dir.x, dir.z);
+        })
+        .def("translate", [](ScriptTransform& t, const glm::vec3& offset) {
+            t.position += offset;
+        })
+        .def("translate_local", [](ScriptTransform& t, const glm::vec3& offset) {
+            // Move in local space using Y rotation
+            glm::vec3 forward(std::sin(t.yRotation), 0.0f, std::cos(t.yRotation));
+            glm::vec3 right(std::cos(t.yRotation), 0.0f, -std::sin(t.yRotation));
+            glm::vec3 up(0.0f, 1.0f, 0.0f);
+            t.position += forward * offset.z + right * offset.x + up * offset.y;
+        })
+        .def("rotate_y", [](ScriptTransform& t, float radians) {
+            t.yRotation += radians;
         });
-
-    // Define Transform struct
-    struct Transform {
-        glm::vec3 position{0.0f};
-        glm::quat rotation{1.0f, 0.0f, 0.0f, 0.0f};
-        glm::vec3 scale{1.0f};
-    };
 }
 
 void ScriptBindings::RegisterEntityTypes(pybind11::module_& m) {
-    // Entity type enum
-    py::enum_<int>(m, "EntityType")
-        .value("None", 0)
-        .value("Player", 1)
-        .value("Zombie", 2)
-        .value("NPC", 3)
-        .value("Projectile", 4)
-        .value("Pickup", 5)
-        .value("Effect", 6)
+    // Entity type enum - using the actual enum from Entity.hpp
+    py::enum_<Vehement::EntityType>(m, "EntityType")
+        .value("None", Vehement::EntityType::None)
+        .value("Player", Vehement::EntityType::Player)
+        .value("Zombie", Vehement::EntityType::Zombie)
+        .value("NPC", Vehement::EntityType::NPC)
+        .value("Projectile", Vehement::EntityType::Projectile)
+        .value("Pickup", Vehement::EntityType::Pickup)
+        .value("Effect", Vehement::EntityType::Effect)
         .export_values();
 
-    // Entity proxy class for Python
-    py::class_<struct EntityProxy>(m, "Entity")
+    // Entity proxy class for Python - Updated to match Entity.hpp API
+    py::class_<EntityProxy>(m, "Entity")
         .def_readonly("id", &EntityProxy::id)
+        // Position properties
         .def_property("position",
             [](const EntityProxy& e) -> glm::vec3 {
                 if (auto* ctx = ScriptBindings::GetContext()) {
@@ -214,6 +307,82 @@ void ScriptBindings::RegisterEntityTypes(pybind11::module_& m) {
                     ctx->SetEntityPosition(e.id, pos.x, pos.y, pos.z);
                 }
             })
+        .def("get_position_2d", [](const EntityProxy& e) -> glm::vec2 {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                auto pos = ctx->GetEntityPosition(e.id);
+                return glm::vec2(pos.x, pos.z);
+            }
+            return glm::vec2(0.0f);
+        }, "Get 2D position (XZ plane) for top-down games")
+        .def("set_position_2d", [](EntityProxy& e, float x, float z) {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                auto pos = ctx->GetEntityPosition(e.id);
+                ctx->SetEntityPosition(e.id, x, pos.y, z);
+            }
+        }, "Set 2D position (XZ plane), preserving Y", py::arg("x"), py::arg("z"))
+        // Velocity property (via ScriptContext extension)
+        .def_property("velocity",
+            [](const EntityProxy& e) -> glm::vec3 {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    return ctx->GetEntityVelocity(e.id);
+                }
+                return glm::vec3(0.0f);
+            },
+            [](EntityProxy& e, const glm::vec3& vel) {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    ctx->SetEntityVelocity(e.id, vel.x, vel.y, vel.z);
+                }
+            })
+        .def("set_velocity_2d", [](EntityProxy& e, float vx, float vz) {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                ctx->SetEntityVelocity(e.id, vx, 0.0f, vz);
+            }
+        }, "Set velocity for 2D movement", py::arg("vx"), py::arg("vz"))
+        // Rotation property (Y-axis rotation for top-down)
+        .def_property("rotation",
+            [](const EntityProxy& e) -> float {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    return ctx->GetEntityRotation(e.id);
+                }
+                return 0.0f;
+            },
+            [](EntityProxy& e, float radians) {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    ctx->SetEntityRotation(e.id, radians);
+                }
+            })
+        // Direction helpers
+        .def("get_forward", [](const EntityProxy& e) -> glm::vec3 {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                float rot = ctx->GetEntityRotation(e.id);
+                return glm::vec3(std::sin(rot), 0.0f, std::cos(rot));
+            }
+            return glm::vec3(0.0f, 0.0f, 1.0f);
+        }, "Get forward direction vector (XZ plane)")
+        .def("get_right", [](const EntityProxy& e) -> glm::vec3 {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                float rot = ctx->GetEntityRotation(e.id);
+                return glm::vec3(std::cos(rot), 0.0f, -std::sin(rot));
+            }
+            return glm::vec3(1.0f, 0.0f, 0.0f);
+        }, "Get right direction vector (XZ plane)")
+        .def("look_at", [](EntityProxy& e, const glm::vec3& target) {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                auto pos = ctx->GetEntityPosition(e.id);
+                float dx = target.x - pos.x;
+                float dz = target.z - pos.z;
+                ctx->SetEntityRotation(e.id, std::atan2(dx, dz));
+            }
+        }, "Rotate to face a target position", py::arg("target"))
+        .def("look_at_2d", [](EntityProxy& e, float x, float z) {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                auto pos = ctx->GetEntityPosition(e.id);
+                float dx = x - pos.x;
+                float dz = z - pos.z;
+                ctx->SetEntityRotation(e.id, std::atan2(dx, dz));
+            }
+        }, "Rotate to face a 2D position", py::arg("x"), py::arg("z"))
+        // Health properties
         .def_property("health",
             [](const EntityProxy& e) -> float {
                 if (auto* ctx = ScriptBindings::GetContext()) {
@@ -226,9 +395,74 @@ void ScriptBindings::RegisterEntityTypes(pybind11::module_& m) {
                     ctx->SetEntityHealth(e.id, health);
                 }
             })
+        .def_property("max_health",
+            [](const EntityProxy& e) -> float {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    return ctx->GetEntityMaxHealth(e.id);
+                }
+                return 0.0f;
+            },
+            [](EntityProxy& e, float maxHealth) {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    ctx->SetEntityMaxHealth(e.id, maxHealth);
+                }
+            })
+        .def("get_health_percent", [](const EntityProxy& e) -> float {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                float health = ctx->GetEntityHealth(e.id);
+                float maxHealth = ctx->GetEntityMaxHealth(e.id);
+                return maxHealth > 0.0f ? health / maxHealth : 0.0f;
+            }
+            return 0.0f;
+        }, "Get health as percentage [0, 1]")
+        // Movement speed
+        .def_property("move_speed",
+            [](const EntityProxy& e) -> float {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    return ctx->GetEntityMoveSpeed(e.id);
+                }
+                return 5.0f;
+            },
+            [](EntityProxy& e, float speed) {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    ctx->SetEntityMoveSpeed(e.id, speed);
+                }
+            })
+        // Collision properties
+        .def_property("collision_radius",
+            [](const EntityProxy& e) -> float {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    return ctx->GetEntityCollisionRadius(e.id);
+                }
+                return 0.5f;
+            },
+            [](EntityProxy& e, float radius) {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    ctx->SetEntityCollisionRadius(e.id, radius);
+                }
+            })
+        .def_property("collidable",
+            [](const EntityProxy& e) -> bool {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    return ctx->IsEntityCollidable(e.id);
+                }
+                return true;
+            },
+            [](EntityProxy& e, bool collidable) {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    ctx->SetEntityCollidable(e.id, collidable);
+                }
+            })
+        // State properties
         .def_property_readonly("type", [](const EntityProxy& e) -> std::string {
             if (auto* ctx = ScriptBindings::GetContext()) {
                 return ctx->GetEntityType(e.id);
+            }
+            return "";
+        })
+        .def_property_readonly("name", [](const EntityProxy& e) -> std::string {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                return ctx->GetEntityName(e.id);
             }
             return "";
         })
@@ -238,34 +472,59 @@ void ScriptBindings::RegisterEntityTypes(pybind11::module_& m) {
             }
             return false;
         })
+        .def_property("active",
+            [](const EntityProxy& e) -> bool {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    return ctx->IsEntityActive(e.id);
+                }
+                return true;
+            },
+            [](EntityProxy& e, bool active) {
+                if (auto* ctx = ScriptBindings::GetContext()) {
+                    ctx->SetEntityActive(e.id, active);
+                }
+            })
+        // Actions
         .def("damage", [](EntityProxy& e, float amount, uint32_t source) {
             if (auto* ctx = ScriptBindings::GetContext()) {
                 ctx->DamageEntity(e.id, amount, source);
             }
-        }, py::arg("amount"), py::arg("source") = 0)
+        }, "Apply damage to entity", py::arg("amount"), py::arg("source") = 0)
         .def("heal", [](EntityProxy& e, float amount) {
             if (auto* ctx = ScriptBindings::GetContext()) {
                 ctx->HealEntity(e.id, amount);
             }
-        })
+        }, "Heal entity by amount")
+        .def("kill", [](EntityProxy& e) {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                ctx->KillEntity(e.id);
+            }
+        }, "Kill the entity immediately")
+        .def("remove", [](EntityProxy& e) {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                ctx->DespawnEntity(e.id);
+            }
+        }, "Mark entity for removal")
+        // Distance methods
         .def("distance_to", [](const EntityProxy& e, const EntityProxy& other) -> float {
             if (auto* ctx = ScriptBindings::GetContext()) {
                 return ctx->GetDistance(e.id, other.id);
             }
             return 0.0f;
-        })
+        }, "Get distance to another entity")
         .def("distance_to_point", [](const EntityProxy& e, const glm::vec3& point) -> float {
             if (auto* ctx = ScriptBindings::GetContext()) {
                 auto pos = ctx->GetEntityPosition(e.id);
                 return glm::length(point - pos);
             }
             return 0.0f;
-        });
-
-    // Define EntityProxy struct
-    struct EntityProxy {
-        uint32_t id = 0;
-    };
+        }, "Get distance to a point")
+        .def("collides_with", [](const EntityProxy& e, const EntityProxy& other) -> bool {
+            if (auto* ctx = ScriptBindings::GetContext()) {
+                return ctx->EntitiesCollide(e.id, other.id);
+            }
+            return false;
+        }, "Check if entities are colliding");
 
     // Entity factory functions
     m.def("get_entity", [](uint32_t id) -> EntityProxy {
@@ -288,34 +547,34 @@ void ScriptBindings::RegisterEntityTypes(pybind11::module_& m) {
 
 void ScriptBindings::RegisterRTSTypes(pybind11::module_& m) {
     // Resource type enum
-    py::enum_<int>(m, "ResourceType")
-        .value("Food", 0)
-        .value("Wood", 1)
-        .value("Stone", 2)
-        .value("Metal", 3)
-        .value("Coins", 4)
-        .value("Fuel", 5)
-        .value("Medicine", 6)
-        .value("Ammunition", 7)
+    py::enum_<ScriptResourceType>(m, "ResourceType")
+        .value("Food", ScriptResourceType::Food)
+        .value("Wood", ScriptResourceType::Wood)
+        .value("Stone", ScriptResourceType::Stone)
+        .value("Metal", ScriptResourceType::Metal)
+        .value("Coins", ScriptResourceType::Coins)
+        .value("Fuel", ScriptResourceType::Fuel)
+        .value("Medicine", ScriptResourceType::Medicine)
+        .value("Ammunition", ScriptResourceType::Ammunition)
         .export_values();
 
     // Building type enum
-    py::enum_<int>(m, "BuildingType")
-        .value("Shelter", 0)
-        .value("House", 1)
-        .value("Barracks", 2)
-        .value("Farm", 3)
-        .value("LumberMill", 4)
-        .value("Quarry", 5)
-        .value("Workshop", 6)
-        .value("WatchTower", 7)
-        .value("Wall", 8)
-        .value("Gate", 9)
-        .value("Fortress", 10)
-        .value("TradingPost", 11)
-        .value("Hospital", 12)
-        .value("Warehouse", 13)
-        .value("CommandCenter", 14)
+    py::enum_<ScriptBuildingType>(m, "BuildingType")
+        .value("Shelter", ScriptBuildingType::Shelter)
+        .value("House", ScriptBuildingType::House)
+        .value("Barracks", ScriptBuildingType::Barracks)
+        .value("Farm", ScriptBuildingType::Farm)
+        .value("LumberMill", ScriptBuildingType::LumberMill)
+        .value("Quarry", ScriptBuildingType::Quarry)
+        .value("Workshop", ScriptBuildingType::Workshop)
+        .value("WatchTower", ScriptBuildingType::WatchTower)
+        .value("Wall", ScriptBuildingType::Wall)
+        .value("Gate", ScriptBuildingType::Gate)
+        .value("Fortress", ScriptBuildingType::Fortress)
+        .value("TradingPost", ScriptBuildingType::TradingPost)
+        .value("Hospital", ScriptBuildingType::Hospital)
+        .value("Warehouse", ScriptBuildingType::Warehouse)
+        .value("CommandCenter", ScriptBuildingType::CommandCenter)
         .export_values();
 
     // Resource functions
@@ -370,7 +629,7 @@ void ScriptBindings::RegisterWorldQueries(pybind11::module_& m) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             auto entities = ctx->FindEntitiesInRadius(x, y, z, radius);
             for (uint32_t id : entities) {
-                result.push_back(id);
+                result.append(id);
             }
         }
         return result;
@@ -381,7 +640,7 @@ void ScriptBindings::RegisterWorldQueries(pybind11::module_& m) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             auto entities = ctx->FindEntitiesInRadius(pos.x, pos.y, pos.z, radius);
             for (uint32_t id : entities) {
-                result.push_back(id);
+                result.append(id);
             }
         }
         return result;
@@ -443,13 +702,67 @@ void ScriptBindings::RegisterUIFunctions(pybind11::module_& m) {
         }
     }, "Show an error message");
 
+    // =========== Sound and Audio Functions ===========
     m.def("play_sound", [](const std::string& name, float x, float y, float z) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             ctx->PlaySound(name, x, y, z);
         }
-    }, "Play a sound effect",
+    }, "Play a sound effect at optional position",
        py::arg("name"), py::arg("x") = 0.0f, py::arg("y") = 0.0f, py::arg("z") = 0.0f);
 
+    m.def("play_sound_3d", [](const std::string& name, float x, float y, float z, float volume) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->PlaySound3D(name, x, y, z, volume);
+        }
+    }, "Play a 3D positional sound",
+       py::arg("name"), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("volume") = 1.0f);
+
+    m.def("play_sound_2d", [](const std::string& name, float volume, float pitch) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->PlaySound2D(name, volume, pitch);
+        }
+    }, "Play a 2D sound (UI, global)",
+       py::arg("name"), py::arg("volume") = 1.0f, py::arg("pitch") = 1.0f);
+
+    m.def("play_music", [](const std::string& name) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->PlayMusic(name);
+        }
+    }, "Play background music (streaming)");
+
+    m.def("stop_music", []() {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->StopMusic();
+        }
+    }, "Stop background music");
+
+    m.def("set_music_volume", [](float volume) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->SetMusicVolume(volume);
+        }
+    }, "Set music volume (0.0 to 1.0)");
+
+    m.def("set_master_volume", [](float volume) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->SetMasterVolume(volume);
+        }
+    }, "Set master volume (0.0 to 1.0)");
+
+    m.def("get_master_volume", []() -> float {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            return ctx->GetMasterVolume();
+        }
+        return 1.0f;
+    }, "Get master volume");
+
+    m.def("set_sound_volume", [](const std::string& category, float volume) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->SetSoundVolume(category, volume);
+        }
+    }, "Set volume for a sound category/bus",
+       py::arg("category"), py::arg("volume"));
+
+    // =========== Visual Effects ===========
     m.def("spawn_effect", [](const std::string& name, float x, float y, float z) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             ctx->SpawnEffect(name, x, y, z);
@@ -633,7 +946,19 @@ void ScriptBindings::RegisterEventTypes(pybind11::module_& m) {
         return min;
     }, "Get a random integer between min and max (inclusive)");
 
-    // Logging functions
+    // =========== Logging Functions (spdlog integration) ===========
+    m.def("log_trace", [](const std::string& message) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->LogDebug("[TRACE] " + message);  // Map to debug level
+        }
+    }, "Log a trace message (verbose debugging)");
+
+    m.def("log_debug", [](const std::string& message) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->LogDebug(message);
+        }
+    }, "Log a debug message");
+
     m.def("log_info", [](const std::string& message) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             ctx->LogInfo(message);
@@ -646,11 +971,49 @@ void ScriptBindings::RegisterEventTypes(pybind11::module_& m) {
         }
     }, "Log a warning message");
 
+    m.def("log_warn", [](const std::string& message) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            ctx->LogWarning(message);
+        }
+    }, "Log a warning message (alias)");
+
     m.def("log_error", [](const std::string& message) {
         if (auto* ctx = ScriptBindings::GetContext()) {
             ctx->LogError(message);
         }
     }, "Log an error message");
+
+    // Convenience log function with level
+    m.def("log", [](const std::string& level, const std::string& message) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            if (level == "trace" || level == "TRACE") {
+                ctx->LogDebug("[TRACE] " + message);
+            } else if (level == "debug" || level == "DEBUG") {
+                ctx->LogDebug(message);
+            } else if (level == "info" || level == "INFO") {
+                ctx->LogInfo(message);
+            } else if (level == "warn" || level == "warning" || level == "WARN" || level == "WARNING") {
+                ctx->LogWarning(message);
+            } else if (level == "error" || level == "ERROR") {
+                ctx->LogError(message);
+            } else {
+                ctx->LogInfo(message);  // Default to info
+            }
+        }
+    }, "Log a message with specified level",
+       py::arg("level"), py::arg("message"));
+
+    // Print function (for convenience - logs as info)
+    m.def("print", [](const py::args& args) {
+        if (auto* ctx = ScriptBindings::GetContext()) {
+            std::string message;
+            for (size_t i = 0; i < args.size(); ++i) {
+                if (i > 0) message += " ";
+                message += py::str(args[i]).cast<std::string>();
+            }
+            ctx->LogInfo(message);
+        }
+    }, "Print message to log (info level)");
 }
 
 } // namespace Scripting

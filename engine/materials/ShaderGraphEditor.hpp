@@ -11,12 +11,17 @@
 #include "ShaderGraph.hpp"
 #include "ShaderNodes.hpp"
 #include "NoiseNodes.hpp"
+#include "../graphics/PreviewRenderer.hpp"
+#include "../graphics/Material.hpp"
+#include "../graphics/Shader.hpp"
 #include <imgui.h>
 #include <unordered_map>
 #include <functional>
 #include <memory>
 #include <string>
 #include <optional>
+#include <variant>
+#include <vector>
 
 namespace Nova {
 
@@ -82,7 +87,12 @@ private:
 class ShaderGraphEditor {
 public:
     ShaderGraphEditor();
-    ~ShaderGraphEditor() = default;
+    ~ShaderGraphEditor();
+
+    /**
+     * @brief Initialize preview renderer (must be called after OpenGL context is ready)
+     */
+    void Initialize();
 
     /**
      * @brief Set the graph to edit
@@ -178,6 +188,22 @@ public:
     using CompiledCallback = std::function<void(const std::string& vs, const std::string& fs)>;
     void SetCompiledCallback(CompiledCallback callback) { m_compiledCallback = callback; }
 
+    /**
+     * @brief Set auto-compile mode (automatically recompiles when graph changes)
+     */
+    void SetAutoCompile(bool autoCompile) { m_autoCompile = autoCompile; }
+    bool GetAutoCompile() const { return m_autoCompile; }
+
+    /**
+     * @brief Mark the graph as dirty (needs recompile)
+     */
+    void MarkGraphDirty() { m_graphDirty = true; }
+
+    /**
+     * @brief Get the preview renderer
+     */
+    PreviewRenderer* GetPreviewRenderer() { return m_previewRenderer.get(); }
+
 private:
     // Drawing methods
     void DrawMenuBar();
@@ -215,9 +241,13 @@ private:
     void RecordAction(EditorAction::Type type, const std::string& data);
     void UpdateNodeConnections();
 
+    // Preview compilation
+    bool CompileGraphToShader();
+    void UpdatePreviewMaterial();
+
     // State
     ShaderGraph* m_graph = nullptr;
-    std::unique_ptr<ShaderGraph> m_ownedGraph;
+    std::shared_ptr<ShaderGraph> m_ownedGraph;  // shared_ptr to match ShaderGraph::FromJson return type
     std::unordered_map<uint64_t, NodeVisualData> m_nodeVisuals;
     std::vector<NodeLink> m_links;
     std::vector<uint64_t> m_selectedNodes;
@@ -272,6 +302,14 @@ private:
     float m_previewRotation = 0.0f;
     int m_previewMeshType = 0; // 0=sphere, 1=cube, 2=plane
 
+    // Preview renderer integration
+    std::unique_ptr<PreviewRenderer> m_previewRenderer;
+    std::shared_ptr<Material> m_previewMaterial;
+    std::shared_ptr<Shader> m_compiledShader;
+    bool m_autoCompile = true;
+    bool m_graphDirty = true;
+    int m_previewSize = 256;
+
     // Callbacks
     CompiledCallback m_compiledCallback;
 
@@ -286,6 +324,15 @@ private:
 
     // ID counter
     uint64_t m_nextId = 1;
+
+    // File state
+    std::string m_currentFilePath;
+    bool m_showOpenDialog = false;
+    bool m_showSaveDialog = false;
+    char m_filePathBuffer[512] = {0};
+
+    // Clipboard
+    std::string m_clipboard;  // JSON representation of copied nodes
 
     // Mini-map
     MiniMap m_miniMap;
@@ -307,6 +354,8 @@ private:
  */
 class MaterialLibrary {
 public:
+    using MaterialSelectedCallback = std::function<void(const std::string& path)>;
+
     /**
      * @brief Draw the library browser panel
      */
@@ -328,6 +377,21 @@ public:
      */
     void ScanDirectory(const std::string& path);
 
+    /**
+     * @brief Set callback for when a material is selected
+     */
+    void SetMaterialSelectedCallback(MaterialSelectedCallback callback) { m_onMaterialSelected = callback; }
+
+    /**
+     * @brief Get the last selected material path (alternative to callback)
+     */
+    const std::string& GetSelectedPath() const { return m_selectedPath; }
+
+    /**
+     * @brief Clear the selected path
+     */
+    void ClearSelectedPath() { m_selectedPath.clear(); }
+
 private:
     struct MaterialEntry {
         std::string name;
@@ -339,6 +403,8 @@ private:
     std::vector<MaterialEntry> m_materials;
     std::string m_searchFilter;
     std::string m_categoryFilter;
+    std::string m_selectedPath;
+    MaterialSelectedCallback m_onMaterialSelected;
 };
 
 /**

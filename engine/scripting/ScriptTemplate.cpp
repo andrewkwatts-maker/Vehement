@@ -229,7 +229,7 @@ ScriptTemplate ScriptTemplateManager::GetOnCreateTemplate() const {
         {"entity_type", "entity", "Type of entity this handles", "string", {}, false},
         {"author", "Unknown", "Script author", "string", {}, false}
     };
-    tmpl.content = R"("""
+    tmpl.content = R"PYTEMPLATE("""
 OnCreate handler for {{entity_type}}
 @author: {{author}}
 """
@@ -244,7 +244,7 @@ def on_create(entity_id: int) -> None:
 
     # Add your initialization logic here
     pass
-)";
+)PYTEMPLATE";
     tmpl.cursorLine = 13;
     tmpl.cursorColumn = 4;
     return tmpl;

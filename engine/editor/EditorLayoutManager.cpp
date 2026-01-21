@@ -576,13 +576,15 @@ void EditorLayoutManager::RenderLayoutManager() {
 
         // Import/Export section
         if (ImGui::Button("Import Layout...")) {
-            // TODO: Show file dialog
+            // FUTURE: Show platform file dialog via EditorApplication::ShowOpenFileDialog
+            spdlog::info("Import Layout clicked - file dialog not yet integrated");
         }
 
         ImGui::SameLine();
 
         if (ImGui::Button("Export Current...")) {
-            // TODO: Show save file dialog
+            // FUTURE: Show platform save dialog via EditorApplication::ShowSaveFileDialog
+            spdlog::info("Export Layout clicked - file dialog not yet integrated");
         }
     }
     ImGui::End();

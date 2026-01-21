@@ -42,10 +42,34 @@ void NPC::Update(float deltaTime) {
 }
 
 void NPC::Render(Nova::Renderer& renderer) {
-    // Infected NPCs could have a visual indicator
-    // TODO: Add tint or overlay for infected state
+    // Apply visual effects based on infection state
+    if (IsInfected()) {
+        // Calculate infection progress (0 = just infected, 1 = about to turn)
+        float progress = GetInfectionProgress();
+
+        // Tint color transitions from normal to sickly green as infection progresses
+        // At start (0%): subtle green tint
+        // Near end (100%): deep green/grey zombie-like color
+        float greenTint = 0.7f + 0.3f * (1.0f - progress);   // Decreases green
+        float redTint = 1.0f - 0.5f * progress;               // Decreases red
+        float blueTint = 1.0f - 0.4f * progress;              // Decreases blue
+
+        // Apply tint through renderer (renderer handles color modulation)
+        renderer.SetColorTint(glm::vec4(redTint, greenTint, blueTint, 1.0f));
+
+        // If turning, add pulsing effect
+        if (IsTurning()) {
+            float pulse = (std::sin(m_infectionTimer * 10.0f) + 1.0f) * 0.5f;
+            renderer.SetColorTint(glm::vec4(redTint * pulse, greenTint, blueTint * pulse, 1.0f));
+        }
+    }
 
     Entity::Render(renderer);
+
+    // Reset tint after rendering
+    if (IsInfected()) {
+        renderer.SetColorTint(glm::vec4(1.0f));
+    }
 }
 
 void NPC::UpdateAI(float deltaTime, EntityManager& entityManager, Nova::Graph* navGraph) {
@@ -231,8 +255,20 @@ void NPC::UpdateInfected(float deltaTime) {
     // Continue previous behavior but with infection timer
     m_infectionTimer -= deltaTime;
 
-    // Visual effects as infection progresses
-    // TODO: Implement visual degradation
+    // Visual degradation based on infection progress
+    float progress = GetInfectionProgress();
+
+    // Slow down movement as infection progresses (zombie-like sluggishness)
+    float speedMultiplier = 1.0f - (progress * 0.5f);  // 50% slower at max infection
+    m_moveSpeed = DEFAULT_MOVE_SPEED * speedMultiplier;
+
+    // Occasionally stumble/pause as infection worsens (after 50% infected)
+    if (progress > 0.5f) {
+        float stumbleChance = (progress - 0.5f) * 0.02f;  // Up to 1% per frame
+        if (Nova::Random::Value() < stumbleChance) {
+            m_velocity = glm::vec3(0.0f);  // Brief stumble
+        }
+    }
 
     // Check for threats (infected NPCs still flee)
     // Note: UpdateAI handles threat detection before state-specific updates

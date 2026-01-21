@@ -572,13 +572,21 @@ float ModifierStack::Calculate(float baseValue,
     // Group modifiers by stacking type
     std::unordered_map<StackingRule, std::vector<float>> stackedValues;
 
+    // Use default condition evaluator for runtime condition checks
+    DefaultConditionEvaluator conditionEvaluator;
+
     for (const auto* mod : m_sortedModifiers) {
         // Check if modifier applies to this entity
         if (!mod->AppliesToEntity(entityType, entityTags, entityId)) {
             continue;
         }
 
-        // TODO: Evaluate conditions with a condition evaluator
+        // Evaluate conditions - skip this modifier if condition is not met
+        if (!mod->condition.IsAlways()) {
+            if (!conditionEvaluator.Evaluate(mod->condition, entityId)) {
+                continue;
+            }
+        }
 
         switch (mod->type) {
             case ModifierType::Flat:

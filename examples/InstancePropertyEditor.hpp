@@ -118,4 +118,8 @@ private:
     // Current editing state
     std::string m_currentInstanceId;
     std::string m_currentMapName;
+
+    // Archetype viewer popup state
+    bool m_showArchetypePopup = false;
+    std::string m_viewedArchetypeId;
 };

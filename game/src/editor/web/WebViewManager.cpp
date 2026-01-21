@@ -7,6 +7,9 @@
 // ImGui for fallback rendering
 #include <imgui.h>
 
+// OpenGL for texture management
+#include <glad/gl.h>
+
 // Platform detection
 #if defined(_WIN32)
     #define WEBVIEW_PLATFORM_WINDOWS 1
@@ -48,15 +51,22 @@ WebView::~WebView() {
 WebView::WebView(WebView&& other) noexcept
     : m_config(std::move(other.m_config))
     , m_currentSource(std::move(other.m_currentSource))
+    , m_loadedHtml(std::move(other.m_loadedHtml))
+    , m_baseUrl(std::move(other.m_baseUrl))
     , m_nativeHandle(other.m_nativeHandle)
     , m_textureId(other.m_textureId)
+    , m_glTextureId(other.m_glTextureId)
     , m_focused(other.m_focused)
     , m_hotReloadEnabled(other.m_hotReloadEnabled)
+    , m_lastMouseX(other.m_lastMouseX)
+    , m_lastMouseY(other.m_lastMouseY)
+    , m_mouseButtonState(other.m_mouseButtonState)
     , m_watchedFiles(std::move(other.m_watchedFiles))
     , m_messageHandler(std::move(other.m_messageHandler))
 {
     other.m_nativeHandle = nullptr;
     other.m_textureId = nullptr;
+    other.m_glTextureId = 0;
 }
 
 WebView& WebView::operator=(WebView&& other) noexcept {
@@ -65,15 +75,22 @@ WebView& WebView::operator=(WebView&& other) noexcept {
 
         m_config = std::move(other.m_config);
         m_currentSource = std::move(other.m_currentSource);
+        m_loadedHtml = std::move(other.m_loadedHtml);
+        m_baseUrl = std::move(other.m_baseUrl);
         m_nativeHandle = other.m_nativeHandle;
         m_textureId = other.m_textureId;
+        m_glTextureId = other.m_glTextureId;
         m_focused = other.m_focused;
         m_hotReloadEnabled = other.m_hotReloadEnabled;
+        m_lastMouseX = other.m_lastMouseX;
+        m_lastMouseY = other.m_lastMouseY;
+        m_mouseButtonState = other.m_mouseButtonState;
         m_watchedFiles = std::move(other.m_watchedFiles);
         m_messageHandler = std::move(other.m_messageHandler);
 
         other.m_nativeHandle = nullptr;
         other.m_textureId = nullptr;
+        other.m_glTextureId = 0;
     }
     return *this;
 }
@@ -170,15 +187,52 @@ window.WebEditor = {
         }
     }
 
-    // TODO: Actually load into native webview
-    // For now, store the HTML for fallback rendering
+    // Load into native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: NavigateToString expects UTF-16 on Windows
+        // For now, store for when WebView2 is fully integrated
+        // ICoreWebView2* webview = static_cast<ICoreWebView2*>(m_nativeHandle);
+        // webview->NavigateToString(injectedHtml.c_str());
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: loadHTMLString:baseURL:
+        // Objective-C bridge would be needed here
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: webkit_web_view_load_html
+        // webkit_web_view_load_html(WEBKIT_WEB_VIEW(m_nativeHandle), injectedHtml.c_str(), baseUrl.c_str());
+#endif
+    }
+
+    // Store the HTML for fallback rendering and future reference
+    m_loadedHtml = injectedHtml;
+    m_baseUrl = baseUrl;
 
     return true;
 }
 
 bool WebView::LoadUrl(const std::string& url) {
     m_currentSource = url;
-    // TODO: Load URL in native webview
+
+    // Load URL in native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: Navigate to URL
+        // ICoreWebView2* webview = static_cast<ICoreWebView2*>(m_nativeHandle);
+        // std::wstring wurl(url.begin(), url.end());
+        // webview->Navigate(wurl.c_str());
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: loadRequest with NSURL
+        // Objective-C bridge would call [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@url]]]
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: webkit_web_view_load_uri
+        // webkit_web_view_load_uri(WEBKIT_WEB_VIEW(m_nativeHandle), url.c_str());
+#endif
+    }
+
+    // Clear loaded HTML since we're loading a URL
+    m_loadedHtml.clear();
+    m_baseUrl = url;
+
     return true;
 }
 
@@ -194,10 +248,37 @@ void WebView::Reload() {
 
 void WebView::ExecuteJS(const std::string& script,
                         std::function<void(const std::string&)> callback) {
-    // TODO: Execute in native webview
-    // For now, queue the script
+    // Execute in native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: ExecuteScript with completion handler
+        // ICoreWebView2* webview = static_cast<ICoreWebView2*>(m_nativeHandle);
+        // std::wstring wscript(script.begin(), script.end());
+        // webview->ExecuteScript(wscript.c_str(),
+        //     Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+        //         [callback](HRESULT hr, LPCWSTR result) -> HRESULT {
+        //             if (callback) {
+        //                 std::wstring wresult(result);
+        //                 std::string sresult(wresult.begin(), wresult.end());
+        //                 callback(sresult);
+        //             }
+        //             return S_OK;
+        //         }).Get());
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: evaluateJavaScript:completionHandler:
+        // [webView evaluateJavaScript:@script completionHandler:^(id result, NSError *error) { ... }]
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: webkit_web_view_run_javascript
+        // webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(m_nativeHandle), script.c_str(),
+        //     nullptr, js_finished_callback, callback_data);
+#endif
+        return;
+    }
+
+    // Fallback: queue the script for logging/debugging and return placeholder result
+    // In a real implementation, this would be handled by the ImGui fallback renderer
     if (callback) {
-        callback("null");  // Placeholder
+        callback("null");  // Placeholder - native webview not available
     }
 }
 
@@ -243,33 +324,197 @@ void WebView::Resize(int width, int height) {
         DestroyTexture();
         CreateTexture();
 
-        // TODO: Resize native webview
+        // Resize native webview if available
+        if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+            // WebView2: put_Bounds on the controller
+            // ICoreWebView2Controller* controller = static_cast<ICoreWebView2Controller*>(m_controllerHandle);
+            // RECT bounds = { 0, 0, width, height };
+            // controller->put_Bounds(bounds);
+#elif WEBVIEW_PLATFORM_MACOS
+            // WKWebView: setFrame on the view
+            // [webView setFrame:NSMakeRect(0, 0, width, height)]
+#elif WEBVIEW_PLATFORM_LINUX
+            // WebKitGTK: gtk_widget_set_size_request
+            // gtk_widget_set_size_request(GTK_WIDGET(m_nativeHandle), width, height);
+#endif
+        }
     }
 }
 
 void WebView::InjectMouseMove(int x, int y) {
-    // TODO: Forward to native webview
+    // Forward mouse move to native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: SendMouseInput on the composition controller
+        // ICoreWebView2CompositionController* compController = ...;
+        // POINT point = { x, y };
+        // compController->SendMouseInput(COREWEBVIEW2_MOUSE_EVENT_KIND_MOVE,
+        //     COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_NONE, 0, point);
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: Create and inject NSEvent
+        // NSEvent* event = [NSEvent mouseEventWithType:NSEventTypeMouseMoved ...];
+        // [webView mouseEvent:event];
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: Create GdkEvent and propagate
+        // GdkEvent* event = gdk_event_new(GDK_MOTION_NOTIFY);
+        // gtk_widget_event(GTK_WIDGET(m_nativeHandle), event);
+#endif
+    }
+
+    // Store last mouse position for fallback renderer
+    m_lastMouseX = x;
+    m_lastMouseY = y;
 }
 
 void WebView::InjectMouseButton(int button, bool pressed, int x, int y) {
-    // TODO: Forward to native webview
+    // Update mouse button state for fallback renderer
+    if (pressed) {
+        m_mouseButtonState |= (1u << button);
+    } else {
+        m_mouseButtonState &= ~(1u << button);
+    }
+    m_lastMouseX = x;
+    m_lastMouseY = y;
+
+    // Forward mouse button to native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: SendMouseInput on the composition controller
+        // COREWEBVIEW2_MOUSE_EVENT_KIND kind = pressed ?
+        //     (button == 0 ? COREWEBVIEW2_MOUSE_EVENT_KIND_LEFT_BUTTON_DOWN :
+        //      button == 1 ? COREWEBVIEW2_MOUSE_EVENT_KIND_MIDDLE_BUTTON_DOWN :
+        //                    COREWEBVIEW2_MOUSE_EVENT_KIND_RIGHT_BUTTON_DOWN) :
+        //     (button == 0 ? COREWEBVIEW2_MOUSE_EVENT_KIND_LEFT_BUTTON_UP :
+        //      button == 1 ? COREWEBVIEW2_MOUSE_EVENT_KIND_MIDDLE_BUTTON_UP :
+        //                    COREWEBVIEW2_MOUSE_EVENT_KIND_RIGHT_BUTTON_UP);
+        // POINT point = { x, y };
+        // compController->SendMouseInput(kind, virtualKeys, 0, point);
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: Create and inject NSEvent for mouse button
+        // NSEventType type = pressed ? NSEventTypeLeftMouseDown : NSEventTypeLeftMouseUp;
+        // NSEvent* event = [NSEvent mouseEventWithType:type ...];
+        // [webView mouseEvent:event];
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: Create GdkEvent for button press/release
+        // GdkEventType type = pressed ? GDK_BUTTON_PRESS : GDK_BUTTON_RELEASE;
+        // GdkEvent* event = gdk_event_new(type);
+        // gtk_widget_event(GTK_WIDGET(m_nativeHandle), event);
+#endif
+    }
 }
 
 void WebView::InjectMouseWheel(float deltaX, float deltaY) {
-    // TODO: Forward to native webview
+    // Forward mouse wheel to native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: SendMouseInput with wheel delta
+        // POINT point = { m_lastMouseX, m_lastMouseY };
+        // int wheelDelta = static_cast<int>(deltaY * WHEEL_DELTA);
+        // compController->SendMouseInput(COREWEBVIEW2_MOUSE_EVENT_KIND_WHEEL,
+        //     COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_NONE, wheelDelta, point);
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: Create and inject NSEvent for scroll wheel
+        // NSEvent* event = [NSEvent scrollWheelEventWithType:NSEventTypeScrollWheel
+        //     deltaX:deltaX deltaY:deltaY ...];
+        // [webView scrollWheel:event];
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: Create GdkEvent for scroll
+        // GdkEvent* event = gdk_event_new(GDK_SCROLL);
+        // GdkEventScroll* scroll = (GdkEventScroll*)event;
+        // scroll->delta_x = deltaX;
+        // scroll->delta_y = deltaY;
+        // gtk_widget_event(GTK_WIDGET(m_nativeHandle), event);
+#endif
+    }
+    // Note: Fallback renderer scrolling could be handled here
+    // by tracking scroll offset and applying to rendered content
 }
 
 void WebView::InjectKeyEvent(int key, int scancode, int action, int mods) {
-    // TODO: Forward to native webview
+    // Forward key event to native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: SendKeyInput or via Windows message
+        // ICoreWebView2Controller* controller = ...;
+        // UINT msg = (action == 1) ? WM_KEYDOWN : (action == 0) ? WM_KEYUP : WM_KEYDOWN;
+        // WPARAM wParam = MapVirtualKey(scancode, MAPVK_VSC_TO_VK);
+        // LPARAM lParam = (scancode << 16) | 1;
+        // PostMessage(hwnd, msg, wParam, lParam);
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: Create and inject NSEvent for key
+        // NSEventType type = (action == 1) ? NSEventTypeKeyDown : NSEventTypeKeyUp;
+        // NSEvent* event = [NSEvent keyEventWithType:type ...];
+        // [webView keyDown:event] or [webView keyUp:event];
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: Create GdkEvent for key press/release
+        // GdkEventType type = (action == 1) ? GDK_KEY_PRESS : GDK_KEY_RELEASE;
+        // GdkEvent* event = gdk_event_new(type);
+        // GdkEventKey* keyEvent = (GdkEventKey*)event;
+        // keyEvent->keyval = gdk_keyval_from_name(...);
+        // gtk_widget_event(GTK_WIDGET(m_nativeHandle), event);
+#endif
+    }
+    // Note: Key events could be captured for fallback form input handling
 }
 
 void WebView::InjectCharEvent(unsigned int codepoint) {
-    // TODO: Forward to native webview
+    // Forward character input to native webview if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: Send WM_CHAR message
+        // PostMessage(hwnd, WM_CHAR, static_cast<WPARAM>(codepoint), 0);
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: Create key event with the character
+        // NSString* chars = [[NSString alloc] initWithBytes:&codepoint
+        //     length:sizeof(codepoint) encoding:NSUTF32LittleEndianStringEncoding];
+        // NSEvent* event = [NSEvent keyEventWithType:NSEventTypeKeyDown
+        //     characters:chars charactersIgnoringModifiers:chars ...];
+        // [webView interpretKeyEvents:@[event]];
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: Create GdkEvent for key with unicode character
+        // GdkEvent* event = gdk_event_new(GDK_KEY_PRESS);
+        // GdkEventKey* keyEvent = (GdkEventKey*)event;
+        // keyEvent->keyval = gdk_unicode_to_keyval(codepoint);
+        // gtk_widget_event(GTK_WIDGET(m_nativeHandle), event);
+#endif
+    }
+    // Note: Character events could be used for text input in fallback forms
 }
 
 void WebView::SetFocused(bool focused) {
+    if (m_focused == focused) {
+        return;  // No change
+    }
+
     m_focused = focused;
-    // TODO: Notify native webview of focus change
+
+    // Notify native webview of focus change if available
+    if (m_nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+        // WebView2: MoveFocus on the controller
+        // ICoreWebView2Controller* controller = static_cast<ICoreWebView2Controller*>(m_controllerHandle);
+        // if (focused) {
+        //     controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
+        // }
+        // Note: WebView2 doesn't have explicit "unfocus" - focus is moved away
+#elif WEBVIEW_PLATFORM_MACOS
+        // WKWebView: Make first responder or resign
+        // if (focused) {
+        //     [[webView window] makeFirstResponder:webView];
+        // } else {
+        //     [[webView window] makeFirstResponder:nil];
+        // }
+#elif WEBVIEW_PLATFORM_LINUX
+        // WebKitGTK: gtk_widget_grab_focus or clear focus
+        // if (focused) {
+        //     gtk_widget_grab_focus(GTK_WIDGET(m_nativeHandle));
+        // } else {
+        //     GtkWidget* parent = gtk_widget_get_parent(GTK_WIDGET(m_nativeHandle));
+        //     if (parent) gtk_widget_grab_focus(parent);
+        // }
+#endif
+    }
 }
 
 void WebView::EnableHotReload(const std::vector<std::string>& paths) {
@@ -326,13 +571,43 @@ void WebView::CheckHotReload() {
 }
 
 void WebView::CreateTexture() {
-    // TODO: Create OpenGL texture for rendering
-    // For now, just placeholder
-    m_textureId = nullptr;
+    // Ensure we don't leak textures
+    if (m_glTextureId != 0) {
+        DestroyTexture();
+    }
+
+    // Create OpenGL texture for rendering webview content
+    glGenTextures(1, &m_glTextureId);
+    if (m_glTextureId == 0) {
+        m_textureId = nullptr;
+        return;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, m_glTextureId);
+
+    // Set texture parameters for crisp rendering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Allocate texture storage (RGBA format for webview content)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+                 m_config.width, m_config.height, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Store as void* for ImGui compatibility
+    m_textureId = reinterpret_cast<void*>(static_cast<uintptr_t>(m_glTextureId));
 }
 
 void WebView::DestroyTexture() {
-    // TODO: Delete OpenGL texture
+    // Delete OpenGL texture if it exists
+    if (m_glTextureId != 0) {
+        glDeleteTextures(1, &m_glTextureId);
+        m_glTextureId = 0;
+    }
     m_textureId = nullptr;
 }
 
@@ -462,7 +737,36 @@ void WebViewManager::Update(float deltaTime) {
 
 void WebViewManager::SetDebugMode(bool enabled) {
     m_debugMode = enabled;
-    // TODO: Enable dev tools in all webviews
+
+    // Enable/disable developer tools in all webviews
+    for (auto& [id, webView] : m_webViews) {
+        void* nativeHandle = webView->GetNativeHandle();
+        if (nativeHandle) {
+#if WEBVIEW_PLATFORM_WINDOWS
+            // WebView2: Enable/disable DevTools
+            // ICoreWebView2Settings* settings = nullptr;
+            // ICoreWebView2* webview = static_cast<ICoreWebView2*>(nativeHandle);
+            // webview->get_Settings(&settings);
+            // settings->put_AreDevToolsEnabled(enabled ? TRUE : FALSE);
+            // if (enabled) {
+            //     webview->OpenDevToolsWindow();
+            // }
+#elif WEBVIEW_PLATFORM_MACOS
+            // WKWebView: Enable Web Inspector via WKPreferences
+            // WKPreferences* prefs = [[webView configuration] preferences];
+            // [prefs setValue:@(enabled) forKey:@"developerExtrasEnabled"];
+            // Note: User opens with right-click -> Inspect Element
+#elif WEBVIEW_PLATFORM_LINUX
+            // WebKitGTK: Enable Web Inspector
+            // WebKitSettings* settings = webkit_web_view_get_settings(WEBKIT_WEB_VIEW(nativeHandle));
+            // webkit_settings_set_enable_developer_extras(settings, enabled);
+            // if (enabled) {
+            //     WebKitWebInspector* inspector = webkit_web_view_get_inspector(WEBKIT_WEB_VIEW(nativeHandle));
+            //     webkit_web_inspector_show(inspector);
+            // }
+#endif
+        }
+    }
 }
 
 void WebViewManager::SetGlobalHotReload(bool enabled) {

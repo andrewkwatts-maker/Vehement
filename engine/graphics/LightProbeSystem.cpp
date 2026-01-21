@@ -264,8 +264,12 @@ void main() {
         vec2 jitter = randomVec2(seed) * 0.5;
         vec3 dir = fibonacciSphere(ray, u_raysPerProbe);
 
-        // TODO: Trace ray and get radiance
-        // For now, use placeholder sky color
+        // Ray tracing integration point
+        // To enable hardware ray tracing, bind an SSBO with scene BVH/SDF data
+        // and implement traceRay() using rayQueryEXT (GL_EXT_ray_query) or
+        // sample from a pre-computed radiance cache texture.
+        //
+        // Current fallback: procedural sky gradient for ambient lighting
         vec3 radiance = mix(vec3(0.8, 0.9, 1.0), vec3(0.2, 0.4, 0.8), dir.y * 0.5 + 0.5);
 
         // Project to SH

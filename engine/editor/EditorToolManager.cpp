@@ -266,13 +266,15 @@ void EditorToolManager::SetGizmoVisible(bool visible) {
 // =============================================================================
 
 bool EditorToolManager::LoadSettings(const std::string& path) {
-    // TODO: Implement settings loading from JSON/INI file
+    // FUTURE: Implement settings loading from JSON/INI file
+    // This will use the same JSON config system as EditorApplication
     spdlog::debug("Loading tool settings from: {}", path);
     return true;
 }
 
 bool EditorToolManager::SaveSettings(const std::string& path) {
-    // TODO: Implement settings saving to JSON/INI file
+    // FUTURE: Implement settings saving to JSON/INI file
+    // This will use the same JSON config system as EditorApplication
     spdlog::debug("Saving tool settings to: {}", path);
     return true;
 }

@@ -102,7 +102,9 @@ public:
  */
 class BuildingComponent {
 public:
+    BuildingComponent() = default;
     BuildingComponent(const std::string& id, const std::string& name);
+    virtual ~BuildingComponent() = default;
 
     // Identity
     std::string GetId() const { return m_id; }
@@ -110,6 +112,8 @@ public:
     std::string GetCategory() const { return m_category; }
     std::vector<std::string> GetTags() const { return m_tags; }
 
+    void SetId(const std::string& id) { m_id = id; }
+    void SetName(const std::string& name) { m_name = name; }
     void SetCategory(const std::string& category) { m_category = category; }
     void AddTag(const std::string& tag) { m_tags.push_back(tag); }
 
@@ -155,10 +159,10 @@ public:
     const Cost& GetCost() const { return m_cost; }
 
     // Serialization
-    nlohmann::json Serialize() const;
+    virtual nlohmann::json Serialize() const;
     static ComponentPtr Deserialize(const nlohmann::json& json);
 
-private:
+protected:
     std::string m_id;
     std::string m_name;
     std::string m_category;      // e.g., "structure", "decoration", "functional"

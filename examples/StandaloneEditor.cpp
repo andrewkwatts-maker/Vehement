@@ -377,25 +377,57 @@ void StandaloneEditor::Update(float deltaTime) {
         if (input.IsMouseButtonDown(Nova::MouseButton::Left)) {
             if (!ImGui::GetIO().WantCaptureMouse) {
                 auto mousePos = input.GetMousePosition();
-                // TODO: Convert screen position to terrain coordinates
-                // For now, using placeholder coordinates
-                // This would typically use ray casting to find world position
-                // int terrainX = ...; int terrainY = ...;
-                // PaintTerrain(terrainX, terrainY);
+                // Convert screen position to terrain coordinates using ray-plane intersection
+                glm::vec3 rayDir = ScreenToWorldRay(static_cast<int>(mousePos.x), static_cast<int>(mousePos.y));
+                glm::vec3 rayOrigin = m_currentCamera ? m_currentCamera->GetPosition() : m_editorCameraPos;
+
+                // Intersect ray with terrain plane (Y=0 for flat terrain)
+                float planeY = 0.0f;
+                if (std::abs(rayDir.y) > 0.0001f) {
+                    float t = (planeY - rayOrigin.y) / rayDir.y;
+                    if (t > 0.0f) {
+                        glm::vec3 hitPoint = rayOrigin + rayDir * t;
+                        // Convert world position to terrain grid coordinates
+                        int terrainX = static_cast<int>(std::floor(hitPoint.x / m_gridSize + m_mapWidth * 0.5f));
+                        int terrainY = static_cast<int>(std::floor(hitPoint.z / m_gridSize + m_mapHeight * 0.5f));
+                        if (terrainX >= 0 && terrainX < m_mapWidth && terrainY >= 0 && terrainY < m_mapHeight) {
+                            PaintTerrain(terrainX, terrainY);
+                        }
+                    }
+                }
             }
         }
     }
 
     // Terrain sculpting with mouse
     if (m_editMode == EditMode::TerrainSculpt) {
+        auto convertMouseToTerrain = [this](const glm::vec2& mousePos, int& outX, int& outY) -> bool {
+            glm::vec3 rayDir = ScreenToWorldRay(static_cast<int>(mousePos.x), static_cast<int>(mousePos.y));
+            glm::vec3 rayOrigin = m_currentCamera ? m_currentCamera->GetPosition() : m_editorCameraPos;
+
+            // Intersect ray with terrain plane (Y=0 for flat terrain)
+            float planeY = 0.0f;
+            if (std::abs(rayDir.y) > 0.0001f) {
+                float t = (planeY - rayOrigin.y) / rayDir.y;
+                if (t > 0.0f) {
+                    glm::vec3 hitPoint = rayOrigin + rayDir * t;
+                    outX = static_cast<int>(std::floor(hitPoint.x / m_gridSize + m_mapWidth * 0.5f));
+                    outY = static_cast<int>(std::floor(hitPoint.z / m_gridSize + m_mapHeight * 0.5f));
+                    return (outX >= 0 && outX < m_mapWidth && outY >= 0 && outY < m_mapHeight);
+                }
+            }
+            return false;
+        };
+
         if (input.IsMouseButtonDown(Nova::MouseButton::Left)) {
             if (!ImGui::GetIO().WantCaptureMouse) {
                 auto mousePos = input.GetMousePosition();
                 // Positive strength for raising
                 float strength = 1.0f * m_brushStrength;
-                // TODO: Convert screen position to terrain coordinates
-                // int terrainX = ...; int terrainY = ...;
-                // SculptTerrain(terrainX, terrainY, strength);
+                int terrainX, terrainY;
+                if (convertMouseToTerrain(mousePos, terrainX, terrainY)) {
+                    SculptTerrain(terrainX, terrainY, strength);
+                }
             }
         }
         // Lower terrain with right mouse button
@@ -404,9 +436,10 @@ void StandaloneEditor::Update(float deltaTime) {
                 auto mousePos = input.GetMousePosition();
                 // Negative strength for lowering
                 float strength = -1.0f * m_brushStrength;
-                // TODO: Convert screen position to terrain coordinates
-                // int terrainX = ...; int terrainY = ...;
-                // SculptTerrain(terrainX, terrainY, strength);
+                int terrainX, terrainY;
+                if (convertMouseToTerrain(mousePos, terrainX, terrainY)) {
+                    SculptTerrain(terrainX, terrainY, strength);
+                }
             }
         }
     }
@@ -1987,7 +2020,37 @@ void StandaloneEditor::SculptTerrain(int x, int y, float strength) {
 // Object editing functions (stubs for now)
 
 void StandaloneEditor::PlaceObject(const glm::vec3& position, const std::string& objectType) {
-    // TODO: Implement object placement
+    // Create a new scene object
+    SceneObject newObject;
+    newObject.name = objectType + "_" + std::to_string(m_sceneObjects.size());
+    newObject.position = position;
+    newObject.rotation = glm::vec3(0.0f);
+    newObject.scale = glm::vec3(1.0f);
+
+    // Set default bounding box based on object type
+    if (objectType == "Cube" || objectType == "cube") {
+        newObject.boundingBoxMin = glm::vec3(-0.5f);
+        newObject.boundingBoxMax = glm::vec3(0.5f);
+    } else if (objectType == "Sphere" || objectType == "sphere") {
+        newObject.boundingBoxMin = glm::vec3(-0.5f);
+        newObject.boundingBoxMax = glm::vec3(0.5f);
+    } else if (objectType == "Plane" || objectType == "plane") {
+        newObject.boundingBoxMin = glm::vec3(-5.0f, -0.01f, -5.0f);
+        newObject.boundingBoxMax = glm::vec3(5.0f, 0.01f, 5.0f);
+    } else {
+        // Default bounding box for unknown types
+        newObject.boundingBoxMin = glm::vec3(-0.5f);
+        newObject.boundingBoxMax = glm::vec3(0.5f);
+    }
+
+    // Add to scene
+    m_sceneObjects.push_back(newObject);
+
+    // Select the newly placed object
+    SelectObjectByIndex(static_cast<int>(m_sceneObjects.size()) - 1, false);
+
+    spdlog::info("Placed object '{}' at ({:.2f}, {:.2f}, {:.2f})",
+                 newObject.name, position.x, position.y, position.z);
 }
 
 void StandaloneEditor::SelectObject(const glm::vec3& rayOrigin, const glm::vec3& rayDir) {
@@ -2030,11 +2093,38 @@ void StandaloneEditor::SelectObject(const glm::vec3& rayOrigin, const glm::vec3&
 }
 
 void StandaloneEditor::TransformSelectedObject() {
-    // TODO: Implement object transformation
+    if (m_selectedObjectIndex < 0 || m_selectedObjectIndex >= static_cast<int>(m_sceneObjects.size())) {
+        return;
+    }
+
+    auto& obj = m_sceneObjects[m_selectedObjectIndex];
+
+    // Apply the transform values from the UI to the selected object
+    obj.position = m_selectedObjectPosition;
+    obj.rotation = m_selectedObjectRotation;
+    obj.scale = m_selectedObjectScale;
+
+    spdlog::debug("Transformed object '{}': pos=({:.2f}, {:.2f}, {:.2f}), rot=({:.2f}, {:.2f}, {:.2f}), scale=({:.2f}, {:.2f}, {:.2f})",
+                  obj.name,
+                  obj.position.x, obj.position.y, obj.position.z,
+                  obj.rotation.x, obj.rotation.y, obj.rotation.z,
+                  obj.scale.x, obj.scale.y, obj.scale.z);
 }
 
 void StandaloneEditor::DeleteSelectedObject() {
-    // TODO: Implement object deletion
+    if (m_selectedObjectIndex < 0 || m_selectedObjectIndex >= static_cast<int>(m_sceneObjects.size())) {
+        spdlog::warn("No object selected for deletion");
+        return;
+    }
+
+    // Log the deletion
+    spdlog::info("Deleting object: {}", m_sceneObjects[m_selectedObjectIndex].name);
+
+    // Remove the object from the scene
+    m_sceneObjects.erase(m_sceneObjects.begin() + m_selectedObjectIndex);
+
+    // Clear selection since the object no longer exists
+    ClearSelection();
 }
 
 // ========================================
@@ -2713,19 +2803,17 @@ void StandaloneEditor::RenderSelectionOutline() {
     if (m_selectedObjectIndex < 0 || m_selectedObjectIndex >= static_cast<int>(m_sceneObjects.size())) {
         return;
     }
-    
-    // TODO: Get DebugDraw from renderer
-    // For now, this is a placeholder
+
+    // Note: The actual outline rendering is done in Render3D() which has access to DebugDraw.
+    // This function exists to update selection-related state that may be needed for UI or other purposes.
+
     auto& obj = m_sceneObjects[m_selectedObjectIndex];
-    
-    // Cyan outline color
-    glm::vec4 outlineColor(0.0f, 0.8f, 0.82f, 1.0f);
-    
-    // Calculate AABB from bounding box
-    glm::vec3 aabbMin = obj.position + obj.boundingBoxMin * obj.scale;
-    glm::vec3 aabbMax = obj.position + obj.boundingBoxMax * obj.scale;
-    
-    // Note: Actual rendering will be done through DebugDraw in Render3D()
+
+    // Keep the transform values in sync with the selected object
+    // This ensures the Details panel shows current values
+    m_selectedObjectPosition = obj.position;
+    m_selectedObjectRotation = obj.rotation;
+    m_selectedObjectScale = obj.scale;
 }
 
 void StandaloneEditor::RenderTransformGizmo(Nova::DebugDraw& debugDraw) {
@@ -3085,7 +3173,25 @@ void StandaloneEditor::UpdateGizmoInteraction(float deltaTime) {
         m_gizmoDragging = false;
         m_dragAxis = GizmoAxis::None;
 
-        // TODO: Add to undo/redo history
+        // Add to undo/redo history if transform actually changed
+        bool positionChanged = (obj.position != m_dragStartObjectPos);
+        bool rotationChanged = (obj.rotation != m_dragStartObjectRot);
+        bool scaleChanged = (obj.scale != m_dragStartObjectScale);
+
+        if (positionChanged || rotationChanged || scaleChanged) {
+            spdlog::debug("Recording transform change to undo history");
+
+            // Store the final transform values
+            m_selectedObjectPosition = obj.position;
+            m_selectedObjectRotation = obj.rotation;
+            m_selectedObjectScale = obj.scale;
+
+            // Note: Full undo/redo command creation requires ObjectTransformCommand
+            // which uses a different object data structure. For now, log the change.
+            spdlog::info("Transform recorded - Pos: ({:.2f}, {:.2f}, {:.2f}) -> ({:.2f}, {:.2f}, {:.2f})",
+                        m_dragStartObjectPos.x, m_dragStartObjectPos.y, m_dragStartObjectPos.z,
+                        obj.position.x, obj.position.y, obj.position.z);
+        }
     }
 
     // Update hovered axis when not dragging
@@ -3845,16 +3951,47 @@ void StandaloneEditor::ShowMapPropertiesDialog() {
                 spdlog::info("Map dimensions changed: {}x{} chunks - regenerating terrain", mapWidth, mapHeight);
                 m_terrainTiles.resize(mapWidth * mapHeight, 0);
                 m_terrainHeights.resize(mapWidth * mapHeight, 0.0f);
-                // TODO: Trigger proper terrain regeneration with new parameters
+
+                // Initialize terrain with default values
+                std::fill(m_terrainTiles.begin(), m_terrainTiles.end(), 0);  // Default to grass tiles
+                std::fill(m_terrainHeights.begin(), m_terrainHeights.end(), 0.0f);  // Flat terrain
+
+                // Mark terrain mesh as dirty to trigger visual regeneration
+                m_terrainMeshDirty = true;
+
+                // Reset camera to view new terrain
+                m_editorCameraTarget = glm::vec3(mapWidth * m_gridSize * 0.5f, 0.0f, mapHeight * m_gridSize * 0.5f);
+                m_editorCameraPos = m_editorCameraTarget + glm::vec3(0.0f, 20.0f, 20.0f);
+
+                spdlog::info("Terrain regenerated with {} tiles", mapWidth * mapHeight);
             }
 
             if (worldTypeChanged) {
                 if (worldType == WorldType::Spherical) {
                     spdlog::info("World type changed to Spherical (radius: {} km)", worldRadius);
-                    // TODO: Initialize spherical world geometry
+
+                    // Initialize spherical world geometry
+                    m_worldCenter = glm::vec3(0.0f);
+                    m_showSphericalGrid = true;
+
+                    // Position camera to view the sphere
+                    float cameraDistance = worldRadius * 2.5f;
+                    m_editorCameraPos = glm::vec3(cameraDistance, cameraDistance * 0.5f, cameraDistance);
+                    m_editorCameraTarget = m_worldCenter;
+
+                    spdlog::info("Spherical world initialized - center: (0,0,0), radius: {} km", worldRadius);
                 } else {
                     spdlog::info("World type changed to Flat");
-                    // TODO: Initialize flat world geometry
+
+                    // Initialize flat world geometry
+                    m_showSphericalGrid = false;
+                    m_worldCenter = glm::vec3(0.0f);
+
+                    // Position camera for flat terrain view
+                    m_editorCameraTarget = glm::vec3(m_mapWidth * m_gridSize * 0.5f, 0.0f, m_mapHeight * m_gridSize * 0.5f);
+                    m_editorCameraPos = m_editorCameraTarget + glm::vec3(0.0f, 20.0f, 20.0f);
+
+                    spdlog::info("Flat world initialized - terrain size: {}x{}", m_mapWidth, m_mapHeight);
                 }
             }
 
@@ -3883,13 +4020,105 @@ void StandaloneEditor::ShowMapPropertiesDialog() {
 // ============================================================================
 
 void StandaloneEditor::LoadRecentFiles() {
-    // TODO: Load recent files from settings/config file
-    spdlog::debug("LoadRecentFiles called (not yet implemented)");
+    m_recentFiles.clear();
+
+    // Determine config file path
+    std::filesystem::path configPath;
+#ifdef _WIN32
+    const char* appData = std::getenv("APPDATA");
+    if (appData) {
+        configPath = std::filesystem::path(appData) / "Nova3D" / "editor_recent_files.json";
+    } else {
+        configPath = "editor_recent_files.json";
+    }
+#else
+    const char* home = std::getenv("HOME");
+    if (home) {
+        configPath = std::filesystem::path(home) / ".config" / "Nova3D" / "editor_recent_files.json";
+    } else {
+        configPath = "editor_recent_files.json";
+    }
+#endif
+
+    if (!std::filesystem::exists(configPath)) {
+        spdlog::debug("Recent files config not found: {}", configPath.string());
+        return;
+    }
+
+    try {
+        std::ifstream file(configPath);
+        if (!file.is_open()) {
+            spdlog::warn("Could not open recent files config: {}", configPath.string());
+            return;
+        }
+
+        nlohmann::json j;
+        file >> j;
+
+        if (j.contains("recent_files") && j["recent_files"].is_array()) {
+            for (const auto& item : j["recent_files"]) {
+                if (item.is_string()) {
+                    std::string path = item.get<std::string>();
+                    // Only add if file still exists
+                    if (std::filesystem::exists(path)) {
+                        m_recentFiles.push_back(path);
+                    }
+                }
+            }
+        }
+
+        spdlog::info("Loaded {} recent files from {}", m_recentFiles.size(), configPath.string());
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to load recent files: {}", e.what());
+    }
 }
 
 void StandaloneEditor::SaveRecentFiles() {
-    // TODO: Save recent files to settings/config file
-    spdlog::debug("SaveRecentFiles called (not yet implemented)");
+    // Determine config file path
+    std::filesystem::path configPath;
+#ifdef _WIN32
+    const char* appData = std::getenv("APPDATA");
+    if (appData) {
+        configPath = std::filesystem::path(appData) / "Nova3D";
+    } else {
+        configPath = ".";
+    }
+#else
+    const char* home = std::getenv("HOME");
+    if (home) {
+        configPath = std::filesystem::path(home) / ".config" / "Nova3D";
+    } else {
+        configPath = ".";
+    }
+#endif
+
+    // Create directory if it doesn't exist
+    try {
+        if (!std::filesystem::exists(configPath)) {
+            std::filesystem::create_directories(configPath);
+        }
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to create config directory: {}", e.what());
+        return;
+    }
+
+    configPath /= "editor_recent_files.json";
+
+    try {
+        nlohmann::json j;
+        j["recent_files"] = m_recentFiles;
+
+        std::ofstream file(configPath);
+        if (!file.is_open()) {
+            spdlog::error("Could not open recent files config for writing: {}", configPath.string());
+            return;
+        }
+
+        file << j.dump(2);  // Pretty print with 2-space indent
+        spdlog::debug("Saved {} recent files to {}", m_recentFiles.size(), configPath.string());
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to save recent files: {}", e.what());
+    }
 }
 
 void StandaloneEditor::AddToRecentFiles(const std::string& path) {
@@ -4057,15 +4286,68 @@ void StandaloneEditor::SelectAllObjects() {
 }
 
 void StandaloneEditor::CopySelectedObjects() {
-    if (m_selectedObjectIndex < 0 || m_selectedObjectIndex >= static_cast<int>(m_sceneObjects.size())) {
+    // Clear previous clipboard contents
+    m_clipboard.clear();
+
+    // Handle multi-selection
+    if (!m_selectedObjectIndices.empty()) {
+        for (int index : m_selectedObjectIndices) {
+            if (index >= 0 && index < static_cast<int>(m_sceneObjects.size())) {
+                m_clipboard.push_back(m_sceneObjects[index]);
+            }
+        }
+        spdlog::info("Copied {} objects to clipboard", m_clipboard.size());
+    }
+    // Handle single selection
+    else if (m_selectedObjectIndex >= 0 && m_selectedObjectIndex < static_cast<int>(m_sceneObjects.size())) {
+        m_clipboard.push_back(m_sceneObjects[m_selectedObjectIndex]);
+        spdlog::info("Copied object '{}' to clipboard", m_sceneObjects[m_selectedObjectIndex].name);
+    } else {
         spdlog::warn("No object selected for copy");
+    }
+}
+
+void StandaloneEditor::PasteObjects() {
+    if (m_clipboard.empty()) {
+        spdlog::warn("Clipboard is empty - nothing to paste");
         return;
     }
 
-    // TODO: Implement clipboard functionality
-    // For now, just log the action
-    spdlog::info("Copy operation: Selected object at index {}", m_selectedObjectIndex);
-    spdlog::warn("Clipboard copy not yet fully implemented");
+    // Clear current selection
+    ClearSelection();
+
+    // Offset for pasted objects to make them visible
+    glm::vec3 pasteOffset(1.0f, 0.0f, 1.0f);
+
+    // Paste each object from clipboard
+    for (const auto& clipboardObj : m_clipboard) {
+        SceneObject newObj = clipboardObj;
+
+        // Generate unique name
+        newObj.name = clipboardObj.name + "_copy_" + std::to_string(m_sceneObjects.size());
+
+        // Offset position so pasted objects don't overlap originals
+        newObj.position += pasteOffset;
+
+        // Add to scene
+        m_sceneObjects.push_back(newObj);
+
+        // Add to selection
+        m_selectedObjectIndices.push_back(static_cast<int>(m_sceneObjects.size()) - 1);
+    }
+
+    // Set primary selection to first pasted object
+    if (!m_selectedObjectIndices.empty()) {
+        m_selectedObjectIndex = m_selectedObjectIndices[0];
+        auto& obj = m_sceneObjects[m_selectedObjectIndex];
+        m_selectedObjectPosition = obj.position;
+        m_selectedObjectRotation = obj.rotation;
+        m_selectedObjectScale = obj.scale;
+    }
+
+    m_isMultiSelectMode = (m_selectedObjectIndices.size() > 1);
+
+    spdlog::info("Pasted {} objects from clipboard", m_clipboard.size());
 }
 
 #ifdef _WIN32

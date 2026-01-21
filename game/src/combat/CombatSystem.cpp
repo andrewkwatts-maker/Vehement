@@ -177,7 +177,7 @@ void CombatSystem::ProcessProjectileHits() {
                 event.damage = proj.GetDamage();
                 event.hitPosition = hit.hitPosition;
                 event.hitDirection = proj.GetDirection();
-                event.weaponType = WeaponType::Glock;  // TODO: Track weapon type in projectile
+                event.weaponType = proj.GetWeaponType();
 
                 // Check for headshot (hit in upper 20% of entity)
                 // This would need height information from entity
@@ -348,6 +348,7 @@ void CombatSystem::SpawnProjectile(
 
     if (proj) {
         proj->SetMaxRange(stats.range);
+        proj->SetWeaponType(weapon.GetType());
 
         // Set projectile type based on weapon
         if (weapon.GetType() == WeaponType::Sniper) {
@@ -402,6 +403,7 @@ void CombatSystem::ApplyDamage(const DamageEvent& event) {
     if (event.isHeadshot) {
         modifiedEvent.damage *= m_headshotMultiplier;
         m_playerStats.headshots++;
+        m_lastKillWasHeadshot = true;  // Track for coin bonus if this kills the target
     }
 
     // Update stats
@@ -530,9 +532,11 @@ void CombatSystem::NotifyKill(
         m_playerStats.grenadeKills++;
     }
 
-    // Calculate coin drop
-    int coins = GetKillCoinValue(false, isExplosion);  // TODO: Track headshots properly
+    // Calculate coin drop - track headshot based on last damage event
+    bool wasHeadshot = m_lastKillWasHeadshot;
+    int coins = GetKillCoinValue(wasHeadshot, isExplosion);
     m_playerStats.coinsEarned += coins;
+    m_lastKillWasHeadshot = false;  // Reset for next kill
 
     // Drop coins
     DropCoins(position, coins);

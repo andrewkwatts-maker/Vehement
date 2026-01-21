@@ -111,6 +111,9 @@ public:
     const std::string& GetName() const { return m_name; }
     NodeCategory GetCategory() const { return m_category; }
 
+    // Type identifier for serialization (override in derived classes)
+    virtual std::string GetTypeId() const { return m_name; }
+
     // UI position
     glm::vec2 GetPosition() const { return m_position; }
     void SetPosition(const glm::vec2& pos) { m_position = pos; }

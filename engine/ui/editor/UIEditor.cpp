@@ -760,9 +760,40 @@ void UIEditor::RenderCanvas() {
     }
 
     // Handle click to select
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0)) {
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !m_previewMode) {
         ImVec2 mousePos = ImGui::GetMousePos();
-        // TODO: Hit test widgets
+
+        // Convert mouse position to canvas coordinates
+        glm::vec2 canvasMousePos(
+            (mousePos.x - canvasOrigin.x) / m_canvasZoom,
+            (mousePos.y - canvasOrigin.y) / m_canvasZoom
+        );
+
+        // Hit test widgets (front-to-back, deepest child first)
+        std::function<WidgetPtr(WidgetPtr)> hitTest = [&](WidgetPtr widget) -> WidgetPtr {
+            if (!widget || !widget->GetStyle().visible) return nullptr;
+
+            // Check children first (reverse order for front-to-back)
+            const auto& children = widget->GetChildren();
+            for (auto it = children.rbegin(); it != children.rend(); ++it) {
+                if (auto hit = hitTest(*it)) {
+                    return hit;
+                }
+            }
+
+            // Check this widget
+            const auto& rect = widget->GetComputedRect();
+            if (canvasMousePos.x >= rect.x && canvasMousePos.x <= rect.x + rect.z &&
+                canvasMousePos.y >= rect.y && canvasMousePos.y <= rect.y + rect.w) {
+                return widget;
+            }
+
+            return nullptr;
+        };
+
+        if (auto hitWidget = hitTest(m_rootWidget)) {
+            SetSelectedWidget(hitWidget);
+        }
     }
 
     // Handle pan with middle mouse

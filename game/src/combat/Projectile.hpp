@@ -106,11 +106,13 @@ public:
     [[nodiscard]] float GetLifetime() const { return m_lifetime; }
     [[nodiscard]] bool IsActive() const { return m_active; }
     [[nodiscard]] ProjectileType GetType() const { return m_type; }
+    [[nodiscard]] WeaponType GetWeaponType() const { return m_weaponType; }
 
     // Setters
     void SetType(ProjectileType type) { m_type = type; }
     void SetMaxRange(float range) { m_maxRange = range; }
     void SetPosition(const glm::vec3& pos) { m_position = pos; }
+    void SetWeaponType(WeaponType type) { m_weaponType = type; }
 
     // Tracer rendering info
     [[nodiscard]] glm::vec3 GetTracerStart() const;
@@ -137,6 +139,7 @@ private:
     float m_tracerLength = 10.0f;
 
     ProjectileType m_type = ProjectileType::Bullet;
+    WeaponType m_weaponType = WeaponType::Glock;
     bool m_active = true;
 };
 

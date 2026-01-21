@@ -66,6 +66,15 @@ private:
     static constexpr size_t BUFFER_SIZE = 1024 * 1024; // 1MB
     char* m_textBuffer = nullptr;
 
+    // Undo/Redo stacks
+    std::vector<std::string> m_undoStack;
+    std::vector<std::string> m_redoStack;
+    static constexpr size_t MAX_UNDO_LEVELS = 50;
+    void PushUndoState();
+    void Undo();
+    void Redo();
+    void RenderJSONNode(struct JSONNode& node, int depth = 0);
+
     // Tree view structure (simplified)
     struct JSONNode {
         std::string key;

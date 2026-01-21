@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cmath>
 #include <imgui.h>
 
 namespace Vehement {
@@ -672,8 +673,190 @@ Config::ValidationResult SchemaEditor::Validate() const {
 
 Config::ValidationResult SchemaEditor::ValidateValue(const std::string& path,
                                                       const std::string& value) const {
-    // TODO: Validate specific value against schema field
-    return Config::ValidationResult{};
+    Config::ValidationResult result;
+
+    auto* schema = GetSchema(m_currentTypeId);
+    if (!schema) {
+        result.AddError(path, "No schema loaded");
+        return result;
+    }
+
+    // Find the field in the schema by parsing the path
+    // Path format: "fieldName" or "fieldName.nestedField"
+    std::vector<std::string> pathParts;
+    std::istringstream iss(path);
+    std::string part;
+    while (std::getline(iss, part, '.')) {
+        pathParts.push_back(part);
+    }
+
+    if (pathParts.empty()) {
+        result.AddError(path, "Invalid path");
+        return result;
+    }
+
+    // Find the field definition
+    const Config::SchemaField* field = nullptr;
+    const std::vector<Config::SchemaField>* currentFields = &schema->fields;
+
+    for (size_t i = 0; i < pathParts.size(); ++i) {
+        const std::string& fieldName = pathParts[i];
+
+        // Skip array indices
+        bool isArrayIndex = !fieldName.empty() && std::all_of(fieldName.begin(), fieldName.end(), ::isdigit);
+        if (isArrayIndex) {
+            continue;
+        }
+
+        field = nullptr;
+        for (const auto& f : *currentFields) {
+            if (f.name == fieldName) {
+                field = &f;
+                break;
+            }
+        }
+
+        if (!field) {
+            // Field not found in schema - not necessarily an error (could be extra data)
+            return result;
+        }
+
+        // If there are more path parts, descend into nested fields
+        if (i < pathParts.size() - 1 && !field->inlineFields.empty()) {
+            currentFields = &field->inlineFields;
+        }
+    }
+
+    if (!field) {
+        return result;  // No validation needed for unknown field
+    }
+
+    // Parse the value
+    JSValue val = JSValue::FromJson(value);
+
+    // Validate type
+    switch (field->type) {
+        case Config::SchemaFieldType::String:
+            if (!val.IsString()) {
+                result.AddError(path, "Expected string value");
+            } else {
+                const std::string& strVal = val.AsString();
+                // Check string constraints
+                if (field->constraints.minLength && strVal.length() < *field->constraints.minLength) {
+                    result.AddError(path, "String too short (minimum: " + std::to_string(*field->constraints.minLength) + ")");
+                }
+                if (field->constraints.maxLength && strVal.length() > *field->constraints.maxLength) {
+                    result.AddError(path, "String too long (maximum: " + std::to_string(*field->constraints.maxLength) + ")");
+                }
+                if (!field->constraints.allowEmpty && strVal.empty()) {
+                    result.AddError(path, "String cannot be empty");
+                }
+            }
+            break;
+
+        case Config::SchemaFieldType::Integer:
+            if (!val.IsNumber()) {
+                result.AddError(path, "Expected integer value");
+            } else {
+                double num = val.AsNumber();
+                if (num != std::floor(num)) {
+                    result.AddError(path, "Expected integer, got float");
+                }
+                if (field->constraints.minValue && num < *field->constraints.minValue) {
+                    result.AddError(path, "Value below minimum (" + std::to_string(static_cast<int>(*field->constraints.minValue)) + ")");
+                }
+                if (field->constraints.maxValue && num > *field->constraints.maxValue) {
+                    result.AddError(path, "Value above maximum (" + std::to_string(static_cast<int>(*field->constraints.maxValue)) + ")");
+                }
+            }
+            break;
+
+        case Config::SchemaFieldType::Float:
+            if (!val.IsNumber()) {
+                result.AddError(path, "Expected numeric value");
+            } else {
+                double num = val.AsNumber();
+                if (field->constraints.minValue && num < *field->constraints.minValue) {
+                    result.AddError(path, "Value below minimum (" + std::to_string(*field->constraints.minValue) + ")");
+                }
+                if (field->constraints.maxValue && num > *field->constraints.maxValue) {
+                    result.AddError(path, "Value above maximum (" + std::to_string(*field->constraints.maxValue) + ")");
+                }
+            }
+            break;
+
+        case Config::SchemaFieldType::Boolean:
+            if (!val.IsBool()) {
+                result.AddError(path, "Expected boolean value");
+            }
+            break;
+
+        case Config::SchemaFieldType::Array:
+            if (!val.IsArray()) {
+                result.AddError(path, "Expected array value");
+            } else {
+                size_t arrSize = val.Size();
+                if (field->constraints.minArraySize && arrSize < *field->constraints.minArraySize) {
+                    result.AddError(path, "Array too small (minimum: " + std::to_string(*field->constraints.minArraySize) + ")");
+                }
+                if (field->constraints.maxArraySize && arrSize > *field->constraints.maxArraySize) {
+                    result.AddError(path, "Array too large (maximum: " + std::to_string(*field->constraints.maxArraySize) + ")");
+                }
+            }
+            break;
+
+        case Config::SchemaFieldType::Object:
+            if (!val.IsObject()) {
+                result.AddError(path, "Expected object value");
+            }
+            break;
+
+        case Config::SchemaFieldType::Enum:
+            if (!val.IsString()) {
+                result.AddError(path, "Expected string value for enum");
+            } else {
+                const auto& enumValues = field->constraints.enumValues;
+                if (std::find(enumValues.begin(), enumValues.end(), val.AsString()) == enumValues.end()) {
+                    std::string validValues;
+                    for (size_t i = 0; i < enumValues.size(); ++i) {
+                        if (i > 0) validValues += ", ";
+                        validValues += enumValues[i];
+                    }
+                    result.AddError(path, "Invalid enum value. Valid values: " + validValues);
+                }
+            }
+            break;
+
+        case Config::SchemaFieldType::Vector3:
+            if (!val.IsArray() || val.Size() != 3) {
+                result.AddError(path, "Expected array of 3 numbers for Vector3");
+            } else {
+                for (size_t i = 0; i < 3; ++i) {
+                    if (!val[i].IsNumber()) {
+                        result.AddError(path, "Vector3 component " + std::to_string(i) + " must be a number");
+                    }
+                }
+            }
+            break;
+
+        case Config::SchemaFieldType::Color:
+            if (!val.IsArray() || (val.Size() != 3 && val.Size() != 4)) {
+                result.AddError(path, "Expected array of 3 or 4 numbers for Color (RGB or RGBA)");
+            } else {
+                for (size_t i = 0; i < val.Size(); ++i) {
+                    if (!val[i].IsNumber()) {
+                        result.AddError(path, "Color component " + std::to_string(i) + " must be a number");
+                    }
+                }
+            }
+            break;
+
+        default:
+            // SchemaFieldType::Any or unknown - no validation
+            break;
+    }
+
+    return result;
 }
 
 bool SchemaEditor::IsValid() const {

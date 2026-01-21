@@ -108,6 +108,12 @@ struct SDFParameters {
     // Smooth blend factor for CSG operations
     float smoothness = 0.1f;
 
+    // Onion shell parameters (for clothing layers)
+    float onionThickness = 0.0f;  // 0 = disabled, >0 = shell thickness
+    float shellMinY = -1e10f;     // Lower Y cutoff for bounded shell
+    float shellMaxY = 1e10f;      // Upper Y cutoff for bounded shell
+    uint32_t flags = 0;           // Bit flags for SDF options
+
     // Custom SDF function ID
     std::string customFunctionId;
 };

@@ -363,7 +363,8 @@ std::vector<std::shared_ptr<Mesh>> LODManager::GenerateLODs(
     // Note: Actual mesh simplification would require a decimation algorithm
     // like quadric error metrics. This is a placeholder.
     for (int i = 1; i < numLevels && i < MAX_LOD_LEVELS; i++) {
-        float ratio = reductionFactors[i];
+        // Note: ratio reserved for future mesh simplification algorithm
+        [[maybe_unused]] float ratio = reductionFactors[i];
 
         // In a real implementation, we would:
         // 1. Get vertex/index data from baseMesh
@@ -380,7 +381,7 @@ std::vector<std::shared_ptr<Mesh>> LODManager::GenerateLODs(
         lods.push_back(lodMesh);
 
         spdlog::debug("Generated LOD level {} with {}% reduction",
-                      i, static_cast<int>((1.0f - ratio) * 100));
+                      i, static_cast<int>((1.0f - reductionFactors[i]) * 100));
     }
 
     return lods;
@@ -462,7 +463,8 @@ ImpostorSystem::ImpostorData ImpostorSystem::GenerateImpostor(
     glViewport(0, 0, resolution, resolution);
 
     for (int i = 0; i < numViews; i++) {
-        float angle = (2.0f * 3.14159f * i) / numViews;
+        // Note: angle reserved for future view matrix calculation
+        [[maybe_unused]] float angle = (2.0f * 3.14159f * static_cast<float>(i)) / static_cast<float>(numViews);
 
         glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                   data.textureID, 0, i);
@@ -483,7 +485,7 @@ void ImpostorSystem::RenderImpostor(
     const ImpostorData& data,
     const glm::vec3& position,
     const glm::vec3& cameraPosition,
-    const glm::mat4& viewProjection) {
+    [[maybe_unused]] const glm::mat4& viewProjection) {
 
     if (data.textureID == 0) {
         return;
@@ -494,12 +496,14 @@ void ImpostorSystem::RenderImpostor(
     float angle = std::atan2(toCamera.x, toCamera.z);
     if (angle < 0) angle += 2.0f * 3.14159f;
 
-    int viewIndex = static_cast<int>((angle / (2.0f * 3.14159f)) * data.viewAngles);
+    // Note: viewIndex reserved for future texture array layer selection
+    [[maybe_unused]] int viewIndex = static_cast<int>((angle / (2.0f * 3.14159f)) * data.viewAngles);
     viewIndex = viewIndex % data.viewAngles;
 
     // Create billboard that faces camera (y-axis aligned)
-    glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0, 1, 0), -toCamera));
-    glm::vec3 up(0, 1, 0);
+    // Note: right and up vectors reserved for future billboard orientation
+    [[maybe_unused]] glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0, 1, 0), -toCamera));
+    [[maybe_unused]] glm::vec3 up(0, 1, 0);
 
     // Render textured billboard
     // This would use the billboard shader and VAO

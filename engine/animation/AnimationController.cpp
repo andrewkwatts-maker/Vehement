@@ -296,7 +296,7 @@ void AnimationStateMachine::SetInitialState(const std::string& stateName) {
     }
 }
 
-void AnimationStateMachine::Update(float deltaTime) {
+void AnimationStateMachine::Update([[maybe_unused]] float deltaTime) {
     if (!m_controller || m_currentState.empty()) {
         return;
     }

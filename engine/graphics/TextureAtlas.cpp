@@ -497,7 +497,7 @@ Atlas& TextureAtlas::CreateAtlas() {
     return m_atlases.back();
 }
 
-void TextureAtlas::UpdateAtlasTexture(Atlas& atlas) {
+void TextureAtlas::UpdateAtlasTexture([[maybe_unused]] Atlas& atlas) {
     // This would be called when atlas needs to be resized or rebuilt
 }
 
@@ -607,7 +607,7 @@ float ShelfPacker::GetUtilization() const {
 // TextureCompressor Implementation
 // ============================================================================
 
-std::vector<uint8_t> TextureCompressor::Compress(const void* data, int width, int height,
+std::vector<uint8_t> TextureCompressor::Compress([[maybe_unused]] const void* data, int width, int height,
                                                   CompressedFormat format) {
     std::vector<uint8_t> result;
 
@@ -727,7 +727,7 @@ bool VirtualTexture::Initialize(int pageSize, int physicalSize) {
     return true;
 }
 
-void VirtualTexture::RequestPage(int pageX, int pageY, int mipLevel) {
+void VirtualTexture::RequestPage([[maybe_unused]] int pageX, [[maybe_unused]] int pageY, [[maybe_unused]] int mipLevel) {
     // Add to request queue
     // Actual loading would happen asynchronously
 }

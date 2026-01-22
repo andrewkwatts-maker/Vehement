@@ -111,6 +111,15 @@ private:
     };
     std::vector<AssetTemplate> GetTemplatesForCategory(AssetCategory category);
 
+    // Asset import
+    /**
+     * @brief Import an asset file into the project
+     * @param sourcePath Full path to the source file to import
+     * @param hintCategory Hint for the asset category (can be auto-detected from extension)
+     * @return true if import succeeded
+     */
+    bool ImportAssetFile(const std::string& sourcePath, AssetCategory hintCategory = AssetCategory::All);
+
     Editor* m_editor = nullptr;
 
     // Asset database

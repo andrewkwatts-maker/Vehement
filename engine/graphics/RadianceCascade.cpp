@@ -33,7 +33,7 @@ bool RadianceCascade::Initialize(const Config& config) {
         int resolution = m_config.baseResolution / static_cast<int>(std::pow(m_config.cascadeScale, i));
         resolution = std::max(resolution, 4); // Minimum 4x4x4
 
-        float spacing = m_config.baseSpacing * std::pow(m_config.cascadeScale, i);
+        float spacing = m_config.baseSpacing * static_cast<float>(std::pow(m_config.cascadeScale, i));
 
         InitializeCascade(m_cascades[i], resolution, spacing);
         spdlog::info("Cascade {}: resolution={}, spacing={}", i, resolution, spacing);
@@ -161,9 +161,9 @@ void RadianceCascade::UpdateProbes(CascadeLevel& cascade, int maxProbes) {
 
         // Update probe position
         int resolution = cascade.resolution;
-        int z = i / (resolution * resolution);
-        int y = (i / resolution) % resolution;
-        int x = i % resolution;
+        int z = static_cast<int>(i) / (resolution * resolution);
+        int y = (static_cast<int>(i) / resolution) % resolution;
+        int x = static_cast<int>(i) % resolution;
 
         cascade.probePositions[i] = GridToWorld(glm::ivec3(x, y, z), cascade);
 
@@ -177,7 +177,7 @@ void RadianceCascade::UpdateProbes(CascadeLevel& cascade, int maxProbes) {
 }
 
 void RadianceCascade::InjectDirectLighting(const std::vector<glm::vec3>& positions,
-                                           const std::vector<glm::vec3>& radiance) {
+                                           [[maybe_unused]] const std::vector<glm::vec3>& radiance) {
     if (!m_initialized || !m_enabled) {
         return;
     }
@@ -201,7 +201,7 @@ void RadianceCascade::InjectDirectLighting(const std::vector<glm::vec3>& positio
     }
 }
 
-void RadianceCascade::InjectEmissive(const glm::vec3& position, const glm::vec3& radiance, float radius) {
+void RadianceCascade::InjectEmissive(const glm::vec3& position, [[maybe_unused]] const glm::vec3& radiance, float radius) {
     if (!m_initialized || !m_enabled) {
         return;
     }
@@ -388,7 +388,7 @@ bool RadianceCascade::LoadPropagationShader() {
     return true;
 }
 
-glm::vec3 RadianceCascade::SampleRadiance(const glm::vec3& worldPos, const glm::vec3& normal) const {
+glm::vec3 RadianceCascade::SampleRadiance(const glm::vec3& worldPos, [[maybe_unused]] const glm::vec3& normal) const {
     if (!m_initialized || !m_enabled) {
         return glm::vec3(0.0f);
     }
@@ -416,8 +416,9 @@ glm::vec3 RadianceCascade::SampleCascade(const glm::vec3& worldPos, int cascadeL
     const auto& cascade = m_cascades[cascadeLevel];
 
     // Convert world position to texture coordinates [0, 1]
-    glm::vec3 localPos = (worldPos - cascade.origin) / (cascade.spacing * cascade.resolution);
-    glm::vec3 texCoord = localPos + 0.5f; // Center in texture
+    glm::vec3 localPos = (worldPos - cascade.origin) / (cascade.spacing * static_cast<float>(cascade.resolution));
+    // Note: texCoord reserved for future GPU texture sampling implementation
+    [[maybe_unused]] glm::vec3 texCoord = localPos + 0.5f; // Center in texture
 
     // Sample using hardware trilinear filtering
     // This would be done in shader, here we just return a placeholder

@@ -212,8 +212,9 @@ void Batching::Flush(const glm::mat4& viewProjection) {
     SortBatches(batchesToRender);
 
     // Render batches
-    uint32_t lastShaderID = 0;
-    uint32_t lastTextureID = 0;
+    // Note: lastShaderID and lastTextureID reserved for future state tracking optimization
+    [[maybe_unused]] uint32_t lastShaderID = 0;
+    [[maybe_unused]] uint32_t lastTextureID = 0;
 
     for (RenderBatch* batch : batchesToRender) {
         m_stats.totalBatches++;

@@ -361,7 +361,7 @@ void RenderCommandBuffer::DrawMesh(const Mesh* mesh, const glm::mat4& transform)
     m_commands.push_back(cmd);
 }
 
-void RenderCommandBuffer::DrawInstanced(const Mesh* mesh, uint32_t instanceCount, void* instanceData) {
+void RenderCommandBuffer::DrawInstanced(const Mesh* mesh, uint32_t instanceCount, [[maybe_unused]] void* instanceData) {
     RenderCommand cmd;
     cmd.type = RenderCommand::Type::DrawInstanced;
     cmd.dataPtr = const_cast<Mesh*>(mesh);
@@ -461,9 +461,9 @@ RenderQueue& ParallelRenderQueue::GetThreadQueue() {
     return *m_threadQueues[threadIndex % m_numThreads];
 }
 
-void ParallelRenderQueue::Merge(RenderQueue& mainQueue) {
+void ParallelRenderQueue::Merge([[maybe_unused]] RenderQueue& mainQueue) {
     // Merge all thread queues into main queue
-    for (auto& threadQueue : m_threadQueues) {
+    for ([[maybe_unused]] auto& threadQueue : m_threadQueues) {
         // Copy items from thread queue to main queue
         // In a real implementation, this would transfer the items more efficiently
     }

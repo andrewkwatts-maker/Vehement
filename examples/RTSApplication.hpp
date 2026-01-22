@@ -12,9 +12,20 @@ namespace Nova {
     class Renderer;
 }
 
+// Forward declarations for game systems
+// These are available when NOVA_ENABLE_RTS_GAME is ON in CMake
 namespace Vehement {
     class SoloGameMode;
     class InGameEditor;
+
+    namespace RTS {
+        class RTSInputController;
+        class AIPlayer;
+
+        namespace Campaign {
+            class CampaignManager;
+        }
+    }
 }
 
 class SettingsMenu;
@@ -86,9 +97,24 @@ private:
     bool m_showSettings = false;
     std::unique_ptr<SettingsMenu> m_settingsMenu;
 
-    // TODO: Game mode subsystems will be added once game library is built
-    // std::unique_ptr<Vehement::SoloGameMode> m_soloGameMode;
-    // std::unique_ptr<Vehement::InGameEditor> m_inGameEditor;
+    // Game mode subsystems
+    // These are conditionally compiled when NOVA_ENABLE_RTS_GAME is ON
+#ifdef NOVA_ENABLE_RTS_GAME
+    // Solo game mode (1v1 vs AI with procedurally generated map)
+    std::unique_ptr<Vehement::SoloGameMode> m_soloGameMode;
+
+    // RTS input controller (selection, commands, camera)
+    std::unique_ptr<Vehement::RTS::RTSInputController> m_rtsInputController;
+
+    // AI player for computer opponent
+    std::unique_ptr<Vehement::RTS::AIPlayer> m_aiPlayer;
+
+    // In-game editor for map/campaign creation
+    std::unique_ptr<Vehement::InGameEditor> m_inGameEditor;
+
+    // Flag to track if full RTS systems are initialized
+    bool m_rtsSystemsInitialized = false;
+#endif
 
     // Lighting
     glm::vec3 m_lightDirection{-0.3f, -1.2f, -0.6f}; // Dramatic angle for hero

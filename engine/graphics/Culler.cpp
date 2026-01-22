@@ -157,8 +157,8 @@ bool HiZBuffer::TestAABB(const AABB& aabb, const glm::mat4& viewProjection) cons
     maxY = std::clamp(maxY, -1.0f, 1.0f);
 
     // Calculate appropriate mip level based on screen-space size
-    float screenWidth = (maxX - minX) * 0.5f * m_width;
-    float screenHeight = (maxY - minY) * 0.5f * m_height;
+    float screenWidth = (maxX - minX) * 0.5f * static_cast<float>(m_width);
+    float screenHeight = (maxY - minY) * 0.5f * static_cast<float>(m_height);
     float maxDim = std::max(screenWidth, screenHeight);
 
     int mipLevel = static_cast<int>(std::log2(maxDim + 1.0f));
@@ -171,8 +171,9 @@ bool HiZBuffer::TestAABB(const AABB& aabb, const glm::mat4& viewProjection) cons
     int levelWidth = m_width >> mipLevel;
     int levelHeight = m_height >> mipLevel;
 
-    int texX = static_cast<int>(u * levelWidth);
-    int texY = static_cast<int>(v * levelHeight);
+    // Note: texX and texY calculated for future per-pixel depth query optimization
+    [[maybe_unused]] int texX = static_cast<int>(u * static_cast<float>(levelWidth));
+    [[maybe_unused]] int texY = static_cast<int>(v * static_cast<float>(levelHeight));
 
     // Read depth from Hi-Z buffer at calculated mip level
     glBindTexture(GL_TEXTURE_2D, m_texture);

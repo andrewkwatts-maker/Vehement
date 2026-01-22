@@ -289,6 +289,21 @@ public:
      */
     std::string GeneratePushId();
 
+    /**
+     * @brief Check if HTTP functionality is available on this platform
+     *
+     * On Windows, HTTP is implemented via WinHTTP (always available).
+     * On other platforms (Linux, macOS), requires libcurl which may not be linked.
+     *
+     * Use this to gracefully disable Firebase features when HTTP is unavailable:
+     *   if (!FirebaseClient::IsHttpAvailable()) {
+     *       // Show offline-only mode, disable sync, etc.
+     *   }
+     *
+     * @return true if HTTP requests will work, false if stub implementations are active
+     */
+    static bool IsHttpAvailable() noexcept;
+
 private:
     // HTTP operations (would use actual HTTP library in production)
     void HttpGet(const std::string& url, std::function<void(int, const std::string&)> callback);

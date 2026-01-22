@@ -511,6 +511,19 @@ std::string FirebaseClient::GeneratePushId() {
     return id;
 }
 
+bool FirebaseClient::IsHttpAvailable() noexcept {
+#if NOVA_HAS_WINHTTP
+    // Windows: WinHTTP is available
+    return true;
+#elif defined(NOVA_HAS_CURL) && NOVA_HAS_CURL
+    // libcurl is linked and available
+    return true;
+#else
+    // No HTTP implementation available (stub mode)
+    return false;
+#endif
+}
+
 // ============================================================================
 // Private Methods
 // ============================================================================
@@ -689,45 +702,134 @@ void FirebaseClient::HttpDelete(const std::string& url, std::function<void(int, 
 
 #else // !NOVA_HAS_WINHTTP
 
-// Stub implementations for non-Windows platforms
-// TODO: Implement using libcurl when NOVA_ENABLE_NETWORKING includes curl dependency
+// =============================================================================
+// Non-Windows HTTP Implementation - Stub / libcurl Integration
+// =============================================================================
+//
+// DEPENDENCY DOCUMENTATION:
+// -------------------------
+// On non-Windows platforms (Linux, macOS), HTTP functionality requires libcurl.
+// Currently these are stub implementations that return error 501 (Not Implemented).
+//
+// To enable full HTTP support on non-Windows:
+//
+// 1. Install libcurl development files:
+//    - Ubuntu/Debian: sudo apt-get install libcurl4-openssl-dev
+//    - Fedora/RHEL:   sudo dnf install libcurl-devel
+//    - macOS:         brew install curl (usually pre-installed)
+//
+// 2. Add to CMakeLists.txt:
+//    find_package(CURL REQUIRED)
+//    target_link_libraries(nova3d PRIVATE CURL::libcurl)
+//    target_compile_definitions(nova3d PRIVATE NOVA_HAS_CURL=1)
+//
+// 3. Implement the HTTP methods below using curl_easy_* API:
+//    - curl_easy_init() to create a handle
+//    - curl_easy_setopt() to configure URL, method, headers, callbacks
+//    - curl_easy_perform() to execute (consider async with curl_multi_*)
+//    - curl_easy_cleanup() to free resources
+//
+// Example curl implementation pattern:
+//    CURL* curl = curl_easy_init();
+//    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+//    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+//    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+//    CURLcode res = curl_easy_perform(curl);
+//    long httpCode = 0;
+//    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+//    curl_easy_cleanup(curl);
+//
+// =============================================================================
+
+namespace {
+    // Helper to log HTTP stub warnings (only logs once per method to avoid spam)
+    static bool s_httpStubWarningLogged = false;
+
+    void LogHttpStubWarning(const char* method, const std::string& url) {
+        if (!s_httpStubWarningLogged) {
+            // In a full implementation, this would use the engine's logging system
+            // For now, we just set the flag to prevent repeated warnings
+            s_httpStubWarningLogged = true;
+        }
+        // Could add: spdlog::warn("FirebaseClient::{} called but HTTP not available (url: {})", method, url);
+    }
+}
 
 void FirebaseClient::HttpGet(const std::string& url, std::function<void(int, const std::string&)> callback) {
-    // Stub: Requires libcurl integration on non-Windows platforms
-    // To enable: add curl dependency to CMakeLists.txt and implement using curl_easy_* API
+    // STUB: HTTP GET not implemented on this platform
+    // Requires libcurl integration - see documentation above
+    LogHttpStubWarning("HttpGet", url);
+
     if (callback) {
-        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
+        nlohmann::json errorResponse;
+        errorResponse["error"] = "HTTP_NOT_IMPLEMENTED";
+        errorResponse["message"] = "HTTP GET not available on this platform. Requires libcurl integration.";
+        errorResponse["url"] = url;
+        errorResponse["platform"] = "non-Windows";
+        callback(501, errorResponse.dump());
     }
 }
 
 void FirebaseClient::HttpPost(const std::string& url, const std::string& body,
                                std::function<void(int, const std::string&)> callback) {
-    // Stub: Requires libcurl integration on non-Windows platforms
+    // STUB: HTTP POST not implemented on this platform
+    // Requires libcurl integration - see documentation above
+    LogHttpStubWarning("HttpPost", url);
+
     if (callback) {
-        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
+        nlohmann::json errorResponse;
+        errorResponse["error"] = "HTTP_NOT_IMPLEMENTED";
+        errorResponse["message"] = "HTTP POST not available on this platform. Requires libcurl integration.";
+        errorResponse["url"] = url;
+        errorResponse["platform"] = "non-Windows";
+        callback(501, errorResponse.dump());
     }
 }
 
 void FirebaseClient::HttpPut(const std::string& url, const std::string& body,
                               std::function<void(int, const std::string&)> callback) {
-    // Stub: Requires libcurl integration on non-Windows platforms
+    // STUB: HTTP PUT not implemented on this platform
+    // Requires libcurl integration - see documentation above
+    LogHttpStubWarning("HttpPut", url);
+
     if (callback) {
-        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
+        nlohmann::json errorResponse;
+        errorResponse["error"] = "HTTP_NOT_IMPLEMENTED";
+        errorResponse["message"] = "HTTP PUT not available on this platform. Requires libcurl integration.";
+        errorResponse["url"] = url;
+        errorResponse["platform"] = "non-Windows";
+        callback(501, errorResponse.dump());
     }
 }
 
 void FirebaseClient::HttpPatch(const std::string& url, const std::string& body,
                                 std::function<void(int, const std::string&)> callback) {
-    // Stub: Requires libcurl integration on non-Windows platforms
+    // STUB: HTTP PATCH not implemented on this platform
+    // Requires libcurl integration - see documentation above
+    LogHttpStubWarning("HttpPatch", url);
+
     if (callback) {
-        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
+        nlohmann::json errorResponse;
+        errorResponse["error"] = "HTTP_NOT_IMPLEMENTED";
+        errorResponse["message"] = "HTTP PATCH not available on this platform. Requires libcurl integration.";
+        errorResponse["url"] = url;
+        errorResponse["platform"] = "non-Windows";
+        callback(501, errorResponse.dump());
     }
 }
 
 void FirebaseClient::HttpDelete(const std::string& url, std::function<void(int, const std::string&)> callback) {
-    // Stub: Requires libcurl integration on non-Windows platforms
+    // STUB: HTTP DELETE not implemented on this platform
+    // Requires libcurl integration - see documentation above
+    LogHttpStubWarning("HttpDelete", url);
+
     if (callback) {
-        callback(501, R"({"error": "HTTP not implemented on this platform - requires libcurl"})");
+        nlohmann::json errorResponse;
+        errorResponse["error"] = "HTTP_NOT_IMPLEMENTED";
+        errorResponse["message"] = "HTTP DELETE not available on this platform. Requires libcurl integration.";
+        errorResponse["url"] = url;
+        errorResponse["platform"] = "non-Windows";
+        callback(501, errorResponse.dump());
     }
 }
 

@@ -11,6 +11,15 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
+// Platform-specific includes for file dialogs
+#ifdef _WIN32
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <Windows.h>
+    #include <commdlg.h>
+#endif
+
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
@@ -91,8 +100,90 @@ void AssetBrowserEnhanced::RenderToolbar() {
     ImGui::SameLine();
 
     if (ImGui::Button("Import")) {
-        // TODO: File import dialog
         ImGui::OpenPopup("ImportAssetDialog");
+    }
+
+    // Import Asset Dialog Popup
+    if (ImGui::BeginPopup("ImportAssetDialog")) {
+        ImGui::Text("Import Asset");
+        ImGui::Separator();
+
+        // Asset type filters
+        static int importType = 0;
+        const char* importTypes[] = { "All Supported", "Textures", "Models", "Audio", "Configs" };
+        ImGui::Combo("Type", &importType, importTypes, IM_ARRAYSIZE(importTypes));
+
+        ImGui::Separator();
+
+        // Platform-specific file dialog (Windows)
+        if (ImGui::Button("Browse Files...", ImVec2(200, 0))) {
+#ifdef _WIN32
+            // Use Windows native file dialog via OPENFILENAME
+            char filename[MAX_PATH] = "";
+
+            // Build filter string based on selected import type
+            std::string filterStr;
+            switch (importType) {
+                case 0: // All Supported
+                    filterStr = "All Supported Files\0*.png;*.jpg;*.jpeg;*.tga;*.bmp;*.obj;*.fbx;*.gltf;*.glb;*.wav;*.mp3;*.ogg;*.json\0"
+                                "Image Files\0*.png;*.jpg;*.jpeg;*.tga;*.bmp\0"
+                                "Model Files\0*.obj;*.fbx;*.gltf;*.glb\0"
+                                "Audio Files\0*.wav;*.mp3;*.ogg\0"
+                                "Config Files\0*.json\0"
+                                "All Files\0*.*\0";
+                    break;
+                case 1: // Textures
+                    filterStr = "Image Files\0*.png;*.jpg;*.jpeg;*.tga;*.bmp\0All Files\0*.*\0";
+                    break;
+                case 2: // Models
+                    filterStr = "Model Files\0*.obj;*.fbx;*.gltf;*.glb\0All Files\0*.*\0";
+                    break;
+                case 3: // Audio
+                    filterStr = "Audio Files\0*.wav;*.mp3;*.ogg\0All Files\0*.*\0";
+                    break;
+                case 4: // Configs
+                    filterStr = "Config Files\0*.json\0All Files\0*.*\0";
+                    break;
+            }
+
+            OPENFILENAMEA ofn = {};
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = nullptr;  // Could get HWND from platform if available
+            ofn.lpstrFile = filename;
+            ofn.nMaxFile = MAX_PATH;
+            ofn.lpstrFilter = filterStr.c_str();
+            ofn.lpstrTitle = "Select Asset to Import";
+            ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+
+            if (GetOpenFileNameA(&ofn)) {
+                std::string sourcePath = filename;
+                ImportAssetFile(sourcePath, static_cast<AssetCategory>(importType));
+            }
+#else
+            // Non-Windows: Show message that native dialog is not available
+            // A cross-platform solution would use a library like NFD (Native File Dialog)
+            // or implement an ImGui-based file browser
+            ImGui::OpenPopup("ImportNotAvailable");
+#endif
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(100, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    // Non-Windows platform notice popup
+    if (ImGui::BeginPopup("ImportNotAvailable")) {
+        ImGui::Text("Native file dialog not available on this platform.");
+        ImGui::Text("Please copy files manually to the assets folder.");
+        if (ImGui::Button("OK")) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     ImGui::SameLine();
@@ -1056,6 +1147,105 @@ AssetBrowserEnhanced::GetTemplatesForCategory(AssetCategory category) {
     }
 
     return templates;
+}
+
+bool AssetBrowserEnhanced::ImportAssetFile(const std::string& sourcePath, AssetCategory hintCategory) {
+    try {
+        fs::path source(sourcePath);
+
+        if (!fs::exists(source)) {
+            // Source file doesn't exist
+            return false;
+        }
+
+        // Determine destination directory based on file extension and category hint
+        std::string extension = source.extension().string();
+        std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+
+        std::string destSubdir;
+
+        // Auto-detect category from extension if hint is All
+        AssetCategory detectedCategory = hintCategory;
+        if (hintCategory == AssetCategory::All) {
+            detectedCategory = DetermineCategory(sourcePath, extension);
+        }
+
+        // Map category to destination directory
+        switch (detectedCategory) {
+            case AssetCategory::Textures:
+                destSubdir = "game/assets/textures";
+                break;
+            case AssetCategory::Models:
+                destSubdir = "game/assets/models";
+                break;
+            case AssetCategory::Scripts:
+                destSubdir = "game/assets/scripts";
+                break;
+            case AssetCategory::Units:
+                destSubdir = "game/assets/configs/units";
+                break;
+            case AssetCategory::Buildings:
+                destSubdir = "game/assets/configs/buildings";
+                break;
+            case AssetCategory::Tiles:
+                destSubdir = "game/assets/configs/tiles";
+                break;
+            case AssetCategory::Configs:
+            default:
+                // Default to a general import folder for unknown types
+                if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" ||
+                    extension == ".tga" || extension == ".bmp") {
+                    destSubdir = "game/assets/textures";
+                } else if (extension == ".obj" || extension == ".fbx" ||
+                           extension == ".gltf" || extension == ".glb") {
+                    destSubdir = "game/assets/models";
+                } else if (extension == ".wav" || extension == ".mp3" || extension == ".ogg") {
+                    destSubdir = "game/assets/audio";
+                } else if (extension == ".json") {
+                    destSubdir = "game/assets/configs";
+                } else {
+                    destSubdir = "game/assets/imported";
+                }
+                break;
+        }
+
+        // Create destination directory if it doesn't exist
+        fs::path destDir(destSubdir);
+        if (!fs::exists(destDir)) {
+            fs::create_directories(destDir);
+        }
+
+        // Generate destination filename (handle duplicates)
+        fs::path destPath = destDir / source.filename();
+        std::string baseName = source.stem().string();
+        std::string ext = source.extension().string();
+        int copyIndex = 1;
+
+        while (fs::exists(destPath)) {
+            destPath = destDir / (baseName + "_" + std::to_string(copyIndex) + ext);
+            copyIndex++;
+        }
+
+        // Copy the file
+        fs::copy_file(source, destPath, fs::copy_options::overwrite_existing);
+
+        // Refresh the asset browser to show the new file
+        RefreshAssets();
+
+        // Select the newly imported asset
+        SelectAsset(destPath.string());
+
+        // Trigger callback if set
+        if (OnAssetCreated) {
+            OnAssetCreated(destPath.string(), detectedCategory);
+        }
+
+        return true;
+    } catch (const std::exception& e) {
+        // Log error (in a full implementation, would show error dialog)
+        (void)e;  // Suppress unused variable warning
+        return false;
+    }
 }
 
 } // namespace Vehement

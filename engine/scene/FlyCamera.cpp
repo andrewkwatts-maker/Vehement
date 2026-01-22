@@ -67,7 +67,7 @@ void FlyCamera::ProcessKeyboardInput(InputManager& input, float deltaTime) {
     }
 }
 
-void FlyCamera::ProcessMouseInput(InputManager& input, float deltaTime) {
+void FlyCamera::ProcessMouseInput(InputManager& input, [[maybe_unused]] float deltaTime) {
     // Only rotate when right mouse button is held
     if (!input.IsMouseButtonDown(MouseButton::Right)) {
         return;

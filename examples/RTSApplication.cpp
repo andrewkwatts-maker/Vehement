@@ -11,10 +11,18 @@
 #include "input/InputManager.hpp"
 #include "scene/FlyCamera.hpp"
 
-// Game mode subsystems
-// TODO: Re-enable these includes once game library is built
-// #include "game/src/rts/modes/SoloGameMode.hpp"
-// #include "game/src/editor/ingame/InGameEditor.hpp"
+// Game mode subsystems - conditionally included when RTS game library is built
+// Enable by setting -DNOVA_ENABLE_RTS_GAME=ON in CMake
+#ifdef NOVA_ENABLE_RTS_GAME
+#include "game/src/rts/modes/SoloGameMode.hpp"
+#include "game/src/rts/modes/GameMode.hpp"
+#include "game/src/rts/modes/ModeRegistry.hpp"
+#include "game/src/rts/RTSInputController.hpp"
+#include "game/src/rts/ai/AIPlayer.hpp"
+#include "game/src/rts/campaign/Campaign.hpp"
+#include "game/src/rts/campaign/CampaignManager.hpp"
+#include "game/src/editor/ingame/InGameEditor.hpp"
+#endif
 
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -117,8 +125,28 @@ bool RTSApplication::Initialize() {
     m_settingsMenu = std::make_unique<SettingsMenu>();
     m_settingsMenu->Initialize(&Nova::Engine::Instance().GetInput(), &Nova::Engine::Instance().GetWindow());
 
-    // Note: Subsystems (solo game mode, etc.) are initialized lazily when their modes are entered
-    // This avoids unnecessary initialization and allows for better resource management
+    // Initialize RTS game systems if available
+#ifdef NOVA_ENABLE_RTS_GAME
+    spdlog::info("Initializing RTS game systems...");
+
+    // Initialize RTS input controller
+    m_rtsInputController = std::make_unique<Vehement::RTS::RTSInputController>();
+    // Note: Full initialization requires camera and player setup, done when entering game modes
+
+    // Initialize AI player for solo mode
+    m_aiPlayer = std::make_unique<Vehement::RTS::AIPlayer>("AI Opponent");
+
+    // Register standard game modes
+    Vehement::ModeRegistry::Instance().Initialize();
+
+    m_rtsSystemsInitialized = true;
+    spdlog::info("RTS game systems initialized successfully");
+#else
+    // Placeholder mode: RTS game library not built
+    // Solo/Campaign modes will use placeholder simulation
+    spdlog::info("RTS game library not built - using placeholder mode");
+    spdlog::info("To enable full RTS systems, build with -DNOVA_ENABLE_RTS_GAME=ON");
+#endif
 
     spdlog::info("RTS Application initialized");
     return true;
@@ -407,8 +435,53 @@ void RTSApplication::RenderSoloGame() {
     ImGui::Text("Solo Play Mode - 1v1 Match");
     ImGui::Separator();
 
-    // Display placeholder game mode info (will use actual SoloGameMode when game library is built)
-    ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Solo Game Active");
+#ifdef NOVA_ENABLE_RTS_GAME
+    if (m_soloGameMode && m_soloGameMode->IsMapGenerated()) {
+        // Full RTS game mode UI
+        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.4f, 1.0f), "Full RTS Systems Active");
+        ImGui::Spacing();
+
+        const auto& config = m_soloGameMode->GetConfig();
+        ImGui::Text("Map: %dx%d  |  Seed: %llu", config.mapWidth, config.mapHeight, config.seed);
+
+        const auto& spawns = m_soloGameMode->GetPlayerSpawns();
+        ImGui::Text("Players: %zu spawned", spawns.size());
+
+        const auto& resources = m_soloGameMode->GetResourceNodes();
+        ImGui::Text("Resource Nodes: %zu placed", resources.size());
+        ImGui::Spacing();
+
+        // Show player spawn positions
+        if (!spawns.empty()) {
+            ImGui::Text("Player Spawns:");
+            for (const auto& spawn : spawns) {
+                ImGui::BulletText("Player %d: (%.1f, %.1f)", spawn.playerId, spawn.position.x, spawn.position.z);
+            }
+        }
+        ImGui::Spacing();
+
+        // Show AI player state
+        if (m_aiPlayer) {
+            const auto& aiState = m_aiPlayer->GetState();
+            ImGui::Text("AI Opponent (%s):", m_aiPlayer->GetName().c_str());
+            ImGui::Text("  Phase: %s", Vehement::RTS::StrategyPhaseToString(aiState.phase));
+            ImGui::Text("  Behavior: %s", Vehement::RTS::AIBehaviorToString(aiState.behavior));
+            ImGui::Text("  Workers: %d  |  Military: %d", aiState.workerCount, aiState.militaryUnits);
+        }
+        ImGui::Spacing();
+
+        ImGui::Text("Starting Resources:");
+        ImGui::Text("  Food: %d  Wood: %d  Stone: %d  Metal: %d",
+                    config.startingFood, config.startingWood, config.startingStone, config.startingMetal);
+    } else {
+        // Fallback to placeholder display
+        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Solo Game Active (Initialization pending)");
+    }
+#else
+    // Placeholder mode display (RTS game library not built)
+    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Placeholder Mode");
+    ImGui::Text("RTS game library not built");
+    ImGui::Text("Build with -DNOVA_ENABLE_RTS_GAME=ON for full features");
     ImGui::Spacing();
 
     // Simulated game state display
@@ -421,15 +494,19 @@ void RTSApplication::RenderSoloGame() {
     ImGui::Text("  Food: 500  Wood: 500  Stone: 200  Metal: 100");
     ImGui::Spacing();
 
-    // Progress indicator for features in development
-    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Features in Development:");
+    // Progress indicator for features available with full build
+    ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "Available with NOVA_ENABLE_RTS_GAME=ON:");
     ImGui::BulletText("Procedurally generated 1v1 maps");
     ImGui::BulletText("Resource placement (trees, rocks, gold)");
     ImGui::BulletText("AI opponent with decision tree logic");
-    ImGui::BulletText("Full RTS input controls");
+    ImGui::BulletText("Full RTS input controls (selection, commands)");
+    ImGui::BulletText("8 standard game modes (Melee, CTF, KotH, etc.)");
+#endif
 
     ImGui::Spacing();
     ImGui::Separator();
+
+    ImGui::Text("Game Time: %.1f seconds", m_soloGameTime);
     ImGui::Text("Camera Position: %.1f, %.1f, %.1f",
                 m_camera->GetPosition().x, m_camera->GetPosition().y, m_camera->GetPosition().z);
 
@@ -479,12 +556,55 @@ void RTSApplication::RenderCampaign() {
     ImGui::Text("Campaign Mode - %s", RACE_NAMES[m_selectedRace]);
     ImGui::Separator();
 
-    ImGui::TextWrapped("Campaign missions for the %s faction.", RACE_NAMES[m_selectedRace]);
+#ifdef NOVA_ENABLE_RTS_GAME
+    // Full campaign system when RTS game library is built
+    auto& campaignMgr = Vehement::RTS::Campaign::CampaignManager::Instance();
 
+    if (campaignMgr.IsInitialized()) {
+        auto* currentCampaign = campaignMgr.GetCurrentCampaign();
+
+        if (currentCampaign) {
+            // Use public member variables (Campaign class uses direct access)
+            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.4f, 1.0f), "Campaign: %s", currentCampaign->title.c_str());
+            ImGui::TextWrapped("%s", currentCampaign->description.c_str());
+            ImGui::Spacing();
+
+            // Show chapters
+            const auto& chapters = currentCampaign->chapters;
+            ImGui::Text("Chapters: %zu", chapters.size());
+
+            for (size_t i = 0; i < chapters.size() && i < 7; ++i) {
+                ImGui::PushID(static_cast<int>(i));
+                const auto& chapter = chapters[i];
+                // Chapter class would have similar public members
+                std::string label = "Chapter " + std::to_string(i + 1);
+                if (ImGui::Button(label.c_str(), ImVec2(300, 30))) {
+                    // Start chapter via campaign manager
+                    spdlog::info("Starting chapter {} for {}", i + 1, RACE_NAMES[m_selectedRace]);
+                }
+                ImGui::PopID();
+            }
+        } else {
+            ImGui::TextWrapped("Campaign missions for the %s faction.", RACE_NAMES[m_selectedRace]);
+            ImGui::Spacing();
+            ImGui::Text("Select a campaign to begin...");
+        }
+    } else {
+        // Campaign manager not initialized - show placeholder
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Campaign system initializing...");
+    }
+#else
+    // Placeholder mode when RTS game library is not built
+    ImGui::TextWrapped("Campaign missions for the %s faction.", RACE_NAMES[m_selectedRace]);
     ImGui::Spacing();
+
+    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Placeholder Mode");
+    ImGui::Text("Build with -DNOVA_ENABLE_RTS_GAME=ON for full campaign");
+    ImGui::Spacing();
+
     ImGui::Text("Available Missions:");
 
-    // Display sample missions
+    // Display sample missions (placeholder)
     for (int i = 1; i <= 7; i++) {
         ImGui::PushID(i);
         if (ImGui::Button(("Mission " + std::to_string(i)).c_str(), ImVec2(200, 30))) {
@@ -492,6 +612,7 @@ void RTSApplication::RenderCampaign() {
         }
         ImGui::PopID();
     }
+#endif
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -510,11 +631,66 @@ void RTSApplication::StartSoloGame() {
     m_soloGameTime = 0.0f;
     m_lastResourceTick = 0.0f;
 
-    // Note: Full solo game mode integration (SoloGameMode, World, TileMap,
-    // TerrainGenerator) will be added when game library is built.
-    // For now, a placeholder simulation runs in UpdateSoloGame().
+#ifdef NOVA_ENABLE_RTS_GAME
+    if (m_rtsSystemsInitialized) {
+        // Full RTS game mode with procedurally generated map
+        spdlog::info("Initializing full Solo Game Mode...");
 
+        // Create solo game mode with default config
+        m_soloGameMode = std::make_unique<Vehement::SoloGameMode>();
+
+        Vehement::SoloGameConfig config;
+        config.mapWidth = 64;
+        config.mapHeight = 64;
+        config.tileSize = 1.0f;
+        config.seed = 0;  // Random seed
+        config.aiDifficulty = "medium";
+        config.startingFood = 500;
+        config.startingWood = 500;
+        config.startingStone = 200;
+        config.startingMetal = 100;
+
+        if (m_soloGameMode->Initialize(config)) {
+            // Generate the map
+            auto& renderer = Nova::Engine::Instance().GetRenderer();
+            if (m_soloGameMode->GenerateMap(renderer)) {
+                spdlog::info("Solo game map generated successfully");
+
+                // Setup AI player
+                if (m_aiPlayer) {
+                    m_aiPlayer->SetBehavior(Vehement::RTS::AIBehavior::Balanced);
+                    m_aiPlayer->SetDifficulty(1.0f);  // Normal difficulty
+                    glm::vec3 aiSpawn = m_soloGameMode->GetPlayerSpawnPosition(1);
+                    m_aiPlayer->SetBaseLocation(glm::vec2(aiSpawn.x, aiSpawn.z));
+                    spdlog::info("AI player initialized at ({}, {})", aiSpawn.x, aiSpawn.z);
+                }
+
+                // Initialize RTS input controller with camera
+                if (m_rtsInputController && m_camera) {
+                    // RTS input controller would be fully initialized here
+                    // m_rtsInputController->Initialize(m_camera.get(), humanPlayer);
+                    spdlog::info("RTS input controller ready");
+                }
+            } else {
+                spdlog::warn("Failed to generate solo game map, using placeholder");
+                m_soloGameMode.reset();
+            }
+        } else {
+            spdlog::warn("Failed to initialize solo game mode, using placeholder");
+            m_soloGameMode.reset();
+        }
+    }
+
+    if (m_soloGameMode) {
+        spdlog::info("Solo game initialized with full RTS systems");
+    } else {
+        spdlog::info("Solo game initialized (placeholder mode)");
+    }
+#else
+    // Placeholder mode when RTS game library is not built
     spdlog::info("Solo game initialized (placeholder mode)");
+#endif
+
     m_currentMode = GameMode::Solo;
 }
 
@@ -526,6 +702,47 @@ void RTSApplication::StartOnlineGame() {
 void RTSApplication::StartCampaign(int raceIndex) {
     spdlog::info("Starting Campaign for race: {}", RACE_NAMES[raceIndex]);
     m_selectedRace = raceIndex;
+
+#ifdef NOVA_ENABLE_RTS_GAME
+    if (m_rtsSystemsInitialized) {
+        auto& campaignMgr = Vehement::RTS::Campaign::CampaignManager::Instance();
+
+        if (!campaignMgr.IsInitialized()) {
+            if (campaignMgr.Initialize()) {
+                // Load campaigns from the game assets directory
+                campaignMgr.LoadAllCampaigns("game_assets/campaigns/");
+                spdlog::info("Campaign system initialized");
+            } else {
+                spdlog::warn("Failed to initialize campaign system");
+            }
+        }
+
+        // Map race index to campaign ID
+        static const char* RACE_CAMPAIGN_IDS[] = {
+            "campaign_aliens",
+            "campaign_cryptids",
+            "campaign_fairies",
+            "campaign_naga",
+            "campaign_undead",
+            "campaign_vampires",
+            "campaign_humans"
+        };
+
+        if (raceIndex >= 0 && raceIndex < NUM_RACES) {
+            auto* campaign = campaignMgr.GetCampaign(RACE_CAMPAIGN_IDS[raceIndex]);
+            if (campaign) {
+                campaignMgr.SetCurrentCampaign(RACE_CAMPAIGN_IDS[raceIndex]);
+                campaignMgr.StartCampaign(RACE_CAMPAIGN_IDS[raceIndex],
+                                          Vehement::RTS::Campaign::CampaignDifficulty::Normal);
+                // Use public member variable 'title' instead of GetTitle()
+                spdlog::info("Campaign started: {}", campaign->title);
+            } else {
+                spdlog::warn("Campaign not found for race: {}", RACE_NAMES[raceIndex]);
+            }
+        }
+    }
+#endif
+
     m_currentMode = GameMode::Campaign;
 }
 
@@ -536,14 +753,49 @@ void RTSApplication::OpenSettings() {
 
 void RTSApplication::ReturnToMainMenu() {
     spdlog::info("Returning to Main Menu");
+
+#ifdef NOVA_ENABLE_RTS_GAME
+    // Clean up active game modes
+    if (m_soloGameMode) {
+        m_soloGameMode->Shutdown();
+        m_soloGameMode.reset();
+        spdlog::info("Solo game mode shut down");
+    }
+#endif
+
+    // Reset game state
+    m_soloGameTime = 0.0f;
+    m_lastResourceTick = 0.0f;
+
     m_currentMode = GameMode::MainMenu;
 }
 
 void RTSApplication::UpdateSoloGame(float deltaTime) {
-    // Placeholder solo game update - simulates game logic
-    // Full implementation will integrate with SoloGameMode when game library is built
+#ifdef NOVA_ENABLE_RTS_GAME
+    // Full RTS game update when game library is built
+    if (m_soloGameMode) {
+        // Update game world simulation
+        m_soloGameMode->Update(deltaTime);
 
-    // Simple placeholder simulation: update game time
+        // Update AI player decision making
+        if (m_aiPlayer) {
+            // AI update would be called here with game systems
+            // m_aiPlayer->Update(deltaTime, population, entityManager, ...);
+        }
+
+        // Update RTS input handling
+        if (m_rtsInputController) {
+            auto& input = Nova::Engine::Instance().GetInput();
+            m_rtsInputController->Update(input, deltaTime);
+        }
+
+        m_soloGameTime += deltaTime;
+        return;
+    }
+#endif
+
+    // Placeholder solo game update - simulates game logic
+    // Used when RTS game library is not built or initialization failed
     m_soloGameTime += deltaTime;
 
     // Simulate resource accumulation every second
@@ -566,13 +818,37 @@ void RTSApplication::Shutdown() {
     m_soloGameTime = 0.0f;
     m_lastResourceTick = 0.0f;
 
-    // Note: Full game mode subsystems (SoloGameMode, InGameEditor) will be
-    // added here when game library is integrated
+#ifdef NOVA_ENABLE_RTS_GAME
+    // Shutdown RTS game systems
+    if (m_inGameEditor) {
+        m_inGameEditor->Shutdown();
+        m_inGameEditor.reset();
+    }
 
-    // Cleanup original resources
+    if (m_soloGameMode) {
+        m_soloGameMode->Shutdown();
+        m_soloGameMode.reset();
+    }
+
+    m_rtsInputController.reset();
+    m_aiPlayer.reset();
+
+    // Shutdown mode registry
+    Vehement::ModeRegistry::Instance().Shutdown();
+
+    m_rtsSystemsInitialized = false;
+    spdlog::info("RTS game systems shut down");
+#endif
+
+    // Cleanup graphics resources
     m_camera.reset();
     m_cubeMesh.reset();
     m_sphereMesh.reset();
     m_planeMesh.reset();
+    m_heroMesh.reset();
+    m_buildingMesh1.reset();
+    m_buildingMesh2.reset();
+    m_buildingMesh3.reset();
+    m_terrainMesh.reset();
     m_basicShader.reset();
 }
